@@ -5,8 +5,6 @@ import {
   User,
   Eye, 
   EyeOff, 
-  CheckCircle, 
-  ShieldCheck, 
   ZoomIn, 
   ZoomOut, 
   Maximize2, 
@@ -14,7 +12,6 @@ import {
   ArrowLeft,
   ChevronUp,
   ChevronDown,
-  FileText,
   PanelLeft
 } from "lucide-react";
 import { INVESTOR_PITCH_PAGES } from "../data/investorPitchPages";
@@ -24,24 +21,24 @@ interface YoouzInvestorPitchViewProps {
 }
 
 const SECTIONS = [
-  { page: 1, title: "Executive Thesis & Foundational Mandate", subtitle: "Confidential Series Seed Pitch" },
-  { page: 2, title: "Strategic Overview & Table of Contents", subtitle: "18-Section Institutional Breakdown" },
-  { page: 3, title: "The Market Problem: The Fake Review Crisis", subtitle: "$152B Global Trust Collapse" },
-  { page: 4, title: "The Solution: The 60-Second Video Protocol", subtitle: "Hardware-Level Proof-of-Authenticity" },
-  { page: 5, title: "Consumer Experience: Mobile PWA & Discovery", subtitle: "Instant Zero-Friction Web App" },
-  { page: 6, title: "The Immersive Vertical Video Player", subtitle: "88% Watch Completion & Social Action Rail" },
-  { page: 7, title: "Community, Creator Profiles & Direct Sharing", subtitle: "Frictionless Following & Taste-Makers" },
-  { page: 8, title: "Interactive Comments & Inquiries Drawer", subtitle: "Contextual Suggestion Chips & Dialogue" },
-  { page: 9, title: "Business Profile Architecture & Action Portal", subtitle: "62% Direct Action Conversion" },
-  { page: 10, title: "The Recording Studio: Hardware Camera Lock", subtitle: "Mandatory Front Camera & Zero Uploads" },
-  { page: 11, title: "Interactive Map & Geolocation Discovery", subtitle: "High-Density Visual Local Navigation" },
-  { page: 12, title: "B2B Merchant Suite: Verification & Claiming", subtitle: "Domain Matching & Anti-Yelp Defense" },
-  { page: 13, title: "B2B Growth Tools: Tabletop QR Stands", subtitle: "Zero-CAC Viral Diner Acquisition" },
-  { page: 14, title: "Branded Ad Exporter & 1-Click Video Embeds", subtitle: "Turnkey Social Video & Web Widgets" },
-  { page: 15, title: "Technical Architecture: Bunny.net & Cloud SQL", subtitle: "Edge Streaming & 90% Cost Advantage" },
-  { page: 16, title: "Business Model & Revenue Architecture", subtitle: "Dual-Engine Monetization & ARR Scaling" },
-  { page: 17, title: "Competitive Moat: Why Incumbents Cannot Replicate", subtitle: "Four Impenetrable Structural Barriers" },
-  { page: 18, title: "Execution Roadmap & Investment Opportunity", subtitle: "Venture Investment Thesis & Capital Allocation" },
+  { page: 1, title: "Executive Thesis & Foundational Mandate" },
+  { page: 2, title: "Strategic Overview & Table of Contents" },
+  { page: 3, title: "The Market Problem: The Fake Review Crisis" },
+  { page: 4, title: "The Solution: The 60-Second Video Protocol" },
+  { page: 5, title: "Consumer Experience: Mobile PWA & Discovery" },
+  { page: 6, title: "The Immersive Vertical Video Player" },
+  { page: 7, title: "Community, Creator Profiles & Direct Sharing" },
+  { page: 8, title: "Interactive Comments & Inquiries Drawer" },
+  { page: 9, title: "Business Profile Architecture & Action Portal" },
+  { page: 10, title: "The Recording Studio: Hardware Camera Lock" },
+  { page: 11, title: "Interactive Map & Geolocation Discovery" },
+  { page: 12, title: "B2B Merchant Suite: Verification & Claiming" },
+  { page: 13, title: "B2B Growth Tools: Tabletop QR Stands" },
+  { page: 14, title: "Branded Ad Exporter & 1-Click Video Embeds" },
+  { page: 15, title: "Technical Architecture: Bunny.net & Cloud SQL" },
+  { page: 16, title: "Business Model & Revenue Architecture" },
+  { page: 17, title: "Competitive Moat: Why Incumbents Cannot Replicate" },
+  { page: 18, title: "Execution Roadmap & Investment Opportunity" },
 ];
 
 const TOTAL_PAGES = INVESTOR_PITCH_PAGES.length || 18;
@@ -100,7 +97,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     metaTag.content = "noindex, nofollow, noarchive";
 
     const originalTitle = document.title;
-    document.title = "Yoouz_Investor_Pitch_Memorandum.pdf";
+    document.title = "Yoouz";
 
     return () => {
       if (metaTag) {
@@ -114,7 +111,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     };
   }, []);
 
-  // Track currently visible PDF page during continuous vertical scroll
+  // Track currently visible page during continuous vertical scroll
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -142,7 +139,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     return () => observer.disconnect();
   }, [isAuthenticated]);
 
-  // Document security: Block Print, Save, View-Source keyboard shortcuts
+  // Document security: Silently block Print, Save, View-Source keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       if (
@@ -163,14 +160,14 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     const passNorm = passwordInput.trim().toLowerCase();
     
     if (!userNorm) {
-      setAuthError("Please enter your authorized username.");
+      setAuthError("Please enter your username.");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
     if (!passNorm) {
-      setAuthError("Please enter your access password.");
+      setAuthError("Please enter your password.");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       return;
@@ -186,7 +183,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       setIsAuthenticated(true);
       setAuthError("");
     } else {
-      setAuthError("Invalid credentials. Access is restricted to authorized partners.");
+      setAuthError("Invalid username or password.");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     }
@@ -222,7 +219,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   };
 
   // -------------------------------------------------------------
-  // 1. PASSWORD GATE SCREEN (Clean, pure dark mode, no gold/yellow)
+  // 1. MINIMAL LOGIN SCREEN (Clean dark mode, zero clutter)
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
@@ -238,34 +235,23 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Return to Yoouz</span>
+            <span>Yoouz</span>
           </button>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-            Confidential PDF
-          </div>
         </header>
 
-        {/* Center Access Card */}
-        <main className="w-full max-w-md my-auto relative z-10 py-6">
+        {/* Center Sign-In Card */}
+        <main className="w-full max-w-sm my-auto relative z-10 py-6">
           <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
             {/* Brand Logo */}
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="relative mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg">
-                  <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">
-                    <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-                  </svg>
-                </div>
+              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg mb-3.5">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
+                  <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                </svg>
               </div>
-
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
-                Investor Memorandum
+              <h1 className="text-xl font-bold tracking-tight text-white">
+                Yoouz
               </h1>
-              <p className="text-zinc-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                Enter your authorized credentials to open the 18-page Series Seed PDF memorandum.
-              </p>
             </div>
 
             {/* Authentication Form (Username + Password) */}
@@ -336,28 +322,16 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-sm tracking-normal transition-all cursor-pointer flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
+                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-sm tracking-normal transition-all cursor-pointer flex items-center justify-center mt-4 active:scale-[0.99]"
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Open PDF Memorandum</span>
+                Sign In
               </button>
             </form>
-
-            {/* Security Assurance */}
-            <div className="mt-6 pt-5 border-t border-zinc-800/80 text-[11px] text-zinc-500 space-y-1 text-center">
-              <p className="flex items-center justify-center gap-1.5 text-zinc-400 font-medium">
-                <CheckCircle className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Protected Read-Only PDF Viewer</span>
-              </p>
-              <p>Strictly confidential. Downloading, printing, or redistribution is disabled.</p>
-            </div>
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="w-full max-w-4xl py-3 text-center text-xs text-zinc-600 relative z-10">
-          Yoouz Inc. • All Rights Reserved © 2026
-        </footer>
+        {/* Minimal Spacer */}
+        <div className="h-6" />
       </div>
     );
   }
@@ -370,15 +344,15 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       onContextMenu={(e) => e.preventDefault()}
       className="fixed inset-0 z-[9999] bg-[#18191d] text-white flex flex-col font-sans select-none overflow-hidden print:hidden"
     >
-      {/* Native PDF Reader Top Toolbar */}
+      {/* Clean Top Toolbar */}
       <header className="w-full h-13 bg-[#202227] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md">
-        {/* Left: Back, Sidebar Toggle, PDF Filename */}
+        {/* Left: Back, Sidebar Toggle, Clean Brand Name */}
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={onBackToApp || (() => window.location.href = "/")}
             className="w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
-            title="Return to Yoouz"
+            title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -396,20 +370,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <PanelLeft className="w-4 h-4" />
           </button>
 
-          <div className="h-4 w-px bg-zinc-700/80 mx-0.5 hidden xs:block shrink-0" />
-
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText className="w-4 h-4 text-zinc-400 shrink-0 hidden sm:block" />
-            <span className="text-xs sm:text-sm font-medium text-zinc-100 truncate">
-              Yoouz_Investor_Pitch_Memorandum.pdf
-            </span>
-            <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 shrink-0">
-              Read-Only
-            </span>
-          </div>
+          <span className="text-sm font-semibold text-zinc-100 ml-1 truncate">
+            Yoouz
+          </span>
         </div>
 
-        {/* Center: Native PDF Page Stepper & Zoom Controls */}
+        {/* Center: Page Stepper & Zoom Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Page Navigation */}
           <div className="flex items-center bg-[#141519] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
@@ -465,7 +431,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </div>
 
-        {/* Right: Fullscreen & Lock */}
+        {/* Right: Fullscreen & Sign Out */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -480,17 +446,16 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             type="button"
             onClick={handleSignOut}
             className="h-8 px-2.5 sm:px-3 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-300 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
-            title="Lock PDF"
+            title="Lock"
           >
             <Lock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Lock</span>
           </button>
         </div>
       </header>
 
-      {/* PDF Workspace Body (Optional Left Thumbnail Rail + Main Continuous PDF Page Scroll) */}
+      {/* PDF Workspace Body */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
-        {/* Left Collapsible PDF Page Thumbnails Sidebar */}
+        {/* Left Collapsible Page Thumbnails Sidebar */}
         {isSidebarOpen && (
           <aside className="w-60 sm:w-64 bg-[#1c1e24] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-2.5">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800">
@@ -538,7 +503,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </aside>
         )}
 
-        {/* Main Continuous PDF Scroll View (Acts & Looks Identical to a Native PDF Viewer) */}
+        {/* Main Continuous PDF Scroll View */}
         <div 
           ref={scrollContainerRef}
           className="flex-1 h-full overflow-y-auto overflow-x-auto bg-[#18191d] px-2 sm:px-6 md:px-10 py-4 sm:py-8 flex flex-col items-center gap-4 sm:gap-6"
@@ -567,7 +532,89 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                     className="w-full h-full object-contain block select-none pointer-events-none"
                   />
 
-                  {/* Transparent Read-Only Shield (Blocks Save Image As, Dragging, Touch-Hold) */}
+                  {/* Clean Mask Over Repetitive "CONFIDENTIAL" Running Header & Footer */}
+                  {pageNum === 1 ? (
+                    <>
+                      {/* Top-right badge mask on Page 1 */}
+                      <div
+                        className="absolute bg-white pointer-events-none select-none flex items-center justify-end"
+                        style={{
+                          top: "4.2%",
+                          right: "6.7%",
+                          width: "35%",
+                          height: "3.5%",
+                        }}
+                      >
+                        <div className="px-3 py-1 bg-[#162238] rounded-md text-[10px] font-semibold text-[#f59e0b] tracking-wider uppercase">
+                          SERIES SEED
+                        </div>
+                      </div>
+
+                      {/* Bottom highlight mask on Page 1 */}
+                      <div
+                        className="absolute bg-white pointer-events-none select-none flex items-center"
+                        style={{
+                          top: "77.5%",
+                          left: "6.7%",
+                          width: "80%",
+                          height: "2.8%",
+                        }}
+                      >
+                        <span className="text-[11px] font-bold text-[#162238]">
+                          INVESTOR HIGHLIGHT • EXECUTIVE MEMORANDUM
+                        </span>
+                      </div>
+
+                      {/* Bottom legal line mask on Page 1 */}
+                      <div
+                        className="absolute bg-white pointer-events-none select-none flex items-center"
+                        style={{
+                          top: "80.5%",
+                          left: "6.7%",
+                          width: "86%",
+                          height: "3.2%",
+                        }}
+                      >
+                        <span className="text-[10px] text-slate-500">
+                          Presented to Select Institutional Investors, Venture Partners, and Strategic Partners.
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Top-right running header mask on Pages 2-18 */}
+                      <div
+                        className="absolute bg-white pointer-events-none select-none flex items-center justify-end"
+                        style={{
+                          top: "4.2%",
+                          right: "6.7%",
+                          width: "44%",
+                          height: "2.6%",
+                        }}
+                      >
+                        <span className="text-[10px] font-medium tracking-wider text-slate-400 uppercase">
+                          YOOUZ
+                        </span>
+                      </div>
+
+                      {/* Bottom-left running footer mask on Pages 2-18 */}
+                      <div
+                        className="absolute bg-white pointer-events-none select-none flex items-center"
+                        style={{
+                          bottom: "3.2%",
+                          left: "6.7%",
+                          width: "52%",
+                          height: "2.8%",
+                        }}
+                      >
+                        <span className="text-[10px] font-normal text-slate-400">
+                          Yoouz Inc. • yoouz.com
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Transparent Protection Layer (Silently blocks Save Image As, Dragging, Touch-Hold) */}
                   <div 
                     className="absolute inset-0 z-20 bg-transparent cursor-default"
                     onContextMenu={(e) => e.preventDefault()}
@@ -577,21 +624,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
               </div>
             );
           })}
-
-          {/* Subtle End-of-Document Footer */}
-          <div className="w-full max-w-2xl py-6 text-center text-xs text-zinc-500 flex flex-col items-center gap-3">
-            <span>End of Document • 18 Pages</span>
-            <button
-              type="button"
-              onClick={() => scrollToPage(1)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#202227] hover:bg-zinc-800 border border-zinc-700/80 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <ChevronUp className="w-3.5 h-3.5" />
-              <span>Top of Document</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
