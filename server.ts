@@ -4516,22 +4516,34 @@ async function startServer() {
     next();
   });
 
-  // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers globally & protect direct downloads
+  // Dedicated route to stream the exact original Investor Pitch Memorandum PDF inline
+  app.get(["/api/pitch/raw-pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf"], (_req, res) => {
+    const candidates = [
+      path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
+      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Investor_Pitch_Memorandum__981d9343.pdf"),
+      path.join(process.cwd(), "dist", "Yoouz_Investor_Pitch_Memorandum.pdf"),
+      path.join(_dirname, "public", "Yoouz_Investor_Pitch_Memorandum.pdf")
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Investor_Pitch_Memorandum.pdf\"");
+        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        return res.sendFile(p);
+      }
+    }
+    return res.status(404).send("Original PDF file not found");
+  });
+
+  // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers globally
   app.use((req, res, next) => {
     const p = (req.path || "").toLowerCase();
-    // Block direct PDF downloads to ensure investors experience the deck interactively on yoouz.com
-    if (
-      p.endsWith(".pdf") && (p.includes("pitch") || p.includes("memorandum") || p.includes("deck") || p.includes("investor"))
-    ) {
-      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
-      return res.redirect(302, "/pitch");
-    }
     if (
       p === "/pitch" || p.startsWith("/pitch/") ||
       p === "/investors" || p.startsWith("/investors/") ||
       p === "/deck" || p.startsWith("/deck/") ||
-      p === "/memorandum" || p.startsWith("/memorandum/") ||
-      p.includes("yoouz_investor_pitch_memorandum")
+      p === "/memorandum" || p.startsWith("/memorandum/")
     ) {
       res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
       res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");

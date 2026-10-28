@@ -468,8 +468,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
         </div>
       </header>
 
-      {/* PDF Workspace Body */}
-      <div className="flex-1 flex min-h-0 overflow-hidden relative">
+      {/* PDF Workspace Body - Embeds Original Attached PDF Directly */}
+      <div className="flex-1 flex min-h-0 overflow-hidden relative bg-[#18191d]">
         {/* Left Collapsible Page Thumbnails Sidebar */}
         {isSidebarOpen && (
           <aside className="w-60 sm:w-64 bg-[#1c1e24] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-2.5">
@@ -513,40 +513,13 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </aside>
         )}
 
-        {/* Main Continuous PDF Scroll View */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex-1 h-full overflow-y-auto overflow-x-auto bg-[#18191d] px-2 sm:px-6 md:px-10 py-4 sm:py-8 flex flex-col items-center gap-4 sm:gap-6"
-        >
-          {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
-            const pageNum = idx + 1;
-
-            return (
-              <div
-                key={pageNum}
-                ref={(el) => { pageRefs.current[idx] = el; }}
-                data-page-num={pageNum}
-                className="w-full flex flex-col items-center shrink-0"
-                style={{
-                  maxWidth: `${Math.round(794 * (zoomLevel / 100))}px`,
-                }}
-              >
-                {/* Exact A4 PDF Page Sheet */}
-                <div 
-                  className="w-full aspect-[595/842] relative shadow-[0_10px_35px_rgba(0,0,0,0.65)] ring-1 ring-zinc-800 overflow-hidden"
-                >
-                  <InvestorPitchSlide pageNum={pageNum} />
-
-                  {/* Transparent Protection Layer (Silently blocks Save Image As, Dragging, Touch-Hold) */}
-                  <div 
-                    className="absolute inset-0 z-20 bg-transparent cursor-default"
-                    onContextMenu={(e) => e.preventDefault()}
-                    draggable={false}
-                  />
-                </div>
-              </div>
-            );
-          })}
+        {/* Main PDF Embed */}
+        <div className="flex-1 h-full w-full bg-[#18191d] relative">
+          <iframe
+            src="/api/pitch/raw-pdf#toolbar=0&navpanes=0&view=FitH"
+            className="w-full h-full border-0 bg-[#18191d]"
+            title="Yoouz Investor Pitch Memorandum PDF"
+          />
         </div>
       </div>
     </div>
