@@ -12,11 +12,15 @@ import {
   ArrowLeft,
   ChevronUp,
   ChevronDown,
-  PanelLeft
+  PanelLeft,
+  Loader2,
+  FileText
 } from "lucide-react";
-import { INVESTOR_PITCH_PAGES } from "../data/investorPitchPages";
-import { InvestorPitchSlide } from "./InvestorPitchSlides";
+import * as pdfjsLib from "pdfjs-dist";
 import { parseLocaleFromPath, buildLocalizedPath } from "../i18n/urlLocalization";
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.js`;
 
 interface YoouzInvestorPitchViewProps {
   onBackToApp?: () => void;
@@ -43,7 +47,6 @@ const SECTIONS = [
   { page: 18, title: "Execution Roadmap & Investment Opportunity" },
 ];
 
-const TOTAL_PAGES = INVESTOR_PITCH_PAGES.length || 18;
 const STORAGE_KEY = "yoouz_investor_auth_seed_2026";
 const AUTHORIZED_USERNAMES = [
   "investor",
@@ -64,6 +67,149 @@ const AUTHORIZED_PASSWORDS = [
   "yoouz"
 ];
 
+/**
+ * Individual Main Page Canvas Renderer
+ */
+const PdfPageCanvas: React.FC<{
+  pdfDoc: pdfjsLib.PDFDocumentProxy;
+  pageNum: number;
+  zoomLevel: number;
+  onPageRef?: (el: HTMLDivElement | null) => void;
+}> = ({ pdfDoc, pageNum, zoomLevel, onPageRef }) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderTaskRef = useRef<any>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const render = async () => {
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        if (isCancelled || !canvasRef.current) return;
+
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel();
+        }
+
+        const scale = (zoomLevel / 100) * 1.5;
+        const viewport = page.getViewport({ scale });
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+
+        if (!context) return;
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+          canvas: canvas,
+        };
+
+        const task = page.render(renderContext);
+        renderTaskRef.current = task;
+        await task.promise;
+      } catch (err: any) {
+        if (err?.name !== "RenderingCancelledException") {
+          console.error(`Error rendering PDF page ${pageNum}:`, err);
+        }
+      }
+    };
+
+    render();
+
+    return () => {
+      isCancelled = true;
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+      }
+    };
+  }, [pdfDoc, pageNum, zoomLevel]);
+
+  return (
+    <div
+      ref={onPageRef}
+      data-page-num={pageNum}
+      className="flex flex-col items-center my-4 transition-all duration-200"
+    >
+      <div className="bg-[#0e0f12] p-1 sm:p-2 rounded-xl shadow-2xl border border-zinc-800/80 max-w-full overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="block rounded shadow-lg max-w-full h-auto bg-white"
+        />
+      </div>
+      <span className="text-[11px] text-zinc-500 mt-2 font-medium">
+        Page {pageNum}
+      </span>
+    </div>
+  );
+};
+
+/**
+ * Individual Sidebar Thumbnail Canvas Renderer
+ */
+const PdfThumbnailCanvas: React.FC<{
+  pdfDoc: pdfjsLib.PDFDocumentProxy;
+  pageNum: number;
+}> = ({ pdfDoc, pageNum }) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderTaskRef = useRef<any>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const render = async () => {
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        if (isCancelled || !canvasRef.current) return;
+
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel();
+        }
+
+        const viewport = page.getViewport({ scale: 0.28 });
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+
+        if (!context) return;
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+          canvas: canvas,
+        };
+
+        const task = page.render(renderContext);
+        renderTaskRef.current = task;
+        await task.promise;
+      } catch (err: any) {
+        if (err?.name !== "RenderingCancelledException") {
+          // Ignore cancellation
+        }
+      }
+    };
+
+    render();
+
+    return () => {
+      isCancelled = true;
+      if (renderTaskRef.current) {
+        renderTaskRef.current.cancel();
+      }
+    };
+  }, [pdfDoc, pageNum]);
+
+  return (
+    <div className="w-full aspect-[595/842] rounded overflow-hidden shadow-md border border-zinc-700/80 bg-zinc-900 flex items-center justify-center pointer-events-none">
+      <canvas ref={canvasRef} className="max-w-full max-h-full object-contain" />
+    </div>
+  );
+};
+
 export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ onBackToApp }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
@@ -78,8 +224,14 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
+
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [numPages, setNumPages] = useState<number>(18);
+  const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(false);
+  const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
+
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -101,7 +253,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     const originalTitle = document.title;
     document.title = "Investor Memorandum | Yoouz";
 
-    // Set browser address bar URL path explicitly to /pitch
     try {
       const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname);
       if (pathWithoutLocale !== "/pitch") {
@@ -121,9 +272,40 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     };
   }, []);
 
-  // Track currently visible page during continuous vertical scroll
+  // Load original PDF file via PDF.js SDK when authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
+
+    let isMounted = true;
+    setIsLoadingPdf(true);
+    setPdfLoadError(null);
+
+    const loadingTask = pdfjsLib.getDocument({ url: "/api/pitch/raw-pdf" });
+
+    loadingTask.promise
+      .then((doc) => {
+        if (isMounted) {
+          setPdfDoc(doc);
+          setNumPages(doc.numPages || 18);
+          setIsLoadingPdf(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load pitch PDF document:", err);
+        if (isMounted) {
+          setPdfLoadError("Unable to render PDF document. Please try again.");
+          setIsLoadingPdf(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
+
+  // Track currently visible page during vertical scroll using IntersectionObserver
+  useEffect(() => {
+    if (!isAuthenticated || !pdfDoc) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -138,7 +320,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       },
       {
         root: scrollContainerRef.current,
-        threshold: 0.35,
+        threshold: 0.3,
       }
     );
 
@@ -147,9 +329,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     });
 
     return () => observer.disconnect();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, pdfDoc, numPages]);
 
-  // Document security: Silently block Print, Save, View-Source keyboard shortcuts
+  // Document security keyboard overrides
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       if (
@@ -210,7 +392,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   };
 
   const scrollToPage = (pageNum: number) => {
-    const clamped = Math.max(1, Math.min(TOTAL_PAGES, pageNum));
+    const clamped = Math.max(1, Math.min(numPages, pageNum));
     const targetEl = pageRefs.current[clamped - 1];
     if (targetEl && scrollContainerRef.current) {
       targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -229,7 +411,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   };
 
   // -------------------------------------------------------------
-  // 1. MINIMAL LOGIN SCREEN (Clean dark mode, zero clutter)
+  // 1. MINIMAL LOGIN SCREEN
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
@@ -237,7 +419,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
         onContextMenu={(e) => e.preventDefault()}
         className="fixed inset-0 z-[9999] bg-[#07080b] text-white flex flex-col justify-between items-center p-4 sm:p-6 overflow-y-auto select-none font-sans"
       >
-        {/* Top Header Bar */}
         <header className="w-full max-w-4xl flex items-center justify-between py-3 relative z-10">
           <button
             type="button"
@@ -249,15 +430,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </button>
         </header>
 
-        {/* Center Sign-In Card */}
         <main className="w-full max-w-sm my-auto relative z-10 py-6">
           <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            {/* Brand Logo & Title Header */}
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg mb-3.5">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
-                  <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-                </svg>
+                <FileText className="w-6 h-6 text-white" />
               </div>
               <h1 className="text-xl font-bold tracking-tight text-white mb-1">
                 Investor Memorandum
@@ -267,7 +444,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
               </p>
             </div>
 
-            {/* Authentication Form (Username + Password) */}
             <form onSubmit={handleAuthSubmit} className="space-y-4">
               <div className={`space-y-3.5 transition-transform duration-100 ${isShaking ? "animate-shake" : ""}`}>
                 <div>
@@ -343,23 +519,22 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </main>
 
-        {/* Minimal Spacer Footer */}
         <div className="w-full py-3 relative z-10" />
       </div>
     );
   }
 
   // -------------------------------------------------------------
-  // 2. NATIVE PDF READER EXPERIENCE (Instant 0ms Embedded Pages)
+  // 2. HIGH-PERFORMANCE PDF READER WITH CANVAS RENDERING
   // -------------------------------------------------------------
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
-      className="fixed inset-0 z-[9999] bg-[#18191d] text-white flex flex-col font-sans select-none overflow-hidden print:hidden"
+      className="fixed inset-0 z-[9999] bg-[#121316] text-white flex flex-col font-sans select-none overflow-hidden print:hidden"
     >
-      {/* Clean Top Toolbar */}
-      <header className="w-full h-13 bg-[#202227] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md">
-        {/* Left: Back, Sidebar Toggle, Clean Brand Name */}
+      {/* Header Bar */}
+      <header className="w-full h-13 bg-[#1c1e22] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md">
+        {/* Left: Back, Sidebar Toggle, Clean Title */}
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -390,10 +565,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </div>
 
-        {/* Center: Page Stepper & Zoom Controls */}
+        {/* Center: Page Stepper & Dynamic Zoom Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Page Navigation */}
-          <div className="flex items-center bg-[#141519] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
+          <div className="flex items-center bg-[#121316] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
               onClick={() => scrollToPage(currentPage - 1)}
@@ -404,12 +579,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
               <ChevronUp className="w-3.5 h-3.5" />
             </button>
             <span className="text-xs font-medium text-zinc-200 px-1.5 tabular-nums whitespace-nowrap">
-              {currentPage} <span className="text-zinc-500">/</span> {TOTAL_PAGES}
+              {currentPage} <span className="text-zinc-500">/</span> {numPages}
             </span>
             <button
               type="button"
               onClick={() => scrollToPage(currentPage + 1)}
-              disabled={currentPage >= TOTAL_PAGES}
+              disabled={currentPage >= numPages}
               className="p-1 text-zinc-400 hover:text-white disabled:opacity-30 transition-colors cursor-pointer"
               title="Next Page"
             >
@@ -417,11 +592,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             </button>
           </div>
 
-          {/* Zoom Controls */}
-          <div className="hidden md:flex items-center bg-[#141519] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
+          {/* Dynamic Zoom Controls */}
+          <div className="hidden md:flex items-center bg-[#121316] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
-              onClick={() => setZoomLevel((z) => Math.max(60, z - 15))}
+              onClick={() => setZoomLevel((z) => Math.max(50, z - 15))}
               className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Zoom Out"
             >
@@ -430,14 +605,14 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             <button
               type="button"
               onClick={() => setZoomLevel(100)}
-              className="text-xs font-medium text-zinc-300 hover:text-white min-w-[42px] text-center tabular-nums cursor-pointer"
+              className="text-xs font-medium text-zinc-300 hover:text-white min-w-[44px] text-center tabular-nums cursor-pointer hover:bg-zinc-800 rounded py-0.5"
               title="Reset Zoom to 100%"
             >
               {zoomLevel}%
             </button>
             <button
               type="button"
-              onClick={() => setZoomLevel((z) => Math.min(160, z + 15))}
+              onClick={() => setZoomLevel((z) => Math.min(200, z + 15))}
               className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
               title="Zoom In"
             >
@@ -446,7 +621,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </div>
 
-        {/* Right: Fullscreen & Sign Out */}
+        {/* Right: Fullscreen & Lock */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
@@ -461,22 +636,23 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             type="button"
             onClick={handleSignOut}
             className="h-8 px-2.5 sm:px-3 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-300 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
-            title="Lock"
+            title="Lock Viewer"
           >
             <Lock className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
 
-      {/* PDF Workspace Body - Embeds Original Attached PDF Directly */}
-      <div className="flex-1 flex min-h-0 overflow-hidden relative bg-[#18191d]">
-        {/* Left Collapsible Page Thumbnails Sidebar */}
-        {isSidebarOpen && (
-          <aside className="w-60 sm:w-64 bg-[#1c1e24] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-2.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800">
-              Pages ({TOTAL_PAGES})
+      {/* Main Container */}
+      <div className="flex-1 flex min-h-0 overflow-hidden relative bg-[#121316]">
+        {/* Left Page Thumbnails Sidebar */}
+        {isSidebarOpen && pdfDoc && (
+          <aside className="w-56 sm:w-64 bg-[#181a1f] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800/80 flex items-center justify-between">
+              <span>Pages</span>
+              <span className="text-zinc-500 font-normal">{numPages}</span>
             </div>
-            {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
+            {Array.from({ length: numPages }).map((_, idx) => {
               const pageNum = idx + 1;
               const isActive = currentPage === pageNum;
               const sec = SECTIONS[idx];
@@ -488,21 +664,19 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                     scrollToPage(pageNum);
                     if (window.innerWidth < 640) setIsSidebarOpen(false);
                   }}
-                  className={`w-full p-2 rounded-lg flex flex-col items-center gap-1.5 text-left transition-all cursor-pointer ${
+                  className={`w-full p-2 rounded-xl flex flex-col items-center gap-2 text-left transition-all cursor-pointer group ${
                     isActive
-                      ? "bg-zinc-800 ring-1 ring-white/40"
+                      ? "bg-zinc-800 ring-2 ring-white/60 shadow-lg"
                       : "hover:bg-zinc-800/50"
                   }`}
                 >
-                  <div className="w-32 aspect-[595/842] rounded overflow-hidden shadow-md border border-zinc-700 relative scale-[0.98] pointer-events-none">
-                    <InvestorPitchSlide pageNum={pageNum} />
-                  </div>
+                  <PdfThumbnailCanvas pdfDoc={pdfDoc} pageNum={pageNum} />
                   <div className="w-full text-center px-1">
-                    <span className={`text-[11px] font-semibold ${isActive ? "text-white" : "text-zinc-400"}`}>
+                    <span className={`text-[11px] font-semibold ${isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"}`}>
                       Page {pageNum}
                     </span>
                     {sec && (
-                      <p className="text-[10px] text-zinc-500 truncate mt-0.5">
+                      <p className="text-[10px] text-zinc-500 truncate mt-0.5 leading-tight">
                         {sec.title}
                       </p>
                     )}
@@ -513,16 +687,54 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </aside>
         )}
 
-        {/* Main PDF Embed */}
-        <div className="flex-1 h-full w-full bg-[#18191d] relative">
-          <iframe
-            src="/api/pitch/raw-pdf#toolbar=0&navpanes=0&view=FitH"
-            className="w-full h-full border-0 bg-[#18191d]"
-            title="Yoouz Investor Pitch Memorandum PDF"
-          />
+        {/* Scrollable Canvas Document View */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 h-full overflow-y-auto p-4 sm:p-6 flex flex-col items-center custom-scrollbar bg-[#121316]"
+        >
+          {isLoadingPdf && (
+            <div className="flex flex-col items-center justify-center py-24 gap-3 text-zinc-400">
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
+              <span className="text-sm font-medium">Loading Investor Memorandum...</span>
+            </div>
+          )}
+
+          {pdfLoadError && (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                <FileText className="w-6 h-6" />
+              </div>
+              <p className="text-sm text-zinc-300 font-medium">{pdfLoadError}</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-white transition-colors"
+              >
+                Reload Document
+              </button>
+            </div>
+          )}
+
+          {!isLoadingPdf && !pdfLoadError && pdfDoc && (
+            <div className="w-full flex flex-col items-center">
+              {Array.from({ length: numPages }).map((_, idx) => {
+                const pageNum = idx + 1;
+                return (
+                  <PdfPageCanvas
+                    key={pageNum}
+                    pdfDoc={pdfDoc}
+                    pageNum={pageNum}
+                    zoomLevel={zoomLevel}
+                    onPageRef={(el) => (pageRefs.current[idx] = el)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
+
 
