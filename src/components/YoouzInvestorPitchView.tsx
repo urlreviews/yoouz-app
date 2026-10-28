@@ -19,8 +19,8 @@ import {
 import * as pdfjsLib from "pdfjs-dist";
 import { parseLocaleFromPath, buildLocalizedPath } from "../i18n/urlLocalization";
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || "3.11.174"}/pdf.worker.min.js`;
+// Configure PDF.js worker locally from server route with CDN fallback
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 interface YoouzInvestorPitchViewProps {
   onBackToApp?: () => void;
@@ -280,23 +280,53 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     setIsLoadingPdf(true);
     setPdfLoadError(null);
 
-    const loadingTask = pdfjsLib.getDocument({ url: "/api/pitch/raw-pdf" });
+    const loadPdf = async () => {
+      try {
+        const response = await fetch("/api/pitch/raw-pdf");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch pitch PDF: ${response.status}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          throw new Error("Pitch PDF buffer is empty");
+        }
 
-    loadingTask.promise
-      .then((doc) => {
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(arrayBuffer),
+          cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version || "6.4.299"}/cmaps/`,
+          cMapPacked: true,
+        });
+
+        const doc = await loadingTask.promise;
         if (isMounted) {
           setPdfDoc(doc);
           setNumPages(doc.numPages || 18);
           setIsLoadingPdf(false);
         }
-      })
-      .catch((err) => {
-        console.error("Failed to load pitch PDF document:", err);
+      } catch (err: any) {
+        console.error("Failed to load pitch PDF document via ArrayBuffer:", err);
+        // Resilient fallback attempt with URL directly
+        try {
+          const fallbackTask = pdfjsLib.getDocument({ url: "/api/pitch/raw-pdf" });
+          const doc = await fallbackTask.promise;
+          if (isMounted) {
+            setPdfDoc(doc);
+            setNumPages(doc.numPages || 18);
+            setIsLoadingPdf(false);
+            return;
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback PDF URL load failed:", fallbackErr);
+        }
+
         if (isMounted) {
           setPdfLoadError("Unable to render PDF document. Please try again.");
           setIsLoadingPdf(false);
         }
-      });
+      }
+    };
+
+    loadPdf();
 
     return () => {
       isMounted = false;

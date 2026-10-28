@@ -4536,6 +4536,17 @@ async function startServer() {
     return res.status(404).send("Original PDF file not found");
   });
 
+  // Serve PDF.js worker locally to guarantee 100% version matching and offline reliability
+  app.get(["/pdf.worker.min.mjs", "/assets/pdf.worker.min.mjs"], (_req, res) => {
+    const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "build", "pdf.worker.min.mjs");
+    if (fs.existsSync(workerPath)) {
+      res.setHeader("Content-Type", "application/javascript");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.sendFile(workerPath);
+    }
+    return res.status(404).send("Worker not found");
+  });
+
   // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers globally
   app.use((req, res, next) => {
     const p = (req.path || "").toLowerCase();
