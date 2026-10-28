@@ -4540,6 +4540,27 @@ async function startServer() {
     next();
   });
 
+  // Dedicated endpoint to reliably serve pitch memorandum page images with instant fallback
+  app.get(["/assets/pitch_pages/:file", "/pitch_pages/:file"], (req, res) => {
+    const filename = path.basename(req.params.file || "");
+    const candidates = [
+      path.join(process.cwd(), "public", "assets", "pitch_pages", filename),
+      path.join(process.cwd(), "dist", "assets", "pitch_pages", filename),
+      path.join(_dirname, "public", "assets", "pitch_pages", filename),
+      path.join(_dirname, "dist", "assets", "pitch_pages", filename)
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+        return res.sendFile(p);
+      }
+    }
+    return res.status(404).send("Page image not found");
+  });
+
+
   app.post('/api/upgrade-request', express.json(), async (req, res) => {
     const { businessName, ownerEmail, placeId, timestamp } = req.body;
     if (!businessName || !ownerEmail) {

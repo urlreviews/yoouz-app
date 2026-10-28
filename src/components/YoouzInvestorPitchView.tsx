@@ -5,9 +5,6 @@ import {
   User,
   Eye, 
   EyeOff, 
-  Mail,
-  ChevronLeft, 
-  ChevronRight, 
   List, 
   X, 
   CheckCircle, 
@@ -17,8 +14,7 @@ import {
   Maximize2, 
   Minimize2, 
   ArrowLeft,
-  Sparkles,
-  FileText
+  ChevronUp
 } from "lucide-react";
 
 interface YoouzInvestorPitchViewProps {
@@ -85,7 +81,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const [isTocOpen, setIsTocOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+  const [loadedPages, setLoadedPages] = useState<Record<number, boolean>>({});
+
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -133,7 +130,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       },
       {
         root: scrollContainerRef.current,
-        threshold: 0.35,
+        threshold: 0.25,
       }
     );
 
@@ -144,22 +141,37 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     return () => observer.disconnect();
   }, [isAuthenticated]);
 
+  // Document security: Block Print, Save, Copy keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKeys = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) && 
+        (e.key === "s" || e.key === "S" || e.key === "p" || e.key === "P" || e.key === "u" || e.key === "U")
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeys);
+    return () => window.removeEventListener("keydown", handleGlobalKeys);
+  }, []);
+
   const handleAuthSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const userNorm = usernameInput.trim().toLowerCase();
     const passNorm = passwordInput.trim().toLowerCase();
     
     if (!userNorm) {
-      setAuthError("Please enter your authorized investor username.");
+      setAuthError("Please enter your authorized username.");
       setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 600);
+      setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
     if (!passNorm) {
-      setAuthError("Please enter your confidential access password.");
+      setAuthError("Please enter your access password.");
       setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 600);
+      setTimeout(() => setIsShaking(false), 500);
       return;
     }
 
@@ -173,9 +185,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       setIsAuthenticated(true);
       setAuthError("");
     } else {
-      setAuthError("Invalid username or password. Please verify credentials or contact investor-relations@yoouz.com.");
+      setAuthError("Invalid credentials. Access is restricted to authorized partners.");
       setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 600);
+      setTimeout(() => setIsShaking(false), 500);
     }
   };
 
@@ -198,18 +210,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     }
   };
 
-  const handleNextPage = () => {
-    if (currentPage < TOTAL_PAGES) {
-      scrollToPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      scrollToPage(currentPage - 1);
-    }
-  };
-
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -220,85 +220,63 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     }
   };
 
-  // Keyboard navigation
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === "PageDown") {
-        if (currentPage < TOTAL_PAGES) scrollToPage(currentPage + 1);
-      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
-        if (currentPage > 1) scrollToPage(currentPage - 1);
-      } else if (e.key === "Escape") {
-        setIsTocOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isAuthenticated, currentPage]);
-
   // -------------------------------------------------------------
-  // PASSWORD GATE SCREEN (If not unlocked)
+  // 1. PASSWORD GATE SCREEN (Clean, pure dark mode, no gold/yellow)
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#05070B] text-white flex flex-col justify-between items-center p-4 sm:p-6 overflow-y-auto select-none font-sans">
-        {/* Subtle Ambient Radial Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-blue-500/10 via-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none -z-0" />
-
+      <div 
+        onContextMenu={(e) => e.preventDefault()}
+        className="fixed inset-0 z-[9999] bg-[#07080b] text-white flex flex-col justify-between items-center p-4 sm:p-6 overflow-y-auto select-none font-sans"
+      >
         {/* Top Header Bar */}
-        <header className="w-full max-w-5xl flex items-center justify-between py-3 relative z-10">
+        <header className="w-full max-w-4xl flex items-center justify-between py-3 relative z-10">
           <button
             type="button"
             onClick={onBackToApp || (() => window.location.href = "/")}
-            className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer group"
+            className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>Return to Yoouz</span>
           </button>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/90 border border-amber-500/30 text-amber-300 text-[11px] font-bold tracking-wider uppercase shadow-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            Confidential • Series Seed
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+            Confidential Document
           </div>
         </header>
 
         {/* Center Access Card */}
         <main className="w-full max-w-md my-auto relative z-10 py-6">
-          <div className="bg-zinc-900/80 backdrop-blur-2xl border border-zinc-800/90 rounded-3xl p-6 sm:p-8 shadow-[0_30px_90px_rgba(0,0,0,0.8)] relative overflow-hidden">
-            {/* Top Amber Accent Line */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-amber-400 to-amber-500" />
-
+          <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
             {/* Brand Logo & Lock Icon */}
             <div className="flex flex-col items-center text-center mb-6">
               <div className="relative mb-4">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-white shadow-xl relative">
+                <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg">
                   <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white">
                     <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
                   </svg>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300">
-                    <Lock className="w-3.5 h-3.5" />
-                  </div>
                 </div>
               </div>
 
-              <h1 className="text-2xl sm:text-[26px] font-black tracking-tight text-white leading-tight">
-                Yoouz Investor Memorandum
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">
+                Investor Memorandum
               </h1>
               <p className="text-zinc-400 text-xs sm:text-sm mt-2 leading-relaxed">
-                Enter your authorized investor username and password to access the complete 18-page Series Seed institutional memorandum.
+                Enter your authorized credentials to view the 18-page Series Seed institutional memorandum.
               </p>
             </div>
 
             {/* Authentication Form (Username + Password) */}
-            <form onSubmit={handleAuthSubmit} className="space-y-3.5">
-              <div className={`space-y-3 transition-transform duration-100 ${isShaking ? "animate-shake" : ""}`}>
-                {/* Username Input */}
+            <form onSubmit={handleAuthSubmit} className="space-y-4">
+              <div className={`space-y-3.5 transition-transform duration-100 ${isShaking ? "animate-shake" : ""}`}>
+                {/* Username Input - Clean, NO hints or examples */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
-                    Authorized Username
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                    Username
                   </label>
-                  <div className="relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-amber-400/60 focus-within:ring-4 focus-within:ring-amber-500/10 rounded-2xl px-4 py-3 transition-all">
-                    <User className="w-4 h-4 text-zinc-500 shrink-0 mr-3 pointer-events-none" />
+                  <div className="relative flex items-center bg-zinc-900/90 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600 rounded-xl px-3.5 py-2.5 transition-all">
+                    <User className="w-4 h-4 text-zinc-500 shrink-0 mr-2.5 pointer-events-none" />
                     <input
                       type="text"
                       autoFocus
@@ -311,19 +289,19 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                         setUsernameInput(e.target.value);
                         if (authError) setAuthError("");
                       }}
-                      placeholder="e.g. investor"
-                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none font-medium"
+                      placeholder="Username"
+                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                {/* Password Input */}
+                {/* Password Input - Clean, NO hints or examples */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider">
-                    Confidential Access Key
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                    Password
                   </label>
-                  <div className="relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-amber-400/60 focus-within:ring-4 focus-within:ring-amber-500/10 rounded-2xl px-4 py-3 transition-all">
-                    <Key className="w-4 h-4 text-zinc-500 shrink-0 mr-3 pointer-events-none" />
+                  <div className="relative flex items-center bg-zinc-900/90 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600 rounded-xl px-3.5 py-2.5 transition-all">
+                    <Key className="w-4 h-4 text-zinc-500 shrink-0 mr-2.5 pointer-events-none" />
                     <input
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
@@ -335,13 +313,13 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                         setPasswordInput(e.target.value);
                         if (authError) setAuthError("");
                       }}
-                      placeholder="e.g. Yoouz2026"
-                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none font-medium tracking-wide"
+                      placeholder="Password"
+                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none tracking-normal"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-zinc-500 hover:text-white transition-colors p-1 cursor-pointer shrink-0 ml-1"
+                      className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer shrink-0 ml-1"
                       title={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -350,66 +328,70 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                 </div>
 
                 {authError && (
-                  <p className="text-red-400 text-xs mt-2 font-medium flex items-center gap-1.5 animate-in fade-in duration-200">
+                  <p className="text-red-400 text-xs mt-1.5 font-medium flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                     {authError}
                   </p>
                 )}
               </div>
 
+              {/* Monochrome Pure-White/Black Premium Button (Zero Gold) */}
               <button
                 type="submit"
-                className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-bold text-sm tracking-wide shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-sm tracking-normal transition-all cursor-pointer flex items-center justify-center gap-2 mt-4 active:scale-[0.99]"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>Unlock Confidential Memorandum</span>
+                <span>View Memorandum</span>
               </button>
             </form>
 
-            {/* Security Assurance Notes */}
-            <div className="mt-6 pt-5 border-t border-zinc-800/80 text-[11px] text-zinc-500 space-y-1.5 text-center">
+            {/* Security Assurance */}
+            <div className="mt-6 pt-5 border-t border-zinc-800/80 text-[11px] text-zinc-500 space-y-1 text-center">
               <p className="flex items-center justify-center gap-1.5 text-zinc-400 font-medium">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                <span>256-Bit Encrypted Institutional Presentation</span>
+                <CheckCircle className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Confidential Institutional Presentation</span>
               </p>
-              <p>Strictly confidential. Unauthorized reproduction or sharing is prohibited.</p>
+              <p>Strictly confidential. Unauthorized copying or redistribution is prohibited.</p>
             </div>
           </div>
         </main>
 
-        {/* Footer Disclaimer */}
-        <footer className="w-full max-w-5xl py-3 text-center text-[11px] text-zinc-600 relative z-10">
-          Yoouz Inc. • Executive Office & Investor Relations • All Rights Reserved © 2026
+        {/* Footer */}
+        <footer className="w-full max-w-4xl py-3 text-center text-xs text-zinc-600 relative z-10">
+          Yoouz Inc. • All Rights Reserved © 2026
         </footer>
       </div>
     );
   }
 
   // -------------------------------------------------------------
-  // FULL ULTRA-PREMIUM PRESENTATION VIEWER (When unlocked)
+  // 2. CONTINUOUS VERTICAL SCROLL VIEWER (Pure Dark Mode, High-End)
   // -------------------------------------------------------------
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#07090E] text-white flex flex-col font-sans select-none overflow-hidden">
-      {/* 1. Master Institutional Navigation Header Bar */}
-      <header className="w-full bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/80 px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 z-40 select-none shadow-xl">
-        {/* Left: Brand, Title & Badge */}
+    <div 
+      onContextMenu={(e) => e.preventDefault()}
+      className="fixed inset-0 z-[9999] bg-[#07080b] text-white flex flex-col font-sans select-none overflow-hidden"
+    >
+      {/* Institutional Top Navigation Bar */}
+      <header className="w-full bg-zinc-950 border-b border-zinc-800/90 px-3 sm:px-6 py-2.5 flex items-center justify-between shrink-0 z-40 select-none">
+        {/* Left: Brand & Title */}
         <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
           <button
             type="button"
             onClick={onBackToApp || (() => window.location.href = "/")}
-            className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
-            title="Return to Yoouz Home"
+            className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+            title="Return to Yoouz"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-xs">
+            <div className="w-6 h-6 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white">
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white">
                 <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
               </svg>
             </div>
-            <span className="font-black text-sm sm:text-base tracking-tight font-['Google_Sans',sans-serif] hidden xs:inline">
+            <span className="font-bold text-sm tracking-tight hidden xs:inline">
               Yoouz
             </span>
           </div>
@@ -417,62 +399,35 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           <div className="h-4 w-px bg-zinc-800 hidden sm:block shrink-0" />
 
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
-                Series Seed Pitch Memorandum
-              </h2>
-              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-bold tracking-wider uppercase shrink-0">
-                Confidential
-              </span>
-            </div>
+            <h2 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">
+              Series Seed Investor Memorandum
+            </h2>
             <p className="text-[11px] text-zinc-400 truncate hidden md:block leading-none mt-0.5">
-              {SECTIONS[currentPage - 1]?.title || "18-Section Comprehensive Breakdown"}
+              {SECTIONS[currentPage - 1]?.title || "18-Section Presentation"}
             </p>
           </div>
         </div>
 
-        {/* Center: Desktop Page Stepper */}
-        <div className="hidden sm:flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 rounded-full px-3 py-1 shadow-inner">
-          <button
-            type="button"
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-            title="Previous page (Up arrow)"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          
-          <span className="text-xs font-bold text-zinc-200 tracking-wider min-w-[70px] text-center">
-            {currentPage} <span className="text-zinc-500">/</span> {TOTAL_PAGES}
-          </span>
-
-          <button
-            type="button"
-            onClick={handleNextPage}
-            disabled={currentPage >= TOTAL_PAGES}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
-            title="Next page (Down arrow)"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        {/* Center: Live Page Position Pill */}
+        <div className="flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 px-3 py-1 rounded-full text-xs font-medium text-zinc-300">
+          <span>Page {currentPage} of {TOTAL_PAGES}</span>
         </div>
 
-        {/* Right: Actions (TOC, Zoom, Download, Lock) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Table of Contents Drawer Toggle */}
+        {/* Right: Actions (Sections Drawer, Zoom, Lock) */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Table of Contents Button */}
           <button
             type="button"
             onClick={() => setIsTocOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-200 hover:text-white transition-all cursor-pointer shadow-xs"
-            title="View Table of Contents"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            title="Jump to Section"
           >
-            <List className="w-3.5 h-3.5 text-amber-400" />
+            <List className="w-3.5 h-3.5" />
             <span className="hidden xs:inline">Sections</span>
           </button>
 
-          {/* Zoom controls (desktop only) */}
-          <div className="hidden lg:flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-full px-2 py-1">
+          {/* Zoom Controls (Desktop only) */}
+          <div className="hidden lg:flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1">
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.max(75, z - 15))}
@@ -481,7 +436,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-bold text-zinc-400 min-w-[36px] text-center">{zoomLevel}%</span>
+            <span className="text-[11px] font-medium text-zinc-400 min-w-[34px] text-center">{zoomLevel}%</span>
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.min(140, z + 15))}
@@ -492,93 +447,115 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             </button>
           </div>
 
-          {/* Schedule Partner Call CTA (Keeps investors engaged directly on yoouz.com) */}
-          <a
-            href="mailto:investor-relations@yoouz.com?subject=Yoouz%20Series%20Seed%20Inquiry%20-%20Partner%20Call"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
-            title="Schedule Founder Call / Investor Relations"
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Contact IR / Schedule Call</span>
-          </a>
-
           {/* Fullscreen Button */}
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="hidden sm:flex w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="hidden sm:flex w-8 h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
 
-          {/* Lock / Sign Out */}
+          {/* Lock / Exit Session */}
           <button
             type="button"
             onClick={handleSignOut}
-            className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors text-xs font-semibold cursor-pointer flex items-center gap-1"
+            className="w-8 h-8 sm:w-auto sm:px-3 sm:py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
             title="Lock document"
           >
             <Lock className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Lock</span>
+            <span className="hidden sm:inline">Lock</span>
           </button>
         </div>
       </header>
 
-      {/* 2. Main Continuous Scroll Canvas */}
+      {/* Main Continuous Vertical Scroll Canvas */}
       <div 
         ref={scrollContainerRef}
-        className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-6 md:p-8 flex flex-col items-center gap-6 sm:gap-10 scroll-smooth relative"
-        style={{ scrollBehavior: "smooth" }}
+        className="flex-1 w-full overflow-y-auto overflow-x-hidden p-2 sm:p-6 md:p-8 flex flex-col items-center gap-6 sm:gap-8 scroll-smooth"
       >
-        {/* Subtle Watermark Banner at Top */}
-        <div className="w-full max-w-4xl flex items-center justify-between text-[11px] text-zinc-500 px-2 select-none">
-          <span className="tracking-wider uppercase font-semibold text-zinc-400">
-            Strictly Confidential • For Authorized Institutional Investors Only
+        {/* Confidential Document Notice */}
+        <div className="w-full max-w-4xl flex items-center justify-between text-xs text-zinc-500 px-2">
+          <span className="font-medium tracking-wide text-zinc-400">
+            Confidential Series Seed Investment Memorandum • View Only
           </span>
-          <span className="hidden sm:inline">Yoouz Inc. • Series Seed</span>
+          <span className="hidden sm:inline text-zinc-500">18 Pages</span>
         </div>
 
-        {/* 18 High-Resolution Pages Stream */}
+        {/* All 18 Pages - Seamless Continuous Vertical Scroll */}
         {Array.from({ length: TOTAL_PAGES }).map((_, idx) => {
           const pageNum = idx + 1;
           const pageStr = String(pageNum).padStart(2, "0");
           const pageInfo = SECTIONS[idx];
+          const isLoaded = loadedPages[pageNum];
 
           return (
             <div
               key={pageNum}
               ref={(el) => { pageRefs.current[idx] = el; }}
               data-page-num={pageNum}
-              className="w-full flex flex-col items-center transition-transform duration-200"
+              className="w-full flex flex-col items-center"
               style={{
-                maxWidth: `${Math.round(896 * (zoomLevel / 100))}px`,
+                maxWidth: `${Math.round(880 * (zoomLevel / 100))}px`,
               }}
             >
-              {/* Page Wrapper with luxury drop shadow and border */}
-              <div className="w-full relative rounded-xl sm:rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800/90 shadow-[0_20px_60px_rgba(0,0,0,0.85)] group">
-                {/* Page Image with view-only protection */}
+              {/* Page Container with crisp border and view-only protection shield */}
+              <div 
+                className="w-full relative rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800/80 shadow-2xl"
+                style={{ minHeight: isLoaded ? "auto" : "500px" }}
+              >
+                {/* Skeleton shimmer before image loads */}
+                {!isLoaded && (
+                  <div className="w-full aspect-[1/1.414] bg-zinc-900/60 animate-pulse flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-600">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs text-zinc-600 font-medium">Loading Page {pageNum}...</span>
+                  </div>
+                )}
+
+                {/* Page Image */}
                 <img
                   src={`/assets/pitch_pages/page_${pageStr}.png`}
-                  alt={`Yoouz Pitch Deck - Page ${pageNum}: ${pageInfo?.title || ""}`}
+                  alt={`Memorandum Page ${pageNum}`}
                   loading={pageNum <= 3 ? "eager" : "lazy"}
                   draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className="w-full h-auto object-contain block pointer-events-auto select-none"
+                  onLoad={() => {
+                    setLoadedPages((prev) => ({ ...prev, [pageNum]: true }));
+                  }}
+                  onError={(e) => {
+                    // Fallback to secondary route if primary path encounters network quirk
+                    const target = e.currentTarget;
+                    if (!target.dataset.triedFallback) {
+                      target.dataset.triedFallback = "true";
+                      target.src = `/pitch_pages/page_${pageStr}.png`;
+                    }
+                  }}
+                  className={`w-full h-auto object-contain block transition-opacity duration-300 ${
+                    isLoaded ? "opacity-100" : "opacity-0 absolute inset-0"
+                  }`}
                 />
 
-                {/* Micro Watermark Strip on every page */}
-                <div className="absolute bottom-2 right-3 px-2.5 py-1 rounded-md bg-black/75 backdrop-blur-md border border-white/5 text-[9px] font-semibold text-zinc-300 tracking-wider pointer-events-none select-none">
-                  Page {pageNum} of {TOTAL_PAGES} • Protected Institutional View
+                {/* View-Only Protection Overlay: Completely intercepts right click, drag, and touch hold */}
+                <div 
+                  className="absolute inset-0 z-20 bg-transparent cursor-default pointer-events-auto"
+                  onContextMenu={(e) => e.preventDefault()}
+                  draggable={false}
+                />
+
+                {/* Subtle corner watermark tag */}
+                <div className="absolute bottom-2.5 right-3 z-30 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm border border-zinc-800 text-[10px] font-medium text-zinc-400 pointer-events-none">
+                  Page {pageNum} of {TOTAL_PAGES}
                 </div>
               </div>
 
-              {/* Page Footer Label */}
-              <div className="w-full flex items-center justify-between px-2 pt-2 text-[11px] text-zinc-500 font-medium select-none">
+              {/* Page Caption */}
+              <div className="w-full flex items-center justify-between px-2 pt-2 text-[11px] text-zinc-500 font-medium">
                 <span className="truncate max-w-[80%] text-zinc-400">
                   {pageNum}. {pageInfo?.title}
                 </span>
-                <span className="shrink-0 text-zinc-500">
+                <span className="shrink-0 text-zinc-600">
                   {pageNum} / {TOTAL_PAGES}
                 </span>
               </div>
@@ -586,92 +563,51 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           );
         })}
 
-        {/* Bottom Concluding Disclaimer */}
-        <div className="w-full max-w-4xl mt-6 pb-20 text-center border-t border-zinc-800/80 pt-8 text-xs text-zinc-500 space-y-2 select-none">
-          <p className="font-bold text-zinc-400 text-sm">
-            Yoouz Inc. • Confidential Series Seed Investment Memorandum
+        {/* End of Memorandum Footer */}
+        <div className="w-full max-w-4xl mt-8 pb-16 text-center border-t border-zinc-800/80 pt-8 text-xs text-zinc-500 space-y-3">
+          <p className="font-semibold text-zinc-300 text-sm">
+            Yoouz Inc. • Series Seed Investment Memorandum
           </p>
-          <p className="max-w-xl mx-auto leading-relaxed">
-            Presented strictly for confidential evaluation by approved institutional investors, venture partners, and strategic acquirers.
-            Inquiries: <span className="text-zinc-300 font-medium">investor-relations@yoouz.com</span>
+          <p className="max-w-md mx-auto text-zinc-500 text-xs">
+            For approved institutional partners and authorized venture investors only.
           </p>
-          <div className="pt-4 flex items-center justify-center gap-3">
+          <div className="pt-2">
             <button
               type="button"
               onClick={() => scrollToPage(1)}
-              className="px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
             >
-              Back to Top
+              <ChevronUp className="w-4 h-4" />
+              <span>Back to Top</span>
             </button>
-            <a
-              href="mailto:investor-relations@yoouz.com?subject=Meeting%20Request%20-%20Yoouz%20Series%20Seed"
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-xs font-bold text-zinc-950 transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-md shadow-amber-500/20"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              Schedule Founder Briefing
-            </a>
           </div>
         </div>
       </div>
 
-      {/* 3. Floating Bottom Stepper for Mobile (Thumb-Friendly) */}
-      <div className="sm:hidden fixed bottom-4 inset-x-4 z-40 flex items-center justify-between bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/90 rounded-2xl px-4 py-2.5 shadow-[0_12px_40px_rgba(0,0,0,0.8)]">
-        <button
-          type="button"
-          onClick={handlePrevPage}
-          disabled={currentPage <= 1}
-          className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-300 disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all cursor-pointer"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setIsTocOpen(true)}
-          className="flex flex-col items-center text-center cursor-pointer px-2"
-        >
-          <span className="text-xs font-black text-white tracking-wider">
-            Page {currentPage} of {TOTAL_PAGES}
-          </span>
-          <span className="text-[10px] text-amber-400 font-semibold truncate max-w-[180px]">
-            {SECTIONS[currentPage - 1]?.title || "Tap for Sections"}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleNextPage}
-          disabled={currentPage >= TOTAL_PAGES}
-          className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-300 disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all cursor-pointer"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* 4. Slide-Over Table of Contents Drawer */}
+      {/* Slide-Over Sections Drawer */}
       {isTocOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setIsTocOpen(false)}
+        >
           <div 
-            className="w-full max-w-md h-full bg-zinc-950 border-l border-zinc-800/90 flex flex-col shadow-2xl animate-in slide-in-from-right duration-200"
+            className="w-full max-w-sm h-full bg-zinc-950 border-l border-zinc-800 flex flex-col shadow-2xl animate-in slide-in-from-right duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
-            <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-white text-base">Memorandum Sections</h3>
-              </div>
+            <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+              <h3 className="font-semibold text-white text-sm">Memorandum Sections</h3>
               <button
                 type="button"
                 onClick={() => setIsTocOpen(false)}
-                className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Sections List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 divide-y divide-zinc-900">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {SECTIONS.map((sec) => {
                 const isActive = currentPage === sec.page;
                 return (
@@ -679,19 +615,19 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
                     key={sec.page}
                     type="button"
                     onClick={() => scrollToPage(sec.page)}
-                    className={`w-full p-3 rounded-xl flex items-start gap-3 text-left transition-all cursor-pointer ${
+                    className={`w-full p-2.5 rounded-lg flex items-start gap-3 text-left transition-colors cursor-pointer ${
                       isActive 
-                        ? "bg-amber-500/10 border border-amber-500/30 text-white" 
-                        : "hover:bg-zinc-900 text-zinc-300 hover:text-white"
+                        ? "bg-zinc-800 text-white" 
+                        : "hover:bg-zinc-900 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0 ${
-                      isActive ? "bg-amber-500 text-zinc-950 font-black shadow-md" : "bg-zinc-900 border border-zinc-800 text-zinc-400"
+                    <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-semibold shrink-0 ${
+                      isActive ? "bg-white text-black" : "bg-zinc-900 border border-zinc-800 text-zinc-400"
                     }`}>
                       {sec.page}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-xs sm:text-sm font-bold truncate leading-tight ${isActive ? "text-amber-300" : "text-white"}`}>
+                      <p className={`text-xs font-medium truncate leading-tight ${isActive ? "text-white" : "text-zinc-300"}`}>
                         {sec.title}
                       </p>
                       <p className="text-[11px] text-zinc-500 truncate mt-0.5">
@@ -704,17 +640,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900/60 flex flex-col gap-2 text-center">
-              <a
-                href="mailto:investor-relations@yoouz.com?subject=Yoouz%20Series%20Seed%20Memorandum%20Inquiry"
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md shadow-amber-500/20"
-              >
-                <Mail className="w-4 h-4" />
-                <span>Connect with Investor Relations</span>
-              </a>
-              <span className="text-[10px] text-zinc-500 font-medium">
-                Protected Interactive Memorandum • View-Only on yoouz.com
-              </span>
+            <div className="p-3 border-t border-zinc-800 bg-zinc-950 text-center text-[11px] text-zinc-500">
+              Yoouz • Confidential Series Seed Memorandum
             </div>
           </div>
         </div>
