@@ -1837,6 +1837,24 @@ export function App() {
   // Synchronize App State to URL (True Client-Side Routing for SEO)
   useEffect(() => {
     try {
+      const { pathWithoutLocale: currentRawPath } = parseLocaleFromPath(window.location.pathname);
+      const isPitchUrl = (
+        currentRawPath === "/pitch" || currentRawPath.startsWith("/pitch/") ||
+        currentRawPath === "/investors" || currentRawPath.startsWith("/investors/") ||
+        currentRawPath === "/deck" || currentRawPath.startsWith("/deck/") ||
+        currentRawPath === "/memorandum" || currentRawPath.startsWith("/memorandum/")
+      );
+
+      if (isPitchRoute || isPitchUrl) {
+        document.title = "Investor Memorandum | Yoouz";
+        if (window.location.pathname !== "/pitch" && currentRawPath !== "/pitch") {
+          try {
+            window.history.replaceState({}, "", "/pitch");
+          } catch (e) {}
+        }
+        return;
+      }
+
       let path = "/";
       let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
 

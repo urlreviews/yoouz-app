@@ -254,9 +254,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     document.title = "Investor Memorandum | Yoouz";
 
     try {
-      const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname);
-      if (pathWithoutLocale !== "/pitch") {
-        window.history.replaceState(null, "", buildLocalizedPath("/pitch", "en"));
+      if (window.location.pathname !== "/pitch") {
+        window.history.replaceState(null, "", "/pitch");
       }
     } catch (e) {}
 
