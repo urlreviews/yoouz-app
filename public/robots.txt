@@ -1,10 +1,11 @@
 # Robots.txt for Yoouz (https://yoouz.com)
-# Designed for maximum AI Engine, LLM Agent, & Search Engine Discoverability
+# Designed for AI Engine & Search Engine Discoverability (excluding private /pitch routes)
 
 User-agent: *
 Allow: /
 Disallow: /api/private/
 Disallow: /api/private-download/
+Disallow: /api/pitch/
 Disallow: /investor-deck/
 Disallow: /pitch
 Disallow: /pitch/
@@ -17,85 +18,78 @@ Disallow: /memorandum/
 Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 Disallow: /assets/pitch_pages/
 Disallow: /admin/
-
-# Explicitly Allow All Major AI Models, LLM Crawlers, and RAG Bots
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-Web
-Allow: /
-
-User-agent: Anthropic-AI
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
+Disallow: /yoouzadmin/
 
 User-agent: Googlebot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /investors
+Disallow: /investors/
+Disallow: /deck
+Disallow: /deck/
+Disallow: /memorandum
+Disallow: /memorandum/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
+Disallow: /assets/pitch_pages/
 
 User-agent: Googlebot-Image
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /assets/pitch_pages/
 
 User-agent: Googlebot-Video
 Allow: /
-
-User-agent: Google Favicon
-Allow: /
+Disallow: /pitch
+Disallow: /pitch/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /investors
+Disallow: /deck
+Disallow: /memorandum
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
-User-agent: Applebot
+User-agent: GPTBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
-User-agent: Applebot-Extended
+User-agent: ChatGPT-User
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
-User-agent: Meta-ExternalAgent
+User-agent: PerplexityBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
-User-agent: FacebookBot
+User-agent: ClaudeBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
-User-agent: Bytespider
+User-agent: Google-Extended
 Allow: /
-
-User-agent: CCBot
-Allow: /
-
-User-agent: cohere-ai
-Allow: /
-
-User-agent: Diffbot
-Allow: /
-
-User-agent: Omgilibot
-Allow: /
-
-User-agent: Omgili
-Allow: /
-
-User-agent: PetalBot
-Allow: /
-
-User-agent: Amazonbot
-Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 Sitemap: https://www.yoouz.com/sitemap.xml
 Sitemap: https://www.yoouz.com/video-sitemap.xml
 Sitemap: https://www.yoouz.com/sitemap-index.xml
-
-# LLMs.txt Standard Machine-Readable Endpoints (https://llmstxt.org)
-# Core LLM Summary: https://yoouz.com/llms.txt
-# Full LLM Knowledge Base & 36+ Q&A: https://yoouz.com/llms-full.txt
-# Machine JSON Knowledge Endpoint: https://yoouz.com/api/ai/knowledge

@@ -7647,6 +7647,19 @@ export function App() {
     );
   }
 
+  if (isPitchRoute) {
+    return (
+      <YoouzInvestorPitchView
+        onBackToApp={() => {
+          try {
+            window.history.pushState(null, "", buildLocalizedPath("/", language));
+          } catch (e) {}
+          window.location.href = "/";
+        }}
+      />
+    );
+  }
+
   return (
     <div
       id="copo-app-root"
@@ -7654,18 +7667,6 @@ export function App() {
     >
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
-
-      {/* Confidential Investor Pitch Memorandum View (Password Protected & Zero Indexing) */}
-      {isPitchRoute && (
-        <YoouzInvestorPitchView
-          onBackToApp={() => {
-            try {
-              window.history.pushState(null, "", buildLocalizedPath("/", language));
-            } catch (e) {}
-            window.location.href = "/";
-          }}
-        />
-      )}
       
 
       

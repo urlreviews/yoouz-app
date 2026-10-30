@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
-  Lock, 
-  Key, 
-  User,
-  Eye, 
-  EyeOff, 
   ZoomIn, 
   ZoomOut, 
   Maximize2, 
@@ -17,7 +12,6 @@ import {
   FileText
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
-import { parseLocaleFromPath, buildLocalizedPath } from "../i18n/urlLocalization";
 
 // Configure PDF.js worker locally from server route with CDN fallback
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -45,26 +39,6 @@ const SECTIONS = [
   { page: 16, title: "Business Model & Revenue Architecture" },
   { page: 17, title: "Competitive Moat: Why Incumbents Cannot Replicate" },
   { page: 18, title: "Execution Roadmap & Investment Opportunity" },
-];
-
-const STORAGE_KEY = "yoouz_investor_auth_seed_2026";
-const AUTHORIZED_USERNAMES = [
-  "investor",
-  "investors",
-  "partner",
-  "partners",
-  "yoouz",
-  "vc",
-  "seed",
-  "venture"
-];
-const AUTHORIZED_PASSWORDS = [
-  "yoouz2026",
-  "yoouz2026!",
-  "yoouzseriesseed",
-  "yoouzseed2026",
-  "investor2026",
-  "yoouz"
 ];
 
 /**
@@ -211,23 +185,9 @@ const PdfThumbnailCanvas: React.FC<{
 };
 
 export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ onBackToApp }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem(STORAGE_KEY) === "authorized";
-    } catch {
-      return false;
-    }
-  });
-
-  const [usernameInput, setUsernameInput] = useState("");
-  const [passwordInput, setPasswordInput] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [isShaking, setIsShaking] = useState(false);
-
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number>(18);
-  const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(false);
+  const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(true);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -238,17 +198,34 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Enforce noindex dynamically on mount & synchronize address bar URL to /pitch
+  // Enforce strict noindex, strip keywords/grounding & synchronize address bar URL to /pitch
   useEffect(() => {
-    let metaTag = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
-    const originalRobots = metaTag ? metaTag.content : "";
-    
-    if (!metaTag) {
-      metaTag = document.createElement("meta");
-      metaTag.name = "robots";
-      document.head.appendChild(metaTag);
+    const noIndexRule = "noindex, nofollow, noarchive, nosnippet, noimageindex";
+
+    let robotsTag = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    const originalRobots = robotsTag ? robotsTag.content : "";
+    if (!robotsTag) {
+      robotsTag = document.createElement("meta");
+      robotsTag.name = "robots";
+      document.head.appendChild(robotsTag);
     }
-    metaTag.content = "noindex, nofollow, noarchive";
+    robotsTag.content = noIndexRule;
+
+    let googlebotTag = document.querySelector('meta[name="googlebot"]') as HTMLMetaElement;
+    const originalGooglebot = googlebotTag ? googlebotTag.content : "";
+    if (!googlebotTag) {
+      googlebotTag = document.createElement("meta");
+      googlebotTag.name = "googlebot";
+      document.head.appendChild(googlebotTag);
+    }
+    googlebotTag.content = noIndexRule;
+
+    // Remove keywords meta tag on /pitch so no keywords from this page are indexed
+    const keywordsTag = document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null;
+    const originalKeywords = keywordsTag ? keywordsTag.content : "";
+    if (keywordsTag) {
+      keywordsTag.content = "";
+    }
 
     const originalTitle = document.title;
     document.title = "Investor Memorandum | Yoouz";
@@ -260,21 +237,29 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     } catch (e) {}
 
     return () => {
-      if (metaTag) {
+      if (robotsTag) {
         if (originalRobots) {
-          metaTag.content = originalRobots;
+          robotsTag.content = originalRobots;
         } else {
-          metaTag.remove();
+          robotsTag.remove();
         }
+      }
+      if (googlebotTag) {
+        if (originalGooglebot) {
+          googlebotTag.content = originalGooglebot;
+        } else {
+          googlebotTag.remove();
+        }
+      }
+      if (keywordsTag && originalKeywords) {
+        keywordsTag.content = originalKeywords;
       }
       document.title = originalTitle;
     };
   }, []);
 
-  // Load original PDF file via PDF.js SDK when authenticated
+  // Load original PDF file immediately on mount (direct link access without login gate)
   useEffect(() => {
-    if (!isAuthenticated) return;
-
     let isMounted = true;
     setIsLoadingPdf(true);
     setPdfLoadError(null);
@@ -304,7 +289,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
         }
       } catch (err: any) {
         console.error("Failed to load pitch PDF document via ArrayBuffer:", err);
-        // Resilient fallback attempt with URL directly
         try {
           const fallbackTask = pdfjsLib.getDocument({ url: "/api/pitch/raw-pdf" });
           const doc = await fallbackTask.promise;
@@ -330,11 +314,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated]);
+  }, []);
 
   // Track currently visible page during vertical scroll using IntersectionObserver
   useEffect(() => {
-    if (!isAuthenticated || !pdfDoc) return;
+    if (!pdfDoc) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -358,7 +342,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     });
 
     return () => observer.disconnect();
-  }, [isAuthenticated, pdfDoc, numPages]);
+  }, [pdfDoc, numPages]);
 
   // Document security keyboard overrides
   useEffect(() => {
@@ -374,51 +358,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     window.addEventListener("keydown", handleGlobalKeys);
     return () => window.removeEventListener("keydown", handleGlobalKeys);
   }, []);
-
-  const handleAuthSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const userNorm = usernameInput.trim().toLowerCase();
-    const passNorm = passwordInput.trim().toLowerCase();
-    
-    if (!userNorm) {
-      setAuthError("Please enter your username.");
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-      return;
-    }
-
-    if (!passNorm) {
-      setAuthError("Please enter your password.");
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-      return;
-    }
-
-    const isValidUser = AUTHORIZED_USERNAMES.includes(userNorm);
-    const isValidPass = AUTHORIZED_PASSWORDS.includes(passNorm);
-
-    if (isValidUser && isValidPass) {
-      try {
-        sessionStorage.setItem(STORAGE_KEY, "authorized");
-      } catch {}
-      setIsAuthenticated(true);
-      setAuthError("");
-    } else {
-      setAuthError("Invalid username or password.");
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 500);
-    }
-  };
-
-  const handleSignOut = () => {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {}
-    setIsAuthenticated(false);
-    setUsernameInput("");
-    setPasswordInput("");
-    setAuthError("");
-  };
 
   const scrollToPage = (pageNum: number) => {
     const clamped = Math.max(1, Math.min(numPages, pageNum));
@@ -439,123 +378,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     }
   };
 
-  // -------------------------------------------------------------
-  // 1. MINIMAL LOGIN SCREEN
-  // -------------------------------------------------------------
-  if (!isAuthenticated) {
-    return (
-      <div 
-        onContextMenu={(e) => e.preventDefault()}
-        className="fixed inset-0 z-[9999] bg-[#07080b] text-white flex flex-col justify-between items-center p-4 sm:p-6 overflow-y-auto select-none font-sans"
-      >
-        <header className="w-full max-w-4xl flex items-center justify-between py-3 relative z-10">
-          <button
-            type="button"
-            onClick={onBackToApp || (() => window.location.href = "/")}
-            className="flex items-center gap-2 text-xs sm:text-sm font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Return to Yoouz</span>
-          </button>
-        </header>
-
-        <main className="w-full max-w-sm my-auto relative z-10 py-6">
-          <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-lg mb-3.5">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-xl font-bold tracking-tight text-white mb-1">
-                Investor Memorandum
-              </h1>
-              <p className="text-xs text-zinc-400 font-medium">
-                Yoouz Pitch Deck & Strategic Overview
-              </p>
-            </div>
-
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
-              <div className={`space-y-3.5 transition-transform duration-100 ${isShaking ? "animate-shake" : ""}`}>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                    Username
-                  </label>
-                  <div className="relative flex items-center bg-zinc-900/90 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600 rounded-xl px-3.5 py-2.5 transition-all">
-                    <User className="w-4 h-4 text-zinc-500 shrink-0 mr-2.5 pointer-events-none" />
-                    <input
-                      type="text"
-                      autoFocus
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      value={usernameInput}
-                      onChange={(e) => {
-                        setUsernameInput(e.target.value);
-                        if (authError) setAuthError("");
-                      }}
-                      placeholder="Username"
-                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative flex items-center bg-zinc-900/90 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600 rounded-xl px-3.5 py-2.5 transition-all">
-                    <Key className="w-4 h-4 text-zinc-500 shrink-0 mr-2.5 pointer-events-none" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      value={passwordInput}
-                      onChange={(e) => {
-                        setPasswordInput(e.target.value);
-                        if (authError) setAuthError("");
-                      }}
-                      placeholder="Password"
-                      className="w-full bg-transparent text-white text-sm placeholder:text-zinc-600 focus:outline-none tracking-normal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer shrink-0 ml-1"
-                      title={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {authError && (
-                  <p className="text-red-400 text-xs mt-1.5 font-medium flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                    {authError}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-200 text-black font-semibold text-sm tracking-normal transition-all cursor-pointer flex items-center justify-center mt-4 active:scale-[0.99]"
-              >
-                Sign In
-              </button>
-            </form>
-          </div>
-        </main>
-
-        <div className="w-full py-3 relative z-10" />
-      </div>
-    );
-  }
-
-  // -------------------------------------------------------------
-  // 2. HIGH-PERFORMANCE PDF READER WITH CANVAS RENDERING
-  // -------------------------------------------------------------
   return (
     <div 
       onContextMenu={(e) => e.preventDefault()}
@@ -650,24 +472,15 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
         </div>
 
-        {/* Right: Fullscreen & Lock */}
+        {/* Right: Fullscreen */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="hidden sm:flex w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            className="flex w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="h-8 px-2.5 sm:px-3 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/80 text-zinc-300 hover:text-white transition-colors text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5"
-            title="Lock Viewer"
-          >
-            <Lock className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
@@ -765,5 +578,3 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     </div>
   );
 };
-
-

@@ -4528,7 +4528,7 @@ async function startServer() {
       if (fs.existsSync(p)) {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Investor_Pitch_Memorandum.pdf\"");
-        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
         res.setHeader("Cache-Control", "public, max-age=3600");
         return res.sendFile(p);
       }
@@ -4556,7 +4556,7 @@ async function startServer() {
       p === "/deck" || p.startsWith("/deck/") ||
       p === "/memorandum" || p.startsWith("/memorandum/")
     ) {
-      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
+      res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
       res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
     }
     next();
@@ -13320,33 +13320,76 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
 Allow: /
 Disallow: /api/private/
 Disallow: /yoouzadmin/
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /investors
+Disallow: /investors/
+Disallow: /deck
+Disallow: /deck/
+Disallow: /memorandum
+Disallow: /memorandum/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: Googlebot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /investors
+Disallow: /deck
+Disallow: /memorandum
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: Googlebot-Image
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
 
 User-agent: Googlebot-Video
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
 
 User-agent: Mediapartners-Google
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
 
 User-agent: GPTBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 User-agent: bingbot
 Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+Disallow: /Yoouz_Investor_Pitch_Memorandum.pdf
 
 Sitemap: https://www.yoouz.com/sitemap.xml
 Sitemap: https://www.yoouz.com/video-sitemap.xml
@@ -13773,7 +13816,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
 
   // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers
   app.use(['/pitch', '/pitch/*', '/investors', '/investors/*', '/deck', '/deck/*', '/memorandum', '/memorandum/*', '/Yoouz_Investor_Pitch_Memorandum.pdf'], (_req: any, res: any, next: any) => {
-    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
     res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     next();
   });
@@ -34697,7 +34740,16 @@ function injectOpenGraphTags(html: string, meta: any) {
       .map(alt => `<link rel="alternate" hreflang="${escapeHtml(alt.hreflang)}" href="${escapeHtml(alt.href)}" />`)
       .join("\n    ");
 
-    let headInject = `
+    const isNoIndexPage = Boolean(meta.robots && meta.robots.toLowerCase().includes("noindex"));
+
+    let headInject = isNoIndexPage
+      ? `
+    <title>${safeTitle}</title>
+    <meta name="robots" content="${escapeHtml(meta.robots)}" />
+    <meta name="googlebot" content="${escapeHtml(meta.robots)}" />
+    <meta name="bingbot" content="${escapeHtml(meta.robots)}" />
+    `
+      : `
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDesc}" />
     <meta name="keywords" content="${safeKeywords}" />
@@ -34743,7 +34795,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
     `;
 
-    if (meta.videoUrl) {
+    if (!isNoIndexPage && meta.videoUrl) {
       headInject += `
       <meta property="og:video" content="${escapeHtml(meta.videoUrl)}" />
       <meta property="og:video:secure_url" content="${escapeHtml(meta.videoUrl)}" />
@@ -34753,21 +34805,23 @@ function injectOpenGraphTags(html: string, meta: any) {
       `;
     }
 
-    if (meta.embedUrl) {
-      headInject += `
-      <meta name="twitter:card" content="player" />
-      <meta name="twitter:player" content="${escapeHtml(meta.embedUrl)}" />
-      <meta name="twitter:player:width" content="360" />
-      <meta name="twitter:player:height" content="640" />
-      <link rel="alternate" type="application/json+oembed" href="${safeUrl.includes('?') ? safeUrl + '&format=oembed' : baseUrl + '/api/oembed?url=' + encodeURIComponent(safeUrl)}" title="${safeTitle} oEmbed" />
-      `;
-    } else {
-      headInject += `
-      <link rel="alternate" type="application/json+oembed" href="${baseUrl}/api/oembed?url=${encodeURIComponent(safeUrl)}" title="Yoouz oEmbed Provider" />
-      `;
+    if (!isNoIndexPage) {
+      if (meta.embedUrl) {
+        headInject += `
+        <meta name="twitter:card" content="player" />
+        <meta name="twitter:player" content="${escapeHtml(meta.embedUrl)}" />
+        <meta name="twitter:player:width" content="360" />
+        <meta name="twitter:player:height" content="640" />
+        <link rel="alternate" type="application/json+oembed" href="${safeUrl.includes('?') ? safeUrl + '&format=oembed' : baseUrl + '/api/oembed?url=' + encodeURIComponent(safeUrl)}" title="${safeTitle} oEmbed" />
+        `;
+      } else {
+        headInject += `
+        <link rel="alternate" type="application/json+oembed" href="${baseUrl}/api/oembed?url=${encodeURIComponent(safeUrl)}" title="Yoouz oEmbed Provider" />
+        `;
+      }
     }
 
-    if (meta.structuredData) {
+    if (!isNoIndexPage && meta.structuredData) {
       headInject += `
       <script type="application/ld+json">
         ${JSON.stringify(meta.structuredData)}
@@ -34778,18 +34832,25 @@ function injectOpenGraphTags(html: string, meta: any) {
     // Strip out all existing title, og/twitter meta tags and static link icons so they don't conflict
     let updatedHtml = html
       .replace(/<title>[\s\S]*?<\/title>/gi, '')
-      .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
+      .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|robots|googlebot|bingbot|disambiguation|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
-      .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '')
-      .replace('</head>', `${headInject}</head>`);
+      .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '');
+
+    if (isNoIndexPage) {
+      updatedHtml = updatedHtml
+        .replace(/<script\s+type=["']application\/ld\+json["']>[\s\S]*?<\/script>/gi, '')
+        .replace(/<section id="yoouz-knowledge-grounding"[\s\S]*?<\/section>/i, '');
+    }
+
+    updatedHtml = updatedHtml.replace('</head>', `${headInject}</head>`);
 
     // Dynamically update the html lang attribute to match the requested language
     if (htmlLang) {
       updatedHtml = updatedHtml.replace(/<html(?:\s+[^>]*?)?\s+lang=["'][^"']*["']/i, `<html lang="${htmlLang}"`);
     }
 
-    // Replace static generic knowledge grounding with route-specific semantic content
-    if (meta.title && meta.description) {
+    // Replace static generic knowledge grounding with route-specific semantic content (only on indexable pages)
+    if (!isNoIndexPage && meta.title && meta.description) {
       const vidObj = meta.structuredData?.["@graph"]?.find((item: any) => item["@type"] === "VideoObject") || 
                      (meta.structuredData?.["@type"] === "VideoObject" ? meta.structuredData : null);
       const locBusObj = meta.structuredData?.["@graph"]?.find((item: any) => item["@type"] === "LocalBusiness");
@@ -34899,11 +34960,22 @@ function injectOpenGraphTags(html: string, meta: any) {
       cleanPathname === "/memorandum" || cleanPathname.startsWith("/memorandum/") ||
       cleanPathname.includes("Yoouz_Investor_Pitch_Memorandum")
     ) {
-      robots = "noindex, nofollow, noarchive";
-      if (cleanPathname.includes("pitch") || cleanPathname.includes("investor") || cleanPathname.includes("deck") || cleanPathname.includes("memorandum")) {
-        title = "Yoouz Confidential Series Seed Investor Memorandum";
-        description = "Confidential institutional investment memorandum. Unauthorized reproduction or sharing is prohibited.";
-      }
+      return {
+        title: "Investor Memorandum | Yoouz",
+        description: "",
+        imageUrl: "",
+        touchIcon,
+        logoUrl: touchIcon,
+        videoUrl: "",
+        embedUrl: "",
+        type: "website",
+        twitterCard: "summary",
+        url: fullUrl,
+        keywords: "",
+        robots: "noindex, nofollow, noarchive, nosnippet, noimageindex",
+        canonicalVideoUrl: "",
+        structuredData: null
+      };
     }
 
     const hasSpecialQuery = !!(params.get('reviewId') || params.get('review_id') || params.get('review') || params.get('video') || params.get('v') || params.get('id') || params.get('r') || params.get('place') || params.get('creator') || params.get('user') || params.get('handle'));
