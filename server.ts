@@ -4516,11 +4516,11 @@ async function startServer() {
     next();
   });
 
-  // Dedicated route to stream the exact original Investor Pitch Memorandum PDF inline
+  // Dedicated route to stream the exact 100% original Investor Pitch Memorandum PDF inline
   app.get(["/api/pitch/raw-pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf"], (_req, res) => {
     const candidates = [
-      path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
       path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Investor_Pitch_Memorandum__981d9343.pdf"),
+      path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
       path.join(process.cwd(), "dist", "Yoouz_Investor_Pitch_Memorandum.pdf"),
       path.join(_dirname, "public", "Yoouz_Investor_Pitch_Memorandum.pdf")
     ];
@@ -4529,14 +4529,14 @@ async function startServer() {
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Investor_Pitch_Memorandum.pdf\"");
         res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
-        res.setHeader("Cache-Control", "public, max-age=3600");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         return res.sendFile(p);
       }
     }
     return res.status(404).send("Original PDF file not found");
   });
 
-  // Serve PDF.js worker locally to guarantee 100% version matching and offline reliability
+  // Serve PDF.js worker, standard_fonts, and cmaps locally to guarantee 100% original PDF font & vector quality
   app.get(["/pdf.worker.min.mjs", "/assets/pdf.worker.min.mjs"], (_req, res) => {
     const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "build", "pdf.worker.min.mjs");
     if (fs.existsSync(workerPath)) {
@@ -4545,6 +4545,26 @@ async function startServer() {
       return res.sendFile(workerPath);
     }
     return res.status(404).send("Worker not found");
+  });
+
+  app.get("/standard_fonts/:file", (req, res) => {
+    const filename = path.basename(req.params.file || "");
+    const fontPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "standard_fonts", filename);
+    if (fs.existsSync(fontPath)) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.sendFile(fontPath);
+    }
+    return res.status(404).send("Font not found");
+  });
+
+  app.get("/cmaps/:file", (req, res) => {
+    const filename = path.basename(req.params.file || "");
+    const cmapPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "cmaps", filename);
+    if (fs.existsSync(cmapPath)) {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.sendFile(cmapPath);
+    }
+    return res.status(404).send("CMap not found");
   });
 
   // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers globally
@@ -4560,26 +4580,6 @@ async function startServer() {
       res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
     }
     next();
-  });
-
-  // Dedicated endpoint to reliably serve pitch memorandum page images with instant response and immutable caching
-  app.get(["/assets/pitch_pages/:file", "/pitch_pages/:file"], (req, res) => {
-    const filename = path.basename(req.params.file || "");
-    const candidates = [
-      path.join(process.cwd(), "public", "assets", "pitch_pages", filename),
-      path.join(process.cwd(), "dist", "assets", "pitch_pages", filename),
-      path.join(_dirname, "public", "assets", "pitch_pages", filename),
-      path.join(_dirname, "dist", "assets", "pitch_pages", filename)
-    ];
-    for (const p of candidates) {
-      if (fs.existsSync(p)) {
-        res.setHeader("Content-Type", filename.endsWith(".webp") ? "image/webp" : "image/png");
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
-        return res.sendFile(p);
-      }
-    }
-    return res.status(404).send("Page image not found");
   });
 
 

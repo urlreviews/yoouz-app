@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 
-// Configure PDF.js worker locally from server route with CDN fallback
+// Configure PDF.js worker locally from server route
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 interface YoouzInvestorPitchViewProps {
@@ -42,7 +42,8 @@ const SECTIONS = [
 ];
 
 /**
- * Individual Main Page Canvas Renderer
+ * Individual Main Page Canvas + Selectable Vector TextLayer Renderer
+ * Renders at 3x+ Retina HiDPI resolution with native PDF font metrics and full text selection
  */
 const PdfPageCanvas: React.FC<{
   pdfDoc: pdfjsLib.PDFDocumentProxy;
@@ -51,7 +52,9 @@ const PdfPageCanvas: React.FC<{
   onPageRef?: (el: HTMLDivElement | null) => void;
 }> = ({ pdfDoc, pageNum, zoomLevel, onPageRef }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const textLayerRef = useRef<HTMLDivElement | null>(null);
   const renderTaskRef = useRef<any>(null);
+  const textLayerInstanceRef = useRef<any>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -64,26 +67,59 @@ const PdfPageCanvas: React.FC<{
         if (renderTaskRef.current) {
           renderTaskRef.current.cancel();
         }
+        if (textLayerInstanceRef.current) {
+          try {
+            textLayerInstanceRef.current.cancel();
+          } catch {}
+        }
 
-        const scale = (zoomLevel / 100) * 1.5;
-        const viewport = page.getViewport({ scale });
+        // Base display scale (at 100% zoom, 595pt PDF page is ~850px CSS width)
+        const cssScale = (zoomLevel / 100) * 1.45;
+        const viewport = page.getViewport({ scale: cssScale });
+
+        // Ultra-crisp Retina HiDPI supersampling (minimum 3x physical pixel density)
+        const outputScale = Math.max(window.devicePixelRatio || 1, 3);
         const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
+        const context = canvas.getContext("2d", { alpha: false });
 
         if (!context) return;
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        const transform =
+          outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
 
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
+          transform: transform,
           canvas: canvas,
         };
 
         const task = page.render(renderContext);
         renderTaskRef.current = task;
         await task.promise;
+
+        // Render authentic selectable PDF TextLayer over the canvas so text & links can be copied freely
+        if (!isCancelled && textLayerRef.current && (pdfjsLib as any).TextLayer) {
+          const textContainer = textLayerRef.current;
+          textContainer.innerHTML = "";
+          textContainer.style.width = `${Math.floor(viewport.width)}px`;
+          textContainer.style.height = `${Math.floor(viewport.height)}px`;
+          textContainer.style.setProperty("--scale-factor", `${cssScale}`);
+
+          const textContentSource = page.streamTextContent();
+          const textLayer = new (pdfjsLib as any).TextLayer({
+            textContentSource,
+            container: textContainer,
+            viewport,
+          });
+          textLayerInstanceRef.current = textLayer;
+          await textLayer.render();
+        }
       } catch (err: any) {
         if (err?.name !== "RenderingCancelledException") {
           console.error(`Error rendering PDF page ${pageNum}:`, err);
@@ -96,7 +132,14 @@ const PdfPageCanvas: React.FC<{
     return () => {
       isCancelled = true;
       if (renderTaskRef.current) {
-        renderTaskRef.current.cancel();
+        try {
+          renderTaskRef.current.cancel();
+        } catch {}
+      }
+      if (textLayerInstanceRef.current) {
+        try {
+          textLayerInstanceRef.current.cancel();
+        } catch {}
       }
     };
   }, [pdfDoc, pageNum, zoomLevel]);
@@ -105,15 +148,19 @@ const PdfPageCanvas: React.FC<{
     <div
       ref={onPageRef}
       data-page-num={pageNum}
-      className="flex flex-col items-center my-4 transition-all duration-200"
+      className="flex flex-col items-center my-4 transition-all duration-200 max-w-full"
     >
-      <div className="bg-[#0e0f12] p-1 sm:p-2 rounded-xl shadow-2xl border border-zinc-800/80 max-w-full overflow-hidden">
+      <div className="relative bg-white rounded-lg shadow-2xl border border-zinc-800/80 overflow-x-auto max-w-full">
         <canvas
           ref={canvasRef}
-          className="block rounded shadow-lg max-w-full h-auto bg-white"
+          className="block bg-white"
+        />
+        <div
+          ref={textLayerRef}
+          className="pdf-text-layer absolute inset-0 select-text"
         />
       </div>
-      <span className="text-[11px] text-zinc-500 mt-2 font-medium">
+      <span className="text-[11px] text-zinc-500 mt-2 font-medium select-none">
         Page {pageNum}
       </span>
     </div>
@@ -121,7 +168,7 @@ const PdfPageCanvas: React.FC<{
 };
 
 /**
- * Individual Sidebar Thumbnail Canvas Renderer
+ * Individual Sidebar Thumbnail Canvas Renderer (HiDPI crisp rendering)
  */
 const PdfThumbnailCanvas: React.FC<{
   pdfDoc: pdfjsLib.PDFDocumentProxy;
@@ -142,18 +189,21 @@ const PdfThumbnailCanvas: React.FC<{
           renderTaskRef.current.cancel();
         }
 
-        const viewport = page.getViewport({ scale: 0.28 });
+        const cssScale = 0.32;
+        const outputScale = Math.max(window.devicePixelRatio || 1, 2);
+        const viewport = page.getViewport({ scale: cssScale });
         const canvas = canvasRef.current;
-        const context = canvas.getContext("2d");
+        const context = canvas.getContext("2d", { alpha: false });
 
         if (!context) return;
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
 
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
+          transform: [outputScale, 0, 0, outputScale, 0, 0],
           canvas: canvas,
         };
 
@@ -172,14 +222,16 @@ const PdfThumbnailCanvas: React.FC<{
     return () => {
       isCancelled = true;
       if (renderTaskRef.current) {
-        renderTaskRef.current.cancel();
+        try {
+          renderTaskRef.current.cancel();
+        } catch {}
       }
     };
   }, [pdfDoc, pageNum]);
 
   return (
     <div className="w-full aspect-[595/842] rounded overflow-hidden shadow-md border border-zinc-700/80 bg-zinc-900 flex items-center justify-center pointer-events-none">
-      <canvas ref={canvasRef} className="max-w-full max-h-full object-contain" />
+      <canvas ref={canvasRef} className="w-full h-full object-contain" />
     </div>
   );
 };
@@ -220,7 +272,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     }
     googlebotTag.content = noIndexRule;
 
-    // Remove keywords meta tag on /pitch so no keywords from this page are indexed
     const keywordsTag = document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null;
     const originalKeywords = keywordsTag ? keywordsTag.content : "";
     if (keywordsTag) {
@@ -258,7 +309,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     };
   }, []);
 
-  // Load original PDF file immediately on mount (direct link access without login gate)
+  // Load 100% original PDF file with local standard_fonts and cmaps for exact original font fidelity
   useEffect(() => {
     let isMounted = true;
     setIsLoadingPdf(true);
@@ -266,7 +317,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
 
     const loadPdf = async () => {
       try {
-        const response = await fetch("/api/pitch/raw-pdf");
+        const response = await fetch(`/api/pitch/raw-pdf?v=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch pitch PDF: ${response.status}`);
         }
@@ -277,7 +330,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
 
         const loadingTask = pdfjsLib.getDocument({
           data: new Uint8Array(arrayBuffer),
-          cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version || "6.4.299"}/cmaps/`,
+          standardFontDataUrl: "/standard_fonts/",
+          cMapUrl: "/cmaps/",
           cMapPacked: true,
         });
 
@@ -290,7 +344,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       } catch (err: any) {
         console.error("Failed to load pitch PDF document via ArrayBuffer:", err);
         try {
-          const fallbackTask = pdfjsLib.getDocument({ url: "/api/pitch/raw-pdf" });
+          const fallbackTask = pdfjsLib.getDocument({
+            url: `/api/pitch/raw-pdf?v=${Date.now()}`,
+            standardFontDataUrl: "/standard_fonts/",
+            cMapUrl: "/cmaps/",
+            cMapPacked: true,
+          });
           const doc = await fallbackTask.promise;
           if (isMounted) {
             setPdfDoc(doc);
@@ -344,21 +403,6 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
     return () => observer.disconnect();
   }, [pdfDoc, numPages]);
 
-  // Document security keyboard overrides
-  useEffect(() => {
-    const handleGlobalKeys = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) && 
-        (e.key === "s" || e.key === "S" || e.key === "p" || e.key === "P" || e.key === "u" || e.key === "U")
-      ) {
-        e.preventDefault();
-        return false;
-      }
-    };
-    window.addEventListener("keydown", handleGlobalKeys);
-    return () => window.removeEventListener("keydown", handleGlobalKeys);
-  }, []);
-
   const scrollToPage = (pageNum: number) => {
     const clamped = Math.max(1, Math.min(numPages, pageNum));
     const targetEl = pageRefs.current[clamped - 1];
@@ -379,12 +423,37 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
   };
 
   return (
-    <div 
-      onContextMenu={(e) => e.preventDefault()}
-      className="fixed inset-0 z-[9999] bg-[#121316] text-white flex flex-col font-sans select-none overflow-hidden print:hidden"
-    >
+    <div className="fixed inset-0 z-[9999] bg-[#121316] text-white flex flex-col font-sans overflow-hidden">
+      {/* Official PDF.js TextLayer CSS for accurate selectable text and links */}
+      <style>{`
+        .pdf-text-layer {
+          position: absolute;
+          text-align: initial;
+          inset: 0;
+          overflow: hidden;
+          opacity: 1;
+          line-height: 1;
+          -webkit-text-size-adjust: none;
+          text-size-adjust: none;
+          forced-color-adjust: none;
+          transform-origin: 0 0;
+          z-index: 2;
+        }
+        .pdf-text-layer :is(span, br) {
+          color: transparent;
+          position: absolute;
+          white-space: pre;
+          cursor: text;
+          transform-origin: 0% 0%;
+        }
+        .pdf-text-layer ::selection {
+          background: rgba(59, 130, 246, 0.35);
+          color: transparent;
+        }
+      `}</style>
+
       {/* Header Bar */}
-      <header className="w-full h-13 bg-[#1c1e22] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md">
+      <header className="w-full h-13 bg-[#1c1e22] border-b border-black/60 px-3 sm:px-4 flex items-center justify-between shrink-0 z-40 shadow-md select-none">
         {/* Left: Back, Sidebar Toggle, Clean Title */}
         <div className="flex items-center gap-2 min-w-0">
           <button
@@ -444,7 +513,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </div>
 
           {/* Dynamic Zoom Controls */}
-          <div className="hidden md:flex items-center bg-[#121316] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
+          <div className="flex items-center bg-[#121316] border border-zinc-700/80 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.max(50, z - 15))}
@@ -489,7 +558,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
       <div className="flex-1 flex min-h-0 overflow-hidden relative bg-[#121316]">
         {/* Left Page Thumbnails Sidebar */}
         {isSidebarOpen && pdfDoc && (
-          <aside className="w-56 sm:w-64 bg-[#181a1f] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-3">
+          <aside className="w-56 sm:w-64 bg-[#181a1f] border-r border-black/60 flex flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-3 select-none">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 px-1 pb-1 border-b border-zinc-800/80 flex items-center justify-between">
               <span>Pages</span>
               <span className="text-zinc-500 font-normal">{numPages}</span>
@@ -529,7 +598,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           </aside>
         )}
 
-        {/* Scrollable Canvas Document View */}
+        {/* Scrollable HiDPI Document View */}
         <div
           ref={scrollContainerRef}
           className="flex-1 h-full overflow-y-auto p-4 sm:p-6 flex flex-col items-center custom-scrollbar bg-[#121316]"
