@@ -21,24 +21,20 @@ interface YoouzInvestorPitchViewProps {
 }
 
 const SECTIONS = [
-  { page: 1, title: "Executive Thesis & Foundational Mandate" },
-  { page: 2, title: "Strategic Overview & Table of Contents" },
-  { page: 3, title: "The Market Problem: The Fake Review Crisis" },
-  { page: 4, title: "The Solution: The 60-Second Video Protocol" },
-  { page: 5, title: "Consumer Experience: Mobile PWA & Discovery" },
-  { page: 6, title: "The Immersive Vertical Video Player" },
-  { page: 7, title: "Community, Creator Profiles & Direct Sharing" },
-  { page: 8, title: "Interactive Comments & Inquiries Drawer" },
-  { page: 9, title: "Business Profile Architecture & Action Portal" },
-  { page: 10, title: "The Recording Studio: Hardware Camera Lock" },
-  { page: 11, title: "Interactive Map & Geolocation Discovery" },
-  { page: 12, title: "B2B Merchant Suite: Verification & Claiming" },
-  { page: 13, title: "B2B Growth Tools: Tabletop QR Stands" },
-  { page: 14, title: "Branded Ad Exporter & 1-Click Video Embeds" },
-  { page: 15, title: "Technical Architecture: Bunny.net & Cloud SQL" },
-  { page: 16, title: "Business Model & Revenue Architecture" },
-  { page: 17, title: "Competitive Moat: Why Incumbents Cannot Replicate" },
-  { page: 18, title: "Execution Roadmap & Investment Opportunity" },
+  { page: 1, title: "Executive Summary & Core Mission" },
+  { page: 2, title: "Complete Platform Guide & 18-Section Breakdown" },
+  { page: 3, title: "The Market Problem & 60-Second Video Protocol" },
+  { page: 4, title: "Trust Flywheel & Mobile Web App (PWA)" },
+  { page: 5, title: "Vertical Video Player & Community Architecture" },
+  { page: 6, title: "Interactive Comments & Business Profile Portal" },
+  { page: 7, title: "Recording Studio Hardware Lock & Interactive Map" },
+  { page: 8, title: "Local Commerce Metrics & Yoouz for Business" },
+  { page: 9, title: "B2B Growth Engine: Tabletop QR Stands & Viral Loop" },
+  { page: 10, title: "Branded Ad Exporter, Website Widget & Tech Stack" },
+  { page: 11, title: "Cloud SQL, 75+ Languages, AI SEO & Pricing Tiers" },
+  { page: 12, title: "Unit Economics, ARR Scaling & Competitive Moat" },
+  { page: 13, title: "Four Defensive Moats & Execution Roadmap" },
+  { page: 14, title: "Phase 2/3 Milestones & Investor Summary" },
 ];
 
 /**
@@ -238,7 +234,7 @@ const PdfThumbnailCanvas: React.FC<{
 
 export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ onBackToApp }) => {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
-  const [numPages, setNumPages] = useState<number>(18);
+  const [numPages, setNumPages] = useState<number>(14);
   const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(true);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
 
@@ -338,7 +334,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
         const doc = await loadingTask.promise;
         if (isMounted) {
           setPdfDoc(doc);
-          setNumPages(doc.numPages || 18);
+          setNumPages(doc.numPages || 14);
           setIsLoadingPdf(false);
         }
       } catch (err: any) {
@@ -353,7 +349,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({ 
           const doc = await fallbackTask.promise;
           if (isMounted) {
             setPdfDoc(doc);
-            setNumPages(doc.numPages || 18);
+            setNumPages(doc.numPages || 14);
             setIsLoadingPdf(false);
             return;
           }

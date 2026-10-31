@@ -4517,17 +4517,19 @@ async function startServer() {
   });
 
   // Dedicated route to stream the exact 100% original Investor Pitch Memorandum PDF inline
-  app.get(["/api/pitch/raw-pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf"], (_req, res) => {
+  app.get(["/api/pitch/raw-pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf", "/Yoouz_Institutional_Investor_Memorandum.pdf"], (_req, res) => {
     const candidates = [
-      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Investor_Pitch_Memorandum__981d9343.pdf"),
+      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"),
+      path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
       path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
+      path.join(process.cwd(), "dist", "Yoouz_Institutional_Investor_Memorandum.pdf"),
       path.join(process.cwd(), "dist", "Yoouz_Investor_Pitch_Memorandum.pdf"),
       path.join(_dirname, "public", "Yoouz_Investor_Pitch_Memorandum.pdf")
     ];
     for (const p of candidates) {
       if (fs.existsSync(p)) {
         res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Investor_Pitch_Memorandum.pdf\"");
+        res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Institutional_Investor_Memorandum.pdf\"");
         res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         return res.sendFile(p);
