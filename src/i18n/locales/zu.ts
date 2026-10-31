@@ -183,7 +183,7 @@ export const zu: TranslationSchema = {
     readyToVerify: "Ingabe usukulungele ukuqinisekisa ibhizinisi lakho? Xhumana nethimba lethu losizo.",
     privacySecurityTitle: "Ubumfihlo, Ukuphepha Nokuthobela Imithetho",
     googleVerified: "Kuqinisekiswe yi-Google • Alukho iphasiwedi eligcinwayo",
-    privacySummary: "I-Yoouz ilandela amazinga aphezulu kakhulu okuvikela idatha. Sisebenzisa i-Google OAuth, ikhamera ebukhoma ngaphandle kokufinyelela izithombe zakho, futhi silandela imithetho yaseSan Francisco, California.",
+    privacySummary: "I-Yoouz ilandela amazinga aphezulu kakhulu okuvikela idatha. Sisebenzisa i-Google OAuth, ikhamera ebukhoma ngaphandle kokufinyelela izithombe zakho, futhi silandela imithetho yaseGoverning Compliance.",
     updatedDate: "Kubuyekezwe ngo-Agasti 24, 2026",
     privacyPolicyTitle: "Inqubomgomo Yobumfihlo",
     privacyPolicyDesc: "Kuhlanganisa idatha ye-akhawunti, ukusetshenziswa kwekhamera ebukhoma, ukwenqatshelwa kokuthengisa idatha, namalungelo okususa idatha.",
@@ -197,7 +197,7 @@ export const zu: TranslationSchema = {
     recordingPillarDesc: "Ikhamera nombhobho kusebenza kuphela uma uqopha ukubuyekeza. Akukho ukufinyelela kusitoreji sedivayisi yakho.",
     zeroSellingPillarTitle: "Akukho Ukuthengiswa Kwedatha",
     zeroSellingPillarDesc: "Siyasiqinisekisa ukuthi asisoze sathengisa noma sabelana ngedatha yakho yangasese nabantu besithathu.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Yonke imigomo nezinqubomgomo ingaphansi kwegunya lomthetho Wezwe LaseCalifornia, USA.",
     allSystemsOperational: "Zonke izinhlelo zisebenza kahle",
     dangerZoneTitle: "Indawo Eyingozi: Susa I-akhawunti",
@@ -301,7 +301,7 @@ export const zu: TranslationSchema = {
     termsConditions: "Imigomo Nemibandela",
     privacyPolicy: "Inqubomgomo Yobumfihlo",
     supportDesk: "Ideskhi Losizo",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Wonke amalungelo agodliwe. Abantu Bangempela. Ukubuyekezwa Kwangempela."
   },
   settings: {

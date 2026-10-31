@@ -183,7 +183,7 @@ export const vi: TranslationSchema = {
     readyToVerify: "Bạn đã sẵn sàng xác thực doanh nghiệp? Hãy liên hệ với đội ngũ của chúng tôi.",
     privacySecurityTitle: "Quyền riêng tư, Bảo mật & Tuân thủ pháp lý",
     googleVerified: "Xác thực bởi Google • Không lưu mật khẩu",
-    privacySummary: "Yoouz tuân thủ các tiêu chuẩn bảo vệ dữ liệu nghiêm ngặt nhất. Chúng tôi sử dụng Google OAuth, xử lý camera trực tiếp không truy cập thư viện ảnh và tuân thủ thẩm quyền pháp lý San Francisco, California.",
+    privacySummary: "Yoouz tuân thủ các tiêu chuẩn bảo vệ dữ liệu nghiêm ngặt nhất. Chúng tôi sử dụng Google OAuth, xử lý camera trực tiếp không truy cập thư viện ảnh và tuân thủ thẩm quyền pháp lý Governing Compliance.",
     updatedDate: "Cập nhật ngày 24 tháng 8 năm 2026",
     privacyPolicyTitle: "Chính sách quyền riêng tư",
     privacyPolicyDesc: "Quy định về dữ liệu tài khoản, sử dụng camera trực tiếp, cấm bán dữ liệu và quyền xóa dữ liệu.",
@@ -197,7 +197,7 @@ export const vi: TranslationSchema = {
     recordingPillarDesc: "Camera và micro chỉ kích hoạt trong lúc bạn đang quay đánh giá. Hoàn toàn không truy cập bộ nhớ máy.",
     zeroSellingPillarTitle: "Tuyệt đối không bán dữ liệu",
     zeroSellingPillarDesc: "Cam kết chắc chắn rằng chúng tôi không bao giờ bán hoặc chia sẻ thông tin cá nhân của bạn cho bên thứ ba.",
-    jurisdictionPillarTitle: "San Francisco, California, Hoa Kỳ",
+    jurisdictionPillarTitle: "Governing ComplianceHoa Kỳ",
     jurispillarDesc: "Mọi điều khoản và quy định đều chịu sự điều chỉnh của luật pháp bang California, Hoa Kỳ.",
     allSystemsOperational: "Mọi hệ thống đang hoạt động bình thường",
     dangerZoneTitle: "Vùng nguy hiểm: Xóa tài khoản",
@@ -301,7 +301,7 @@ export const vi: TranslationSchema = {
     termsConditions: "Điều khoản dịch vụ",
     privacyPolicy: "Chính sách quyền riêng tư",
     supportDesk: "Trung tâm hỗ trợ",
-    networkLocation: "Mạng lưới Tin cậy Yoouz • San Francisco, CA",
+    networkLocation: "Mạng lưới Tin cậy Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Bảo lưu mọi quyền. Người thật. Đánh giá thật."
   },
   settings: {

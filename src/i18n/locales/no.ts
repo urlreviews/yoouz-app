@@ -183,7 +183,7 @@ export const no: TranslationSchema = {
     readyToVerify: "Klar til å verifisere bedriften din? Ta kontakt med vårt team.",
     privacySecurityTitle: "Personvern, sikkerhet og overholdelse av regelverk",
     googleVerified: "Google-verifisert • Ingen passord lagres",
-    privacySummary: "Yoouz oppfyller de strengeste standardene for personvern. Vi bruker Google OAuth, direkte kamerabehandling uten lagring i lokalt bildegalleri og er underlagt lovgivningen i San Francisco, California.",
+    privacySummary: "Yoouz oppfyller de strengeste standardene for personvern. Vi bruker Google OAuth, direkte kamerabehandling uten lagring i lokalt bildegalleri og er underlagt lovgivningen i Governing Compliance.",
     updatedDate: "Oppdatert 24. august 2026",
     privacyPolicyTitle: "Personvernerklæring",
     privacyPolicyDesc: "Beskriver håndtering av kontodata, kamerabruk, forbud mot videresalg av data og retten til sletting.",
@@ -197,7 +197,7 @@ export const no: TranslationSchema = {
     recordingPillarDesc: "Kamera og mikrofon er kun aktive mens du tar opp videoen. Ingen tilgang til bildegalleriet.",
     zeroSellingPillarTitle: "Ingen datasalg",
     zeroSellingPillarDesc: "Vi selger eller deler aldri personopplysningene dine med tredjeparter.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Vilkår og retningslinjer reguleres under lovene i delstaten California, USA.",
     allSystemsOperational: "Alle systemer fungerer normalt",
     dangerZoneTitle: "Faresone: Slett konto",
@@ -301,7 +301,7 @@ export const no: TranslationSchema = {
     termsConditions: "Tjenestevilkår",
     privacyPolicy: "Personvernerklæring",
     supportDesk: "Brukerstøtte",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Alle rettigheter forbeholdt. Ekte mennesker. Ekte anmeldelser."
   },
   settings: {

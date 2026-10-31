@@ -183,7 +183,7 @@ export const sq: TranslationSchema = {
     readyToVerify: "Gati për të verifikuar biznesin tuaj? Kontaktoni ekipin tonë të mbështetjes.",
     privacySecurityTitle: "Privatësia, Siguria dhe Pajtueshmëria Ligjore",
     googleVerified: "I Verifikuar nga Google • Nuk ruhet asnjë fjalëkalim",
-    privacySummary: "Yoouz ndjek standardet më të larta të mbrojtjes së të dhënave. Ne përdorim Google OAuth, kamerë të drejtpërdrejtë pa qasje në galerinë tuaj, dhe respektojmë ligjet e San Francisco, California.",
+    privacySummary: "Yoouz ndjek standardet më të larta të mbrojtjes së të dhënave. Ne përdorim Google OAuth, kamerë të drejtpërdrejtë pa qasje në galerinë tuaj, dhe respektojmë ligjet e Governing Compliance.",
     updatedDate: "Përditësuar më 24 Gusht 2026",
     privacyPolicyTitle: "Politika e Privatësisë",
     privacyPolicyDesc: "Përfshin të dhënat e llogarisë, përdorimin e kamerës, ndalimin e shitjes së të dhënave dhe të drejtat e fshirjes.",
@@ -197,7 +197,7 @@ export const sq: TranslationSchema = {
     recordingPillarDesc: "Kamera dhe mikrofoni funksionojnë vetëm kur regjistroni një rishikim. Nuk ka qasje në memorien e pajisjes suaj.",
     zeroSellingPillarTitle: "Asnjë Shitje e të Dhënave",
     zeroSellingPillarDesc: "Ne garantojmë se nuk do t'i shesim ose ndajmë kurrë të dhënat tuaja personale me palë të treta.",
-    jurisdictionPillarTitle: "San Francisco, Kaliforni, SHBA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Të gjitha kushtet dhe politikat i nënshtrohen juridiksionit ligjor të Shtetit të Kalifornisë, SHBA.",
     allSystemsOperational: "Të gjitha sistemet funksionojnë normalisht",
     dangerZoneTitle: "Zona e Rrezikut: Fshirja e Llogarisë",
@@ -301,7 +301,7 @@ export const sq: TranslationSchema = {
     termsConditions: "Kushtet dhe Rregullat",
     privacyPolicy: "Politika e Privatësisë",
     supportDesk: "Qendra e Mbështetjes",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Të gjitha të drejtat e rezervuara. Njerëz Realë. Rishikime Reale."
   },
   settings: {

@@ -11321,7 +11321,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => void }> = ({ onClose, onSave }) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Restaurant");
-  const [city, setCity] = useState("San Francisco");
+  const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -11341,7 +11341,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       name: name.trim(),
       category: category.trim(),
       categoryType: "restaurants",
-      address: address.trim() || `${city}, CA`,
+      address: address.trim() || city.trim() || "Online",
       city: city.trim(),
       lat: 37.7749,
       lng: -122.4194,
@@ -11414,7 +11414,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. San Francisco"
+                placeholder="e.g. New York"
                 className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
               />
             </div>
@@ -11424,7 +11424,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. 66 Mint St, San Francisco, CA"
+                placeholder="e.g. 100 Main St, Suite 200"
                 className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
               />
             </div>

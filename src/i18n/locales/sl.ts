@@ -197,7 +197,7 @@ export const sl: TranslationSchema = {
     recordingPillarDesc: "Kamera in mikrofon sta vključena le med aktivnim snemanjem. Dostop do galerije je onemogočen.",
     zeroSellingPillarTitle: "Nična prodaja podatkov",
     zeroSellingPillarDesc: "Zagotavljamo, da vaših osebnih podatkov nikoli ne prodajamo ali posredujemo tretjim osebam.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornija, ZDA",
+    jurisdictionPillarTitle: "Governing Complianceja, ZDA",
     jurispillarDesc: "Vsi pogoji in pravila se presojajo po zakonih zvezne države Kalifornije v ZDA.",
     allSystemsOperational: "Vsi sistemi delujejo normalno",
     dangerZoneTitle: "Nevarno območje: Izbris računa",
@@ -301,7 +301,7 @@ export const sl: TranslationSchema = {
     termsConditions: "Pogoji storitve",
     privacyPolicy: "Pravilnik o zasebnosti",
     supportDesk: "Center za podporo",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Vse pravice pridržane. Resnični ljudje. Resnične ocene."
   },
   settings: {

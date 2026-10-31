@@ -183,7 +183,7 @@ export const tl: TranslationSchema = {
     readyToVerify: "Handa nang patunayan ang iyong negosyo? Makipag-ugnayan sa aming koponan.",
     privacySecurityTitle: "Privacy, Seguridad at Legal na Pagsunod",
     googleVerified: "Beripikado ng Google • Walang password na iniimbak",
-    privacySummary: "Sumusunod ang Yoouz sa pinakamataas na pamantayan sa proteksyon ng data. Gumagamit kami ng Google OAuth, live camera na walang access sa gallery ng larawan, at sumusunod sa mga batas ng San Francisco, California.",
+    privacySummary: "Sumusunod ang Yoouz sa pinakamataas na pamantayan sa proteksyon ng data. Gumagamit kami ng Google OAuth, live camera na walang access sa gallery ng larawan, at sumusunod sa mga batas ng Governing Compliance.",
     updatedDate: "Na-update noong Agosto 24, 2026",
     privacyPolicyTitle: "Patakaran sa Privacy",
     privacyPolicyDesc: "Naglalaman ng data ng account, paggamit ng live camera, pagbabawal sa pagbebenta ng data, at mga karapatan sa pagbura.",
@@ -197,7 +197,7 @@ export const tl: TranslationSchema = {
     recordingPillarDesc: "Ang camera at mikropono ay bukas lamang habang nagre-record ka ng review. Walang access sa storage ng device.",
     zeroSellingPillarTitle: "Walang Pagbebenta ng Data",
     zeroSellingPillarDesc: "Ginagarantiya namin na hindi namin ibebenta o ibabahagi ang iyong personal na data sa mga third party.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Lahat ng tuntunin at patakaran ay sumasailalim sa mga batas ng Estado ng California, USA.",
     allSystemsOperational: "Lahat ng sistema ay gumagana nang maayos",
     dangerZoneTitle: "Panganib na Sona: Pagbura ng Account",
@@ -301,7 +301,7 @@ export const tl: TranslationSchema = {
     termsConditions: "Mga Tuntunin at Kundisyon",
     privacyPolicy: "Patakaran sa Privacy",
     supportDesk: "Support Desk",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Nakareserba ang lahat ng karapatan. Totoong Tao. Totoong Review."
   },
   settings: {

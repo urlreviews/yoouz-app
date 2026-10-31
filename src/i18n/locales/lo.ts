@@ -183,7 +183,7 @@ export const lo: TranslationSchema = {
     readyToVerify: "ພ້ອມແລ້ວບໍທີ່ຈະຢັ້ງຢືນທຸລະກິດຂອງທ່ານ? ຕິດຕໍ່ທີມງານຊ່ວຍເຫຼືອຂອງພວກເຮົາ.",
     privacySecurityTitle: "ຄວາມເປັນສ່ວນຕົວ, ຄວາມປອດໄພ ແລະ ຄວາມຖືກຕ້ອງຕາມກົດໝາຍ",
     googleVerified: "ຢັ້ງຢືນໂດຍ Google • ບໍ່ມີການເກັບລະຫັດຜ່ານ",
-    privacySummary: "Yoouz ປະຕິບັດຕາມມາດຕະຖານການປົກປ້ອງຂໍ້ມູນທີ່ເຂັ້ມງວດທີ່ສຸດ. ພວກເຮົາໃຊ້ Google OAuth, ກ້ອງສົດໂດຍບໍ່ເຂົ້າເຖິງຄັງຮູບ, ແລະ ປະຕິບັດຕາມກົດໝາຍຂອງ San Francisco, California.",
+    privacySummary: "Yoouz ປະຕິບັດຕາມມາດຕະຖານການປົກປ້ອງຂໍ້ມູນທີ່ເຂັ້ມງວດທີ່ສຸດ. ພວກເຮົາໃຊ້ Google OAuth, ກ້ອງສົດໂດຍບໍ່ເຂົ້າເຖິງຄັງຮູບ, ແລະ ປະຕິບັດຕາມກົດໝາຍຂອງ Governing Compliance.",
     updatedDate: "ອັບເດດເມື່ອ 24 ສິງຫາ 2026",
     privacyPolicyTitle: "ນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ",
     privacyPolicyDesc: "ກວມເອົາຂໍ້ມູນບັນຊີ, ການໃຊ້ກ້ອງໜ້າ, ການຫ້າມຂາຍຂໍ້ມູນ ແລະ ສິດທິໃນການລຶບຂໍ້ມູນ.",
@@ -197,7 +197,7 @@ export const lo: TranslationSchema = {
     recordingPillarDesc: "ກ້ອງ ແລະ ໄມໂຄຣໂຟນຈະເຮັດວຽກສະເພາະຕອນທີ່ທ່ານກຳລັງອັດຣີວິວ. ບໍ່ມີການເຂົ້າເຖິງຄວາມຈຳໃນອຸປະກອນຂອງທ່ານ.",
     zeroSellingPillarTitle: "ບໍ່ມີການຂາຍຂໍ້ມູນເດັດຂາດ",
     zeroSellingPillarDesc: "ພວກເຮົາຮັບປະກັນວ່າຈະບໍ່ຂາຍ ຫຼື ແບ່ງປັນຂໍ້ມູນສ່ວນຕົວຂອງທ່ານໃຫ້ບຸກຄົນທີສາມ.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "ຂໍ້ກຳນົດ ແລະ ນະໂຍບາຍທັງໝົດຢູ່ພາຍໃຕ້ສິດອຳນາດສານຂອງລັດຄາລິຟໍເນຍ, ສະຫະລັດອາເມລິກາ.",
     allSystemsOperational: "ທຸກລະບົບເຮັດວຽກເປັນປົກກະຕິ",
     dangerZoneTitle: "ເຂດອັນຕະລາຍ: ລຶບບັນຊີ",
@@ -301,7 +301,7 @@ export const lo: TranslationSchema = {
     termsConditions: "ຂໍ້ກຳນົດ ແລະ ເງື່ອນໄຂ",
     privacyPolicy: "ນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ",
     supportDesk: "ສູນຊ່ວຍເຫຼືອ",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. ສະຫງວນລິຂະສິດທັງໝົດ. ຄົນແທ້. ຣີວິວແທ້."
   },
   settings: {

@@ -301,7 +301,7 @@ export const ne: TranslationSchema = {
     termsConditions: "नियम तथा सर्तहरू",
     privacyPolicy: "गोपनीयता नीति",
     supportDesk: "सहायता केन्द्र",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. सबै अधिकार सुरक्षित। वास्तविक मानिसहरू। वास्तविक समीक्षाहरू।"
   },
   settings: {

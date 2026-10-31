@@ -183,7 +183,7 @@ export const it: TranslationSchema = {
     readyToVerify: "Pronto a verificare la tua attività? Contatta il team dedicato.",
     privacySecurityTitle: "Privacy, Sicurezza & Conformità Legale",
     googleVerified: "Verificato da Google • Nessuna password salvata",
-    privacySummary: "Yoouz rispetta i più severi standard di privacy. Utilizziamo Google OAuth, elaboriamo il flusso video in tempo reale senza accedere alla tua galleria foto e siamo conformi alle leggi di San Francisco, California.",
+    privacySummary: "Yoouz rispetta i più severi standard di privacy. Utilizziamo Google OAuth, elaboriamo il flusso video in tempo reale senza accedere alla tua galleria foto e siamo conformi alle leggi di Governing Compliance.",
     updatedDate: "Aggiornato il 24 agosto 2026",
     privacyPolicyTitle: "Informativa sulla Privacy",
     privacyPolicyDesc: "Descrive il trattamento dei dati dell'account, l'uso della fotocamera e del microfono in tempo reale e il diritto all'oblio.",
@@ -197,7 +197,7 @@ export const it: TranslationSchema = {
     recordingPillarDesc: "Fotocamera e microfono si attivano esclusivamente durante la registrazione attiva.",
     zeroSellingPillarTitle: "Nessuna Vendita di Dati",
     zeroSellingPillarDesc: "Non vendiamo né cediamo mai i tuoi dati personali a terzi.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "I termini e le politiche di Yoouz sono disciplinati dalle leggi dello Stato della California, USA.",
     allSystemsOperational: "Tutti i Sistemi Operativi",
     dangerZoneTitle: "Zona Pericolosa: Eliminazione Profilo",
@@ -301,7 +301,7 @@ export const it: TranslationSchema = {
     termsConditions: "Termini e Condizioni",
     privacyPolicy: "Informativa sulla Privacy",
     supportDesk: "Help Desk",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Tutti i diritti riservati. Persone Reali. Recensioni Reali."
   },
   settings: {

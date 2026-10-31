@@ -183,7 +183,7 @@ export const et: TranslationSchema = {
     readyToVerify: "Valmis oma ettevõtet kinnitama? Võta ühendust meie tiimiga.",
     privacySecurityTitle: "Privaatsus, turvalisus ja nõuetele vastavus",
     googleVerified: "Google'i poolt kinnitatud • Paroole ei salvestata",
-    privacySummary: "Yoouz järgib kõrgeimaid andmekaitsestandardeid. Kasutame Google OAuth-i, reaalajas kaameratöötlust ilma fotogalerii juurdepääsuta ning allume San Francisco (California) seadustele.",
+    privacySummary: "Yoouz järgib kõrgeimaid andmekaitsestandardeid. Kasutame Google OAuth-i, reaalajas kaameratöötlust ilma fotogalerii juurdepääsuta ning allume Global (California) seadustele.",
     updatedDate: "Uuendatud 24. augustil 2026",
     privacyPolicyTitle: "Privaatsuspoliitika",
     privacyPolicyDesc: "Kirjeldab konto andmeid, reaalajas kaamera kasutamist, andmete müügi keeldu ja kustutamisõigust.",
@@ -197,7 +197,7 @@ export const et: TranslationSchema = {
     recordingPillarDesc: "Kaamera ja mikrofon on aktiivsed vaid arvustuse filmimise hetkel. Juurdepääs seadme mälule puudub.",
     zeroSellingPillarTitle: "Null andmete müüki",
     zeroSellingPillarDesc: "Garanteerime kategooriliselt, et me ei müü ega jaga teie isikuandmeid kolmandatele osapooltele.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Kõigile tingimustele ja reeglitele kohaldatakse USA California osariigi seadusi.",
     allSystemsOperational: "Kõik süsteemid töötavad tavapäraselt",
     dangerZoneTitle: "Ohutsoon: Konto kustutamine",
@@ -301,7 +301,7 @@ export const et: TranslationSchema = {
     termsConditions: "Teenusetingimused",
     privacyPolicy: "Privaatsuspoliitika",
     supportDesk: "Tugikeskus",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Kõik õigused kaitstud. Päris inimesed. Päris arvustused."
   },
   settings: {

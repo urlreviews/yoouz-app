@@ -301,7 +301,7 @@ export const kk: TranslationSchema = {
     termsConditions: "Шарттар мен ережелер",
     privacyPolicy: "Құпиялылық саясаты",
     supportDesk: "Қолдау қызметі",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Барлық құқықтар қорғалған. Шынайы адамдар. Шынайы пікірлер."
   },
   settings: {

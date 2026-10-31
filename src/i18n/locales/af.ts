@@ -183,7 +183,7 @@ export const af: TranslationSchema = {
     readyToVerify: "Gereed om jou besigheid te verifieer? Kontak ons ondersteuningspan.",
     privacySecurityTitle: "Privaatheid, Sekuriteit en Wetlike Nakoming",
     googleVerified: "Geverifieer deur Google • Geen wagwoorde gestoor nie",
-    privacySummary: "Yoouz volg die strengste databeskermingstandaarde. Ons gebruik Google OAuth, lewendige kamera sonder toegang tot jou galery, en voldoen aan die wette van San Francisco, Kalifornië.",
+    privacySummary: "Yoouz volg die strengste databeskermingstandaarde. Ons gebruik Google OAuth, lewendige kamera sonder toegang tot jou galery, en voldoen aan die wette van Governing Complianceë.",
     updatedDate: "Opgedateer op 24 Augustus 2026",
     privacyPolicyTitle: "Privaatheidsbeleid",
     privacyPolicyDesc: "Dek rekeningdata, voorkameragebruik, verbod op dataverkoop en verwyderingsregte.",
@@ -197,7 +197,7 @@ export const af: TranslationSchema = {
     recordingPillarDesc: "Die kamera en mikrofoon word slegs geaktiveer terwyl jy 'n resensie opneem. Geen toegang tot jou toestel se geheue nie.",
     zeroSellingPillarTitle: "Geen Dataverkoop Nie",
     zeroSellingPillarDesc: "Ons waarborg dat ons nooit jou persoonlike data aan derde partye sal verkoop of deel nie.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornië, VSA",
+    jurisdictionPillarTitle: "Governing Complianceë, VSA",
     jurispillarDesc: "Alle bepalings en beleide val onder die jurisdiksie van die Staat van Kalifornië, VSA.",
     allSystemsOperational: "Alle stelsels werk normaal",
     dangerZoneTitle: "Gevaarsone: Verwyder Rekening",
@@ -301,7 +301,7 @@ export const af: TranslationSchema = {
     termsConditions: "Terme en Voorwaardes",
     privacyPolicy: "Privaatheidsbeleid",
     supportDesk: "Hulptoonbank",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Alle regte voorbehou. Regte Mense. Regte Resensies."
   },
   settings: {

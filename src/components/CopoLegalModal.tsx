@@ -79,7 +79,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 {t("legal.title", "Yoouz Legal & Compliance")}
               </h2>
               <p className="text-[11px] text-zinc-200 font-medium">
-                {t("legal.jurisdiction", "Governing Jurisdiction: San Francisco, California, USA")}
+                {t("legal.jurisdiction", "Governing Compliance & Data Protection")}
               </p>
             </div>
           </div>
@@ -265,7 +265,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   {t("legal.sec7Title", "Governing Law & Jurisdiction")}
                 </h3>
                 <p className="text-xs text-zinc-200 leading-relaxed">
-                  {t("legal.sec7Body", "These terms are governed by the laws of the State of California, USA, without regard to its conflict of law provisions. Any legal action or proceeding arising from these terms shall be brought exclusively in the courts located in San Francisco, California, USA.")}
+                  {t("legal.sec7Body", "These terms are governed by applicable privacy regulations and digital service guidelines. Any legal inquiry or proceeding arising from these terms shall be submitted through our official platform compliance desk.")}
                 </p>
               </section>
             </article>
@@ -394,7 +394,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
         {/* Modal Footer */}
         <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-200 shrink-0">
           <span className="font-semibold text-[11px] text-zinc-200">
-            {t("legal.copyright", "© 2026 Yoouz Inc. • San Francisco, CA")}
+            {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved.")}
           </span>
           <button
             onClick={onClose}

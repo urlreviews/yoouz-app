@@ -183,7 +183,7 @@ export const ms: TranslationSchema = {
     readyToVerify: "Bersedia untuk mengesahkan perniagaan anda? Hubungi pasukan kami.",
     privacySecurityTitle: "Privasi, Keselamatan & Pematuhan Undang-undang",
     googleVerified: "Disahkan oleh Google • Tiada penyimpanan kata laluan",
-    privacySummary: "Yoouz mematuhi standard perlindungan data yang tertinggi. Kami menggunakan Google OAuth, pemprosesan kamera langsung tanpa akses kepada galeri foto dan tertakluk di bawah bidang kuasa San Francisco, California.",
+    privacySummary: "Yoouz mematuhi standard perlindungan data yang tertinggi. Kami menggunakan Google OAuth, pemprosesan kamera langsung tanpa akses kepada galeri foto dan tertakluk di bawah bidang kuasa Governing Compliance.",
     updatedDate: "Dikemas kini pada 24 Ogos 2026",
     privacyPolicyTitle: "Dasar Privasi",
     privacyPolicyDesc: "Menerangkan data akaun, penggunaan kamera langsung, larangan penjualan data dan hak pemadaman.",
@@ -197,7 +197,7 @@ export const ms: TranslationSchema = {
     recordingPillarDesc: "Kamera dan mikrofon hanya aktif semasa anda merakam ulasan. Tiada akses ke memori peranti.",
     zeroSellingPillarTitle: "Sifar penjualan data",
     zeroSellingPillarDesc: "Kami menjamin secara mutlak bahawa data peribadi anda tidak pernah dijual atau diserahkan kepada pihak ketiga.",
-    jurisdictionPillarTitle: "San Francisco, California, Amerika Syarikat",
+    jurisdictionPillarTitle: "Governing ComplianceAmerika Syarikat",
     jurispillarDesc: "Semua syarat dan polisi tertakluk di bawah undang-undang Negeri California, Amerika Syarikat.",
     allSystemsOperational: "Semua sistem beroperasi seperti biasa",
     dangerZoneTitle: "Zon Bahaya: Padam Akaun",
@@ -301,7 +301,7 @@ export const ms: TranslationSchema = {
     termsConditions: "Terma dan Syarat",
     privacyPolicy: "Dasar Privasi",
     supportDesk: "Pusat Sokongan",
-    networkLocation: "Rangkaian Kepercayaan Yoouz • San Francisco, CA",
+    networkLocation: "Rangkaian Kepercayaan Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Hak cipta terpelihara. Manusia sebenar. Ulasan sebenar."
   },
   settings: {

@@ -183,7 +183,7 @@ export const nl: TranslationSchema = {
     readyToVerify: "Klaar om uw bedrijf te verifiëren en te claimen?",
     privacySecurityTitle: "Privacy, Beveiliging & Naleving",
     googleVerified: "Google OAuth • Geen wachtwoorden opgeslagen",
-    privacySummary: "Yoouz is gebouwd met strenge privacynormen. Wij gebruiken veilige wachtwoordloze e-mailverificatie, verwerken camerabeelden uitsluitend live zonder toegang tot uw fotobibliotheek, en vallen onder de jurisdictie van San Francisco, CA, VS.",
+    privacySummary: "Yoouz is gebouwd met strenge privacynormen. Wij gebruiken veilige wachtwoordloze e-mailverificatie, verwerken camerabeelden uitsluitend live zonder toegang tot uw fotobibliotheek, en vallen onder de jurisdictie van Global, CA, VS.",
     updatedDate: "Bijgewerkt: Augustus 2026",
     privacyPolicyTitle: "Privacybeleid",
     privacyPolicyDesc: "Informatie over gegevensbescherming, live cameragebruik, nul verkoop van gegevens en het recht op gegevensverwijdering.",
@@ -197,8 +197,8 @@ export const nl: TranslationSchema = {
     recordingPillarDesc: "Toegang tot camera en microfoon is alleen actief tijdens opnames. Geen toegang tot apparaatopslag.",
     zeroSellingPillarTitle: "Geen Verkoop van Gegevens",
     zeroSellingPillarDesc: "Wij verkopen, verhuren of verhandelen uw persoonlijke gegevens nooit aan derden.",
-    jurisdictionPillarTitle: "San Francisco, CA, VS",
-    jurisdictionPillarDesc: "Voorwaarden en privacybeleid vallen onder het recht van de staat Californië, VS met jurisdictie in San Francisco.",
+    jurisdictionPillarTitle: "Global, CA, VS",
+    jurisdictionPillarDesc: "Voorwaarden en privacybeleid vallen onder het recht van de staat Californië, VS met jurisdictie in Global.",
     allSystemsOperational: "Alle Systemen Operationeel",
     dangerZoneTitle: "Gevarenzone: Account & Profiel Verwijderen",
     dangerZoneDesc: "Verwijder uw profielgegevens, foto en inloggegevens definitief. Dit kan niet ongedaan worden gemaakt.",
@@ -316,7 +316,7 @@ export const nl: TranslationSchema = {
     termsConditions: "Algemene Voorwaarden",
     privacyPolicy: "Privacybeleid",
     supportDesk: "Helpdesk",
-    networkLocation: "Yoouz Vertrouwensnetwerk • San Francisco, CA",
+    networkLocation: "Yoouz Vertrouwensnetwerk • Global, CA",
     copyright: "© 2026 Yoouz Inc. Alle rechten voorbehouden. Echte Mensen. Echte Reviews."
   },
   settings: {

@@ -183,7 +183,7 @@ export const es: TranslationSchema = {
     readyToVerify: "¿Listo para verificar tu negocio? Contacta a nuestro equipo especializado.",
     privacySecurityTitle: "Privacidad, Seguridad y Cumplimiento Legal",
     googleVerified: "Verificado por Google • Cero Almacenamiento de Contraseñas",
-    privacySummary: "Yoouz está diseñado con estrictos estándares de privacidad. Usamos Google OAuth para inicio de sesión seguro, procesamos video en tiempo real sin acceder a tu galería de fotos y nos regimos por las leyes de San Francisco, California.",
+    privacySummary: "Yoouz está diseñado con estrictos estándares de privacidad. Usamos Google OAuth para inicio de sesión seguro, procesamos video en tiempo real sin acceder a tu galería de fotos y nos regimos por las leyes de Governing Compliance.",
     updatedDate: "Actualizado el 24 de agosto de 2026",
     privacyPolicyTitle: "Política de Privacidad",
     privacyPolicyDesc: "Detalla el tratamiento de datos de la cuenta, uso de cámara/micrófono en vivo, política de cero venta de datos y tu derecho de eliminación.",
@@ -197,7 +197,7 @@ export const es: TranslationSchema = {
     recordingPillarDesc: "La cámara y micrófono solo se activan durante la grabación. Nunca accedemos a tu galería de fotos.",
     zeroSellingPillarTitle: "Cero Venta de Datos",
     zeroSellingPillarDesc: "Nunca vendemos ni alquilamos tu información personal a terceros.",
-    jurisdictionPillarTitle: "San Francisco, California, EE. UU.",
+    jurisdictionPillarTitle: "Governing ComplianceEE. UU.",
     jurispillarDesc: "Los términos y políticas de privacidad de Yoouz se rigen por las leyes del Estado de California, EE. UU.",
     allSystemsOperational: "Todos los Sistemas Operativos",
     dangerZoneTitle: "Zona de Peligro: Eliminar Perfil",
@@ -301,7 +301,7 @@ export const es: TranslationSchema = {
     termsConditions: "Términos y Condiciones",
     privacyPolicy: "Política de Privacidad",
     supportDesk: "Mesa de Ayuda",
-    networkLocation: "Red de Confianza Yoouz • San Francisco, CA",
+    networkLocation: "Red de Confianza Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Todos los derechos reservados. Personas Reales. Reseñas Reales."
   },
   settings: {

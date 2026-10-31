@@ -183,7 +183,7 @@ export const sw: TranslationSchema = {
     readyToVerify: "Uko tayari kuthibitisha biashara yako? Wasiliana na timu yetu ya usaidizi.",
     privacySecurityTitle: "Faragha, Usalama na Uzingatiaji wa Sheria",
     googleVerified: "Imethibitishwa na Google • Hakuna nenosiri linalohifadhiwa",
-    privacySummary: "Yoouz inazingatia viwango vya juu zaidi vya ulinzi wa data. Tunatumia Google OAuth, kamera ya mbele ya moja kwa moja bila kufikia picha zako zilizohifadhiwa, na kufuata sheria za San Francisco, California.",
+    privacySummary: "Yoouz inazingatia viwango vya juu zaidi vya ulinzi wa data. Tunatumia Google OAuth, kamera ya mbele ya moja kwa moja bila kufikia picha zako zilizohifadhiwa, na kufuata sheria za Governing Compliance.",
     updatedDate: "Imesasishwa tarehe 24 Agosti, 2026",
     privacyPolicyTitle: "Sera ya Faragha",
     privacyPolicyDesc: "Inajumuisha data ya akaunti, matumizi ya kamera ya moja kwa moja, marufuku ya kuuza data, na haki za kufuta.",
@@ -197,7 +197,7 @@ export const sw: TranslationSchema = {
     recordingPillarDesc: "Kamera na maikrofoni hufanya kazi unapofanya mapitio pekee. Hatuna ufikiaji wa hifadhi ya kifaa chako.",
     zeroSellingPillarTitle: "Hakuna Uuzaji wa Data",
     zeroSellingPillarDesc: "Tunathibitisha kuwa hatutawahi kuuza au kushiriki data yako binafsi na wahusika wengine.",
-    jurisdictionPillarTitle: "San Francisco, California, Marekani",
+    jurisdictionPillarTitle: "Governing ComplianceMarekani",
     jurispillarDesc: "Masharti na sera zote zinafuata mamlaka ya kisheria ya Jimbo la California, Marekani.",
     allSystemsOperational: "Mifumo yote inafanya kazi vizuri",
     dangerZoneTitle: "Eneo Hatari: Futa Akaunti",
@@ -301,7 +301,7 @@ export const sw: TranslationSchema = {
     termsConditions: "Sheria na Masharti",
     privacyPolicy: "Sera ya Faragha",
     supportDesk: "Dawati la Usaidizi",
-    networkLocation: "Mtandao wa Uaminifu wa Yoouz • San Francisco, CA",
+    networkLocation: "Mtandao wa Uaminifu wa Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Haki zote zimehifadhiwa. Watu Halisi. Mapitio Halisi."
   },
   settings: {

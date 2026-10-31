@@ -301,7 +301,7 @@ export const az: TranslationSchema = {
     termsConditions: "Şərtlər və Qaydalar",
     privacyPolicy: "Məxfilik Siyasəti",
     supportDesk: "Dəstək Mərkəzi",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Bütün hüquqlar qorunur. Real İnsanlar. Real Rəylər."
   },
   settings: {

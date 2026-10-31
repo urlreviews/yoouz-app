@@ -183,7 +183,7 @@ export const ca: TranslationSchema = {
     readyToVerify: "A punt per verificar el teu negoci? Contacta amb el nostre equip de suport.",
     privacySecurityTitle: "Privadesa, Seguretat i Compliment Legal",
     googleVerified: "Verificat per Google • Sense contrasenyes emmagatzemades",
-    privacySummary: "Yoouz segueix els estàndards més estrictes de protecció de dades. Utilitzem Google OAuth, càmera en directe sense accés a la teva galeria, i complim les lleis de San Francisco, Califòrnia.",
+    privacySummary: "Yoouz segueix els estàndards més estrictes de protecció de dades. Utilitzem Google OAuth, càmera en directe sense accés a la teva galeria, i complim les lleis de Global, Califòrnia.",
     updatedDate: "Actualitzat el 24 d'Agost de 2026",
     privacyPolicyTitle: "Política de Privadesa",
     privacyPolicyDesc: "Cobreix dades de compte, ús de càmera frontal, prohibició de venda de dades i drets d'eliminació.",
@@ -197,7 +197,7 @@ export const ca: TranslationSchema = {
     recordingPillarDesc: "La càmera i el micròfon només s'activen mentre graves una ressenya. Sense accés a la memòria del teu dispositiu.",
     zeroSellingPillarTitle: "Cap Venda de Dades",
     zeroSellingPillarDesc: "Garantim que mai vendrem ni compartirem les teves dades personals amb tercers.",
-    jurisdictionPillarTitle: "San Francisco, Califòrnia, EUA",
+    jurisdictionPillarTitle: "Global, Califòrnia, EUA",
     jurispillarDesc: "Tots els termes i polítiques estan subjectes a la jurisdicció de l'Estat de Califòrnia, EUA.",
     allSystemsOperational: "Tots els sistemes funcionen correctament",
     dangerZoneTitle: "Zona de Perill: Elimina el Compte",
@@ -301,7 +301,7 @@ export const ca: TranslationSchema = {
     termsConditions: "Termes i Condicions",
     privacyPolicy: "Política de Privadesa",
     supportDesk: "Servei de Suport",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Tots els drets reservats. Persones Reals. Ressenyes Reals."
   },
   settings: {

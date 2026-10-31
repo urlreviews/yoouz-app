@@ -183,7 +183,7 @@ export const gl: TranslationSchema = {
     readyToVerify: "Listo para verificar o teu negocio? Contacta co noso equipo de soporte.",
     privacySecurityTitle: "Privacidade, Seguridade e Cumprimento Legal",
     googleVerified: "Verificado por Google • Sen contrasinais gardados",
-    privacySummary: "Yoouz segue os estándares máis estritos de protección de datos. Utilizamos Google OAuth, cámara en directo sen acceso á túa galería, e cumprimos as leis de San Francisco, California.",
+    privacySummary: "Yoouz segue os estándares máis estritos de protección de datos. Utilizamos Google OAuth, cámara en directo sen acceso á túa galería, e cumprimos as leis de Governing Compliance.",
     updatedDate: "Actualizado o 24 de Agosto de 2026",
     privacyPolicyTitle: "Política de Privacidade",
     privacyPolicyDesc: "Cobre datos de conta, uso de cámara frontal, prohibición de venda de datos e dereitos de eliminación.",
@@ -197,7 +197,7 @@ export const gl: TranslationSchema = {
     recordingPillarDesc: "A cámara e o micrófono só se activan mentres gravas unha reseña. Sen acceso á memoria do teu dispositivo.",
     zeroSellingPillarTitle: "Ningunha Venda de Datos",
     zeroSellingPillarDesc: "Garantimos que nunca venderemos nin compartiremos os teus datos persoais con terceiros.",
-    jurisdictionPillarTitle: "San Francisco, California, EUA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Todos os termos e políticas están suxeitos á xurisdición do Estado de California, EUA.",
     allSystemsOperational: "Todos os sistemas funcionan correctamente",
     dangerZoneTitle: "Zona de Perigo: Eliminar Conta",
@@ -301,7 +301,7 @@ export const gl: TranslationSchema = {
     termsConditions: "Termos e Condicións",
     privacyPolicy: "Política de Privacidade",
     supportDesk: "Servizo de Soporte",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Todos os dereitos reservados. Persoas Reais. Reseñas Reais."
   },
   settings: {

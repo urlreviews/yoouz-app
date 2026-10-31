@@ -183,7 +183,7 @@ export const pl: TranslationSchema = {
     readyToVerify: "Gotowy na weryfikację firmy? Skontaktuj się z naszym zespołem.",
     privacySecurityTitle: "Prywatność, Bezpieczeństwo i Zgodność z Prawem",
     googleVerified: "Zweryfikowane przez Google • Brak Przechowywania Haseł",
-    privacySummary: "Yoouz spełnia najwyższe standardy ochrony prywatności. Korzystamy z Google OAuth, przetwarzamy obraz z kamery w czasie rzeczywistym bez wglądu do galerii zdjęć i podlegamy prawu San Francisco w Kalifornii.",
+    privacySummary: "Yoouz spełnia najwyższe standardy ochrony prywatności. Korzystamy z Google OAuth, przetwarzamy obraz z kamery w czasie rzeczywistym bez wglądu do galerii zdjęć i podlegamy prawu Global w Kalifornii.",
     updatedDate: "Zaktualizowano 24 sierpnia 2026 r.",
     privacyPolicyTitle: "Polityka Prywatności",
     privacyPolicyDesc: "Opisuje zasady przetwarzania danych konta, korzystanie z kamery na żywo, zakaz sprzedaży danych i prawo do usunięcia profilu.",
@@ -197,7 +197,7 @@ export const pl: TranslationSchema = {
     recordingPillarDesc: "Kamera i mikrofon są aktywne tylko podczas trwania nagrania. Brak dostępu do plików w telefonie.",
     zeroSellingPillarTitle: "Zero Sprzedaży Danych",
     zeroSellingPillarDesc: "Nigdy nie sprzedajemy ani nie udostępniamy Twoich danych osobowych podmiotom trzecim.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornia, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Regulamin i polityka platformy podlegają prawu stanu Kalifornia, USA.",
     allSystemsOperational: "Wszystkie systemy działają prawidłowo",
     dangerZoneTitle: "Strefa Zagrożenia: Usunięcie Profilu",
@@ -301,7 +301,7 @@ export const pl: TranslationSchema = {
     termsConditions: "Regulamin Usługi",
     privacyPolicy: "Polityka Prywatności",
     supportDesk: "Biuro Pomocy",
-    networkLocation: "Sieć Zaufania Yoouz • San Francisco, CA",
+    networkLocation: "Sieć Zaufania Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Wszelkie prawa zastrzeżone. Prawdziwi Ludzie. Prawdziwe Opinie."
   },
   settings: {

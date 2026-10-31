@@ -183,7 +183,7 @@ export const hu: TranslationSchema = {
     readyToVerify: "Készen állsz a vállalkozásod hitelesítésére? Vedd fel a kapcsolatot csapatunkkal.",
     privacySecurityTitle: "Adatvédelem, biztonság és jogi megfelelőség",
     googleVerified: "Google által hitelesített • Nincs jelszótárolás",
-    privacySummary: "A Yoouz a legszigorúbb adatvédelmi szabványoknak felel meg. Google OAuth-ot használunk, a kamera képe élőben kerül feldolgozásra a fotótár elérése nélkül, és a működésünk San Francisco, Kalifornia joghatósága alá tartozik.",
+    privacySummary: "A Yoouz a legszigorúbb adatvédelmi szabványoknak felel meg. Google OAuth-ot használunk, a kamera képe élőben kerül feldolgozásra a fotótár elérése nélkül, és a működésünk Governing Compliancejoghatósága alá tartozik.",
     updatedDate: "Frissítve: 2026. augusztus 24.",
     privacyPolicyTitle: "Adatvédelmi irányelvek",
     privacyPolicyDesc: "Ismerteti a fiókadatok kezelését, a kamera használatát, az adatok eladásának tilalmát és a törléshez való jogot.",
@@ -197,7 +197,7 @@ export const hu: TranslationSchema = {
     recordingPillarDesc: "A kamera és a mikrofon kizárólag a videó készítésekor működik. Nem férünk hozzá a telefonod képeihez.",
     zeroSellingPillarTitle: "Nincs adatértékesítés",
     zeroSellingPillarDesc: "Kifejezetten garantáljuk, hogy személyes adataidat soha nem értékesítjük vagy adjuk át harmadik feleknek.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornia, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "A feltételekre és szabályzatokra Kalifornia állam (USA) jogszabályai vonatkoznak.",
     allSystemsOperational: "Minden rendszer zavartalanul működik",
     dangerZoneTitle: "Veszélyes zóna: Fiók törlése",
@@ -301,7 +301,7 @@ export const hu: TranslationSchema = {
     termsConditions: "Felhasználási feltételek",
     privacyPolicy: "Adatvédelmi irányelvek",
     supportDesk: "Ügyfélszolgálat",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Minden jog fenntartva. Valódi Emberek. Valódi Értékelések."
   },
   settings: {

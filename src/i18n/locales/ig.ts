@@ -183,7 +183,7 @@ export const ig: TranslationSchema = {
     readyToVerify: "Ị dịla njikere ịkwado azụmahịa gị? Kpọtụrụ ndị otu nkwado anyị.",
     privacySecurityTitle: "Nzuzo, Nchedo na Nrubeisi n'Iwu",
     googleVerified: "Google Kwadoro • Enweghị paswọọdụ echekwara",
-    privacySummary: "Yoouz na-agbaso ụkpụrụ nchekwa data kachasị elu. Anyị na-eji Google OAuth, kamera ozugbo na-enweghị ohere ịbanye na foto gị, ma na-erube isi n'iwu San Francisco, California.",
+    privacySummary: "Yoouz na-agbaso ụkpụrụ nchekwa data kachasị elu. Anyị na-eji Google OAuth, kamera ozugbo na-enweghị ohere ịbanye na foto gị, ma na-erube isi n'iwu Governing Compliance.",
     updatedDate: "Emelitere n'August 24, 2026",
     privacyPolicyTitle: "Amụma Nzuzo",
     privacyPolicyDesc: "Gụnyere data akaụntụ, iji kamera ozugbo, mmachibido ire data, na ikike ihichapụ data.",
@@ -197,7 +197,7 @@ export const ig: TranslationSchema = {
     recordingPillarDesc: "Kamera na maịkrofon na-arụ ọrụ naanị mgbe ị na-edekọ nyocha. Enweghị ohere ịbanye na nchekwa ngwaọrụ gị.",
     zeroSellingPillarTitle: "Enweghị Ire Data ma Ọlị",
     zeroSellingPillarDesc: "Anyị na-ekwe nkwa na anyị agaghị ere ma ọ bụ kesaa data nke gị nye ndị ọzọ.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Usoro na amụma niile dị n'okpuru ikike iwu nke Steeti California, USA.",
     allSystemsOperational: "Sistemụ niile na-arụ ọrụ nke ọma",
     dangerZoneTitle: "Mpaghara Ihe Egwu: Hichapụ Akaụntụ",
@@ -301,7 +301,7 @@ export const ig: TranslationSchema = {
     termsConditions: "Usoro na Ọnọdụ",
     privacyPolicy: "Amụma Nzuzo",
     supportDesk: "Ebe Nkwado",
-    networkLocation: "Netwọk Ntụkwasị Obi Yoouz • San Francisco, CA",
+    networkLocation: "Netwọk Ntụkwasị Obi Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Ikike niile echekwabara. Ezigbo Ndị Mmadụ. Ezigbo Nyocha."
   },
   settings: {

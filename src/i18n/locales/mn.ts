@@ -301,7 +301,7 @@ export const mn: TranslationSchema = {
     termsConditions: "Нөхцөл ба журам",
     privacyPolicy: "Нууцлалын бодлого",
     supportDesk: "Дэмжлэгийн төв",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Бүх эрх хуулиар хамгаалагдсан. Бодит хүмүүс. Бодит үнэлгээ."
   },
   settings: {

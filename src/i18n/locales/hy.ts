@@ -301,7 +301,7 @@ export const hy: TranslationSchema = {
     termsConditions: "Պայմաններ և դրույթներ",
     privacyPolicy: "Գաղտնիության քաղաքականություն",
     supportDesk: "Աջակցման կենտրոն",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Բոլոր իրավունքները պաշտպանված են: Իրական մարդիկ: Իրական կարծիքներ:"
   },
   settings: {

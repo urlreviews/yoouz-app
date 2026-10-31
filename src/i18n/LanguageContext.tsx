@@ -236,7 +236,7 @@ const CORE_STRINGS_TO_WARM = [
   "Yes. Browsing, discovering local venues, posting authentic 60-second video reviews, and venue profile claiming are included for all users and business operators with no hidden fees.",
   // Terms & Conditions & Privacy Policy Full Text
   "Yoouz Legal & Compliance",
-  "Governing Jurisdiction: San Francisco, California, USA",
+  "Governing Compliance & Data Protection",
   "Terms & Conditions",
   "Privacy Policy",
   "Official Legal Agreement",
@@ -272,7 +272,7 @@ const CORE_STRINGS_TO_WARM = [
   "Changes to Terms",
   "We reserve the right to modify these Terms & Conditions at any time. Continued use of Yoouz after changes constitutes your acceptance of the updated terms.",
   "Governing Law & Jurisdiction",
-  "These terms are governed by the laws of the State of California, USA, without regard to its conflict of law provisions. Any legal action or proceeding arising from these terms shall be brought exclusively in the courts located in San Francisco, California, USA.",
+  "These terms are governed by applicable privacy regulations and digital service guidelines. Any legal inquiry or proceeding arising from these terms shall be submitted through our official platform compliance desk.",
   "Privacy & Security Compliant",
   "Privacy Policy for Yoouz",
   "Welcome to Yoouz ('we,' 'our,' or 'us'). We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our website and web application.",

@@ -197,7 +197,7 @@ export const hr: TranslationSchema = {
     recordingPillarDesc: "Kamera i mikrofon rade samo dok snimate recenziju. Nema pristupa galeriji uređaja.",
     zeroSellingPillarTitle: "Nula prodaje podataka",
     zeroSellingPillarDesc: "Kategorički jamčimo da vaše osobne podatke nikada ne prodajemo niti dijelimo s trećim stranama.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornija, SAD",
+    jurisdictionPillarTitle: "Governing Complianceja, SAD",
     jurispillarDesc: "Svi uvjeti i pravila podliježu zakonima savezne države Kalifornije u SAD-u.",
     allSystemsOperational: "Svi sustavi rade normalno",
     dangerZoneTitle: "Opasna zona: Brisanje računa",
@@ -301,7 +301,7 @@ export const hr: TranslationSchema = {
     termsConditions: "Uvjeti pružanja usluge",
     privacyPolicy: "Pravila o privatnosti",
     supportDesk: "Centar za podršku",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Sva prava pridržana. Stvarni ljudi. Stvarne recenzije."
   },
   settings: {

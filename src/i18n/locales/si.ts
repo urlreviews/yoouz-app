@@ -301,7 +301,7 @@ export const si: TranslationSchema = {
     termsConditions: "නියම සහ කොන්දේසි",
     privacyPolicy: "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
     supportDesk: "සහාය මධ්‍යස්ථානය",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. සියලුම හිමිකම් ඇවිරිණි. සැබෑ මිනිසුන්. සැබෑ සමාලෝචන."
   },
   settings: {

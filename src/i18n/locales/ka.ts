@@ -301,7 +301,7 @@ export const ka: TranslationSchema = {
     termsConditions: "წესები და პირობები",
     privacyPolicy: "კონფიდენციალურობის პოლიტიკა",
     supportDesk: "მხარდაჭერის ცენტრი",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. ყველა უფლება დაცულია. ნამდვილი ადამიანები. ნამდვილი შეფასებები."
   },
   settings: {

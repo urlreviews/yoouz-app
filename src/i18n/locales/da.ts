@@ -183,7 +183,7 @@ export const da: TranslationSchema = {
     readyToVerify: "Klar til at verificere din virksomhed? Kontakt vores supportteam.",
     privacySecurityTitle: "Privatliv, sikkerhed og overholdelse af lovgivning",
     googleVerified: "Google-verificeret • Ingen adgangskoder gemmes",
-    privacySummary: "Yoouz overholder de højeste standarder for databeskyttelse. Vi anvender Google OAuth, direkte kamerabehandling uden lagring i fotobibliotek og opererer under lovgivningen i San Francisco, Californien.",
+    privacySummary: "Yoouz overholder de højeste standarder for databeskyttelse. Vi anvender Google OAuth, direkte kamerabehandling uden lagring i fotobibliotek og opererer under lovgivningen i Global, Californien.",
     updatedDate: "Opdateret 24. august 2026",
     privacyPolicyTitle: "Privatlivspolitik",
     privacyPolicyDesc: "Beskriver kontodata, live-kameraanvendelse, forbud mod videresalg af data og retten til sletning.",
@@ -197,7 +197,7 @@ export const da: TranslationSchema = {
     recordingPillarDesc: "Kamera og mikrofon er kun aktive, mens du optager. Ingen adgang til enhedens billedgalleri.",
     zeroSellingPillarTitle: "Ingen videresalg af data",
     zeroSellingPillarDesc: "Vi sælger eller deler aldrig dine personlige oplysninger med tredjeparter.",
-    jurisdictionPillarTitle: "San Francisco, Californien, USA",
+    jurisdictionPillarTitle: "Global, Californien, USA",
     jurispillarDesc: "Betingelser og politikker er underlagt lovgivningen i staten Californien, USA.",
     allSystemsOperational: "Alle systemer kører normalt",
     dangerZoneTitle: "Farezone: Slet konto",
@@ -301,7 +301,7 @@ export const da: TranslationSchema = {
     termsConditions: "Servicevilkår",
     privacyPolicy: "Privatlivspolitik",
     supportDesk: "Supportcenter",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Alle rettigheder forbeholdes. Rigtige mennesker. Rigtige anmeldelser."
   },
   settings: {

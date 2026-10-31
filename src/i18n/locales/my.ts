@@ -183,7 +183,7 @@ export const my: TranslationSchema = {
     readyToVerify: "သင့်လုပ်ငန်းကို အတည်ပြုရန် အဆင်သင့်ဖြစ်ပြီလား? ကျွန်ုပ်တို့၏ အဖွဲ့နှင့် ဆက်သွယ်ပါ။",
     privacySecurityTitle: "ကိုယ်ရေးကိုယ်တာ၊ လုံခြုံရေးနှင့် ဥပဒေလိုက်နာမှု",
     googleVerified: "Google မှ အတည်ပြုထားသည် • လျှို့ဝှက်နံပါတ် သိမ်းဆည်းခြင်းမရှိပါ",
-    privacySummary: "Yoouz သည် အမြင့်ဆုံး ဒေတာကာကွယ်ရေးစံနှုန်းများကို လိုက်နာပါသည်။ ကျွန်ုပ်တို့သည် Google OAuth၊ ဖုန်းပြခန်းဖွင့်ခွင့်မပါသော တိုက်ရိုက်ကင်မရာကို သုံးပြီး San Francisco, California ၏ ဥပဒေများကို လိုက်နာပါသည်။",
+    privacySummary: "Yoouz သည် အမြင့်ဆုံး ဒေတာကာကွယ်ရေးစံနှုန်းများကို လိုက်နာပါသည်။ ကျွန်ုပ်တို့သည် Google OAuth၊ ဖုန်းပြခန်းဖွင့်ခွင့်မပါသော တိုက်ရိုက်ကင်မရာကို သုံးပြီး Governing Compliance၏ ဥပဒေများကို လိုက်နာပါသည်။",
     updatedDate: "၂၀၂၆ ခုနှစ် သြဂုတ် ၂၄ ရက်တွင် နောက်ဆုံးပြင်ဆင်ခဲ့သည်",
     privacyPolicyTitle: "ကိုယ်ရေးကိုယ်တာ မူဝါဒ",
     privacyPolicyDesc: "အကောင့်ဒေတာ၊ တိုက်ရိုက်ကင်မရာအသုံးပြုမှု၊ အချက်အလက်ရောင်းချခြင်းမပြုမှုနှင့် အချက်အလက်ဖျက်သိမ်းခွင့်များ ပါဝင်သည်။",
@@ -301,7 +301,7 @@ export const my: TranslationSchema = {
     termsConditions: "စည်းမျဉ်းများနှင့် သတ်မှတ်ချက်များ",
     privacyPolicy: "ကိုယ်ရေးကိုယ်တာ မူဝါဒ",
     supportDesk: "အကူအညီပေးရေးဌာန",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© ၂၀၂၆ Yoouz Inc. မူပိုင်ခွင့်များ ရယူထားပြီးဖြစ်သည်။ အစစ်အမှန်လူများ။ အစစ်အမှန်သုံးသပ်ချက်များ။"
   },
   settings: {

@@ -183,7 +183,7 @@ export const eu: TranslationSchema = {
     readyToVerify: "Zure negozioa egiaztatzeko prest? Jarri harremanetan gure laguntza-taldearekin.",
     privacySecurityTitle: "Pribatutasuna, Segurtasuna eta Lege-betetzea",
     googleVerified: "Google-k Egiaztatua • Pasahitzik gorde gabe",
-    privacySummary: "Yoouz-ek datuen babeserako arau gorenak betetzen ditu. Google OAuth erabiltzen dugu, zuzeneko kamera zure galeriarako sarbiderik gabe, eta San Francisco, Kaliforniako legeak betetzen ditugu.",
+    privacySummary: "Yoouz-ek datuen babeserako arau gorenak betetzen ditu. Google OAuth erabiltzen dugu, zuzeneko kamera zure galeriarako sarbiderik gabe, eta Governing Complianceko legeak betetzen ditugu.",
     updatedDate: "2026ko abuztuaren 24an eguneratua",
     privacyPolicyTitle: "Pribatutasun Politika",
     privacyPolicyDesc: "Kontuaren datuak, aurreko kameraren erabilera, datuak saltzeko debekua eta ezabatzeko eskubideak barne hartzen ditu.",
@@ -197,7 +197,7 @@ export const eu: TranslationSchema = {
     recordingPillarDesc: "Kamera eta mikrofonoa iritzi bat grabatzean soilik aktibatzen dira. Gailuaren memoriarako sarbiderik gabe.",
     zeroSellingPillarTitle: "Datuak Inoiz Ez Saltzea",
     zeroSellingPillarDesc: "Zure datu pertsonalak hirugarrenei inoiz ez dizkiegula salduko edo partekatuko bermatzen dugu.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornia, AEB",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Baldintza eta politika guztiak Kaliforniako Estatuaren (AEB) jurisdikziopean daude.",
     allSystemsOperational: "Sistema guztiak behar bezala dabiltza",
     dangerZoneTitle: "Arrisku Eremua: Ezabatu Kontua",
@@ -301,7 +301,7 @@ export const eu: TranslationSchema = {
     termsConditions: "Baldintzak eta Arauak",
     privacyPolicy: "Pribatutasun Politika",
     supportDesk: "Laguntza Mahaia",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Eskubide guztiak erreserbatuta. Benetako Jendea. Benetako Iritziak."
   },
   settings: {

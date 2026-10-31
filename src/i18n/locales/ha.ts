@@ -183,7 +183,7 @@ export const ha: TranslationSchema = {
     readyToVerify: "A shirye kuke ku tabbatar da kasuwancinku? Tuntuɓi ƙungiyar tallafinmu.",
     privacySecurityTitle: "Sirri, Tsaro da Bin Doka",
     googleVerified: "Google ya Tabbatar • Ba a adana kalmar sirri",
-    privacySummary: "Yoouz yana bin mafi girman matakan kare bayanai. Muna amfani da Google OAuth, kyamara kai tsaye ba tare da samun damar shiga hotunanku ba, kuma muna bin dokokin San Francisco, California.",
+    privacySummary: "Yoouz yana bin mafi girman matakan kare bayanai. Muna amfani da Google OAuth, kyamara kai tsaye ba tare da samun damar shiga hotunanku ba, kuma muna bin dokokin Governing Compliance.",
     updatedDate: "An sabunta a ranar 24 ga Agusta, 2026",
     privacyPolicyTitle: "Manufar Sirri",
     privacyPolicyDesc: "Ya ƙunshi bayanan asusu, amfani da kyamarar kai tsaye, hana sayar da bayanai, da haƙƙin goge bayanai.",
@@ -197,7 +197,7 @@ export const ha: TranslationSchema = {
     recordingPillarDesc: "Kyamara da makirufo suna aiki ne kawai lokacin da kuke ɗaukar sharhi. Babu damar shiga ma'ajiyar wayarku.",
     zeroSellingPillarTitle: "Babu Sayar da Bayanai Ko Kaɗan",
     zeroSellingPillarDesc: "Muna ba da tabbacin cewa ba za mu taɓa sayarwa ko raba keɓaɓɓun bayanan ku ga wasu mutane ba.",
-    jurisdictionPillarTitle: "San Francisco, California, Amurka",
+    jurisdictionPillarTitle: "Governing ComplianceAmurka",
     jurispillarDesc: "Dukkan sharuɗɗa da manufofi suna ƙarƙashin ikon dokokin Jihar California, Amurka.",
     allSystemsOperational: "Dukkan tsare-tsare suna aiki yadda ya kamata",
     dangerZoneTitle: "Yankin Haɗari: Goge Asusu",
@@ -301,7 +301,7 @@ export const ha: TranslationSchema = {
     termsConditions: "Sharuɗɗa da Ƙa'idoji",
     privacyPolicy: "Manufar Sirri",
     supportDesk: "Sashen Tallafi",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Dukkan haƙƙoƙi an kiyaye su. Mutane na Gaskiya. Sharhi na Gaskiya."
   },
   settings: {

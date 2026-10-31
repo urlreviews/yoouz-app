@@ -197,8 +197,8 @@ export const id: TranslationSchema = {
     recordingPillarDesc: "Akses kamera dan mikrofon hanya aktif saat merekam dan tidak mengakses file di memori perangkat.",
     zeroSellingPillarTitle: "0% Penjualan Data Pribadi",
     zeroSellingPillarDesc: "Kami tidak pernah menjual, menyewakan, atau memperdagangkan data pribadi Anda kepada pihak ketiga.",
-    jurisdictionPillarTitle: "Yurisdiksi San Francisco, CA, AS",
-    jurisdictionPillarDesc: "Syarat dan kebijakan tunduk pada hukum Negara Bagian California, AS dengan yurisdiksi di San Francisco.",
+    jurisdictionPillarTitle: "Yurisdiksi Global, CA, AS",
+    jurisdictionPillarDesc: "Syarat dan kebijakan tunduk pada hukum Negara Bagian California, AS dengan yurisdiksi di Global.",
     allSystemsOperational: "Semua Sistem Berjalan Normal",
     dangerZoneTitle: "Zona Bahaya: Hapus Akun & Profil",
     dangerZoneDesc: "Hapus data profil, foto, dan kredensial Anda secara permanen. Tindakan ini tidak dapat dibatalkan.",
@@ -316,7 +316,7 @@ export const id: TranslationSchema = {
     termsConditions: "Syarat & Ketentuan",
     privacyPolicy: "Kebijakan Privasi",
     supportDesk: "Pusat Bantuan",
-    networkLocation: "Jaringan Kepercayaan Yoouz • San Francisco, CA",
+    networkLocation: "Jaringan Kepercayaan Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Hak cipta dilindungi. Orang Asli. Ulasan Nyata."
   },
   settings: {

@@ -183,7 +183,7 @@ export const fr: TranslationSchema = {
     readyToVerify: "Prêt à vérifier votre établissement ? Contactez notre équipe dédiée.",
     privacySecurityTitle: "Confidentialité, Sécurité & Conformité Juridique",
     googleVerified: "Vérifié Google • Zéro Stockage de Mots de Passe",
-    privacySummary: "Yoouz est conçu selon des normes de confidentialité strictes. Nous utilisons l'authentification Google OAuth, traitons les flux caméra en direct sans accès à votre bibliothèque photo, et respectons la juridiction de San Francisco, Californie.",
+    privacySummary: "Yoouz est conçu selon des normes de confidentialité strictes. Nous utilisons l'authentification Google OAuth, traitons les flux caméra en direct sans accès à votre bibliothèque photo, et respectons la juridiction de Global, Californie.",
     updatedDate: "Mis à jour le 24 août 2026",
     privacyPolicyTitle: "Politique de Confidentialité",
     privacyPolicyDesc: "Détaille le traitement des données de compte, l'utilisation de la caméra/micro en direct, l'absence totale de revente de données et votre droit de suppression.",
@@ -197,7 +197,7 @@ export const fr: TranslationSchema = {
     recordingPillarDesc: "La caméra et le micro ne sont activés que durant l'enregistrement actif. Aucun accès à votre galerie photos.",
     zeroSellingPillarTitle: "Zéro Revente de Données",
     zeroSellingPillarDesc: "Nous ne vendons ni ne louons vos données personnelles à des tiers, jamais.",
-    jurisdictionPillarTitle: "San Francisco, Californie, États-Unis",
+    jurisdictionPillarTitle: "Global, Californie, États-Unis",
     jurispillarDesc: "Les conditions et politiques de Yoouz sont régies par les lois de l'État de Californie, États-Unis.",
     allSystemsOperational: "Tous les Systèmes Sont Opérationnels",
     dangerZoneTitle: "Zone de Danger : Suppression du Profil",
@@ -301,7 +301,7 @@ export const fr: TranslationSchema = {
     termsConditions: "Conditions Générales d'Utilisation",
     privacyPolicy: "Politique de Confidentialité",
     supportDesk: "Bureau d'Assistance",
-    networkLocation: "Réseau de Confiance Yoouz • San Francisco, CA",
+    networkLocation: "Réseau de Confiance Yoouz • Global, CA",
     copyright: "© 2026 Yoouz Inc. Tous droits réservés. Personnes Réelles. Avis Réels."
   },
   settings: {

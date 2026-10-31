@@ -197,7 +197,7 @@ export const cs: TranslationSchema = {
     recordingPillarDesc: "Kamera a mikrofon běží pouze během nahrávání. Žádný přístup do paměti telefonu.",
     zeroSellingPillarTitle: "Nulový prodej dat",
     zeroSellingPillarDesc: "Garantujeme, že vaše osobní údaje nikdy neprodáváme ani nesdílíme s třetími stranami.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornie, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Podmínky a zásady se řídí právním řádem státu Kalifornie v USA.",
     allSystemsOperational: "Všechny systémy fungují normálně",
     dangerZoneTitle: "Nebezpečná zóna: Smazání účtu",
@@ -301,7 +301,7 @@ export const cs: TranslationSchema = {
     termsConditions: "Smluvní podmínky",
     privacyPolicy: "Zásady ochrany soukromí",
     supportDesk: "Centrum podpory",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Všechna práva vyhrazena. Skuteční lidé. Skutečné recenze."
   },
   settings: {

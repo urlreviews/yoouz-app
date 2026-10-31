@@ -183,7 +183,7 @@ export const is: TranslationSchema = {
     readyToVerify: "Tilbúin(n) að staðfesta fyrirtækið þitt? Hafðu samband við þjónustuteymi okkar.",
     privacySecurityTitle: "Friðhelgi, öryggi og lagalegt samræmi",
     googleVerified: "Staðfest af Google • Engin lykilorð geymd",
-    privacySummary: "Yoouz fylgir ströngustu stöðlum um gagnavernd. Við notum Google OAuth, beina myndavél án aðgangs að myndasafni þínu, og fylgjum lögum í San Francisco, Kaliforníu.",
+    privacySummary: "Yoouz fylgir ströngustu stöðlum um gagnavernd. Við notum Google OAuth, beina myndavél án aðgangs að myndasafni þínu, og fylgjum lögum í Global, Kaliforníu.",
     updatedDate: "Uppfært 24. ágúst 2026",
     privacyPolicyTitle: "Persónuverndarstefna",
     privacyPolicyDesc: "Nær yfir reikningsgögn, notkun beinnar myndavélar, bann við sölu gagna og rétt til eyðingar.",
@@ -197,7 +197,7 @@ export const is: TranslationSchema = {
     recordingPillarDesc: "Myndavél og hljóðnemi virka aðeins á meðan þú tekur upp umsögn. Enginn aðgangur er að geymslu tækisins.",
     zeroSellingPillarTitle: "Engin sala á gögnum",
     zeroSellingPillarDesc: "Við ábyrgjumst að við munum aldrei selja eða deila persónulegum gögnum þínum með þriðju aðilum.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornía, Bandaríkin",
+    jurisdictionPillarTitle: "Global, Kalifornía, Bandaríkin",
     jurispillarDesc: "Allir skilmálar og reglur heyra undir lögsögu Kaliforníuríkis í Bandaríkjunum.",
     allSystemsOperational: "Öll kerfi virka eðlilega",
     dangerZoneTitle: "Hættusvæði: Eyða reikningi",
@@ -301,7 +301,7 @@ export const is: TranslationSchema = {
     termsConditions: "Skilmálar og skilyrði",
     privacyPolicy: "Persónuverndarstefna",
     supportDesk: "Þjónustuborð",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Allur réttur áskilinn. Raunverulegt fólk. Raunverulegar umsagnir."
   },
   settings: {

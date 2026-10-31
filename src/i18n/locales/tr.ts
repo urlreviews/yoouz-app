@@ -197,7 +197,7 @@ export const tr: TranslationSchema = {
     recordingPillarDesc: "Kamera ve mikrofon sadece kayıt anında aktiftir, cihazınızdaki dosyalara erişilmez.",
     zeroSellingPillarTitle: "%0 Veri Satışı",
     zeroSellingPillarDesc: "Kişisel verilerinizi asla üçüncü taraflara satmıyor veya kiralamıyoruz.",
-    jurisdictionPillarTitle: "San Francisco, CA, ABD Yetki Alanı",
+    jurisdictionPillarTitle: "Global, CA, ABD Yetki Alanı",
     jurisdictionPillarDesc: "Hüküm ve koşullar Kaliforniya Eyaleti yasalarına tabidir.",
     allSystemsOperational: "Tüm Sistemler Çalışıyor",
     dangerZoneTitle: "Tehlike Bölgesi: Hesabı ve Profili Sil",
@@ -316,7 +316,7 @@ export const tr: TranslationSchema = {
     termsConditions: "Kullanım Koşulları",
     privacyPolicy: "Gizlilik Politikası",
     supportDesk: "Destek Masası",
-    networkLocation: "Yoouz Güven Ağı • San Francisco, CA",
+    networkLocation: "Yoouz Güven Ağı • Global, CA",
     copyright: "© 2026 Yoouz Inc. Tüm hakları saklıdır. Gerçek İnsanlar. Gerçek İncelemeler."
   },
   settings: {

@@ -183,7 +183,7 @@ export const de: TranslationSchema = {
     readyToVerify: "Bereit zur Verifizierung Ihres Unternehmens? Kontaktieren Sie unser Team.",
     privacySecurityTitle: "Datenschutz, Sicherheit & Rechtliche Konformität",
     googleVerified: "Google-verifiziert • Keine Passwortspeicherung",
-    privacySummary: "Yoouz erfüllt höchste Datenschutzstandards. Wir nutzen Google OAuth, verarbeiten Live-Kamerabilder in Echtzeit ohne Zugriff auf Ihre Fotobibliothek und unterliegen der Gerichtsbarkeit von San Francisco, Kalifornien.",
+    privacySummary: "Yoouz erfüllt höchste Datenschutzstandards. Wir nutzen Google OAuth, verarbeiten Live-Kamerabilder in Echtzeit ohne Zugriff auf Ihre Fotobibliothek und unterliegen der Gerichtsbarkeit von Governing Compliancen.",
     updatedDate: "Aktualisiert am 24. August 2026",
     privacyPolicyTitle: "Datenschutzerklärung",
     privacyPolicyDesc: "Regelt den Umgang mit Kontodaten, die Nutzung der Live-Kamera, das Verbot des Datenverkaufs und Ihr Recht auf Löschung.",
@@ -197,7 +197,7 @@ export const de: TranslationSchema = {
     recordingPillarDesc: "Kamera und Mikrofon werden nur während aktiver Aufnahmen genutzt. Kein Zugriff auf Fotogalerien.",
     zeroSellingPillarTitle: "Kein Datenverkauf",
     zeroSellingPillarDesc: "Wir verkaufen oder vermieten Ihre personenbezogenen Daten unter keinen Umständen.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornien, USA",
+    jurisdictionPillarTitle: "Governing Compliancen, USA",
     jurispillarDesc: "Die Plattformrichtlinien unterliegen dem Recht des Bundesstaates Kalifornien, USA.",
     allSystemsOperational: "Alle Systeme betriebsbereit",
     dangerZoneTitle: "Gefahrenzone: Profil löschen",
@@ -301,7 +301,7 @@ export const de: TranslationSchema = {
     termsConditions: "Nutzungsbedingungen",
     privacyPolicy: "Datenschutzerklärung",
     supportDesk: "Support-Desk",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Alle Rechte vorbehalten. Echte Menschen. Echte Bewertungen."
   },
   settings: {

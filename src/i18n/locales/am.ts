@@ -301,7 +301,7 @@ export const am: TranslationSchema = {
     termsConditions: "ውሎች እና ሁኔታዎች",
     privacyPolicy: "የግላዊነት ፖሊሲ",
     supportDesk: "የእገዛ ማዕከል",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. መብቱ በህግ የተጠበቀ ነው። እውነተኛ ሰዎች። እውነተኛ ግምገማዎች።"
   },
   settings: {

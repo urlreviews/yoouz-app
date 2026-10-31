@@ -183,7 +183,7 @@ export const ro: TranslationSchema = {
     readyToVerify: "Ești gata să îți verifici afacerea? Contactează echipa noastră de asistență.",
     privacySecurityTitle: "Confidențialitate, Securitate și Conformitate Legală",
     googleVerified: "Verificat de Google • Fără Stocare de Parole",
-    privacySummary: "Yoouz respectă cele mai înalte standarde de confidențialitate. Utilizăm Google OAuth, procesare video în timp real fără acces la galeria foto și operăm sub jurisdicția din San Francisco, California.",
+    privacySummary: "Yoouz respectă cele mai înalte standarde de confidențialitate. Utilizăm Google OAuth, procesare video în timp real fără acces la galeria foto și operăm sub jurisdicția din Governing Compliance.",
     updatedDate: "Actualizat la 24 august 2026",
     privacyPolicyTitle: "Politica de Confidențialitate",
     privacyPolicyDesc: "Descrie datele contului, utilizarea camerei live, interzicerea vânzării datelor și dreptul la ștergere.",
@@ -197,7 +197,7 @@ export const ro: TranslationSchema = {
     recordingPillarDesc: "Camera și microfonul sunt active doar când filmezi recenzia. Nu avem acces la fișierele din telefon.",
     zeroSellingPillarTitle: "Fără Vânzare de Date",
     zeroSellingPillarDesc: "Garantăm categoric că nu vindem și nu partajăm datele tale personale cu terțe părți.",
-    jurisdictionPillarTitle: "San Francisco, California, SUA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Toți termenii și politicile sunt guvernate de legislația statului California, SUA.",
     allSystemsOperational: "Toate sistemele funcționează normal",
     dangerZoneTitle: "Zonă Periculoasă: Ștergere Cont",
@@ -301,7 +301,7 @@ export const ro: TranslationSchema = {
     termsConditions: "Termeni și Condiții",
     privacyPolicy: "Politica de Confidențialitate",
     supportDesk: "Birou de Asistență",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Toate drepturile rezervate. Oameni Reali. Recenzii Reale."
   },
   settings: {

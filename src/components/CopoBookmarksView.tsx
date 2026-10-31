@@ -75,7 +75,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
 
   // Helper to clean up any raw URL addresses in list views
   const cleanDisplayAddress = (address: string) => {
-    if (!address) return "San Francisco";
+    if (!address) return "";
     if (
       address.startsWith("http") ||
       address.includes("www.") ||

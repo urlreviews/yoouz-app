@@ -183,7 +183,7 @@ export const mt: TranslationSchema = {
     readyToVerify: "Lest biex tivverifika n-negozju tiegħek? Ikkuntattja lit-tim ta' appoġġ tagħna.",
     privacySecurityTitle: "Privatezza, Sigurtà u Konformità Legali",
     googleVerified: "Verifikat minn Google • L-ebda password ma tinħażen",
-    privacySummary: "Yoouz isegwi l-ogħla standards ta' protezzjoni tad-dejta. Aħna nużaw Google OAuth, kamera diretta mingħajr aċċess għall-gallerija tiegħek, u nsegwu l-liġijiet ta' San Francisco, California.",
+    privacySummary: "Yoouz isegwi l-ogħla standards ta' protezzjoni tad-dejta. Aħna nużaw Google OAuth, kamera diretta mingħajr aċċess għall-gallerija tiegħek, u nsegwu l-liġijiet ta' Governing Compliance.",
     updatedDate: "Aġġornat fl-24 ta' Awwissu 2026",
     privacyPolicyTitle: "Politika ta' Privatezza",
     privacyPolicyDesc: "Tkopri d-dejta tal-kont, l-użu tal-kamera, il-projbizzjoni tal-bejgħ tad-dejta, u d-drittijiet tat-tħassir.",
@@ -197,7 +197,7 @@ export const mt: TranslationSchema = {
     recordingPillarDesc: "Il-kamera u l-mikrofonu jattivaw ruħhom biss meta tkun qed tirreġistra reviżjoni. L-ebda aċċess għall-memorja tat-tagħmir tiegħek.",
     zeroSellingPillarTitle: "L-ebda Bejgħ ta' Dejta",
     zeroSellingPillarDesc: "Aħna niggarantixxu li qatt mhu se nbiegħu jew naqsmu d-dejta personali tiegħek ma' partijiet terzi.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "It-termini u l-politiki kollha huma taħt il-ġurisdizzjoni tal-Istat ta' California, USA.",
     allSystemsOperational: "Is-sistemi kollha qed jaħdmu b'mod normali",
     dangerZoneTitle: "Żona ta' Periklu: Ħassar il-Kont",
@@ -301,7 +301,7 @@ export const mt: TranslationSchema = {
     termsConditions: "Termini u Kundizzjonijiet",
     privacyPolicy: "Politika ta' Privatezza",
     supportDesk: "Helpdesk tal-Appoġġ",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Id-drittijiet kollha riżervati. Nies Reali. Reviżjonijiet Reali."
   },
   settings: {

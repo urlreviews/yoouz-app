@@ -183,7 +183,7 @@ export const yo: TranslationSchema = {
     readyToVerify: "Ṣé o ti ṣetán láti fìdí ilé-iṣẹ́ rẹ múlẹ̀? Kàn sí ẹgbẹ́ ìrànwọ́ wa.",
     privacySecurityTitle: "Àṣírí, Àbò àti Ìbámu pẹ̀lú Òfin",
     googleVerified: "Google ti Fìdí Rẹ̀ Múlẹ̀ • A kò tọ́jú ọ̀rọ̀-ìgbaniwọlé kankan",
-    privacySummary: "Yoouz ń tẹ̀lé àwọn ìlànà gíga jùlọ fún ààbò data. A ń lo Google OAuth, kámẹ́rà tààrà láìsí wíwọlé sí àwọn fọ́tò rẹ, a sì ń tẹ̀lé àwọn òfin San Francisco, California.",
+    privacySummary: "Yoouz ń tẹ̀lé àwọn ìlànà gíga jùlọ fún ààbò data. A ń lo Google OAuth, kámẹ́rà tààrà láìsí wíwọlé sí àwọn fọ́tò rẹ, a sì ń tẹ̀lé àwọn òfin Governing Compliance.",
     updatedDate: "Ti ṣe àtúnṣe ní Oṣù Kẹjọ Ọjọ́ 24, 2026",
     privacyPolicyTitle: "Ètò Àbò Àṣírí",
     privacyPolicyDesc: "Ó ní data àkọsílẹ̀, lílo kámẹ́rà tààrà, ìdènà títà data, àti ẹ̀tọ́ láti pa data rẹ́ nínú.",
@@ -197,7 +197,7 @@ export const yo: TranslationSchema = {
     recordingPillarDesc: "Kámẹ́rà àti ẹ̀rọ gbohúngbohùn ń ṣiṣẹ́ nígbà tí o bá ń gba àtúnyẹ̀wò sílẹ̀ nìkan. Kò sí ọ̀nà láti wọ inú ibi ìpamọ́ ẹ̀rọ rẹ.",
     zeroSellingPillarTitle: "Kò Sí Títà Data Rárá",
     zeroSellingPillarDesc: "A ṣe ìdánilójú pé a kò ní ta tàbí pín data ara rẹ pẹ̀lú àwọn ẹlòmíràn láé.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Gbogbo àwọn ìlànà àti ètò wà lábẹ́ àṣẹ àwọn òfin ti Ìpínlẹ̀ California, USA.",
     allSystemsOperational: "Gbogbo ẹ̀rọ ń ṣiṣẹ́ dáradára",
     dangerZoneTitle: "Agbègbè Ewu: Pa Àkọsílẹ̀ Rẹ́",
@@ -301,7 +301,7 @@ export const yo: TranslationSchema = {
     termsConditions: "Àwọn Ìlànà àti Àdéhùn",
     privacyPolicy: "Ètò Àbò Àṣírí",
     supportDesk: "Pátákó Ìrànwọ́",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Gbogbo ẹ̀tọ́ wà ní ìpamọ́. Ènìyàn Gidi. Àtúnyẹ̀wò Gidi."
   },
   settings: {

@@ -183,7 +183,7 @@ export const ga: TranslationSchema = {
     readyToVerify: "Réidh chun do ghnó a fhíorú? Déan teagmháil lenár bhfoireann tacaíochta.",
     privacySecurityTitle: "Príobháideacht, Slándáil agus Comhlíonadh Dlí",
     googleVerified: "Fíoraithe ag Google • Gan focal faire sábháilte",
-    privacySummary: "Cloíonn Yoouz leis na caighdeáin is airde maidir le cosaint sonraí. Úsáidimid Google OAuth, ceamara beo gan rochtain ar do ghailearaí, agus cloímid le dlíthe San Francisco, California.",
+    privacySummary: "Cloíonn Yoouz leis na caighdeáin is airde maidir le cosaint sonraí. Úsáidimid Google OAuth, ceamara beo gan rochtain ar do ghailearaí, agus cloímid le dlíthe Governing Compliance.",
     updatedDate: "Nuashonraithe 24 Lúnasa 2026",
     privacyPolicyTitle: "Polasaí Príobháideachais",
     privacyPolicyDesc: "Clúdaíonn sé sonraí cuntais, úsáid ceamara beo, cosc ar dhíol sonraí, agus cearta scriosta.",
@@ -197,7 +197,7 @@ export const ga: TranslationSchema = {
     recordingPillarDesc: "Ní oibríonn an ceamara agus an micreafón ach amháin nuair a bhíonn léirmheas á thaifeadadh agat. Gan rochtain ar do ghléas.",
     zeroSellingPillarTitle: "Gan Sonraí a Dhíol Riamh",
     zeroSellingPillarDesc: "Geallaimid nach ndíolfaimid ná nach roinnfimid do chuid sonraí pearsanta le tríú páirtithe.",
-    jurisdictionPillarTitle: "San Francisco, California, SAM",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Tá gach téarma agus polasaí faoi dhlínse dhlíthiúil Stát California, SAM.",
     allSystemsOperational: "Gach córas ag feidhmiú go hiontach",
     dangerZoneTitle: "Crios Contúirte: Scrios Cuntas",
@@ -301,7 +301,7 @@ export const ga: TranslationSchema = {
     termsConditions: "Téarmaí agus Coinníollacha",
     privacyPolicy: "Polasaí Príobháideachais",
     supportDesk: "Deasc Tacaíochta",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Gach ceart ar cosaint. Fíordhaoine. Fíor-léirmheasanna."
   },
   settings: {

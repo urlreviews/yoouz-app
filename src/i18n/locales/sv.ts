@@ -183,7 +183,7 @@ export const sv: TranslationSchema = {
     readyToVerify: "Redo att verifiera ditt företag? Kontakta vårt supportteam.",
     privacySecurityTitle: "Integritet, datasäkerhet och regelefterlevnad",
     googleVerified: "Google-verifierad • Inga lösenord lagras",
-    privacySummary: "Yoouz uppfyller de högsta integritetsstandarderna. Vi använder Google OAuth, live-kamera utan åtkomst till bildarkiv och styrs av lagarna i San Francisco, Kalifornien.",
+    privacySummary: "Yoouz uppfyller de högsta integritetsstandarderna. Vi använder Google OAuth, live-kamera utan åtkomst till bildarkiv och styrs av lagarna i Governing Compliancen.",
     updatedDate: "Uppdaterad den 24 augusti 2026",
     privacyPolicyTitle: "Integritetspolicy",
     privacyPolicyDesc: "Beskriver hantering av kontodata, live-kameraanvändning, förbud mot dataförsäljning och rätten till radering.",
@@ -197,7 +197,7 @@ export const sv: TranslationSchema = {
     recordingPillarDesc: "Kameran och mikrofonen är endast aktiva medan du spelar in. Ingen åtkomst till enhetens bildgalleri.",
     zeroSellingPillarTitle: "Ingen dataförsäljning",
     zeroSellingPillarDesc: "Vi säljer eller delar aldrig dina personuppgifter med tredjepartsannonsörer.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornien, USA",
+    jurisdictionPillarTitle: "Governing Compliancen, USA",
     jurispillarDesc: "Plattformens villkor och policyer lyder under lagstiftningen i delstaten Kalifornien, USA.",
     allSystemsOperational: "Alla system fungerar normalt",
     dangerZoneTitle: "Riskzon: Radera konto",
@@ -301,7 +301,7 @@ export const sv: TranslationSchema = {
     termsConditions: "Användarvillkor",
     privacyPolicy: "Integritetspolicy",
     supportDesk: "Supportcenter",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Med ensamrätt. Riktiga människor. Riktiga recensioner."
   },
   settings: {

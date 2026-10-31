@@ -183,7 +183,7 @@ export const fi: TranslationSchema = {
     readyToVerify: "Valmis vahvistamaan yrityksesi? Ota yhteyttä tiimiimme.",
     privacySecurityTitle: "Tietosuoja, turvallisuus ja säännösten noudattaminen",
     googleVerified: "Googlen varmentama • Salasanoja ei tallenneta",
-    privacySummary: "Yoouz noudattaa alan korkeimpia tietosuojastandardeja. Käytämme Google OAuthia, suoraa kamerankäsittelyä ilman kuvagalleriaan koskemista ja toimimme San Franciscon, Kalifornian lakien mukaisesti.",
+    privacySummary: "Yoouz noudattaa alan korkeimpia tietosuojastandardeja. Käytämme Google OAuthia, suoraa kamerankäsittelyä ilman kuvagalleriaan koskemista ja toimimme Globaln, Kalifornian lakien mukaisesti.",
     updatedDate: "Päivitetty 24. elokuuta 2026",
     privacyPolicyTitle: "Tietosuojaseloste",
     privacyPolicyDesc: "Kuvaa tilitietojen käsittelyä, kameran käyttöä, tietojen myyntikieltoa ja oikeutta poistaa profiili.",
@@ -197,7 +197,7 @@ export const fi: TranslationSchema = {
     recordingPillarDesc: "Kamera ja mikrofoni ovat päällä vain tallennuksen aikana. Laitteen kuvagalleriaan ei kosketa.",
     zeroSellingPillarTitle: "Ei tietojen myyntiä",
     zeroSellingPillarDesc: "Emme koskaan myy tai luovuta henkilötietojasi kolmansille osapuolille.",
-    jurisdictionPillarTitle: "San Francisco, Kalifornia, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Kaikki ehdot ja toimintaperiaatteet kuuluvat Kalifornian osavaltion lakien alaisuuteen.",
     allSystemsOperational: "Kaikki järjestelmät toimivat normaalisti",
     dangerZoneTitle: "Vaara-alue: Poista tili",
@@ -301,7 +301,7 @@ export const fi: TranslationSchema = {
     termsConditions: "Käyttöehdot",
     privacyPolicy: "Tietosuojaseloste",
     supportDesk: "Tukikeskus",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Kaikki oikeudet pidätetään. Oikeat ihmiset. Oikeat arvostelut."
   },
   settings: {

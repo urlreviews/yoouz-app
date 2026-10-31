@@ -183,7 +183,7 @@ export const so: TranslationSchema = {
     readyToVerify: "Diyaar ma u tahay inaad xaqiijiso ganacsigaaga? La xiriir kooxdayada taageerada.",
     privacySecurityTitle: "Kalsoonida, Amniga iyo U Hogaansanaanta Sharciga",
     googleVerified: "Waxaa xaqiijiyay Google • Sirta lama keydiyo",
-    privacySummary: "Yoouz waxay u hoggaansantaa heerarka ugu sarreeya ee ilaalinta xogta. Waxaan isticmaalnaa Google OAuth, kamarad toos ah oo aan geli karin sawirradaada, waxaana u hoggaansannaa sharciyada San Francisco, California.",
+    privacySummary: "Yoouz waxay u hoggaansantaa heerarka ugu sarreeya ee ilaalinta xogta. Waxaan isticmaalnaa Google OAuth, kamarad toos ah oo aan geli karin sawirradaada, waxaana u hoggaansannaa sharciyada Governing Compliance.",
     updatedDate: "La cusbooneysiiyay Agoosto 24, 2026",
     privacyPolicyTitle: "Xeerka Ilaalinta Xogta Gaarka ah",
     privacyPolicyDesc: "Waxaa ku jira xogta koontada, isticmaalka kamaradda tooska ah, mamnuucidda iibinta xogta, iyo xuquuqda tirtirista.",
@@ -197,7 +197,7 @@ export const so: TranslationSchema = {
     recordingPillarDesc: "Kamaradda iyo mikrofoonku waxay shaqeeyaan kaliya markaad faallo duubeyso. Ma jirto wax marin u ah keydka taleefankaaga.",
     zeroSellingPillarTitle: "Marna Lama Iibiyo Xogta",
     zeroSellingPillarDesc: "Waxaan dammaanad qaadeynaa inaanan marna ka iibin doonin ama la wadaagi doonin xogtaada shaqsiyaad kale.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Dhammaan shuruudaha iyo xeerarku waxay hoos yimaadaan sharciyada Gobolka California, USA.",
     allSystemsOperational: "Dhammaan nidaamyadu si fiican bay u shaqeynayaan",
     dangerZoneTitle: "Aagga Halista: Tirtir Koontada",
@@ -301,7 +301,7 @@ export const so: TranslationSchema = {
     termsConditions: "Shuruudaha iyo Xeerarka",
     privacyPolicy: "Xeerka Ilaalinta Xogta",
     supportDesk: "Xarunta Caawimaadda",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Xuquuqda oo dhan waa dhowran tahay. Dad Dhab ah. Faallooyin Dhab ah."
   },
   settings: {

@@ -1187,7 +1187,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
-                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use secure email verification for passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce San Francisco, California USA governing jurisdiction.")}
+                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use secure email verification for passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce strict global privacy compliance standards.")}
                     </p>
                   </div>
                 </div>
@@ -1226,7 +1226,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
                       <p className="text-xs text-zinc-200 leading-normal">
-                        {t("trustCenter.termsConditionsDesc", "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and San Francisco, CA jurisdiction.")}
+                        {t("trustCenter.termsConditionsDesc", "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and governing compliance terms.")}
                       </p>
                     </div>
                     <button
@@ -1267,9 +1267,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.jurisdictionPillarTitle", "San Francisco, California, USA")}</h4>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.jurisdictionPillarTitle", "Governing Compliance & Standards")}</h4>
                     <p className="text-[11px] text-zinc-200 leading-normal">
-                      {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies are governed by the laws of the State of California, USA with jurisdiction in San Francisco, CA.")}
+                      {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies enforce strict global consumer data protection and digital privacy standards.")}
                     </p>
                   </div>
                 </div>
@@ -1643,7 +1643,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
           <div className="space-y-1 text-center font-medium">
             <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
-              {t("legal.networkLocation", "Yoouz Trust Network • San Francisco, CA")}
+              {t("legal.networkLocation", "Yoouz Trust Network")}
             </p>
             <p className="text-[11px] text-zinc-200">
               {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}

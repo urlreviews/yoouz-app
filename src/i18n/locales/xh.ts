@@ -183,7 +183,7 @@ export const xh: TranslationSchema = {
     readyToVerify: "Ukulungele ukuqinisekisa ishishini lakho? Qhagamshelana neqela lethu lenkxaso.",
     privacySecurityTitle: "Ubumfihlo, Ukhuseleko kunye Nokuthotyelwa Komthetho",
     googleVerified: "Iqinisekiswe nguGoogle • Akukho magama okugqitha agciniweyo",
-    privacySummary: "I-Yoouz ilandela eyona migangatho ingqongqo yokukhusela idatha. Sisebenzisa i-Google OAuth, ikhamera ephilayo ngaphandle kokungena kwigalari yakho, kwaye sithobela imithetho yaseSan Francisco, California.",
+    privacySummary: "I-Yoouz ilandela eyona migangatho ingqongqo yokukhusela idatha. Sisebenzisa i-Google OAuth, ikhamera ephilayo ngaphandle kokungena kwigalari yakho, kwaye sithobela imithetho yaseGoverning Compliance.",
     updatedDate: "Ihlaziywe ngomhla wama-24 ku-Agasti 2026",
     privacyPolicyTitle: "Umgaqo-nkqubo Wabucala",
     privacyPolicyDesc: "Iquka idatha yeakhawunti, ukusetyenziswa kwekhamera yangaphambili, ukwalelwa kokuthengiswa kwedatha kunye namalungelo okucima.",
@@ -197,7 +197,7 @@ export const xh: TranslationSchema = {
     recordingPillarDesc: "Ikhamera nemakrofoni zisebenza kuphela xa urekhoda uphononongo. Akukho kufikelela kwimemori yesixhobo sakho.",
     zeroSellingPillarTitle: "Akukho Kuthengiswa Kwedatha",
     zeroSellingPillarDesc: "Siyaqinisekisa ukuba asisoze sithengise okanye sabelane ngedatha yakho yomntu siqu nabantu besithathu.",
-    jurisdictionPillarTitle: "San Francisco, California, USA",
+    jurisdictionPillarTitle: "Governing Compliance",
     jurispillarDesc: "Yonke imiqathango nemigaqo-nkqubo iphantsi kolawulo lweLizwe laseCalifornia, e-USA.",
     allSystemsOperational: "Zonke iinkqubo zisebenza ngokuqhelekileyo",
     dangerZoneTitle: "Indawo Eyingozi: Cima I-akhawunti",
@@ -301,7 +301,7 @@ export const xh: TranslationSchema = {
     termsConditions: "Imiqathango Nemimiselo",
     privacyPolicy: "Umgaqo-nkqubo Wabucala",
     supportDesk: "Iziko Lenkxaso",
-    networkLocation: "Yoouz Trust Network • San Francisco, CA",
+    networkLocation: "Yoouz Trust Network",
     copyright: "© 2026 Yoouz Inc. Onke amalungelo agciniwe. Abantu Bokwenyani. Uphononongo Lokwenyani."
   },
   settings: {
