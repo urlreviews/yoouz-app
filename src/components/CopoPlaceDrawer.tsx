@@ -432,7 +432,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const dynamicReviewCount = rawPlaceVideos.length;
   const dynamicAvgRating = dynamicReviewCount > 0 
     ? rawPlaceVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / dynamicReviewCount 
-    : (place.rating || 5.0);
+    : 0.0;
 
   const starCounts = React.useMemo(() => {
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -2595,7 +2595,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         website={place.website || undefined}
         bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage || undefined}
         isBusinessProfile={true}
-        rating={place.rating || 5.0}
+        rating={dynamicReviewCount > 0 ? dynamicAvgRating : 0.0}
+        reviewsCount={dynamicReviewCount}
+        reviewCount={dynamicReviewCount}
         placeId={place.id}
         onOpenReport={onOpenReport ? () => onOpenReport({ type: "place", placeName: displayedPlaceName, placeId: place.id }) : undefined}
       />
@@ -2683,7 +2685,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
                     <span className="text-amber-400 font-extrabold">{avgRatingStr}</span>
                     <CopoStarRating
-                      rating={Number(avgRatingStr) || 5.0}
+                      rating={dynamicReviewCount > 0 ? (Number(avgRatingStr) || 0) : 0}
                       starClassName="w-3.5 h-3.5"
                       filledColorClass="text-amber-400 fill-amber-400"
                       emptyColorClass="text-zinc-600 fill-zinc-800"
@@ -2892,7 +2894,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
                       <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRatingStr}</span>
                       <CopoStarRating
-                        rating={Number(avgRatingStr) || 5.0}
+                        rating={dynamicReviewCount > 0 ? (Number(avgRatingStr) || 0) : 0}
                         starClassName="w-3.5 h-3.5"
                         filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                         emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"

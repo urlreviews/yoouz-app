@@ -4273,9 +4273,9 @@ export function App() {
         const computedCount = matchingV.length;
         const computedRating = matchingV.length > 0 
           ? Number((matchingV.reduce((acc, v) => acc + (v.rating || 5), 0) / matchingV.length).toFixed(1))
-          : (p.rating || 5.0);
+          : 0.0;
 
-        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount || (matchingV.length > 0 && Math.abs((Number(p.rating) || 0) - computedRating) > 0.01)) {
+        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount || Math.abs((Number(p.rating) || 0) - computedRating) > 0.01) {
           next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount, rating: computedRating };
           modified = true;
 
@@ -4601,9 +4601,9 @@ export function App() {
                   country: metaData.country || fetchedPlace?.country || "",
                   lat: metaData.lat || fetchedPlace?.lat || 0,
                   lng: metaData.lng || fetchedPlace?.lng || 0,
-                  rating: fetchedPlace?.rating || 5,
-                  totalReviews: fetchedPlace?.totalReviews || 1,
-                  ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+                  rating: fetchedPlace?.rating || 0,
+                  totalReviews: fetchedPlace?.totalReviews !== undefined ? fetchedPlace.totalReviews : 0,
+                  ratingDistribution: fetchedPlace?.ratingDistribution || { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
                   avatarUrl: effectiveLogoCandidate,
                   logoUrl: effectiveLogoCandidate,
                   bannerUrl: effectiveBannerCandidate,

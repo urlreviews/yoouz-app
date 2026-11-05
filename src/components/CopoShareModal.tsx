@@ -259,8 +259,31 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   // Helper to compute place rating & review count (matching live database and local storage)
   const placeStats = (() => {
+    // 1. If explicit review count was passed into props (e.g. from CopoPlaceDrawer), strictly prioritize it!
+    const explicitCount = typeof propReviewsCount === 'number'
+      ? propReviewsCount
+      : (typeof propReviewCount === 'number'
+          ? propReviewCount
+          : (propReviewsCount !== undefined && propReviewsCount !== null && !isNaN(Number(propReviewsCount))
+              ? Number(propReviewsCount)
+              : (propReviewCount !== undefined && propReviewCount !== null && !isNaN(Number(propReviewCount))
+                  ? Number(propReviewCount)
+                  : null)));
+
+    const explicitRating = typeof propRating === 'number'
+      ? propRating
+      : (propRating !== undefined && propRating !== null && !isNaN(Number(propRating))
+          ? Number(propRating)
+          : null);
+
+    if (explicitCount !== null && !isNaN(explicitCount)) {
+      const count = Math.max(0, explicitCount);
+      const avg = count > 0 ? (explicitRating !== null && !isNaN(explicitRating) ? explicitRating : 5.0) : 0.0;
+      return { count, avgRating: avg, scoreStr: avg.toFixed(1) };
+    }
+
     const cleanDomain = (resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title || "").toLowerCase();
-    const cleanId = (video?.placeId || "").toLowerCase();
+    const cleanId = (propPlaceId || video?.placeId || "").toLowerCase();
     let matching: any[] = [];
     try {
       const saved = localStorage.getItem("yoouz_video_reviews");
@@ -286,9 +309,16 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       const avg = Number((sum / count).toFixed(1));
       return { count, avgRating: avg, scoreStr: avg.toFixed(1) };
     }
-    const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || propReviewsCount || propReviewCount || 1);
-    const fallbackRating = Number((video as any)?.placeRating || video?.rating || propRating || 5.0);
-    return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
+
+    // Fallback: If in video mode, at least this 1 video review exists
+    if (isVideoMode && video) {
+      const fallbackCount = Number((video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || 1);
+      const fallbackRating = Number((video as any)?.placeRating || video?.rating || 5.0);
+      return { count: fallbackCount, avgRating: fallbackRating, scoreStr: fallbackRating.toFixed(1) };
+    }
+
+    // Business profile with 0 matching videos:
+    return { count: 0, avgRating: 0.0, scoreStr: "0.0" };
   })();
 
   const relativeDateStr = (() => {
@@ -367,8 +397,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const embedUrl = `${appOrigin}/embed/${encodeURIComponent(embedSlug)}`;
 
   const placeTitle = (title || 'Business').replace(/"/g, '\\"');
-  const placeRating = Number(video?.rating || 5).toFixed(1);
-  const reviewCount = video ? 1 : 8;
+  const placeRating = placeStats.scoreStr;
+  const reviewCount = placeStats.count;
 
   const iframeEmbedCode = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">

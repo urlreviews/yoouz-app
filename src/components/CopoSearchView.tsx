@@ -250,9 +250,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           country: "",
           lat: 0,
           lng: 0,
-          rating: 5,
-          totalReviews: 1,
-          ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          rating: 0,
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
           avatarUrl: "",
           logoUrl: "",
           bannerUrl: "",
@@ -659,9 +659,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         country: instantCountry,
         lat: preloadedMeta?.lat || 0,
         lng: preloadedMeta?.lng || 0,
-        rating: 5,
-        totalReviews: 1,
-        ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+        rating: 0,
+        totalReviews: 0,
+        ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
         avatarUrl: instantLogo,
         logoUrl: instantLogo,
         bannerUrl: instantBanner,
@@ -827,7 +827,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
   const averageRating = placeVideos.length > 0
     ? placeVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / placeVideos.length
-    : (searchedPlace?.rating || 5.0);
+    : 0.0;
   const totalReviewsCount = placeVideos.length;
 
   return (

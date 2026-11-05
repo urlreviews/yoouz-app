@@ -8101,17 +8101,24 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         items.forEach((p: any) => {
           if (!p || !p.id) return;
           const pDomain = cleanDomainName(p.website || p.brandDomain || p.id || p.name);
-          const matchedCount = allRevs.filter((v: any) => {
+          const matchedReviews = allRevs.filter((v: any) => {
             if (!v) return false;
             const pIdLower = String(p.id).toLowerCase().trim();
             const vPlaceId = String(v.placeId || "").toLowerCase().trim();
             if (vPlaceId && pIdLower && (vPlaceId === pIdLower || vPlaceId.replace(/[^a-z0-9]/g, "") === pIdLower.replace(/[^a-z0-9]/g, ""))) return true;
             const vDomain = cleanDomainName(v.placeWebsite || v.placeId || v.placeName);
             return Boolean(pDomain && vDomain && pDomain === vDomain);
-          }).length;
+          });
+          const matchedCount = matchedReviews.length;
           if (matchedCount > 0) {
             p.totalReviews = matchedCount;
             p.videoReviewCount = matchedCount;
+            const sum = matchedReviews.reduce((acc: number, r: any) => acc + (Number(r.rating) || 5), 0);
+            p.rating = Number((sum / matchedCount).toFixed(1));
+          } else {
+            p.totalReviews = 0;
+            p.videoReviewCount = 0;
+            p.rating = 0.0;
           }
         });
       } catch (e) {}
@@ -33413,13 +33420,15 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch (e) {}
       }
 
-      if (placeReviewsCount === 0 && query.reviewsCount) {
-        placeReviewsCount = Number(query.reviewsCount);
+      if (query.reviewsCount !== undefined && query.reviewsCount !== null) {
+        placeReviewsCount = Math.max(0, Number(query.reviewsCount) || 0);
       }
-      if (query.rating) {
-        placeAvgRating = Number(query.rating);
+      if (query.rating !== undefined && query.rating !== null) {
+        placeAvgRating = Number(query.rating) || 0.0;
       }
-      if (placeReviewsCount === 0) placeReviewsCount = 1;
+      if (placeReviewsCount === 0) {
+        placeAvgRating = 0.0;
+      }
 
       const placeRatingStr = placeAvgRating.toFixed(1);
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
@@ -34445,6 +34454,7 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
             return { id: r.id, ...v };
           });
           place.reviewCount = matching.length;
+          place.totalReviews = matching.length;
           const sum = matching.reduce((acc: number, r: any) => {
             const rawData = r.data;
             const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
@@ -34459,6 +34469,11 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
           if (!place.logoUrl && (first.placeLogo || first.placeLogoUrl || first.logoUrl)) {
             place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
           }
+        } else {
+          place.reviews = [];
+          place.reviewCount = 0;
+          place.totalReviews = 0;
+          place.rating = 0.0;
         }
       }
     }
@@ -35541,7 +35556,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=22`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=23`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 
