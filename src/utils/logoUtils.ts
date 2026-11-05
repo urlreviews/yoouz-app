@@ -65,6 +65,18 @@ export function isBadBanner(url?: string | null): boolean {
   return (
     u.includes('yoouz.com/og-banner.png') ||
     u.includes('unsplash.com') ||
+    u.includes('pexels.com') ||
+    u.includes('pixabay.com') ||
+    u.includes('wallpapersafari.com') ||
+    u.includes('pinimg.com') ||
+    u.includes('/clients/') ||
+    u.includes('/portfolio/') ||
+    u.includes('h2okinnovations') ||
+    u.includes('kimba+website') ||
+    u.includes('kimba%2bwebsite') ||
+    u.includes('scholarsedge.in') ||
+    u.includes('blur_2') ||
+    u.includes('w_147,') ||
     u.includes('placeholder') ||
     u.includes('mock') ||
     u.includes('1789810172562') ||
@@ -923,32 +935,7 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "jollibee.ca": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "jollibee.com.au": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "jollibee": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
-  "whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
-  "www.whatsapp.com": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
-  "whatsapp": "https://mcdn.wallpapersafari.com/medium/76/21/iY6CMj2.jpg",
-  "guard-slip-cafe-by-lgip.bayombong": "https://i.pinimg.com/736x/3e/0e/84/3e0e846bff77cac51167bf5f9ab99cd9.jpg",
-  "anythingvirtual.net": "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "healis.be": "https://www.healis.be/sites/default/files/styles/article_teaser/public/media/image/2026-06/healis-apotheeksintjacob-apotheek1.jpg",
-  "izci.be": "https://images.pexels.com/photos/3807277/pexels-photo-3807277.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "autowerkplaatsbrugge.be": "https://images.pexels.com/photos/2244746/pexels-photo-2244746.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "london.doverstreetmarket.com": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "doverstreetmarket": "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "sutas.com": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.sutas.com": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "sutas.com.tr": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.sutas.com.tr": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "sutas": "https://images.pexels.com/photos/440731/pexels-photo-440731.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "pop-boutique.com": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.pop-boutique.com": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "pop-boutique": "https://images.pexels.com/photos/135620/pexels-photo-135620.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "cleanton-management.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.cleanton-management.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "cleanton-management": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.cleanton.co.il": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "cleanton": "https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
@@ -1012,40 +999,6 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "clubhotels.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
   "clubhotel.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
   "clubhotel": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "kokorocleaning.net": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.kokorocleaning.net": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "kokorocleaning": "https://images.pexels.com/photos/4107120/pexels-photo-4107120.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "saksautoleasing.com": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.saksautoleasing.com": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "saksautoleasing": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "swych.co.uk": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.swych.co.uk": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "swych": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "pbsupercars.com": "https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.pbsupercars.com": "https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "pbsupercars": "https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "bluechillicars.com": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.bluechillicars.com": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "bluechillicars": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "bluechillicarleasing.co.uk": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "valko.be": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.valko.be": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "valko": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "ofran.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.ofran.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "ofran": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "alfaleasing.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.alfaleasing.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "alfaleasing": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "blue-sky.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.blue-sky.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "blue-sky": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "best-car.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.best-car.co.il": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "best-car": "https://images.pexels.com/photos/164634/pexels-photo-164634.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "www.gett.com": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "gett": "https://images.pexels.com/photos/4606338/pexels-photo-4606338.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "www.switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "switch": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
@@ -1392,6 +1345,13 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
+export function getLiveWebsiteBannerUrl(domain?: string | null): string {
+  if (!domain || typeof domain !== "string") return "";
+  const cleanDomain = domain.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase();
+  if (!cleanDomain || !cleanDomain.includes(".") || cleanDomain.endsWith(".bayombong") || cleanDomain.includes(" ")) return "";
+  return getProxiedImageUrl(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${cleanDomain}`);
+}
+
 export function getCategoryThematicBanner(_category?: string | null, _name?: string | null): string {
   return "";
 }
@@ -1428,6 +1388,9 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
   }
   if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
     return getProxiedImageUrl(place.ogImage);
+  }
+  if (cleanDomain) {
+    return getLiveWebsiteBannerUrl(cleanDomain);
   }
 
   return "";

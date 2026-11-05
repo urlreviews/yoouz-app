@@ -253,6 +253,18 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("paint0_linear") ||
       decoded.includes("credit-card") ||
       decoded.includes("unsplash.com") || 
+      decoded.includes("pexels.com") ||
+      decoded.includes("pixabay.com") ||
+      decoded.includes("wallpapersafari.com") ||
+      decoded.includes("pinimg.com") ||
+      decoded.includes("/clients/") ||
+      decoded.includes("/portfolio/") ||
+      decoded.includes("h2okinnovations") ||
+      decoded.includes("kimba+website") ||
+      decoded.includes("kimba%2bwebsite") ||
+      decoded.includes("scholarsedge.in") ||
+      decoded.includes("blur_2") ||
+      decoded.includes("w_147,") ||
       decoded.includes("placeholder") || 
       decoded.includes("glas1.png") || 
       decoded.includes("dummy.png") ||
@@ -462,12 +474,10 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
 
       if (lowerImg.includes("favicon") || lowerImg.includes("logo") || lowerImg.endsWith(".ico") || lowerTitle.includes("logo")) continue;
 
-      // Authentic wide landscape photography
-      if (width >= 500 && (height === 0 || width >= height * 1.15)) {
-        bannerUrl = img;
-        photos.push(img);
-        break;
-      } else if (img.toLowerCase().includes(cleanDom) && width >= 400) {
+      const sourcePageUrl = String(item.url || "").toLowerCase();
+      const isFromOwnDomain = lowerImg.includes(cleanDom) || sourcePageUrl.includes(cleanDom);
+      // Only accept images that originate from the business's own domain so we never attach another business's image
+      if (isFromOwnDomain && width >= 400 && (height === 0 || width >= height * 1.1)) {
         bannerUrl = img;
         photos.push(img);
         break;
@@ -8007,6 +8017,11 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             p.selectedName = cleanedSel;
           }
         }
+        if ((!p.bannerUrl || isBadBanner(p.bannerUrl)) && key && key.includes('.') && !key.endsWith('.bayombong') && !key.includes(' ')) {
+          const fallbackBanner = KNOWN_BRAND_BANNERS[key] || sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${key}`);
+          p.bannerUrl = fallbackBanner;
+          p.ogImage = fallbackBanner;
+        }
 
         // Special rule for yoouz.com
         if (key === 'yoouz.com' || canonId === 'yoouz.com' || p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz')) {
@@ -8251,6 +8266,11 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           if (cleanedSel && !isDomainStemName(cleanedSel, domKey)) {
             rec.selectedName = cleanedSel;
           }
+        }
+        if ((!rec.bannerUrl || isBadBanner(rec.bannerUrl)) && domKey && domKey.includes('.') && !domKey.endsWith('.bayombong') && !domKey.includes(' ')) {
+          const fallbackBanner = KNOWN_BRAND_BANNERS[domKey] || sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${domKey}`);
+          rec.bannerUrl = fallbackBanner;
+          rec.ogImage = fallbackBanner;
         }
         return rec;
       };
@@ -29655,8 +29675,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   if (!src || isLogoOrIconUrl(src)) return;
                   
                   const lowerSrc = src.toLowerCase();
-                  const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '');
+                  const altText = ($(el).attr('alt') || '').toLowerCase();
+                  const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '') + ' ' + ($(el).closest('section, div').attr('id') || '');
                   const parentLower = parentClasses.toLowerCase();
+
+                  // Strictly skip portfolio companies, client logos, partner grids, blog thumbnails, and team headshots
+                  if (
+                    lowerSrc.includes('portfolio') || lowerSrc.includes('/clients/') || lowerSrc.includes('client-') ||
+                    lowerSrc.includes('partner') || lowerSrc.includes('testimonial') || lowerSrc.includes('case-study') ||
+                    parentLower.includes('portfolio') || parentLower.includes('client') || parentLower.includes('partner') ||
+                    parentLower.includes('testimonial') || parentLower.includes('investor') || parentLower.includes('blog') ||
+                    altText.includes('portfolio') || altText.includes('client') || altText.includes('website')
+                  ) {
+                    return;
+                  }
 
                   const width = parseInt($(el).attr('width') || '0', 10);
                   const height = parseInt($(el).attr('height') || '0', 10);
@@ -29708,7 +29740,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     weight -= 600;
                   }
 
-                  candidates.push({ src, weight });
+                  if (weight >= 450) {
+                    candidates.push({ src, weight });
+                  }
                 });
 
                 const preloadImg = $('link[rel="preload"][as="image"]').first().attr('href');
@@ -29716,7 +29750,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   candidates.push({ src: preloadImg, weight: 450 });
                 }
 
-                const validCandidates = candidates.filter(c => c.src && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
+                const validCandidates = candidates.filter(c => c.src && c.weight >= 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
                 if (validCandidates.length > 0) {
                   validCandidates.sort((a, b) => b.weight - a.weight);
                   try {
@@ -30131,17 +30165,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             new Promise<any>((resolve) => setTimeout(() => resolve(null), 4200))
           ]);
           if (ddgMedia) {
-            if ((!image || isBadBanner(image)) && ddgMedia.banner && !isBadBanner(ddgMedia.banner)) {
-              image = sanitizeProxy(ddgMedia.banner);
+            const ddgBanner = ddgMedia.bannerUrl || ddgMedia.banner;
+            const ddgLogo = ddgMedia.logoUrl || ddgMedia.logo;
+            if ((!image || isBadBanner(image)) && ddgBanner && !isBadBanner(ddgBanner)) {
+              image = sanitizeProxy(ddgBanner);
             }
-            if ((!logo || isGenericOrPlaceholderLogo(logo)) && ddgMedia.logo && !isGenericOrPlaceholderLogo(ddgMedia.logo)) {
-              logo = sanitizeProxy(ddgMedia.logo);
+            if ((!logo || isGenericOrPlaceholderLogo(logo)) && ddgLogo && !isGenericOrPlaceholderLogo(ddgLogo)) {
+              logo = sanitizeProxy(ddgLogo);
             }
             if (!description && ddgMedia.description) {
               description = ddgMedia.description;
             }
           }
         } catch (ddgErr) {}
+      }
+
+      // Final banner guarantee: If website had no og:image or valid hero image, capture live 1200x630 screenshot of the official website
+      if ((!image || isBadBanner(image)) && cleanDomain && cleanDomain.includes(".") && !cleanDomain.endsWith(".bayombong") && !cleanDomain.includes(" ")) {
+        image = sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${cleanDomain}`);
       }
 
       // Final logo guarantee: If still missing, provide authentic Google S2 favicon service proxy
@@ -31301,7 +31342,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
           'Referer': 'https://yoouz.com/'
         },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(10000) : undefined
       });
 
       let contentType = (response.headers.get('content-type') || '').toLowerCase();

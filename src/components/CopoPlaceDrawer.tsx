@@ -53,7 +53,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, extractBrandFromDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -122,13 +122,17 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [bannerError, setBannerError] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [activeBanner, setActiveBanner] = useState<string | null>(null);
+  const [activeBannerState, setActiveBannerState] = useState<{ placeId: string; url: string } | null>(null);
   const [bannerLoaded, setBannerLoaded] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
   
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
-  const [fetchedBannerUrl, setFetchedBannerUrl] = useState<string | null>(null);
+  const [fetchedBannerState, setFetchedBannerState] = useState<{ placeId: string; url: string } | null>(null);
+  const setActiveBanner = (url: string | null) => setActiveBannerState(url && place?.id ? { placeId: place.id, url } : null);
+  const setFetchedBannerUrl = (url: string | null) => setFetchedBannerState(url && place?.id ? { placeId: place.id, url } : null);
+  const activeBanner = activeBannerState && activeBannerState.placeId === place?.id ? activeBannerState.url : null;
+  const fetchedBannerUrl = fetchedBannerState && fetchedBannerState.placeId === place?.id ? fetchedBannerState.url : null;
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [forcedHeaderReady, setForcedHeaderReady] = useState(false);
@@ -857,8 +861,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [drawerDomain, place.brandDomain, place.id]);
 
-  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (cachedMedia?.bannerUrl || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
-  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (cachedMedia?.bannerUrl || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
+  const validCachedBanner = (cachedMedia?.bannerUrl && !isBadBanner(cachedMedia.bannerUrl)) ? cachedMedia.bannerUrl : "";
+  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (validCachedBanner || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
+  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (validCachedBanner || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
   const cleanReviewBanner = !isBadBanner(reviewBannerUrl) ? reviewBannerUrl : "";
   const cleanFetchedBanner = !isBadBanner(fetchedBannerUrl) ? fetchedBannerUrl : "";
 
@@ -868,17 +873,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     getPlaceBannerUrl(place);
 
   const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
-    ? (KNOWN_BRAND_BANNERS[drawerDomain] || "")
+    ? (KNOWN_BRAND_BANNERS[drawerDomain] || getLiveWebsiteBannerUrl(drawerDomain) || "")
     : "";
 
   const effectiveBanner =
     knownDomainBanner ||
     cleanBannerUrl ||
     cleanOgImage ||
-    cachedMedia?.bannerUrl ||
+    validCachedBanner ||
     cleanFetchedBanner ||
     activeBanner ||
     cleanReviewBanner ||
+    domainFallbackBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
 
   // Check if photos are authentic place photos
@@ -901,7 +907,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const photoCandidates = [
       cleanBannerUrl,
-      cachedMedia?.bannerUrl,
+      validCachedBanner,
       cleanOgImage,
       cleanFetchedBanner,
       activeBanner,
@@ -914,7 +920,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, cachedMedia, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner]);
+  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 

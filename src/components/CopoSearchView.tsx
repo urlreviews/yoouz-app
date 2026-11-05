@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, extractBrandFromDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -627,7 +627,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
-        || (isMetaMatchingCurrent && preloadedMeta?.image ? preloadedMeta.image : "") 
+        || (isMetaMatchingCurrent && preloadedMeta?.image && !isBadBanner(preloadedMeta.image) ? preloadedMeta.image : "") 
+        || (isRealDomain ? getLiveWebsiteBannerUrl(cleanUrl) : "")
         || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
       const validPreferredName = (preferredName && !isDomainStemName(preferredName, cleanUrl))
         ? (formatBusinessName(preferredName, cleanUrl) || preferredName)
@@ -715,9 +716,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.logo 
                : (domainCleanLogo || (instantLogo && !isFaviconUrl(instantLogo) ? instantLogo : ""));
 
-             const fetchedBanner = data.image 
+             const fetchedBanner = (data.image && !isBadBanner(data.image))
                ? data.image 
-               : instantBanner;
+               : (instantBanner || (discoveredDom ? getLiveWebsiteBannerUrl(discoveredDom) : ""));
              
              const rawMetaTitle = (data.siteName && !isDomainStemName(data.siteName, discoveredDom))
                ? data.siteName
