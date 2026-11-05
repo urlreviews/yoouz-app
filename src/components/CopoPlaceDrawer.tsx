@@ -537,10 +537,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       }
 
       if ((place as any)?.selectedName && !isGenericPlaceName((place as any).selectedName) && !isDomainStemName((place as any).selectedName, drawerDomain)) {
-        return unescapeStr((place as any).selectedName);
+        const cleanedSelected = formatBusinessName((place as any).selectedName, drawerDomain) || (place as any).selectedName;
+        return unescapeStr(cleanedSelected);
       }
       if ((place as any)?.officialName && !isGenericPlaceName((place as any).officialName) && !isDomainStemName((place as any).officialName, drawerDomain)) {
-        return unescapeStr((place as any).officialName);
+        const cleanedOfficial = formatBusinessName((place as any).officialName, drawerDomain) || (place as any).officialName;
+        return unescapeStr(cleanedOfficial);
       }
 
       // Check session and local storage (ignore 1-word domain stems if a richer brand name exists)
@@ -556,11 +558,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           const keyStr = String(k).toLowerCase().trim();
           const cachedSession = sessionStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedSession && cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com") && !isDomainStemName(cachedSession, drawerDomain)) {
-            return unescapeStr(cachedSession.trim());
+            const cleanedSession = formatBusinessName(cachedSession.trim(), drawerDomain) || cachedSession.trim();
+            return unescapeStr(cleanedSession);
           }
           const cachedLocal = localStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedLocal && cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com") && !isDomainStemName(cachedLocal, drawerDomain)) {
-            return unescapeStr(cachedLocal.trim());
+            const cleanedLocal = formatBusinessName(cachedLocal.trim(), drawerDomain) || cachedLocal.trim();
+            return unescapeStr(cleanedLocal);
           }
         }
       } catch (e) {}
@@ -570,11 +574,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return unescapeStr(descBrand);
       }
 
-      // 2. Exact non-generic place name
+      // 2. Exact non-generic place name (always passed through formatBusinessName to strip any title slogans)
       if (place?.name && !isGenericPlaceName(place.name) && !place.name.includes(".com") && !isDomainStemName(place.name, drawerDomain)) {
         const pLower = place.name.toLowerCase().trim();
         if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
-        return unescapeStr(place.name.trim());
+        const cleanedPlaceName = formatBusinessName(place.name.trim(), drawerDomain) || place.name.trim();
+        return unescapeStr(cleanedPlaceName);
       }
 
       if (descBrand) {
@@ -596,7 +601,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanRawLower = raw.toLowerCase().trim();
     if (KNOWN_OFFICIAL_NAMES[cleanRawLower]) return KNOWN_OFFICIAL_NAMES[cleanRawLower];
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) return KNOWN_OFFICIAL_NAMES[drawerDomain];
-    return raw;
+    return formatBusinessName(raw, drawerDomain) || raw;
   }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, place?.description, drawerDomain]);
 
   const effectiveWebsite = React.useMemo(() => {
@@ -772,11 +777,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? descExtractedBrand
                   : (rawMetaName ? formatBusinessName(rawMetaName, resolvedDomainClean) : (descExtractedBrand || ""));
                 const validSelectedName = ((place as any).selectedName && !isDomainStemName((place as any).selectedName, resolvedDomainClean))
-                  ? (place as any).selectedName
+                  ? (formatBusinessName((place as any).selectedName, resolvedDomainClean) || (place as any).selectedName)
+                  : "";
+                const cleanedCurrentPlaceName = (!isGenericName && !isSearchPhraseName && place.name)
+                  ? (formatBusinessName(place.name, resolvedDomainClean) || place.name)
                   : "";
                 const bestPlaceName = (resolvedDomainClean && KNOWN_OFFICIAL_NAMES[resolvedDomainClean])
                   || validSelectedName
-                  || ((!isGenericName && !isSearchPhraseName && place.name) ? place.name : (resolvedTitle || descExtractedBrand || data.siteName || data.title || place.name));
+                  || cleanedCurrentPlaceName
+                  || resolvedTitle
+                  || descExtractedBrand
+                  || formatBusinessName(data.siteName || data.title || place.name, resolvedDomainClean)
+                  || place.name;
 
                 const updatedPlaceObj = {
                   ...place,

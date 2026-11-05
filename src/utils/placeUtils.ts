@@ -952,7 +952,10 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
     const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
-      return true;
+      if (trimmed === trimmed.toLowerCase()) return true;
+      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking)$/i.test(cleanName)) {
+        return true;
+      }
     }
   }
   return false;
@@ -1205,12 +1208,6 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     return "Yoouz";
   }
 
-  // 0. If it looks like a multi-word human name (Hebrew/English), preserve EXACT order!
-  // This prevents flipping "נועה הבית לאירועים" -> "לאירועים נועה הבית"
-  if (trimmed.includes(" ") && trimmed.length < 60 && !trimmed.includes("|") && !trimmed.includes("- ")) {
-    return toTitleCase(trimmed);
-  }
-  
   // Quick lookup of trimmed normalized key
   const normalizedKey = trimmed.toLowerCase().replace(/^https?:\/\//, "").replace(/^www[\.\-]/, "").replace(/\/+$/, "");
   if (KNOWN_OFFICIAL_NAMES[normalizedKey]) {
@@ -1231,19 +1228,6 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     /^[a-z0-9-_]+(?:\.[a-z0-9-_]+)+$/i.test(trimmed) ||
     /-(?:com|net|org|io|co|ai|app|dev|tech|store|be|co-uk)$/i.test(trimmed);
 
-  // If already a clean capitalized multi-word human title (e.g. "Empire Hotel Rooftop Pool", "מלון פרא רמת הגולן"), preserve in full directly!
-  if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && !isGenericPlaceName(trimmed) && trimmed.length <= 80 && !trimmed.includes('|') && !trimmed.includes(':') && !trimmed.includes(' - ') && !trimmed.includes(' – ') && !trimmed.includes(' — ')) {
-    if (queryContext) {
-      const cleanQ = queryContext.trim();
-      if (cleanQ.length >= 3 && !cleanQ.includes('.') && !isGenericPlaceName(cleanQ)) {
-        if (cleanQ.toLowerCase().includes(trimmed.toLowerCase()) || trimmed.toLowerCase().includes(cleanQ.toLowerCase())) {
-          return toTitleCase(cleanQ.length >= trimmed.length ? cleanQ : trimmed);
-        }
-      }
-    }
-    return toTitleCase(trimmed);
-  }
-
   // 1. Remove concatenated navigation text & spam keywords like "MenuCloseMoreMoreMore..."
   trimmed = trimmed.replace(/(?:Menu|Close|More|Search|Login|Sign|Cart|Navigation|Toggle|Header|Footer|Cookies|Accept|Privacy|Skip to content){2,}.*$/i, '').trim();
   trimmed = trimmed.replace(/([a-z0-9])(?:Menu|Close|More|Search|Login|Sign|Cart|Toggle|Header|Footer).*/i, '$1').trim();
@@ -1253,62 +1237,63 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     trimmed = trimmed.replace(/^L500\s*[|\-–—:]\s*/i, "");
   }
 
-  // 2.5 Truncate at common verb/slogan marketing phrases (e.g. "Law Firm Wanted Law Is A Group of Law Firm S Offering Accessible Law...")
-  const sloganVerbPattern = /\s+(?:is\s+a|is\s+an|is\s+the|is\s+een|is\s+het|offering|provides|providing|specializing\s+in|specialised\s+in|voor\s+al\s+uw|voor\s+al\s+je|pour\s+tous\s+vos|welkom\s+bij|welcome\s+to|dedicated\s+to|your\s+trusted)\b.*/i;
-  if (sloganVerbPattern.test(trimmed)) {
-    const truncated = trimmed.replace(sloganVerbPattern, "").trim();
-    if (truncated && truncated.length >= 2 && !isGenericPlaceName(truncated)) {
-      trimmed = truncated;
-    }
-  }
+  // 2.5 Strip any leading/trailing separator characters
+  trimmed = trimmed.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
 
-  // 2.6 Clean leading generic industry descriptors if followed by the actual brand name (e.g., "Law Firm Wanted Law" -> "Wanted Law")
-  // (Do NOT strip valid brand words like Hotel or Restaurant)
-
-  // 3. Clean up scraped SEO titles (e.g., "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
-  const rawParts = trimmed.split(/\s*(?:[|\-–—•]|:)\s*/).map(p => p.trim()).filter(Boolean);
+  // 3. Clean up scraped SEO titles FIRST by splitting on separators (e.g., "Amino Capital — We back builders from day one", "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
+  const rawParts = trimmed.split(/\s*(?:\||–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => p.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim()).filter(Boolean);
   if (rawParts.length > 1) {
     let bestCandidate: string | undefined = undefined;
+    const domAlpha = domRoot ? domRoot.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
 
     // First try finding a part that matches queryContext if provided
     if (queryContext) {
       const cleanQContext = queryContext.trim().toLowerCase();
       const qWords = cleanQContext.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|law|firm|inc|llc)$/i.test(w));
       if (qWords.length > 0) {
-        // Try finding part containing all key query words
         bestCandidate = rawParts.find(p => {
           const pLower = p.toLowerCase();
-          return qWords.every(w => pLower.includes(w)) && !isGenericPlaceName(p);
+          return qWords.every(w => pLower.includes(w)) && p.length <= 40 && !isGenericPlaceName(p);
         });
         if (!bestCandidate) {
           bestCandidate = rawParts.find(p => {
             const pLower = p.toLowerCase();
-            return qWords.some(w => pLower.includes(w)) && !isGenericPlaceName(p);
+            return qWords.some(w => pLower.includes(w)) && p.length <= 40 && !isGenericPlaceName(p);
           });
         }
       }
     }
 
-    // Second try finding a part that matches domRoot
-    if (!bestCandidate && domRoot) {
-      bestCandidate = rawParts.find(p => p.toLowerCase().includes(domRoot.toLowerCase()) && p.length <= 45 && !isGenericPlaceName(p));
+    // Second try finding a part that matches domRoot (both direct substring and space-insensitive alphanumeric match, e.g. "Amino Capital" === "aminocapital")
+    if (!bestCandidate && domAlpha) {
+      bestCandidate = rawParts.find(p => {
+        const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return pAlpha === domAlpha && !isGenericPlaceName(p);
+      }) || rawParts.find(p => {
+        const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return (p.toLowerCase().includes(domRoot.toLowerCase()) || pAlpha.includes(domAlpha) || (pAlpha.length >= 3 && domAlpha.startsWith(pAlpha))) && p.length <= 45 && !isGenericPlaceName(p);
+      });
     }
 
     // Score each part in rawParts to pick the true concise brand name over marketing slogans/descriptions
     if (!bestCandidate) {
       const isSlogan = (s: string) => {
-        const lower = s.toLowerCase();
+        const lower = s.toLowerCase().trim();
+        const wordCount = lower.split(/\s+/).length;
         return (
           s.length > 26 ||
-          /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|welcome to|the best|top rated|personal injury|attorneys at law|car rental|rent a car)\b/i.test(lower)
+          wordCount > 4 ||
+          /^(we|our|building|backing|empowering|helping|investing|discover|explore|welcome|find|get|your)\b/i.test(lower) ||
+          /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|official website|welcome to|the best|top rated|from day one|we back|personal injury|attorneys at law|car rental|rent a car)\b/i.test(lower)
         );
       };
 
       const ranked = rawParts
         .filter(p => !isGenericPlaceName(p))
-        .map(p => {
-          let score = 50;
-          if (domRoot && p.toLowerCase().includes(domRoot.toLowerCase())) score += 100;
+        .map((p, idx) => {
+          let score = idx === 0 ? 60 : 50;
+          const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (domAlpha && (pAlpha === domAlpha || pAlpha.includes(domAlpha) || domAlpha.includes(pAlpha))) score += 100;
           if (isSlogan(p)) score -= 80;
           if (p.length >= 2 && p.length <= 25) score += 30; // Bonus for concise brand names
           return { part: p, score };
@@ -1325,21 +1310,37 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
   }
 
-  // 3.1 Anchor preservation: if queryContext is a valid proper brand name (e.g. "Tobener Ravenscroft" or "Piotrowski Law"),
-  // and trimmed is an SEO tagline/slogan that does NOT contain the key query brand words (e.g. "California Tenant Lawyers")
-  // OR trimmed is a short acronym/abbreviation (e.g. "CP Law")
+  // 3.05 Truncate at common verb/slogan marketing phrases (e.g. "Law Firm Wanted Law Is A Group of Law Firm S Offering Accessible Law...")
+  const sloganVerbPattern = /\s+(?:is\s+a|is\s+an|is\s+the|is\s+een|is\s+het|we\s+back|we\s+invest|we\s+help|we\s+build|offering|provides|providing|specializing\s+in|specialised\s+in|voor\s+al\s+uw|voor\s+al\s+je|pour\s+tous\s+vos|welkom\s+bij|welcome\s+to|dedicated\s+to|your\s+trusted)\b.*/i;
+  if (sloganVerbPattern.test(trimmed)) {
+    const truncated = trimmed.replace(sloganVerbPattern, "").replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
+    if (truncated && truncated.length >= 2 && !isGenericPlaceName(truncated)) {
+      trimmed = truncated;
+    }
+  }
+
+  // 3.06 Strip trailing generic SEO industry descriptions (e.g. "Greycroft Venture Capital Investment Firm" -> "Greycroft")
+  const seoSuffixPattern = /\s+(?:Venture\s+Capital\s+Investment\s+Firm|Venture\s+Capital\s+Firm|Private\s+Equity\s+Firm|Investment\s+Management\s+Firm|Official\s+Website|Official\s+Site|Home\s+Page|All\s+Rights\s+Reserved)$/i;
+  if (seoSuffixPattern.test(trimmed)) {
+    const strippedSuffix = trimmed.replace(seoSuffixPattern, "").replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
+    if (strippedSuffix && strippedSuffix.length >= 2 && !isGenericPlaceName(strippedSuffix)) {
+      trimmed = strippedSuffix;
+    }
+  }
+
+  trimmed = trimmed.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
+
+  // 3.1 Anchor preservation: if queryContext is a valid proper brand name from dropdown/search (e.g. "Amino Capital", "Greycroft", "Tobener Ravenscroft"),
+  // preserve queryContext over longer SEO titles or unrelated slogans
   if (queryContext) {
     const qTrim = queryContext.trim();
     const qWords = qTrim.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|inc|llc|pc|corp)$/i.test(w));
-    if (qWords.length >= 1 && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(qTrim) && !qTrim.includes('.')) {
+    if (qWords.length >= 1 && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(qTrim) && !qTrim.includes('.') && !isDomainStemName(qTrim, cleanDom)) {
       const qLower = qTrim.toLowerCase();
       const trimmedLower = trimmed.toLowerCase();
-
-      // Check if trimmed fails to contain any of the primary query brand words
       const matchesQueryWords = qWords.some(w => trimmedLower.includes(w.toLowerCase()));
 
-      // If trimmed is an unrelated marketing slogan (e.g. "California Tenant Lawyers") or an acronym (e.g. "CP Law")
-      if (!matchesQueryWords || (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower))) {
+      if (!matchesQueryWords || (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower)) || (trimmedLower.startsWith(qLower + " ") && trimmed.split(/\s+/).length > qTrim.split(/\s+/).length + 1)) {
         trimmed = qTrim;
       }
     }
@@ -1402,9 +1403,9 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
   }
 
-  // 3c. If the string is already a clean capitalized business name from metadata, preserve directly
-  if (!isDomainLike && trimmed && /^[A-Z][A-Za-z0-9\s&'’\.,\-]+$/.test(trimmed) && trimmed.length <= 50) {
-    return trimmed;
+  // 3c. If the string is now a clean human business name (English or Hebrew) after separator & slogan stripping, preserve in full
+  if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && trimmed.length <= 50) {
+    return toTitleCase(trimmed);
   }
 
   let rawName = trimmed;

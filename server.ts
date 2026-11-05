@@ -7995,6 +7995,17 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             p.name = descBrand;
             if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
           }
+        } else if (p.name) {
+          const cleanedName = formatBusinessName(p.name, key);
+          if (cleanedName && !isDomainStemName(cleanedName, key)) {
+            p.name = cleanedName;
+          }
+        }
+        if (p.selectedName) {
+          const cleanedSel = formatBusinessName(p.selectedName, key);
+          if (cleanedSel && !isDomainStemName(cleanedSel, key)) {
+            p.selectedName = cleanedSel;
+          }
         }
 
         // Special rule for yoouz.com
@@ -8228,6 +8239,17 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           if (descBrand) {
             rec.name = descBrand;
             if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+          }
+        } else if (rec.name) {
+          const cleanedName = formatBusinessName(rec.name, domKey);
+          if (cleanedName && !isDomainStemName(cleanedName, domKey)) {
+            rec.name = cleanedName;
+          }
+        }
+        if (rec.selectedName) {
+          const cleanedSel = formatBusinessName(rec.selectedName, domKey);
+          if (cleanedSel && !isDomainStemName(cleanedSel, domKey)) {
+            rec.selectedName = cleanedSel;
           }
         }
         return rec;
@@ -30234,10 +30256,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             
             // Protection: If the existing name is already a high-quality name, don't let it be overwritten by a generic title,
             // EXCEPT when existingName is merely a 1-word domain stem (like "Adaptvc") and autoPlaceName is a multi-word brand name (like "Adapt Ventures")!
-            const existingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
+            const rawExistingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
+            const existingName = formatBusinessName(rawExistingName, cleanDomain) || rawExistingName;
             const isExistingOneWordStem = !existingName.includes(" ") && existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean;
-            const hasBetterMultiWordName = Boolean(autoPlaceName && autoPlaceName.includes(" "));
-            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 3 && !(isExistingOneWordStem && hasBetterMultiWordName);
+            const hasBetterMultiWordName = Boolean(autoPlaceName && autoPlaceName.includes(" ") && !isDomainStemName(autoPlaceName, cleanDomain));
+            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 2 && !(isExistingOneWordStem && hasBetterMultiWordName);
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
@@ -30352,9 +30375,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             effectiveEmail = mergedEmail || effectiveEmail;
             effectiveCategory = mergedDoc.category || effectiveCategory;
             title = formattedExistingName;
+            if (siteName) siteName = formatBusinessName(siteName, cleanDomain) || formattedExistingName;
           } else {
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;
+            title = autoPlaceName;
+            if (siteName) siteName = formatBusinessName(siteName, cleanDomain) || autoPlaceName;
             await bunnyDb.execute({
               sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,

@@ -1,5 +1,53 @@
 [
   {
+    "id": "aminocapital.com",
+    "name": "Amino Capital",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://www.aminocapital.com/amino-mark.png",
+    "logoUrl": "https://www.aminocapital.com/amino-mark.png",
+    "bannerUrl": "",
+    "ogImage": "",
+    "photos": [],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://aminocapital.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Amino Capital is a Palo Alto venture firm. We invest at pre-seed, seed, Series A, and Series B, and we've backed Chime, Webflow, Rippling, Grail, and Replit since 2012.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "aminocapital.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "customEdited": true
+  },
+  {
     "id": "ycombinator.com",
     "name": "Y Combinator",
     "category": "Website",
@@ -256,8 +304,8 @@
     "address": "292 Madison Ave, 8th Floor New York, NY 10017",
     "city": "New york",
     "country": "United States",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "rating": 5,
     "totalReviews": 0,
     "ratingDistribution": {
@@ -269,10 +317,10 @@
     },
     "avatarUrl": "https://www.greycroft.com/wp-content/uploads/2024/01/Greycroft.svg",
     "logoUrl": "https://www.greycroft.com/wp-content/uploads/2024/01/Greycroft.svg",
-    "bannerUrl": "https://www.greycroft.com/wp-content/uploads/2025/04/MNTN.svg",
-    "ogImage": "https://www.greycroft.com/wp-content/uploads/2025/04/MNTN.svg",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.greycroft.com%2Fwp-content%2Fuploads%2F2025%2F07%2F16141754%2Fh2okinnovationshero.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.greycroft.com%2Fwp-content%2Fuploads%2F2025%2F07%2F16141754%2Fh2okinnovationshero.webp",
     "photos": [
-      "https://www.greycroft.com/wp-content/uploads/2025/04/MNTN.svg"
+      "/api/proxy-image?url=https%3A%2F%2Fcdn.greycroft.com%2Fwp-content%2Fuploads%2F2025%2F07%2F16141754%2Fh2okinnovationshero.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,

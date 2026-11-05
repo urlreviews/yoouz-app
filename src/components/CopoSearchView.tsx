@@ -302,7 +302,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         const hasDot = dom.includes('.');
         return {
           id: p.id,
-          title: KNOWN_OFFICIAL_NAMES[p.id?.toLowerCase()] || KNOWN_OFFICIAL_NAMES[dom?.toLowerCase()] || p.name || dom,
+          title: KNOWN_OFFICIAL_NAMES[p.id?.toLowerCase()] || KNOWN_OFFICIAL_NAMES[dom?.toLowerCase()] || formatBusinessName(p.name, dom) || p.name || dom,
           domain: hasDot ? dom : "",
           logoUrl: (p.logoUrl && !isFaviconUrl(p.logoUrl)) ? p.logoUrl : "",
           category: (p.category && !p.category.toLowerCase().includes("verified") && !p.category.toLowerCase().includes("google")) ? p.category : "",
@@ -630,12 +630,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (isMetaMatchingCurrent && preloadedMeta?.image ? preloadedMeta.image : "") 
         || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
       const validPreferredName = (preferredName && !isDomainStemName(preferredName, cleanUrl))
-        ? preferredName
-        : ((locationDetails?.rawBusinessName && !isDomainStemName(locationDetails.rawBusinessName, cleanUrl)) ? locationDetails.rawBusinessName : "");
+        ? (formatBusinessName(preferredName, cleanUrl) || preferredName)
+        : ((locationDetails?.rawBusinessName && !isDomainStemName(locationDetails.rawBusinessName, cleanUrl))
+          ? (formatBusinessName(locationDetails.rawBusinessName, cleanUrl) || locationDetails.rawBusinessName)
+          : "");
       const preloadedDescBrand = extractBrandFromDescription(preloadedMeta?.description, cleanUrl);
+      const cleanedPreloadedTitle = isMetaMatchingCurrent
+        ? (preloadedDescBrand || formatBusinessName(preloadedMeta?.siteName || preloadedMeta?.title, cleanUrl))
+        : "";
       const instantName = (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || validPreferredName
-        || (isMetaMatchingCurrent && (preloadedDescBrand || preloadedMeta?.siteName || preloadedMeta?.title))
+        || cleanedPreloadedTitle
         || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
         || baseName
         || rawQuery;
