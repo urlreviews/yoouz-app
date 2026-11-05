@@ -27548,27 +27548,31 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
   } catch(e) {}
 
-  // 2. High-resolution Web Icon links (sizes >= 96px, e.g. 192x192, 512x512) or SVG icons
+  // 2. High-resolution Web Icon links (sizes >= 96px, e.g. 192x192, 512x512), SVG icons, or authentic declared link icons (e.g. lovable/custom png)
   try {
-    const highResIcons: { url: string; size: number }[] = [];
+    const siteIcons: { url: string; size: number }[] = [];
     $('link[rel="icon"], link[rel="shortcut icon"]').each((_: any, el: any) => {
       const href = $(el).attr("href");
       const sizes = $(el).attr("sizes") || "";
-      if (href && !href.includes(".ico") && !sizes.includes("16") && !sizes.includes("32")) {
-        const sizeNum = parseInt(sizes.split("x")[0], 10) || 0;
+      if (href) {
         const lowerHref = href.toLowerCase();
-        if (sizeNum >= 96 || lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || lowerHref.endsWith(".png")) {
-          const abs = makeAbsolute(href);
-          if (abs && isValidCandidate(abs)) {
-            highResIcons.push({ url: abs, size: sizeNum });
-          }
+        let sizeNum = parseInt(sizes.split("x")[0], 10) || 0;
+        if (sizeNum === 0) {
+          if (lowerHref.endsWith(".svg") || lowerHref.includes(".svg?")) sizeNum = 512;
+          else if (lowerHref.endsWith(".png") || lowerHref.includes(".png?")) sizeNum = 128;
+          else if (!lowerHref.includes(".ico")) sizeNum = 64;
+          else sizeNum = 16;
+        }
+        const abs = makeAbsolute(href);
+        if (abs && isValidCandidate(abs)) {
+          siteIcons.push({ url: abs, size: sizeNum });
         }
       }
     });
-    if (highResIcons.length > 0) {
-      highResIcons.sort((a, b) => b.size - a.size);
-      if (highResIcons[0].size >= 96 || highResIcons[0].url.includes(".svg")) {
-        return highResIcons[0].url;
+    if (siteIcons.length > 0) {
+      siteIcons.sort((a, b) => b.size - a.size);
+      if (siteIcons[0].url) {
+        return siteIcons[0].url;
       }
     }
   } catch(e) {}
@@ -30068,14 +30072,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "zoom.us": "https://images.ctfassets.net/kftzwdyauwt9/7o2h0Z7Y3mBqEmsKq0mKkG/7a996f01c23f110ea09bbcf8cfbd5dfc/Zoom-Logo.png",
         "apple.com": "https://www.apple.com/ac/structured-data/images/open_graph_logo.png",
         "github.com": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+        "offline.vc": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
+        "www.offline.vc": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
+        "amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+        "www.amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+        "marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
+        "www.marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
       };
 
-      // Prioritize known brand logos, otherwise verify authentic logo without favicon or placeholder fallback
+      // Prioritize known brand logos, otherwise verify authentic logo without placeholder fallback
       if (serverBrandLogos[cleanDomain]) {
         logo = serverBrandLogos[cleanDomain];
       } else if (KNOWN_BRAND_LOGOS[cleanDomain]) {
         logo = KNOWN_BRAND_LOGOS[cleanDomain];
-      } else if (!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
+      } else if (!logo || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
         logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || "";
       }
 
@@ -30085,14 +30095,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         image = sanitizeProxy(image);
       }
 
-      if (logo && (isGenericOrPlaceholderLogo(logo) || isFaviconUrl(logo))) {
+      if (logo && isGenericOrPlaceholderLogo(logo)) {
         logo = "";
       } else if (logo) {
         logo = sanitizeProxy(logo);
       }
 
       // If SPA website or anti-bot firewall prevented HTML banner/logo extraction, fetch authentic media via DuckDuckGo fallback
-      if ((!image || isBadBanner(image)) || (!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo))) {
+      if ((!image || isBadBanner(image)) || (!logo || isGenericOrPlaceholderLogo(logo))) {
         try {
           const ddgMedia = await Promise.race([
             fetchDuckDuckGoMediaAndInfo(cleanDomain, title || cleanDomain),
@@ -30102,7 +30112,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if ((!image || isBadBanner(image)) && ddgMedia.banner && !isBadBanner(ddgMedia.banner)) {
               image = sanitizeProxy(ddgMedia.banner);
             }
-            if ((!logo || isFaviconUrl(logo) || isGenericOrPlaceholderLogo(logo)) && ddgMedia.logo && !isFaviconUrl(ddgMedia.logo) && !isGenericOrPlaceholderLogo(ddgMedia.logo)) {
+            if ((!logo || isGenericOrPlaceholderLogo(logo)) && ddgMedia.logo && !isGenericOrPlaceholderLogo(ddgMedia.logo)) {
               logo = sanitizeProxy(ddgMedia.logo);
             }
             if (!description && ddgMedia.description) {
@@ -30111,6 +30121,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         } catch (ddgErr) {}
       }
+
+      // Final logo guarantee: If still missing, provide authentic Google S2 favicon service proxy
+      if (!logo && cleanDomain && cleanDomain.includes(".")) {
+        logo = `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+      }
+
       console.log("[TRACE METADATA 1] domain:", cleanDomain, "image:", image, "logo:", logo);
 
       // Extract rich location, phone, email, and category
@@ -30182,8 +30198,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             rating: 5,
             totalReviews: 1,
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !isFaviconUrl(logo)) ? logo : "",
-            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !isFaviconUrl(logo)) ? logo : "",
+            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : ""),
+            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : ""),
             bannerUrl: (image && !isBadBanner(image)) ? image : "",
             ogImage: (image && !isBadBanner(image)) ? image : "",
             photos: (image && !isBadBanner(image)) ? [image] : [],
@@ -30249,12 +30265,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return false;
             };
 
-            const isFaviconOrPlaceholder = (u?: string) => !u || typeof u !== 'string' || u.includes("/api/favicon") || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("faviconV2") || u.includes("/api/brand-banner") || u.includes("#") || u.includes("paint0_linear") || u.includes("credit-card");
-            const hasBetterLogo = logo && !isFaviconOrPlaceholder(logo);
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || u.includes("#") || u.includes("paint0_linear") || u.includes("credit-card");
+            const hasBetterLogo = logo && !isPlaceholderLogo(logo);
 
-            const mergedLogo = (!isFaviconOrPlaceholder(existingDoc.logoUrl))
+            const domainLogoFallback = cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "";
+            const mergedLogo = (!isPlaceholderLogo(existingDoc.logoUrl))
               ? existingDoc.logoUrl
-              : (hasBetterLogo ? logo : (!isFaviconOrPlaceholder((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (hasBetterLogo ? logo : "")));
+              : (hasBetterLogo ? logo : (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (hasBetterLogo ? logo : domainLogoFallback)));
 
             const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const mergedBanner = (!isBadBannerInternal(existingDoc.bannerUrl))

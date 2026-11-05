@@ -950,31 +950,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     return null;
   }, [place, drawerDomain, rawPlaceVideos]);
 
-  const hasAuthenticLogo = React.useMemo(() => {
-    const cleanD = (drawerDomain || place.brandDomain || "").replace(/^www\./, "").toLowerCase().trim();
-    if (cleanD === "yoouz.com" || cleanD === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return true;
-    if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return true;
-    
-    // Check if primaryLogoUrl is present, not a favicon, and not a generic/fallback URL
-    if (primaryLogoUrl && 
-        !isFaviconUrl(primaryLogoUrl) && 
-        !primaryLogoUrl.includes("/api/favicon") && 
-        !primaryLogoUrl.includes("/api/monogram") && 
-        !isGenericOrPlaceholderLogo(primaryLogoUrl)) {
-      return true;
-    }
-    
-    // Check if place.logoUrl is present, not a favicon, and not a generic/fallback URL
-    if (place.logoUrl && 
-        !isFaviconUrl(place.logoUrl) && 
-        !place.logoUrl.includes("/api/favicon") && 
-        !place.logoUrl.includes("/api/monogram") && 
-        !isGenericOrPlaceholderLogo(place.logoUrl)) {
-      return true;
-    }
 
-    return false;
-  }, [place, drawerDomain, primaryLogoUrl]);
 
   const activeBannerUrl = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
   const brandGrad = React.useMemo(
@@ -1395,31 +1371,28 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         ) : null}
 
-        {/* Overlapping Business Logo - Only render when an authentic logo is available */}
-        {hasAuthenticLogo && !logoError && (
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300">
-            <CopoBrandLogo
-              key={`logo-${place.id}-${primaryLogoUrl || place.logoUrl || ""}`}
-              domain={drawerDomain || undefined}
-              name={displayedPlaceName}
-              website={effectiveWebsite}
-              logoUrl={primaryLogoUrl || place.logoUrl}
-              bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-              className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-              imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
-              fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
-              onLoad={() => {
-                setLogoLoaded(true);
-                setLogoError(false);
-              }}
-              onError={() => setLogoError(true)}
-            />
-          </div>
-        )}
+        {/* Overlapping Business Logo - Always render signature brand logo box */}
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300 shadow-xl">
+          <CopoBrandLogo
+            key={`logo-${place.id}-${primaryLogoUrl || place.logoUrl || ""}`}
+            domain={drawerDomain || undefined}
+            name={displayedPlaceName}
+            website={effectiveWebsite}
+            logoUrl={primaryLogoUrl || place.logoUrl}
+            bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+            className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+            onLoad={() => {
+              setLogoLoaded(true);
+              setLogoError(false);
+            }}
+          />
+        </div>
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className={`px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 ${hasAuthenticLogo && !logoError ? "pt-12 sm:pt-16" : "pt-5 sm:pt-6"}`}>
+      <div className="px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 pt-12 sm:pt-16">
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-1">
           <div className="min-w-0 flex-1">
