@@ -1,5 +1,7 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   X,
   MapPin,
@@ -28,6 +30,9 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   SlidersHorizontal,
+  Sliders,
+  QrCode,
+  Printer,
   Download,
   Filter,
   Mail,
@@ -105,6 +110,12 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [showHoursDropdown, setShowHoursDropdown] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [showQrPrintModal, setShowQrPrintModal] = useState(false);
+  const [qrCustomHeading, setQrCustomHeading] = useState("LEAVE A 60-SECOND VIDEO REVIEW");
+  const [qrTableLabel, setQrTableLabel] = useState("");
+  const [showQrCustomize, setShowQrCustomize] = useState(false);
+  const [qrLinkCopied, setQrLinkCopied] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [showUnclaimedChatModal, setShowUnclaimedChatModal] = useState(false);
@@ -1264,8 +1275,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        {/* Top-Right Header Actions: Share & Report / Flag */}
+        {/* Top-Right Header Actions: QR Code, Share & Report / Flag */}
         <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
+          <button
+            id="btn-qr-business-header"
+            onClick={() => {
+              triggerHaptic("light");
+              setIsQrModalOpen(true);
+            }}
+            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+            title={t("place.qrCode", "Business QR Code")}
+          >
+            <QrCode className="w-4 h-4 text-white" />
+          </button>
           <button
             onClick={() => {
               triggerHaptic("light");
@@ -2563,6 +2585,358 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         placeId={place.id}
         onOpenReport={onOpenReport ? () => onOpenReport({ type: "place", placeName: displayedPlaceName, placeId: place.id }) : undefined}
       />
+
+      {/* Instant Business QR Code & Standee Modal */}
+      {isQrModalOpen && typeof document !== "undefined" && createPortal(
+        (() => {
+          const placeSlug = getPlaceSlug(place);
+          const originUrl = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://www.yoouz.com";
+          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}?action=record`;
+          const displayQrUrl = `www.yoouz.com/reviews/${placeSlug}?action=record`;
+          const avgRatingStr = dynamicAvgRating.toFixed(1);
+
+          const handleDownloadPlaceQr = () => {
+            const canvas =
+              (document.getElementById("yoouz-place-qr-code-mobile") as HTMLCanvasElement) ||
+              (document.getElementById("yoouz-place-qr-code") as HTMLCanvasElement);
+            if (canvas) {
+              const pngUrl = canvas.toDataURL("image/png");
+              const downloadLink = document.createElement("a");
+              downloadLink.href = pngUrl;
+              downloadLink.download = `${(displayedPlaceName || "business").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-yoouz-qr.png`;
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }
+          };
+
+          return (
+            <div
+              className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+              onClick={() => setIsQrModalOpen(false)}
+            >
+              <div
+                className="w-full max-w-md my-auto flex flex-col items-center relative animate-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsQrModalOpen(false)}
+                  className="absolute -top-11 right-0 w-9 h-9 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700/80 flex items-center justify-center transition-colors cursor-pointer shadow-lg z-20"
+                  title={t("common.close", "Close")}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                {/* Standee Card */}
+                <div className="w-full bg-zinc-900/95 border border-zinc-800/90 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/10 backdrop-blur-2xl">
+                  {/* Top Acrylic Lip & Bevel */}
+                  <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-zinc-700/80 rounded-full mx-auto mb-4 sm:mb-5 shadow-inner" />
+
+                  {qrTableLabel && (
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 text-[8.5px] sm:text-[9px] font-extrabold uppercase border border-zinc-700 tracking-wider">
+                      {qrTableLabel}
+                    </div>
+                  )}
+
+                  {/* Venue Logo Avatar */}
+                  <CopoBrandLogo
+                    domain={drawerDomain || place.website || place.id}
+                    name={displayedPlaceName}
+                    website={effectiveWebsite}
+                    logoUrl={primaryLogoUrl || place.logoUrl}
+                    bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200 overflow-hidden"
+                    imageClassName="w-full h-full object-contain rounded-lg"
+                    fallbackTextClassName="font-black text-lg text-zinc-950"
+                  />
+
+                  {/* Venue Title & Verified Badge */}
+                  <div className="flex items-center justify-center gap-1.5 mb-0.5 px-2">
+                    <h3 className="font-black text-white text-base sm:text-xl tracking-tight truncate max-w-[260px] sm:max-w-[300px]">
+                      {displayedPlaceName}
+                    </h3>
+                    <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+                  </div>
+
+                  {/* Business Place Handle / URL */}
+                  <div className="text-[11px] font-bold text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
+                    <span>yoouz.com/reviews/{placeSlug}</span>
+                  </div>
+
+                  {/* Star Rating & Reviews Count */}
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
+                    <span className="text-amber-400 font-extrabold">{avgRatingStr}</span>
+                    <CopoStarRating
+                      rating={Number(avgRatingStr) || 5.0}
+                      starClassName="w-3.5 h-3.5"
+                      filledColorClass="text-amber-400 fill-amber-400"
+                      emptyColorClass="text-zinc-600 fill-zinc-800"
+                    />
+                    <span className="text-zinc-400 text-[11px] font-normal">
+                      ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Video Review" : "Video Reviews"})
+                    </span>
+                  </div>
+
+                  {/* Callout Prompt with Edit Trigger */}
+                  <div className="mb-4 sm:mb-5 px-2 flex items-center justify-center gap-1.5">
+                    <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-[85%] truncate">
+                      {qrCustomHeading || "LEAVE A 60-SECOND VIDEO REVIEW"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowQrCustomize(!showQrCustomize)}
+                      title="Customize Text"
+                      className="p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 active:scale-95 text-zinc-400 hover:text-white transition-all cursor-pointer shrink-0 border border-zinc-700/60"
+                    >
+                      <Sliders className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Collapsible Text Customization */}
+                  {showQrCustomize && (
+                    <div className="mb-4 p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2.5 text-left animate-in fade-in slide-in-from-top-1 shadow-inner">
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          Callout Heading
+                        </label>
+                        <input
+                          type="text"
+                          value={qrCustomHeading}
+                          onChange={(e) => setQrCustomHeading(e.target.value)}
+                          placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
+                          className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          Table / Zone Label (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={qrTableLabel}
+                          onChange={(e) => setQrTableLabel(e.target.value)}
+                          placeholder="e.g. Counter, Table #4"
+                          className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* QR Code Canvas Card */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-2xl inline-block border border-zinc-300 relative group my-1 max-w-full">
+                    <div className="hidden sm:block">
+                      <QRCodeCanvas
+                        id="yoouz-place-qr-code"
+                        value={qrDirectReviewUrl}
+                        size={220}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
+                    <div className="sm:hidden flex items-center justify-center">
+                      <QRCodeCanvas
+                        id="yoouz-place-qr-code-mobile"
+                        value={qrDirectReviewUrl}
+                        size={190}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
+
+                    {/* Center Yoouz Star Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-sm shadow-xl">
+                        ★
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Camera Guidance Prompt */}
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mt-4 font-medium px-2">
+                    <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>Scan with phone camera to record live review</span>
+                  </div>
+
+                  {/* Footnote: Direct URL + Copy Link */}
+                  <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-1">
+                    <span className="text-[11px] font-mono text-zinc-400 truncate max-w-[200px] sm:max-w-[240px]">
+                      {displayQrUrl}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(qrDirectReviewUrl);
+                          setQrLinkCopied(true);
+                          setTimeout(() => setQrLinkCopied(false), 2500);
+                        }}
+                        className="p-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-750 active:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer text-xs font-semibold flex items-center gap-1 border border-zinc-700/60"
+                        title="Copy Direct Link"
+                      >
+                        {qrLinkCopied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-[10px] text-emerald-400 font-bold">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="text-[10px]">Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary Action Buttons: Download QR Code & Print Standee */}
+                <div className="w-full mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownloadPlaceQr}
+                    className="w-full py-3 px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  >
+                    <Download className="w-4 h-4 text-zinc-950 shrink-0" />
+                    <span className="truncate">Download QR Code</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQrPrintModal(true)}
+                    className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
+                  >
+                    <Printer className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <span className="truncate">Print Standee</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })(),
+        document.body
+      )}
+
+      {/* Printable A6 Standee Layout Modal */}
+      {showQrPrintModal && typeof document !== "undefined" && createPortal(
+        (() => {
+          const placeSlug = getPlaceSlug(place);
+          const originUrl = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://www.yoouz.com";
+          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}?action=record`;
+          const avgRatingStr = dynamicAvgRating.toFixed(1);
+
+          return (
+            <div
+              className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+              onClick={() => setShowQrPrintModal(false)}
+            >
+              <div
+                className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white max-w-lg w-full p-6 shadow-2xl relative space-y-5 print:p-0 print:border-none print:shadow-none"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowQrPrintModal(false)}
+                  className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 transition-colors cursor-pointer print:hidden"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2 print:hidden">
+                  <Printer className="w-5 h-5 text-white" />
+                  <h3 className="font-extrabold text-white text-base">A6 Table Standee Print Layout</h3>
+                </div>
+
+                {/* Printable Area */}
+                <div className="bg-zinc-950 border-2 border-zinc-800 rounded-3xl p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
+                  {qrTableLabel && (
+                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-extrabold uppercase border border-zinc-700 tracking-wider print:bg-zinc-100 print:text-black print:border-zinc-300">
+                      {qrTableLabel}
+                    </div>
+                  )}
+
+                  <CopoBrandLogo
+                    domain={drawerDomain || place.website || place.id}
+                    name={displayedPlaceName}
+                    website={effectiveWebsite}
+                    logoUrl={primaryLogoUrl || place.logoUrl}
+                    bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
+                    className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-200 print:bg-white print:border-zinc-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
+                    imageClassName="w-full h-full object-contain rounded-lg"
+                    fallbackTextClassName="font-black text-xl text-zinc-950"
+                  />
+
+                  <div>
+                    <h2 className="font-black text-white text-xl tracking-tight text-center [overflow-wrap:anywhere] print:text-black flex items-center justify-center gap-1.5">
+                      <span>{displayedPlaceName}</span>
+                      <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 print:fill-black print:text-white" />
+                    </h2>
+                    <div className="text-xs font-bold text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                      <span>yoouz.com/reviews/{placeSlug}</span>
+                    </div>
+                    <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
+                      <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRatingStr}</span>
+                      <CopoStarRating
+                        rating={Number(avgRatingStr) || 5.0}
+                        starClassName="w-3.5 h-3.5"
+                        filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                        emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                      />
+                      <span className="text-zinc-300 font-medium print:text-zinc-700">
+                        ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Video Review" : "Video Reviews"} on Yoouz)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl shadow-xl inline-block border border-zinc-200 print:shadow-none print:border-zinc-300 relative">
+                    <QRCodeCanvas
+                      value={qrDirectReviewUrl}
+                      size={180}
+                      level="H"
+                      includeMargin={true}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-8 h-8 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-xs shadow-xl">
+                        ★
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20 print:bg-zinc-100 print:text-black print:border-zinc-300">
+                      {qrCustomHeading || "LEAVE A 60-SECOND VIDEO REVIEW"}
+                    </span>
+                    <p className="text-xs text-zinc-300 font-medium print:text-zinc-600">
+                      Scan with your phone camera app to share your video review!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 print:hidden">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="flex-1 py-3 bg-white hover:bg-zinc-200 text-black rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print Now / Save as PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowQrPrintModal(false)}
+                    className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })(),
+        document.body
+      )}
 
 
 
