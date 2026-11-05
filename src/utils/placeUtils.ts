@@ -906,8 +906,92 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "autowerkplaats-brugge.be": "Auto Werkplaats Brugge",
   "www-autowerkplaatsbrugge-be": "Auto Werkplaats Brugge",
   "autowerkplaats brugge": "Auto Werkplaats Brugge",
-  "auto werkplaats brugge": "Auto Werkplaats Brugge"
+  "auto werkplaats brugge": "Auto Werkplaats Brugge",
+  "adaptvc.com": "Adapt Ventures",
+  "www.adaptvc.com": "Adapt Ventures",
+  "adaptvc": "Adapt Ventures",
+  "adapt ventures": "Adapt Ventures",
+  "afore.vc": "Afore Capital",
+  "www.afore.vc": "Afore Capital",
+  "afore": "Afore Capital",
+  "afore capital": "Afore Capital",
+  "afore-capital-san-francisco.co.il": "Afore Capital",
+  "researchgate.net": "ResearchGate",
+  "www.researchgate.net": "ResearchGate",
+  "researchgate": "ResearchGate",
+  "videoland.com": "Videoland",
+  "www.videoland.com": "Videoland",
+  "videoland": "Videoland",
+  "grammarhow.com": "GrammarHow",
+  "www.grammarhow.com": "GrammarHow",
+  "grammarhow": "GrammarHow",
+  "adaptipventures.com": "Adapt IP Ventures",
+  "www.adaptipventures.com": "Adapt IP Ventures",
+  "adaptipventures": "Adapt IP Ventures",
+  "adapt ip ventures": "Adapt IP Ventures",
+  "springinv.com": "Spring Investments",
+  "www.springinv.com": "Spring Investments",
+  "springinv": "Spring Investments",
+  "spring investments sa": "Spring Investments"
 };
+
+/**
+ * Checks if a candidate business name is merely a raw domain or a 1-word unsplit domain stem
+ * (e.g., "Adaptvc" or "adaptvc.com" for domain "adaptvc.com").
+ */
+export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
+  if (!name || !name.trim()) return true;
+  const trimmed = name.trim();
+  if (isValidDomainUrl(trimmed) || /\.(com|net|org|io|vc|co|ai|app|dev|be|nl|de|fr|uk|ae|il)$/i.test(trimmed)) {
+    return true;
+  }
+  if (trimmed.includes(" ")) return false;
+  const cleanName = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!cleanName) return true;
+  if (domain) {
+    const cleanDom = extractCleanDomain(domain);
+    const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (domRoot && cleanName === domRoot) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Extracts a clean multi-word company/brand name from the beginning of a business description
+ * when the description starts with "<Brand Name> is a/an/the ..."
+ * e.g., "Adapt Ventures is a private investment firm..." -> "Adapt Ventures"
+ */
+export function extractBrandFromDescription(description?: string | null, domain?: string | null): string | null {
+  if (!description || typeof description !== "string") return null;
+  const cleanDesc = description.trim();
+  if (!cleanDesc || cleanDesc.length < 10) return null;
+
+  const match = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+)/u);
+  if (!match || !match[1]) return null;
+
+  const candidate = match[1].trim();
+  if (candidate.length < 2 || candidate.length > 42) return null;
+
+  const lowerCand = candidate.toLowerCase();
+  const stopStarts = ["this", "we", "our", "welcome", "official", "discover", "watch", "verified", "the best", "leading", "trusted", "here", "there", "it"];
+  if (stopStarts.some(w => lowerCand === w || lowerCand.startsWith(w + " "))) return null;
+
+  if (domain) {
+    const cleanDom = extractCleanDomain(domain);
+    const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const candAlpha = lowerCand.replace(/[^a-z0-9]/g, "");
+    if (domRoot && domRoot.length >= 3) {
+      const prefix3 = domRoot.slice(0, 3);
+      if (candAlpha.startsWith(prefix3) || domRoot.startsWith(candAlpha.slice(0, 3)) || candidate.includes(" ")) {
+        return candidate;
+      }
+    }
+  }
+
+  return candidate;
+}
 
 /**
  * Detects corrupt/fragmented strings scraped from website footers or contact blocks (e.g. "Kruis Tel", "St-Kruis Tel", "Tel: 050", etc.)

@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -7986,6 +7986,17 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         const domain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
         const key = domain || canonId;
 
+        if (KNOWN_OFFICIAL_NAMES[key]) {
+          p.name = KNOWN_OFFICIAL_NAMES[key];
+          if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
+        } else if (isDomainStemName(p.name, key)) {
+          const descBrand = extractBrandFromDescription(p.description, key);
+          if (descBrand) {
+            p.name = descBrand;
+            if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
+          }
+        }
+
         // Special rule for yoouz.com
         if (key === 'yoouz.com' || canonId === 'yoouz.com' || p.id === 'yoouz.com' || (p.name && p.name.toLowerCase() === 'yoouz')) {
           p.isClaimed = true;
@@ -8206,14 +8217,29 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
 
     // Special handler for places collection: check places index and multi-layer resolver
     if (colName === 'places') {
+      const normalizePlaceRecord = (rec: any) => {
+        if (!rec) return rec;
+        const domKey = String(rec.brandDomain || rec.id || id || "").toLowerCase().replace(/^www\./, "").trim();
+        if (KNOWN_OFFICIAL_NAMES[domKey]) {
+          rec.name = KNOWN_OFFICIAL_NAMES[domKey];
+          if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+        } else if (isDomainStemName(rec.name, domKey)) {
+          const descBrand = extractBrandFromDescription(rec.description, domKey);
+          if (descBrand) {
+            rec.name = descBrand;
+            if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+          }
+        }
+        return rec;
+      };
       const placesList = readPlacesIndex();
       const existingInList = placesList.find((p: any) => p && (p.id === id || p.brandDomain === id || cleanDomainName(p.website || p.id) === cleanDomainName(id) || String(p.id).toLowerCase() === String(id).toLowerCase()));
       if (existingInList && !isDeletedPlaceServer(existingInList)) {
-        return res.json(existingInList);
+        return res.json(normalizePlaceRecord(existingInList));
       }
       const resolved = await resolvePlaceFromAnySource(id);
       if (resolved && !isDeletedPlaceServer(resolved)) {
-        return res.json(resolved);
+        return res.json(normalizePlaceRecord(resolved));
       }
       return res.status(404).json({ error: "Place not found" });
     }
@@ -29521,6 +29547,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 description = jsonLdDesc;
               }
 
+              // If title resolved to a 1-word domain stem (e.g. "Adaptvc"), upgrade from multi-word siteName or description subject (e.g. "Adapt Ventures")
+              if (title && !title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot) {
+                if (siteName && siteName.includes(' ') && !isGenericOrPlaceholderTitle(siteName)) {
+                  title = cleanTitleString(siteName);
+                } else if (description) {
+                  const descBrandMatch = description.trim().match(/^([A-Z0-9][A-Za-z0-9&'’\.\-]*(?:\s+[A-Z0-9][A-Za-z0-9&'’\.\-]*){1,3})\s+(?:is\s+a|is\s+an|is\s+the|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+)/);
+                  if (descBrandMatch && descBrandMatch[1] && descBrandMatch[1].length <= 42) {
+                    title = descBrandMatch[1].trim();
+                    siteName = title;
+                  }
+                }
+              }
+
               // 5. EXTRACT BANNER IMAGE & PAGE PHOTOS
               const rawMetaImage = getMetaContent('image') || 
                                    getMetaContent('image:url') || 
@@ -30117,7 +30156,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
           const autoPlaceId = cleanDomain;
-          const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || cleanDomain, cleanDomain);
+          const domRootClean = cleanDomain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (title && !title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRootClean) {
+            if (siteName && siteName.includes(' ')) {
+              title = siteName;
+            } else if (description) {
+              const descMatch = description.trim().match(/^([A-Z0-9][A-Za-z0-9&'’\.\-]*(?:\s+[A-Z0-9][A-Za-z0-9&'’\.\-]*){1,3})\s+(?:is\s+a|is\s+an|is\s+the|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+)/);
+              if (descMatch && descMatch[1] && descMatch[1].length <= 42) {
+                title = descMatch[1].trim();
+                siteName = title;
+              }
+            }
+          }
+          const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || siteName || cleanDomain, cleanDomain);
           const autoPlaceDoc = {
             id: autoPlaceId,
             name: autoPlaceName,
@@ -30165,13 +30216,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const cleanDomainExact = cleanDomain.toLowerCase();
             
-            // Protection: If the existing name is already a high-quality name, don't let it be overwritten by a generic title
+            // Protection: If the existing name is already a high-quality name, don't let it be overwritten by a generic title,
+            // EXCEPT when existingName is merely a 1-word domain stem (like "Adaptvc") and autoPlaceName is a multi-word brand name (like "Adapt Ventures")!
             const existingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
-            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 3;
+            const isExistingOneWordStem = !existingName.includes(" ") && existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean;
+            const hasBetterMultiWordName = Boolean(autoPlaceName && autoPlaceName.includes(" "));
+            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 3 && !(isExistingOneWordStem && hasBetterMultiWordName);
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
-              || (isExistingNameGood ? existingName : formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId));
+              || (isExistingNameGood ? existingName : (autoPlaceName || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId)));
 
             // Detect and discard corrupt/scraped garbled text in address (e.g. "st Bestellen Contact...", "st un établissement...", "st Wortelkanaalbehandeling...")
             const isCorruptAddress = (addr: string) => {

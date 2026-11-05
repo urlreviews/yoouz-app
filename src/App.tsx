@@ -47,7 +47,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 // Core place and user utility methods
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, extractBrandFromDescription } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -4565,9 +4565,17 @@ export function App() {
                 };
                 const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
                 const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
-                const officialName = (fetchedPlace as any)?.selectedName || (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]);
-                const isFetchedNameSearchQuery = Boolean(fetchedPlace?.name && (/\s+in\s+/i.test(fetchedPlace.name) || fetchedPlace.name.toLowerCase() === cleanId.toLowerCase()));
-                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? fetchedPlace.name : (formatBusinessName(metaData.siteName || metaData.title, resolvedDom || cleanId) || cleanId));
+                const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
+                const officialName = (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || validSelected;
+                const isFetchedNameSearchQuery = Boolean(fetchedPlace?.name && (/\s+in\s+/i.test(fetchedPlace.name) || fetchedPlace.name.toLowerCase() === cleanId.toLowerCase() || isDomainStemName(fetchedPlace.name, resolvedDom || cleanId)));
+                const rawMetaBrand = (metaData.siteName && !isDomainStemName(metaData.siteName, resolvedDom || cleanId))
+                  ? metaData.siteName
+                  : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
+                const descBrand = extractBrandFromDescription(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
+                const resolvedCleanMetaName = (descBrand && isDomainStemName(rawMetaBrand, resolvedDom || cleanId))
+                  ? descBrand
+                  : (formatBusinessName(rawMetaBrand, resolvedDom || cleanId) || descBrand || cleanId);
+                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? fetchedPlace.name : resolvedCleanMetaName);
                 const cleanBanner = (url?: string | null): string => {
                   if (!url || typeof url !== "string") return "";
                   const u = url.toLowerCase();
@@ -4673,14 +4681,21 @@ export function App() {
 
   const displayedDrawerPlaceName = useMemo(() => {
     if (!drawerPlace) return undefined;
-    if ((drawerPlace as any).selectedName) return (drawerPlace as any).selectedName;
     const dom = (drawerPlace.brandDomain || drawerPlace.id || "").toLowerCase().replace(/^www\./, "");
     if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
-    if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com")) {
+    if ((drawerPlace as any).selectedName && !isDomainStemName((drawerPlace as any).selectedName, dom)) {
+      return (drawerPlace as any).selectedName;
+    }
+    const descBrand = extractBrandFromDescription(drawerPlace.description, dom);
+    if (descBrand && isDomainStemName(drawerPlace.name, dom)) {
+      return descBrand;
+    }
+    if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com") && !isDomainStemName(drawerPlace.name, dom)) {
       const pLower = drawerPlace.name.toLowerCase().trim();
       if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
       return toTitleCase(drawerPlace.name);
     }
+    if (descBrand) return descBrand;
     const formatted = formatBusinessName(drawerPlace.name || drawerPlace.id, dom);
     return toTitleCase(formatted || drawerPlace.name || drawerPlace.id);
   }, [drawerPlace]);

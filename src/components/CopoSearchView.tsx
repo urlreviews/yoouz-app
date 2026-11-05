@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, extractBrandFromDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -385,10 +385,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     
     try {
       const cleanKey = (item.id || item.domain || item.title || "").toLowerCase().trim();
-      if (cleanKey && item.title) {
+      const dom = extractCleanDomain(cleanKey);
+      if (cleanKey && item.title && !isDomainStemName(item.title, dom || cleanKey)) {
         sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, item.title);
         localStorage.setItem(`yoouz_clicked_name_${cleanKey}`, item.title);
-        const dom = extractCleanDomain(cleanKey);
         if (dom) {
           sessionStorage.setItem(`yoouz_clicked_name_${dom}`, item.title);
           localStorage.setItem(`yoouz_clicked_name_${dom}`, item.title);
@@ -461,7 +461,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     try {
       const cleanKey = cleanUrl ? cleanUrl.toLowerCase().trim() : rawQuery.toLowerCase().trim();
-      if (cleanKey && baseName && !baseName.includes(".com")) {
+      if (cleanKey && baseName && !baseName.includes(".com") && !isDomainStemName(baseName, cleanUrl)) {
         sessionStorage.setItem(`yoouz_clicked_name_${cleanKey}`, baseName);
         if (cleanUrl) {
           sessionStorage.setItem(`yoouz_clicked_name_${cleanUrl.toLowerCase().trim()}`, baseName);
@@ -629,10 +629,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.image ? preloadedMeta.image : "") 
         || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
-      const instantName = preferredName
-        || locationDetails?.rawBusinessName
-        || (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl]) 
-        || (isMetaMatchingCurrent && (preloadedMeta?.title || preloadedMeta?.siteName))
+      const validPreferredName = (preferredName && !isDomainStemName(preferredName, cleanUrl))
+        ? preferredName
+        : ((locationDetails?.rawBusinessName && !isDomainStemName(locationDetails.rawBusinessName, cleanUrl)) ? locationDetails.rawBusinessName : "");
+      const preloadedDescBrand = extractBrandFromDescription(preloadedMeta?.description, cleanUrl);
+      const instantName = (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
+        || validPreferredName
+        || (isMetaMatchingCurrent && (preloadedDescBrand || preloadedMeta?.siteName || preloadedMeta?.title))
         || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
         || baseName
         || rawQuery;
@@ -669,7 +672,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         amenities: [],
         topDishes: [],
         brandDomain: isRealDomain ? cleanUrl : (preloadedMeta?.domain || ""),
-        selectedName: preferredName || locationDetails?.rawBusinessName || instantName
+        selectedName: validPreferredName || undefined
       } as Place;
 
       if (currentRequestId !== searchRequestIdRef.current) return;
@@ -711,13 +714,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.image 
                : instantBanner;
              
-             const targetName = (currentPlace as any).selectedName
-               || preferredName
-               || locationDetails?.rawBusinessName
-               || (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
+             const rawMetaTitle = (data.siteName && !isDomainStemName(data.siteName, discoveredDom))
+               ? data.siteName
+               : (data.title && !isDomainStemName(data.title, discoveredDom) ? data.title : (data.siteName || data.title));
+             const descBrandName = extractBrandFromDescription(data.description, discoveredDom);
+             const formattedMetaName = (descBrandName && isDomainStemName(rawMetaTitle, discoveredDom))
+               ? descBrandName
+               : formatBusinessName(rawMetaTitle, data.domain || discoveredDom);
+             const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isDomainStemName(currentPlace.name, discoveredDom))
+               ? currentPlace.name
+               : "";
+             const targetName = (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
-               || (!isGenericPlaceName(currentPlace.name) ? currentPlace.name : "")
-               || formatBusinessName(data.siteName || data.title, data.domain || discoveredDom)
+               || validPreferredName
+               || formattedMetaName
+               || descBrandName
+               || validCurrentName
                || formatBusinessName(discoveredDom)
                || instantName;
 
@@ -725,7 +737,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ...currentPlace,
                id: discoveredDom || currentPlace.id,
                brandDomain: discoveredDom || "",
-               selectedName: (currentPlace as any).selectedName || preferredName || locationDetails?.rawBusinessName || targetName,
+               selectedName: validPreferredName || (!isDomainStemName(targetName, discoveredDom) ? targetName : undefined),
                website: (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org')) 
                  ? data.url 
                  : (discoveredDom ? `https://${discoveredDom}` : ""),
