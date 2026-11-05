@@ -1772,25 +1772,25 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         id="copo-empty-feed-container"
         className="flex-1 h-full flex items-center justify-center relative p-3 overflow-hidden bg-zinc-950"
       >
-        <div className="relative w-full max-w-[360px] sm:max-w-[380px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-[40px] p-10 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white">
-          <div className="w-24 h-24 rounded-[32px] bg-zinc-800/50 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-8 group-hover:scale-105 transition-transform duration-500">
-            <Video className="w-12 h-12 text-white" />
+        <div className="relative w-full max-w-[360px] sm:max-w-[400px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-[40px] px-6 sm:px-10 py-10 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white overflow-hidden">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[28px] sm:rounded-[32px] bg-zinc-800/50 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6 sm:mb-8 shrink-0">
+            <Video className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-3 tracking-tight leading-tight">
+          <h2 className="w-full max-w-full text-xl sm:text-2xl font-black text-white mb-3 tracking-tight leading-snug break-words">
             {feedContextTitle ? (
               <>
                 No Video Reviews for{" "}
-                <span className="whitespace-nowrap inline-block">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>
+                <span className="inline font-black text-white break-words max-w-full">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>
               </>
             ) : (
               "No Video Reviews Yet"
             )}
           </h2>
-          <p className="text-sm text-zinc-400 max-w-[280px] mb-10 leading-relaxed font-medium">
+          <p className="w-full max-w-[320px] text-xs sm:text-sm text-zinc-400 mb-8 sm:mb-10 leading-relaxed font-medium break-words">
             {feedContextTitle ? (
               <>
                 Be the first creator to record an authentic 60-second video review for{" "}
-                <span className="whitespace-nowrap inline-block">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>!
+                <span className="inline text-zinc-300 font-semibold break-words max-w-full">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>!
               </>
             ) : (
               "Record the first authentic 60-second video review for any business or place!"
@@ -1800,7 +1800,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             <button
               id="copo-empty-state-record-btn"
               onClick={onOpenCreateModal}
-              className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight"
+              className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
             >
               <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
               Record Review

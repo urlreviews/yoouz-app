@@ -110,7 +110,11 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('no-featured-image') ||
     u.includes('thrive-visual-editor') ||
     u.includes('editor/css/images') ||
-    u.endsWith('.ico')
+    u.endsWith('.ico') ||
+    u.endsWith('.svg') ||
+    u.includes('.svg?') ||
+    u.includes('.svg#') ||
+    u.includes('data:image/svg')
   );
 }
 
