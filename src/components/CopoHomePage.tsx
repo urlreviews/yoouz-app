@@ -516,8 +516,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 }}
                 placeholder={
                   searchMode === "review"
-                    ? "Search business name, place, or website to review..."
-                    : t("search.placeholder", "Search any business, service, or place...")
+                    ? t("search.placeholder", "Search any business, place, or URL...")
+                    : t("search.placeholder", "Search any business, place, or URL...")
                 }
                 style={{ caretColor: "#007aff" }}
                 className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate caret-[#007aff]"

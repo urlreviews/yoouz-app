@@ -1202,7 +1202,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       reviews: "Reviews",
       syncing: "Syncing details...",
       invalidUrl: "Please select a business from the dropdown list or search with a valid website domain.",
-      placeholder: "Search any business, service, or place..."
+      placeholder: "Search any business, place, or URL..."
     },
     record: {
       title: "Record Video Review",
