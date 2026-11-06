@@ -151,10 +151,16 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     return false;
   }
 
+  if (clean.startsWith("data:image/svg") && (clean.includes("lg:hidden") || clean.includes('aria-label="openai"') || !clean.includes("width="))) {
+    return true;
+  }
+
   return (
     clean === "" ||
     clean === "data:;" ||
     clean.startsWith("data:;") ||
+    clean.includes("vitejs.dev/logo.svg") ||
+    clean.includes("/vite.svg") ||
     clean.includes("logo-default") ||
     clean.includes("default-logo") ||
     clean.includes("default_logo") ||
@@ -181,12 +187,15 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
 
 function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
-  const l = url.toLowerCase().trim();
+  let l = url.toLowerCase().trim();
+  try { l = decodeURIComponent(l); } catch {}
   if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
     return false;
   }
-  return (
-    l.includes("favicon") ||
+  if (l.startsWith("/api/favicon") || l.includes("/api/favicon")) {
+    return false;
+  }
+  if (
     l.includes("16x16") ||
     l.includes("32x32") ||
     l.includes("48x48") ||
@@ -197,7 +206,13 @@ function isFaviconUrl(url?: string | null): boolean {
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse")
-  );
+  ) {
+    return true;
+  }
+  if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
+    return false;
+  }
+  return l.includes("favicon");
 }
 
 function isLogoOrIconUrl(urlStr: string): boolean {
@@ -15998,9 +16013,9 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         }
       }
 
-      // 5. Purge fake/mock unsplash stock photo banners from all place records in BunnyDB
+      // 5. Purge fake/mock unsplash stock photo banners and broken/placeholder logos from all place records in BunnyDB
       const placesWithBanners = await bunnyDb.execute({
-        sql: `SELECT id, data FROM places`
+        sql: `SELECT id, logoUrl, data FROM places`
       });
       if (placesWithBanners.rows && placesWithBanners.rows.length > 0) {
         for (const pRow of placesWithBanners.rows as any[]) {
@@ -16021,6 +16036,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
 
           const hasRealMeta = KNOWN_PLACE_METADATA[domain] || KNOWN_PLACE_METADATA[`www.${domain}`];
           const currentBanner = parsedData.bannerUrl || parsedData.ogImage || '';
+          const currentLogo = parsedData.logoUrl || pRow.logoUrl || '';
+          let needsPlaceUpdate = false;
 
           if (currentBanner.includes('unsplash.com') || currentBanner.includes('placeholder') || currentBanner.includes('mock')) {
             if (hasRealMeta && hasRealMeta.bannerUrl) {
@@ -16032,9 +16049,26 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               parsedData.ogImage = "";
               parsedData.photos = [];
             }
+            needsPlaceUpdate = true;
+          }
+
+          if (hasRealMeta && hasRealMeta.logoUrl && currentLogo !== hasRealMeta.logoUrl) {
+            parsedData.logoUrl = hasRealMeta.logoUrl;
+            parsedData.avatarUrl = hasRealMeta.logoUrl;
+            needsPlaceUpdate = true;
+          } else if (isGenericOrPlaceholderLogo(currentLogo) || isFaviconUrl(currentLogo)) {
+            const fallbackLogo = domain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(domain)}` : '';
+            if (fallbackLogo && currentLogo !== fallbackLogo) {
+              parsedData.logoUrl = fallbackLogo;
+              parsedData.avatarUrl = fallbackLogo;
+              needsPlaceUpdate = true;
+            }
+          }
+
+          if (needsPlaceUpdate) {
             await bunnyDb.execute({
-              sql: `UPDATE places SET data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-              args: [JSON.stringify(parsedData), String(pRow.id)]
+              sql: `UPDATE places SET logoUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [parsedData.logoUrl || currentLogo || '', JSON.stringify(parsedData), String(pRow.id)]
             }).catch(() => {});
           }
 
@@ -27526,12 +27560,15 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
 
 function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
-  const l = url.toLowerCase().trim();
+  let l = url.toLowerCase().trim();
+  try { l = decodeURIComponent(l); } catch {}
   if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
     return false;
   }
-  return (
-    l.includes("favicon") ||
+  if (l.startsWith("/api/favicon") || l.includes("/api/favicon")) {
+    return false;
+  }
+  if (
     l.includes("16x16") ||
     l.includes("32x32") ||
     l.includes("48x48") ||
@@ -27542,7 +27579,13 @@ function isFaviconUrl(url?: string | null): boolean {
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse")
-  );
+  ) {
+    return true;
+  }
+  if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
+    return false;
+  }
+  return l.includes("favicon");
 }
 
 function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string, domain: string): string {
@@ -27702,19 +27745,36 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   // 6. Inline SVG Brand Logos inside header, .logo, or navbar
   try {
     const svgSelectors = [
-      '.logo svg', '[class*="logo"] svg', '[id*="logo"] svg',
-      'header .brand svg', 'header a[href="/"] svg', 'header a[aria-label*="home" i] svg'
+      'header a[href="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
+      'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
+      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg'
     ];
     for (const sel of svgSelectors) {
       const el = $(sel).first();
       if (el.length) {
         const cl = (el.attr("class") || "").toLowerCase();
+        const ariaLabel = (el.attr("aria-label") || "").toLowerCase();
         if (!cl.includes("search") && !cl.includes("cart") && !cl.includes("menu") && !cl.includes("close") && !cl.includes("chevron") && !cl.includes("arrow") && !cl.includes("clock") && !cl.includes("marker")) {
+          // Ensure aria-label if present is not a customer testimonial logo
+          if (ariaLabel && !ariaLabel.includes(cleanDom.split(".")[0]) && !ariaLabel.includes("logo") && !ariaLabel.includes("home")) {
+            continue;
+          }
           let svgStr = $.html(el);
           if (svgStr && svgStr.includes("<svg") && svgStr.length > 50 && svgStr.length < 50000) {
             if (!svgStr.includes("xmlns=")) {
               svgStr = svgStr.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
             }
+            // Strip CSS classes that could hide or collapse standalone SVG rendering
+            svgStr = svgStr.replace(/\sclass="[^"]*"/gi, "");
+            // Ensure explicit width and height from viewBox so <img> naturalWidth > 0 in all browsers
+            if (!/\bwidth="/i.test(svgStr)) {
+              const vbMatch = svgStr.match(/viewBox="[\d.\s-]+\s+([\d.]+)\s+([\d.]+)"/i);
+              const w = vbMatch ? Math.max(120, Math.round(parseFloat(vbMatch[1]) * 4)) : 200;
+              const h = vbMatch ? Math.max(40, Math.round(parseFloat(vbMatch[2]) * 4)) : 80;
+              svgStr = svgStr.replace("<svg", `<svg width="${w}" height="${h}"`);
+            }
+            // Replace CSS variables with fallback values or dark brand fill
+            svgStr = svgStr.replace(/var\([^,)]+,\s*([^)]+)\)/g, "$1").replace(/var\([^)]+\)/g, "#18181b");
             return "data:image/svg+xml;utf8," + encodeURIComponent(svgStr);
           }
         }
@@ -28928,26 +28988,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
 
+            const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
+            const isBrokenSvgLogo = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
+            const cachedLogoCandidate = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey]) 
+              || (row.logoUrl && !isFaviconUrl(row.logoUrl) && !isBrokenSvgLogo(row.logoUrl) ? row.logoUrl : null) 
+              || (!isFaviconUrl(pData.logoUrl) && !isBrokenSvgLogo(pData.logoUrl) ? pData.logoUrl : null) 
+              || (!isFaviconUrl(pData.avatarUrl) && !isBrokenSvgLogo(pData.avatarUrl) ? pData.avatarUrl : null) 
+              || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) 
+              || "";
+
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
-            if (matchedDom && isExactMatch && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear')) {
+            if (matchedDom && isExactMatch && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
-              const cleanDomKey = matchedDom.toLowerCase().replace(/^www\./, "").trim();
               const cachedImageCandidate = (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) ? row.bannerUrl : "") 
                 || (!isLogoOrIconUrl(pData.bannerUrl) ? pData.bannerUrl : "") 
                 || (!isLogoOrIconUrl(pData.ogImage) ? pData.ogImage : "") 
                 || (!isLogoOrIconUrl(pData.image) ? pData.image : "") 
                 || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
                 || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
-
-              const cachedLogoCandidate = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey]) 
-                || (row.logoUrl && !isFaviconUrl(row.logoUrl) && !row.logoUrl.includes('apple-touch-icon') ? row.logoUrl : null) 
-                || (!isFaviconUrl(pData.logoUrl) && !pData.logoUrl?.includes('apple-touch-icon') ? pData.logoUrl : null) 
-                || (!isFaviconUrl(pData.avatarUrl) && !pData.avatarUrl?.includes('apple-touch-icon') ? pData.avatarUrl : null) 
-                || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) 
-                || "";
               const resolvedEntity = row.name || (matchedDom ? (KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()] || formatBusinessName(matchedDom)) : rawQuery);
               return res.json({
                 title: resolvedEntity,
@@ -29885,8 +29946,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (!siteName || siteName === domain) {
                 siteName = getMetaContent('site_name') || bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName || title || domain;
               }
-    
-              logo = '';
 
               const isCandidateWhiteOrInverted = (_src: string): boolean => {
                 return false;
@@ -30139,8 +30198,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "www.offline.vc": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
         "amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
         "www.amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-        "marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
-        "www.marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
+        "marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
+        "www.marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
       };
 
       // Prioritize known brand logos, otherwise verify authentic logo without placeholder fallback
@@ -30336,11 +30395,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return false;
             };
 
-            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || u.includes("#") || u.includes("paint0_linear") || u.includes("credit-card");
-            const hasBetterLogo = logo && !isPlaceholderLogo(logo);
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
+            const hasBetterLogo = Boolean(logo && !isPlaceholderLogo(logo));
 
             const domainLogoFallback = cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "";
-            const mergedLogo = (!isPlaceholderLogo(existingDoc.logoUrl))
+            const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
+            const mergedLogo = (isCustomUploadedLogo || (!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl)))
               ? existingDoc.logoUrl
               : (hasBetterLogo ? logo : (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : (hasBetterLogo ? logo : domainLogoFallback)));
 
@@ -35972,7 +36032,15 @@ function injectOpenGraphTags(html: string, meta: any) {
     "cleanton-management.co.il": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
     "cleanton-management": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
     "cleanton.co.il": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
-    "cleanton": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" }
+    "cleanton": { logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(CLEANTON_LOGO_SVG), bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.pexels.com%2Fphotos%2F323705%2Fpexels-photo-323705.jpeg%3Fauto%3Dcompress%26cs%3Dtinysrgb%26w%3D1200" },
+    "felicis.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.felicis.com%2Ffavicon.png" },
+    "www.felicis.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.felicis.com%2Ffavicon.png" },
+    "stripe.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.stripeassets.com%2Ffzn2n1nzq965%2F4vVgZi0ZMoEzOhkcv7EVwK%2F8cce6fdcf2733b2ec8e99548908847ed%2Ffavicon.png%3Fw%3D180%26h%3D180" },
+    "www.stripe.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.stripeassets.com%2Ffzn2n1nzq965%2F4vVgZi0ZMoEzOhkcv7EVwK%2F8cce6fdcf2733b2ec8e99548908847ed%2Ffavicon.png%3Fw%3D180%26h%3D180" },
+    "backbone.ventures": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%257Emv2.png" },
+    "www.backbone.ventures": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%257Emv2.png" },
+    "marketplace-capital.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png" },
+    "www.marketplace-capital.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png" }
   });
 
   // Dedicated endpoint to flush all metadata memory caches and sanitize place asset domain mismatches
@@ -36132,8 +36200,12 @@ function injectOpenGraphTags(html: string, meta: any) {
         const catChanged = targetCategory && placeDoc.category !== targetCategory;
         const latLngChanged = targetLat !== 0 && (placeDoc.lat !== targetLat || placeDoc.lng !== targetLng);
         const bannerChanged = matchedMeta?.bannerUrl && placeDoc.bannerUrl !== matchedMeta.bannerUrl;
+        const logoChanged = Boolean((matchedMeta?.logoUrl && (placeDoc.logoUrl !== matchedMeta.logoUrl || row.logoUrl !== matchedMeta.logoUrl)) || isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo));
+        if (!matchedMeta?.logoUrl && (isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo)) && cleanDom.includes(".")) {
+          targetLogo = `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
+        }
 
-        if (nameChanged || addressChanged || countryChanged || cityChanged || emailChanged || phoneChanged || catChanged || latLngChanged || bannerChanged) {
+        if (nameChanged || addressChanged || countryChanged || cityChanged || emailChanged || phoneChanged || catChanged || latLngChanged || bannerChanged || logoChanged) {
           const finalName = formattedName || placeDoc.name || placeId || "";
           const finalAddress = targetAddress || placeDoc.address || "";
           const finalCity = targetCity || placeDoc.city || "";

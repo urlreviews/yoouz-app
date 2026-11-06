@@ -76,12 +76,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const candidates: string[] = [];
 
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
+
     // 0. Explicit rich brand logo URL from place data/metadata (Always preferred over favicons)
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
       !isFaviconUrl(logoUrl) &&
+      !isBrokenSvg(logoUrl) &&
       !logoUrl.includes("/api/favicon")
     ) {
       const proxiedLogo = getProxiedImageUrl(logoUrl);
@@ -102,7 +105,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     // 2. Locked verified authentic brand logo from previous successful load (never favicons)
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
       const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
-      if (!isGenericOrPlaceholderLogo(locked) && !isFaviconUrl(locked) && !locked.includes("/api/favicon")) {
+      if (!isGenericOrPlaceholderLogo(locked) && !isFaviconUrl(locked) && !isBrokenSvg(locked) && !locked.includes("/api/favicon")) {
         candidates.push(locked);
       }
     }
@@ -111,7 +114,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
-      !isGenericOrPlaceholderLogo(logoUrl)
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isBrokenSvg(logoUrl)
     ) {
       const proxiedLogo = getProxiedImageUrl(logoUrl);
       if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
@@ -124,7 +128,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // Filter duplicates and any generic placeholders
-    return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u))));
+    return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u))));
   }, [isYoouz, cleanDomain, logoUrl]);
 
   // Current src candidate

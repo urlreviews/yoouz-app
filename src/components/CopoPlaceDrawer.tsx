@@ -717,10 +717,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 
     const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
+    const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
       !isFaviconUrl(place.logoUrl) &&
+      !isBrokenSvgDataUri(place.logoUrl) &&
       !place.logoUrl.startsWith("data:;") &&
       !place.logoUrl.includes("760X310") &&
       !place.logoUrl.includes("fallback")
@@ -945,12 +947,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
+
     // Priority 0: Freshly resolved rich logo from live website enrichment
-    if (fetchedLogoUrl && (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))) {
+    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl) && (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))) {
       return fetchedLogoUrl;
     }
 
-    if (cachedMedia?.logoUrl && (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))) {
+    if (cachedMedia?.logoUrl && !isBrokenSvg(cachedMedia.logoUrl) && (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))) {
       return cachedMedia.logoUrl;
     }
 
@@ -958,6 +962,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
     if (
       canonicalPlaceLogo && 
+      !isBrokenSvg(canonicalPlaceLogo) &&
       (!isFaviconUrl(canonicalPlaceLogo) || canonicalPlaceLogo.includes("size=256") || canonicalPlaceLogo.includes("sz=256")) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 

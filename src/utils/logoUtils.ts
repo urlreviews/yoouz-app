@@ -317,9 +317,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
   "www.amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
   "amazon": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-  "marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
-  "www.marketplace-capital.com": "https://marketplace-capital.com/favicon.ico",
-  "marketplace capital": "https://marketplace-capital.com/favicon.ico",
+  "marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
+  "www.marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
+  "marketplace capital": "https://marketplace-capital.com/assets/mc-logo.png",
   "refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
   "www.refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
   "refalo": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
@@ -899,7 +899,15 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "burgerking": "https://icons.duckduckgo.com/ip3/bk.com.ico",
   "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
   "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
-  "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png"
+  "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "felicis.com": "https://www.felicis.com/favicon.png",
+  "www.felicis.com": "https://www.felicis.com/favicon.png",
+  "felicis": "https://www.felicis.com/favicon.png",
+  "stripe.com": "https://images.stripeassets.com/fzn2n1nzq965/4vVgZi0ZMoEzOhkcv7EVwK/8cce6fdcf2733b2ec8e99548908847ed/favicon.png?w=180&h=180",
+  "www.stripe.com": "https://images.stripeassets.com/fzn2n1nzq965/4vVgZi0ZMoEzOhkcv7EVwK/8cce6fdcf2733b2ec8e99548908847ed/favicon.png?w=180&h=180",
+  "stripe": "https://images.stripeassets.com/fzn2n1nzq965/4vVgZi0ZMoEzOhkcv7EVwK/8cce6fdcf2733b2ec8e99548908847ed/favicon.png?w=180&h=180",
+  "backbone.ventures": "https://static.wixstatic.com/media/9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%7Emv2.png",
+  "www.backbone.ventures": "https://static.wixstatic.com/media/9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%7Emv2.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
@@ -1034,6 +1042,12 @@ export function prewarmBannerImage(url?: string | null): void {
  */
 export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
+  let l = url.trim().toLowerCase();
+  try { l = decodeURIComponent(l); } catch {}
+  if (l.includes("vitejs.dev/logo.svg") || l.includes("/vite.svg")) return true;
+  if (l.startsWith("data:image/svg") && (l.includes("lg:hidden") || l.includes('aria-label="openai"') || !l.includes("width="))) {
+    return true;
+  }
   return false;
 }
 
@@ -1219,7 +1233,8 @@ export function getDomainBrandGradient(domainOrName?: string | null): {
 
 export function isFaviconUrl(url?: string | null): boolean {
   if (!url || typeof url !== "string") return false;
-  const l = url.toLowerCase().trim();
+  let l = url.toLowerCase().trim();
+  try { l = decodeURIComponent(l); } catch {}
   // High-resolution (128px-256px) Google brand icons are high quality authentic logos
   if ((l.includes("gstatic.com/favicon") || l.includes("google.com/s2/favicons")) && (l.includes("size=256") || l.includes("sz=256") || l.includes("size=128") || l.includes("sz=128"))) {
     return false;
@@ -1228,8 +1243,8 @@ export function isFaviconUrl(url?: string | null): boolean {
   if (l.startsWith("/api/favicon") || l.includes("/api/favicon")) {
     return false;
   }
-  return (
-    l.includes("favicon") ||
+  // Reject tiny explicit sizes or .ico files
+  if (
     l.includes("16x16") ||
     l.includes("32x32") ||
     l.includes("48x48") ||
@@ -1237,8 +1252,17 @@ export function isFaviconUrl(url?: string | null): boolean {
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||
+    l.includes("google.com/s2/favicons") ||
+    l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse")
-  );
+  ) {
+    return true;
+  }
+  // High-res PNG, SVG, or WebP site icons named favicon.png / favicon.svg are authentic vector/raster brand logos
+  if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
+    return false;
+  }
+  return l.includes("favicon");
 }
 
 export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {
