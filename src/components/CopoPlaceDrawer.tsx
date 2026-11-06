@@ -129,10 +129,13 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [logoError, setLogoError] = useState(false);
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerState, setFetchedBannerState] = useState<{ placeId: string; url: string } | null>(null);
+  const [fetchedLogoState, setFetchedLogoState] = useState<{ placeId: string; url: string } | null>(null);
   const setActiveBanner = (url: string | null) => setActiveBannerState(url && place?.id ? { placeId: place.id, url } : null);
   const setFetchedBannerUrl = (url: string | null) => setFetchedBannerState(url && place?.id ? { placeId: place.id, url } : null);
+  const setFetchedLogoUrl = (url: string | null) => setFetchedLogoState(url && place?.id ? { placeId: place.id, url } : null);
   const activeBanner = activeBannerState && activeBannerState.placeId === place?.id ? activeBannerState.url : null;
   const fetchedBannerUrl = fetchedBannerState && fetchedBannerState.placeId === place?.id ? fetchedBannerState.url : null;
+  const fetchedLogoUrl = fetchedLogoState && fetchedLogoState.placeId === place?.id ? fetchedLogoState.url : null;
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [forcedHeaderReady, setForcedHeaderReady] = useState(false);
@@ -140,7 +143,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const contentRef = React.useRef<HTMLDivElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
-  // Reset image errors, photo index, logo errors, and fetched banner state synchronously when place identity changes
+  // Reset image errors, photo index, logo errors, and fetched media state synchronously when place identity changes
   useEffect(() => {
     setBannerError(false);
     setPhotoIndex(0);
@@ -149,6 +152,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setLogoLoaded(false);
     setLogoError(false);
     setFetchedBannerUrl(null);
+    setFetchedLogoUrl(null);
     setIsHoveredUnfollow(false);
     setIsEnriching(false);
     setForcedHeaderReady(false);
@@ -167,6 +171,14 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
       setPhotoIndex(0);
     }
   }, [fetchedBannerUrl]);
+
+  // Synchronously reset logo state when fresh logo arrives from background enrichment
+  useEffect(() => {
+    if (fetchedLogoUrl) {
+      setLogoError(false);
+      setLogoLoaded(false);
+    }
+  }, [fetchedLogoUrl]);
 
   useEffect(() => {
     if (place?.bannerUrl && !isBadBanner(place.bannerUrl)) {
@@ -763,6 +775,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 if (isRealPhoto(resolvedBanner)) {
                   setFetchedBannerUrl(resolvedBanner);
                 }
+                if (resolvedLogo && !isFaviconUrl(resolvedLogo) && !isGenericOrPlaceholderLogo(resolvedLogo)) {
+                  setFetchedLogoUrl(resolvedLogo);
+                }
                 const resolvedDomainClean = (data.domain && isValidDomainUrl(data.domain))
                   ? extractCleanDomain(data.domain)
                   : (drawerDomain && isValidDomainUrl(drawerDomain) ? drawerDomain : (place.brandDomain && isValidDomainUrl(place.brandDomain) ? extractCleanDomain(place.brandDomain) : undefined));
@@ -930,6 +945,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
+    // Priority 0: Freshly resolved rich logo from live website enrichment
+    if (fetchedLogoUrl && (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))) {
+      return fetchedLogoUrl;
+    }
+
     if (cachedMedia?.logoUrl && (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))) {
       return cachedMedia.logoUrl;
     }
@@ -966,7 +986,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
     return null;
-  }, [place, drawerDomain, rawPlaceVideos]);
+  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, cachedMedia]);
 
 
 

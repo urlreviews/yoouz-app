@@ -76,12 +76,17 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const candidates: string[] = [];
 
-    // 0. Locked verified domain logo from previous successful load
-    if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
-      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
-      if (!isGenericOrPlaceholderLogo(locked)) {
-        candidates.push(locked);
-      }
+    // 0. Explicit rich brand logo URL from place data/metadata (Always preferred over favicons)
+    if (
+      logoUrl &&
+      logoUrl.trim() !== "" &&
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isFaviconUrl(logoUrl) &&
+      !logoUrl.includes("/api/favicon")
+    ) {
+      const proxiedLogo = getProxiedImageUrl(logoUrl);
+      if (proxiedLogo) candidates.push(proxiedLogo);
+      if (logoUrl !== proxiedLogo) candidates.push(logoUrl);
     }
 
     // 1. Direct match in KNOWN_BRAND_LOGOS
@@ -94,19 +99,26 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 2. Explicit custom logo URL from place data/metadata (Strictly reject fake or default builder icons)
+    // 2. Locked verified authentic brand logo from previous successful load (never favicons)
+    if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+      const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
+      if (!isGenericOrPlaceholderLogo(locked) && !isFaviconUrl(locked) && !locked.includes("/api/favicon")) {
+        candidates.push(locked);
+      }
+    }
+
+    // 3. Fallback explicit logoUrl if it was a high-res favicon or icon
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
-      !isGenericOrPlaceholderLogo(logoUrl) &&
-      (!isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon.svg") || logoUrl.includes("sz=128") || logoUrl.includes("size=256"))
+      !isGenericOrPlaceholderLogo(logoUrl)
     ) {
       const proxiedLogo = getProxiedImageUrl(logoUrl);
-      if (proxiedLogo) candidates.push(proxiedLogo);
-      if (logoUrl !== proxiedLogo) candidates.push(logoUrl);
+      if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
+      if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
-    // 3. High-resolution authentic domain brand logo via server proxy (100% 200 OK guaranteed)
+    // 4. Domain brand logo via server proxy
     if (cleanDomain) {
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
@@ -115,7 +127,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u))));
   }, [isYoouz, cleanDomain, logoUrl]);
 
-// Current src candidate
+  // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || null;
 
   // Reset index when domain/logoUrl changes
@@ -176,7 +188,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             }
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
-              if (cleanDomain && !LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
+              // Only lock rich authentic logos, never lock generic favicons
+              if (cleanDomain && !currentSrc.includes("/api/favicon") && !isFaviconUrl(currentSrc)) {
                 LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
             }
@@ -192,10 +205,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : null}
-      {/* Fallback - keep it visible if image is still loading or failed */}
+      {/* Fallback skeleton or initial - never flash fake black B while image is loading */}
       {!imgLoaded && (
-        <div className={`absolute inset-0 flex items-center justify-center bg-zinc-800/50 text-zinc-400 font-bold text-xs uppercase select-none ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
-          <span className={fallbackTextClassName || "text-zinc-200 tracking-wider"}>{brandInitial}</span>
+        <div className={`absolute inset-0 flex items-center justify-center ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
+          {currentSrc && candidateIdx < candidateUrls.length ? (
+            <div className="w-full h-full bg-zinc-800/20 animate-pulse rounded-xl" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-800/40 text-zinc-400 font-bold select-none">
+              <span className={fallbackTextClassName || "text-zinc-300 tracking-wider"}>{brandInitial}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

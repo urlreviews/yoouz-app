@@ -624,8 +624,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       );
 
       // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
-      const instantLogo: string = (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "") 
-        || (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "");
+      const instantLogo: string = (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "")
+        || (cleanUrl && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "")
+        || (isRealDomain ? getCleanLogoUrl(null, cleanUrl) : "");
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
         || (isMetaMatchingCurrent && preloadedMeta?.image && !isBadBanner(preloadedMeta.image) ? preloadedMeta.image : "") 
         || (isRealDomain ? getLiveWebsiteBannerUrl(cleanUrl) : "")
@@ -714,7 +715,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom) : null;
              const fetchedLogo = (isValidLogo(data.logo) && !isFaviconUrl(data.logo))
                ? data.logo 
-               : (domainCleanLogo || (instantLogo && !isFaviconUrl(instantLogo) ? instantLogo : ""));
+               : ((instantLogo && !isFaviconUrl(instantLogo)) ? instantLogo : (domainCleanLogo || instantLogo || ""));
 
              const fetchedBanner = (data.image && !isBadBanner(data.image))
                ? data.image 
