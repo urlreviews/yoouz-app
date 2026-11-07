@@ -18,8 +18,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
+    "avatarUrl": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+    "logoUrl": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
     "photos": [
@@ -33,7 +33,7 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "For more information Contact US 85 Medinat Hayehudim st. Hertzlia Pituach, Israel +972-9-9508690 info@gefencapital.com",
+    "description": "",
     "popularKeywords": [],
     "amenities": [],
     "topDishes": [],
