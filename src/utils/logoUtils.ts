@@ -304,6 +304,22 @@ export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0
 </svg>`;
 export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
 
+export const INTUITION_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="26" fill="#0d1117"/>
+  <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+  <text x="60" y="66" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">intuition</text>
+  <text x="60" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11" fill="#ec4899" text-anchor="middle" letter-spacing="1">.VC</text>
+</svg>`;
+export const INTUITION_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(INTUITION_LOGO_SVG)}`;
+
+export const ALEPH_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="26" fill="#0d1117"/>
+  <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+  <text x="60" y="66" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="26" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5">Aleph</text>
+  <text x="60" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="11" fill="#3b82f6" text-anchor="middle" letter-spacing="1">.VC</text>
+</svg>`;
+export const ALEPH_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ALEPH_LOGO_SVG)}`;
+
 export const PICO_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <rect width="120" height="120" rx="26" fill="#0d1117"/>
   <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
@@ -363,12 +379,12 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "mamotcv": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
   "mamo tcv advocates": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
   "mamo tcv": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
-  "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
-  "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
-  "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
-  "intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
-  "www.intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
-  "intuition": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
+  "aleph.vc": ALEPH_LOGO_DATA_URI,
+  "www.aleph.vc": ALEPH_LOGO_DATA_URI,
+  "aleph": ALEPH_LOGO_DATA_URI,
+  "intuition.vc": INTUITION_LOGO_DATA_URI,
+  "www.intuition.vc": INTUITION_LOGO_DATA_URI,
+  "intuition": INTUITION_LOGO_DATA_URI,
   "pico.partners": PICO_LOGO_DATA_URI,
   "www.pico.partners": PICO_LOGO_DATA_URI,
   "pico venture partners": PICO_LOGO_DATA_URI,
