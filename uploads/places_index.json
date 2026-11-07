@@ -1,5 +1,54 @@
 [
   {
+    "id": "kaya.vc",
+    "name": "Kaya",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.kaya.vc%2Fapple-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.kaya.vc%2Fapple-icon.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.kaya.vc%2Fopengraph-image.jpg%3Fopengraph-image.2rm4p93hfs-iv.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.kaya.vc%2Fopengraph-image.jpg%3Fopengraph-image.2rm4p93hfs-iv.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.kaya.vc%2Fopengraph-image.jpg%3Fopengraph-image.2rm4p93hfs-iv.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.kaya.vc/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "KAYA - Early to believe. Last to leave.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "kaya.vc",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "smok.vc",
     "name": "Smok Ventures",
     "category": "Website",
