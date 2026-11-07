@@ -561,7 +561,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return unescapeStr(cleanedOfficial);
       }
 
-      // Check session and local storage (ignore 1-word domain stems if a richer brand name exists)
+      // If place.name is already a verified multi-word official name (like "Phoenix Court" or "LUMO Labs"), prefer it over any 1-word cached stem
+      const hasMultiWordPlaceName = Boolean(place?.name && place.name.trim().includes(" ") && !isGenericPlaceName(place.name) && !isDomainStemName(place.name, drawerDomain));
+
+      // Check session and local storage (ignore and purge 1-word domain stems)
       try {
         const keysToCheck = [
           place?.id,
@@ -573,19 +576,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         for (const k of keysToCheck) {
           const keyStr = String(k).toLowerCase().trim();
           const cachedSession = sessionStorage.getItem(`yoouz_clicked_name_${keyStr}`);
-          if (cachedSession && cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com") && !isDomainStemName(cachedSession, drawerDomain)) {
-            const cleanedSession = formatBusinessName(cachedSession.trim(), drawerDomain) || cachedSession.trim();
-            return unescapeStr(cleanedSession);
+          if (cachedSession) {
+            if (isDomainStemName(cachedSession, drawerDomain) || (hasMultiWordPlaceName && !cachedSession.trim().includes(" "))) {
+              sessionStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
+            } else if (cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com")) {
+              const cleanedSession = formatBusinessName(cachedSession.trim(), drawerDomain) || cachedSession.trim();
+              return unescapeStr(cleanedSession);
+            }
           }
           const cachedLocal = localStorage.getItem(`yoouz_clicked_name_${keyStr}`);
-          if (cachedLocal && cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com") && !isDomainStemName(cachedLocal, drawerDomain)) {
-            const cleanedLocal = formatBusinessName(cachedLocal.trim(), drawerDomain) || cachedLocal.trim();
-            return unescapeStr(cleanedLocal);
+          if (cachedLocal) {
+            if (isDomainStemName(cachedLocal, drawerDomain) || (hasMultiWordPlaceName && !cachedLocal.trim().includes(" "))) {
+              localStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
+            } else if (cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com")) {
+              const cleanedLocal = formatBusinessName(cachedLocal.trim(), drawerDomain) || cachedLocal.trim();
+              return unescapeStr(cleanedLocal);
+            }
           }
         }
       } catch (e) {}
 
-      // If place.name is merely a 1-word domain stem (like "Adaptvc") and description starts with the real multi-word brand name (like "Adapt Ventures"), use it!
+      // If place.name is merely a 1-word domain stem (like "Adaptvc" or "Phoenixcourt") and description starts with the real multi-word brand name (like "Adapt Ventures" or "Phoenix Court"), use it!
       if (descBrand && isDomainStemName(place?.name, drawerDomain)) {
         return unescapeStr(descBrand);
       }
@@ -804,12 +815,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? (formatBusinessName(place.name, resolvedDomainClean) || place.name)
                   : "";
                 const bestPlaceName = (resolvedDomainClean && KNOWN_OFFICIAL_NAMES[resolvedDomainClean])
-                  || validSelectedName
-                  || cleanedCurrentPlaceName
                   || resolvedTitle
                   || descExtractedBrand
+                  || validSelectedName
+                  || cleanedCurrentPlaceName
                   || formatBusinessName(data.siteName || data.title || place.name, resolvedDomainClean)
                   || place.name;
+
+                try {
+                  if (resolvedDomainClean && bestPlaceName && !isDomainStemName(bestPlaceName, resolvedDomainClean)) {
+                    sessionStorage.setItem(`yoouz_clicked_name_${resolvedDomainClean.toLowerCase()}`, bestPlaceName);
+                    localStorage.setItem(`yoouz_clicked_name_${resolvedDomainClean.toLowerCase()}`, bestPlaceName);
+                  }
+                } catch (e) {}
 
                 const updatedPlaceObj = {
                   ...place,

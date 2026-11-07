@@ -932,12 +932,20 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "springinv.com": "Spring Investments",
   "www.springinv.com": "Spring Investments",
   "springinv": "Spring Investments",
-  "spring investments sa": "Spring Investments"
+  "spring investments sa": "Spring Investments",
+  "phoenixcourt.co": "Phoenix Court",
+  "www.phoenixcourt.co": "Phoenix Court",
+  "phoenixcourt.vc": "Phoenix Court",
+  "www.phoenixcourt.vc": "Phoenix Court",
+  "lumolabs.io": "LUMO Labs",
+  "www.lumolabs.io": "LUMO Labs",
+  "lumofunds.vc": "LUMO Labs",
+  "www.lumofunds.vc": "LUMO Labs"
 };
 
 /**
  * Checks if a candidate business name is merely a raw domain or a 1-word unsplit domain stem
- * (e.g., "Adaptvc" or "adaptvc.com" for domain "adaptvc.com").
+ * (e.g., "Adaptvc", "Phoenixcourt", or "adaptvc.com" for domain "adaptvc.com" / "phoenixcourt.co").
  */
 export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
   if (!name || !name.trim()) return true;
@@ -952,8 +960,11 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
     const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
-      if (trimmed === trimmed.toLowerCase()) return true;
-      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking)$/i.test(cleanName)) {
+      // Any single unspaced word equal to the domain root without internal camelCase (e.g. "Phoenixcourt" or "phoenixcourt") is a raw domain stem
+      if (!/[A-Z]/.test(trimmed.slice(1))) {
+        return true;
+      }
+      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds)$/i.test(cleanName)) {
         return true;
       }
     }

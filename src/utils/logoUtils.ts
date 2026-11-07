@@ -914,7 +914,11 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "lumolabs.io": "https://lumofunds.vc/lumo-logo.png",
   "www.lumolabs.io": "https://lumofunds.vc/lumo-logo.png",
   "lumofunds.vc": "https://lumofunds.vc/lumo-logo.png",
-  "www.lumofunds.vc": "https://lumofunds.vc/lumo-logo.png"
+  "www.lumofunds.vc": "https://lumofunds.vc/lumo-logo.png",
+  "phoenixcourt.co": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
+  "www.phoenixcourt.co": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
+  "phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
+  "www.phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
@@ -1055,7 +1059,7 @@ export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
   let l = url.trim().toLowerCase();
   try { l = decodeURIComponent(l); } catch {}
-  if (l.includes("vitejs.dev/logo.svg") || l.includes("/vite.svg")) return true;
+  if (l.includes("vitejs.dev/logo.svg") || l.includes("/vite.svg") || l.includes("travelperk-logo.svg")) return true;
   if (l.startsWith("data:image/svg") && (l.includes("lg:hidden") || l.includes('aria-label="openai"') || !l.includes("width="))) {
     return true;
   }

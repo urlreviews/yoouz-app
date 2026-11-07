@@ -172,6 +172,7 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
+    clean.includes("travelperk-logo.svg") ||
     clean.includes("placeholder") ||
     clean.includes("mock") ||
     clean.includes("og-banner.png") ||
@@ -27625,16 +27626,34 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   // 0. Preloaded main brand logo in <head> (common on Vite/React SPAs like <link rel="preload" as="image" href="/lumo-logo.png">)
   try {
     let preloadedLogo = "";
+    const domStem = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    let effStem = domStem;
+    try {
+      const effHost = new URL(effectiveBaseUrl).hostname.replace(/^www\./i, "").toLowerCase();
+      effStem = effHost.split(".")[0].replace(/[^a-z0-9]/g, "") || domStem;
+    } catch (e) {}
+    const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
+    const effPrefix = effStem.length >= 4 ? effStem.slice(0, 4) : effStem;
+
     $('link[rel="preload"][as="image"]').each((_: any, el: any) => {
       if (preloadedLogo) return;
       const href = ($(el).attr("href") || "").trim();
       const lowerHref = href.toLowerCase();
+      const cleanPath = lowerHref.split("?")[0].replace(/\/m\/trim\/.*$/, "");
+      const filePart = cleanPath.split("/").pop() || "";
+      const isOwnBrandLogoPreload =
+        /^logo\.(png|svg|webp|jpg|jpeg)$/i.test(filePart) ||
+        (domStem.length >= 3 && filePart.includes(domStem) && filePart.includes("logo")) ||
+        (effStem.length >= 3 && filePart.includes(effStem) && filePart.includes("logo")) ||
+        (domPrefix.length >= 4 && filePart.startsWith(domPrefix) && filePart.includes("logo")) ||
+        (effPrefix.length >= 4 && filePart.startsWith(effPrefix) && filePart.includes("logo"));
       if (
         href &&
-        lowerHref.includes("logo") &&
+        isOwnBrandLogoPreload &&
         !lowerHref.includes("/logos/") &&
         !lowerHref.includes("/clients/") &&
         !lowerHref.includes("/partners/") &&
+        !lowerHref.includes("storyblok.com") &&
         !/logo[0-9]+\./i.test(lowerHref)
       ) {
         const abs = makeAbsolute(href);
@@ -30403,8 +30422,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             // EXCEPT when existingName is merely a 1-word domain stem (like "Adaptvc") and autoPlaceName is a multi-word brand name (like "Adapt Ventures")!
             const rawExistingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
             const existingName = formatBusinessName(rawExistingName, cleanDomain) || rawExistingName;
-            const isExistingOneWordStem = !existingName.includes(" ") && existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean;
-            const hasBetterMultiWordName = Boolean(autoPlaceName && autoPlaceName.includes(" ") && !isDomainStemName(autoPlaceName, cleanDomain));
+            const isExistingOneWordStem = !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean || isDomainStemName(existingName, cleanDomain));
+            const hasBetterMultiWordName = Boolean(autoPlaceName && !isDomainStemName(autoPlaceName, cleanDomain) && (autoPlaceName.includes(" ") || autoPlaceName !== existingName));
             const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 2 && !(isExistingOneWordStem && hasBetterMultiWordName);
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
@@ -30802,17 +30821,81 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       }
 
-      // 4. If query itself looks like a domain, ensure it is added
+      // 4. If query itself looks like a domain, ensure it is added with its official business name from the website
       if (q.includes('.') && !q.includes(' ')) {
         const cleanQDom = cleanDomainName(q);
-        if (cleanQDom && !seenKeys.has(cleanQDom)) {
-          addSuggestion({
-            title: formatBusinessName(cleanQDom) || cleanQDom,
-            domain: cleanQDom,
-            logoUrl: cleanQDom && KNOWN_BRAND_LOGOS[cleanQDom] ? KNOWN_BRAND_LOGOS[cleanQDom] : "",
-            category: "Direct Domain Search",
-            source: "direct"
-          });
+        if (cleanQDom && cleanQDom.includes('.')) {
+          const existingIdx = suggestions.findIndex(s => s.domain === cleanQDom || s.id === cleanQDom);
+          const existingHasGoodName = existingIdx >= 0 && suggestions[existingIdx].title && !isDomainStemName(suggestions[existingIdx].title, cleanQDom);
+          let resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[cleanQDom] || "";
+          let resolvedDirectLogo = KNOWN_BRAND_LOGOS[cleanQDom] || KNOWN_PLACE_METADATA[cleanQDom]?.logoUrl || "";
+
+          if (!resolvedDirectTitle && !existingHasGoodName) {
+            try {
+              const ctrl = new AbortController();
+              const tid = setTimeout(() => ctrl.abort(), 1600);
+              const directRes = await fetch(`https://${cleanQDom}`, {
+                signal: ctrl.signal,
+                redirect: "follow",
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                  "Accept": "text/html,application/xhtml+xml"
+                }
+              });
+              clearTimeout(tid);
+              if (directRes.ok) {
+                const finalDirectUrl = directRes.url || `https://${cleanQDom}`;
+                const redirDom = cleanDomainName(finalDirectUrl) || cleanQDom;
+                if (KNOWN_OFFICIAL_NAMES[redirDom]) {
+                  resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[redirDom];
+                }
+                if (!resolvedDirectLogo) {
+                  resolvedDirectLogo = KNOWN_BRAND_LOGOS[redirDom] || KNOWN_PLACE_METADATA[redirDom]?.logoUrl || "";
+                }
+                const html = await directRes.text();
+                const $d = cheerio.load(html);
+                const ogSiteName = ($d('meta[property="og:site_name"]').attr('content') || $d('meta[name="application-name"]').attr('content') || $d('meta[name="apple-mobile-web-app-title"]').attr('content') || "").trim();
+                const ogTitle = ($d('meta[property="og:title"]').attr('content') || $d('title').first().text() || "").trim();
+                const ogDesc = ($d('meta[property="og:description"]').attr('content') || $d('meta[name="description"]').attr('content') || "").trim();
+                const candidates = [ogSiteName, ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "", extractBrandFromDescription(ogDesc, redirDom), extractBrandFromDescription(ogDesc, cleanQDom)].filter(Boolean);
+                for (const cand of candidates) {
+                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom)) {
+                    resolvedDirectTitle = cand;
+                    break;
+                  }
+                }
+                if (!resolvedDirectLogo) {
+                  const extractedLogo = extractAuthenticWebsiteLogo($d, html, finalDirectUrl, redirDom);
+                  if (extractedLogo) {
+                    resolvedDirectLogo = extractedLogo.startsWith("http") ? `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}` : extractedLogo;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+
+          const finalTitle = resolvedDirectTitle || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || formatBusinessName(cleanQDom, cleanQDom) || cleanQDom;
+          if (existingIdx >= 0) {
+            if (resolvedDirectTitle && isDomainStemName(suggestions[existingIdx].title, cleanQDom)) {
+              suggestions[existingIdx].title = resolvedDirectTitle;
+            }
+            if (resolvedDirectLogo && !suggestions[existingIdx].logoUrl) {
+              suggestions[existingIdx].logoUrl = resolvedDirectLogo;
+            }
+          } else if (!seenKeys.has(cleanQDom)) {
+            addSuggestion({
+              title: finalTitle,
+              domain: cleanQDom,
+              logoUrl: resolvedDirectLogo,
+              category: "Direct Domain Search",
+              source: "direct"
+            });
+            // Ensure addSuggestion didn't overwrite resolvedDirectTitle with a stem
+            const addedIdx = suggestions.findIndex(s => s.domain === cleanQDom);
+            if (addedIdx >= 0 && resolvedDirectTitle) {
+              suggestions[addedIdx].title = resolvedDirectTitle;
+            }
+          }
         }
       }
 
@@ -36086,7 +36169,11 @@ function injectOpenGraphTags(html: string, meta: any) {
     "lumolabs.io": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
     "www.lumolabs.io": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
     "lumofunds.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
-    "www.lumofunds.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" }
+    "www.lumofunds.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
+    "phoenixcourt.co": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
+    "www.phoenixcourt.co": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
+    "phoenixcourt.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
+    "www.phoenixcourt.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" }
   });
 
   // Dedicated endpoint to flush all metadata memory caches and sanitize place asset domain mismatches
