@@ -210,6 +210,19 @@ function isFaviconUrl(url?: string | null): boolean {
   ) {
     return true;
   }
+  if (
+    l.includes("favicon") &&
+    !l.includes(".svg") &&
+    !l.includes("w=180") &&
+    !l.includes("180x180") &&
+    !l.includes("192x192") &&
+    !l.includes("256x256") &&
+    !l.includes("512x512") &&
+    !l.includes("apple-touch-icon") &&
+    !l.includes("felicis.com/favicon.png")
+  ) {
+    return true;
+  }
   if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
     return false;
   }
@@ -27586,6 +27599,19 @@ function isFaviconUrl(url?: string | null): boolean {
   ) {
     return true;
   }
+  if (
+    l.includes("favicon") &&
+    !l.includes(".svg") &&
+    !l.includes("w=180") &&
+    !l.includes("180x180") &&
+    !l.includes("192x192") &&
+    !l.includes("256x256") &&
+    !l.includes("512x512") &&
+    !l.includes("apple-touch-icon") &&
+    !l.includes("felicis.com/favicon.png")
+  ) {
+    return true;
+  }
   if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
     return false;
   }
@@ -27665,56 +27691,12 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (preloadedLogo) return preloadedLogo;
   } catch (e) {}
 
-  // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
-  try {
-    const appleIcons: { url: string; size: number }[] = [];
-    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
-      const href = $(el).attr("href");
-      const sizes = $(el).attr("sizes") || "";
-      if (href) {
-        const sizeNum = parseInt(sizes.split("x")[0], 10) || 120;
-        const abs = makeAbsolute(href);
-        if (abs && isValidCandidate(abs)) {
-          appleIcons.push({ url: abs, size: sizeNum });
-        }
-      }
-    });
-    if (appleIcons.length > 0) {
-      appleIcons.sort((a, b) => b.size - a.size);
-      return appleIcons[0].url;
-    }
-  } catch(e) {}
+  const isWhiteOrLightFilename = (url: string): boolean => {
+    const l = (url || "").toLowerCase();
+    return l.includes("logo-white") || l.includes("white-logo") || l.includes("logo_white") || l.includes("white_logo") || l.includes("logo-light") || l.includes("light-logo") || l.includes("logo-inverse") || l.includes("inverse-logo");
+  };
 
-  // 2. High-resolution Web Icon links (sizes >= 96px, e.g. 192x192, 512x512), SVG icons, or authentic declared link icons (e.g. lovable/custom png)
-  try {
-    const siteIcons: { url: string; size: number }[] = [];
-    $('link[rel="icon"], link[rel="shortcut icon"]').each((_: any, el: any) => {
-      const href = $(el).attr("href");
-      const sizes = $(el).attr("sizes") || "";
-      if (href) {
-        const lowerHref = href.toLowerCase();
-        let sizeNum = parseInt(sizes.split("x")[0], 10) || 0;
-        if (sizeNum === 0) {
-          if (lowerHref.endsWith(".svg") || lowerHref.includes(".svg?")) sizeNum = 512;
-          else if (lowerHref.endsWith(".png") || lowerHref.includes(".png?")) sizeNum = 128;
-          else if (!lowerHref.includes(".ico")) sizeNum = 64;
-          else sizeNum = 16;
-        }
-        const abs = makeAbsolute(href);
-        if (abs && isValidCandidate(abs)) {
-          siteIcons.push({ url: abs, size: sizeNum });
-        }
-      }
-    });
-    if (siteIcons.length > 0) {
-      siteIcons.sort((a, b) => b.size - a.size);
-      if (siteIcons[0].url) {
-        return siteIcons[0].url;
-      }
-    }
-  } catch(e) {}
-
-  // 3. JSON-LD Schema Logo
+  // 1. JSON-LD Schema Logo (Organization / Corporation / LocalBusiness / Brand — official high-res brand logo)
   try {
     let schemaLogo = "";
     $('script[type="application/ld+json"]').each((_: any, el: any) => {
@@ -27727,10 +27709,10 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
             if (!node || typeof node !== "object") return;
             const candidate = node.logo || (node.publisher && node.publisher.logo) || (node.brand && node.brand.logo);
             if (candidate) {
-              const lUrl = typeof candidate === "string" ? candidate : (candidate.url || candidate["@id"]);
-              if (lUrl && typeof lUrl === "string") {
+              const lUrl = typeof candidate === "string" ? candidate : (candidate.url || candidate.contentUrl || candidate["@id"]);
+              if (lUrl && typeof lUrl === "string" && !lUrl.startsWith("#") && !lUrl.includes("/#/schema/")) {
                 const abs = makeAbsolute(lUrl);
-                if (abs && isValidCandidate(abs)) {
+                if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) {
                   schemaLogo = abs;
                   return;
                 }
@@ -27751,7 +27733,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (schemaLogo) return schemaLogo;
   } catch(e) {}
 
-  // 4. OpenGraph & Meta Logo tags
+  // 2. OpenGraph & Meta Logo tags
   try {
     const metaLogo = $('meta[property="og:logo"]').attr("content") ||
                      $('meta[name="og:logo"]').attr("content") ||
@@ -27761,17 +27743,37 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
                      $('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr("content");
     if (metaLogo) {
       const abs = makeAbsolute(metaLogo);
-      if (abs && isValidCandidate(abs)) return abs;
+      if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
     }
   } catch(e) {}
 
-  // 5. DOM Header & Navigation Brand Images
+  // 3. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
+  try {
+    const appleIcons: { url: string; size: number }[] = [];
+    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      if (href) {
+        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
+        const abs = makeAbsolute(href);
+        if (abs && isValidCandidate(abs)) {
+          appleIcons.push({ url: abs, size: sizeNum });
+        }
+      }
+    });
+    if (appleIcons.length > 0) {
+      appleIcons.sort((a, b) => b.size - a.size);
+      return appleIcons[0].url;
+    }
+  } catch(e) {}
+
+  // 4. DOM Header & Navigation Brand Images
   try {
     const imgSelectors = [
       'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
       'nav img[class*="logo" i]', 'nav img[alt*="logo" i]', 'nav img[src*="logo" i]',
       '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
-      '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
+      '.logo-box .logo img', '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
       'header a[href="/"] img', 'header a[aria-label*="home" i] img',
       'header img:first-of-type'
     ];
@@ -27781,13 +27783,13 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
         if (src) {
           const abs = makeAbsolute(src);
-          if (abs && isValidCandidate(abs)) return abs;
+          if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
         }
       }
     }
   } catch(e) {}
 
-  // 6. Inline SVG Brand Logos inside header, .logo, or navbar
+  // 5. Inline SVG Brand Logos inside header, .logo, or navbar
   try {
     const svgSelectors = [
       'header a[href="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
@@ -27800,7 +27802,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         const cl = (el.attr("class") || "").toLowerCase();
         const ariaLabel = (el.attr("aria-label") || "").toLowerCase();
         if (!cl.includes("search") && !cl.includes("cart") && !cl.includes("menu") && !cl.includes("close") && !cl.includes("chevron") && !cl.includes("arrow") && !cl.includes("clock") && !cl.includes("marker")) {
-          // Ensure aria-label if present is not a customer testimonial logo
           if (ariaLabel && !ariaLabel.includes(cleanDom.split(".")[0]) && !ariaLabel.includes("logo") && !ariaLabel.includes("home")) {
             continue;
           }
@@ -27809,20 +27810,45 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
             if (!svgStr.includes("xmlns=")) {
               svgStr = svgStr.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
             }
-            // Strip CSS classes that could hide or collapse standalone SVG rendering
             svgStr = svgStr.replace(/\sclass="[^"]*"/gi, "");
-            // Ensure explicit width and height from viewBox so <img> naturalWidth > 0 in all browsers
             if (!/\bwidth="/i.test(svgStr)) {
               const vbMatch = svgStr.match(/viewBox="[\d.\s-]+\s+([\d.]+)\s+([\d.]+)"/i);
               const w = vbMatch ? Math.max(120, Math.round(parseFloat(vbMatch[1]) * 4)) : 200;
               const h = vbMatch ? Math.max(40, Math.round(parseFloat(vbMatch[2]) * 4)) : 80;
               svgStr = svgStr.replace("<svg", `<svg width="${w}" height="${h}"`);
             }
-            // Replace CSS variables with fallback values or dark brand fill
             svgStr = svgStr.replace(/var\([^,)]+,\s*([^)]+)\)/g, "$1").replace(/var\([^)]+\)/g, "#18181b");
             return "data:image/svg+xml;utf8," + encodeURIComponent(svgStr);
           }
         }
+      }
+    }
+  } catch(e) {}
+
+  // 6. High-resolution Web Icon links (strictly vector .svg or explicit sizes >= 128px; never low-res shortcut icons or favicons)
+  try {
+    const siteIcons: { url: string; size: number }[] = [];
+    $('link[rel="icon"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      const typeAttr = ($(el).attr("type") || "").toLowerCase();
+      if (href && typeAttr !== "image/x-icon" && typeAttr !== "image/vnd.microsoft.icon") {
+        const lowerHref = href.toLowerCase();
+        const isSvg = lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || typeAttr === "image/svg+xml";
+        const explicitSize = parseInt(sizes.split("x")[0], 10) || 0;
+        const sizeNum = isSvg ? 512 : explicitSize;
+        if (sizeNum >= 128) {
+          const abs = makeAbsolute(href);
+          if (abs && isValidCandidate(abs)) {
+            siteIcons.push({ url: abs, size: sizeNum });
+          }
+        }
+      }
+    });
+    if (siteIcons.length > 0) {
+      siteIcons.sort((a, b) => b.size - a.size);
+      if (siteIcons[0].url) {
+        return siteIcons[0].url;
       }
     }
   } catch(e) {}
@@ -31421,6 +31447,44 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     if (KNOWN_BRAND_LOGOS[cleanDomain]) {
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
+    }
+
+    if (KNOWN_PLACE_METADATA[cleanDomain]?.logoUrl && !KNOWN_PLACE_METADATA[cleanDomain].logoUrl.includes("/api/favicon")) {
+      return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
+    }
+
+    // Attempt to extract the authentic high-resolution brand logo from the website before falling back to browser favicons
+    if (cleanDomain && cleanDomain.includes(".")) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 2500);
+        const siteResp = await fetch(`https://${cleanDomain}`, {
+          signal: ctrl.signal,
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml"
+          }
+        });
+        clearTimeout(tid);
+        if (siteResp.ok) {
+          const finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
+          const redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
+          const html = await siteResp.text();
+          const $f = cheerio.load(html);
+          const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
+          if (extractedLogo && !isFaviconUrl(extractedLogo)) {
+            if (extractedLogo.startsWith("data:image/svg+xml;utf8,")) {
+              const svgContent = decodeURIComponent(extractedLogo.replace("data:image/svg+xml;utf8,", ""));
+              res.setHeader("Content-Type", "image/svg+xml");
+              res.setHeader("Cache-Control", "public, max-age=604800");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(svgContent);
+            }
+            return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}`);
+          }
+        }
+      } catch (e) {}
     }
 
     // High-resolution authentic brand favicon from Google s2 service fetched server-side
@@ -36173,7 +36237,9 @@ function injectOpenGraphTags(html: string, meta: any) {
     "phoenixcourt.co": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
     "www.phoenixcourt.co": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
     "phoenixcourt.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
-    "www.phoenixcourt.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" }
+    "www.phoenixcourt.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png" },
+    "smok.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.smok.vc%2Fwp-content%2Fuploads%2F2025%2F03%2FSmok-Ventures-logo_SMOK-RED.png" },
+    "www.smok.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.smok.vc%2Fwp-content%2Fuploads%2F2025%2F03%2FSmok-Ventures-logo_SMOK-RED.png" }
   });
 
   // Dedicated endpoint to flush all metadata memory caches and sanitize place asset domain mismatches

@@ -918,7 +918,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "phoenixcourt.co": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
   "www.phoenixcourt.co": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
   "phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
-  "www.phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png"
+  "www.phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
+  "smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png",
+  "www.smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
@@ -1273,7 +1275,19 @@ export function isFaviconUrl(url?: string | null): boolean {
   ) {
     return true;
   }
-  // High-res PNG, SVG, or WebP site icons named favicon.png / favicon.svg are authentic vector/raster brand logos
+  if (
+    l.includes("favicon") &&
+    !l.includes(".svg") &&
+    !l.includes("w=180") &&
+    !l.includes("180x180") &&
+    !l.includes("192x192") &&
+    !l.includes("256x256") &&
+    !l.includes("512x512") &&
+    !l.includes("apple-touch-icon") &&
+    !l.includes("felicis.com/favicon.png")
+  ) {
+    return true;
+  }
   if (l.includes(".png") || l.includes(".svg") || l.includes(".webp") || l.startsWith("data:image/")) {
     return false;
   }
