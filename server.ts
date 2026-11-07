@@ -15405,6 +15405,18 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       name: "Aleph",
       website: "https://www.aleph.vc"
     },
+    "pico.partners": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F5c50ba20f93fd4fd6af8a558%2F1636758165182-WWIUZMEQ29VPMZ99D3S7%2FALK_8054.jpg%3Fformat%3D1500w",
+      logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
+      name: "PICO Venture Partners",
+      website: "https://www.pico.partners/"
+    },
+    "www.pico.partners": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F5c50ba20f93fd4fd6af8a558%2F1636758165182-WWIUZMEQ29VPMZ99D3S7%2FALK_8054.jpg%3Fformat%3D1500w",
+      logoUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
+      name: "PICO Venture Partners",
+      website: "https://www.pico.partners/"
+    },
     "nfx.com": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
       logoUrl: "https://www.nfx.com/apple-touch-icon.png",
@@ -29970,7 +29982,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     parentLower.includes('elementor-widget-container') ||
                     parentLower.includes('wp-block-cover') ||
                     parentLower.includes('section-background') ||
-                    parentLower.includes('page-banner')
+                    parentLower.includes('page-banner') ||
+                    parentLower.includes('index-page') ||
+                    parentLower.includes('parallax') ||
+                    parentLower.includes('intro') ||
+                    parentLower.includes('main--overlay') ||
+                    $(el).attr('data-parallax-image-wrapper') !== undefined ||
+                    $(el).attr('data-image-dimensions') !== undefined
                   ) {
                     weight += 500;
                   }
@@ -30375,6 +30393,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
         "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
         "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+        "pico.partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
+        "www.pico.partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
+        "pico venture partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
         "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "nfx": "https://www.nfx.com/apple-touch-icon.png",

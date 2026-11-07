@@ -1,5 +1,55 @@
 [
   {
+    "id": "pico.partners",
+    "name": "PICO Venture Partners",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "via the Storage",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%230d1117%22%2F%3E%0A%20%20%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%22118.5%22%20height%3D%22118.5%22%20rx%3D%2225.25%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.14)%22%20stroke-width%3D%221.5%22%2F%3E%0A%20%20%3Cg%20transform%3D%22translate(13%2C%2038)%22%3E%0A%20%20%20%20%3Ctext%20x%3D%220%22%20y%3D%2224%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2224%22%20fill%3D%22%23ffffff%22%20letter-spacing%3D%22-0.5%22%3EPICO%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2264%22%20y%3D%2224%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22300%22%20font-size%3D%2224%22%20fill%3D%22%23EAA45D%22%3E%2F%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%222%22%20y%3D%2244%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%2213%22%20fill%3D%22%23EAA45D%22%20letter-spacing%3D%220.5%22%3Epartners%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%230d1117%22%2F%3E%0A%20%20%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%22118.5%22%20height%3D%22118.5%22%20rx%3D%2225.25%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.14)%22%20stroke-width%3D%221.5%22%2F%3E%0A%20%20%3Cg%20transform%3D%22translate(13%2C%2038)%22%3E%0A%20%20%20%20%3Ctext%20x%3D%220%22%20y%3D%2224%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2224%22%20fill%3D%22%23ffffff%22%20letter-spacing%3D%22-0.5%22%3EPICO%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2264%22%20y%3D%2224%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22300%22%20font-size%3D%2224%22%20fill%3D%22%23EAA45D%22%3E%2F%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%222%22%20y%3D%2244%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%2213%22%20fill%3D%22%23EAA45D%22%20letter-spacing%3D%220.5%22%3Epartners%3C%2Ftext%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F5c50ba20f93fd4fd6af8a558%2F1636758165182-WWIUZMEQ29VPMZ99D3S7%2FALK_8054.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F5c50ba20f93fd4fd6af8a558%2F1636758165182-WWIUZMEQ29VPMZ99D3S7%2FALK_8054.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F5c50ba20f93fd4fd6af8a558%2F1636758165182-WWIUZMEQ29VPMZ99D3S7%2FALK_8054.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "Sheffie@pico.partners",
+    "website": "https://www.pico.partners/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Pico Venture Partners invests in visionary Israeli entrepreneurs building future-defining technologies. We seek the leaders who are relentless in their quest to disrupt existing markets, industries, business processes, and consumer experiences.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "pico.partners",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "customEdited": true
+  },
+  {
     "id": "aleph.vc",
     "name": "Aleph",
     "category": "Website",

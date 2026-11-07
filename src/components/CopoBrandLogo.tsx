@@ -132,18 +132,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(appleTouchUrl);
     }
 
-    // 5. Domain brand logo via server proxy
-    if (cleanDomain) {
-      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
-    }
-
-    // 6. High-resolution Google FaviconV2 & DuckDuckGo fallbacks (guaranteed global brand emblem coverage)
-    if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=128`);
-      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
-    }
-
-    // 7. Hero Banner Brand Fallback: If no standalone logo is available, use the authentic hero banner artwork as brand graphic
+    // 4. Hero Banner Brand Fallback: If no standalone logo is available, use the authentic hero banner artwork as brand graphic
     if (
       bannerUrl &&
       bannerUrl.trim() !== "" &&
@@ -159,12 +148,36 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
+    // 5. Domain brand logo via server proxy
+    if (cleanDomain) {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
+    }
+
+    // 6. High-resolution Google FaviconV2 & DuckDuckGo fallbacks (strictly filtered by 64x64 minimum resolution in onLoad)
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=128`);
+      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
+    }
+
     // Filter duplicates and any generic placeholders
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u))));
   }, [isYoouz, cleanDomain, logoUrl, bannerUrl]);
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || null;
+
+  // Determine if active candidate is the hero banner image
+  const isBannerAsLogo = Boolean(
+    bannerUrl &&
+    currentSrc &&
+    (currentSrc === bannerUrl ||
+      currentSrc.includes(bannerUrl) ||
+      (getProxiedImageUrl(bannerUrl) && currentSrc.includes(getProxiedImageUrl(bannerUrl))))
+  );
+
+  const activeImageClass = isBannerAsLogo
+    ? "w-full h-full object-cover rounded-xl sm:rounded-2xl"
+    : imageClassName;
 
   // Reset index when domain/logoUrl/bannerUrl changes
   useEffect(() => {
@@ -208,13 +221,16 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${imageClassName} relative z-10 w-full h-full object-contain transition-opacity duration-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+          className={`${activeImageClass} relative z-10 w-full h-full transition-opacity duration-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
             imgLoaded ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
           onLoad={(e) => {
             const img = e.currentTarget;
-            if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+            const isSvg = Boolean(currentSrc && (currentSrc.includes('.svg') || currentSrc.startsWith('data:image/svg') || currentSrc.includes('image/svg+xml')));
+            // Strictly reject tiny, low-resolution raster images (e.g. 12x16, 16x16, 32x32, 48x48 favicons).
+            // Magnifying low-res icons in 96px/128px badges results in blurry, pixelated graphics.
+            if (!isSvg && (img.naturalWidth < 64 || img.naturalHeight < 64)) {
               setCandidateIdx((prev) => {
                 const next = prev + 1;
                 if (next >= candidateUrls.length) onError?.();

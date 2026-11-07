@@ -25,21 +25,22 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
-    clean.includes("placeholder") ||
-    clean.includes("mock") ||
-    clean.includes("fake") ||
-    clean.includes("test") ||
-    clean.includes("sample") ||
-    clean.includes("example") ||
-    clean.includes("demo") ||
+    clean.includes("default-logo") ||
+    clean.includes("default_logo") ||
+    clean.includes("dummy-logo") ||
+    clean.includes("dummy_logo") ||
+    clean.includes("fake-logo") ||
+    clean.includes("test-logo") ||
+    clean.includes("sample-logo") ||
+    clean.includes("mockup-logo") ||
+    clean.includes("generic-logo") ||
+    clean.includes("no-logo") ||
+    clean.includes("blank-logo") ||
+    clean.includes("/placeholder") ||
+    clean.includes("placeholder.") ||
     clean.includes("og-banner.png") ||
     clean.includes("tap/0.png") ||
     clean.includes("icons/tap") ||
-    clean.includes("dummy") ||
-    clean.includes("no-logo") ||
-    clean.includes("blank-logo") ||
-    clean.includes("generic-logo") ||
-    clean.includes("sample-logo") ||
     clean.includes("dcassetcdn.com") ||
     clean.includes("designcrowd") ||
     clean.includes("99designs") ||
@@ -299,6 +300,17 @@ export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0
 </svg>`;
 export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
 
+export const PICO_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="26" fill="#0d1117"/>
+  <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+  <g transform="translate(13, 38)">
+    <text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text>
+    <text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text>
+    <text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text>
+  </g>
+</svg>`;
+export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PICO_LOGO_SVG)}`;
+
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "whatsapp.com": WHATSAPP_LOGO_DATA_URI,
@@ -350,6 +362,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
   "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
   "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+  "pico.partners": PICO_LOGO_DATA_URI,
+  "www.pico.partners": PICO_LOGO_DATA_URI,
+  "pico venture partners": PICO_LOGO_DATA_URI,
+  "pico": PICO_LOGO_DATA_URI,
   "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
   "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
   "nfx": "https://www.nfx.com/apple-touch-icon.png",
@@ -956,6 +972,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
+  "pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
+  "www.pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
+  "pico venture partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
+  "pico": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "www.nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "nfx": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
