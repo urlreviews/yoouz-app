@@ -46,8 +46,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-// Core place and user utility methods
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, extractBrandFromDescription } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -4572,9 +4571,12 @@ export function App() {
                   ? metaData.siteName
                   : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
                 const descBrand = extractBrandFromDescription(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
-                const resolvedCleanMetaName = (descBrand && isDomainStemName(rawMetaBrand, resolvedDom || cleanId))
+                const camelBrand = extractCamelCaseBrandFromText(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
+                const resolvedCleanMetaName = (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
                   ? descBrand
-                  : (formatBusinessName(rawMetaBrand, resolvedDom || cleanId) || descBrand || cleanId);
+                  : (camelBrand && isDomainStemName(rawMetaBrand, resolvedDom || cleanId))
+                  ? camelBrand
+                  : (formatBusinessName(rawMetaBrand, resolvedDom || cleanId) || descBrand || camelBrand || cleanId);
                 const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? fetchedPlace.name : resolvedCleanMetaName);
                 const cleanBanner = (url?: string | null): string => {
                   if (!url || typeof url !== "string") return "";
@@ -4687,8 +4689,12 @@ export function App() {
       return (drawerPlace as any).selectedName;
     }
     const descBrand = extractBrandFromDescription(drawerPlace.description, dom);
-    if (descBrand && isDomainStemName(drawerPlace.name, dom)) {
+    const camelBrand = extractCamelCaseBrandFromText(drawerPlace.description, dom);
+    if (descBrand && (isDomainStemName(drawerPlace.name, dom) || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(drawerPlace.name || "")))) {
       return descBrand;
+    }
+    if (camelBrand && (isDomainStemName(drawerPlace.name, dom) || !/[\p{Ll}][\p{Lu}]/u.test(drawerPlace.name || ""))) {
+      return camelBrand;
     }
     if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com") && !isDomainStemName(drawerPlace.name, dom)) {
       const pLower = drawerPlace.name.toLowerCase().trim();
@@ -4696,6 +4702,7 @@ export function App() {
       return toTitleCase(drawerPlace.name);
     }
     if (descBrand) return descBrand;
+    if (camelBrand) return camelBrand;
     const formatted = formatBusinessName(drawerPlace.name || drawerPlace.id, dom);
     return toTitleCase(formatted || drawerPlace.name || drawerPlace.id);
   }, [drawerPlace]);

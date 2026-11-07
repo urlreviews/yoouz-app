@@ -54,7 +54,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription, extractCamelCaseBrandFromText } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -539,6 +539,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const getRawName = () => {
       // 0. Selected / Clicked / Searched name from suggestion list or place record
       const descBrand = extractBrandFromDescription(place?.description, drawerDomain || place?.brandDomain || place?.id);
+      const camelBrand = extractCamelCaseBrandFromText(place?.description, drawerDomain || place?.brandDomain || place?.id);
 
       // 1. Verified KNOWN_OFFICIAL_NAMES dictionary (Highest priority canonical dictionary)
       if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) {
@@ -577,7 +578,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           const keyStr = String(k).toLowerCase().trim();
           const cachedSession = sessionStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedSession) {
-            if (isDomainStemName(cachedSession, drawerDomain) || isFalseSplitOfDomain(cachedSession, drawerDomain) || (hasMultiWordPlaceName && !cachedSession.trim().includes(" "))) {
+            const isStaleStem = isDomainStemName(cachedSession, drawerDomain) || 
+              isFalseSplitOfDomain(cachedSession, drawerDomain) || 
+              (hasMultiWordPlaceName && !cachedSession.trim().includes(" ")) ||
+              (descBrand && /[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(cachedSession)) ||
+              (camelBrand && !/[\p{Ll}][\p{Lu}]/u.test(cachedSession));
+
+            if (isStaleStem) {
               sessionStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
             } else if (cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com")) {
               const cleanedSession = formatBusinessName(cachedSession.trim(), drawerDomain) || cachedSession.trim();
@@ -586,7 +593,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           }
           const cachedLocal = localStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedLocal) {
-            if (isDomainStemName(cachedLocal, drawerDomain) || isFalseSplitOfDomain(cachedLocal, drawerDomain) || (hasMultiWordPlaceName && !cachedLocal.trim().includes(" "))) {
+            const isStaleLocalStem = isDomainStemName(cachedLocal, drawerDomain) || 
+              isFalseSplitOfDomain(cachedLocal, drawerDomain) || 
+              (hasMultiWordPlaceName && !cachedLocal.trim().includes(" ")) ||
+              (descBrand && /[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(cachedLocal)) ||
+              (camelBrand && !/[\p{Ll}][\p{Lu}]/u.test(cachedLocal));
+
+            if (isStaleLocalStem) {
               localStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
             } else if (cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com")) {
               const cleanedLocal = formatBusinessName(cachedLocal.trim(), drawerDomain) || cachedLocal.trim();
@@ -596,9 +609,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         }
       } catch (e) {}
 
-      // If place.name is merely a 1-word domain stem (like "Adaptvc" or "Phoenixcourt") and description starts with the real multi-word brand name (like "Adapt Ventures" or "Phoenix Court"), use it!
-      if (descBrand && isDomainStemName(place?.name, drawerDomain)) {
+      // If place.name is merely a 1-word domain stem (like "Adaptvc", "Phoenixcourt", or "Scifi") and description starts with the real brand name (like "Adapt Ventures", "Phoenix Court", or "SciFi"), use it!
+      if (descBrand && (isDomainStemName(place?.name, drawerDomain) || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(place?.name || "")))) {
         return unescapeStr(descBrand);
+      }
+      if (camelBrand && (isDomainStemName(place?.name, drawerDomain) || !/[\p{Ll}][\p{Lu}]/u.test(place?.name || ""))) {
+        return unescapeStr(camelBrand);
       }
 
       // 2. Exact non-generic place name (always passed through formatBusinessName to strip any title slogans)
@@ -611,6 +627,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
       if (descBrand) {
         return unescapeStr(descBrand);
+      }
+      if (camelBrand) {
+        return unescapeStr(camelBrand);
       }
 
       // 3. Official scraped place name on the Place record
@@ -805,9 +824,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? data.siteName
                   : (data.title && !isDomainStemName(data.title, resolvedDomainClean) ? data.title : (data.siteName || data.title));
                 const descExtractedBrand = extractBrandFromDescription(data.description || place.description, resolvedDomainClean);
+                const camelExtractedBrand = extractCamelCaseBrandFromText(data.description || place.description, resolvedDomainClean);
                 const resolvedTitle = (descExtractedBrand && isDomainStemName(rawMetaName, resolvedDomainClean))
                   ? descExtractedBrand
-                  : (rawMetaName ? formatBusinessName(rawMetaName, resolvedDomainClean) : (descExtractedBrand || ""));
+                  : (camelExtractedBrand && isDomainStemName(rawMetaName, resolvedDomainClean))
+                  ? camelExtractedBrand
+                  : (rawMetaName ? formatBusinessName(rawMetaName, resolvedDomainClean) : (descExtractedBrand || camelExtractedBrand || ""));
                 const validSelectedName = ((place as any).selectedName && !isDomainStemName((place as any).selectedName, resolvedDomainClean))
                   ? (formatBusinessName((place as any).selectedName, resolvedDomainClean) || (place as any).selectedName)
                   : "";
@@ -815,6 +837,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? (formatBusinessName(place.name, resolvedDomainClean) || place.name)
                   : "";
                 const bestPlaceName = (resolvedDomainClean && KNOWN_OFFICIAL_NAMES[resolvedDomainClean])
+                  || (descExtractedBrand && /[\p{Ll}][\p{Lu}]/u.test(descExtractedBrand) ? descExtractedBrand : null)
+                  || (camelExtractedBrand ? camelExtractedBrand : null)
                   || resolvedTitle
                   || descExtractedBrand
                   || validSelectedName

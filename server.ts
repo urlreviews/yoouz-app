@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -8057,10 +8057,14 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         if (KNOWN_OFFICIAL_NAMES[key]) {
           p.name = KNOWN_OFFICIAL_NAMES[key];
           if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
-        } else if (isDomainStemName(p.name, key)) {
+        } else if (isDomainStemName(p.name, key) || !/[\p{Ll}][\p{Lu}]/u.test(p.name || "")) {
           const descBrand = extractBrandFromDescription(p.description, key);
-          if (descBrand) {
+          const camelBrand = extractCamelCaseBrandFromText(p.description, key);
+          if (descBrand && (/[\p{Ll}][\p{Lu}]/u.test(descBrand) || isDomainStemName(p.name, key))) {
             p.name = descBrand;
+            if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
+          } else if (camelBrand) {
+            p.name = camelBrand;
             if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
           }
         } else if (p.name) {
@@ -30943,7 +30947,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const ogSiteName = ($d('meta[property="og:site_name"]').attr('content') || $d('meta[name="application-name"]').attr('content') || $d('meta[name="apple-mobile-web-app-title"]').attr('content') || "").trim();
                 const ogTitle = ($d('meta[property="og:title"]').attr('content') || $d('title').first().text() || "").trim();
                 const ogDesc = ($d('meta[property="og:description"]').attr('content') || $d('meta[name="description"]').attr('content') || "").trim();
-                const candidates = [ogSiteName, ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "", extractBrandFromDescription(ogDesc, redirDom), extractBrandFromDescription(ogDesc, cleanQDom)].filter(Boolean);
+                const candidates = [
+                  ogSiteName,
+                  ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
+                  extractCamelCaseBrandFromText(ogDesc, redirDom),
+                  extractCamelCaseBrandFromText(ogDesc, cleanQDom),
+                  extractBrandFromDescription(ogDesc, redirDom),
+                  extractBrandFromDescription(ogDesc, cleanQDom)
+                ].filter(Boolean);
                 for (const cand of candidates) {
                   if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom)) {
                     resolvedDirectTitle = cand;

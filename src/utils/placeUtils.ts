@@ -944,6 +944,10 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.elaia.com": "Elaia",
   "elaia": "Elaia",
   "el aia": "Elaia",
+  "scifi.vc": "SciFi VC",
+  "www.scifi.vc": "SciFi VC",
+  "scifi": "SciFi VC",
+  "scifi vc": "SciFi VC",
   "smok.vc": "SMOK Ventures",
   "www.smok.vc": "SMOK Ventures",
   "kaya.vc": "KAYA",
@@ -1007,17 +1011,21 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
     const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
-      // All-lowercase raw token (e.g. "phoenixcourt", "elaia") is a raw stem
-      if (trimmed === trimmed.toLowerCase()) {
-        return true;
+      // If it's a verified known official name with exact match, it is NOT a stem
+      const knownOfficial = KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[cleanName];
+      if (knownOfficial && knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName && trimmed === knownOfficial) {
+        return false;
       }
-      // If splitCompoundWords detects a legitimate multi-word compound (e.g. "Phoenixcourt" -> "Phoenix Court", "Lumolabs" -> "Lumo Labs"), it's an unsplit stem
-      if (splitCompoundWords(cleanName).includes(" ")) {
-        return true;
+      // If the string has intentional internal CamelCase (e.g. "SciFi", "OpenAI", "YouTube", "eBay", "PayPal"), it is a legitimate brand name, NOT a flat stem
+      if (/[\p{Ll}][\p{Lu}]/u.test(trimmed)) {
+        return false;
       }
-      if (/(?:[a-z]{2,})(?:vc|ws|angel|angels|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|inv|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds|tandartsen|optiek|apotheek|werkplaats)$/i.test(cleanName)) {
-        return true;
+      // If it's an all-caps acronym (e.g. "KAYA", "SMOK", "USV", "10MK"), not a flat stem
+      if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && BRAND_ACRONYMS.has(trimmed)) {
+        return false;
       }
+      // All other single-word tokens matching domRoot (e.g. "scifi", "Scifi", "adaptvc", "Adaptvc", "phoenixcourt", "Phoenixcourt") are domain stems
+      return true;
     }
   }
   return false;
@@ -1049,13 +1057,14 @@ export function isFalseSplitOfDomain(name?: string | null, domain?: string | nul
  * Extracts a clean multi-word company/brand name from the beginning of a business description
  * when the description starts with "<Brand Name> is a/an/the ..."
  * e.g., "Adapt Ventures is a private investment firm..." -> "Adapt Ventures"
+ * e.g., "SciFi is an early-stage..." -> "SciFi"
  */
 export function extractBrandFromDescription(description?: string | null, domain?: string | null): string | null {
   if (!description || typeof description !== "string") return null;
   const cleanDesc = description.trim();
   if (!cleanDesc || cleanDesc.length < 10) return null;
 
-  const match = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+)/u);
+  const match = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+|partners\s+with|invests\s+in|builds|empowers|funds|accelerates|supports)/u);
   if (!match || !match[1]) return null;
 
   const candidate = match[1].trim();
@@ -1078,6 +1087,28 @@ export function extractBrandFromDescription(description?: string | null, domain?
   }
 
   return candidate;
+}
+
+/**
+ * Detects if a text (description, title, heading) contains the official CamelCase or mixed-case
+ * representation of a domain root (e.g. "SciFi" for "scifi.vc", "OpenAI" for "openai.com", "PayPal" for "paypal.com").
+ */
+export function extractCamelCaseBrandFromText(text?: string | null, domain?: string | null): string | null {
+  if (!text || !domain) return null;
+  const cleanDom = extractCleanDomain(domain);
+  const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!domRoot || domRoot.length < 3) return null;
+
+  const tokens = text.match(/[\p{L}0-9&'\.\-]+/gu) || [];
+  for (const token of tokens) {
+    const cleanToken = token.replace(/[^a-z0-9]/gi, "");
+    if (cleanToken.toLowerCase() === domRoot) {
+      if (/[\p{Ll}][\p{Lu}]/u.test(cleanToken)) {
+        return cleanToken;
+      }
+    }
+  }
+  return null;
 }
 
 /**
