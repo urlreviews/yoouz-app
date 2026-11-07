@@ -347,6 +347,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "mamotcv": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
   "mamo tcv advocates": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
   "mamo tcv": "https://www.mamotcv.com/app/uploads/2024/02/LinkedIn_231009.jpg",
+  "2b.vc": "https://www.2b.vc/wp-content/uploads/2022/06/logo-copy.jpg",
+  "www.2b.vc": "https://www.2b.vc/wp-content/uploads/2022/06/logo-copy.jpg",
+  "2b": "https://www.2b.vc/wp-content/uploads/2022/06/logo-copy.jpg",
   "ssmgroup.org": "https://ssmgroup.org/wp-content/uploads/2021/01/ssm-logo.png",
   "www.ssmgroup.org": "https://ssmgroup.org/wp-content/uploads/2021/01/ssm-logo.png",
   "ssm group malta": "https://ssmgroup.org/wp-content/uploads/2021/01/ssm-logo.png",
@@ -1045,7 +1048,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "www.switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "switch": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
-  "switchmalta": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp"
+  "switchmalta": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
+  "2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "www.2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "2b": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();

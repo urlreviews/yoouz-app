@@ -944,6 +944,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.elaia.com": "Elaia",
   "elaia": "Elaia",
   "el aia": "Elaia",
+  "2b.vc": "2B.VC",
+  "www.2b.vc": "2B.VC",
+  "2b": "2B.VC",
+  "2b vc": "2B.VC",
+  "2 b": "2B.VC",
+  "2 b vc": "2B.VC",
   "scifi.vc": "SciFi VC",
   "www.scifi.vc": "SciFi VC",
   "scifi": "SciFi VC",
@@ -974,7 +980,7 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
 
 export const BRAND_ACRONYMS = new Set([
   "VC", "WS", "SV", "FJ", "GV", "TCV", "IVP", "GGV", "NEA", "CRV", "USV", "NFX", "DCVC", "SVB",
-  "B2B", "B2C", "D2C", "C2C", "AI", "ML", "NLP", "LLM", "API", "SDK", "SAAS", "PAAS", "IAAS",
+  "2B", "3M", "10MK", "7PC", "B2B", "B2C", "D2C", "C2C", "AI", "ML", "NLP", "LLM", "API", "SDK", "SAAS", "PAAS", "IAAS",
   "IO", "IT", "IP", "HR", "PR", "IR", "VR", "AR", "XR", "MR", "TV", "FM", "AM", "DJ", "MC",
   "PE", "LP", "GP", "IPO", "ROI", "KPI", "ESG", "DEI", "R&D", "M&A",
   "CEO", "CFO", "CTO", "COO", "CMO", "CIO", "CISO", "CPO", "CRO", "VP", "EVP", "SVP",
@@ -1001,18 +1007,24 @@ export const BRAND_ACRONYMS = new Set([
 export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
   if (!name || !name.trim()) return true;
   const trimmed = name.trim();
+  const cleanDom = domain ? extractCleanDomain(domain) : "";
+  const cleanName = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // If it's a verified known official name with exact match (even if it contains .vc or .com like "2B.VC"), it is NOT a stem
+  const knownOfficial = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || (cleanName && KNOWN_OFFICIAL_NAMES[cleanName]);
+  if (knownOfficial && (trimmed.toLowerCase() === knownOfficial.toLowerCase() || trimmed === knownOfficial)) {
+    return false;
+  }
+
   if (isValidDomainUrl(trimmed) || /\.(com|net|org|io|vc|co|ai|app|dev|be|nl|de|fr|uk|ae|il)$/i.test(trimmed)) {
     return true;
   }
   if (trimmed.includes(" ")) return false;
-  const cleanName = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!cleanName) return true;
   if (domain) {
-    const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
       // If it's a verified known official name with exact match, it is NOT a stem
-      const knownOfficial = KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[cleanName];
       if (knownOfficial && knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName && trimmed === knownOfficial) {
         return false;
       }
@@ -1020,8 +1032,8 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
       if (/[\p{Ll}][\p{Lu}]/u.test(trimmed)) {
         return false;
       }
-      // If it's an all-caps acronym (e.g. "KAYA", "SMOK", "USV", "10MK"), not a flat stem
-      if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && BRAND_ACRONYMS.has(trimmed)) {
+      // If it's an all-caps acronym or short alphanumeric brand (e.g. "KAYA", "SMOK", "USV", "10MK", "2B", "3M"), not a flat stem
+      if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && (BRAND_ACRONYMS.has(trimmed) || /^[0-9]+[A-Z]{1,2}$/.test(trimmed) || /^[A-Z]{1,2}[0-9]+$/.test(trimmed))) {
         return false;
       }
       // All other single-word tokens matching domRoot (e.g. "scifi", "Scifi", "adaptvc", "Adaptvc", "phoenixcourt", "Phoenixcourt") are domain stems
@@ -1033,18 +1045,22 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
 
 /**
  * Detects if a multi-word candidate is a false syllable split of a single-word domain root
- * (e.g., "El Aia" for "elaia.com", "Pro Ximus" for "proximus.be").
+ * (e.g., "El Aia" for "elaia.com", "Pro Ximus" for "proximus.be", "2 B" for "2b.vc").
  */
 export function isFalseSplitOfDomain(name?: string | null, domain?: string | null): boolean {
   if (!name || !domain || !name.includes(" ")) return false;
   const lower = name.trim().toLowerCase();
-  if (lower === "el aia" || lower === "pro ximus" || lower === "al pha" || lower === "el ement" || lower === "the ranos" || lower === "ve spa" || lower === "pla net" || lower === "al titude vc" || lower === "ven tech vc") {
+  if (lower === "2 b" || lower === "2 b vc" || lower === "el aia" || lower === "pro ximus" || lower === "al pha" || lower === "el ement" || lower === "the ranos" || lower === "ve spa" || lower === "pla net" || lower === "al titude vc" || lower === "ven tech vc") {
     return true;
   }
   const cleanDom = extractCleanDomain(domain);
   const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (!domRoot || domRoot.length < 4) return false;
+  if (!domRoot) return false;
   const parts = lower.split(/\s+/).filter(Boolean);
+  // Any false split of a short root (like "2b" -> "2 b") is a false split!
+  if (parts.join("") === domRoot && domRoot.length <= 4) {
+    return true;
+  }
   if (parts.length >= 2 && parts.join("") === domRoot) {
     if ((parts[0] === "el" || parts[0] === "al") && !/^(dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)$/.test(parts[1])) {
       return true;
@@ -1142,8 +1158,14 @@ export function splitCompoundWords(str: string): string {
 
   // 1. Split camelCase/PascalCase (e.g., FirstStrikeElectrical -> First Strike Electrical)
   s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
-  // 2. Split letter-number and number-letter
-  s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
+
+  // 1.5 Do not split short alphanumeric acronyms/brands (e.g., 2B, 3M, 10MK, 7PC, F1, N26, B2B, A1)
+  if (/^[0-9]+[a-zA-Z]{1,2}$/i.test(s) || /^[a-zA-Z]{1,2}[0-9]+$/i.test(s) || /^[a-zA-Z][0-9][a-zA-Z]$/i.test(s) || (s.length <= 4 && /^[a-zA-Z0-9]+$/.test(s) && /\d/.test(s) && /[a-zA-Z]/.test(s))) {
+    return s.toUpperCase();
+  }
+
+  // 2. Split letter-number and number-letter ONLY when the letter sequence is a word (>= 3 chars)
+  s = s.replace(/([a-zA-Z]{3,})([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z]{3,})/g, "$1 $2");
   
   // 3. Known brand/locational prefixes ONLY when followed by an explicit standalone compound word
   s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");

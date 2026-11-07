@@ -566,16 +566,22 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
 
   if (!bannerUrl) {
     try {
-      const wikiSummaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(brandName)}`;
-      const wRes = await fetch(wikiSummaryUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined });
-      if (wRes.ok) {
-        const wJson = await wRes.json();
-        if (wJson.originalimage?.source && !isBadBanner(wJson.originalimage.source)) {
-          bannerUrl = wJson.originalimage.source;
-          photos.push(bannerUrl);
-        }
-        if (!description && wJson.extract) {
-          description = wJson.extract;
+      const cleanBrand = (brandName || "").trim();
+      // Never search Wikipedia for short <= 3 character tokens or isolated digits+letters (prevents "2 B" or "2B" matching anime characters)
+      if (cleanBrand.length >= 4 && !/^[0-9]+\s*[a-zA-Z]{1,2}$/i.test(cleanBrand) && !/^[a-zA-Z]{1,2}\s*[0-9]+$/i.test(cleanBrand)) {
+        const wikiSummaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanBrand)}`;
+        const wRes = await fetch(wikiSummaryUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined });
+        if (wRes.ok) {
+          const wJson = await wRes.json();
+          const extractLow = (wJson.extract || '').toLowerCase();
+          const isBusinessOrPlace = /\b(company|firm|corporation|fund|venture|business|enterprise|agency|brand|retailer|organization|group|bank|hotel|restaurant|store|chain|platform|service|founded|headquarters|headquartered)\b/i.test(extractLow);
+          if (wJson.originalimage?.source && !isBadBanner(wJson.originalimage.source) && isBusinessOrPlace) {
+            bannerUrl = wJson.originalimage.source;
+            photos.push(bannerUrl);
+          }
+          if (!description && wJson.extract && isBusinessOrPlace) {
+            description = wJson.extract;
+          }
         }
       }
     } catch (e) {}
