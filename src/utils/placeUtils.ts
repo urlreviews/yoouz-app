@@ -87,6 +87,11 @@ export function extractCleanDomain(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
   let clean = input.trim().toLowerCase();
   
+  // Fix comma typos in domain/URL (e.g. intuition,vc -> intuition.vc, pico,partners -> pico.partners)
+  clean = clean.replace(/([a-z0-9]),([a-z]{2,})/g, '$1.$2');
+  clean = clean.replace(/,([a-z]{2,})/g, '.$1');
+  clean = clean.replace(/([a-z]),([a-z])/g, '$1.$2');
+
   // 1. Try standard URL hostname parsing if valid protocol or leading slashes
   try {
     if (clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("//")) {
@@ -313,6 +318,9 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "aleph.vc": "Aleph",
   "www.aleph.vc": "Aleph",
   "aleph": "Aleph",
+  "intuition.vc": "Intuition",
+  "www.intuition.vc": "Intuition",
+  "intuition": "Intuition",
   "pico.partners": "PICO Venture Partners",
   "www.pico.partners": "PICO Venture Partners",
   "pico venture partners": "PICO Venture Partners",

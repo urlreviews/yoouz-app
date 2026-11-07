@@ -36,7 +36,8 @@
     "followedPlaces": [
       "zakhgroup.com"
     ],
-    "followingCount": 1
+    "followingCount": 1,
+    "state": ""
   },
   {
     "id": "aouisesmee@gmail.com",
@@ -197,5 +198,51 @@
     "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EE%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "bio": "Verified video reviewer on Yoouz.",
     "location": ""
+  },
+  {
+    "id": "yudansha14@gmail.com",
+    "uid": "yudansha14@gmail.com",
+    "email": "yudansha14@gmail.com",
+    "name": "Josh Montgomery",
+    "role": "Creator",
+    "status": "verified",
+    "isVerified": true,
+    "isRegisteredAccount": true,
+    "handle": "@joshmontgomery",
+    "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "bio": "Verified video reviewer on Yoouz.",
+    "location": ""
+  },
+  {
+    "id": "chotrevlee@gmail.com",
+    "uid": "chotrevlee@gmail.com",
+    "email": "chotrevlee@gmail.com",
+    "name": "Trev Lee",
+    "role": "Creator",
+    "status": "verified",
+    "isVerified": true,
+    "isRegisteredAccount": true,
+    "handle": "@trevlee",
+    "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23D81B60%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ET%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "bio": "Verified video reviewer on Yoouz.",
+    "location": ""
+  },
+  {
+    "id": "sophiecieloo@gmail.com",
+    "uid": "sophiecieloo@gmail.com",
+    "email": "sophiecieloo@gmail.com",
+    "name": "Sophie Cielo",
+    "role": "Creator",
+    "status": "verified",
+    "isVerified": true,
+    "isRegisteredAccount": true,
+    "handle": "@sophiecielo",
+    "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "bio": "Verified video reviewer on Yoouz.",
+    "location": "Vitória da Conquista, Bahia, Brazil",
+    "firstName": "Sophie",
+    "lastName": "Cielo",
+    "city": "Vitória da Conquista",
+    "country": "Brazil"
   }
 ]

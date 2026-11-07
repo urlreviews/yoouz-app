@@ -366,6 +366,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
   "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
   "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+  "intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
+  "www.intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
+  "intuition": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538965626da4ef74cd494ef_Logo.svg",
   "pico.partners": PICO_LOGO_DATA_URI,
   "www.pico.partners": PICO_LOGO_DATA_URI,
   "pico venture partners": PICO_LOGO_DATA_URI,
@@ -980,6 +983,9 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
+  "intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
+  "www.intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
+  "intuition": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
   "pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "www.pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico venture partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
@@ -1462,6 +1468,12 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   // 4. Guaranteed high-resolution authentic domain logo fallback for any verified web business
   if (cleanDomain) {
     return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+  }
+
+  // 5. Fallback to banner if no logo is available (so logo is never empty)
+  const banner = getPlaceBannerUrl(place);
+  if (banner && !isBadBanner(banner)) {
+    return banner;
   }
 
   return null;
