@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Building2 } from "lucide-react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -27,6 +27,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   name,
   website,
   logoUrl,
+  bannerUrl,
   className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2 z-30",
   imageClassName = "w-full h-full object-contain rounded-xl",
   fallbackTextClassName,
@@ -142,18 +143,34 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
+    // 7. Hero Banner Brand Fallback: If no standalone logo is available, use the authentic hero banner artwork as brand graphic
+    if (
+      bannerUrl &&
+      bannerUrl.trim() !== "" &&
+      !isBadBanner(bannerUrl) &&
+      !bannerUrl.startsWith("blob:")
+    ) {
+      const proxiedBanner = getProxiedImageUrl(bannerUrl);
+      if (proxiedBanner && !candidates.includes(proxiedBanner)) {
+        candidates.push(proxiedBanner);
+      }
+      if (!candidates.includes(bannerUrl)) {
+        candidates.push(bannerUrl);
+      }
+    }
+
     // Filter duplicates and any generic placeholders
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u))));
-  }, [isYoouz, cleanDomain, logoUrl]);
+  }, [isYoouz, cleanDomain, logoUrl, bannerUrl]);
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || null;
 
-  // Reset index when domain/logoUrl changes
+  // Reset index when domain/logoUrl/bannerUrl changes
   useEffect(() => {
     setCandidateIdx(0);
     setImgLoaded(false);
-  }, [cleanDomain, logoUrl]);
+  }, [cleanDomain, logoUrl, bannerUrl]);
 
   // Dedicated Yoouz emblem
   if (isYoouz) {

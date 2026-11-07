@@ -1,5 +1,54 @@
 [
   {
+    "id": "aleph.vc",
+    "name": "Aleph",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+    "logoUrl": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F670ca83cf63fc368062b2d3a%2F6757fd66b08c7c2009504b8e_Meta%2520image%2520Aleph.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F670ca83cf63fc368062b2d3a%2F6757fd66b08c7c2009504b8e_Meta%2520image%2520Aleph.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F670ca83cf63fc368062b2d3a%2F6757fd66b08c7c2009504b8e_Meta%2520image%2520Aleph.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.aleph.vc/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Early-stage VC fund managing $850M+ and partnering with Israeli entrepreneurs to build impactful global brands, like Lemonade and Melio.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "aleph.vc",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "nfx.com",
     "name": "NFX",
     "category": "Legal Services",

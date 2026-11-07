@@ -310,6 +310,9 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "aleph.vc": "Aleph",
+  "www.aleph.vc": "Aleph",
+  "aleph": "Aleph",
   "nfx.com": "NFX",
   "www.nfx.com": "NFX",
   "nfx": "NFX",

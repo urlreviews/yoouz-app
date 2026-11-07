@@ -15393,6 +15393,18 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "aleph.vc": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F670ca83cf63fc368062b2d3a%2F6757fd66b08c7c2009504b8e_Meta%2520image%2520Aleph.jpg",
+      logoUrl: "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+      name: "Aleph",
+      website: "https://www.aleph.vc"
+    },
+    "www.aleph.vc": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F670ca83cf63fc368062b2d3a%2F6757fd66b08c7c2009504b8e_Meta%2520image%2520Aleph.jpg",
+      logoUrl: "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+      name: "Aleph",
+      website: "https://www.aleph.vc"
+    },
     "nfx.com": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
       logoUrl: "https://www.nfx.com/apple-touch-icon.png",
@@ -27646,6 +27658,10 @@ function isFaviconUrl(url?: string | null): boolean {
     !l.includes("192x192") &&
     !l.includes("256x256") &&
     !l.includes("512x512") &&
+    !l.includes("256") &&
+    !l.includes("512") &&
+    !l.includes("180") &&
+    !l.includes("192") &&
     !l.includes("apple-touch-icon") &&
     !l.includes("felicis.com/favicon.png")
   ) {
@@ -27730,9 +27746,24 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (preloadedLogo) return preloadedLogo;
   } catch (e) {}
 
-  const isWhiteOrLightFilename = (url: string): boolean => {
+  const isWhiteOrLightFilename = (url: string, el?: any): boolean => {
     const l = (url || "").toLowerCase();
-    return l.includes("logo-white") || l.includes("white-logo") || l.includes("logo_white") || l.includes("white_logo") || l.includes("logo-light") || l.includes("light-logo") || l.includes("logo-inverse") || l.includes("inverse-logo");
+    if (
+      l.includes("logo-white") || l.includes("white-logo") || l.includes("logo_white") || l.includes("white_logo") ||
+      l.includes("logo-light") || l.includes("light-logo") || l.includes("logo-inverse") || l.includes("inverse-logo") ||
+      l.includes("%20white") || l.includes("_white") || l.includes("-white") || l.includes("white.svg") || l.includes("white.png") ||
+      l.includes("mobile%20logo") || l.includes("mobile_logo") || l.includes("mobile-logo")
+    ) {
+      return true;
+    }
+    if (el) {
+      const cls = (el.attr("class") || "").toLowerCase();
+      const parentCls = (el.parent()?.attr("class") || "").toLowerCase();
+      if (cls.includes("white") || cls.includes("inverse") || parentCls.includes("cc-mobile") || parentCls.includes("white")) {
+        return true;
+      }
+    }
+    return false;
   };
 
   // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
@@ -27744,7 +27775,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       if (href) {
         const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
         const abs = makeAbsolute(href);
-        if (abs && isValidCandidate(abs)) {
+        if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs, $(el))) {
           appleIcons.push({ url: abs, size: sizeNum });
         }
       }
@@ -27758,11 +27789,13 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   // 2. DOM Header & Navigation Brand Images (actual visual elements rendered on page)
   try {
     const imgSelectors = [
-      'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
-      'nav img[class*="logo" i]', 'nav img[alt*="logo" i]', 'nav img[src*="logo" i]',
-      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
-      '.logo-box .logo img', '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
+      '.w-nav-brand:not([class*="mobile"]) img', 'a[class*="brand" i]:not([class*="mobile"]) img',
       'header a[href="/"] img', 'header a[aria-label*="home" i] img',
+      'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
+      'a[class*="logo" i]:not([class*="mobile"]) img',
+      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
+      '.logo-box .logo img', '.logo img', '#logo img',
+      'nav img[class*="logo" i]:not([class*="white"])', 'nav img[src*="logo" i]:not([src*="white"]):not([src*="mobile"])',
       'header img:first-of-type'
     ];
     for (const sel of imgSelectors) {
@@ -27771,7 +27804,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
         if (src) {
           const abs = makeAbsolute(src);
-          if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
+          if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs, el)) return abs;
         }
       }
     }
@@ -30339,6 +30372,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       };
 
       const serverBrandLogos: Record<string, string> = {
+        "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+        "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+        "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
         "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "nfx": "https://www.nfx.com/apple-touch-icon.png",
@@ -31531,6 +31567,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     const KNOWN_FAVICON_LOGOS: Record<string, string> = {
+      "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+      "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
+      "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/670cdf7250672565d4a60efb_logo.svg",
       "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
       "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
       "nfx": "https://www.nfx.com/apple-touch-icon.png",
