@@ -1,5 +1,55 @@
 [
   {
+    "id": "svangel.com",
+    "name": "SV Angel",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "",
+    "city": "Gent",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fsvangel.com%2Fsva-color.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fsvangel.com%2Fsva-color.png",
+    "bannerUrl": "https://svangel.com/sva-site-image.png",
+    "ogImage": "https://svangel.com/sva-site-image.png",
+    "photos": [
+      "https://svangel.com/sva-site-image.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://svangel.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "We invest long-term in founders to help them create impact that extends beyond business.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "svangel.com",
+    "customEdited": true,
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "elaia.com",
     "name": "Elaia",
     "category": "Website",

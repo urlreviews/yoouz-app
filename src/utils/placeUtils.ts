@@ -949,8 +949,45 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "kaya.vc": "KAYA",
   "www.kaya.vc": "KAYA",
   "felicis.com": "Felicis",
-  "www.felicis.com": "Felicis"
+  "www.felicis.com": "Felicis",
+  "svangel.com": "SV Angel",
+  "www.svangel.com": "SV Angel",
+  "svangel": "SV Angel",
+  "sv angel": "SV Angel",
+  "altitude-vc.com": "Altitude VC",
+  "www.altitude-vc.com": "Altitude VC",
+  "al titude vc": "Altitude VC",
+  "ventechvc.com": "Ventech",
+  "www.ventechvc.com": "Ventech",
+  "ven tech vc": "Ventech",
+  "underscore.vc": "Underscore VC",
+  "www.underscore.vc": "Underscore VC",
+  "undersccore vc": "Underscore VC",
+  "7pc.vc": "7percent Ventures",
+  "10mk.com": "10MK",
+  "channel4ventures.com": "Channel 4 Ventures"
 };
+
+export const BRAND_ACRONYMS = new Set([
+  "VC", "WS", "SV", "FJ", "GV", "TCV", "IVP", "GGV", "NEA", "CRV", "USV", "NFX", "DCVC", "SVB",
+  "B2B", "B2C", "D2C", "C2C", "AI", "ML", "NLP", "LLM", "API", "SDK", "SAAS", "PAAS", "IAAS",
+  "IO", "IT", "IP", "HR", "PR", "IR", "VR", "AR", "XR", "MR", "TV", "FM", "AM", "DJ", "MC",
+  "PE", "LP", "GP", "IPO", "ROI", "KPI", "ESG", "DEI", "R&D", "M&A",
+  "CEO", "CFO", "CTO", "COO", "CMO", "CIO", "CISO", "CPO", "CRO", "VP", "EVP", "SVP",
+  "CPA", "CFA", "MBA", "PHD", "MD", "DO", "DDS", "DMD", "OD", "DC", "RN", "NP", "PA", "ESQ", "JD",
+  "LLC", "LLP", "PLLC", "INC", "CORP", "PLC", "AG", "KG", "OHG", "GBR", "UG",
+  "SA", "SAS", "SARL", "SRL", "SPA", "SL", "BV", "NV", "AB", "OY", "AS", "APS", "PTY", "PC", "SC",
+  "USA", "UK", "US", "EU", "UAE", "KSA", "UN", "NATO", "ASEAN", "APAC", "EMEA", "LATAM",
+  "NYC", "NY", "LA", "SF", "DC", "BC", "ON", "QC", "AB", "NSW", "VIC", "QLD", "WA", "SA", "NZ", "HK", "SG",
+  "BMW", "IBM", "AMD", "HP", "LG", "GE", "GM", "VW", "BYD", "KIA", "JBL", "BOSE", "HSBC", "UBS", "ING", "BNP", "BBVA", "RBC", "TD", "BMO", "CIBC",
+  "BBC", "CNN", "CBS", "NBC", "ABC", "HBO", "ESPN", "MTV", "UFC", "NBA", "NFL", "MLB", "NHL", "MLS", "FIFA", "UEFA", "PGA", "ATP", "WTA", "F1",
+  "SEO", "SEM", "SMM", "PPC", "CRO", "CMS", "CRM", "ERP", "LMS", "HRM", "DMS", "WMS", "TMS", "POS", "AEO", "PWA",
+  "VPN", "DNS", "CDN", "AWS", "GCP", "OCI", "SSH", "SSL", "TLS", "HTTP", "HTTPS", "HTML", "CSS", "SQL", "XML", "JSON",
+  "H2O", "CO2", "DNA", "RNA", "PCR", "MRI", "CT", "IVF", "ENT", "ICU", "ER", "CBD", "THC", "SPF", "FDA", "USDA", "EPA", "OSHA", "HIPAA", "GDPR", "SOC", "ISO",
+  "LED", "LCD", "OLED", "QLED", "PCB", "CNC", "CAD", "CAM", "BIM", "PLC", "HMI", "HVAC", "MEP", "EPC", "EV",
+  "DIY", "VIP", "MVP", "FAQ", "SOS", "ATM", "PIN", "SIM", "ESIM", "USB", "HDMI", "SSD", "HDD", "GPU", "CPU", "NPU", "RAM", "NFC", "RFID", "QR",
+  "2D", "3D", "4D", "4K", "8K", "HD", "FHD", "UHD", "QHD", "VR", "BH", "LM", "JB", "LUMO", "SMOK", "KAYA", "10MK", "3M"
+]);
 
 /**
  * Checks if a candidate business name is merely a raw domain or a 1-word unsplit domain stem
@@ -978,7 +1015,7 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
       if (splitCompoundWords(cleanName).includes(" ")) {
         return true;
       }
-      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|inv|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds|tandartsen|optiek|apotheek|werkplaats)$/i.test(cleanName)) {
+      if (/(?:[a-z]{2,})(?:vc|ws|angel|angels|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|inv|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds|tandartsen|optiek|apotheek|werkplaats)$/i.test(cleanName)) {
         return true;
       }
     }
@@ -993,14 +1030,14 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
 export function isFalseSplitOfDomain(name?: string | null, domain?: string | null): boolean {
   if (!name || !domain || !name.includes(" ")) return false;
   const lower = name.trim().toLowerCase();
-  if (lower === "el aia" || lower === "pro ximus" || lower === "al pha" || lower === "el ement" || lower === "the ranos" || lower === "ve spa" || lower === "pla net") {
+  if (lower === "el aia" || lower === "pro ximus" || lower === "al pha" || lower === "el ement" || lower === "the ranos" || lower === "ve spa" || lower === "pla net" || lower === "al titude vc" || lower === "ven tech vc") {
     return true;
   }
   const cleanDom = extractCleanDomain(domain);
   const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!domRoot || domRoot.length < 4) return false;
   const parts = lower.split(/\s+/).filter(Boolean);
-  if (parts.length === 2 && parts.join("") === domRoot) {
+  if (parts.length >= 2 && parts.join("") === domRoot) {
     if ((parts[0] === "el" || parts[0] === "al") && !/^(dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)$/.test(parts[1])) {
       return true;
     }
@@ -1078,17 +1115,20 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
   
   // 3. Known brand/locational prefixes ONLY when followed by an explicit standalone compound word
-  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital|best|top|pro)(?=(?:strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
+  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|(?:dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)(?:$|[a-z]{3,}))/i, "$1 ");
 
   // 4. Lookbehind compound word splitters for concatenated business suffixes at word boundaries (never splitting inside unrelated words like planet, vespa, marshall, calabasas)
-  const singleWordExceptions = new Set(["planet", "planets", "vespa", "marshall", "spark", "sparks", "sparkle", "calabasas", "elaborate", "collaborate", "cabinet", "cabinets", "magnet", "magnets", "mustard", "blink", "scare", "shallow", "challenge", "elaia", "proximus", "theranos", "supernova", "topaz", "element", "alpha"]);
+  const singleWordExceptions = new Set(["planet", "planets", "vespa", "marshall", "spark", "sparks", "sparkle", "calabasas", "elaborate", "collaborate", "cabinet", "cabinets", "magnet", "magnets", "mustard", "blink", "scare", "shallow", "challenge", "elaia", "proximus", "theranos", "supernova", "topaz", "element", "alpha", "evangel", "archangel", "ventech"]);
   if (!singleWordExceptions.has(cleanKey)) {
+    s = s.replace(/(?<=[a-z]{2,})(angel|angels|vc|fund|funds)(?=$|[-_ ])/gi, " $1 ");
     s = s.replace(/(?<=[a-z]{3,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|virtual|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|ventures|court|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|online|prime|select|choice|smart|master|star|stars|tandartsen|optiek|apotheek|werkplaats)(?=$|[-_ ]|(?:center|centre|clinic|group|firm|agency|services|solutions|partners|capital|ventures|labs|studio|shop|store|market|hotel|hotels|resort|resorts|srl)\b)/gi, " $1 ");
   }
 
-  // 5. Clean up any multiple spaces and format each word cleanly with title case
+  // 5. Clean up any multiple spaces and format each word cleanly with title case / acronym preservation
   const words = s.split(/[-_ ]+/).filter(Boolean).map(w => {
+    const upper = w.toUpperCase();
+    if (BRAND_ACRONYMS.has(upper)) return upper;
     if (/^[A-Z0-9]+$/.test(w)) return w;
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   });
@@ -1174,16 +1214,49 @@ export function isGenericPlaceName(name?: string | null): boolean {
 
 export function toTitleCase(str: string): string {
   if (!str) return "";
-  const acronyms = new Set(["LLC", "INC", "PC", "USA", "UK", "BMW", "IBM", "SEO", "CMS", "AEO", "PWA", "UAE", "NY", "LA"]);
+  const trimmedStr = str.trim();
+  // Detect if the entire string is an ALL-CAPS multi-word sentence (e.g. "WELCOME TO OUR OFFICIAL STORE")
+  // vs. mixed-case official branding (e.g. "SV Angel", "LUMO Labs", "OpenAI", "Adapt VC") or a short 2-6 letter acronym/brand ("KAYA", "USV").
+  const hasLowercase = /[\p{Ll}]/u.test(trimmedStr);
+  const casedLetters = trimmedStr.replace(/[^\p{Lu}\p{Ll}]/gu, "");
+  const isAllCapsSentence = !hasLowercase && casedLetters.length > 6 && trimmedStr.includes(" ");
+
   return str.split(/(\s+)/).map(word => {
     if (/^\s+$/.test(word)) return word;
     
-    if (word.includes("-") && /^[a-zA-Z\u00C0-\u017F\u0590-\u05FF\-]+$/.test(word)) {
+    if (word.includes("-") && /^[\p{L}0-9\-]+$/u.test(word)) {
       return word.split("-").map(p => toTitleCase(p)).join("-");
     }
 
-    return word.replace(/([a-zA-Z\u00C0-\u017F]+)/g, (m) => {
-      if (acronyms.has(m.toUpperCase())) return m.toUpperCase();
+    return word.replace(/([\p{L}0-9]+)/gu, (m) => {
+      const upper = m.toUpperCase();
+      if (upper === "GMBH") return "GmbH";
+      // 1. Canonical uppercase acronyms (VC, WS, SV, AI, LLC, USA, etc.) are ALWAYS uppercase regardless of input casing
+      if (BRAND_ACRONYMS.has(upper)) {
+        return upper;
+      }
+      // 2. If the overall title is not an all-caps screaming sentence, preserve intentional uppercase tokens (e.g., "SV", "VC", "WS", "NXT", "B2B", "10MK")
+      // and intentional mixed-case / CamelCase / digit-prefixed tokens (e.g., "OpenAI", "GitHub", "YouTube", "McVeagh", "iPhone", "eBay", "SaaS", "7Percent")
+      if (!isAllCapsSentence) {
+        if (m.length >= 2 && m === upper && /[\p{Lu}]/u.test(m)) {
+          return m;
+        }
+        if (/[\p{Ll}].*[\p{Lu}]|[\p{Lu}]{2,}[\p{Ll}]|^[0-9]+[\p{Lu}]/u.test(m)) {
+          return m;
+        }
+      }
+      // 3. For non-cased scripts (Hebrew, Arabic, Japanese, Chinese, etc.), return as-is
+      if (!/[\p{Lu}\p{Ll}]/u.test(m)) {
+        return m;
+      }
+      // 4. If token starts with digits followed by letters (e.g. "4ventures" -> "4Ventures"), capitalize first letter after digits
+      if (/^[0-9]+[\p{L}]/u.test(m)) {
+        return m.replace(/^([0-9]+)([\p{L}])([\p{L}]*)$/u, (_, nums, firstL, restL) => {
+          const subUpper = (firstL + restL).toUpperCase();
+          if (BRAND_ACRONYMS.has(subUpper)) return nums + subUpper;
+          return nums + firstL.toUpperCase() + restL.toLowerCase();
+        });
+      }
       return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
     });
   }).join("");
@@ -1397,7 +1470,10 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       const matchesQueryWords = qWords.some(w => trimmedLower.includes(w.toLowerCase()));
 
       if (!matchesQueryWords || (trimmedLower.length < qLower.length && !qLower.includes(trimmedLower)) || (trimmedLower.startsWith(qLower + " ") && trimmed.split(/\s+/).length > qTrim.split(/\s+/).length + 1)) {
-        trimmed = qTrim;
+        // Only override with qTrim if trimmed isn't already the exact same text with superior official capitalization (e.g. trimmed="SV Angel" vs qTrim="Sv Angel")
+        if (trimmedLower !== qLower) {
+          trimmed = qTrim;
+        }
       }
     }
   }
@@ -1459,7 +1535,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
   }
 
-  // 3c. If the string is now a clean human business name (English or Hebrew) after separator & slogan stripping, preserve in full
+  // 3c. If the string is now a clean human business name (in any language) after separator & slogan stripping, preserve in full
   if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && trimmed.length <= 50) {
     if (cleanDom && isFalseSplitOfDomain(trimmed, cleanDom)) {
       return KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()] || splitCompoundWords(domRoot);
@@ -1479,9 +1555,9 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     .replace(/^www[\.\-\/]/i, '')
     .replace(/\.(?:com|net|org|io|vc|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
 
-  // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma"), preserve directly
-  if (/^[A-Z][a-z0-9]+$/.test(rawName)) {
-    return rawName;
+  // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma") that is not a compound stem, preserve directly
+  if (/^[A-Z][a-z0-9]+$/.test(rawName) && !splitCompoundWords(rawName.toLowerCase()).includes(" ")) {
+    return toTitleCase(rawName);
   }
 
   // 6. Split compound words
@@ -1494,16 +1570,17 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     spaced = "Brett Levy";
   }
 
-  const acronyms = new Set(["bh", "usa", "nyc", "la", "uk", "us", "ai", "api", "ibm", "bbc", "cnn", "cbs", "nbc", "hbo", "eu", "srl", "uae", "lm", "jb", "sf"]);
   const lowerCaseWords = new Set(["of", "and", "in", "at", "de", "et", "du", "des"]);
 
   const words = spaced
     .split(/[-_ ]+/)
     .map((word, idx) => {
       if (!word) return "";
+      const upper = word.toUpperCase();
       const lower = word.toLowerCase();
-      if (acronyms.has(lower)) return lower.toUpperCase();
+      if (BRAND_ACRONYMS.has(upper)) return upper;
       if (lowerCaseWords.has(lower) && idx > 0) return lower;
+      if (word.length >= 2 && word === upper && /[\p{Lu}]/u.test(word)) return word;
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .filter(Boolean);

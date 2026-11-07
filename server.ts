@@ -27363,23 +27363,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
 function generateBrandBannerSvg(nameOrDomain?: string | null): string {
   const input = (nameOrDomain || "Business").trim();
-  let cleanName = input;
-  if (input.includes('.')) {
-    cleanName = input.split('.')[0];
-  }
-  
-  cleanName = cleanName.replace(/[-_]+/g, ' ')
-                       .replace(/([a-z])([A-Z])/g, '$1 $2')
-                       .trim();
+  let cleanName = formatBusinessName(input, input.includes('.') ? input : undefined) || input;
   if (cleanName.length > 40) {
     cleanName = cleanName.substring(0, 37) + "...";
   }
-
-  // Proper title casing
-  cleanName = cleanName.split(/\s+/).map(word => {
-    if (!word) return "";
-    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-  }).join(" ");
 
   if (!cleanName) cleanName = "Verified Business";
 
