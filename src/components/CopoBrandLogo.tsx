@@ -78,7 +78,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const candidates: string[] = [];
 
-    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden")));
 
     // 0. Explicit rich brand logo URL from place data/metadata (Always preferred over favicons)
     if (

@@ -29247,7 +29247,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
 
             const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
-            const isBrokenSvgLogo = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || (u.startsWith("data:image/svg") && !u.includes("width="))));
+            const isBrokenSvgLogo = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden")));
             const cachedLogoCandidate = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey]) 
               || (row.logoUrl && !isFaviconUrl(row.logoUrl) && !isBrokenSvgLogo(row.logoUrl) ? row.logoUrl : null) 
               || (!isFaviconUrl(pData.logoUrl) && !isBrokenSvgLogo(pData.logoUrl) ? pData.logoUrl : null) 

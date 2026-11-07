@@ -1488,7 +1488,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 
   // 5. Fallback to banner if no logo is available (so logo is never empty)
   const banner = getPlaceBannerUrl(place);
-  if (banner && !isBadBanner(banner)) {
+  if (banner && isValidImageUrl(banner)) {
     return banner;
   }
 
