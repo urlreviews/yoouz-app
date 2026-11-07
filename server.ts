@@ -182,7 +182,16 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("no-logo") ||
     clean.includes("blank-logo") ||
     clean.includes("generic-logo") ||
-    clean.includes("sample-logo")
+    clean.includes("sample-logo") ||
+    clean.includes("dcassetcdn.com") ||
+    clean.includes("designcrowd") ||
+    clean.includes("99designs") ||
+    clean.includes("brandcrowd") ||
+    clean.includes("logopond") ||
+    clean.includes("seeklogo.com") ||
+    clean.includes("freepik.com") ||
+    clean.includes("pngtree.com") ||
+    clean.includes("vecteezy.com")
   );
 }
 
@@ -339,6 +348,11 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("challenge") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
+      decoded.includes("thum.io") ||
+      decoded.includes("mshots") ||
+      decoded.includes("microlink.io") ||
+      decoded.includes("cloudflare") ||
+      decoded.includes("dcassetcdn.com") ||
       decoded.includes("justice-gavel") ||
       decoded.includes("gavel-hammer") ||
       decoded.includes("scale-of-justice") ||
@@ -455,11 +469,10 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     }
   } catch (e) {}
 
-  // 2. Dedicated Logo Query Pass via DuckDuckGo
+  // 2. Dedicated Logo Query Pass via DuckDuckGo (strictly verified against cleanDom)
   const logoQueries = [
     `${cleanDom} logo`,
-    `${brandName} brand logo png`,
-    `${cleanDom} official logo svg`
+    `${cleanDom} official logo`
   ];
 
   for (const lq of logoQueries) {
@@ -471,13 +484,15 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
       if (isBadBanner(img)) continue;
       const lowerImg = img.toLowerCase();
       const lowerTitle = (item.title || "").toLowerCase();
+      const sourcePageUrl = String(item.url || "").toLowerCase();
       const width = Number(item.width) || 0;
       const height = Number(item.height) || 0;
 
       if (lowerImg.includes("favicon") || lowerImg.endsWith(".ico") || width < 64 || height < 64) continue;
       if (isGenericOrPlaceholderLogo(img)) continue;
 
-      if (lowerImg.includes("logo") || lowerTitle.includes("logo") || lowerImg.endsWith(".svg") || lowerImg.includes("brand")) {
+      const isFromOwnDomain = lowerImg.includes(cleanDom) || sourcePageUrl.includes(cleanDom);
+      if (isFromOwnDomain && (lowerImg.includes("logo") || lowerTitle.includes("logo") || lowerImg.endsWith(".svg") || lowerImg.includes("brand"))) {
         logoUrl = img;
         break;
       }
@@ -508,11 +523,22 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
 
       const sourcePageUrl = String(item.url || "").toLowerCase();
       const isFromOwnDomain = lowerImg.includes(cleanDom) || sourcePageUrl.includes(cleanDom);
-      // Only accept images that originate from the business's own domain so we never attach another business's image
+      // Only accept images that originate from the business's own domain AND actually resolve to an image
       if (isFromOwnDomain && width >= 400 && (height === 0 || width >= height * 1.1)) {
-        bannerUrl = img;
-        photos.push(img);
-        break;
+        try {
+          const checkRes = await fetch(img, {
+            method: "HEAD",
+            headers: { "User-Agent": "Mozilla/5.0" },
+            redirect: "follow",
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+          });
+          const ct = (checkRes.headers.get("content-type") || "").toLowerCase();
+          if (checkRes.ok && ct.startsWith("image/")) {
+            bannerUrl = img;
+            photos.push(img);
+            break;
+          }
+        } catch (e) {}
       }
     }
   }
@@ -8049,10 +8075,12 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             p.selectedName = cleanedSel;
           }
         }
-        if ((!p.bannerUrl || isBadBanner(p.bannerUrl)) && key && key.includes('.') && !key.endsWith('.bayombong') && !key.includes(' ')) {
-          const fallbackBanner = KNOWN_BRAND_BANNERS[key] || sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${key}`);
-          p.bannerUrl = fallbackBanner;
-          p.ogImage = fallbackBanner;
+        if ((!p.bannerUrl || isBadBanner(p.bannerUrl)) && key && KNOWN_BRAND_BANNERS[key]) {
+          p.bannerUrl = KNOWN_BRAND_BANNERS[key];
+          p.ogImage = KNOWN_BRAND_BANNERS[key];
+        } else if (p.bannerUrl && isBadBanner(p.bannerUrl)) {
+          p.bannerUrl = "";
+          p.ogImage = "";
         }
 
         // Special rule for yoouz.com
@@ -8306,10 +8334,12 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             rec.selectedName = cleanedSel;
           }
         }
-        if ((!rec.bannerUrl || isBadBanner(rec.bannerUrl)) && domKey && domKey.includes('.') && !domKey.endsWith('.bayombong') && !domKey.includes(' ')) {
-          const fallbackBanner = KNOWN_BRAND_BANNERS[domKey] || sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${domKey}`);
-          rec.bannerUrl = fallbackBanner;
-          rec.ogImage = fallbackBanner;
+        if ((!rec.bannerUrl || isBadBanner(rec.bannerUrl)) && domKey && KNOWN_BRAND_BANNERS[domKey]) {
+          rec.bannerUrl = KNOWN_BRAND_BANNERS[domKey];
+          rec.ogImage = KNOWN_BRAND_BANNERS[domKey];
+        } else if (rec.bannerUrl && isBadBanner(rec.bannerUrl)) {
+          rec.bannerUrl = "";
+          rec.ogImage = "";
         }
         return rec;
       };
@@ -27964,44 +27994,87 @@ function logSearchIntel(query: string, domain: string, status: string, details: 
   if (SEARCH_INTEL_LOG.length > 100) SEARCH_INTEL_LOG.pop();
 }
 
-async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; logo: string; title: string; description: string; photos: string[] } | null> {
+async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; logo: string; title: string; description: string; photos: string[]; html?: string } | null> {
   try {
     const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-    const availResp = await fetch(`https://archive.org/wayback/available?url=https://${cleanDom}`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
-    });
-    if (!availResp.ok) return null;
-    const availData = await availResp.json();
-    const snapUrl = availData?.archived_snapshots?.closest?.url;
-    if (!snapUrl) return null;
+    let snapTime = "";
+    let origTarget = `https://${cleanDom}/`;
 
-    const snapResp = await fetch(snapUrl, {
+    // 1. Fast CDX API lookup for latest 200 OK snapshot
+    try {
+      const cdxResp = await fetch(`https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(cleanDom)}&output=json&fl=timestamp,original,statuscode&filter=statuscode:200&limit=1&sort=reverse`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+      });
+      if (cdxResp.ok) {
+        const cdxRows = await cdxResp.json();
+        if (Array.isArray(cdxRows) && cdxRows.length > 1 && Array.isArray(cdxRows[1])) {
+          snapTime = String(cdxRows[1][0] || "");
+          origTarget = String(cdxRows[1][1] || origTarget);
+        }
+      }
+    } catch (eCdx) {}
+
+    // 2. Fallback to wayback/available if CDX returned empty
+    if (!snapTime) {
+      const availResp = await fetch(`https://archive.org/wayback/available?url=https://${cleanDom}`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+      });
+      if (availResp.ok) {
+        const availData = await availResp.json();
+        const snapUrl = availData?.archived_snapshots?.closest?.url || "";
+        const timeMatch = snapUrl.match(/\/web\/(\d+)\/(https?:\/\/.+)/);
+        if (timeMatch) {
+          snapTime = timeMatch[1];
+          origTarget = timeMatch[2];
+        }
+      }
+    }
+
+    if (!snapTime) return null;
+
+    // Fetch raw id_ snapshot so HTML is clean without Wayback toolbar injection
+    const rawSnapUrl = `https://web.archive.org/web/${snapTime}id_/${origTarget}`;
+    const snapResp = await fetch(rawSnapUrl, {
       headers: { "User-Agent": "Mozilla/5.0" },
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5500) : undefined
     });
     if (!snapResp.ok) return null;
     const html = await snapResp.text();
-    if (!html || html.length < 500) return null;
+    if (!html || html.length < 400) return null;
 
     const $ = cheerio.load(html);
 
-    const timeMatch = snapUrl.match(/https?:\/\/web\.archive\.org\/web\/(\d+)\//);
-    const snapTime = timeMatch ? timeMatch[1] : "";
-    const imPrefix = snapTime ? `https://web.archive.org/web/${snapTime}im_/` : "";
-
     let logo = "";
     let banner = "";
-    let desc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || "";
-    let title = $('meta[property="og:title"]').attr('content') || $('title').text() || "";
+    let desc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || $('meta[name="twitter:description"]').attr('content') || "";
+    let title = $('meta[property="og:site_name"]').attr('content') || $('meta[property="og:title"]').attr('content') || $('title').text() || "";
 
-    const ogImg = $('meta[property="og:image"]').attr('content');
+    const normalizeArchUrl = (u: string): string => {
+      const trimmed = (u || "").trim();
+      if (!trimmed) return "";
+      const wbMatch = trimmed.match(/https?:\/\/web\.archive\.org\/web\/\d+(?:[a-z]{2}_)?\/(https?:\/\/.+)/i);
+      if (wbMatch && wbMatch[1]) return wbMatch[1];
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+      if (trimmed.startsWith("//")) return "https:" + trimmed;
+      if (trimmed.startsWith("/")) return `https://${cleanDom}${trimmed}`;
+      return `https://${cleanDom}/${trimmed}`;
+    };
+
+    const ogImg = normalizeArchUrl($('meta[property="og:image"]').attr('content') || $('meta[name="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content') || $('meta[property="twitter:image"]').attr('content') || "");
+    if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
+      banner = ogImg;
+    }
+
+    const touchIcon = normalizeArchUrl($('link[rel="apple-touch-icon"]').attr('href') || $('link[rel="apple-touch-icon-precomposed"]').attr('href') || "");
+    if (touchIcon && !isGenericOrPlaceholderLogo(touchIcon)) {
+      logo = touchIcon;
+    }
 
     // Collect all raw image URLs from HTML tags and inline styles
     const allImageUrls: string[] = [];
     if (ogImg) allImageUrls.push(ogImg);
-    const twitterImg = $('meta[name="twitter:image"]').attr('content') || $('meta[property="twitter:image"]').attr('content');
-    if (twitterImg) allImageUrls.push(twitterImg);
 
     $('img').each((_, el) => {
       const src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-original');
@@ -28016,42 +28089,26 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
       }
     });
 
-    // Clean and normalize matched URLs to be relative or absolute to the target domain
-    const uniqueRawUrls = Array.from(new Set(allImageUrls))
-      .map(u => u.trim())
-      .filter(u => {
-        if (!u || u.startsWith('data:') || u.includes('pixel.gif') || u.includes('blank.gif') || u.includes('transparent')) return false;
-        const lower = u.toLowerCase();
-        if (lower.includes('favicon') || lower.includes('.ico') || lower.includes('avatar') || lower.includes('32x32') || lower.includes('16x16') || lower.includes('60x60')) return false;
-        return true;
-      });
+    const cleanUrls = Array.from(new Set(allImageUrls.map(normalizeArchUrl).filter(u => {
+      if (!u || u.startsWith('data:') || u.includes('pixel.gif') || u.includes('blank.gif') || u.includes('transparent')) return false;
+      const lower = u.toLowerCase();
+      if (lower.includes('favicon') || lower.includes('.ico') || lower.includes('avatar') || lower.includes('32x32') || lower.includes('16x16') || lower.includes('60x60')) return false;
+      return true;
+    })));
 
-    const cleanUrls = uniqueRawUrls.map(u => {
-      const idx = u.indexOf('https://');
-      if (idx !== -1) return 'https://' + u.slice(idx + 8).split('/')[0] + '/' + u.slice(idx + 8).split('/').slice(1).join('/');
-      const hIdx = u.indexOf('http://');
-      if (hIdx !== -1) return 'http://' + u.slice(hIdx + 7).split('/')[0] + '/' + u.slice(hIdx + 7).split('/').slice(1).join('/');
-      
-      if (u.startsWith('/')) return `https://${cleanDom}${u}`;
-      return `https://${cleanDom}/${u}`;
-    });
-
-    // High-Fidelity Banner and Logo Ranking Algorithm
-    let bestLogo = "";
-    let bestBanner = "";
-    let highestLogoScore = -1000;
-    let highestBannerScore = -1000;
+    let bestLogo = logo;
+    let bestBanner = banner;
+    let highestLogoScore = logo ? 80 : -1000;
+    let highestBannerScore = banner ? 500 : -1000;
 
     cleanUrls.forEach(origUrl => {
       const lower = origUrl.toLowerCase();
       
-      // LOGO Score calculation
       let logoScore = 0;
       if (lower.includes('logo')) logoScore += 100;
-      if (lower.includes('brand')) logoScore += 50;
+      if (lower.includes('brand') || lower.includes('webclip')) logoScore += 60;
       if (lower.includes('header')) logoScore += 20;
       if (lower.includes('cropped')) logoScore -= 20;
-      if (lower.includes('300x') || lower.includes('150x')) logoScore += 10;
       if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('banner') || lower.includes('hero')) logoScore -= 80;
       
       if (logoScore > highestLogoScore) {
@@ -28059,7 +28116,6 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
         bestLogo = origUrl;
       }
 
-      // BANNER Score calculation
       let bannerScore = 0;
       if (
         lower.includes('logo') || 
@@ -28075,12 +28131,13 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
         lower.includes('150x150') ||
         lower.includes('78x100')
       ) {
-        bannerScore = -9999; // Disqualify logos/icons from banner slot
+        bannerScore = -9999;
       } else {
-        if (lower.includes('hero') || lower.includes('banner') || lower.includes('header') || lower.includes('cover') || lower.includes('background') || lower.includes('widescreen') || lower.includes('summer') || lower.includes('outlet') || lower.includes('sale') || lower.includes('featured')) bannerScore += 200;
+        if (origUrl === ogImg) bannerScore += 500;
+        if (lower.includes('og') || lower.includes('hero') || lower.includes('banner') || lower.includes('header') || lower.includes('cover') || lower.includes('background') || lower.includes('widescreen') || lower.includes('featured')) bannerScore += 200;
         if (lower.includes('1024x') || lower.includes('1536x') || lower.includes('1200x') || lower.includes('1920x') || lower.includes('2560x')) bannerScore += 80;
-        if (lower.includes('/wp-content/uploads/') || lower.includes('/cdn/shop/') || lower.includes('wixstatic.com') || lower.includes('squarespace-cdn.com') || lower.includes('website-files.com')) bannerScore += 100;
-        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp')) bannerScore += 50;
+        if (lower.includes('/wp-content/uploads/') || lower.includes('/cdn/shop/') || lower.includes('wixstatic.com') || lower.includes('squarespace-cdn.com') || lower.includes('website-files.com')) bannerScore += 120;
+        if (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.webp') || lower.endsWith('.png')) bannerScore += 50;
       }
 
       if (bannerScore > highestBannerScore) {
@@ -28089,19 +28146,16 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
       }
     });
 
-    if (bestLogo && highestLogoScore > 0) {
-      logo = bestLogo;
-    }
-    if (bestBanner && highestBannerScore > 0) {
-      banner = bestBanner;
-    }
+    if (bestLogo && highestLogoScore > 0) logo = bestLogo;
+    if (bestBanner && highestBannerScore > 0) banner = bestBanner;
 
     return {
       title,
       description: desc,
       banner,
       logo,
-      photos: Array.from(new Set(cleanUrls)).slice(0, 10)
+      photos: cleanUrls.slice(0, 10),
+      html
     };
   } catch (e: any) {
     return null;
@@ -29304,97 +29358,50 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (fetchResponse && fetchResponse.ok) {
           finalUrl = fetchResponse.url;
           html = await fetchResponse.text();
-          
-          // Precise Security Gate Shield detection (Cloudflare, Akamai, Incapsula, DataDome Block Pages)
-          const lowerHtml = (html || "").toLowerCase();
-          const isBlocked = (fetchResponse && (fetchResponse.status === 403 || fetchResponse.status === 429 || fetchResponse.status === 503)) ||
-                            lowerHtml.includes("sgcaptcha") || 
-                            lowerHtml.includes("cf-browser-verification") || 
-                            lowerHtml.includes("cf-challenge-running") || 
-                            lowerHtml.includes("ray id:") ||
-                            lowerHtml.includes("<title>just a moment") || 
-                            lowerHtml.includes("<title>attention required") || 
-                            lowerHtml.includes("you have been blocked") ||
-                            lowerHtml.includes("sorry, you have been blocked") ||
-                            lowerHtml.includes("unable to access") ||
-                            lowerHtml.includes("access was denied") ||
-                            lowerHtml.includes("access denied") ||
-                            lowerHtml.includes("challenge-platform") ||
-                            lowerHtml.includes("blocked by cloudflare") ||
-                            lowerHtml.includes("incapsula") ||
-                            lowerHtml.includes("datadome") ||
-                            lowerHtml.includes("perimeterx") ||
-                            lowerHtml.includes("turnstile") ||
-                            (lowerHtml.includes("enable javascript") && lowerHtml.includes("cloudflare"));
-                            
-          if (isBlocked || !html || html.length < 500) {
-            console.warn(`[Scraper Block] Security shield detected for ${domain}. Retrying with DuckDuckGo Enterprise Media Scraper & Elite Resolver...`);
-            
-            // 1. First consult DuckDuckGo live media scraper for authentic high-res banner & logo
-            const ddgData = await fetchDuckDuckGoMediaAndInfo(cleanDomain, domain).catch(() => null);
+        }
 
-            // 2. High-accuracy Wikipedia REST API
-            const wiki = await fetchWikiMetadata(cleanDomain).catch(() => null);
+        // Precise Security Gate Shield detection (Cloudflare, Akamai, Incapsula, DataDome Block Pages, or HTTP 403/503)
+        const lowerHtmlCheck = (html || "").toLowerCase();
+        const isSecurityShield =
+          !fetchResponse ||
+          !fetchResponse.ok ||
+          fetchResponse.status === 403 ||
+          fetchResponse.status === 429 ||
+          fetchResponse.status === 503 ||
+          lowerHtmlCheck.includes("sgcaptcha") ||
+          lowerHtmlCheck.includes("cf-browser-verification") ||
+          lowerHtmlCheck.includes("cf-challenge-running") ||
+          lowerHtmlCheck.includes("ray id:") ||
+          lowerHtmlCheck.includes("<title>just a moment") ||
+          lowerHtmlCheck.includes("<title>attention required") ||
+          lowerHtmlCheck.includes("you have been blocked") ||
+          lowerHtmlCheck.includes("sorry, you have been blocked") ||
+          lowerHtmlCheck.includes("unable to access") ||
+          lowerHtmlCheck.includes("access was denied") ||
+          lowerHtmlCheck.includes("access denied") ||
+          lowerHtmlCheck.includes("challenge-platform") ||
+          lowerHtmlCheck.includes("blocked by cloudflare") ||
+          lowerHtmlCheck.includes("incapsula") ||
+          lowerHtmlCheck.includes("datadome") ||
+          lowerHtmlCheck.includes("perimeterx") ||
+          lowerHtmlCheck.includes("turnstile") ||
+          (lowerHtmlCheck.includes("enable javascript") && lowerHtmlCheck.includes("cloudflare"));
 
-            const eliteFallback = await resolveBusinessQuery(domain);
-            const targetDom = eliteFallback?.domain || cleanDomain || domain;
-            
-            let bannerImg = (!isBadBanner(ddgData?.bannerUrl) ? ddgData.bannerUrl : "") ||
-                            (!isBadBanner(wiki?.banner) ? wiki?.banner : "") || 
-                            (!isBadBanner(eliteFallback?.photo) ? eliteFallback?.photo : "") || "";
-            let logoImg = (ddgData?.logoUrl && !isFaviconUrl(ddgData.logoUrl) && !isGenericOrPlaceholderLogo(ddgData.logoUrl)) ? ddgData.logoUrl :
-                          ((wiki?.logo && !isFaviconUrl(wiki?.logo)) ? wiki?.logo : 
-                          ((eliteFallback?.logo && !isFaviconUrl(eliteFallback.logo)) ? eliteFallback.logo : ""));
-
-            if (!bannerImg) {
-              try {
-                const arc = await fetchArchiveMetadata(targetDom);
-                if (arc?.banner && !isBadBanner(arc.banner)) bannerImg = arc.banner;
-                if (arc?.logo && !isFaviconUrl(arc.logo)) logoImg = arc.logo;
-              } catch(e) {}
+        // If live website blocked our server with Cloudflare/WAF or failed, load clean snapshot HTML from Wayback Machine CDX!
+        if (isSecurityShield || !html || html.length < 500) {
+          try {
+            const arcSnap = await fetchArchiveMetadata(cleanDomain);
+            if (arcSnap && arcSnap.html && arcSnap.html.length >= 500) {
+              html = arcSnap.html;
+              finalUrl = canonicalBaseUrl;
+              fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
+              if (arcSnap.banner && !isBadBanner(arcSnap.banner)) image = arcSnap.banner;
+              if (arcSnap.logo && !isGenericOrPlaceholderLogo(arcSnap.logo) && !isFaviconUrl(arcSnap.logo)) logo = arcSnap.logo;
             }
+          } catch (eArc) {}
+        }
 
-            if (!bannerImg && KNOWN_BRAND_BANNERS[targetDom]) {
-              bannerImg = KNOWN_BRAND_BANNERS[targetDom];
-            }
-
-            if (!logoImg || isFaviconUrl(logoImg) || isGenericOrPlaceholderLogo(logoImg)) {
-              logoImg = KNOWN_BRAND_LOGOS[targetDom] || `/api/favicon?domain=${encodeURIComponent(targetDom)}`;
-            }
-
-            if (bannerImg) bannerImg = sanitizeProxy(bannerImg);
-            if (logoImg) logoImg = sanitizeProxy(logoImg);
-
-            const fallbackTitle = (targetDom && KNOWN_OFFICIAL_NAMES[targetDom]) || 
-                                  ddgData?.title ||
-                                  wiki?.title || 
-                                  (eliteFallback ? formatBusinessName(eliteFallback.name, targetDom, rawQuery) : formatBusinessName(targetDom));
-            const fallbackDesc = ddgData?.description || wiki?.description || eliteFallback?.description || `${fallbackTitle} is a verified business on Yoouz.`;
-
-            logSearchIntel(rawQuery, targetDom, "elite_retry_resolved");
-            return res.json({
-              title: fallbackTitle,
-              description: fallbackDesc,
-              image: bannerImg || "",
-              logo: logoImg || "",
-              siteName: fallbackTitle,
-              domain: targetDom,
-              url: (eliteFallback && eliteFallback.websiteUrl) || `https://${targetDom}`,
-              address: (eliteFallback && eliteFallback.address) || "",
-              city: (eliteFallback && eliteFallback.city) || "Online",
-              country: (eliteFallback && eliteFallback.country) || "",
-              phone: (eliteFallback && eliteFallback.phone) || "",
-              email: (eliteFallback && eliteFallback.email) || "",
-              category: (eliteFallback && eliteFallback.category) || "Verified Business",
-              openingHours: (eliteFallback && eliteFallback.openingHours) || "Available 24/7",
-              locations: [],
-              name: fallbackTitle,
-              websiteUrl: (eliteFallback && eliteFallback.websiteUrl) || `https://${targetDom}`,
-              photos: bannerImg ? [bannerImg] : []
-            });
-          }
-          
-          if (html && html.length < 5000000) {
+        if (fetchResponse && fetchResponse.ok && html && html.length >= 500) {
             try {
               $ = cheerio.load(html);
 
@@ -30169,7 +30176,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } catch (cheerioErr) {
               console.error('Cheerio parse error:', cheerioErr);
             }
-          }
         } else {
           try {
             const businessFallback = await resolveBusinessQuery(domain);
@@ -30379,9 +30385,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         } catch (ddgErr) {}
       }
 
-      // Final banner guarantee: If website had no og:image or valid hero image, capture live 1200x630 screenshot of the official website
-      if ((!image || isBadBanner(image)) && cleanDomain && cleanDomain.includes(".") && !cleanDomain.endsWith(".bayombong") && !cleanDomain.includes(" ")) {
-        image = sanitizeProxy(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${cleanDomain}`);
+      // Never use live browser screenshot bots (thum.io/mshots) that capture Cloudflare challenge pages or browser error screens
+      if (image && isBadBanner(image)) {
+        image = "";
       }
 
       // Final logo guarantee: If still missing, provide authentic Google S2 favicon service proxy
@@ -31657,28 +31663,34 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       let contentType = (response.headers.get('content-type') || '').toLowerCase();
       
-      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine or return 404
+      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine 2im_ archive or return fallback
       if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
-        // Fallback: Fetch authentic image bytes from Wayback Machine archive
+        // Fallback: Fetch authentic image bytes from Wayback Machine archive (2im_ matches latest 20xx snapshot)
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
           try {
             const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
-            const wbUrl = `https://web.archive.org/web/im_/https://${cleanTarget}`;
+            const wbUrl = `https://web.archive.org/web/2im_/https://${cleanTarget}`;
             const wbResp = await fetch(wbUrl, {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
               },
+              redirect: 'follow',
               signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
             });
-            const wbType = (wbResp.headers.get('content-type') || '').toLowerCase();
-            if (wbResp.ok && !wbType.includes('text/html') && (wbType.includes('image') || wbType.includes('octet-stream'))) {
-              res.setHeader('Content-Type', wbType.includes('image') ? wbType : 'image/jpeg');
+            const wbType = (wbResp.headers.get('content-type') || wbResp.headers.get('x-archive-guessed-content-type') || '').toLowerCase();
+            if (wbResp.ok && !wbType.includes('text/html') && !wbType.includes('text/plain') && (wbType.includes('image') || wbType.includes('octet-stream') || wbType === '')) {
+              const inferredMime = wbType.includes('image')
+                ? wbType
+                : (cleanTarget.endsWith('.png') ? 'image/png' : (cleanTarget.endsWith('.webp') ? 'image/webp' : (cleanTarget.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg')));
+              res.setHeader('Content-Type', inferredMime);
               res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
               res.setHeader('Access-Control-Allow-Origin', '*');
               res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
               const buf = Buffer.from(await wbResp.arrayBuffer());
-              return res.send(buf);
+              if (buf.length > 100) {
+                return res.send(buf);
+              }
             }
           } catch(eWb) {}
         }
@@ -36427,6 +36439,14 @@ function injectOpenGraphTags(html: string, meta: any) {
           if (matchedMeta.bannerUrl) targetBanner = matchedMeta.bannerUrl;
           if (matchedMeta.logoUrl) targetLogo = matchedMeta.logoUrl;
         }
+        if (cleanDom && KNOWN_BRAND_BANNERS[cleanDom]) {
+          targetBanner = KNOWN_BRAND_BANNERS[cleanDom];
+        } else if (targetBanner && (isBadBanner(targetBanner) || targetBanner.includes("officeent.webp"))) {
+          targetBanner = "";
+        }
+        if (cleanDom && KNOWN_BRAND_LOGOS[cleanDom]) {
+          targetLogo = KNOWN_BRAND_LOGOS[cleanDom];
+        }
 
         // Fix corrupt addresses like "st Bestellen Contact..."
         if (targetAddress.toLowerCase().startsWith("st bestellen") || targetAddress.toLowerCase().includes("bestellen contact") || targetAddress.toLowerCase().includes("jaarlijks")) {
@@ -36452,9 +36472,9 @@ function injectOpenGraphTags(html: string, meta: any) {
         const phoneChanged = targetPhone && placeDoc.phone !== targetPhone;
         const catChanged = targetCategory && placeDoc.category !== targetCategory;
         const latLngChanged = targetLat !== 0 && (placeDoc.lat !== targetLat || placeDoc.lng !== targetLng);
-        const bannerChanged = matchedMeta?.bannerUrl && placeDoc.bannerUrl !== matchedMeta.bannerUrl;
-        const logoChanged = Boolean((matchedMeta?.logoUrl && (placeDoc.logoUrl !== matchedMeta.logoUrl || row.logoUrl !== matchedMeta.logoUrl)) || isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo));
-        if (!matchedMeta?.logoUrl && (isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo)) && cleanDom.includes(".")) {
+        const bannerChanged = Boolean(placeDoc.bannerUrl !== targetBanner);
+        const logoChanged = Boolean(placeDoc.logoUrl !== targetLogo || row.logoUrl !== targetLogo || isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo));
+        if (!matchedMeta?.logoUrl && !KNOWN_BRAND_LOGOS[cleanDom] && (isGenericOrPlaceholderLogo(targetLogo) || isFaviconUrl(targetLogo)) && cleanDom.includes(".")) {
           targetLogo = `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
         }
 
@@ -36475,8 +36495,14 @@ function injectOpenGraphTags(html: string, meta: any) {
           placeDoc.phone = targetPhone || placeDoc.phone || "";
           placeDoc.email = targetEmail || placeDoc.email || "";
           placeDoc.category = finalCategory;
-          placeDoc.bannerUrl = targetBanner || placeDoc.bannerUrl || "";
-          placeDoc.ogImage = targetBanner || placeDoc.ogImage || "";
+          placeDoc.bannerUrl = targetBanner;
+          placeDoc.ogImage = targetBanner;
+          if (Array.isArray(placeDoc.photos)) {
+            placeDoc.photos = placeDoc.photos.filter((ph: string) => ph && !isBadBanner(ph) && !ph.includes("officeent.webp"));
+            if (targetBanner && !placeDoc.photos.includes(targetBanner)) {
+              placeDoc.photos.unshift(targetBanner);
+            }
+          }
           placeDoc.logoUrl = finalLogo;
           placeDoc.avatarUrl = finalLogo;
           placeDoc.lat = finalLat;

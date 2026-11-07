@@ -39,7 +39,16 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("no-logo") ||
     clean.includes("blank-logo") ||
     clean.includes("generic-logo") ||
-    clean.includes("sample-logo")
+    clean.includes("sample-logo") ||
+    clean.includes("dcassetcdn.com") ||
+    clean.includes("designcrowd") ||
+    clean.includes("99designs") ||
+    clean.includes("brandcrowd") ||
+    clean.includes("logopond") ||
+    clean.includes("seeklogo.com") ||
+    clean.includes("freepik.com") ||
+    clean.includes("pngtree.com") ||
+    clean.includes("vecteezy.com")
   );
 }
 
@@ -114,6 +123,11 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('sorry_you_have_been_blocked') ||
     u.includes('challenge') ||
     u.includes('access_denied') ||
+    u.includes('thum.io') ||
+    u.includes('mshots') ||
+    u.includes('microlink.io') ||
+    u.includes('cloudflare') ||
+    u.includes('dcassetcdn.com') ||
     u.includes('${') ||
     u.includes('h:180') ||
     u.includes('qt=q:') ||
@@ -920,11 +934,15 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
   "www.phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
   "smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png",
-  "www.smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png"
+  "www.smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png",
+  "threshold.vc": "/api/favicon?domain=threshold.vc",
+  "www.threshold.vc": "/api/favicon?domain=threshold.vc"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
+  "www.threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "lumolabs.io": "https://lumofunds.vc/impact/whispp-bg.webp",
   "www.lumolabs.io": "https://lumofunds.vc/impact/whispp-bg.webp",
   "lumofunds.vc": "https://lumofunds.vc/impact/whispp-bg.webp",
@@ -1398,11 +1416,8 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
-export function getLiveWebsiteBannerUrl(domain?: string | null): string {
-  if (!domain || typeof domain !== "string") return "";
-  const cleanDomain = domain.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase();
-  if (!cleanDomain || !cleanDomain.includes(".") || cleanDomain.endsWith(".bayombong") || cleanDomain.includes(" ")) return "";
-  return getProxiedImageUrl(`https://image.thum.io/get/width/1200/crop/630/noanimate/https://${cleanDomain}`);
+export function getLiveWebsiteBannerUrl(_domain?: string | null): string {
+  return "";
 }
 
 export function getCategoryThematicBanner(_category?: string | null, _name?: string | null): string {
