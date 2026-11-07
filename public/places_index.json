@@ -1,5 +1,54 @@
 [
   {
+    "id": "nfx.com",
+    "name": "NFX",
+    "category": "Legal Services",
+    "categoryType": "all",
+    "address": "San Francisco, US",
+    "city": "San Francisco",
+    "country": "US",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://www.nfx.com/apple-touch-icon.png",
+    "logoUrl": "https://www.nfx.com/apple-touch-icon.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "qed@nfx.com",
+    "website": "https://www.nfx.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "We are a VC firm investing in pre-seed and seed stage startups. We back exceptional Founders building market-transforming companies.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "nfx.com",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "2b.vc",
     "name": "2B.VC",
     "category": "Website",

@@ -123,9 +123,23 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
-    // 4. Domain brand logo via server proxy
+    // 4. Direct apple-touch-icon on authentic domain (standard high-res 180x180 app icon)
+    if (cleanDomain && cleanDomain.includes(".")) {
+      const appleTouchUrl = `https://${cleanDomain}/apple-touch-icon.png`;
+      const proxiedApple = getProxiedImageUrl(appleTouchUrl);
+      if (proxiedApple) candidates.push(proxiedApple);
+      candidates.push(appleTouchUrl);
+    }
+
+    // 5. Domain brand logo via server proxy
     if (cleanDomain) {
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
+    }
+
+    // 6. High-resolution Google FaviconV2 & DuckDuckGo fallbacks (guaranteed global brand emblem coverage)
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=128`);
+      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
     // Filter duplicates and any generic placeholders

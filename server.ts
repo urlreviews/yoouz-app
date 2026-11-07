@@ -15393,6 +15393,18 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
   };
 
   const KNOWN_PLACE_METADATA: Record<string, { bannerUrl?: string; logoUrl?: string; name?: string; website?: string }> = {
+    "nfx.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
+      logoUrl: "https://www.nfx.com/apple-touch-icon.png",
+      name: "NFX",
+      website: "https://www.nfx.com"
+    },
+    "www.nfx.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
+      logoUrl: "https://www.nfx.com/apple-touch-icon.png",
+      name: "NFX",
+      website: "https://www.nfx.com"
+    },
     "anthropic.com": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1618005182384-a83a8bd57fbe%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80",
       logoUrl: "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://anthropic.com&size=256",
@@ -27723,7 +27735,49 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     return l.includes("logo-white") || l.includes("white-logo") || l.includes("logo_white") || l.includes("white_logo") || l.includes("logo-light") || l.includes("light-logo") || l.includes("logo-inverse") || l.includes("inverse-logo");
   };
 
-  // 1. JSON-LD Schema Logo (Organization / Corporation / LocalBusiness / Brand — official high-res brand logo)
+  // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
+  try {
+    const appleIcons: { url: string; size: number }[] = [];
+    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      if (href) {
+        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
+        const abs = makeAbsolute(href);
+        if (abs && isValidCandidate(abs)) {
+          appleIcons.push({ url: abs, size: sizeNum });
+        }
+      }
+    });
+    if (appleIcons.length > 0) {
+      appleIcons.sort((a, b) => b.size - a.size);
+      return appleIcons[0].url;
+    }
+  } catch(e) {}
+
+  // 2. DOM Header & Navigation Brand Images (actual visual elements rendered on page)
+  try {
+    const imgSelectors = [
+      'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
+      'nav img[class*="logo" i]', 'nav img[alt*="logo" i]', 'nav img[src*="logo" i]',
+      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
+      '.logo-box .logo img', '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
+      'header a[href="/"] img', 'header a[aria-label*="home" i] img',
+      'header img:first-of-type'
+    ];
+    for (const sel of imgSelectors) {
+      const el = $(sel).first();
+      if (el.length) {
+        const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
+        if (src) {
+          const abs = makeAbsolute(src);
+          if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 3. JSON-LD Schema Logo (Organization / Corporation / LocalBusiness / Brand — official high-res brand logo)
   try {
     let schemaLogo = "";
     $('script[type="application/ld+json"]').each((_: any, el: any) => {
@@ -27760,7 +27814,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (schemaLogo) return schemaLogo;
   } catch(e) {}
 
-  // 2. OpenGraph & Meta Logo tags
+  // 4. OpenGraph & Meta Logo tags
   try {
     const metaLogo = $('meta[property="og:logo"]').attr("content") ||
                      $('meta[name="og:logo"]').attr("content") ||
@@ -27771,48 +27825,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (metaLogo) {
       const abs = makeAbsolute(metaLogo);
       if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
-    }
-  } catch(e) {}
-
-  // 3. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
-  try {
-    const appleIcons: { url: string; size: number }[] = [];
-    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
-      const href = $(el).attr("href");
-      const sizes = $(el).attr("sizes") || "";
-      if (href) {
-        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
-        const abs = makeAbsolute(href);
-        if (abs && isValidCandidate(abs)) {
-          appleIcons.push({ url: abs, size: sizeNum });
-        }
-      }
-    });
-    if (appleIcons.length > 0) {
-      appleIcons.sort((a, b) => b.size - a.size);
-      return appleIcons[0].url;
-    }
-  } catch(e) {}
-
-  // 4. DOM Header & Navigation Brand Images
-  try {
-    const imgSelectors = [
-      'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
-      'nav img[class*="logo" i]', 'nav img[alt*="logo" i]', 'nav img[src*="logo" i]',
-      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
-      '.logo-box .logo img', '.logo img', '#logo img', 'a[class*="logo" i] img', 'a[id*="logo" i] img',
-      'header a[href="/"] img', 'header a[aria-label*="home" i] img',
-      'header img:first-of-type'
-    ];
-    for (const sel of imgSelectors) {
-      const el = $(sel).first();
-      if (el.length) {
-        const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
-        if (src) {
-          const abs = makeAbsolute(src);
-          if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
-        }
-      }
     }
   } catch(e) {}
 
@@ -30327,6 +30339,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       };
 
       const serverBrandLogos: Record<string, string> = {
+        "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
+        "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
+        "nfx": "https://www.nfx.com/apple-touch-icon.png",
         "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
         "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
         "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
@@ -30358,6 +30373,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = KNOWN_BRAND_LOGOS[cleanDomain];
       } else if (!logo || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
         logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || "";
+      }
+
+      // Proactively test scraped logo reachability (never pass dead 404 assets to client)
+      if (logo && logo.startsWith("http") && !logo.includes("/api/favicon")) {
+        try {
+          const probe = await fetch(logo, {
+            method: "HEAD",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+              "Accept": "image/*,*/*;q=0.8"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(900) : undefined
+          });
+          if (!probe.ok && probe.status === 404) {
+            console.warn(`[UrlMetadata] Scraped logo URL returned 404: ${logo}, falling back to domain icon`);
+            logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || (cleanDomain.includes('.') ? `https://${cleanDomain}/apple-touch-icon.png` : "");
+          }
+        } catch (eProbe) {}
       }
 
       if (image && isBadBanner(image)) {
@@ -31498,6 +31531,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     const KNOWN_FAVICON_LOGOS: Record<string, string> = {
+      "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
+      "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
+      "nfx": "https://www.nfx.com/apple-touch-icon.png",
       "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
       "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
       "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
@@ -31711,6 +31747,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           } catch(eWb) {}
         }
+
+        // Automatic recovery for failed logo/icon assets: probe authentic domain icons
+        try {
+          const lowerTarget = targetUrl.toLowerCase();
+          const isLogoOrIcon = lowerTarget.includes('logo') || lowerTarget.includes('icon') || lowerTarget.includes('brand') || req.query.isLogo === '1';
+          if (isLogoOrIcon && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+            const host = new URL(targetUrl).hostname.replace(/^www\./i, '').toLowerCase();
+            const fallbacks = [
+              KNOWN_BRAND_LOGOS[host],
+              KNOWN_BRAND_LOGOS[`www.${host}`],
+              `https://${host}/apple-touch-icon.png`,
+              `https://${host}/apple-touch-icon-precomposed.png`,
+              `https://${host}/favicon.ico`,
+              `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${host}&size=128`,
+              `https://icons.duckduckgo.com/ip3/${host}.ico`
+            ].filter(Boolean) as string[];
+
+            for (const fbUrl of fallbacks) {
+              if (fbUrl === targetUrl) continue;
+              try {
+                const fbResp = await fetch(fbUrl, {
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                  },
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+                });
+                const fbType = (fbResp.headers.get('content-type') || '').toLowerCase();
+                if (fbResp.ok && (fbType.includes('image') || fbType.includes('octet-stream') || fbUrl.endsWith('.ico'))) {
+                  const fbBuf = Buffer.from(await fbResp.arrayBuffer());
+                  if (fbBuf.length > 100) {
+                    res.setHeader('Content-Type', fbType.includes('image') ? fbType : (fbUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'));
+                    res.setHeader('Cache-Control', 'public, max-age=604800');
+                    res.setHeader('Access-Control-Allow-Origin', '*');
+                    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                    return res.send(fbBuf);
+                  }
+                }
+              } catch (eFb) {}
+            }
+          }
+        } catch (eFbHost) {}
 
         return sendFallbackImage();
       }

@@ -310,6 +310,10 @@ export function formatViewCount(views?: number | null): string {
  * Verified Official Names Dictionary for Known Brands and Seeded Places
  */
 export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
+  "nfx.com": "NFX",
+  "www.nfx.com": "NFX",
+  "nfx": "NFX",
+  "nfx vc": "NFX",
   "bk.com": "Burger King",
   "www.bk.com": "Burger King",
   "burgerking.com": "Burger King",
