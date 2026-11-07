@@ -320,6 +320,15 @@ export const ALEPH_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="
 </svg>`;
 export const ALEPH_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ALEPH_LOGO_SVG)}`;
 
+export const ALL_IN_CAPITAL_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="26" fill="#0d1117"/>
+  <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+  <path d="M 24 38 C 42 30, 78 46, 96 38 L 96 68 C 78 76, 42 60, 24 68 Z" fill="#ef4444"/>
+  <text x="60" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="16" fill="#ffffff" text-anchor="middle" letter-spacing="0.5" transform="rotate(-3 60 56)">ALL IN</text>
+  <text x="60" y="92" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">CAPITAL</text>
+</svg>`;
+export const ALL_IN_CAPITAL_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ALL_IN_CAPITAL_LOGO_SVG)}`;
+
 export const PICO_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <rect width="120" height="120" rx="26" fill="#0d1117"/>
   <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
@@ -333,6 +342,11 @@ export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIC
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
+  "www.allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
+  "allincapital": ALL_IN_CAPITAL_LOGO_DATA_URI,
+  "all in capital": ALL_IN_CAPITAL_LOGO_DATA_URI,
+  "allin capital": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "whatsapp.com": WHATSAPP_LOGO_DATA_URI,
   "www.whatsapp.com": WHATSAPP_LOGO_DATA_URI,
   "web.whatsapp.com": WHATSAPP_LOGO_DATA_URI,
@@ -1002,6 +1016,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
   "www.intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
   "intuition": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
+  "allincapital.vc": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
+  "www.allincapital.vc": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
+  "allincapital": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
+  "all in capital": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
   "pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "www.pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico venture partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
