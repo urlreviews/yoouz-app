@@ -54,7 +54,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, extractBrandFromDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -562,9 +562,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       }
 
       // If place.name is already a verified multi-word official name (like "Phoenix Court" or "LUMO Labs"), prefer it over any 1-word cached stem
-      const hasMultiWordPlaceName = Boolean(place?.name && place.name.trim().includes(" ") && !isGenericPlaceName(place.name) && !isDomainStemName(place.name, drawerDomain));
+      const hasMultiWordPlaceName = Boolean(place?.name && place.name.trim().includes(" ") && !isGenericPlaceName(place.name) && !isDomainStemName(place.name, drawerDomain) && !isFalseSplitOfDomain(place.name, drawerDomain));
 
-      // Check session and local storage (ignore and purge 1-word domain stems)
+      // Check session and local storage (ignore and purge 1-word domain stems and false syllable splits)
       try {
         const keysToCheck = [
           place?.id,
@@ -577,7 +577,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           const keyStr = String(k).toLowerCase().trim();
           const cachedSession = sessionStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedSession) {
-            if (isDomainStemName(cachedSession, drawerDomain) || (hasMultiWordPlaceName && !cachedSession.trim().includes(" "))) {
+            if (isDomainStemName(cachedSession, drawerDomain) || isFalseSplitOfDomain(cachedSession, drawerDomain) || (hasMultiWordPlaceName && !cachedSession.trim().includes(" "))) {
               sessionStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
             } else if (cachedSession.trim().length > 1 && !cachedSession.toLowerCase().includes(".com")) {
               const cleanedSession = formatBusinessName(cachedSession.trim(), drawerDomain) || cachedSession.trim();
@@ -586,7 +586,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           }
           const cachedLocal = localStorage.getItem(`yoouz_clicked_name_${keyStr}`);
           if (cachedLocal) {
-            if (isDomainStemName(cachedLocal, drawerDomain) || (hasMultiWordPlaceName && !cachedLocal.trim().includes(" "))) {
+            if (isDomainStemName(cachedLocal, drawerDomain) || isFalseSplitOfDomain(cachedLocal, drawerDomain) || (hasMultiWordPlaceName && !cachedLocal.trim().includes(" "))) {
               localStorage.removeItem(`yoouz_clicked_name_${keyStr}`);
             } else if (cachedLocal.trim().length > 1 && !cachedLocal.toLowerCase().includes(".com")) {
               const cleanedLocal = formatBusinessName(cachedLocal.trim(), drawerDomain) || cachedLocal.trim();

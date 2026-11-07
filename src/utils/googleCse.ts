@@ -192,7 +192,21 @@ export function scoreCandidateUrl(url: string, query: string, rankIndex: number 
     score -= 400;
   }
 
-  // 2. Root domain vs deep directory path
+  // 2. Global TLD priority vs regional .co.il for non-Hebrew / non-Israeli queries
+  const isHebrewOrIsraelQuery = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat|herzliya|ramat\s*gan)\b/i.test(query);
+  if (!isHebrewOrIsraelQuery) {
+    if (hostname.endsWith(".co.il") || hostname.endsWith(".org.il") || hostname.endsWith(".il")) {
+      score -= 600;
+    } else if (/\.(com|vc|io|co|ai|org|net)$/i.test(hostname)) {
+      score += 200;
+      const cleanQuerySlug = query.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (cleanQuerySlug && domainRoot === cleanQuerySlug) {
+        score += 450;
+      }
+    }
+  }
+
+  // 3. Root domain vs deep directory path
   if (pathname === "/" || pathname === "" || pathname.split("/").filter(Boolean).length <= 1) {
     score += 60; // Clean homepage / root domain
   } else {
@@ -398,14 +412,14 @@ export async function queryGoogleCseForUrl(query: string, maxRetries: number = 2
             if (targetUrl) {
               const allowed = isAllowedOrganicUrl(targetUrl);
               console.info(`[Google CSE] Candidate #${i + 1}: ${targetUrl} (Allowed: ${allowed})`);
-              if (allowed) {
-                console.info(`[Google CSE] SUCCESS! Selecting #${i + 1}: ${targetUrl}`);
-                resolve(targetUrl);
-                resolved = true;
-                cleanup();
-                return;
+              if (allowed && !candidateMap.has(targetUrl)) {
+                candidateMap.set(targetUrl, i);
               }
             }
+          }
+          if (candidateMap.size > 0) {
+            finishWithBestCandidate();
+            return;
           }
         };
 

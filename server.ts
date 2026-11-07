@@ -28580,6 +28580,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       ];
 
       // Extreme DuckDuckGo-Only Discovery Engine (4 high-speed attempts with realistic headers)
+      const isHebrewOrIsraelQuery = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat|herzliya|ramat\s*gan|netanya|ashdod|beersheba|rishon|petah\s*tikva)\b/i.test(cleanQ);
       const variations = [
         `${cleanQ}`,
         `${cleanQ} website`,
@@ -28596,7 +28597,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
           
           const qEnc = encodeURIComponent(currentQ);
-          const ddgUrl = `https://html.duckduckgo.com/html/?q=${qEnc}`;
+          const ddgUrl = `https://html.duckduckgo.com/html/?q=${qEnc}${isHebrewOrIsraelQuery ? '' : '&kl=us-en'}`;
           
           console.log(`[DuckDuckGo Discovery] Fetching search results for: "${currentQ}" (Attempt ${attempt + 1}/4)`);
           
@@ -28604,7 +28605,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7,*;q=0.5'
+              'Accept-Language': isHebrewOrIsraelQuery ? 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7,*;q=0.5' : 'en-US,en;q=0.9'
             },
             signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
           });
@@ -28688,6 +28689,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 if (qLower.includes('אלפא') && cleanHost.includes('alfaleasing')) score += 150;
                 if (qLower.includes('איטריידר') && cleanHost.includes('etrader')) score += 150;
 
+                // Prioritize global TLDs (.com, .vc, .io, .co, .ai, .org) and penalize .co.il for non-Hebrew queries
+                if (!isHebrewOrIsraelQuery) {
+                  if (cleanHost.endsWith('.co.il') || cleanHost.endsWith('.org.il') || cleanHost.endsWith('.il')) {
+                    score -= 150;
+                  } else if (/\.(com|vc|io|co|ai|org|net)$/i.test(cleanHost)) {
+                    score += 45;
+                    const cleanQueryAlpha = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (cleanQueryAlpha && domainNameOnly === cleanQueryAlpha) {
+                      score += 120;
+                    }
+                  }
+                }
+
                 // 3. Minor penalty for deep sub-paths (Official sites are root or shallow)
                 const pathParts = new URL(u).pathname.split('/').filter(Boolean);
                 if (pathParts.length > 2) {
@@ -28717,6 +28731,55 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
     } catch (e) {
       console.error("[Google Discovery Critical Error]:", e.message);
+    }
+
+    // Live Official Domain Verification Probe when search engine is rate-limited or returns empty for plain brand queries
+    if (!discoveredUrl && !cleanQ.includes('.')) {
+      const compactSlug = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const hyphenSlug = cleanQ.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const firstWord = cleanQ.toLowerCase().trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '');
+      if (compactSlug.length >= 2) {
+        const probeDomains = Array.from(new Set([
+          `${compactSlug}.com`,
+          `${compactSlug}.vc`,
+          `${compactSlug}.io`,
+          `${compactSlug}.co`,
+          `${compactSlug}.ai`,
+          ...(hyphenSlug && hyphenSlug !== compactSlug ? [`${hyphenSlug}.com`] : []),
+          ...(firstWord.length >= 4 && firstWord !== compactSlug ? [`${firstWord}.com`, `${firstWord}.vc`] : [])
+        ]));
+        const probeResults = await Promise.all(
+          probeDomains.map(async (candDom, idx) => {
+            try {
+              const resp = await fetch(`https://${candDom}`, {
+                method: 'GET',
+                redirect: 'follow',
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml'
+                },
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+              });
+              if (!resp.ok) return null;
+              const html = await resp.text();
+              if (!html || html.length < 200) return null;
+              const lowerHtml = html.slice(0, 8000).toLowerCase();
+              if (/sedoparking|afternic|hugedomains|domain\s+is\s+for\s+sale|buy\s+this\s+domain|parked\s+domain|godaddy\.com\/forsale|dan\.com/i.test(lowerHtml)) {
+                return null;
+              }
+              return { url: resp.url || `https://${candDom}/`, idx };
+            } catch {
+              return null;
+            }
+          })
+        );
+        const validProbes = probeResults.filter(Boolean) as { url: string; idx: number }[];
+        if (validProbes.length > 0) {
+          validProbes.sort((a, b) => a.idx - b.idx);
+          discoveredUrl = validProbes[0].url;
+          console.log(`[Live Domain Probe] Verified official domain for "${cleanQ}": ${discoveredUrl}`);
+        }
+      }
     }
 
     if (discoveredUrl) {
@@ -28929,7 +28992,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const cleanSlug = cleanQ.toLowerCase().trim()
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9_\-\.]/g, '');
-      const fallbackDomain = cleanSlug.includes('.') ? cleanSlug : `${cleanSlug || 'business'}.co.il`;
+      const fallbackDomain = cleanSlug.includes('.') ? cleanSlug : `${cleanSlug.replace(/-/g, '') || 'business'}.com`;
       const fallbackResult: ResolvedBusinessData = {
         domain: fallbackDomain,
         websiteUrl: `https://${fallbackDomain}`,
@@ -30725,8 +30788,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             args: [`${q}%`, `${q}%`, `${q}%`, `${q}%`, `${q}%`]
           });
           if (dbRes && dbRes.rows) {
+            const isHebrewSuggest = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat)\b/i.test(q);
             for (const row of dbRes.rows as any[]) {
               const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+              if (!isHebrewSuggest && bDom.endsWith(".co.il") && !KNOWN_OFFICIAL_NAMES[bDom] && !row.address) {
+                continue;
+              }
               const hasDot = bDom.includes(".");
               const title = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
               addSuggestion({
@@ -36921,8 +36988,9 @@ function injectOpenGraphTags(html: string, meta: any) {
       // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs
       await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe'").catch(() => {});
 
-      // 2. Purge only broken or unnamed place records (never delete valid registered places)
-      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%'").catch(() => {});
+      // 2. Purge only broken, unnamed, or legacy synthesized .co.il fallback place records
+      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR id IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il')").catch(() => {});
+      await bunnyDb.execute("UPDATE places SET name = 'Elaia' WHERE LOWER(id) IN ('elaia.com', 'www.elaia.com') AND name != 'Elaia'").catch(() => {});
       console.log("🧹 [Server] Cleaned up broken and unnamed place records safely.");
     } catch (e) {
       console.warn("Purge notice:", e);

@@ -915,7 +915,6 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.afore.vc": "Afore Capital",
   "afore": "Afore Capital",
   "afore capital": "Afore Capital",
-  "afore-capital-san-francisco.co.il": "Afore Capital",
   "researchgate.net": "ResearchGate",
   "www.researchgate.net": "ResearchGate",
   "researchgate": "ResearchGate",
@@ -940,12 +939,23 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "lumolabs.io": "LUMO Labs",
   "www.lumolabs.io": "LUMO Labs",
   "lumofunds.vc": "LUMO Labs",
-  "www.lumofunds.vc": "LUMO Labs"
+  "www.lumofunds.vc": "LUMO Labs",
+  "elaia.com": "Elaia",
+  "www.elaia.com": "Elaia",
+  "elaia": "Elaia",
+  "el aia": "Elaia",
+  "smok.vc": "SMOK Ventures",
+  "www.smok.vc": "SMOK Ventures",
+  "kaya.vc": "KAYA",
+  "www.kaya.vc": "KAYA",
+  "felicis.com": "Felicis",
+  "www.felicis.com": "Felicis"
 };
 
 /**
  * Checks if a candidate business name is merely a raw domain or a 1-word unsplit domain stem
  * (e.g., "Adaptvc", "Phoenixcourt", or "adaptvc.com" for domain "adaptvc.com" / "phoenixcourt.co").
+ * Legitimate single-word brand names (e.g., "Elaia", "Felicis", "Proximus") return false.
  */
 export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
   if (!name || !name.trim()) return true;
@@ -960,13 +970,39 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
     const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
-      // Any single unspaced word equal to the domain root without internal camelCase (e.g. "Phoenixcourt" or "phoenixcourt") is a raw domain stem
-      if (!/[A-Z]/.test(trimmed.slice(1))) {
+      // All-lowercase raw token (e.g. "phoenixcourt", "elaia") is a raw stem
+      if (trimmed === trimmed.toLowerCase()) {
         return true;
       }
-      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds)$/i.test(cleanName)) {
+      // If splitCompoundWords detects a legitimate multi-word compound (e.g. "Phoenixcourt" -> "Phoenix Court", "Lumolabs" -> "Lumo Labs"), it's an unsplit stem
+      if (splitCompoundWords(cleanName).includes(" ")) {
         return true;
       }
+      if (/(?:[a-z]{2,})(?:vc|inc|llc|ltd|corp|hq|labs|tech|group|media|agency|studio|capital|ventures|partners|holdings|finance|financial|investments|inv|advisors|consulting|solutions|services|systems|software|digital|global|law|legal|lawyers|attorneys|firm|clinic|dental|medical|health|care|pharma|hotel|hotels|resort|resorts|spa|cafe|coffee|bakery|shop|store|boutique|market|motors|auto|garage|plumbing|roofing|electric|electrical|construction|builders|realty|realestate|homes|properties|insurance|bank|banking|court|fund|funds|tandartsen|optiek|apotheek|werkplaats)$/i.test(cleanName)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Detects if a multi-word candidate is a false syllable split of a single-word domain root
+ * (e.g., "El Aia" for "elaia.com", "Pro Ximus" for "proximus.be").
+ */
+export function isFalseSplitOfDomain(name?: string | null, domain?: string | null): boolean {
+  if (!name || !domain || !name.includes(" ")) return false;
+  const lower = name.trim().toLowerCase();
+  if (lower === "el aia" || lower === "pro ximus" || lower === "al pha" || lower === "el ement" || lower === "the ranos" || lower === "ve spa" || lower === "pla net") {
+    return true;
+  }
+  const cleanDom = extractCleanDomain(domain);
+  const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!domRoot || domRoot.length < 4) return false;
+  const parts = lower.split(/\s+/).filter(Boolean);
+  if (parts.length === 2 && parts.join("") === domRoot) {
+    if ((parts[0] === "el" || parts[0] === "al") && !/^(dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)$/.test(parts[1])) {
+      return true;
     }
   }
   return false;
@@ -1023,6 +1059,7 @@ export function isCorruptedBusinessName(name?: string | null): boolean {
 
 /**
  * Splits concatenated compound words, slugs, and camelCase domain strings into separate human-readable words.
+ * Never splits single-word brand names into arbitrary syllables (e.g. "elaia" -> "Elaia", "proximus" -> "Proximus").
  */
 export function splitCompoundWords(str: string): string {
   let s = str.trim();
@@ -1030,17 +1067,25 @@ export function splitCompoundWords(str: string): string {
   if (s.includes(" ") && /^[0-9\p{L}\s&'’\.,\-]+$/u.test(s)) {
     return s;
   }
+  const cleanKey = s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (KNOWN_OFFICIAL_NAMES[cleanKey]) {
+    return KNOWN_OFFICIAL_NAMES[cleanKey];
+  }
+
   // 1. Split camelCase/PascalCase (e.g., FirstStrikeElectrical -> First Strike Electrical)
   s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
   // 2. Split letter-number and number-letter
   s = s.replace(/([a-zA-Z])([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z])/g, "$1 $2");
   
-  // 3. Known brand/locational prefixes
-  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital|best|top|pro)(?=[a-z]{3,})/i, "$1 ");
-  s = s.replace(/^(al|el)(?=[-_ ]|[A-Z]|dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)/i, "$1 ");
+  // 3. Known brand/locational prefixes ONLY when followed by an explicit standalone compound word
+  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|digital|best|top|pro)(?=(?:strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
+  s = s.replace(/^(al|el)(?=[-_ ]|(?:dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)(?:$|[a-z]{3,}))/i, "$1 ");
 
-  // 4. Lookbehind compound word splitters for concatenated terms (e.g., firststrikeelectrical, thebookstore)
-  s = s.replace(/(?<=[a-z]{2,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|net|web|online|express|prime|select|choice|smart|master|star|stars)/gi, " $1 ");
+  // 4. Lookbehind compound word splitters for concatenated business suffixes at word boundaries (never splitting inside unrelated words like planet, vespa, marshall, calabasas)
+  const singleWordExceptions = new Set(["planet", "planets", "vespa", "marshall", "spark", "sparks", "sparkle", "calabasas", "elaborate", "collaborate", "cabinet", "cabinets", "magnet", "magnets", "mustard", "blink", "scare", "shallow", "challenge", "elaia", "proximus", "theranos", "supernova", "topaz", "element", "alpha"]);
+  if (!singleWordExceptions.has(cleanKey)) {
+    s = s.replace(/(?<=[a-z]{3,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|virtual|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|ventures|court|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|online|prime|select|choice|smart|master|star|stars|tandartsen|optiek|apotheek|werkplaats)(?=$|[-_ ]|(?:center|centre|clinic|group|firm|agency|services|solutions|partners|capital|ventures|labs|studio|shop|store|market|hotel|hotels|resort|resorts|srl)\b)/gi, " $1 ");
+  }
 
   // 5. Clean up any multiple spaces and format each word cleanly with title case
   const words = s.split(/[-_ ]+/).filter(Boolean).map(w => {
@@ -1416,6 +1461,9 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
 
   // 3c. If the string is now a clean human business name (English or Hebrew) after separator & slogan stripping, preserve in full
   if (!isDomainLike && trimmed && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(trimmed) && trimmed.length <= 50) {
+    if (cleanDom && isFalseSplitOfDomain(trimmed, cleanDom)) {
+      return KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()] || splitCompoundWords(domRoot);
+    }
     return toTitleCase(trimmed);
   }
 
@@ -1429,7 +1477,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   rawName = rawName
     .replace(/^https?:\/\//i, '')
     .replace(/^www[\.\-\/]/i, '')
-    .replace(/\.(?:com|net|org|io|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
+    .replace(/\.(?:com|net|org|io|vc|co|ai|app|dev|tech|store|be|co\.uk|co\.il|ae|ca|de|fr|it|es|eu|nl|ch|at|pl|in|cn|jp|kr|xyz|info|biz|online|site|law|club|me|tv|us|uk)$/i, '');
 
   // If rawName is already a clean single capitalized word (e.g. "Proximus", "Multipharma"), preserve directly
   if (/^[A-Z][a-z0-9]+$/.test(rawName)) {
