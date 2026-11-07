@@ -317,6 +317,10 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.pico.partners": "PICO Venture Partners",
   "pico venture partners": "PICO Venture Partners",
   "pico": "PICO Venture Partners",
+  "gefencapital.com": "Gefen Capital",
+  "www.gefencapital.com": "Gefen Capital",
+  "gefencapital": "Gefen Capital",
+  "gefen capital": "Gefen Capital",
   "nfx.com": "NFX",
   "www.nfx.com": "NFX",
   "nfx": "NFX",
@@ -2714,7 +2718,7 @@ export function resolveSafeAuthor(
     registryMatch = undefined;
   }
   if (isUserDeleted(knownMatch) || isUserDeleted(userKey) || isUserDeleted(nameKey) || isUserDeleted(handleKey)) {
-    knownMatch = undefined;
+    knownMatch = undefined as any;
   }
 
   // Check if active user matches this video

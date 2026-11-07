@@ -169,6 +169,10 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("cb6ad0") ||
     clean.includes("s.w.org") ||
     clean.includes("wordpress.org") ||
+    clean.includes("w-logo-blue") ||
+    clean.includes("wordpress-logo") ||
+    clean.includes("wp-logo") ||
+    clean.includes("wp-icon") ||
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
@@ -15417,6 +15421,18 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       name: "PICO Venture Partners",
       website: "https://www.pico.partners/"
     },
+    "gefencapital.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
+      logoUrl: "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+      name: "Gefen Capital",
+      website: "https://gefencapital.com/"
+    },
+    "www.gefencapital.com": {
+      bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fgefencapital.com%2Fwp-content%2Fuploads%2F2019%2F06%2Fcropped-Untitled-design-45-2.png",
+      logoUrl: "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+      name: "Gefen Capital",
+      website: "https://gefencapital.com/"
+    },
     "nfx.com": {
       bannerUrl: "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
       logoUrl: "https://www.nfx.com/apple-touch-icon.png",
@@ -30396,6 +30412,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "pico.partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
         "www.pico.partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
         "pico venture partners": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120"><rect width="120" height="120" rx="26" fill="#0d1117"/><rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/><g transform="translate(13, 38)"><text x="0" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="24" fill="#ffffff" letter-spacing="-0.5">PICO</text><text x="64" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="300" font-size="24" fill="#EAA45D">/</text><text x="2" y="44" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="13" fill="#EAA45D" letter-spacing="0.5">partners</text></g></svg>`),
+        "gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+        "www.gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+        "gefencapital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+        "gefen capital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
         "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "nfx": "https://www.nfx.com/apple-touch-icon.png",

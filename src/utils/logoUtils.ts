@@ -22,6 +22,10 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("cb6ad0") ||
     clean.includes("s.w.org") ||
     clean.includes("wordpress.org") ||
+    clean.includes("w-logo-blue") ||
+    clean.includes("wordpress-logo") ||
+    clean.includes("wp-logo") ||
+    clean.includes("wp-icon") ||
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
@@ -366,6 +370,10 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "www.pico.partners": PICO_LOGO_DATA_URI,
   "pico venture partners": PICO_LOGO_DATA_URI,
   "pico": PICO_LOGO_DATA_URI,
+  "gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "www.gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "gefencapital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "gefen capital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
   "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
   "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
   "nfx": "https://www.nfx.com/apple-touch-icon.png",
@@ -976,6 +984,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "www.pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico venture partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
+  "gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "www.gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "gefencapital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "gefen capital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
   "nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "www.nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "nfx": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
@@ -1385,7 +1397,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): string | null {
   if (!place) return null;
 
-  let domain = place.brandDomain;
+  let domain: string | null | undefined = place.brandDomain;
   if (!domain && place.website) {
     domain = extractDomain(place.website);
   }
@@ -1469,7 +1481,7 @@ export function getCategoryThematicBanner(_category?: string | null, _name?: str
 export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
   if (!place) return "";
 
-  let domain = place.brandDomain;
+  let domain: string | null | undefined = place.brandDomain;
   if (!domain && place.website) {
     domain = extractDomain(place.website);
   }
