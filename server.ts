@@ -281,6 +281,9 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("blur_2") ||
       decoded.includes("w_147,") ||
       decoded.includes("placeholder") || 
+      decoded.includes("lovable.app") ||
+      decoded.includes("lovable.dev") ||
+      decoded.includes("pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev") ||
       decoded.includes("glas1.png") || 
       decoded.includes("dummy.png") ||
       decoded.includes("no-image") ||
@@ -27592,24 +27595,23 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   if (!sc$ && !rawHtml) return "";
   const $ = sc$ || cheerio.load(rawHtml);
   const cleanDom = (domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  const ogCanonicalUrl = ($('meta[property="og:url"]').attr("content") || $('link[rel="canonical"]').attr("href") || "").trim();
+  const effectiveBaseUrl = (pageUrl && pageUrl.startsWith("http"))
+    ? pageUrl
+    : (ogCanonicalUrl && ogCanonicalUrl.startsWith("http") ? ogCanonicalUrl : `https://${cleanDom}`);
 
   function makeAbsolute(src: string): string {
     if (!src) return "";
     let s = src.trim();
     if (s.startsWith("data:")) return s;
     if (s.startsWith("//")) return "https:" + s;
-    if (s.startsWith("/")) {
-      try {
-        const u = new URL(pageUrl || `https://${cleanDom}`);
-        return `${u.protocol}//${u.host}${s}`;
-      } catch {
-        return `https://${cleanDom}${s}`;
-      }
+    try {
+      return new URL(s, effectiveBaseUrl).toString();
+    } catch {
+      if (s.startsWith("/")) return `https://${cleanDom}${s}`;
+      if (!s.startsWith("http://") && !s.startsWith("https://")) return `https://${cleanDom}/${s.replace(/^\/+/, "")}`;
+      return s;
     }
-    if (!s.startsWith("http://") && !s.startsWith("https://")) {
-      return `https://${cleanDom}/${s.replace(/^\/+/, "")}`;
-    }
-    return s;
   }
 
   function isValidCandidate(url: string): boolean {
@@ -27619,6 +27621,30 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (url.includes("placeholder") || url.includes("blank.gif") || url.includes("pixel.gif")) return false;
     return true;
   }
+
+  // 0. Preloaded main brand logo in <head> (common on Vite/React SPAs like <link rel="preload" as="image" href="/lumo-logo.png">)
+  try {
+    let preloadedLogo = "";
+    $('link[rel="preload"][as="image"]').each((_: any, el: any) => {
+      if (preloadedLogo) return;
+      const href = ($(el).attr("href") || "").trim();
+      const lowerHref = href.toLowerCase();
+      if (
+        href &&
+        lowerHref.includes("logo") &&
+        !lowerHref.includes("/logos/") &&
+        !lowerHref.includes("/clients/") &&
+        !lowerHref.includes("/partners/") &&
+        !/logo[0-9]+\./i.test(lowerHref)
+      ) {
+        const abs = makeAbsolute(href);
+        if (abs && isValidCandidate(abs)) {
+          preloadedLogo = abs;
+        }
+      }
+    });
+    if (preloadedLogo) return preloadedLogo;
+  } catch (e) {}
 
   // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
   try {
@@ -29334,12 +29360,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               // Better Banner Image Extraction
               const ogImg = getMetaContent('image');
-              if (ogImg && !isLogoOrIconUrl(ogImg) && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
+              if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg) && !ogImg.includes('placeholder') && !ogImg.includes('unsplash.com') && !ogImg.startsWith('data:')) {
                 try {
                   image = new URL(ogImg, finalUrl).toString();
                 } catch (e) {
                   image = ogImg;
                 }
+              }
+              if (!image || isBadBanner(image)) {
+                $('link[rel="preload"][as="image"]').each((_: any, el: any) => {
+                  if (image && !isBadBanner(image)) return;
+                  const href = ($(el).attr('href') || '').trim();
+                  if (href && !isLogoOrIconUrl(href) && !href.toLowerCase().includes('/logos/')) {
+                    try {
+                      const candidateImg = new URL(href, finalUrl).toString();
+                      if (!isBadBanner(candidateImg)) image = candidateImg;
+                    } catch (e) {}
+                  }
+                });
               }
 
               if (rawTitle && !isGenericOrPlaceholderTitle(rawTitle)) {
@@ -30395,10 +30433,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return false;
             };
 
-            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
+            const redirectedCleanDom = cleanDomainName(finalUrl || "");
+            const isRedirectedDomain = Boolean(redirectedCleanDom && redirectedCleanDom.includes(".") && redirectedCleanDom !== cleanDomain);
+            const isStaleRedirectedLogo = (u?: string) => Boolean(isRedirectedDomain && u && typeof u === 'string' && u.toLowerCase().includes(cleanDomain));
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = Boolean(logo && !isPlaceholderLogo(logo));
 
-            const domainLogoFallback = cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "";
+            const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
+            const domainLogoFallback = effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "";
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
             const mergedLogo = (isCustomUploadedLogo || (!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl)))
               ? existingDoc.logoUrl
@@ -36040,7 +36082,11 @@ function injectOpenGraphTags(html: string, meta: any) {
     "backbone.ventures": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%257Emv2.png" },
     "www.backbone.ventures": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%257Emv2.png" },
     "marketplace-capital.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png" },
-    "www.marketplace-capital.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png" }
+    "www.marketplace-capital.com": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png" },
+    "lumolabs.io": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
+    "www.lumolabs.io": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
+    "lumofunds.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" },
+    "www.lumofunds.vc": { logoUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Flumo-logo.png", bannerUrl: "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp" }
   });
 
   // Dedicated endpoint to flush all metadata memory caches and sanitize place asset domain mismatches

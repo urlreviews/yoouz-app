@@ -78,6 +78,9 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('blur_2') ||
     u.includes('w_147,') ||
     u.includes('placeholder') ||
+    u.includes('lovable.app') ||
+    u.includes('lovable.dev') ||
+    u.includes('pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev') ||
     u.includes('mock') ||
     u.includes('1789810172562') ||
     u.includes('demdex.net') ||
@@ -907,11 +910,19 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "www.stripe.com": "https://images.stripeassets.com/fzn2n1nzq965/4vVgZi0ZMoEzOhkcv7EVwK/8cce6fdcf2733b2ec8e99548908847ed/favicon.png?w=180&h=180",
   "stripe": "https://images.stripeassets.com/fzn2n1nzq965/4vVgZi0ZMoEzOhkcv7EVwK/8cce6fdcf2733b2ec8e99548908847ed/favicon.png?w=180&h=180",
   "backbone.ventures": "https://static.wixstatic.com/media/9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%7Emv2.png",
-  "www.backbone.ventures": "https://static.wixstatic.com/media/9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%7Emv2.png"
+  "www.backbone.ventures": "https://static.wixstatic.com/media/9b90d6_a578da1f0c284c1c9a7ca94ea3a1470d%7Emv2.png",
+  "lumolabs.io": "https://lumofunds.vc/lumo-logo.png",
+  "www.lumolabs.io": "https://lumofunds.vc/lumo-logo.png",
+  "lumofunds.vc": "https://lumofunds.vc/lumo-logo.png",
+  "www.lumofunds.vc": "https://lumofunds.vc/lumo-logo.png"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "lumolabs.io": "https://lumofunds.vc/impact/whispp-bg.webp",
+  "www.lumolabs.io": "https://lumofunds.vc/impact/whispp-bg.webp",
+  "lumofunds.vc": "https://lumofunds.vc/impact/whispp-bg.webp",
+  "www.lumofunds.vc": "https://lumofunds.vc/impact/whispp-bg.webp",
   "bk.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
   "www.bk.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",
   "burgerking.com": "https://www.bk.com/static/media/FreeWhooper.bfcca180c2a3afcba437.png",

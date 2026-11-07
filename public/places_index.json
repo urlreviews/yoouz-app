@@ -1,5 +1,58 @@
 [
   {
+    "id": "lumolabs.io",
+    "name": "Lumo Labs",
+    "category": "Healthcare & Medical",
+    "categoryType": "all",
+    "address": "High Tech Campus 6a, 5656AE Eindhoven",
+    "city": "Eindhoven",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://lumofunds.vc/lumo-logo.png",
+    "logoUrl": "https://lumofunds.vc/lumo-logo.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Flumofunds.vc%2Fimpact%2Fwhispp-bg.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "questions@lumolabs.io",
+    "website": "https://lumofunds.vc/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Pre-seed VC investing in impact-driven ventures using emerging technologies.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "lumolabs.io",
+    "customEdited": true,
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "postalCode": "High Tech",
+    "zipCode": "High Tech",
+    "zip": "High Tech"
+  },
+  {
     "id": "backbone.ventures",
     "name": "Backbone Ventures",
     "category": "Verified Business",

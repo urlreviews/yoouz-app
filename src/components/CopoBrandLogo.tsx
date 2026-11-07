@@ -65,7 +65,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       cn === "yoouz.com" ||
       cn.includes("yoouz") ||
       cl.includes("yoouz") ||
-      cl.includes("favicon.svg") ||
+      cl === "/favicon.svg" ||
+      cl.includes("yoouz.com/favicon.svg") ||
       cw.includes("yoouz.com")
     );
   }, [cleanDomain, name, logoUrl, website]);
