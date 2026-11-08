@@ -125,21 +125,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 3. Hero Banner Brand Fallback: Whenever no standalone high-res logo is available (or it was a low-res favicon), use the authentic hero banner artwork as the logo so it looks clean and matches
-    const effectiveBanner = bannerUrl || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : null);
-    if (
-      effectiveBanner &&
-      effectiveBanner.trim() !== "" &&
-      !isBadBanner(effectiveBanner) &&
-      !effectiveBanner.startsWith("blob:")
-    ) {
-      const proxiedBanner = getProxiedImageUrl(effectiveBanner);
-      if (proxiedBanner && !candidates.includes(proxiedBanner)) {
-        candidates.push(proxiedBanner);
-      }
-      if (!candidates.includes(effectiveBanner)) {
-        candidates.push(effectiveBanner);
-      }
+    // 3. Guaranteed authentic domain favicon/logo proxy
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
 
     // 4. Fallback explicit logoUrl if it was a high-res favicon or icon
@@ -154,37 +142,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
-    // 5. Domain brand logo via server proxy
-    if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`/api/brand-banner/${encodeURIComponent(cleanDomain)}`);
-    }
-
     // Filter duplicates, generic placeholders, and URLs that already failed for this domain
     return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u) && !failedUrlsRef.current.has(u))));
-  }, [isYoouz, cleanDomain, logoUrl, bannerUrl]);
+  }, [isYoouz, cleanDomain, logoUrl]);
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
 
-  // Determine if a given src is the hero banner image
-  const checkIsBannerAsLogo = (srcToCheck: string | null) => Boolean(
-    bannerUrl &&
-    srcToCheck &&
-    (srcToCheck === bannerUrl ||
-      srcToCheck.includes(bannerUrl) ||
-      (getProxiedImageUrl(bannerUrl) && srcToCheck.includes(getProxiedImageUrl(bannerUrl))))
-  );
-
-  const isBannerAsLogo = checkIsBannerAsLogo(currentSrc);
-  const isLoadedBannerAsLogo = checkIsBannerAsLogo(loadedSrc);
-
-  const activeImageClass = isBannerAsLogo
-    ? "w-full h-full object-cover rounded-[16px] sm:rounded-[20px]"
-    : imageClassName;
-
-  const loadedImageClass = isLoadedBannerAsLogo
-    ? "w-full h-full object-cover rounded-[16px] sm:rounded-[20px]"
-    : imageClassName;
+  const activeImageClass = imageClassName;
+  const loadedImageClass = imageClassName;
 
   // Reset state when switching to a different business domain
   useEffect(() => {

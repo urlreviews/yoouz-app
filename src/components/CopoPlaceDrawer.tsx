@@ -974,6 +974,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       if (lower.includes("favicon") || lower.endsWith(".ico") || lower.includes("placeholder") || lower.includes("mock")) return false;
       if (lower.includes("shareimg.jpg") || lower.includes("hero desktop.jpg") || lower.includes("injury-lawyer.jpg")) return false;
       if (!lower.startsWith("http://") && !lower.startsWith("https://") && !lower.startsWith("/") && !lower.startsWith("data:")) return false;
+      if (
+        clean === place.logoUrl ||
+        clean === place.avatarUrl ||
+        isFaviconUrl(clean) ||
+        clean.includes("/api/favicon") ||
+        clean.includes("/api/brand-banner")
+      ) return false;
       return true;
     };
 
@@ -1439,12 +1446,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
         </div>
 
-        {(hasAuthenticPhoto || effectiveBanner) && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner) ? (
+        {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
           <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
-              key={`banner-${place.id}-${allPhotos[photoIndex] || allPhotos[0] || effectiveBanner}`}
-              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner)}
+              key={`banner-${place.id}-${allPhotos[photoIndex] || allPhotos[0]}`}
+              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
               alt={displayedPlaceName}
               loading="eager"
               decoding="async"
