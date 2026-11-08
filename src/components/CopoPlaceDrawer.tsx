@@ -1441,9 +1441,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Sleek Dark Obsidian Mode Banner Canvas - Uniform, zero color bleeding */}
+        {/* Sleek Dark Obsidian Mode Banner Canvas with Ambient Brand Color Lighting */}
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/60 via-zinc-950 to-zinc-950 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/40 via-zinc-950 to-zinc-950 pointer-events-none z-10" />
+          {primaryLogoUrl && !primaryLogoUrl.includes("favicon") && (
+            <>
+              {/* Soft Ambient Brand Lighting Aura derived from Logo */}
+              <img
+                src={getProxiedImageUrl(primaryLogoUrl)}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-30 scale-150 pointer-events-none"
+              />
+              {/* Centered Crisp Contained Brand Logo in Banner (Zero Cutoff, fully fitted) */}
+              <div className="absolute inset-0 flex items-center justify-center p-6 pl-28 pr-16 z-0 opacity-85 pointer-events-none">
+                <img
+                  src={getProxiedImageUrl(primaryLogoUrl)}
+                  alt=""
+                  className="max-h-16 max-w-[65%] object-contain drop-shadow-2xl"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
