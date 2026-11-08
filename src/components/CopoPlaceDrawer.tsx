@@ -1442,8 +1442,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {/* Sleek Dark Obsidian Mode Banner Canvas with Ambient Brand Color Lighting */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/40 via-zinc-950 to-zinc-950 pointer-events-none z-10" />
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/40 via-zinc-950 to-zinc-950 pointer-events-none z-20" />
           {primaryLogoUrl && (
             <>
               {/* Soft Ambient Brand Lighting Aura derived from Logo */}
