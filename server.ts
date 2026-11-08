@@ -32434,6 +32434,10 @@ const isPlaceCard = type === 'place';
   // Pre-render static fallback /public/og-banner.png on boot
   async function regenerateDefaultOgBanner() {
     try {
+      const targetOgPath = path.join(process.cwd(), 'public', 'og-banner.png');
+      if (fs.existsSync(targetOgPath)) {
+        return;
+      }
       const defaultSvg = `<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
@@ -36867,10 +36871,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         allowedHosts: true,
         host: true,
         hmr: false,
-        watch: {
-          usePolling: true,
-          interval: 100
-        }
+        watch: null
       },
       appType: "spa",
     });
@@ -37134,16 +37135,6 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   }
 
-  // Start database schema verification and cleanup asynchronously in background
-  initBunnyDbSchema().then(async () => {
-    try {
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        await bunnyDb.execute("DELETE FROM places WHERE id LIKE '%.solicitors%' OR id LIKE '%.restaurant%' OR id LIKE '%.hotel%' OR id LIKE '%.shop%' OR id LIKE '%.law%' OR id LIKE '%-injury.%' OR name LIKE '%blocked%' OR name LIKE '%unable to access%' OR bannerUrl LIKE '%blocked%' OR bannerUrl LIKE '%challenge%'").catch(() => {});
-      }
-    } catch(e) {}
-  }).catch(() => {});
-
   const purgeBlockedPlaceRecords = async (): Promise<void> => {
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
@@ -37191,9 +37182,10 @@ function injectOpenGraphTags(html: string, meta: any) {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
   });
 
-  // Deferred non-blocking background initialization tasks after server is listening
+  // Deferred non-blocking background initialization tasks after server is listening and pre-warmed
   setTimeout(async () => {
     try {
+      await initBunnyDbSchema().catch(() => {});
       await purgeFakeReviewsAndPlaces().catch(() => {});
       await syncAndMigrateBusinessPlaces().catch(() => {});
       await syncExistingUsersWelcomeSentIndex().catch(() => {});
@@ -37234,7 +37226,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     } catch (bgErr) {
       console.warn("Background startup sync notice:", bgErr);
     }
-  }, 100);
+  }, 15000);
 
   setInterval(() => {
     syncAndReconcileBunnyStreamVideos().catch(() => {});
