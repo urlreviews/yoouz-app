@@ -1186,6 +1186,35 @@ export function extractDomainAlignedNameFromText(text?: string | null, domain?: 
 }
 
 /**
+ * Strips corporate legal entity suffixes (LLC, Inc, Ltd, Corp, GmbH, BV, etc.) and
+ * directory / search junk suffixes (Phone Number, Reviews, Contact, etc.) from business names.
+ */
+export function stripLegalEntityAndNoiseSuffixes(str?: string | null): string {
+  if (!str) return "";
+  let s = str.trim();
+
+  // Strip trailing phone numbers / formatted numbers (e.g. " - +1-800-555-0199", " | 050 123 456")
+  s = s.replace(/[\s,\-–—|:]+(?:\+?\d{1,4}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}$/, '').trim();
+
+  // Strip directory / search junk keywords at the end of the name
+  const directoryJunkPattern = /\s*(?:[|\-–—:•·,]|\s+)\b(?:phone(?:\s*number)?|telephone|tel|reviews?|ratings?|opening\s*hours|hours|address|directions|website|official\s+website|official\s+site|home\s*page|login|careers?|jobs?|salary|salaries|wiki|wikipedia|reddit|near\s+me)\b\.?$/i;
+  while (directoryJunkPattern.test(s)) {
+    s = s.replace(directoryJunkPattern, '').replace(/[\s,\-–—|:]+$/, '').trim();
+  }
+
+  // Strip corporate legal entity suffixes at word boundaries (only if there are previous words)
+  const legalEntitySuffixPattern = /(?:,\s*|\s+)(?:LLC|L\.L\.C\.|Llc|Inc\.?|Incorporated|Ltd\.?|Limited|Corp\.?|Corporation|Co\.,?\s*Ltd\.?|Co\.,\s*Limited|GmbH|Gmbh|B\.V\.|BV|N\.V\.|NV|S\.A\.|SA|S\.R\.L\.|SRL|Pte\.?\s*Ltd\.?|Pty\.?\s*Ltd\.?|Plc|PLC|LLP|L\.L\.P\.|S\.L\.|A\.G\.|AG|S\.A\.S\.|SAS|OÜ|OU|Sp\.\s*z\s*o\.o\.)\.?$/i;
+
+  if (s.split(/\s+/).length > 1) {
+    while (legalEntitySuffixPattern.test(s)) {
+      s = s.replace(legalEntitySuffixPattern, '').replace(/[\s,\-–—|:]+$/, '').trim();
+    }
+  }
+
+  return s;
+}
+
+/**
  * Checks if a candidate business name is merely a raw domain or an unsplit/partially-split domain stem
  * (e.g., "Adaptvc", "Allin Capital", "Redswan Ventures", "V3" on "v3.ventures", or "adaptvc.com").
  * Legitimate single-word brand names (e.g., "Elaia", "Felicis", "Proximus") return false.
@@ -1195,6 +1224,11 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
   const trimmed = name.trim();
   const cleanDom = domain ? extractCleanDomain(domain) : "";
   const cleanName = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // If name has unstripped corporate or noise suffixes (like "Sling Ventures LLC"), treat as stem to force clean alignment
+  if (stripLegalEntityAndNoiseSuffixes(trimmed) !== trimmed) {
+    return true;
+  }
 
   // If it's a verified known official name with exact match (even if it contains .vc or .com like "2B.VC"), it is NOT a stem
   const knownOfficial = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || (cleanName && KNOWN_OFFICIAL_NAMES[cleanName]);
@@ -1625,15 +1659,15 @@ export function toTitleCase(str: string): string {
 
 export function formatBusinessName(name?: string | null, domain?: string | null, queryContextParam?: string | null): string {
   let rawDomain = domain || "";
-  let queryContext = queryContextParam || "";
+  let queryContext = queryContextParam ? stripLegalEntityAndNoiseSuffixes(queryContextParam) : "";
   if (rawDomain.includes(":")) {
     const parts = rawDomain.split(":");
     rawDomain = parts[0];
-    if (!queryContext) queryContext = parts.slice(1).join(":");
+    if (!queryContext) queryContext = stripLegalEntityAndNoiseSuffixes(parts.slice(1).join(":"));
   } else if (rawDomain.includes("|")) {
     const parts = rawDomain.split("|");
     rawDomain = parts[0];
-    if (!queryContext) queryContext = parts.slice(1).join("|");
+    if (!queryContext) queryContext = stripLegalEntityAndNoiseSuffixes(parts.slice(1).join("|"));
   }
 
   const cleanDom = rawDomain ? extractCleanDomain(rawDomain) : "";
@@ -1657,7 +1691,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     return formatBusinessName(cleanDom);
   }
   if (!name) return "";
-  let trimmed = name
+  let trimmed = stripLegalEntityAndNoiseSuffixes(name
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&apos;/gi, "'")
@@ -1669,7 +1703,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     .replace(/&rsquo;/gi, "'")
     .replace(/&ldquo;/gi, '"')
     .replace(/&rdquo;/gi, '"')
-    .trim();
+    .trim());
 
   // Guard against known agency/CMS/boilerplate titles leaking into business names
   const lowerTrimmedCheck = trimmed.toLowerCase();
@@ -1728,10 +1762,10 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   }
 
   // 2.5 Strip any leading/trailing separator characters
-  trimmed = trimmed.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim();
+  trimmed = stripLegalEntityAndNoiseSuffixes(trimmed.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim());
 
   // 3. Clean up scraped SEO titles FIRST by splitting on separators (e.g., "Amino Capital — We back builders from day one", "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
-  const rawParts = trimmed.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => p.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim()).filter(Boolean);
+  const rawParts = trimmed.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim())).filter(Boolean);
   if (rawParts.length > 1) {
     let bestCandidate: string | undefined = undefined;
     const domAlpha = domRoot ? domRoot.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
@@ -1796,7 +1830,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
 
     if (bestCandidate) {
-      trimmed = bestCandidate;
+      trimmed = stripLegalEntityAndNoiseSuffixes(bestCandidate);
     }
   }
 
@@ -1805,7 +1839,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (sloganVerbPattern.test(trimmed)) {
     const truncated = trimmed.replace(sloganVerbPattern, "").replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
     if (truncated && truncated.length >= 2 && !isGenericPlaceName(truncated)) {
-      trimmed = truncated;
+      trimmed = stripLegalEntityAndNoiseSuffixes(truncated);
     }
   }
 
@@ -1814,16 +1848,16 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   if (seoSuffixPattern.test(trimmed)) {
     const strippedSuffix = trimmed.replace(seoSuffixPattern, "").replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
     if (strippedSuffix && strippedSuffix.length >= 2 && !isGenericPlaceName(strippedSuffix)) {
-      trimmed = strippedSuffix;
+      trimmed = stripLegalEntityAndNoiseSuffixes(strippedSuffix);
     }
   }
 
-  trimmed = trimmed.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
+  trimmed = stripLegalEntityAndNoiseSuffixes(trimmed.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim());
 
   // 3.1 Anchor preservation: if queryContext is a valid proper brand name from dropdown/search (e.g. "Amino Capital", "Greycroft", "Tobener Ravenscroft"),
   // preserve queryContext over longer SEO titles or unrelated slogans
   if (queryContext) {
-    const qTrim = queryContext.trim();
+    const qTrim = stripLegalEntityAndNoiseSuffixes(queryContext.trim());
     const qWords = qTrim.split(/\s+/).filter(w => w.length >= 2 && !/^(the|and|or|in|at|of|for|inc|llc|pc|corp)$/i.test(w));
     if (qWords.length >= 1 && /^[0-9\p{L}][0-9\p{L}\s&'’\.,\-]+$/u.test(qTrim) && !qTrim.includes('.') && !isDomainStemName(qTrim, cleanDom)) {
       const qLower = qTrim.toLowerCase();
@@ -1841,7 +1875,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
 
   // If queryContext has a city location (e.g. "Wanted Law Brugge") and trimmed is short ("Wanted Law"), attach city if query explicitly contained it
   if (queryContext) {
-    const qTrim = queryContext.trim();
+    const qTrim = stripLegalEntityAndNoiseSuffixes(queryContext.trim());
     const words = qTrim.split(/\s+/);
     if (words.length >= 2) {
       const lastQWord = words[words.length - 1];
@@ -1908,7 +1942,8 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     }
     // Expand any unsplit compound token inside trimmed (e.g. "Allin Capital" -> "All In Capital", "Redswan Ventures" -> "Red Swan Ventures")
     const expandedTrimmed = splitCompoundWords(trimmed);
-    return toTitleCase(expandedTrimmed);
+    const cleanedExpanded = stripLegalEntityAndNoiseSuffixes(expandedTrimmed);
+    return toTitleCase(cleanedExpanded);
   }
 
   let rawName = trimmed;
@@ -1960,11 +1995,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     })
     .filter(Boolean);
 
-  const result = words.join(' ');
+  const result = stripLegalEntityAndNoiseSuffixes(words.join(' '));
   if (result.length > 0 && !result.includes(" ")) {
     return toTitleCase(result.charAt(0).toUpperCase() + result.slice(1));
   }
-  return toTitleCase(result || trimmed);
+  return toTitleCase(result || stripLegalEntityAndNoiseSuffixes(trimmed));
 }
 
 /**

@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -29880,24 +29880,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
               } catch (e) {}
 
-              // 4. Resolve Title (Priority: og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Cleaned HTML <title> > og:title > Logo alt > Bundle phrase > domain fallback)
+              // 4. Resolve Title (Priority: Known Brand > Browser URL Tab <title> > og:title / twitter:title > og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Logo alt > Bundle phrase > domain fallback)
               const cleanTitleString = (str: string) => {
                 let cleaned = str.replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '').replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, '').trim();
                 // Strip common marketing / generic prefixes
                 cleaned = cleaned.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
+                cleaned = stripLegalEntityAndNoiseSuffixes(cleaned);
                 // Clean SEO title suffixes like "Welcome to Proximus - Internet, mobile, phone and TV | Proximus" -> "Proximus"
-                const parts = cleaned.split(/\s*(?:[|\-–—•│｜]|:)\s*/).map(p => p.trim()).filter(Boolean);
+                const parts = cleaned.split(/\s*(?:[|\-–—•│｜]|:)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
                   // Check if any part matches domRoot exactly (e.g. "Proximus")
                   const exactPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot && !isGenericOrPlaceholderTitle(p));
-                  if (exactPart) return exactPart;
+                  if (exactPart) return stripLegalEntityAndNoiseSuffixes(exactPart);
                   const matchPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '').includes(domRoot) && p.length <= 40 && !isGenericOrPlaceholderTitle(p));
-                  if (matchPart) return matchPart.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
+                  if (matchPart) return stripLegalEntityAndNoiseSuffixes(matchPart.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, ''));
                   const nonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && p.length >= 2 && p.length <= 45);
-                  if (nonGeneric.length > 0) return nonGeneric[0];
+                  if (nonGeneric.length > 0) return stripLegalEntityAndNoiseSuffixes(nonGeneric[0]);
                 }
-                return cleaned;
+                return stripLegalEntityAndNoiseSuffixes(cleaned);
               };
 
               const cleanDomKey = cleanDomainName(domain);
@@ -29931,19 +29932,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (knownBrand) {
                 title = knownBrand;
                 siteName = knownBrand;
-              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
-                title = cleanTitleString(jsonLdOrgName);
-                siteName = title;
+              } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
+                // Official Browser URL Tab <title> tag
+                title = cleanTitleString(htmlTagTitle);
+              } else if (rawTitle && !isGenericOrPlaceholderTitle(cleanTitleString(rawTitle))) {
+                // Official og:title / twitter:title
+                title = cleanTitleString(rawTitle);
               } else if (validSiteName) {
                 title = cleanTitleString(validSiteName);
+                siteName = title;
+              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
+                title = cleanTitleString(jsonLdOrgName);
                 siteName = title;
               } else if (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && !isAgencyOrBoilerplate(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 50) {
                 title = cleanTitleString(jsonLdWebSiteName);
                 siteName = title;
-              } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
-                title = cleanTitleString(htmlTagTitle);
-              } else if (rawTitle && !isGenericOrPlaceholderTitle(cleanTitleString(rawTitle))) {
-                title = cleanTitleString(rawTitle);
               } else if (validAppName) {
                 title = cleanTitleString(validAppName);
                 siteName = title;
@@ -29969,7 +29972,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
 
               if (!siteName) {
-                siteName = bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName || title;
+                siteName = title || bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName;
               }
 
               if (!description && jsonLdDesc) {

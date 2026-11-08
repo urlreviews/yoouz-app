@@ -263,7 +263,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         const meta = await res.json();
         const resolvedDomain = extractCleanDomain(meta.domain || meta.url || "");
         if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
-          const officialName = formatBusinessName(meta.siteName || meta.title || trimmed, resolvedDomain) || trimmed;
+          const officialName = formatBusinessName(meta.title || meta.siteName || trimmed, resolvedDomain) || trimmed;
           const newPlace: Place = {
             id: resolvedDomain,
             name: officialName,

@@ -639,7 +639,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           : "");
       const preloadedDescBrand = extractBrandFromDescription(preloadedMeta?.description, cleanUrl);
       const cleanedPreloadedTitle = isMetaMatchingCurrent
-        ? (preloadedDescBrand || formatBusinessName(preloadedMeta?.siteName || preloadedMeta?.title, cleanUrl))
+        ? (preloadedDescBrand || formatBusinessName(preloadedMeta?.title || preloadedMeta?.siteName, cleanUrl))
         : "";
       const instantName = (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
         || validPreferredName

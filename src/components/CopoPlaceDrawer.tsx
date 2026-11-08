@@ -833,9 +833,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     isDomainStemName(place.name, resolvedDomainClean)
                   )
                 );
-                const rawMetaName = (data.siteName && !isDomainStemName(data.siteName, resolvedDomainClean))
-                  ? data.siteName
-                  : (data.title && !isDomainStemName(data.title, resolvedDomainClean) ? data.title : (data.siteName || data.title));
+                const rawMetaName = (data.title && !isDomainStemName(data.title, resolvedDomainClean))
+                  ? data.title
+                  : (data.siteName && !isDomainStemName(data.siteName, resolvedDomainClean) ? data.siteName : (data.title || data.siteName));
                 const descExtractedBrand = extractBrandFromDescription(data.description || place.description, resolvedDomainClean);
                 const camelExtractedBrand = extractCamelCaseBrandFromText(data.description || place.description, resolvedDomainClean);
                 const resolvedTitle = (descExtractedBrand && isDomainStemName(rawMetaName, resolvedDomainClean))
@@ -857,7 +857,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   || descExtractedBrand
                   || validSelectedName
                   || cleanedCurrentPlaceName
-                  || formatBusinessName(data.siteName || data.title || place.name, resolvedDomainClean)
+                  || formatBusinessName(data.title || data.siteName || place.name, resolvedDomainClean)
                   || place.name;
 
                 if (bestPlaceName) {
