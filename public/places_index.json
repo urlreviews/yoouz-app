@@ -1,5 +1,55 @@
 [
   {
+    "id": "secondsightventures.com",
+    "name": "Second Sight Ventures",
+    "category": "Real Estate",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F6971b304cc01fc46937a9906%2F30887f0d-23f1-41cf-add9-1766672af413%2FSSV-Horizontal-Logo-FINAL-red-coolwater.png%3Fformat%3D1500w",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F6971b304cc01fc46937a9906%2F30887f0d-23f1-41cf-add9-1766672af413%2FSSV-Horizontal-Logo-FINAL-red-coolwater.png%3Fformat%3D1500w",
+    "bannerUrl": "/api/favicon?domain=secondsightventures.com",
+    "ogImage": "/api/favicon?domain=secondsightventures.com",
+    "photos": [
+      "/api/favicon?domain=secondsightventures.com"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "hannah@secondsightventures.com",
+    "website": "https://www.secondsightventures.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Investing in consumer brands and technology where culture creates the moat.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "secondsightventures.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "image": "/api/brand-banner/secondsightventures.com"
+  },
+  {
     "id": "anthoscapital.com",
     "name": "Anthos Capital",
     "category": "Website",

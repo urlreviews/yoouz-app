@@ -99,6 +99,7 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('lovable.dev') ||
     u.includes('pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev') ||
     u.includes('mock') ||
+    u.includes('/api/brand-banner') ||
     u.includes('1789810172562') ||
     u.includes('demdex.net') ||
     u.includes('demconf') ||
@@ -348,10 +349,10 @@ export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIC
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "anthoscapital.com": "/api/brand-banner/anthoscapital.com",
-  "www.anthoscapital.com": "/api/brand-banner/anthoscapital.com",
-  "anthos capital": "/api/brand-banner/anthoscapital.com",
-  "anthos": "/api/brand-banner/anthoscapital.com",
+  "anthoscapital.com": "/api/favicon?domain=anthoscapital.com",
+  "www.anthoscapital.com": "/api/favicon?domain=anthoscapital.com",
+  "anthos capital": "/api/favicon?domain=anthoscapital.com",
+  "anthos": "/api/favicon?domain=anthoscapital.com",
   "allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "www.allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "allincapital": ALL_IN_CAPITAL_LOGO_DATA_URI,
@@ -1018,8 +1019,6 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
-  "anthoscapital.com": "/api/brand-banner/anthoscapital.com",
-  "www.anthoscapital.com": "/api/brand-banner/anthoscapital.com",
   "threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "www.threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
@@ -1459,7 +1458,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  const effectiveBanner = bannerUrl || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : null);
+  const effectiveBanner = bannerUrl && !bannerUrl.includes("/api/brand-banner") ? bannerUrl : null;
   const isLowResFavicon = url && (isFaviconUrl(url) || url.includes("/api/favicon") || url.includes("favicon"));
 
   // If the only candidate is a blurry low-res favicon and an authentic brand banner is available, use the banner as the logo so it looks clean and matches
@@ -1472,6 +1471,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     url &&
     !isWhiteOrInvertedLogo(url) &&
     !isLowResFavicon &&
+    !url.includes("/api/brand-banner") &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
@@ -1479,7 +1479,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isWhiteOrInvertedLogo(url) && !isLowResFavicon) {
+  if (url && !isWhiteOrInvertedLogo(url) && !isLowResFavicon && !url.includes("/api/brand-banner")) {
     return getProxiedImageUrl(url);
   }
 
@@ -1491,7 +1491,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
 
   // High-res domain logo fallback
   if (cleanDomain) {
-    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;
@@ -1521,19 +1521,20 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 1. Direct match for known high-quality brand vector logos takes absolute precedence
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/brand-banner")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`] && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/brand-banner")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
 
-  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, or Wikimedia URLs for known brands)
+  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, fake banners, or Wikimedia URLs for known brands)
   if (
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
     !isFaviconUrl(place.logoUrl) &&
     !place.logoUrl.includes("/api/favicon") &&
+    !place.logoUrl.includes("/api/brand-banner") &&
     !isWhiteOrInvertedLogo(place.logoUrl) &&
     !place.logoUrl.includes("brandfetch.io") &&
     !place.logoUrl.includes("wikimedia.org") &&
@@ -1547,12 +1548,13 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.logoUrl);
   }
 
-  // 3. Explicit avatarUrl fallback (strictly rejecting any favicons, white SVGs, or .ico icons)
+  // 3. Explicit avatarUrl fallback
   if (
     place.avatarUrl &&
     place.avatarUrl.trim() !== "" &&
     !isFaviconUrl(place.avatarUrl) &&
     !place.avatarUrl.includes("/api/favicon") &&
+    !place.avatarUrl.includes("/api/brand-banner") &&
     !isWhiteOrInvertedLogo(place.avatarUrl) &&
     !place.avatarUrl.includes("brandfetch.io") &&
     place.avatarUrl !== "data:;" &&
@@ -1566,12 +1568,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 4. Fallback to banner if no standalone logo is available (so the logo is identical to the banner and never empty)
-  const banner = getPlaceBannerUrl(place);
-  if (banner && isValidImageUrl(banner) && !isBadBanner(banner)) {
-    return banner;
+  if (place.bannerUrl && !isBadBanner(place.bannerUrl) && !place.bannerUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.bannerUrl);
   }
 
-  // 5. Guaranteed high-resolution authentic domain logo fallback when neither a custom logo nor a banner is available
+  // 5. Guaranteed authentic domain favicon/logo fallback
   if (cleanDomain) {
     return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
@@ -1582,7 +1583,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 export function getLiveWebsiteBannerUrl(domain?: string | null): string {
   const cleanDomain = extractDomain(domain || "");
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
   return "";
 }
@@ -1610,22 +1611,31 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
 
   const cleanDomain = domain?.trim().replace(/^www\./, "").toLowerCase();
   if (cleanDomain) {
-    if (KNOWN_BRAND_BANNERS[cleanDomain]) {
+    if (KNOWN_BRAND_BANNERS[cleanDomain] && !KNOWN_BRAND_BANNERS[cleanDomain].includes("/api/brand-banner")) {
       return KNOWN_BRAND_BANNERS[cleanDomain];
     }
-    if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) {
+    if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`] && !KNOWN_BRAND_BANNERS[`www.${cleanDomain}`].includes("/api/brand-banner")) {
       return KNOWN_BRAND_BANNERS[`www.${cleanDomain}`];
     }
   }
 
-  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl) && !place.bannerUrl.startsWith("blob:")) {
+  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl) && !place.bannerUrl.includes("/api/brand-banner") && !place.bannerUrl.startsWith("blob:")) {
     return getProxiedImageUrl(place.bannerUrl);
   }
-  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
+  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage) && !place.ogImage.includes("/api/brand-banner")) {
     return getProxiedImageUrl(place.ogImage);
   }
+
+  // Fallback: If no photographic banner exists, use authentic logoUrl/avatarUrl as banner!
+  if (place.logoUrl && place.logoUrl.trim() !== "" && !isBadBanner(place.logoUrl) && !place.logoUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.logoUrl);
+  }
+  if (place.avatarUrl && place.avatarUrl.trim() !== "" && !isBadBanner(place.avatarUrl) && !place.avatarUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.avatarUrl);
+  }
+
   if (cleanDomain) {
-    return getLiveWebsiteBannerUrl(cleanDomain);
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return "";

@@ -331,6 +331,7 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("#") ||
       decoded.includes("paint0_linear") ||
       decoded.includes("credit-card") ||
+      decoded.includes("brand-banner") ||
       decoded.includes("unsplash.com") || 
       decoded.includes("pexels.com") ||
       decoded.includes("pixabay.com") ||
@@ -752,7 +753,7 @@ async function persistToDb(data: ResolvedBusinessData) {
               ? existingDoc.bannerUrl
               : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) 
                   ? KNOWN_BRAND_BANNERS[autoPlaceId] 
-                  : (autoPlaceId.includes('.') ? `/api/brand-banner/${encodeURIComponent(autoPlaceId)}` : ""))));
+                  : (autoPlaceId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}` : ""))));
 
     const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] 
       || (data.logo && !isGenericOrPlaceholderLogo(data.logo) ? data.logo : "")
@@ -28450,8 +28451,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear');
                 const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
 
-                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : (rowId.includes('.') ? `/api/brand-banner/${encodeURIComponent(rowId)}` : "")));
                 const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : (rowId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(rowId)}` : "")));
+                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : cleanLogo));
 
                 const result: ResolvedBusinessData = {
                   domain: rowId,
@@ -30256,7 +30257,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
                   image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
                 } else if (cleanDomain && cleanDomain.includes('.')) {
-                  image = `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
+                  image = logo || `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
                 } else {
                   image = "";
                 }
@@ -30532,7 +30533,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (!image || isBadBanner(image)) {
         image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
                 (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") ||
-                (cleanDomain && cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
+                (logo || (cleanDomain && cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : ""));
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -30773,9 +30774,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
             avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
             logoUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            bannerUrl: (image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : ""),
-            ogImage: (image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : ""),
-            photos: [(image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "")].filter(Boolean),
+            bannerUrl: (image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            ogImage: (image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            photos: [(image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : "")].filter(Boolean),
             openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
@@ -30847,7 +30848,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
-            const fallbackBanner = cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "";
+            const fallbackBanner = (logo && !isPlaceholderLogo(logo)) ? logo : (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
             const mergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
               ? existingDoc.bannerUrl
               : (!isBadBannerInternal(image)
@@ -30928,7 +30929,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               writePlacesIndex(currentPlaces);
             } catch (pErr) {}
 
-            image = mergedBanner || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
+            image = mergedBanner || logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
             logo = mergedLogo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
             effectiveAddress = mergedAddress || effectiveAddress;
             effectiveCity = mergedCity || effectiveCity;
@@ -30971,7 +30972,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         statusColor: 'emerald'
       });
 
-      const finalBanner = image || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
+      const finalBanner = image || logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
       const finalLogo = logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
 
       const resultPayload = { 
