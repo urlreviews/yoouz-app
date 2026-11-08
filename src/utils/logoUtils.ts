@@ -348,6 +348,10 @@ export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIC
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "anthoscapital.com": "https://anthoscapital.com/favicon.1db37ced.png",
+  "www.anthoscapital.com": "https://anthoscapital.com/favicon.1db37ced.png",
+  "anthos capital": "https://anthoscapital.com/favicon.1db37ced.png",
+  "anthos": "https://anthoscapital.com/favicon.1db37ced.png",
   "allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "www.allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "allincapital": ALL_IN_CAPITAL_LOGO_DATA_URI,
@@ -1014,6 +1018,8 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "anthoscapital.com": "/api/brand-banner/anthoscapital.com",
+  "www.anthoscapital.com": "/api/brand-banner/anthoscapital.com",
   "threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "www.threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
@@ -1453,11 +1459,9 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // Explicit authentic custom logo URL takes priority (strictly rejecting any favicons or low-res .ico icons)
+  // Explicit authentic custom logo URL takes priority
   if (
     url &&
-    !isFaviconUrl(url) &&
-    !url.includes("/api/favicon") &&
     !isWhiteOrInvertedLogo(url) &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
@@ -1466,7 +1470,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isFaviconUrl(url) && !url.includes("/api/favicon") && !isWhiteOrInvertedLogo(url)) {
+  if (url && !isWhiteOrInvertedLogo(url)) {
     return getProxiedImageUrl(url);
   }
 
@@ -1566,7 +1570,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
-export function getLiveWebsiteBannerUrl(_domain?: string | null): string {
+export function getLiveWebsiteBannerUrl(domain?: string | null): string {
+  const cleanDomain = extractDomain(domain || "");
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
+  }
   return "";
 }
 

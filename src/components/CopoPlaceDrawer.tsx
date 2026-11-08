@@ -760,8 +760,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
-      !isFaviconUrl(place.logoUrl) &&
-      !place.logoUrl.includes("/api/favicon") &&
       !isBrokenSvgDataUri(place.logoUrl) &&
       !place.logoUrl.startsWith("data:;") &&
       !place.logoUrl.includes("760X310") &&
@@ -803,7 +801,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
                 const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : (place.bannerUrl || ""));
-                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo) && !data.logo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(data.logo) && !isBrokenSvgDataUri(data.logo))
+                const resolvedLogo = (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isBrokenSvgDataUri(data.logo))
                   ? data.logo
                   : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl)) ? place.logoUrl : (resolvedBanner || place.logoUrl || ""));
                 
@@ -820,7 +818,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 if (isRealPhoto(resolvedBanner)) {
                   setFetchedBannerUrl(resolvedBanner);
                 }
-                if (resolvedLogo && !isFaviconUrl(resolvedLogo) && !resolvedLogo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(resolvedLogo) && !isBrokenSvgDataUri(resolvedLogo)) {
+                if (resolvedLogo && !isGenericOrPlaceholderLogo(resolvedLogo) && !isBrokenSvgDataUri(resolvedLogo)) {
                   setFetchedLogoUrl(resolvedLogo);
                 }
                 const resolvedDomainClean = (data.domain && isValidDomainUrl(data.domain))
@@ -950,7 +948,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     getPlaceBannerUrl(place);
 
   const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
-    ? (KNOWN_BRAND_BANNERS[drawerDomain] || getLiveWebsiteBannerUrl(drawerDomain) || "")
+    ? (KNOWN_BRAND_BANNERS[drawerDomain] || getLiveWebsiteBannerUrl(drawerDomain) || `/api/brand-banner/${encodeURIComponent(drawerDomain)}`)
     : "";
 
   const effectiveBanner =
@@ -1013,18 +1011,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     // Priority 0: Freshly resolved rich logo from live website enrichment
     if (
       fetchedLogoUrl &&
-      !isBrokenSvg(fetchedLogoUrl) &&
-      !fetchedLogoUrl.includes("/api/favicon") &&
-      (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))
+      !isBrokenSvg(fetchedLogoUrl)
     ) {
       return fetchedLogoUrl;
     }
 
     if (
       cachedMedia?.logoUrl &&
-      !isBrokenSvg(cachedMedia.logoUrl) &&
-      !cachedMedia.logoUrl.includes("/api/favicon") &&
-      (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))
+      !isBrokenSvg(cachedMedia.logoUrl)
     ) {
       return cachedMedia.logoUrl;
     }
@@ -1034,8 +1028,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (
       canonicalPlaceLogo && 
       !isBrokenSvg(canonicalPlaceLogo) &&
-      !canonicalPlaceLogo.includes("/api/favicon") &&
-      (!isFaviconUrl(canonicalPlaceLogo) || canonicalPlaceLogo.includes("size=256") || canonicalPlaceLogo.includes("sz=256")) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 
       !canonicalPlaceLogo.includes("LogoHeader") && 
@@ -1050,8 +1042,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
       !isBrokenSvg(v.placeLogoUrl) &&
-      !v.placeLogoUrl.includes("/api/favicon") &&
-      (!isFaviconUrl(v.placeLogoUrl) || v.placeLogoUrl.includes("size=256") || v.placeLogoUrl.includes("sz=256")) &&
       !v.placeLogoUrl.startsWith("data:;") && 
       v.placeLogoUrl.trim() !== "" && 
       !v.placeLogoUrl.includes("LogoHeader") && 

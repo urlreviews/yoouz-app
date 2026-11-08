@@ -1,5 +1,55 @@
 [
   {
+    "id": "anthoscapital.com",
+    "name": "Anthos Capital",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://anthoscapital.com/favicon.1db37ced.png",
+    "logoUrl": "https://anthoscapital.com/favicon.1db37ced.png",
+    "bannerUrl": "/api/brand-banner/anthoscapital.com",
+    "ogImage": "/api/brand-banner/anthoscapital.com",
+    "photos": [
+      "/api/brand-banner/anthoscapital.com"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+1 (424) 322-7082",
+    "email": "info@anthoscapital.com",
+    "website": "https://anthoscapital.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Anthos partners with innovative consumer and technology companies shaping the future.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "anthoscapital.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "customEdited": true
+  },
+  {
     "id": "oneragtime.com",
     "name": "One Ragtime",
     "category": "Healthcare & Medical",

@@ -91,14 +91,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
 
-    // 0. Explicit rich brand logo URL from place data/metadata (Always preferred over favicons)
+    // 0. Explicit rich brand logo URL from place data/metadata
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isFaviconUrl(logoUrl) &&
-      !isBrokenSvg(logoUrl) &&
-      !logoUrl.includes("/api/favicon")
+      !isBrokenSvg(logoUrl)
     ) {
       const proxiedLogo = getProxiedImageUrl(logoUrl);
       if (proxiedLogo) candidates.push(proxiedLogo);
@@ -115,10 +113,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 2. Locked verified authentic brand logo from previous successful load (never favicons)
+    // 2. Locked verified authentic brand logo from previous successful load
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
       const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
-      if (!isGenericOrPlaceholderLogo(locked) && !isFaviconUrl(locked) && !isBrokenSvg(locked) && !locked.includes("/api/favicon")) {
+      if (!isGenericOrPlaceholderLogo(locked) && !isBrokenSvg(locked)) {
         candidates.push(locked);
       }
     }
@@ -225,9 +223,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     const img = imgRef.current;
     if (img && currentSrc && img.complete && img.naturalWidth > 0) {
       const isSvg = Boolean(currentSrc.includes(".svg") || currentSrc.startsWith("data:image/svg") || currentSrc.includes("image/svg+xml"));
-      if (isSvg || (img.naturalWidth >= 64 && img.naturalHeight >= 64)) {
+      if (isSvg || (img.naturalWidth >= 16 && img.naturalHeight >= 16)) {
         KNOWN_LOADED_LOGOS.add(currentSrc);
-        if (cleanDomain && !currentSrc.includes("/api/favicon") && !isFaviconUrl(currentSrc)) {
+        if (cleanDomain) {
           LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
         }
         setLoadedSrc(currentSrc);
@@ -291,9 +289,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           onLoad={(e) => {
             const img = e.currentTarget;
             const isSvg = Boolean(currentSrc && (currentSrc.includes('.svg') || currentSrc.startsWith('data:image/svg') || currentSrc.includes('image/svg+xml')));
-            // Strictly reject tiny, low-resolution raster images (e.g. 12x16, 16x16, 32x32, 48x48 favicons).
-            // Magnifying low-res icons in 96px/128px badges results in blurry, pixelated graphics.
-            if (!isSvg && (img.naturalWidth < 64 || img.naturalHeight < 64)) {
+            // Strictly reject empty or broken raster images (accept authentic brand favicons >= 16px)
+            if (!isSvg && (img.naturalWidth < 16 || img.naturalHeight < 16)) {
               if (currentSrc) failedUrlsRef.current.add(currentSrc);
               setCandidateIdx((prev) => {
                 const next = prev + 1;
@@ -304,8 +301,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             }
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
-              // Only lock rich authentic logos, never lock generic favicons
-              if (cleanDomain && !currentSrc.includes("/api/favicon") && !isFaviconUrl(currentSrc)) {
+              if (cleanDomain) {
                 LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
               setLoadedSrc(currentSrc);

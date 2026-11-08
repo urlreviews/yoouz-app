@@ -743,18 +743,22 @@ async function persistToDb(data: ResolvedBusinessData) {
     } catch(e) {}
 
     // Resilient logo & banner preservation: NEVER overwrite a valid banner or logo with an empty string
-    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] 
-      || (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) ? data.logo : "")
-      || (existingRowData?.logoUrl && !isGenericOrPlaceholderLogo(existingRowData.logoUrl) && !isFaviconUrl(existingRowData.logoUrl) ? existingRowData.logoUrl : "")
-      || (existingDoc?.logoUrl && !isGenericOrPlaceholderLogo(existingDoc.logoUrl) && !isFaviconUrl(existingDoc.logoUrl) ? existingDoc.logoUrl : "");
-
-    const bannerUrl = (data.photo && !isBadBanner(data.photo)) 
-      ? data.photo 
+    const rawBanner = data.image || data.photo;
+    const bannerUrl = (rawBanner && !isBadBanner(rawBanner)) 
+      ? rawBanner 
       : (existingRowData?.bannerUrl && !isBadBanner(existingRowData.bannerUrl)
           ? existingRowData.bannerUrl
           : (existingDoc?.bannerUrl && !isBadBanner(existingDoc.bannerUrl)
               ? existingDoc.bannerUrl
-              : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) ? KNOWN_BRAND_BANNERS[autoPlaceId] : "")));
+              : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) 
+                  ? KNOWN_BRAND_BANNERS[autoPlaceId] 
+                  : (autoPlaceId.includes('.') ? `/api/brand-banner/${encodeURIComponent(autoPlaceId)}` : ""))));
+
+    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] 
+      || (data.logo && !isGenericOrPlaceholderLogo(data.logo) ? data.logo : "")
+      || (existingRowData?.logoUrl && !isGenericOrPlaceholderLogo(existingRowData.logoUrl) ? existingRowData.logoUrl : "")
+      || (existingDoc?.logoUrl && !isGenericOrPlaceholderLogo(existingDoc.logoUrl) ? existingDoc.logoUrl : "")
+      || (autoPlaceId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}` : "");
 
     // Calculate ground-truth rating from videoReviews
     const computedRating = await calculatePlaceRatingFromDb(autoPlaceId, resolvedName);
@@ -27958,7 +27962,8 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     const svgSelectors = [
       'header a[href="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
       'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
-      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg'
+      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg',
+      '.logo svg', '[class*="logo" i]:not([class*="mobile" i]) svg', '.brand svg', 'a.brand svg'
     ];
     for (const sel of svgSelectors) {
       const el = $(sel).first();
@@ -27975,7 +27980,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
             if (
               lowerSvg.includes('preserveaspectratio="none"') ||
               (lowerSvg.includes("<use") && lowerSvg.includes("#") && !lowerSvg.includes("<symbol")) ||
-              !/<svg[^>]*\bwidth=/i.test(lowerSvg)
+              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !lowerSvg.includes("viewbox"))
             ) {
               continue;
             }
@@ -27985,7 +27990,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
               .replace(/<mask[\s\S]*?<\/mask>/gi, "");
             if (!visibleSvg.includes("<rect")) {
               const nonNoneFills = [
-                ...Array.from(lowerSvg.matchAll(/fill=["']([^"']+)["']/g)).map(m => m[1].trim()),
+                ...Array.from(lowerSvg.matchAll(/fill=["']?([^"'\s>]+)["']?/g)).map(m => m[1].trim()),
                 ...Array.from(lowerSvg.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
               ].filter(f => f !== "none" && f !== "transparent");
               if (nonNoneFills.length > 0) {
@@ -27995,7 +28000,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
                 }
               }
               const nonNoneStrokes = [
-                ...Array.from(lowerSvg.matchAll(/stroke=["']([^"']+)["']/g)).map(m => m[1].trim()),
+                ...Array.from(lowerSvg.matchAll(/stroke=["']?([^"'\s>]+)["']?/g)).map(m => m[1].trim()),
                 ...Array.from(lowerSvg.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
               ].filter(s => s !== "none" && s !== "transparent");
               if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0) {
@@ -28023,23 +28028,21 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
   } catch(e) {}
 
-  // 6. High-resolution Web Icon links (strictly vector .svg or explicit sizes >= 128px; never low-res shortcut icons or favicons)
+  // 6. High-resolution & authentic Web Icon links from the HTML (<link rel="icon">, <link rel="shortcut icon">, <link rel="apple-touch-icon">)
   try {
     const siteIcons: { url: string; size: number }[] = [];
-    $('link[rel="icon"]').each((_: any, el: any) => {
+    $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel*="icon"]').each((_: any, el: any) => {
       const href = $(el).attr("href");
       const sizes = $(el).attr("sizes") || "";
       const typeAttr = ($(el).attr("type") || "").toLowerCase();
       if (href && typeAttr !== "image/x-icon" && typeAttr !== "image/vnd.microsoft.icon") {
         const lowerHref = href.toLowerCase();
         const isSvg = lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || typeAttr === "image/svg+xml";
-        const explicitSize = parseInt(sizes.split("x")[0], 10) || 0;
-        const sizeNum = isSvg ? 512 : explicitSize;
-        if (sizeNum >= 128) {
-          const abs = makeAbsolute(href);
-          if (abs && isValidCandidate(abs)) {
-            siteIcons.push({ url: abs, size: sizeNum });
-          }
+        const isPngOrWebp = lowerHref.endsWith(".png") || lowerHref.endsWith(".webp") || typeAttr.includes("png") || typeAttr.includes("webp");
+        const explicitSize = parseInt(sizes.split("x")[0], 10) || (isSvg ? 512 : (isPngOrWebp ? 128 : 64));
+        const abs = makeAbsolute(href);
+        if (abs && !isGenericOrPlaceholderLogo(abs)) {
+          siteIcons.push({ url: abs, size: explicitSize });
         }
       }
     });
@@ -28384,8 +28387,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
       const p = cachedEntry.data.photo || "";
       const l = cachedEntry.data.logo || "";
-      const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear") || p.includes("/api/brand-banner");
-      const isBadLogo = !l || isFaviconUrl(l) || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram");
+      const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear");
+      const isBadLogo = !l || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram") || isGenericOrPlaceholderLogo(l);
       const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || isBadPhoto || isBadLogo;
       if (!isMissing) {
         return cachedEntry.data;
@@ -28448,11 +28451,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
                 const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || formatBusinessName(rowName, rowId, cleanQ) || rowName;
-                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner');
-                const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isFaviconUrl(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
+                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear');
+                const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
 
-                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : ""));
-                const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : ""));
+                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : (rowId.includes('.') ? `/api/brand-banner/${encodeURIComponent(rowId)}` : "")));
+                const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : (rowId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(rowId)}` : "")));
 
                 const result: ResolvedBusinessData = {
                   domain: rowId,
@@ -30256,6 +30259,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   image = sanitizeProxy(domainBanners[cleanDomain]);
                 } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
                   image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
+                } else if (cleanDomain && cleanDomain.includes('.')) {
+                  image = `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
                 } else {
                   image = "";
                 }
@@ -30343,12 +30348,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
 
               if (image) {
-                if (!image.startsWith('http')) {
+                if (!image.startsWith('http') && !image.startsWith('/api/')) {
                   try {
                     image = new URL(image, finalUrl).toString();
                   } catch (e) {}
                 }
-                image = getHighQualityImageUrl(image);
+                if (!image.startsWith('/api/')) {
+                  image = getHighQualityImageUrl(image);
+                }
               }
 
               if (!siteName || siteName === domain) {
@@ -30528,7 +30535,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!image || isBadBanner(image)) {
         image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
-                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "");
+                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") ||
+                (cleanDomain && cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -30689,8 +30697,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         image = "";
       }
 
-      // Final logo guarantee: If no standalone non-white logo is found and a valid banner exists, use the banner image as the logo!
-      if ((!logo || isGenericOrPlaceholderLogo(logo) || logo.startsWith("/api/favicon")) && image && !isBadBanner(image)) {
+      // Final logo guarantee: If no standalone logo is found and a valid photographic banner exists, use the banner image as the logo!
+      if ((!logo || isGenericOrPlaceholderLogo(logo)) && image && !isBadBanner(image) && !image.includes("brand-banner")) {
         logo = image;
       } else if (!logo && cleanDomain && cleanDomain.includes(".")) {
         logo = `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
@@ -30767,11 +30775,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             rating: 5,
             totalReviews: 1,
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            bannerUrl: (image && !isBadBanner(image)) ? image : "",
-            ogImage: (image && !isBadBanner(image)) ? image : "",
-            photos: (image && !isBadBanner(image)) ? [image] : [],
+            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            bannerUrl: (image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : ""),
+            ogImage: (image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : ""),
+            photos: [(image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "")].filter(Boolean),
             openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
@@ -30838,21 +30846,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const redirectedCleanDom = cleanDomainName(finalUrl || "");
             const isRedirectedDomain = Boolean(redirectedCleanDom && redirectedCleanDom.includes(".") && redirectedCleanDom !== cleanDomain);
             const isStaleRedirectedLogo = (u?: string) => Boolean(isRedirectedDomain && u && typeof u === 'string' && u.toLowerCase().includes(cleanDomain));
-            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = Boolean(logo && !isPlaceholderLogo(logo));
 
-            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
+            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
+            const fallbackBanner = cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "";
             const mergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
               ? existingDoc.bannerUrl
               : (!isBadBannerInternal(image)
                   ? image
                   : (!forceRefresh && !isBadBannerInternal(existingDoc.bannerUrl)
                       ? existingDoc.bannerUrl
-                      : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
+                      : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : fallbackBanner)));
 
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
-            const domainLogoFallback = mergedBanner || (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "");
+            const domainLogoFallback = (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : (mergedBanner || ""));
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
             const mergedLogo = (isCustomUploadedLogo || (!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl)))
               ? existingDoc.logoUrl
@@ -30923,8 +30932,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               writePlacesIndex(currentPlaces);
             } catch (pErr) {}
 
-            image = mergedBanner;
-            logo = mergedLogo;
+            image = mergedBanner || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
+            logo = mergedLogo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
             effectiveAddress = mergedAddress || effectiveAddress;
             effectiveCity = mergedCity || effectiveCity;
             effectiveCountry = mergedCountry || effectiveCountry;
@@ -30966,11 +30975,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         statusColor: 'emerald'
       });
 
+      const finalBanner = image || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : "");
+      const finalLogo = logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
+
       const resultPayload = { 
         title, 
         description, 
-        image, 
-        logo, 
+        image: finalBanner, 
+        logo: finalLogo, 
         siteName, 
         domain: cleanDomain, 
         url: finalUrl,
@@ -31867,7 +31879,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const html = await siteResp.text();
           const $f = cheerio.load(html);
           const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
-          if (extractedLogo && !isFaviconUrl(extractedLogo)) {
+          if (extractedLogo) {
             if (extractedLogo.startsWith("data:image/svg+xml;utf8,")) {
               const svgContent = decodeURIComponent(extractedLogo.replace("data:image/svg+xml;utf8,", ""));
               res.setHeader("Content-Type", "image/svg+xml");
@@ -31897,10 +31909,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const s2Buf = Buffer.from(await s2Resp.arrayBuffer());
           // Ensure valid image payload (>200 bytes)
           if (s2Buf.length > 200) {
-            res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(s2Buf);
+            try {
+              const sharpPng = await sharp(s2Buf)
+                .resize(128, 128, { kernel: "lanczos3", fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .png()
+                .toBuffer();
+              res.setHeader("Content-Type", "image/png");
+              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(sharpPng);
+            } catch (sharpErr) {
+              res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
+              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(s2Buf);
+            }
           }
         }
       } catch (s2Err) {}
@@ -31917,10 +31940,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (ddgResp.ok) {
           const ddgBuf = Buffer.from(await ddgResp.arrayBuffer());
           if (ddgBuf.length > 200) {
-            res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(ddgBuf);
+            try {
+              const sharpPng = await sharp(ddgBuf)
+                .resize(128, 128, { kernel: "lanczos3", fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .png()
+                .toBuffer();
+              res.setHeader("Content-Type", "image/png");
+              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(sharpPng);
+            } catch (sharpErr) {
+              res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
+              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(ddgBuf);
+            }
           }
         }
       } catch (ddgErr) {}
