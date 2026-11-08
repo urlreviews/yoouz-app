@@ -1169,10 +1169,33 @@ export function prewarmBannerImage(url?: string | null): void {
 export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   if (!url || typeof url !== "string") return false;
   let l = url.trim().toLowerCase();
-  try { l = decodeURIComponent(l); } catch {}
+  try { l = decodeURIComponent(l).toLowerCase(); } catch {}
   if (l.includes("vitejs.dev/logo.svg") || l.includes("/vite.svg") || l.includes("travelperk-logo.svg")) return true;
-  if (l.startsWith("data:image/svg") && (l.includes("lg:hidden") || l.includes('aria-label="openai"') || !l.includes("width="))) {
-    return true;
+  if (l.startsWith("data:image/svg")) {
+    if (l.includes("lg:hidden") || l.includes('aria-label="openai"') || !l.includes("width=")) {
+      return true;
+    }
+    // Reject inline SVGs scraped from dark website headers that have white primary fills on a transparent background (no background <rect>)
+    if (!l.includes("<rect")) {
+      const nonNoneFills = Array.from(l.matchAll(/fill=["']([^"']+)["']/g))
+        .map(m => m[1].trim())
+        .filter(f => f !== "none" && f !== "transparent");
+      if (nonNoneFills.length > 0) {
+        const primaryFill = nonNoneFills[0];
+        if (primaryFill === "#fff" || primaryFill === "#ffffff" || primaryFill === "white" || primaryFill.startsWith("rgb(255")) {
+          return true;
+        }
+      }
+      const nonNoneStrokes = Array.from(l.matchAll(/stroke=["']([^"']+)["']/g))
+        .map(m => m[1].trim())
+        .filter(s => s !== "none" && s !== "transparent");
+      if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0) {
+        const primaryStroke = nonNoneStrokes[0];
+        if (primaryStroke === "#fff" || primaryStroke === "#ffffff" || primaryStroke === "white" || primaryStroke.startsWith("rgb(255")) {
+          return true;
+        }
+      }
+    }
   }
   return false;
 }
@@ -1403,7 +1426,7 @@ export function isFaviconUrl(url?: string | null): boolean {
   return l.includes("favicon");
 }
 
-export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null): string | null {
+export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, bannerUrl?: string | null): string | null {
   const cleanDomain = extractDomain(domain || url);
   if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
     return YOOUZ_LOGO_DATA_URI;
@@ -1416,6 +1439,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   if (
     url &&
     !isFaviconUrl(url) &&
+    !url.includes("/api/favicon") &&
     !isWhiteOrInvertedLogo(url) &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
@@ -1424,7 +1448,15 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isFaviconUrl(url)) return getProxiedImageUrl(url);
+  if (url && !isFaviconUrl(url) && !url.includes("/api/favicon") && !isWhiteOrInvertedLogo(url)) {
+    return getProxiedImageUrl(url);
+  }
+
+  // If no valid standalone logo exists and a valid banner is available, use the banner image as the logo
+  if (bannerUrl && !isBadBanner(bannerUrl)) {
+    const proxiedBanner = getProxiedImageUrl(bannerUrl);
+    if (proxiedBanner) return proxiedBanner;
+  }
 
   // High-res domain logo fallback
   if (cleanDomain) {
@@ -1465,11 +1497,12 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
 
-  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, or Wikimedia URLs for known brands)
+  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, or Wikimedia URLs for known brands)
   if (
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
     !isFaviconUrl(place.logoUrl) &&
+    !place.logoUrl.includes("/api/favicon") &&
     !isWhiteOrInvertedLogo(place.logoUrl) &&
     !place.logoUrl.includes("brandfetch.io") &&
     !place.logoUrl.includes("wikimedia.org") &&
@@ -1483,11 +1516,13 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.logoUrl);
   }
 
-  // 3. Explicit avatarUrl fallback (strictly rejecting any favicons or .ico icons)
+  // 3. Explicit avatarUrl fallback (strictly rejecting any favicons, white SVGs, or .ico icons)
   if (
     place.avatarUrl &&
     place.avatarUrl.trim() !== "" &&
     !isFaviconUrl(place.avatarUrl) &&
+    !place.avatarUrl.includes("/api/favicon") &&
+    !isWhiteOrInvertedLogo(place.avatarUrl) &&
     !place.avatarUrl.includes("brandfetch.io") &&
     place.avatarUrl !== "data:;" &&
     !place.avatarUrl.startsWith("data:;") &&
@@ -1499,15 +1534,15 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.avatarUrl);
   }
 
-  // 4. Guaranteed high-resolution authentic domain logo fallback for any verified web business
-  if (cleanDomain) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+  // 4. Fallback to banner if no standalone logo is available (so the logo is identical to the banner and never empty)
+  const banner = getPlaceBannerUrl(place);
+  if (banner && isValidImageUrl(banner) && !isBadBanner(banner)) {
+    return banner;
   }
 
-  // 5. Fallback to banner if no logo is available (so logo is never empty)
-  const banner = getPlaceBannerUrl(place);
-  if (banner && isValidImageUrl(banner)) {
-    return banner;
+  // 5. Guaranteed high-resolution authentic domain logo fallback when neither a custom logo nor a banner is available
+  if (cleanDomain) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;

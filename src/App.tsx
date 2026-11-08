@@ -47,7 +47,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText } from "./utils/placeUtils";
-import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
@@ -4523,7 +4523,9 @@ export function App() {
           fetchedPlace.bannerUrl &&
           !fetchedPlace.bannerUrl.includes('placeholder') &&
           fetchedPlace.logoUrl &&
-          !isFaviconUrl(fetchedPlace.logoUrl)
+          !isFaviconUrl(fetchedPlace.logoUrl) &&
+          !fetchedPlace.logoUrl.includes('/api/favicon') &&
+          !isWhiteOrInvertedLogo(fetchedPlace.logoUrl)
         );
 
         if (fetchedPlace && fetchedPlace.id) {
@@ -4538,7 +4540,17 @@ export function App() {
           setPlaces(prev => {
             const exists = prev.some(p => p.id === fetchedPlace.id);
             if (exists) {
-              return prev.map(p => p.id === fetchedPlace.id ? { ...p, ...fetchedPlace } : p);
+              return prev.map(p => {
+                if (p.id !== fetchedPlace.id) return p;
+                const keepExistingName = p.name && !isDomainStemName(p.name, fetchedPlace.id) && isDomainStemName(fetchedPlace.name, fetchedPlace.id);
+                return {
+                  ...p,
+                  ...fetchedPlace,
+                  name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
+                  bannerUrl: (fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || ""),
+                  logoUrl: (fetchedPlace.logoUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon')) ? fetchedPlace.logoUrl : ((p.logoUrl && !isWhiteOrInvertedLogo(p.logoUrl)) ? p.logoUrl : (fetchedPlace.bannerUrl || p.bannerUrl || fetchedPlace.logoUrl || ""))
+                };
+              });
             }
             return [fetchedPlace, ...prev];
           });
@@ -4561,10 +4573,10 @@ export function App() {
               if (metaData && (metaData.title || metaData.domain)) {
                 const isValidLogo = (l?: string | null): boolean => {
                   if (!l || typeof l !== "string") return false;
-                  if (l.startsWith("data:;") || l.includes("brandfetch.io") || isFaviconUrl(l)) return false;
+                  if (l.startsWith("data:;") || l.includes("brandfetch.io") || isFaviconUrl(l) || l.includes("/api/favicon") || isWhiteOrInvertedLogo(l)) return false;
                   return true;
                 };
-                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
+                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon') && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
                 const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
                 const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
                 const officialName = (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || validSelected;
@@ -4601,7 +4613,7 @@ export function App() {
                   : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
                 const effectiveLogoCandidate = (isValidLogo(metaData.logo)) 
                   ? metaData.logo 
-                  : (existingValidLogo || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom) || '') : ''));
+                  : (existingValidLogo || effectiveBannerCandidate || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : ''));
                 const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
                 const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {

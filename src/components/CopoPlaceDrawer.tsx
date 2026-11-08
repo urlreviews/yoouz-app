@@ -53,7 +53,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription, extractCamelCaseBrandFromText } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -756,11 +756,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 
     const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
-    const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden")));
+    const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
       !isFaviconUrl(place.logoUrl) &&
+      !place.logoUrl.includes("/api/favicon") &&
       !isBrokenSvgDataUri(place.logoUrl) &&
       !place.logoUrl.startsWith("data:;") &&
       !place.logoUrl.includes("760X310") &&
@@ -801,7 +802,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
                 const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : (place.bannerUrl || ""));
-                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo) && !isGenericOrPlaceholderLogo(data.logo)) ? data.logo : ((hasValidLogo && place.logoUrl) ? place.logoUrl : (place.logoUrl || ""));
+                const resolvedLogo = (data.logo && !isFaviconUrl(data.logo) && !data.logo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(data.logo) && !isBrokenSvgDataUri(data.logo))
+                  ? data.logo
+                  : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl)) ? place.logoUrl : (resolvedBanner || place.logoUrl || ""));
                 
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
@@ -816,7 +819,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 if (isRealPhoto(resolvedBanner)) {
                   setFetchedBannerUrl(resolvedBanner);
                 }
-                if (resolvedLogo && !isFaviconUrl(resolvedLogo) && !isGenericOrPlaceholderLogo(resolvedLogo)) {
+                if (resolvedLogo && !isFaviconUrl(resolvedLogo) && !resolvedLogo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(resolvedLogo) && !isBrokenSvgDataUri(resolvedLogo)) {
                   setFetchedLogoUrl(resolvedLogo);
                 }
                 const resolvedDomainClean = (data.domain && isValidDomainUrl(data.domain))
@@ -1003,14 +1006,25 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden")));
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const fallbackBannerLogo = effectiveBanner || allPhotos[0] || place.bannerUrl || place.ogImage || "";
 
     // Priority 0: Freshly resolved rich logo from live website enrichment
-    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl) && (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))) {
+    if (
+      fetchedLogoUrl &&
+      !isBrokenSvg(fetchedLogoUrl) &&
+      !fetchedLogoUrl.includes("/api/favicon") &&
+      (!isFaviconUrl(fetchedLogoUrl) || fetchedLogoUrl.includes("size=256") || fetchedLogoUrl.includes("sz=256"))
+    ) {
       return fetchedLogoUrl;
     }
 
-    if (cachedMedia?.logoUrl && !isBrokenSvg(cachedMedia.logoUrl) && (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))) {
+    if (
+      cachedMedia?.logoUrl &&
+      !isBrokenSvg(cachedMedia.logoUrl) &&
+      !cachedMedia.logoUrl.includes("/api/favicon") &&
+      (!isFaviconUrl(cachedMedia.logoUrl) || cachedMedia.logoUrl.includes("size=256") || cachedMedia.logoUrl.includes("sz=256"))
+    ) {
       return cachedMedia.logoUrl;
     }
 
@@ -1019,6 +1033,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (
       canonicalPlaceLogo && 
       !isBrokenSvg(canonicalPlaceLogo) &&
+      !canonicalPlaceLogo.includes("/api/favicon") &&
       (!isFaviconUrl(canonicalPlaceLogo) || canonicalPlaceLogo.includes("size=256") || canonicalPlaceLogo.includes("sz=256")) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 
@@ -1027,12 +1042,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !canonicalPlaceLogo.includes("tap/0.png") &&
       !canonicalPlaceLogo.includes("icons/tap")
     ) {
-      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain) || canonicalPlaceLogo;
+      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain, fallbackBannerLogo) || canonicalPlaceLogo;
     }
 
     // Priority 2: Video review logo
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
+      !isBrokenSvg(v.placeLogoUrl) &&
+      !v.placeLogoUrl.includes("/api/favicon") &&
       (!isFaviconUrl(v.placeLogoUrl) || v.placeLogoUrl.includes("size=256") || v.placeLogoUrl.includes("sz=256")) &&
       !v.placeLogoUrl.startsWith("data:;") && 
       v.placeLogoUrl.trim() !== "" && 
@@ -1042,12 +1059,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !v.placeLogoUrl.includes("icons/tap")
     ));
     if (matchingVidWithLogo?.placeLogoUrl) {
-      return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain) || matchingVidWithLogo.placeLogoUrl;
+      return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain, fallbackBannerLogo) || matchingVidWithLogo.placeLogoUrl;
     }
 
-    if (drawerDomain) return getCleanLogoUrl(null, drawerDomain);
+    // Priority 3: If there is a valid banner and no standalone logo, use the banner image as the logo so they match and the logo is never empty
+    if (fallbackBannerLogo && !isBadBanner(fallbackBannerLogo)) {
+      return getProxiedImageUrl(fallbackBannerLogo) || fallbackBannerLogo;
+    }
+
+    if (drawerDomain) return getCleanLogoUrl(null, drawerDomain, fallbackBannerLogo);
     return null;
-  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, cachedMedia]);
+  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, cachedMedia, effectiveBanner, allPhotos]);
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Building2 } from "lucide-react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -78,7 +78,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const candidates: string[] = [];
 
-    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden")));
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
 
     // 0. Explicit rich brand logo URL from place data/metadata (Always preferred over favicons)
     if (
@@ -112,27 +112,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 3. Fallback explicit logoUrl if it was a high-res favicon or icon
-    if (
-      logoUrl &&
-      logoUrl.trim() !== "" &&
-      !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isBrokenSvg(logoUrl)
-    ) {
-      const proxiedLogo = getProxiedImageUrl(logoUrl);
-      if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
-      if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
-    }
-
-    // 4. Direct apple-touch-icon on authentic domain (standard high-res 180x180 app icon)
-    if (cleanDomain && cleanDomain.includes(".")) {
-      const appleTouchUrl = `https://${cleanDomain}/apple-touch-icon.png`;
-      const proxiedApple = getProxiedImageUrl(appleTouchUrl);
-      if (proxiedApple) candidates.push(proxiedApple);
-      candidates.push(appleTouchUrl);
-    }
-
-    // 4. Hero Banner Brand Fallback: If no standalone logo is available, use the authentic hero banner artwork as brand graphic
+    // 3. Hero Banner Brand Fallback: Whenever no standalone logo is available (or it failed/was white), use the authentic hero banner artwork as the logo
     if (
       bannerUrl &&
       bannerUrl.trim() !== "" &&
@@ -146,6 +126,18 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       if (!candidates.includes(bannerUrl)) {
         candidates.push(bannerUrl);
       }
+    }
+
+    // 4. Fallback explicit logoUrl if it was a high-res favicon or icon
+    if (
+      logoUrl &&
+      logoUrl.trim() !== "" &&
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isBrokenSvg(logoUrl)
+    ) {
+      const proxiedLogo = getProxiedImageUrl(logoUrl);
+      if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
+      if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
     // 5. Domain brand logo via server proxy
@@ -176,7 +168,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   );
 
   const activeImageClass = isBannerAsLogo
-    ? "w-full h-full object-cover rounded-xl sm:rounded-2xl"
+    ? "w-full h-full object-cover rounded-[16px] sm:rounded-[20px]"
     : imageClassName;
 
   // Reset index when domain/logoUrl/bannerUrl changes
