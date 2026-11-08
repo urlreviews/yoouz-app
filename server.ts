@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -29267,7 +29267,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 || (!isLogoOrIconUrl(pData.image) ? pData.image : "") 
                 || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
                 || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
-              const resolvedEntity = row.name || (matchedDom ? (KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()] || formatBusinessName(matchedDom)) : rawQuery);
+              const resolvedEntity = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
               return res.json({
                 title: resolvedEntity,
                 description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
@@ -29884,17 +29884,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 description = jsonLdDesc;
               }
 
-              // If title resolved to a 1-word domain stem (e.g. "Adaptvc"), upgrade from multi-word siteName or description subject (e.g. "Adapt Ventures")
-              if (title && !title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot) {
-                if (siteName && siteName.includes(' ') && !isGenericOrPlaceholderTitle(siteName)) {
+              // Align title with domain suffix (e.g. <title>Red Swan</title> on redswanventures.com -> "Red Swan Ventures")
+              if (title && cleanDomKey) {
+                title = alignTitleWithDomain(title, cleanDomKey);
+              }
+              if (siteName && cleanDomKey) {
+                siteName = alignTitleWithDomain(siteName, cleanDomKey);
+              }
+
+              // Scan page headings, footer copyright, and description for exact multi-word brand alignment matching domRoot
+              if (cleanDomKey && (!title || isDomainStemName(title, cleanDomKey))) {
+                const pageBrandText = [
+                  htmlTagTitle,
+                  rawTitle,
+                  rawSiteName,
+                  description,
+                  $ ? $('h1, h2, footer, .footer, [class*="footer"], [class*="copyright"]').text() : ''
+                ].filter(Boolean).join(' | ');
+                const alignedFromPage = extractDomainAlignedNameFromText(pageBrandText, cleanDomKey);
+                if (alignedFromPage) {
+                  title = alignedFromPage;
+                  siteName = alignedFromPage;
+                }
+              }
+
+              // If title resolved to a 1-word or partial domain stem (e.g. "Adaptvc"), upgrade from multi-word siteName or description subject (e.g. "Adapt Ventures")
+              if (title && ((!title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot) || isDomainStemName(title, cleanDomKey))) {
+                if (siteName && siteName.includes(' ') && !isGenericOrPlaceholderTitle(siteName) && !isDomainStemName(siteName, cleanDomKey)) {
                   title = cleanTitleString(siteName);
                 } else if (description) {
-                  const descBrandMatch = description.trim().match(/^([A-Z0-9][A-Za-z0-9&'’\.\-]*(?:\s+[A-Z0-9][A-Za-z0-9&'’\.\-]*){1,3})\s+(?:is\s+a|is\s+an|is\s+the|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+)/);
-                  if (descBrandMatch && descBrandMatch[1] && descBrandMatch[1].length <= 42) {
-                    title = descBrandMatch[1].trim();
+                  const descBrandMatch = extractBrandFromDescription(description, cleanDomKey);
+                  if (descBrandMatch && descBrandMatch.length <= 42) {
+                    title = descBrandMatch.trim();
                     siteName = title;
                   }
                 }
+              }
+
+              if (title && cleanDomKey) {
+                title = formatBusinessName(title, cleanDomKey) || title;
+              }
+              if (siteName && cleanDomKey) {
+                siteName = formatBusinessName(siteName, cleanDomKey) || siteName;
               }
 
               // 5. EXTRACT BANNER IMAGE & PAGE PHOTOS
@@ -30621,12 +30652,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const cleanDomainExact = cleanDomain.toLowerCase();
             
             // Protection: If the existing name is already a high-quality name, don't let it be overwritten by a generic title,
-            // EXCEPT when existingName is merely a 1-word domain stem (like "Adaptvc") and autoPlaceName is a multi-word brand name (like "Adapt Ventures")!
+            // EXCEPT when rawExistingName is a 1-word or partially-split domain stem (like "Adaptvc", "Allin Capital", "Redswan Ventures") and autoPlaceName is a better multi-word brand name!
             const rawExistingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
             const existingName = formatBusinessName(rawExistingName, cleanDomain) || rawExistingName;
-            const isExistingOneWordStem = !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean || isDomainStemName(existingName, cleanDomain));
-            const hasBetterMultiWordName = Boolean(autoPlaceName && !isDomainStemName(autoPlaceName, cleanDomain) && (autoPlaceName.includes(" ") || autoPlaceName !== existingName));
-            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 2 && !(isExistingOneWordStem && hasBetterMultiWordName);
+            const isExistingStem = !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean) || isDomainStemName(rawExistingName, cleanDomain) || isDomainStemName(existingName, cleanDomain);
+            const hasBetterMultiWordName = Boolean(autoPlaceName && !isDomainStemName(autoPlaceName, cleanDomain) && (autoPlaceName.split(/\s+/).length >= existingName.split(/\s+/).length || autoPlaceName !== existingName));
+            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 2 && !(isExistingStem && hasBetterMultiWordName);
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
@@ -37170,6 +37201,30 @@ function injectOpenGraphTags(html: string, meta: any) {
       // 2. Purge only broken, unnamed, or legacy synthesized .co.il fallback place records
       await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR id IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il')").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'Elaia' WHERE LOWER(id) IN ('elaia.com', 'www.elaia.com') AND name != 'Elaia'").catch(() => {});
+      await bunnyDb.execute("UPDATE places SET name = 'All In Capital' WHERE LOWER(id) IN ('allincapital.vc', 'www.allincapital.vc') OR LOWER(name) = 'allin capital'").catch(() => {});
+      await bunnyDb.execute("UPDATE places SET name = 'Red Swan Ventures' WHERE LOWER(id) IN ('redswanventures.com', 'www.redswanventures.com') OR LOWER(name) IN ('redswan ventures', 'red swan')").catch(() => {});
+      await bunnyDb.execute("UPDATE places SET name = 'Red Sea Ventures' WHERE LOWER(id) IN ('redseaventures.com', 'www.redseaventures.com') OR LOWER(name) = 'redsea ventures'").catch(() => {});
+      await bunnyDb.execute("UPDATE videoReviews SET placeName = 'All In Capital' WHERE LOWER(placeId) IN ('allincapital.vc', 'www.allincapital.vc') OR LOWER(placeName) = 'allin capital'").catch(() => {});
+      await bunnyDb.execute("UPDATE videoReviews SET placeName = 'Red Swan Ventures' WHERE LOWER(placeId) IN ('redswanventures.com', 'www.redswanventures.com') OR LOWER(placeName) = 'redswan ventures'").catch(() => {});
+      await bunnyDb.execute("UPDATE videoReviews SET placeName = 'Red Sea Ventures' WHERE LOWER(placeId) IN ('redseaventures.com', 'www.redseaventures.com') OR LOWER(placeName) = 'redsea ventures'").catch(() => {});
+
+      // Heal any other existing place records in BunnyDB whose name had an unsplit compound stem
+      const allPlacesRs = await bunnyDb.execute("SELECT id, name, data FROM places").catch(() => null);
+      if (allPlacesRs && allPlacesRs.rows) {
+        for (const r of allPlacesRs.rows as any[]) {
+          if (!r || !r.id || !r.name) continue;
+          const healed = formatBusinessName(r.name, r.id);
+          if (healed && healed !== r.name && healed.split(/\s+/).length >= r.name.split(/\s+/).length) {
+            let dObj: any = {};
+            try { dObj = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch {}
+            dObj.name = healed;
+            await bunnyDb.execute({
+              sql: "UPDATE places SET name = ?, data = ? WHERE id = ?",
+              args: [healed, JSON.stringify(dObj), r.id]
+            }).catch(() => {});
+          }
+        }
+      }
       console.log("🧹 [Server] Cleaned up broken and unnamed place records safely.");
     } catch (e) {
       console.warn("Purge notice:", e);

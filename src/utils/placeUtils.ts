@@ -998,11 +998,28 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "undersccore vc": "Underscore VC",
   "7pc.vc": "7percent Ventures",
   "10mk.com": "10MK",
-  "channel4ventures.com": "Channel 4 Ventures"
+  "channel4ventures.com": "Channel 4 Ventures",
+  "allincapital.vc": "All In Capital",
+  "www.allincapital.vc": "All In Capital",
+  "allincapital": "All In Capital",
+  "all in capital": "All In Capital",
+  "allin capital": "All In Capital",
+  "all-in capital": "All In Capital",
+  "redswanventures.com": "Red Swan Ventures",
+  "www.redswanventures.com": "Red Swan Ventures",
+  "redswanventures": "Red Swan Ventures",
+  "redswan ventures": "Red Swan Ventures",
+  "red swan ventures": "Red Swan Ventures",
+  "red swan": "Red Swan Ventures",
+  "redseaventures.com": "Red Sea Ventures",
+  "www.redseaventures.com": "Red Sea Ventures",
+  "redseaventures": "Red Sea Ventures",
+  "redsea ventures": "Red Sea Ventures",
+  "red sea ventures": "Red Sea Ventures"
 };
 
 export const BRAND_ACRONYMS = new Set([
-  "VC", "WS", "SV", "FJ", "GV", "TCV", "IVP", "GGV", "NEA", "CRV", "USV", "NFX", "DCVC", "SVB",
+  "VC", "WS", "SV", "FJ", "GV", "TCV", "IVP", "GGV", "NEA", "CRV", "USV", "NFX", "DCVC", "SVB", "RSV",
   "2B", "3M", "10MK", "7PC", "B2B", "B2C", "D2C", "C2C", "AI", "ML", "NLP", "LLM", "API", "SDK", "SAAS", "PAAS", "IAAS",
   "IO", "IT", "IP", "HR", "PR", "IR", "VR", "AR", "XR", "MR", "TV", "FM", "AM", "DJ", "MC",
   "PE", "LP", "GP", "IPO", "ROI", "KPI", "ESG", "DEI", "R&D", "M&A",
@@ -1022,9 +1039,117 @@ export const BRAND_ACRONYMS = new Set([
   "2D", "3D", "4D", "4K", "8K", "HD", "FHD", "UHD", "QHD", "VR", "BH", "LM", "JB", "LUMO", "SMOK", "KAYA", "10MK", "3M"
 ]);
 
+const DOMAIN_ENTITY_SUFFIXES = new Set([
+  "ventures", "venture", "capital", "partners", "partner", "labs", "lab", "group",
+  "studio", "studios", "media", "agency", "holdings", "holding", "fund", "funds",
+  "investments", "investment", "advisors", "advisory", "consulting", "vc",
+  "law", "legal", "firm", "lawyers", "attorneys", "dental", "clinic", "clinics",
+  "care", "health", "wellness", "hotel", "hotels", "resort", "resorts", "motors",
+  "auto", "leasing", "realty", "homes", "properties", "bank", "banking", "finance",
+  "financial", "insurance", "tech", "technologies", "technology", "systems",
+  "solutions", "services", "global", "international", "collective", "network",
+  "associates", "management"
+]);
+
 /**
- * Checks if a candidate business name is merely a raw domain or a 1-word unsplit domain stem
- * (e.g., "Adaptvc", "Phoenixcourt", or "adaptvc.com" for domain "adaptvc.com" / "phoenixcourt.co").
+ * Aligns a website's <title> or og:site_name with its domain name when the title
+ * is the brand prefix of the domain (e.g. <title>Red Swan</title> on redswanventures.com -> "Red Swan Ventures").
+ */
+export function alignTitleWithDomain(titleStr?: string | null, domain?: string | null): string {
+  if (!titleStr || !titleStr.trim()) return "";
+  const trimmed = titleStr.trim();
+  if (!domain) return trimmed;
+  const cleanDom = extractCleanDomain(domain);
+  if (!cleanDom) return trimmed;
+
+  if (KNOWN_OFFICIAL_NAMES[cleanDom]) {
+    return KNOWN_OFFICIAL_NAMES[cleanDom];
+  }
+
+  const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const titleAlpha = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  if (domRoot && titleAlpha && domRoot.length > titleAlpha.length && domRoot.startsWith(titleAlpha)) {
+    const rem = domRoot.slice(titleAlpha.length);
+    if (DOMAIN_ENTITY_SUFFIXES.has(rem)) {
+      const formattedSuffix = BRAND_ACRONYMS.has(rem.toUpperCase())
+        ? rem.toUpperCase()
+        : rem.charAt(0).toUpperCase() + rem.slice(1).toLowerCase();
+      return `${trimmed} ${formattedSuffix}`;
+    }
+  }
+  return trimmed;
+}
+
+/**
+ * Scans scraped text (e.g., <title>, og:site_name, og:title, footer, h1, description) for a multi-word
+ * brand phrase whose alphanumeric characters match the domain root (or domain prefix + entity suffix).
+ * e.g., finds "All In Capital" for allincapital.vc, "Red Swan Ventures" for redswanventures.com, "Red Sea Ventures" for redseaventures.com.
+ */
+export function extractDomainAlignedNameFromText(text?: string | null, domain?: string | null): string | null {
+  if (!text || !domain) return null;
+  const cleanDom = extractCleanDomain(domain);
+  if (!cleanDom) return null;
+  if (KNOWN_OFFICIAL_NAMES[cleanDom]) return KNOWN_OFFICIAL_NAMES[cleanDom];
+
+  const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!domRoot || domRoot.length < 4) return null;
+
+  // Tokenize text into word sequences (allowing internal hyphens like "All-In Capital")
+  const wordRegex = /[A-Za-z0-9][\p{L}0-9&'’\-]*/gu;
+  const matches = Array.from(text.matchAll(wordRegex));
+  if (matches.length === 0) return null;
+
+  for (let i = 0; i < matches.length; i++) {
+    let combinedAlpha = "";
+    const words: string[] = [];
+    const startIdx = matches[i].index ?? 0;
+
+    // Skip if preceded by URL/email characters
+    if (startIdx > 0 && /[/@.]/.test(text[startIdx - 1])) continue;
+
+    for (let j = i; j < Math.min(i + 5, matches.length); j++) {
+      if (j > i) {
+        const prevEnd = (matches[j - 1].index ?? 0) + matches[j - 1][0].length;
+        const currStart = matches[j].index ?? 0;
+        const between = text.slice(prevEnd, currStart);
+        // Words in a multi-word name must only be separated by whitespace or a single hyphen
+        if (!/^[\s\-]+$/.test(between) || between.includes("\n")) break;
+      }
+
+      const rawWord = matches[j][0];
+      const wordEnd = (matches[j].index ?? 0) + rawWord.length;
+      // Skip if followed immediately by a domain dot (e.g. "redswanventures.com")
+      if (text[wordEnd] === "." && /^[a-z]{2,}/i.test(text.slice(wordEnd + 1, wordEnd + 6))) break;
+
+      const alpha = rawWord.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!alpha) break;
+
+      combinedAlpha += alpha;
+      // Expand hyphenated words like "All-In" into "All In" if they match domRoot
+      if (rawWord.includes("-")) {
+        words.push(...rawWord.split("-").filter(Boolean));
+      } else {
+        words.push(rawWord);
+      }
+
+      if (combinedAlpha === domRoot && words.length >= 2) {
+        const candidate = toTitleCase(words.join(" "));
+        if (!isFalseSplitOfDomain(candidate, cleanDom)) {
+          return candidate;
+        }
+      }
+
+      if (combinedAlpha.length >= domRoot.length) break;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Checks if a candidate business name is merely a raw domain or an unsplit/partially-split domain stem
+ * (e.g., "Adaptvc", "Allin Capital", "Redswan Ventures", or "adaptvc.com").
  * Legitimate single-word brand names (e.g., "Elaia", "Felicis", "Proximus") return false.
  */
 export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
@@ -1035,14 +1160,36 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
 
   // If it's a verified known official name with exact match (even if it contains .vc or .com like "2B.VC"), it is NOT a stem
   const knownOfficial = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || (cleanName && KNOWN_OFFICIAL_NAMES[cleanName]);
-  if (knownOfficial && (trimmed.toLowerCase() === knownOfficial.toLowerCase() || trimmed === knownOfficial)) {
-    return false;
+  if (knownOfficial) {
+    if (trimmed.toLowerCase() === knownOfficial.toLowerCase()) {
+      return false;
+    }
+    // If knownOfficial has different spacing (e.g. "All In Capital" vs "Allin Capital", "Red Swan Ventures" vs "Redswan Ventures"), then trimmed IS a stem!
+    if (knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName) {
+      return true;
+    }
   }
 
   if (isValidDomainUrl(trimmed) || /\.(com|net|org|io|vc|co|ai|app|dev|be|nl|de|fr|uk|ae|il)$/i.test(trimmed)) {
     return true;
   }
-  if (trimmed.includes(" ")) return false;
+
+  if (trimmed.includes(" ")) {
+    // Check if a multi-word string is a partially-split domain stem (e.g. "Allin Capital" or "Redswan Ventures")
+    // where splitting compound words yields more words (e.g. "All In Capital" or "Red Swan Ventures")
+    const rescanned = splitCompoundWords(trimmed);
+    if (rescanned.split(/\s+/).length > trimmed.split(/\s+/).length) {
+      return true;
+    }
+    if (cleanDom) {
+      const aligned = alignTitleWithDomain(trimmed, cleanDom);
+      if (aligned !== trimmed && aligned.split(/\s+/).length > trimmed.split(/\s+/).length) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   if (!cleanName) return true;
   if (domain) {
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -1120,7 +1267,7 @@ export function extractBrandFromDescription(description?: string | null, domain?
     if (domRoot && domRoot.length >= 3) {
       const prefix3 = domRoot.slice(0, 3);
       if (candAlpha.startsWith(prefix3) || domRoot.startsWith(candAlpha.slice(0, 3)) || candidate.includes(" ")) {
-        return candidate;
+        return alignTitleWithDomain(candidate, cleanDom);
       }
     }
   }
@@ -1164,19 +1311,103 @@ export function isCorruptedBusinessName(name?: string | null): boolean {
   return false;
 }
 
+const COMPOUND_WORD_EXCEPTIONS = new Set([
+  "planet", "planets", "vespa", "marshall", "spark", "sparks", "sparkle", "calabasas",
+  "elaborate", "collaborate", "cabinet", "cabinets", "magnet", "magnets", "mustard",
+  "blink", "scare", "shallow", "challenge", "elaia", "proximus", "theranos", "supernova",
+  "topaz", "element", "alpha", "evangel", "archangel", "ventech", "redwood", "greylock",
+  "blackrock", "blackstone", "bluestone", "silverlake", "lightspeed", "benchmark",
+  "facebook", "youtube", "linkedin", "whatsapp", "snapchat", "wordpress", "squarespace",
+  "webflow", "shopify", "salesforce", "microsoft", "cloudflare", "firecrawl", "trustpilot",
+  "tripadvisor", "glassdoor", "doordash", "instacart", "postmates", "airtable", "mailchimp",
+  "sendgrid", "coinbase", "robinhood", "wealthfront", "betterment", "kickstarter",
+  "soundcloud", "bandcamp", "spotify", "netflix", "paramount", "dreamworks", "mastercard",
+  "nationwide", "statefarm", "allstate", "clearwater", "bridgewater", "bayside", "westside",
+  "eastside", "northside", "southside", "parkside", "waterside", "hillside", "seaside",
+  "lakeside", "riverside", "rooftop", "hilltop", "sunlight", "moonlight", "starlight",
+  "daylight", "spotlight", "highlight", "skylight", "greenlight", "bluebird", "blackbird",
+  "firebird", "thunderbird", "sunflower", "wildflower", "mayflower", "waterfall", "windfall",
+  "snowfall", "rainfall", "starfall", "greycroft", "crunchbase", "pitchbook", "techcrunch",
+  "researchgate", "videoland", "grammarhow", "multipharma"
+]);
+
+const COMPOUND_PREFIX_WORDS = new Set([
+  "all", "red", "blue", "green", "black", "white", "silver", "gold", "golden", "iron",
+  "stone", "rock", "oak", "pine", "cedar", "maple", "river", "lake", "sea", "ocean",
+  "bay", "harbor", "harbour", "coast", "ridge", "peak", "summit", "valley", "creek",
+  "spring", "meadow", "field", "wood", "forest", "hill", "mountain", "mount", "star",
+  "sun", "moon", "sky", "cloud", "wind", "fire", "light", "bright", "clear", "true",
+  "pure", "fair", "free", "new", "old", "high", "low", "deep", "wide", "long", "far",
+  "near", "next", "first", "second", "third", "four", "five", "six", "seven", "eight",
+  "nine", "ten", "one", "two", "three", "twin", "north", "south", "east", "west",
+  "central", "mid", "up", "down", "cross", "open", "bold", "swift", "fast", "quick",
+  "smart", "wise", "good", "best", "top", "prime", "premier", "grand", "royal", "noble",
+  "crown", "king", "queen", "lion", "eagle", "hawk", "falcon", "swan", "fox", "wolf",
+  "bear", "bull", "stag", "deer", "horse", "whale", "shark", "dolphin", "phoenix",
+  "dragon", "tiger", "panther"
+]);
+
+const COMPOUND_ROOT_WORDS = new Set([
+  "in", "on", "up", "out", "sea", "swan", "ocean", "lake", "river", "bay", "coast",
+  "harbor", "harbour", "ridge", "peak", "summit", "valley", "creek", "spring", "springs",
+  "meadow", "field", "fields", "wood", "woods", "forest", "hill", "hills", "mountain",
+  "mount", "rock", "stone", "oak", "pine", "cedar", "maple", "star", "stars", "sun",
+  "moon", "sky", "skies", "cloud", "wind", "fire", "light", "lights", "wave", "waves",
+  "tide", "water", "waters", "island", "islands", "point", "points", "bridge", "gate",
+  "gates", "court", "courts", "park", "parks", "square", "plaza", "tower", "towers",
+  "hall", "haven", "harbor", "crest", "grove", "glen", "brook", "cliff", "shore",
+  "shores", "dune", "dunes", "reef", "cove", "cape", "sound", "view", "vista", "path",
+  "trail", "way", "line", "link", "mark", "works", "craft", "forge", "foundry", "mill",
+  "press", "post", "beacon", "anchor", "compass", "shield", "crown", "wings", "wing",
+  "leaf", "tree", "seed", "root", "roots", "bloom", "rose", "lily", "lotus", "fern",
+  "moss", "ivy", "sage", "mint", "olive", "palm", "palms", "bird", "birds", "swan",
+  "swans", "hawk", "hawks", "eagle", "eagles", "falcon", "falcons", "owl", "owls",
+  "dove", "fox", "wolf", "wolves", "bear", "bears", "lion", "lions", "tiger", "tigers",
+  "stag", "deer", "horse", "whale", "shark", "dolphin", "dragon", "phoenix", "angel",
+  "angels", "knight", "knights", "guard", "watch", "bell", "key", "keys", "lock",
+  "coin", "mint", "vault", "pulse", "spark", "wave", "shift", "leap", "step", "stride",
+  "strike", "drive", "force", "power", "energy", "focus", "vision", "mind", "sense",
+  "voice", "word", "story", "book", "books", "page", "note", "notes", "scale", "scope",
+  "sphere", "zone", "world", "earth", "globe", "atlas", "nexus", "vertex", "apex",
+  "zenith", "horizon", "frontier", "pioneer", "voyager", "nomad", "citizen", "guild",
+  "table", "house", "room", "street", "avenue", "road", "lane"
+]);
+
+function splitSingleCompoundToken(token: string): string {
+  const lower = token.toLowerCase();
+  if (lower.length < 4 || COMPOUND_WORD_EXCEPTIONS.has(lower)) return token;
+  if (KNOWN_OFFICIAL_NAMES[lower]) return KNOWN_OFFICIAL_NAMES[lower];
+  // Do not split if token already has internal CamelCase
+  if (/[\p{Ll}][\p{Lu}]/u.test(token)) return token;
+
+  for (let i = 2; i <= lower.length - 2; i++) {
+    const left = lower.slice(0, i);
+    const right = lower.slice(i);
+    if (COMPOUND_PREFIX_WORDS.has(left) && COMPOUND_ROOT_WORDS.has(right)) {
+      // Only allow 2-letter right word ("in", "on", "up") when left is "all" (e.g. "allin" -> "All In")
+      if (right.length === 2 && left !== "all") continue;
+      return `${left.charAt(0).toUpperCase() + left.slice(1)} ${right.charAt(0).toUpperCase() + right.slice(1)}`;
+    }
+  }
+  return token;
+}
+
 /**
  * Splits concatenated compound words, slugs, and camelCase domain strings into separate human-readable words.
  * Never splits single-word brand names into arbitrary syllables (e.g. "elaia" -> "Elaia", "proximus" -> "Proximus").
  */
 export function splitCompoundWords(str: string): string {
   let s = str.trim();
-  // If already a clean capitalized multi-word string with spaces, preserve word order
-  if (s.includes(" ") && /^[0-9\p{L}\s&'’\.,\-]+$/u.test(s)) {
-    return s;
-  }
   const cleanKey = s.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (KNOWN_OFFICIAL_NAMES[cleanKey]) {
     return KNOWN_OFFICIAL_NAMES[cleanKey];
+  }
+
+  // If already a multi-word string with spaces, check if any individual word is an unsplit compound token (like "Allin Capital" or "Redswan Ventures")
+  if (s.includes(" ") && /^[0-9\p{L}\s&'’\.,\-]+$/u.test(s)) {
+    const parts = s.split(/\s+/);
+    const expanded = parts.map(p => splitSingleCompoundToken(p)).join(" ");
+    return expanded;
   }
 
   // 1. Split camelCase/PascalCase (e.g., FirstStrikeElectrical -> First Strike Electrical)
@@ -1195,14 +1426,17 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/^(al|el)(?=[-_ ]|(?:dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)(?:$|[a-z]{3,}))/i, "$1 ");
 
   // 4. Lookbehind compound word splitters for concatenated business suffixes at word boundaries (never splitting inside unrelated words like planet, vespa, marshall, calabasas)
-  const singleWordExceptions = new Set(["planet", "planets", "vespa", "marshall", "spark", "sparks", "sparkle", "calabasas", "elaborate", "collaborate", "cabinet", "cabinets", "magnet", "magnets", "mustard", "blink", "scare", "shallow", "challenge", "elaia", "proximus", "theranos", "supernova", "topaz", "element", "alpha", "evangel", "archangel", "ventech"]);
-  if (!singleWordExceptions.has(cleanKey)) {
+  if (!COMPOUND_WORD_EXCEPTIONS.has(cleanKey)) {
     s = s.replace(/(?<=[a-z]{2,})(angel|angels|vc|fund|funds)(?=$|[-_ ])/gi, " $1 ");
     s = s.replace(/(?<=[a-z]{3,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|virtual|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|ventures|court|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|online|prime|select|choice|smart|master|star|stars|tandartsen|optiek|apotheek|werkplaats)(?=$|[-_ ]|(?:center|centre|clinic|group|firm|agency|services|solutions|partners|capital|ventures|labs|studio|shop|store|market|hotel|hotels|resort|resorts|srl)\b)/gi, " $1 ");
   }
 
+  // 4.5 Split remaining compound prefix+root tokens (e.g. "redswan" -> "Red Swan", "redsea" -> "Red Sea", "allin" -> "All In")
+  const rawTokens = s.split(/[-_ ]+/).filter(Boolean);
+  const expandedTokens = rawTokens.flatMap(t => splitSingleCompoundToken(t).split(/\s+/));
+
   // 5. Clean up any multiple spaces and format each word cleanly with title case / acronym preservation
-  const words = s.split(/[-_ ]+/).filter(Boolean).map(w => {
+  const words = expandedTokens.filter(Boolean).map(w => {
     const upper = w.toUpperCase();
     if (BRAND_ACRONYMS.has(upper)) return upper;
     if (/^[A-Z0-9]+$/.test(w)) return w;
@@ -1573,6 +1807,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     trimmed = "";
   }
 
+  // Align title prefix with domain suffix if applicable (e.g. <title>Red Swan</title> on redswanventures.com -> "Red Swan Ventures")
+  if (trimmed && cleanDom) {
+    trimmed = alignTitleWithDomain(trimmed, cleanDom);
+  }
+
   // Re-check normalized key after SEO title strip
   const strippedKey = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (strippedKey && KNOWN_OFFICIAL_NAMES[strippedKey]) {
@@ -1616,7 +1855,9 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     if (cleanDom && isFalseSplitOfDomain(trimmed, cleanDom)) {
       return KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()] || splitCompoundWords(domRoot);
     }
-    return toTitleCase(trimmed);
+    // Expand any unsplit compound token inside trimmed (e.g. "Allin Capital" -> "All In Capital", "Redswan Ventures" -> "Red Swan Ventures")
+    const expandedTrimmed = splitCompoundWords(trimmed);
+    return toTitleCase(expandedTrimmed);
   }
 
   let rawName = trimmed;
@@ -1646,7 +1887,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     spaced = "Brett Levy";
   }
 
-  const lowerCaseWords = new Set(["of", "and", "in", "at", "de", "et", "du", "des"]);
+  const lowerCaseWords = new Set(["of", "and", "at", "de", "et", "du", "des"]);
 
   const words = spaced
     .split(/[-_ ]+/)
