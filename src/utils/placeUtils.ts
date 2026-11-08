@@ -318,12 +318,6 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "aleph.vc": "Aleph",
   "www.aleph.vc": "Aleph",
   "aleph": "Aleph",
-  "secondsightventures.com": "Second Sight Ventures",
-  "www.secondsightventures.com": "Second Sight Ventures",
-  "secondsightventures": "Second Sight Ventures",
-  "secondsight": "Second Sight",
-  "secondsight.vc": "Second Sight Ventures",
-  "second sight ventures": "Second Sight Ventures",
   "intuition.vc": "Intuition",
   "www.intuition.vc": "Intuition",
   "intuition": "Intuition",
@@ -1457,7 +1451,7 @@ const COMPOUND_ROOT_WORDS = new Set([
   "stag", "deer", "horse", "whale", "shark", "dolphin", "dragon", "phoenix", "angel",
   "angels", "knight", "knights", "guard", "watch", "bell", "key", "keys", "lock",
   "coin", "mint", "vault", "pulse", "spark", "wave", "shift", "leap", "step", "stride",
-  "strike", "drive", "force", "power", "energy", "focus", "vision", "sight", "sights", "mind", "sense",
+  "strike", "drive", "force", "power", "energy", "focus", "vision", "mind", "sense",
   "voice", "word", "story", "book", "books", "page", "note", "notes", "scale", "scope",
   "sphere", "zone", "world", "earth", "globe", "atlas", "nexus", "vertex", "apex",
   "zenith", "horizon", "frontier", "pioneer", "voyager", "nomad", "citizen", "guild",
@@ -1513,7 +1507,7 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/([a-zA-Z]{3,})([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z]{3,})/g, "$1 $2");
   
   // 3. Known brand/locational prefixes ONLY when followed by an explicit standalone compound word
-  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:sight|sights|angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
+  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|(?:dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)(?:$|[a-z]{3,}))/i, "$1 ");
 
   // 4. Lookbehind compound word splitters for concatenated business suffixes at word boundaries (never splitting inside unrelated words like planet, vespa, marshall, calabasas)

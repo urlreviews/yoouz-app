@@ -331,7 +331,6 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("#") ||
       decoded.includes("paint0_linear") ||
       decoded.includes("credit-card") ||
-      decoded.includes("brand-banner") ||
       decoded.includes("unsplash.com") || 
       decoded.includes("pexels.com") ||
       decoded.includes("pixabay.com") ||
@@ -744,22 +743,18 @@ async function persistToDb(data: ResolvedBusinessData) {
     } catch(e) {}
 
     // Resilient logo & banner preservation: NEVER overwrite a valid banner or logo with an empty string
-    const rawBanner = data.image || data.photo;
-    const bannerUrl = (rawBanner && !isBadBanner(rawBanner)) 
-      ? rawBanner 
+    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] 
+      || (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) ? data.logo : "")
+      || (existingRowData?.logoUrl && !isGenericOrPlaceholderLogo(existingRowData.logoUrl) && !isFaviconUrl(existingRowData.logoUrl) ? existingRowData.logoUrl : "")
+      || (existingDoc?.logoUrl && !isGenericOrPlaceholderLogo(existingDoc.logoUrl) && !isFaviconUrl(existingDoc.logoUrl) ? existingDoc.logoUrl : "");
+
+    const bannerUrl = (data.photo && !isBadBanner(data.photo)) 
+      ? data.photo 
       : (existingRowData?.bannerUrl && !isBadBanner(existingRowData.bannerUrl)
           ? existingRowData.bannerUrl
           : (existingDoc?.bannerUrl && !isBadBanner(existingDoc.bannerUrl)
               ? existingDoc.bannerUrl
-              : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) 
-                  ? KNOWN_BRAND_BANNERS[autoPlaceId] 
-                  : (autoPlaceId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}` : ""))));
-
-    const logoUrl = KNOWN_BRAND_LOGOS[autoPlaceId] 
-      || (data.logo && !isGenericOrPlaceholderLogo(data.logo) ? data.logo : "")
-      || (existingRowData?.logoUrl && !isGenericOrPlaceholderLogo(existingRowData.logoUrl) ? existingRowData.logoUrl : "")
-      || (existingDoc?.logoUrl && !isGenericOrPlaceholderLogo(existingDoc.logoUrl) ? existingDoc.logoUrl : "")
-      || (autoPlaceId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}` : "");
+              : (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) ? KNOWN_BRAND_BANNERS[autoPlaceId] : "")));
 
     // Calculate ground-truth rating from videoReviews
     const computedRating = await calculatePlaceRatingFromDb(autoPlaceId, resolvedName);
@@ -27516,12 +27511,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     lng: number;
   }
 
-function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean = false): string {
+function generateBrandBannerSvg(nameOrDomain?: string | null): string {
   const input = (nameOrDomain || "Business").trim();
   let cleanName = formatBusinessName(input, input.includes('.') ? input : undefined) || input;
-  if (isSquare && cleanName.length > 22) {
-    cleanName = cleanName.substring(0, 20) + "...";
-  } else if (!isSquare && cleanName.length > 40) {
+  if (cleanName.length > 40) {
     cleanName = cleanName.substring(0, 37) + "...";
   }
 
@@ -27532,11 +27525,6 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     hash = input.charCodeAt(i) + ((hash << 5) - hash);
   }
   const styleIdx = Math.abs(hash) % 5;
-
-  const w = isSquare ? 400 : 1200;
-  const h = 400;
-  const cx = isSquare ? 200 : 600;
-  const cy = 200;
 
   let bgGradient = "";
   let artwork = "";
@@ -27560,16 +27548,16 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     artwork = `
       <!-- Abstract Luxury Golden Lines and Circles -->
       <g stroke="url(#goldGrad)" stroke-width="1" fill="none" opacity="0.3">
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 120 : 180}" stroke-dasharray="5 5"/>
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}"/>
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 160 : 260}" stroke-dasharray="2 10"/>
-        ${!isSquare ? `<circle cx="${cx}" cy="${cy}" r="320"/>` : ""}
-        <line x1="0" y1="${cy}" x2="${w}" y2="${cy}" opacity="0.5"/>
-        <line x1="${cx}" y1="0" x2="${cx}" y2="${h}" opacity="0.5"/>
-        <path d="M ${cx - (isSquare ? 100 : 150)},${cy} L ${cx},${cy - (isSquare ? 100 : 150)} L ${cx + (isSquare ? 100 : 150)},${cy} L ${cx},${cy + (isSquare ? 100 : 150)} Z" stroke-width="1.5"/>
+        <circle cx="600" cy="200" r="180" stroke-dasharray="5 5"/>
+        <circle cx="600" cy="200" r="140"/>
+        <circle cx="600" cy="200" r="260" stroke-dasharray="2 10"/>
+        <circle cx="600" cy="200" r="320"/>
+        <line x1="0" y1="200" x2="1200" y2="200" opacity="0.5"/>
+        <line x1="600" y1="0" x2="600" y2="400" opacity="0.5"/>
+        <path d="M 450,200 L 600,50 L 750,200 L 600,350 Z" stroke-width="1.5"/>
       </g>
       <!-- Soft Ambient Glow points -->
-      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 100 : 150}" fill="#fbbf24" opacity="0.03" filter="blur(40px)"/>
+      <circle cx="600" cy="200" r="150" fill="#fbbf24" opacity="0.03" filter="blur(40px)"/>
     `;
     textColor = "url(#goldGrad)";
     textFont = "Georgia, serif";
@@ -27590,11 +27578,16 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     artwork = `
       <!-- Futuristic Technical Mesh -->
       <g stroke="url(#cyberGrad)" stroke-width="0.8" fill="none" opacity="0.25">
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 130 : 180}" stroke-dasharray="4 4"/>
-        <polygon points="${cx},${cy - 80} ${cx + 70},${cy - 40} ${cx + 70},${cy + 40} ${cx},${cy + 80} ${cx - 70},${cy + 40} ${cx - 70},${cy - 40}" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" opacity="0.2" stroke-dasharray="5 3"/>
+        <path d="M-100,100 C 300,300 900,100 1300,300" stroke-width="1.5"/>
+        <path d="M-100,150 C 300,350 900,150 1300,350" stroke-width="1"/>
+        <path d="M-100,50 C 300,250 900,50 1300,250" stroke-dasharray="4 4"/>
+        <line x1="150" y1="0" x2="150" y2="400" stroke-dasharray="2 4"/>
+        <line x1="1050" y1="0" x2="1050" y2="400" stroke-dasharray="2 4"/>
+        <circle cx="150" cy="200" r="4" fill="#a855f7"/>
+        <circle cx="1050" cy="200" r="4" fill="#3b82f6"/>
       </g>
-      <!-- Subtle center glow -->
-      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}" fill="#a855f7" opacity="0.03" filter="blur(30px)"/>
+      <!-- Tech hexagon element in background center -->
+      <polygon points="600,110 680,155 680,245 600,290 520,245 520,155" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" opacity="0.2" stroke-dasharray="5 3"/>
     `;
     textColor = "#ffffff";
     textFont = "system-ui, -apple-system, sans-serif";
@@ -27614,9 +27607,12 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     artwork = `
       <!-- Elegant curved biological or wave patterns -->
       <g stroke="url(#emeraldGrad)" stroke-width="1" fill="none" opacity="0.25">
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 120 : 160}" stroke-width="0.5" stroke-dasharray="4 6"/>
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 80 : 120}" fill="#34d399" opacity="0.02" filter="blur(30px)"/>
+        <path d="M 0,400 C 300,300 400,100 600,200 C 800,300 900,100 1200,0" stroke-width="1.5"/>
+        <path d="M 0,380 C 300,280 400,80 600,180 C 800,280 900,80 1200,-20" stroke-dasharray="2 2"/>
+        <path d="M 0,420 C 300,320 400,120 600,220 C 800,320 900,120 1200,20"/>
+        <circle cx="600" cy="200" r="160" stroke-width="0.5" stroke-dasharray="4 6"/>
       </g>
+      <circle cx="600" cy="200" r="120" fill="#34d399" opacity="0.02" filter="blur(30px)"/>
     `;
     textColor = "#e6fbf4";
     textFont = "Georgia, serif";
@@ -27637,10 +27633,13 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     artwork = `
       <!-- Bold abstract stripes and lines -->
       <g stroke="url(#crimsonGrad)" stroke-width="1.5" fill="none" opacity="0.3">
-        <rect x="${cx - (isSquare ? 80 : 100)}" y="${cy - (isSquare ? 80 : 100)}" width="${isSquare ? 160 : 200}" height="${isSquare ? 160 : 200}" rx="10" stroke-dasharray="10 5" stroke-width="1"/>
+        <line x1="0" y1="50" x2="1200" y2="350" stroke-width="2"/>
+        <line x1="0" y1="350" x2="1200" y2="50" stroke-width="0.5" stroke-dasharray="6 6"/>
+        <rect x="500" y="100" width="200" height="200" rx="10" stroke-dasharray="10 5" stroke-width="1"/>
+        <rect x="530" y="130" width="140" height="140" rx="6" stroke-width="1"/>
       </g>
       <!-- Subtle red glow -->
-      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 130}" fill="#ef4444" opacity="0.04" filter="blur(35px)"/>
+      <circle cx="600" cy="200" r="130" fill="#ef4444" opacity="0.04" filter="blur(35px)"/>
     `;
     textColor = "#ffffff";
     textFont = "Impact, Charcoal, sans-serif";
@@ -27660,20 +27659,20 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
     artwork = `
       <!-- Smooth concentric waves -->
       <g stroke="url(#oceanGrad)" stroke-width="1" fill="none" opacity="0.25">
-        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 130 : 220}"/>
+        <circle cx="600" cy="200" r="220"/>
+        <path d="M 0,200 Q 300,100 600,200 T 1200,200" stroke-width="1.5"/>
+        <path d="M 0,220 Q 300,120 600,220 T 1200,220" opacity="0.5"/>
+        <path d="M 0,180 Q 300,80 600,180 T 1200,180" stroke-dasharray="4 2" opacity="0.5"/>
+        <line x1="100" y1="100" x2="1100" y2="300" stroke-width="0.5" stroke-dasharray="2 10"/>
       </g>
-      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}" fill="#38bdf8" opacity="0.03" filter="blur(30px)"/>
+      <circle cx="600" cy="200" r="140" fill="#38bdf8" opacity="0.03" filter="blur(30px)"/>
     `;
     textColor = "#f0f9ff";
     textFont = "system-ui, -apple-system, sans-serif";
     subtitleColor = "#38bdf8";
   }
 
-  const titleFontSize = isSquare ? (cleanName.length > 15 ? 26 : 32) : (cleanName.length > 25 ? 52 : 72);
-  const subFontSize = isSquare ? 11 : 20;
-  const subLetterSpacing = isSquare ? 2 : 4;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
     <defs>
       ${bgGradient}
       <style>
@@ -27681,8 +27680,8 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
           font-family: ${textFont};
           font-weight: 900;
           fill: ${textColor};
-          font-size: ${titleFontSize}px;
-          letter-spacing: ${isSquare ? "-0.5px" : "-2px"};
+          font-size: 72px;
+          letter-spacing: -2px;
           text-anchor: middle;
           dominant-baseline: middle;
         }
@@ -27690,8 +27689,8 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
           font-family: system-ui, -apple-system, sans-serif;
           font-weight: 600;
           fill: ${subtitleColor};
-          font-size: ${subFontSize}px;
-          letter-spacing: ${subLetterSpacing}px;
+          font-size: 20px;
+          letter-spacing: 4px;
           text-anchor: middle;
           dominant-baseline: middle;
           text-transform: uppercase;
@@ -27700,16 +27699,16 @@ function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean 
       </style>
     </defs>
     <!-- Background -->
-    <rect width="${w}" height="${h}" fill="url(#bannerBg)"/>
+    <rect width="1200" height="400" fill="url(#bannerBg)"/>
     
     <!-- Abstract Artwork background patterns -->
     ${artwork}
     
     <!-- Title Text -->
-    <text x="${cx}" y="${isSquare ? 185 : 190}" class="banner-title">${cleanName}</text>
+    <text x="600" y="190" class="banner-title">${cleanName}</text>
     
     <!-- Subtle category tag context -->
-    <text x="${cx}" y="${isSquare ? 230 : 260}" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
+    <text x="600" y="260" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
   </svg>`;
 }
 
@@ -27959,8 +27958,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     const svgSelectors = [
       'header a[href="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
       'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
-      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg',
-      '.logo svg', '[class*="logo" i]:not([class*="mobile" i]) svg', '.brand svg', 'a.brand svg'
+      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg'
     ];
     for (const sel of svgSelectors) {
       const el = $(sel).first();
@@ -27977,7 +27975,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
             if (
               lowerSvg.includes('preserveaspectratio="none"') ||
               (lowerSvg.includes("<use") && lowerSvg.includes("#") && !lowerSvg.includes("<symbol")) ||
-              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !lowerSvg.includes("viewbox"))
+              !/<svg[^>]*\bwidth=/i.test(lowerSvg)
             ) {
               continue;
             }
@@ -27987,7 +27985,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
               .replace(/<mask[\s\S]*?<\/mask>/gi, "");
             if (!visibleSvg.includes("<rect")) {
               const nonNoneFills = [
-                ...Array.from(lowerSvg.matchAll(/fill=["']?([^"'\s>]+)["']?/g)).map(m => m[1].trim()),
+                ...Array.from(lowerSvg.matchAll(/fill=["']([^"']+)["']/g)).map(m => m[1].trim()),
                 ...Array.from(lowerSvg.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
               ].filter(f => f !== "none" && f !== "transparent");
               if (nonNoneFills.length > 0) {
@@ -27997,7 +27995,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
                 }
               }
               const nonNoneStrokes = [
-                ...Array.from(lowerSvg.matchAll(/stroke=["']?([^"'\s>]+)["']?/g)).map(m => m[1].trim()),
+                ...Array.from(lowerSvg.matchAll(/stroke=["']([^"']+)["']/g)).map(m => m[1].trim()),
                 ...Array.from(lowerSvg.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
               ].filter(s => s !== "none" && s !== "transparent");
               if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0) {
@@ -28025,21 +28023,23 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
   } catch(e) {}
 
-  // 6. High-resolution & authentic Web Icon links from the HTML (<link rel="icon">, <link rel="shortcut icon">, <link rel="apple-touch-icon">)
+  // 6. High-resolution Web Icon links (strictly vector .svg or explicit sizes >= 128px; never low-res shortcut icons or favicons)
   try {
     const siteIcons: { url: string; size: number }[] = [];
-    $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel*="icon"]').each((_: any, el: any) => {
+    $('link[rel="icon"]').each((_: any, el: any) => {
       const href = $(el).attr("href");
       const sizes = $(el).attr("sizes") || "";
       const typeAttr = ($(el).attr("type") || "").toLowerCase();
       if (href && typeAttr !== "image/x-icon" && typeAttr !== "image/vnd.microsoft.icon") {
         const lowerHref = href.toLowerCase();
         const isSvg = lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || typeAttr === "image/svg+xml";
-        const isPngOrWebp = lowerHref.endsWith(".png") || lowerHref.endsWith(".webp") || typeAttr.includes("png") || typeAttr.includes("webp");
-        const explicitSize = parseInt(sizes.split("x")[0], 10) || (isSvg ? 512 : (isPngOrWebp ? 128 : 64));
-        const abs = makeAbsolute(href);
-        if (abs && !isGenericOrPlaceholderLogo(abs)) {
-          siteIcons.push({ url: abs, size: explicitSize });
+        const explicitSize = parseInt(sizes.split("x")[0], 10) || 0;
+        const sizeNum = isSvg ? 512 : explicitSize;
+        if (sizeNum >= 128) {
+          const abs = makeAbsolute(href);
+          if (abs && isValidCandidate(abs)) {
+            siteIcons.push({ url: abs, size: sizeNum });
+          }
         }
       }
     });
@@ -28384,8 +28384,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
       const p = cachedEntry.data.photo || "";
       const l = cachedEntry.data.logo || "";
-      const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear");
-      const isBadLogo = !l || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram") || isGenericOrPlaceholderLogo(l);
+      const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear") || p.includes("/api/brand-banner");
+      const isBadLogo = !l || isFaviconUrl(l) || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram");
       const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || isBadPhoto || isBadLogo;
       if (!isMissing) {
         return cachedEntry.data;
@@ -28448,11 +28448,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
                 const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || formatBusinessName(rowName, rowId, cleanQ) || rowName;
-                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear');
-                const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
+                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner');
+                const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isFaviconUrl(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
 
-                const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : (rowId.includes('.') ? `/api/favicon?domain=${encodeURIComponent(rowId)}` : "")));
-                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : cleanLogo));
+                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : ""));
+                const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : ""));
 
                 const result: ResolvedBusinessData = {
                   domain: rowId,
@@ -30256,8 +30256,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   image = sanitizeProxy(domainBanners[cleanDomain]);
                 } else if (cleanDomain && KNOWN_BRAND_BANNERS[cleanDomain]) {
                   image = sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]);
-                } else if (cleanDomain && cleanDomain.includes('.')) {
-                  image = logo || `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
                 } else {
                   image = "";
                 }
@@ -30345,14 +30343,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
 
               if (image) {
-                if (!image.startsWith('http') && !image.startsWith('/api/')) {
+                if (!image.startsWith('http')) {
                   try {
                     image = new URL(image, finalUrl).toString();
                   } catch (e) {}
                 }
-                if (!image.startsWith('/api/')) {
-                  image = getHighQualityImageUrl(image);
-                }
+                image = getHighQualityImageUrl(image);
               }
 
               if (!siteName || siteName === domain) {
@@ -30532,8 +30528,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!image || isBadBanner(image)) {
         image = (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "") || 
-                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "") ||
-                (logo || (cleanDomain && cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : ""));
+                (KNOWN_BRAND_BANNERS[cleanDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain]) : "");
       }
 
       // High-accuracy fallback descriptions for major websites and businesses
@@ -30694,8 +30689,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         image = "";
       }
 
-      // Final logo guarantee: If no standalone logo is found and a valid photographic banner exists, use the banner image as the logo!
-      if ((!logo || isGenericOrPlaceholderLogo(logo)) && image && !isBadBanner(image) && !image.includes("brand-banner")) {
+      // Final logo guarantee: If no standalone non-white logo is found and a valid banner exists, use the banner image as the logo!
+      if ((!logo || isGenericOrPlaceholderLogo(logo) || logo.startsWith("/api/favicon")) && image && !isBadBanner(image)) {
         logo = image;
       } else if (!logo && cleanDomain && cleanDomain.includes(".")) {
         logo = `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
@@ -30772,11 +30767,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             rating: 5,
             totalReviews: 1,
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo)) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            bannerUrl: (image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            ogImage: (image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            photos: [(image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo)) ? logo : "")].filter(Boolean),
+            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
+            bannerUrl: (image && !isBadBanner(image)) ? image : "",
+            ogImage: (image && !isBadBanner(image)) ? image : "",
+            photos: (image && !isBadBanner(image)) ? [image] : [],
             openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
@@ -30843,22 +30838,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const redirectedCleanDom = cleanDomainName(finalUrl || "");
             const isRedirectedDomain = Boolean(redirectedCleanDom && redirectedCleanDom.includes(".") && redirectedCleanDom !== cleanDomain);
             const isStaleRedirectedLogo = (u?: string) => Boolean(isRedirectedDomain && u && typeof u === 'string' && u.toLowerCase().includes(cleanDomain));
-            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = Boolean(logo && !isPlaceholderLogo(logo));
 
-            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
+            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
-            const fallbackBanner = (logo && !isPlaceholderLogo(logo)) ? logo : (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
             const mergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
               ? existingDoc.bannerUrl
               : (!isBadBannerInternal(image)
                   ? image
                   : (!forceRefresh && !isBadBannerInternal(existingDoc.bannerUrl)
                       ? existingDoc.bannerUrl
-                      : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : fallbackBanner)));
+                      : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
 
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
-            const domainLogoFallback = (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : (mergedBanner || ""));
+            const domainLogoFallback = mergedBanner || (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "");
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
             const mergedLogo = (isCustomUploadedLogo || (!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl)))
               ? existingDoc.logoUrl
@@ -30929,8 +30923,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               writePlacesIndex(currentPlaces);
             } catch (pErr) {}
 
-            image = mergedBanner || logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
-            logo = mergedLogo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
+            image = mergedBanner;
+            logo = mergedLogo;
             effectiveAddress = mergedAddress || effectiveAddress;
             effectiveCity = mergedCity || effectiveCity;
             effectiveCountry = mergedCountry || effectiveCountry;
@@ -30972,14 +30966,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         statusColor: 'emerald'
       });
 
-      const finalBanner = image || logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
-      const finalLogo = logo || (cleanDomain && cleanDomain.includes('.') ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
-
       const resultPayload = { 
         title, 
         description, 
-        image: finalBanner, 
-        logo: finalLogo, 
+        image, 
+        logo, 
         siteName, 
         domain: cleanDomain, 
         url: finalUrl,
@@ -31772,17 +31763,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.send(svg);
   });
 
-  app.get(['/api/brand-banner/:id', '/api/brand-logo/:id'], (req, res) => {
+  app.get('/api/brand-banner/:id', (req, res) => {
     const id = req.params.id || "Business";
-    const isSquare = req.query.square === "1" || req.query.square === "true" || req.path.includes("brand-logo");
-    const svg = generateBrandBannerSvg(id, isSquare);
+    const svg = generateBrandBannerSvg(id);
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.send(svg);
   });
 
   function generateCustomBrandLogo(nameOrDomain?: string | null): string {
-    return generateBrandBannerSvg(nameOrDomain, true);
+    const raw = (nameOrDomain || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
+    const letter = (raw.charAt(0) || "B").toUpperCase();
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+      <rect width="128" height="128" rx="28" fill="#18181b"/>
+      <rect x="1" y="1" width="126" height="126" rx="27" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+      <text x="64" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle">${letter}</text>
+    </svg>`;
   }
 
   app.get("/api/favicon", async (req, res) => {
@@ -31790,7 +31786,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
     const sendDefaultFavicon = (domainName: string) => {
-      const cleanSvg = generateBrandBannerSvg(domainName, true);
+      const cleanSvg = generateCustomBrandLogo(domainName);
       res.setHeader("Content-Type", "image/svg+xml");
       res.setHeader("Cache-Control", "no-cache, max-age=60");
       res.setHeader("Access-Control-Allow-Origin", "*");
@@ -31871,7 +31867,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const html = await siteResp.text();
           const $f = cheerio.load(html);
           const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
-          if (extractedLogo) {
+          if (extractedLogo && !isFaviconUrl(extractedLogo)) {
             if (extractedLogo.startsWith("data:image/svg+xml;utf8,")) {
               const svgContent = decodeURIComponent(extractedLogo.replace("data:image/svg+xml;utf8,", ""));
               res.setHeader("Content-Type", "image/svg+xml");
@@ -31901,21 +31897,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const s2Buf = Buffer.from(await s2Resp.arrayBuffer());
           // Ensure valid image payload (>200 bytes)
           if (s2Buf.length > 200) {
-            try {
-              const sharpPng = await sharp(s2Buf)
-                .resize(128, 128, { kernel: "lanczos3", fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-                .png()
-                .toBuffer();
-              res.setHeader("Content-Type", "image/png");
-              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(sharpPng);
-            } catch (sharpErr) {
-              res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
-              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(s2Buf);
-            }
+            res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(s2Buf);
           }
         }
       } catch (s2Err) {}
@@ -31932,21 +31917,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (ddgResp.ok) {
           const ddgBuf = Buffer.from(await ddgResp.arrayBuffer());
           if (ddgBuf.length > 200) {
-            try {
-              const sharpPng = await sharp(ddgBuf)
-                .resize(128, 128, { kernel: "lanczos3", fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-                .png()
-                .toBuffer();
-              res.setHeader("Content-Type", "image/png");
-              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(sharpPng);
-            } catch (sharpErr) {
-              res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
-              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(ddgBuf);
-            }
+            res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
+            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(ddgBuf);
           }
         }
       } catch (ddgErr) {}
