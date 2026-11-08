@@ -1165,7 +1165,20 @@ export function extractDomainAlignedNameFromText(text?: string | null, domain?: 
         }
       }
 
-      if (combinedAlpha.length >= domRoot.length) break;
+      // Also match <DomainRoot> + <CapitalizedEntitySuffix> (e.g. "Astir Ventures" on astir.vc)
+      if (
+        words.length === 2 &&
+        words[0].toLowerCase().replace(/[^a-z0-9]/g, "") === rawDomRoot &&
+        /^[A-Z]/.test(words[1]) &&
+        DOMAIN_ENTITY_SUFFIXES.has(words[1].toLowerCase().replace(/[^a-z0-9]/g, ""))
+      ) {
+        const candidate = toTitleCase(words.join(" "));
+        if (!isFalseSplitOfDomain(candidate, cleanDom)) {
+          return candidate;
+        }
+      }
+
+      if (combinedAlpha.length >= domRoot.length && words.length >= 2) break;
     }
   }
 
@@ -1332,12 +1345,20 @@ export function extractCamelCaseBrandFromText(text?: string | null, domain?: str
  */
 export function isCorruptedBusinessName(name?: string | null): boolean {
   if (!name) return false;
-  const lower = name.trim().toLowerCase();
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
   if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
   if (/^(st-)?kruis\s*tel[:\s]/i.test(lower)) return true;
   if (/^(tel|fax|gsm|phone|call|contact|address|location|postcode|zipcode|vat|be\s*0\d{3})[:\s]/i.test(lower)) return true;
   if (/^(tel|fax|gsm|phone)\b/i.test(lower) && /\d{3}/.test(lower)) return true;
   if (/^maalsesteenweg/i.test(lower) || /^postcode/i.test(lower)) return true;
+  // Reject Google Analytics / Tag Manager tracking IDs or formatted versions of them (e.g. "G-7Z1H493SN5" or "7 Z1 H493 SN5")
+  if (/^(?:G|GTM|UA|AW)-[A-Z0-9\-]{4,}$/i.test(trimmed)) return true;
+  if (/^\d+\s+[A-Z]\d+\s+[A-Z]\d+/i.test(trimmed)) return true;
+  if (/^[A-Z0-9]{1,3}\s+[A-Z]\d{2,4}\s+[A-Z]{1,3}\d{1,3}$/i.test(trimmed)) return true;
+  // Reject random base64/hash tokens (e.g. "ZG1ndmVudH" or space-split "ZG1 Ndm Vud H")
+  if (/^[A-Za-z0-9]{8,24}$/.test(trimmed) && /\d/.test(trimmed) && /[a-z].*[A-Z]|[A-Z].*[a-z].*[A-Z]/.test(trimmed)) return true;
+  if (/^[A-Z0-9]{2,4}(?:\s+[A-Za-z0-9]{1,4}){2,5}$/.test(trimmed) && /\d/.test(trimmed) && /\s+[A-Z]$/.test(trimmed)) return true;
   return false;
 }
 
@@ -1707,10 +1728,10 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   }
 
   // 2.5 Strip any leading/trailing separator characters
-  trimmed = trimmed.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim();
+  trimmed = trimmed.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim();
 
   // 3. Clean up scraped SEO titles FIRST by splitting on separators (e.g., "Amino Capital — We back builders from day one", "Garage Vermeersch J. : Auto's van alle merken...", "Home | Van Law Firm")
-  const rawParts = trimmed.split(/\s*(?:\||–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => p.replace(/^[\s|\-–—•·:]+|[\s|\-–—•·:]+$/g, "").trim()).filter(Boolean);
+  const rawParts = trimmed.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => p.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim()).filter(Boolean);
   if (rawParts.length > 1) {
     let bestCandidate: string | undefined = undefined;
     const domAlpha = domRoot ? domRoot.toLowerCase().replace(/[^a-z0-9]/g, "") : "";

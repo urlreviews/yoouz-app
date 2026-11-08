@@ -773,7 +773,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
     // If core media (logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
-    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl) && !isSlugDomain);
+    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl) && !bannerError && !isSlugDomain);
     if (hasCoreMedia && !isGenericName && !isGenericDesc) {
       return;
     }
@@ -789,9 +789,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
+        const refreshParam = (bannerError || isGenericName) ? "&refresh=true" : "";
         const endpoint = targetUrl
-          ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}`
-          : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}`;
+          ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
+          : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
 
         fetch(endpoint)
           .then((res) => (res.ok ? res.json() : null))
@@ -922,7 +923,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
       return runEnrichment();
     }
-  }, [place.id, place.name, place.website, drawerDomain, reviewBannerUrl, onUpdatePlace]);
+  }, [place.id, place.name, place.website, drawerDomain, reviewBannerUrl, bannerError, onUpdatePlace]);
 
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
@@ -1495,7 +1496,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Overlapping Business Logo - Always render signature brand logo box */}
         <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300 shadow-xl">
           <CopoBrandLogo
-            key={`logo-${place.id}-${primaryLogoUrl || place.logoUrl || ""}`}
+            key={`logo-${drawerDomain || place.id}`}
             domain={drawerDomain || undefined}
             name={displayedPlaceName}
             website={effectiveWebsite}

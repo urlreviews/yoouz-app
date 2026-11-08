@@ -38,6 +38,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 }) => {
   const [candidateIdx, setCandidateIdx] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const prevDomainRef = React.useRef<string>("");
+  const failedUrlsRef = React.useRef<Set<string>>(new Set());
+  const imgRef = React.useRef<HTMLImageElement | null>(null);
 
   // Clean domain extraction
   const resolvedDomain = useMemo(() => {
@@ -51,6 +55,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const cleanDomain = useMemo(() => {
     return (resolvedDomain || "").replace(/^www\./, "").toLowerCase().trim();
   }, [resolvedDomain]);
+
+  // Reset failed URLs and loadedSrc ONLY when switching to a different business domain
+  const domainIdentity = cleanDomain || (name || "").toLowerCase().trim();
+  if (prevDomainRef.current !== domainIdentity) {
+    prevDomainRef.current = domainIdentity;
+    failedUrlsRef.current.clear();
+  }
 
   // Is Yoouz
   const isYoouz = useMemo(() => {
@@ -151,31 +162,80 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
     }
 
-    // Filter duplicates and any generic placeholders
-    return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u))));
+    // Filter duplicates, generic placeholders, and URLs that already failed for this domain
+    return Array.from(new Set(candidates.filter(u => u && !isGenericOrPlaceholderLogo(u) && !isBrokenSvg(u) && !failedUrlsRef.current.has(u))));
   }, [isYoouz, cleanDomain, logoUrl, bannerUrl]);
 
   // Current src candidate
-  const currentSrc = candidateUrls[candidateIdx] || null;
+  const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
 
-  // Determine if active candidate is the hero banner image
-  const isBannerAsLogo = Boolean(
+  // Determine if a given src is the hero banner image
+  const checkIsBannerAsLogo = (srcToCheck: string | null) => Boolean(
     bannerUrl &&
-    currentSrc &&
-    (currentSrc === bannerUrl ||
-      currentSrc.includes(bannerUrl) ||
-      (getProxiedImageUrl(bannerUrl) && currentSrc.includes(getProxiedImageUrl(bannerUrl))))
+    srcToCheck &&
+    (srcToCheck === bannerUrl ||
+      srcToCheck.includes(bannerUrl) ||
+      (getProxiedImageUrl(bannerUrl) && srcToCheck.includes(getProxiedImageUrl(bannerUrl))))
   );
+
+  const isBannerAsLogo = checkIsBannerAsLogo(currentSrc);
+  const isLoadedBannerAsLogo = checkIsBannerAsLogo(loadedSrc);
 
   const activeImageClass = isBannerAsLogo
     ? "w-full h-full object-cover rounded-[16px] sm:rounded-[20px]"
     : imageClassName;
 
-  // Reset index when domain/logoUrl/bannerUrl changes
+  const loadedImageClass = isLoadedBannerAsLogo
+    ? "w-full h-full object-cover rounded-[16px] sm:rounded-[20px]"
+    : imageClassName;
+
+  // Reset state when switching to a different business domain
   useEffect(() => {
+    const locked = cleanDomain ? LOCKED_DOMAIN_LOGOS.get(cleanDomain) : null;
     setCandidateIdx(0);
-    setImgLoaded(false);
-  }, [cleanDomain, logoUrl, bannerUrl]);
+    if (locked && !failedUrlsRef.current.has(locked)) {
+      setLoadedSrc(locked);
+      setImgLoaded(true);
+    } else {
+      setLoadedSrc(null);
+      setImgLoaded(false);
+    }
+  }, [domainIdentity, cleanDomain]);
+
+  // When logoUrl or bannerUrl updates for the SAME domain, try the new primary candidate without blanking out loadedSrc
+  const primaryCandidate = candidateUrls[0] || null;
+  useEffect(() => {
+    if (!primaryCandidate) return;
+    if (primaryCandidate === loadedSrc) {
+      setCandidateIdx(0);
+      setImgLoaded(true);
+      return;
+    }
+    if (!failedUrlsRef.current.has(primaryCandidate)) {
+      setCandidateIdx(0);
+      // Only clear imgLoaded if we don't already have a verified loadedSrc to display
+      if (!loadedSrc) {
+        setImgLoaded(false);
+      }
+    }
+  }, [primaryCandidate, loadedSrc]);
+
+  // Synchronously handle images that are already complete in browser memory cache
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && currentSrc && img.complete && img.naturalWidth > 0) {
+      const isSvg = Boolean(currentSrc.includes(".svg") || currentSrc.startsWith("data:image/svg") || currentSrc.includes("image/svg+xml"));
+      if (isSvg || (img.naturalWidth >= 64 && img.naturalHeight >= 64)) {
+        KNOWN_LOADED_LOGOS.add(currentSrc);
+        if (cleanDomain && !currentSrc.includes("/api/favicon") && !isFaviconUrl(currentSrc)) {
+          LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
+        }
+        setLoadedSrc(currentSrc);
+        setImgLoaded(true);
+        onLoad?.();
+      }
+    }
+  }, [currentSrc, cleanDomain, onLoad]);
 
   // Dedicated Yoouz emblem
   if (isYoouz) {
@@ -202,19 +262,30 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   // Display Name / Domain Title for wordmark fallback
   const displayName = (name || cleanDomain || "Business").trim();
   const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
+  const hasVisibleLogo = Boolean(imgLoaded || loadedSrc);
 
   return (
     <div className={`relative overflow-hidden bg-transparent [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${className}`}>
+      {/* Keep the last verified loaded logo visible on screen while any updated candidate loads so the logo never flashes empty */}
+      {loadedSrc && loadedSrc !== currentSrc ? (
+        <img
+          src={loadedSrc}
+          alt={displayName}
+          className={`${loadedImageClass} absolute inset-0 z-10 w-full h-full opacity-100 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
+          referrerPolicy="no-referrer"
+        />
+      ) : null}
       {currentSrc && candidateIdx < candidateUrls.length ? (
         <img
+          ref={imgRef}
           key={currentSrc}
           src={currentSrc}
           alt={displayName}
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${activeImageClass} relative z-10 w-full h-full transition-opacity duration-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
-            imgLoaded ? "opacity-100" : "opacity-0"
+          className={`${activeImageClass} relative z-20 w-full h-full transition-opacity duration-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+            currentSrc === loadedSrc || (imgLoaded && !loadedSrc) ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
           onLoad={(e) => {
@@ -223,9 +294,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             // Strictly reject tiny, low-resolution raster images (e.g. 12x16, 16x16, 32x32, 48x48 favicons).
             // Magnifying low-res icons in 96px/128px badges results in blurry, pixelated graphics.
             if (!isSvg && (img.naturalWidth < 64 || img.naturalHeight < 64)) {
+              if (currentSrc) failedUrlsRef.current.add(currentSrc);
               setCandidateIdx((prev) => {
                 const next = prev + 1;
-                if (next >= candidateUrls.length) onError?.();
+                if (next >= candidateUrls.length && !loadedSrc) onError?.();
                 return next;
               });
               return;
@@ -236,21 +308,23 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
               if (cleanDomain && !currentSrc.includes("/api/favicon") && !isFaviconUrl(currentSrc)) {
                 LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
+              setLoadedSrc(currentSrc);
             }
             setImgLoaded(true);
             onLoad?.();
           }}
           onError={() => {
+            if (currentSrc) failedUrlsRef.current.add(currentSrc);
             setCandidateIdx((prev) => {
               const next = prev + 1;
-              if (next >= candidateUrls.length) onError?.();
+              if (next >= candidateUrls.length && !loadedSrc) onError?.();
               return next;
             });
           }}
         />
       ) : null}
       {/* Fallback skeleton or initial - never flash fake black B while image is loading */}
-      {!imgLoaded && (
+      {!hasVisibleLogo && (
         <div className={`absolute inset-0 flex items-center justify-center ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
           {currentSrc && candidateIdx < candidateUrls.length ? (
             <div className="w-full h-full bg-zinc-800/20 animate-pulse rounded-xl" />

@@ -1178,23 +1178,35 @@ export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   try { l = decodeURIComponent(l).toLowerCase(); } catch {}
   if (l.includes("vitejs.dev/logo.svg") || l.includes("/vite.svg") || l.includes("travelperk-logo.svg")) return true;
   if (l.startsWith("data:image/svg")) {
-    if (l.includes("lg:hidden") || l.includes('aria-label="openai"') || !l.includes("width=")) {
+    if (
+      l.includes("lg:hidden") ||
+      l.includes('aria-label="openai"') ||
+      l.includes('preserveaspectratio="none"') ||
+      (l.includes("<use") && l.includes("#") && !l.includes("<symbol")) ||
+      !/<svg[^>]*\bwidth=/i.test(l)
+    ) {
       return true;
     }
+    const visibleSvg = l
+      .replace(/<defs[\s\S]*?<\/defs>/gi, "")
+      .replace(/<clippath[\s\S]*?<\/clippath>/gi, "")
+      .replace(/<mask[\s\S]*?<\/mask>/gi, "");
     // Reject inline SVGs scraped from dark website headers that have white primary fills on a transparent background (no background <rect>)
-    if (!l.includes("<rect")) {
-      const nonNoneFills = Array.from(l.matchAll(/fill=["']([^"']+)["']/g))
-        .map(m => m[1].trim())
-        .filter(f => f !== "none" && f !== "transparent");
+    if (!visibleSvg.includes("<rect")) {
+      const nonNoneFills = [
+        ...Array.from(l.matchAll(/fill=["']([^"']+)["']/g)).map(m => m[1].trim()),
+        ...Array.from(l.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
+      ].filter(f => f !== "none" && f !== "transparent");
       if (nonNoneFills.length > 0) {
         const primaryFill = nonNoneFills[0];
         if (primaryFill === "#fff" || primaryFill === "#ffffff" || primaryFill === "white" || primaryFill.startsWith("rgb(255")) {
           return true;
         }
       }
-      const nonNoneStrokes = Array.from(l.matchAll(/stroke=["']([^"']+)["']/g))
-        .map(m => m[1].trim())
-        .filter(s => s !== "none" && s !== "transparent");
+      const nonNoneStrokes = [
+        ...Array.from(l.matchAll(/stroke=["']([^"']+)["']/g)).map(m => m[1].trim()),
+        ...Array.from(l.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
+      ].filter(s => s !== "none" && s !== "transparent");
       if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0) {
         const primaryStroke = nonNoneStrokes[0];
         if (primaryStroke === "#fff" || primaryStroke === "#ffffff" || primaryStroke === "white" || primaryStroke.startsWith("rgb(255")) {
