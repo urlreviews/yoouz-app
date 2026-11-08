@@ -217,7 +217,10 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("seeklogo.com") ||
     clean.includes("freepik.com") ||
     clean.includes("pngtree.com") ||
-    clean.includes("vecteezy.com")
+    clean.includes("vecteezy.com") ||
+    clean.endsWith(".gif") ||
+    clean.includes(".gif?") ||
+    clean.includes(".gif#")
   );
 }
 
@@ -387,7 +390,10 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("no-featured-image") ||
       decoded.includes("thrive-visual-editor") ||
       decoded.includes("editor/css/images") ||
-      decoded.endsWith(".ico")
+      decoded.endsWith(".ico") ||
+      decoded.endsWith(".gif") ||
+      decoded.includes(".gif?") ||
+      decoded.includes(".gif#")
     );
   } catch (e) {
     return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit") || url.includes("demdex");
@@ -27909,16 +27915,22 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (schemaLogo) return schemaLogo;
   } catch(e) {}
 
-  // 4. OpenGraph & Meta Logo tags
+  // 4. OpenGraph & Meta Logo tags (including og:image when its filename is explicitly the brand's logo)
   try {
+    const ogImgCandidate = $('meta[property="og:image"]').attr("content") ||
+                           $('meta[name="og:image"]').attr("content") ||
+                           $('meta[property="twitter:image"]').attr("content") ||
+                           $('meta[name="twitter:image"]').attr("content") || "";
+    const isOgLogoImage = ogImgCandidate && /logo/i.test(ogImgCandidate) && !/og-banner|banner/i.test(ogImgCandidate);
     const metaLogo = $('meta[property="og:logo"]').attr("content") ||
                      $('meta[name="og:logo"]').attr("content") ||
                      $('meta[itemprop="logo"]').attr("content") ||
                      $('[itemprop="logo"]').attr("src") ||
                      $('[itemprop="logo"]').attr("content") ||
-                     $('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr("content");
+                     $('[itemprop="publisher"] [itemprop="logo"] [itemprop="url"]').attr("content") ||
+                     (isOgLogoImage ? ogImgCandidate : "");
     if (metaLogo) {
-      const abs = makeAbsolute(metaLogo);
+      const abs = makeAbsolute(metaLogo).replace(/^http:\/\//i, "https://");
       if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs)) return abs;
     }
   } catch(e) {}

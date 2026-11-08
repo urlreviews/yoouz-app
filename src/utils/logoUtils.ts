@@ -53,7 +53,10 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("seeklogo.com") ||
     clean.includes("freepik.com") ||
     clean.includes("pngtree.com") ||
-    clean.includes("vecteezy.com")
+    clean.includes("vecteezy.com") ||
+    clean.endsWith(".gif") ||
+    clean.includes(".gif?") ||
+    clean.includes(".gif#")
   );
 }
 
@@ -145,6 +148,9 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('thrive-visual-editor') ||
     u.includes('editor/css/images') ||
     u.endsWith('.ico') ||
+    u.endsWith('.gif') ||
+    u.includes('.gif?') ||
+    u.includes('.gif#') ||
     u.endsWith('.svg') ||
     u.includes('.svg?') ||
     u.includes('.svg#') ||

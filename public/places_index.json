@@ -1,5 +1,55 @@
 [
   {
+    "id": "redriceventures.com",
+    "name": "Redrice Ventures",
+    "category": "Real Estate",
+    "categoryType": "all",
+    "address": "Unit 103 Tea Building, London",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fstatic1.squarespace.com%2Fstatic%2F67a205f0f3e9ec60508ee65d%2Ft%2F67a2060af3e9ec60508eecb6%2F1655034761411%2FRedrice_Logo_Yellow_Square_Large.png%3Fformat%3D1500w",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fstatic1.squarespace.com%2Fstatic%2F67a205f0f3e9ec60508ee65d%2Ft%2F67a2060af3e9ec60508eecb6%2F1655034761411%2FRedrice_Logo_Yellow_Square_Large.png%3Fformat%3D1500w",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67a205f0f3e9ec60508ee65d%2F1738671611121-7J7EM67EM759AC8SCPRE%2Funtamed-NewBanner.png%3Fformat%3D1500w",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67a205f0f3e9ec60508ee65d%2F1738671611121-7J7EM67EM759AC8SCPRE%2Funtamed-NewBanner.png%3Fformat%3D1500w",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67a205f0f3e9ec60508ee65d%2F1738671611121-7J7EM67EM759AC8SCPRE%2Funtamed-NewBanner.png%3Fformat%3D1500w"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "info@redriceventures.com",
+    "website": "https://www.redriceventures.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "We support Founders creating premium consumer brands, platforms and related tech solutions.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "redriceventures.com",
+    "customEdited": true,
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "iccap.co",
     "name": "Inner Circle",
     "category": "Website",
