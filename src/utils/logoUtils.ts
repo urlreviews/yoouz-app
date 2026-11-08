@@ -1449,7 +1449,7 @@ export function isFaviconUrl(url?: string | null): boolean {
   return l.includes("favicon");
 }
 
-export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, bannerUrl?: string | null): string | null {
+export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, _bannerUrl?: string | null): string | null {
   const cleanDomain = extractDomain(domain || url);
   if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
     return YOOUZ_LOGO_DATA_URI;
@@ -1458,19 +1458,10 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  const effectiveBanner = bannerUrl && !bannerUrl.includes("/api/brand-banner") ? bannerUrl : null;
-  const isLowResFavicon = url && (isFaviconUrl(url) || url.includes("/api/favicon") || url.includes("favicon"));
-
-  // If the only candidate is a blurry low-res favicon and an authentic brand banner is available, use the banner as the logo so it looks clean and matches
-  if (isLowResFavicon && effectiveBanner && !isBadBanner(effectiveBanner)) {
-    return getProxiedImageUrl(effectiveBanner) || effectiveBanner;
-  }
-
   // Explicit authentic custom high-res logo URL takes priority
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
-    !isLowResFavicon &&
     !url.includes("/api/brand-banner") &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
@@ -1479,14 +1470,8 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isWhiteOrInvertedLogo(url) && !isLowResFavicon && !url.includes("/api/brand-banner")) {
+  if (url && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
     return getProxiedImageUrl(url);
-  }
-
-  // If no valid standalone high-res logo exists and a valid banner is available, use the banner image as the logo
-  if (effectiveBanner && !isBadBanner(effectiveBanner)) {
-    const proxiedBanner = getProxiedImageUrl(effectiveBanner);
-    if (proxiedBanner) return proxiedBanner;
   }
 
   // High-res domain logo fallback

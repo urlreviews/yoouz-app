@@ -4548,7 +4548,7 @@ export function App() {
                   ...fetchedPlace,
                   name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
                   bannerUrl: (fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || ""),
-                  logoUrl: (fetchedPlace.logoUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon')) ? fetchedPlace.logoUrl : ((p.logoUrl && !isWhiteOrInvertedLogo(p.logoUrl)) ? p.logoUrl : (fetchedPlace.bannerUrl || p.bannerUrl || fetchedPlace.logoUrl || ""))
+                  logoUrl: (fetchedPlace.logoUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon')) ? fetchedPlace.logoUrl : ((p.logoUrl && !isWhiteOrInvertedLogo(p.logoUrl)) ? p.logoUrl : (fetchedPlace.logoUrl || ""))
                 };
               });
             }
@@ -4613,7 +4613,7 @@ export function App() {
                   : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
                 const effectiveLogoCandidate = (isValidLogo(metaData.logo)) 
                   ? metaData.logo 
-                  : (existingValidLogo || effectiveBannerCandidate || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : ''));
+                  : (existingValidLogo || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom) || '') : ''));
                 const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
                 const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {
