@@ -1015,7 +1015,11 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "www.redseaventures.com": "Red Sea Ventures",
   "redseaventures": "Red Sea Ventures",
   "redsea ventures": "Red Sea Ventures",
-  "red sea ventures": "Red Sea Ventures"
+  "red sea ventures": "Red Sea Ventures",
+  "v3.ventures": "V3 Ventures",
+  "www.v3.ventures": "V3 Ventures",
+  "v3-ventures.com": "V3 Ventures",
+  "www.v3-ventures.com": "V3 Ventures"
 };
 
 export const BRAND_ACRONYMS = new Set([
@@ -1051,9 +1055,22 @@ const DOMAIN_ENTITY_SUFFIXES = new Set([
   "associates", "management"
 ]);
 
+const SEMANTIC_ENTITY_TLDS = new Set([
+  "ventures", "venture", "capital", "partners", "partner", "labs", "lab", "group",
+  "studio", "studios", "media", "agency", "holdings", "holding", "fund", "funds",
+  "investments", "investment", "advisors", "advisory", "consulting",
+  "law", "legal", "firm", "lawyers", "attorneys", "dental", "clinic", "clinics",
+  "care", "health", "wellness", "hotel", "hotels", "resort", "resorts", "motors",
+  "auto", "leasing", "realty", "homes", "properties", "bank", "banking", "finance",
+  "financial", "insurance", "technologies", "technology", "systems",
+  "solutions", "services", "global", "international", "collective", "network",
+  "associates", "management"
+]);
+
 /**
  * Aligns a website's <title> or og:site_name with its domain name when the title
- * is the brand prefix of the domain (e.g. <title>Red Swan</title> on redswanventures.com -> "Red Swan Ventures").
+ * is the brand prefix of the domain (e.g. <title>Red Swan</title> on redswanventures.com -> "Red Swan Ventures",
+ * or "V3" on v3.ventures -> "V3 Ventures").
  */
 export function alignTitleWithDomain(titleStr?: string | null, domain?: string | null): string {
   if (!titleStr || !titleStr.trim()) return "";
@@ -1066,8 +1083,14 @@ export function alignTitleWithDomain(titleStr?: string | null, domain?: string |
     return KNOWN_OFFICIAL_NAMES[cleanDom];
   }
 
+  const domTld = cleanDom.split(".").pop()?.toLowerCase() || "";
   const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   const titleAlpha = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  if (SEMANTIC_ENTITY_TLDS.has(domTld) && domRoot && titleAlpha === domRoot && !trimmed.toLowerCase().endsWith(domTld)) {
+    const formattedTld = domTld.charAt(0).toUpperCase() + domTld.slice(1).toLowerCase();
+    return `${trimmed} ${formattedTld}`;
+  }
 
   if (domRoot && titleAlpha && domRoot.length > titleAlpha.length && domRoot.startsWith(titleAlpha)) {
     const rem = domRoot.slice(titleAlpha.length);
@@ -1092,7 +1115,9 @@ export function extractDomainAlignedNameFromText(text?: string | null, domain?: 
   if (!cleanDom) return null;
   if (KNOWN_OFFICIAL_NAMES[cleanDom]) return KNOWN_OFFICIAL_NAMES[cleanDom];
 
-  const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const domTld = cleanDom.split(".").pop()?.toLowerCase() || "";
+  const rawDomRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const domRoot = SEMANTIC_ENTITY_TLDS.has(domTld) ? `${rawDomRoot}${domTld}` : rawDomRoot;
   if (!domRoot || domRoot.length < 4) return null;
 
   // Tokenize text into word sequences (allowing internal hyphens like "All-In Capital")
@@ -1149,7 +1174,7 @@ export function extractDomainAlignedNameFromText(text?: string | null, domain?: 
 
 /**
  * Checks if a candidate business name is merely a raw domain or an unsplit/partially-split domain stem
- * (e.g., "Adaptvc", "Allin Capital", "Redswan Ventures", or "adaptvc.com").
+ * (e.g., "Adaptvc", "Allin Capital", "Redswan Ventures", "V3" on "v3.ventures", or "adaptvc.com").
  * Legitimate single-word brand names (e.g., "Elaia", "Felicis", "Proximus") return false.
  */
 export function isDomainStemName(name?: string | null, domain?: string | null): boolean {
@@ -1164,13 +1189,13 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
     if (trimmed.toLowerCase() === knownOfficial.toLowerCase()) {
       return false;
     }
-    // If knownOfficial has different spacing (e.g. "All In Capital" vs "Allin Capital", "Red Swan Ventures" vs "Redswan Ventures"), then trimmed IS a stem!
-    if (knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName) {
+    // If knownOfficial has different spacing or extra words (e.g. "All In Capital" vs "Allin Capital", "V3 Ventures" vs "V3"), then trimmed IS a stem!
+    if (knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName || knownOfficial.toLowerCase().startsWith(trimmed.toLowerCase() + " ")) {
       return true;
     }
   }
 
-  if (isValidDomainUrl(trimmed) || /\.(com|net|org|io|vc|co|ai|app|dev|be|nl|de|fr|uk|ae|il)$/i.test(trimmed)) {
+  if (isValidDomainUrl(trimmed) || /\.(com|net|org|io|vc|co|ai|app|dev|be|nl|de|fr|uk|ae|il|ventures|partners|capital)$/i.test(trimmed)) {
     return true;
   }
 
@@ -1192,8 +1217,13 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
 
   if (!cleanName) return true;
   if (domain) {
+    const domTld = cleanDom.split(".").pop()?.toLowerCase() || "";
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     if (domRoot && cleanName === domRoot) {
+      // If the domain uses a semantic entity TLD (like .ventures, .partners, .capital) and the 1-word name omits it (e.g. "V3" on "v3.ventures"), it IS an incomplete stem!
+      if (SEMANTIC_ENTITY_TLDS.has(domTld) && !trimmed.toLowerCase().includes(domTld)) {
+        return true;
+      }
       // If it's a verified known official name with exact match, it is NOT a stem
       if (knownOfficial && knownOfficial.toLowerCase().replace(/[^a-z0-9]/g, "") === cleanName && trimmed === knownOfficial) {
         return false;
@@ -1202,11 +1232,11 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
       if (/[\p{Ll}][\p{Lu}]/u.test(trimmed)) {
         return false;
       }
-      // If it's an all-caps acronym or short alphanumeric brand (e.g. "KAYA", "SMOK", "USV", "10MK", "2B", "3M"), not a flat stem
-      if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && (BRAND_ACRONYMS.has(trimmed) || /^[0-9]+[A-Z]{1,2}$/.test(trimmed) || /^[A-Z]{1,2}[0-9]+$/.test(trimmed))) {
+      // If it's an explicit known standalone all-caps acronym brand (e.g. "KAYA", "SMOK", "USV", "10MK", "2B", "3M"), not a flat stem
+      if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && BRAND_ACRONYMS.has(trimmed)) {
         return false;
       }
-      // All other single-word tokens matching domRoot (e.g. "scifi", "Scifi", "adaptvc", "Adaptvc", "phoenixcourt", "Phoenixcourt") are domain stems
+      // All other single-word tokens matching domRoot (e.g. "V3", "scifi", "Scifi", "adaptvc", "Adaptvc", "phoenixcourt", "Phoenixcourt") are domain stems
       return true;
     }
   }
@@ -1863,7 +1893,14 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
   let rawName = trimmed;
   if (isDomainLike) {
     const cleanDomain = extractCleanDomain(trimmed);
-    rawName = cleanDomain.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] || cleanDomain;
+    const domTld = cleanDomain.split(".").pop()?.toLowerCase() || "";
+    const stemPart = cleanDomain.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0] || cleanDomain;
+    if (SEMANTIC_ENTITY_TLDS.has(domTld) && !stemPart.toLowerCase().endsWith(domTld)) {
+      const formattedStem = splitCompoundWords(stemPart);
+      const formattedTld = domTld.charAt(0).toUpperCase() + domTld.slice(1).toLowerCase();
+      return toTitleCase(`${formattedStem} ${formattedTld}`);
+    }
+    rawName = stemPart;
   }
 
   // 5. Final fallback cleanup - strip any remaining protocol, www, or TLD suffixes

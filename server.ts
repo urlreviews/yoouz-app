@@ -8332,8 +8332,12 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
         } else if (isDomainStemName(rec.name, domKey)) {
           const descBrand = extractBrandFromDescription(rec.description, domKey);
+          const alignedName = formatBusinessName(rec.name || domKey, domKey);
           if (descBrand) {
             rec.name = descBrand;
+            if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+          } else if (alignedName && !isDomainStemName(alignedName, domKey)) {
+            rec.name = alignedName;
             if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
           }
         } else if (rec.name) {
@@ -29206,9 +29210,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       // Fast-path: If user wants resolve-only and passed a direct domain, return instantly in 0.0s
       if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ') && !forceRefresh) {
         const cleanDom = cleanDomainName(rawQuery);
+        const fastTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(cleanDom, cleanDom) || cleanDom;
         console.log(`[Fast Resolve Only] Bypassing scrape for domain: ${cleanDom}`);
         return res.json({
-          title: cleanDom.split('.')[0].toUpperCase(),
+          title: fastTitle,
+          siteName: fastTitle,
           domain: cleanDom,
           url: `https://${cleanDom}`,
           city: "Online"
@@ -29258,7 +29264,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
-            if (matchedDom && isExactMatch && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
+            const isCachedNameStem = isDomainStemName(row.name, matchedDom) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
+            if (matchedDom && isExactMatch && !isCachedNameStem && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const cachedImageCandidate = (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) ? row.bannerUrl : "") 
@@ -29267,7 +29274,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 || (!isLogoOrIconUrl(pData.image) ? pData.image : "") 
                 || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
                 || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
-              const resolvedEntity = (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
+              const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]) || (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
               return res.json({
                 title: resolvedEntity,
                 description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
@@ -31069,18 +31076,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           if (!resolvedDirectTitle && !existingHasGoodName) {
             try {
-              const ctrl = new AbortController();
-              const tid = setTimeout(() => ctrl.abort(), 1600);
-              const directRes = await fetch(`https://${cleanQDom}`, {
-                signal: ctrl.signal,
-                redirect: "follow",
-                headers: {
-                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                  "Accept": "text/html,application/xhtml+xml"
-                }
-              });
-              clearTimeout(tid);
-              if (directRes.ok) {
+              let directRes: any = null;
+              for (const tryUrl of [`https://${cleanQDom}`, `https://www.${cleanQDom}`]) {
+                try {
+                  const ctrl = new AbortController();
+                  const tid = setTimeout(() => ctrl.abort(), 1600);
+                  const r = await fetch(tryUrl, {
+                    signal: ctrl.signal,
+                    redirect: "follow",
+                    headers: {
+                      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                      "Accept": "text/html,application/xhtml+xml"
+                    }
+                  });
+                  clearTimeout(tid);
+                  if (r.ok) {
+                    directRes = r;
+                    break;
+                  }
+                } catch (eTry) {}
+              }
+              if (directRes && directRes.ok) {
                 const finalDirectUrl = directRes.url || `https://${cleanQDom}`;
                 const redirDom = cleanDomainName(finalDirectUrl) || cleanQDom;
                 if (KNOWN_OFFICIAL_NAMES[redirDom]) {
@@ -31092,17 +31108,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const html = await directRes.text();
                 const $d = cheerio.load(html);
                 const ogSiteName = ($d('meta[property="og:site_name"]').attr('content') || $d('meta[name="application-name"]').attr('content') || $d('meta[name="apple-mobile-web-app-title"]').attr('content') || "").trim();
-                const ogTitle = ($d('meta[property="og:title"]').attr('content') || $d('title').first().text() || "").trim();
+                const htmlTitleText = ($d('title').first().text() || "").trim();
+                const ogTitle = ($d('meta[property="og:title"]').attr('content') || htmlTitleText || "").trim();
                 const ogDesc = ($d('meta[property="og:description"]').attr('content') || $d('meta[name="description"]').attr('content') || "").trim();
-                const candidates = [
+                const rawCandidates = [
                   ogSiteName,
+                  htmlTitleText.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
                   ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
+                  extractDomainAlignedNameFromText(`${htmlTitleText} | ${ogTitle} | ${ogSiteName} | ${ogDesc}`, redirDom),
                   extractCamelCaseBrandFromText(ogDesc, redirDom),
                   extractCamelCaseBrandFromText(ogDesc, cleanQDom),
                   extractBrandFromDescription(ogDesc, redirDom),
                   extractBrandFromDescription(ogDesc, cleanQDom)
                 ].filter(Boolean);
-                for (const cand of candidates) {
+                for (const rawCand of rawCandidates) {
+                  const cand = formatBusinessName(String(rawCand), redirDom) || String(rawCand);
                   if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom)) {
                     resolvedDirectTitle = cand;
                     break;
@@ -31118,10 +31138,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             } catch (e) {}
           }
 
-          const finalTitle = resolvedDirectTitle || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || formatBusinessName(cleanQDom, cleanQDom) || cleanQDom;
+          const finalTitle = resolvedDirectTitle || formatBusinessName(cleanQDom, cleanQDom) || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || cleanQDom;
           if (existingIdx >= 0) {
-            if (resolvedDirectTitle && isDomainStemName(suggestions[existingIdx].title, cleanQDom)) {
+            if (resolvedDirectTitle && (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || (!suggestions[existingIdx].title.includes(" ") && resolvedDirectTitle.includes(" ")))) {
               suggestions[existingIdx].title = resolvedDirectTitle;
+            } else if (isDomainStemName(suggestions[existingIdx].title, cleanQDom)) {
+              suggestions[existingIdx].title = finalTitle;
             }
             if (resolvedDirectLogo && !suggestions[existingIdx].logoUrl) {
               suggestions[existingIdx].logoUrl = resolvedDirectLogo;

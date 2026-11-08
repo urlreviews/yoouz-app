@@ -130,12 +130,15 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [showDetailedInfo, setShowDetailedInfo] = useState(true);
   const [fetchedBannerState, setFetchedBannerState] = useState<{ placeId: string; url: string } | null>(null);
   const [fetchedLogoState, setFetchedLogoState] = useState<{ placeId: string; url: string } | null>(null);
+  const [fetchedNameState, setFetchedNameState] = useState<{ placeId: string; name: string } | null>(null);
   const setActiveBanner = (url: string | null) => setActiveBannerState(url && place?.id ? { placeId: place.id, url } : null);
   const setFetchedBannerUrl = (url: string | null) => setFetchedBannerState(url && place?.id ? { placeId: place.id, url } : null);
   const setFetchedLogoUrl = (url: string | null) => setFetchedLogoState(url && place?.id ? { placeId: place.id, url } : null);
+  const setFetchedPlaceName = (name: string | null) => setFetchedNameState(name && place?.id ? { placeId: place.id, name } : null);
   const activeBanner = activeBannerState && activeBannerState.placeId === place?.id ? activeBannerState.url : null;
   const fetchedBannerUrl = fetchedBannerState && fetchedBannerState.placeId === place?.id ? fetchedBannerState.url : null;
   const fetchedLogoUrl = fetchedLogoState && fetchedLogoState.placeId === place?.id ? fetchedLogoState.url : null;
+  const fetchedPlaceName = fetchedNameState && fetchedNameState.placeId === place?.id ? fetchedNameState.name : null;
   const [isHoveredUnfollow, setIsHoveredUnfollow] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [forcedHeaderReady, setForcedHeaderReady] = useState(false);
@@ -153,6 +156,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
     setLogoError(false);
     setFetchedBannerUrl(null);
     setFetchedLogoUrl(null);
+    setFetchedPlaceName(null);
     setIsHoveredUnfollow(false);
     setIsEnriching(false);
     setForcedHeaderReady(false);
@@ -161,7 +165,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
       fetchedTargetUrlsRef.current.clear();
     }
     return () => clearTimeout(t);
-  }, [place?.id, place?.brandDomain, place?.website, place?.name]);
+  }, [place?.id, place?.brandDomain, place?.website]);
 
   // Synchronously reset banner error state when fresh banner arrives from background enrichment or place updates
   useEffect(() => {
@@ -553,6 +557,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         return KNOWN_OFFICIAL_NAMES[place.brandDomain];
       }
 
+      if (fetchedPlaceName && !isGenericPlaceName(fetchedPlaceName) && !isDomainStemName(fetchedPlaceName, drawerDomain)) {
+        const cleanedFetched = formatBusinessName(fetchedPlaceName, drawerDomain) || fetchedPlaceName;
+        return unescapeStr(cleanedFetched);
+      }
+
       if ((place as any)?.selectedName && !isGenericPlaceName((place as any).selectedName) && !isDomainStemName((place as any).selectedName, drawerDomain)) {
         const cleanedSelected = formatBusinessName((place as any).selectedName, drawerDomain) || (place as any).selectedName;
         return unescapeStr(cleanedSelected);
@@ -648,7 +657,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (KNOWN_OFFICIAL_NAMES[cleanRawLower]) return KNOWN_OFFICIAL_NAMES[cleanRawLower];
     if (drawerDomain && KNOWN_OFFICIAL_NAMES[drawerDomain]) return KNOWN_OFFICIAL_NAMES[drawerDomain];
     return formatBusinessName(raw, drawerDomain) || raw;
-  }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, place?.description, drawerDomain]);
+  }, [rawPlaceVideos, place?.name, place?.id, place?.brandDomain, place?.description, drawerDomain, fetchedPlaceName]);
 
   const effectiveWebsite = React.useMemo(() => {
     if (place.website && isValidDomainUrl(place.website) && !place.website.includes("maps.google.com") && !place.website.toLowerCase().includes("wikipedia.org") && (!place.website.includes("g.com") || place.id === "g.com")) {
@@ -837,6 +846,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? (formatBusinessName(place.name, resolvedDomainClean) || place.name)
                   : "";
                 const bestPlaceName = (resolvedDomainClean && KNOWN_OFFICIAL_NAMES[resolvedDomainClean])
+                  || (resolvedTitle && !isDomainStemName(resolvedTitle, resolvedDomainClean) ? resolvedTitle : null)
                   || (descExtractedBrand && /[\p{Ll}][\p{Lu}]/u.test(descExtractedBrand) ? descExtractedBrand : null)
                   || (camelExtractedBrand ? camelExtractedBrand : null)
                   || resolvedTitle
@@ -845,6 +855,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   || cleanedCurrentPlaceName
                   || formatBusinessName(data.siteName || data.title || place.name, resolvedDomainClean)
                   || place.name;
+
+                if (bestPlaceName) {
+                  setFetchedPlaceName(bestPlaceName);
+                }
 
                 try {
                   if (resolvedDomainClean && bestPlaceName && !isDomainStemName(bestPlaceName, resolvedDomainClean)) {

@@ -503,7 +503,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return false;
     });
 
-    if (matchingLocal) {
+    if (matchingLocal && !isDomainStemName(matchingLocal.name, cleanUrl || extractCleanDomain(matchingLocal.brandDomain || matchingLocal.website || matchingLocal.id))) {
       if (currentRequestId !== searchRequestIdRef.current) return;
       console.info("[Search] Found authoritative local place match:", matchingLocal.name);
       setSearchedPlace(matchingLocal);
@@ -733,6 +733,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                : "";
              const targetName = (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+               || (formattedMetaName && !isDomainStemName(formattedMetaName, discoveredDom) && (!validPreferredName || (!validPreferredName.includes(" ") && formattedMetaName.includes(" "))) ? formattedMetaName : "")
                || validPreferredName
                || formattedMetaName
                || descBrandName

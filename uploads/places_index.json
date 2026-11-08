@@ -1,5 +1,58 @@
 [
   {
+    "id": "v3.ventures",
+    "name": "V3 Ventures",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F66c60a4b15a1ad9f1db01b85%2F66d04fce1d0f79b524fd40ec_v3_webclip.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F66c60a4b15a1ad9f1db01b85%2F66d04fce1d0f79b524fd40ec_v3_webclip.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F66c60a4b15a1ad9f1db01b85%2F66cd705368b0455145897160_og_image.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F66c60a4b15a1ad9f1db01b85%2F66cd705368b0455145897160_og_image.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F66c60a4b15a1ad9f1db01b85%2F66cd705368b0455145897160_og_image.png"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "hello@v3.ventures",
+    "website": "https://www.v3.ventures/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "We back founders who are building the consumer brands of tomorrow. V3 Ventures",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "v3.ventures",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "domain": "v3.ventures",
+    "reviewCount": 0,
+    "reviews": [],
+    "customEdited": true
+  },
+  {
     "id": "allincapital.vc",
     "name": "All In Capital",
     "category": "Marketing & Creative Agency",

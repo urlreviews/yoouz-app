@@ -4544,8 +4544,10 @@ export function App() {
           });
         }
 
-        if (!hasCoreMedia || !isValidDomainUrl(cleanId)) {
-          // If not in database or missing rich banner/contact data or non-domain query, enrich immediately from /api/url-metadata
+        const hasStemName = !fetchedPlace?.name || isDomainStemName(fetchedPlace.name, cleanId);
+
+        if (!hasCoreMedia || hasStemName || !isValidDomainUrl(cleanId)) {
+          // If not in database or missing rich banner/contact data or stem name or non-domain query, enrich immediately from /api/url-metadata
           const validFetchedWeb = fetchedPlace?.website && isValidDomainUrl(fetchedPlace.website) ? fetchedPlace.website : "";
           const validFetchedDom = fetchedPlace?.brandDomain && isValidDomainUrl(fetchedPlace.brandDomain) ? fetchedPlace.brandDomain : "";
           const targetDomainOrUrl = validFetchedWeb || validFetchedDom || (isValidDomainUrl(cleanId) ? cleanId : "");
@@ -4566,18 +4568,27 @@ export function App() {
                 const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
                 const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
                 const officialName = (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || validSelected;
-                const isFetchedNameSearchQuery = Boolean(fetchedPlace?.name && (/\s+in\s+/i.test(fetchedPlace.name) || fetchedPlace.name.toLowerCase() === cleanId.toLowerCase() || isDomainStemName(fetchedPlace.name, resolvedDom || cleanId)));
                 const rawMetaBrand = (metaData.siteName && !isDomainStemName(metaData.siteName, resolvedDom || cleanId))
                   ? metaData.siteName
                   : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
                 const descBrand = extractBrandFromDescription(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
                 const camelBrand = extractCamelCaseBrandFromText(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
-                const resolvedCleanMetaName = (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
+                const resolvedCleanMetaName = (formatBusinessName(rawMetaBrand, resolvedDom || cleanId) && !isDomainStemName(formatBusinessName(rawMetaBrand, resolvedDom || cleanId), resolvedDom || cleanId))
+                  ? formatBusinessName(rawMetaBrand, resolvedDom || cleanId)
+                  : (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
                   ? descBrand
                   : (camelBrand && isDomainStemName(rawMetaBrand, resolvedDom || cleanId))
                   ? camelBrand
                   : (formatBusinessName(rawMetaBrand, resolvedDom || cleanId) || descBrand || camelBrand || cleanId);
-                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? fetchedPlace.name : resolvedCleanMetaName);
+                const isFetchedNameSearchQuery = Boolean(
+                  fetchedPlace?.name && (
+                    /\s+in\s+/i.test(fetchedPlace.name) ||
+                    fetchedPlace.name.toLowerCase() === cleanId.toLowerCase() ||
+                    isDomainStemName(fetchedPlace.name, resolvedDom || cleanId) ||
+                    (!fetchedPlace.name.trim().includes(" ") && resolvedCleanMetaName && resolvedCleanMetaName.trim().includes(" "))
+                  )
+                );
+                const preservedName = officialName || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? formatBusinessName(fetchedPlace.name, resolvedDom || cleanId) : resolvedCleanMetaName);
                 const cleanBanner = (url?: string | null): string => {
                   if (!url || typeof url !== "string") return "";
                   const u = url.toLowerCase();
@@ -7419,7 +7430,7 @@ export function App() {
         {/* Place Drawer */}
         {selectedPlaceIdForDrawer && drawerPlace && (
           <CopoPlaceDrawer
-            key={`${drawerPlace.id}_${drawerPlace.brandDomain || ''}_${drawerPlace.website || ''}_${drawerPlace.name || ''}`}
+            key={`${drawerPlace.id}_${drawerPlace.brandDomain || ''}_${drawerPlace.website || ''}`}
             place={drawerPlace}
             allVideos={videos}
             onClose={handleCloseDrawers}
