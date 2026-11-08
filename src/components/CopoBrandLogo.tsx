@@ -92,11 +92,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
 
     // 0. Explicit rich brand logo URL from place data/metadata
+    const isLowResFavicon = Boolean(logoUrl && (isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("favicon")));
+
+    // 0. Explicit rich brand logo URL from place data/metadata (only when NOT a blurry low-res favicon)
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isBrokenSvg(logoUrl)
+      !isBrokenSvg(logoUrl) &&
+      !isLowResFavicon
     ) {
       const proxiedLogo = getProxiedImageUrl(logoUrl);
       if (proxiedLogo) candidates.push(proxiedLogo);
@@ -121,19 +125,20 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 3. Hero Banner Brand Fallback: Whenever no standalone logo is available (or it failed/was white), use the authentic hero banner artwork as the logo
+    // 3. Hero Banner Brand Fallback: Whenever no standalone high-res logo is available (or it was a low-res favicon), use the authentic hero banner artwork as the logo so it looks clean and matches
+    const effectiveBanner = bannerUrl || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : null);
     if (
-      bannerUrl &&
-      bannerUrl.trim() !== "" &&
-      !isBadBanner(bannerUrl) &&
-      !bannerUrl.startsWith("blob:")
+      effectiveBanner &&
+      effectiveBanner.trim() !== "" &&
+      !isBadBanner(effectiveBanner) &&
+      !effectiveBanner.startsWith("blob:")
     ) {
-      const proxiedBanner = getProxiedImageUrl(bannerUrl);
+      const proxiedBanner = getProxiedImageUrl(effectiveBanner);
       if (proxiedBanner && !candidates.includes(proxiedBanner)) {
         candidates.push(proxiedBanner);
       }
-      if (!candidates.includes(bannerUrl)) {
-        candidates.push(bannerUrl);
+      if (!candidates.includes(effectiveBanner)) {
+        candidates.push(effectiveBanner);
       }
     }
 
@@ -150,14 +155,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     }
 
     // 5. Domain brand logo via server proxy
-    if (cleanDomain) {
-      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
-    }
-
-    // 6. High-resolution Google FaviconV2 & DuckDuckGo fallbacks (strictly filtered by 64x64 minimum resolution in onLoad)
     if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${cleanDomain}&size=128`);
-      candidates.push(`https://icons.duckduckgo.com/ip3/${cleanDomain}.ico`);
+      candidates.push(`/api/brand-banner/${encodeURIComponent(cleanDomain)}`);
     }
 
     // Filter duplicates, generic placeholders, and URLs that already failed for this domain
@@ -288,9 +287,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           referrerPolicy="no-referrer"
           onLoad={(e) => {
             const img = e.currentTarget;
-            const isSvg = Boolean(currentSrc && (currentSrc.includes('.svg') || currentSrc.startsWith('data:image/svg') || currentSrc.includes('image/svg+xml')));
-            // Strictly reject empty or broken raster images (accept authentic brand favicons >= 16px)
-            if (!isSvg && (img.naturalWidth < 16 || img.naturalHeight < 16)) {
+            const isSvg = Boolean(currentSrc && (currentSrc.includes('.svg') || currentSrc.startsWith('data:image/svg') || currentSrc.includes('image/svg+xml') || currentSrc.includes('/api/brand-banner') || currentSrc.includes('/api/brand-logo')));
+            // Strictly reject empty or blurry low-res raster images (< 64px) so they don't look pixelated, letting it fall back to the clean brand banner
+            if (!isSvg && (img.naturalWidth < 64 || img.naturalHeight < 64)) {
               if (currentSrc) failedUrlsRef.current.add(currentSrc);
               setCandidateIdx((prev) => {
                 const next = prev + 1;

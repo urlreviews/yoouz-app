@@ -27515,10 +27515,12 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     lng: number;
   }
 
-function generateBrandBannerSvg(nameOrDomain?: string | null): string {
+function generateBrandBannerSvg(nameOrDomain?: string | null, isSquare: boolean = false): string {
   const input = (nameOrDomain || "Business").trim();
   let cleanName = formatBusinessName(input, input.includes('.') ? input : undefined) || input;
-  if (cleanName.length > 40) {
+  if (isSquare && cleanName.length > 22) {
+    cleanName = cleanName.substring(0, 20) + "...";
+  } else if (!isSquare && cleanName.length > 40) {
     cleanName = cleanName.substring(0, 37) + "...";
   }
 
@@ -27529,6 +27531,11 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     hash = input.charCodeAt(i) + ((hash << 5) - hash);
   }
   const styleIdx = Math.abs(hash) % 5;
+
+  const w = isSquare ? 400 : 1200;
+  const h = 400;
+  const cx = isSquare ? 200 : 600;
+  const cy = 200;
 
   let bgGradient = "";
   let artwork = "";
@@ -27552,16 +27559,16 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     artwork = `
       <!-- Abstract Luxury Golden Lines and Circles -->
       <g stroke="url(#goldGrad)" stroke-width="1" fill="none" opacity="0.3">
-        <circle cx="600" cy="200" r="180" stroke-dasharray="5 5"/>
-        <circle cx="600" cy="200" r="140"/>
-        <circle cx="600" cy="200" r="260" stroke-dasharray="2 10"/>
-        <circle cx="600" cy="200" r="320"/>
-        <line x1="0" y1="200" x2="1200" y2="200" opacity="0.5"/>
-        <line x1="600" y1="0" x2="600" y2="400" opacity="0.5"/>
-        <path d="M 450,200 L 600,50 L 750,200 L 600,350 Z" stroke-width="1.5"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 120 : 180}" stroke-dasharray="5 5"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 160 : 260}" stroke-dasharray="2 10"/>
+        ${!isSquare ? `<circle cx="${cx}" cy="${cy}" r="320"/>` : ""}
+        <line x1="0" y1="${cy}" x2="${w}" y2="${cy}" opacity="0.5"/>
+        <line x1="${cx}" y1="0" x2="${cx}" y2="${h}" opacity="0.5"/>
+        <path d="M ${cx - (isSquare ? 100 : 150)},${cy} L ${cx},${cy - (isSquare ? 100 : 150)} L ${cx + (isSquare ? 100 : 150)},${cy} L ${cx},${cy + (isSquare ? 100 : 150)} Z" stroke-width="1.5"/>
       </g>
       <!-- Soft Ambient Glow points -->
-      <circle cx="600" cy="200" r="150" fill="#fbbf24" opacity="0.03" filter="blur(40px)"/>
+      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 100 : 150}" fill="#fbbf24" opacity="0.03" filter="blur(40px)"/>
     `;
     textColor = "url(#goldGrad)";
     textFont = "Georgia, serif";
@@ -27582,16 +27589,11 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     artwork = `
       <!-- Futuristic Technical Mesh -->
       <g stroke="url(#cyberGrad)" stroke-width="0.8" fill="none" opacity="0.25">
-        <path d="M-100,100 C 300,300 900,100 1300,300" stroke-width="1.5"/>
-        <path d="M-100,150 C 300,350 900,150 1300,350" stroke-width="1"/>
-        <path d="M-100,50 C 300,250 900,50 1300,250" stroke-dasharray="4 4"/>
-        <line x1="150" y1="0" x2="150" y2="400" stroke-dasharray="2 4"/>
-        <line x1="1050" y1="0" x2="1050" y2="400" stroke-dasharray="2 4"/>
-        <circle cx="150" cy="200" r="4" fill="#a855f7"/>
-        <circle cx="1050" cy="200" r="4" fill="#3b82f6"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 130 : 180}" stroke-dasharray="4 4"/>
+        <polygon points="${cx},${cy - 80} ${cx + 70},${cy - 40} ${cx + 70},${cy + 40} ${cx},${cy + 80} ${cx - 70},${cy + 40} ${cx - 70},${cy - 40}" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" opacity="0.2" stroke-dasharray="5 3"/>
       </g>
-      <!-- Tech hexagon element in background center -->
-      <polygon points="600,110 680,155 680,245 600,290 520,245 520,155" fill="none" stroke="url(#cyberGrad)" stroke-width="1.5" opacity="0.2" stroke-dasharray="5 3"/>
+      <!-- Subtle center glow -->
+      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}" fill="#a855f7" opacity="0.03" filter="blur(30px)"/>
     `;
     textColor = "#ffffff";
     textFont = "system-ui, -apple-system, sans-serif";
@@ -27611,12 +27613,9 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     artwork = `
       <!-- Elegant curved biological or wave patterns -->
       <g stroke="url(#emeraldGrad)" stroke-width="1" fill="none" opacity="0.25">
-        <path d="M 0,400 C 300,300 400,100 600,200 C 800,300 900,100 1200,0" stroke-width="1.5"/>
-        <path d="M 0,380 C 300,280 400,80 600,180 C 800,280 900,80 1200,-20" stroke-dasharray="2 2"/>
-        <path d="M 0,420 C 300,320 400,120 600,220 C 800,320 900,120 1200,20"/>
-        <circle cx="600" cy="200" r="160" stroke-width="0.5" stroke-dasharray="4 6"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 120 : 160}" stroke-width="0.5" stroke-dasharray="4 6"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 80 : 120}" fill="#34d399" opacity="0.02" filter="blur(30px)"/>
       </g>
-      <circle cx="600" cy="200" r="120" fill="#34d399" opacity="0.02" filter="blur(30px)"/>
     `;
     textColor = "#e6fbf4";
     textFont = "Georgia, serif";
@@ -27637,13 +27636,10 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     artwork = `
       <!-- Bold abstract stripes and lines -->
       <g stroke="url(#crimsonGrad)" stroke-width="1.5" fill="none" opacity="0.3">
-        <line x1="0" y1="50" x2="1200" y2="350" stroke-width="2"/>
-        <line x1="0" y1="350" x2="1200" y2="50" stroke-width="0.5" stroke-dasharray="6 6"/>
-        <rect x="500" y="100" width="200" height="200" rx="10" stroke-dasharray="10 5" stroke-width="1"/>
-        <rect x="530" y="130" width="140" height="140" rx="6" stroke-width="1"/>
+        <rect x="${cx - (isSquare ? 80 : 100)}" y="${cy - (isSquare ? 80 : 100)}" width="${isSquare ? 160 : 200}" height="${isSquare ? 160 : 200}" rx="10" stroke-dasharray="10 5" stroke-width="1"/>
       </g>
       <!-- Subtle red glow -->
-      <circle cx="600" cy="200" r="130" fill="#ef4444" opacity="0.04" filter="blur(35px)"/>
+      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 130}" fill="#ef4444" opacity="0.04" filter="blur(35px)"/>
     `;
     textColor = "#ffffff";
     textFont = "Impact, Charcoal, sans-serif";
@@ -27663,20 +27659,20 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
     artwork = `
       <!-- Smooth concentric waves -->
       <g stroke="url(#oceanGrad)" stroke-width="1" fill="none" opacity="0.25">
-        <circle cx="600" cy="200" r="220"/>
-        <path d="M 0,200 Q 300,100 600,200 T 1200,200" stroke-width="1.5"/>
-        <path d="M 0,220 Q 300,120 600,220 T 1200,220" opacity="0.5"/>
-        <path d="M 0,180 Q 300,80 600,180 T 1200,180" stroke-dasharray="4 2" opacity="0.5"/>
-        <line x1="100" y1="100" x2="1100" y2="300" stroke-width="0.5" stroke-dasharray="2 10"/>
+        <circle cx="${cx}" cy="${cy}" r="${isSquare ? 130 : 220}"/>
       </g>
-      <circle cx="600" cy="200" r="140" fill="#38bdf8" opacity="0.03" filter="blur(30px)"/>
+      <circle cx="${cx}" cy="${cy}" r="${isSquare ? 90 : 140}" fill="#38bdf8" opacity="0.03" filter="blur(30px)"/>
     `;
     textColor = "#f0f9ff";
     textFont = "system-ui, -apple-system, sans-serif";
     subtitleColor = "#38bdf8";
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  const titleFontSize = isSquare ? (cleanName.length > 15 ? 26 : 32) : (cleanName.length > 25 ? 52 : 72);
+  const subFontSize = isSquare ? 11 : 20;
+  const subLetterSpacing = isSquare ? 2 : 4;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
     <defs>
       ${bgGradient}
       <style>
@@ -27684,8 +27680,8 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
           font-family: ${textFont};
           font-weight: 900;
           fill: ${textColor};
-          font-size: 72px;
-          letter-spacing: -2px;
+          font-size: ${titleFontSize}px;
+          letter-spacing: ${isSquare ? "-0.5px" : "-2px"};
           text-anchor: middle;
           dominant-baseline: middle;
         }
@@ -27693,8 +27689,8 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
           font-family: system-ui, -apple-system, sans-serif;
           font-weight: 600;
           fill: ${subtitleColor};
-          font-size: 20px;
-          letter-spacing: 4px;
+          font-size: ${subFontSize}px;
+          letter-spacing: ${subLetterSpacing}px;
           text-anchor: middle;
           dominant-baseline: middle;
           text-transform: uppercase;
@@ -27703,16 +27699,16 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
       </style>
     </defs>
     <!-- Background -->
-    <rect width="1200" height="400" fill="url(#bannerBg)"/>
+    <rect width="${w}" height="${h}" fill="url(#bannerBg)"/>
     
     <!-- Abstract Artwork background patterns -->
     ${artwork}
     
     <!-- Title Text -->
-    <text x="600" y="190" class="banner-title">${cleanName}</text>
+    <text x="${cx}" y="${isSquare ? 185 : 190}" class="banner-title">${cleanName}</text>
     
     <!-- Subtle category tag context -->
-    <text x="600" y="260" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
+    <text x="${cx}" y="${isSquare ? 230 : 260}" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
   </svg>`;
 }
 
@@ -31775,22 +31771,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.send(svg);
   });
 
-  app.get('/api/brand-banner/:id', (req, res) => {
+  app.get(['/api/brand-banner/:id', '/api/brand-logo/:id'], (req, res) => {
     const id = req.params.id || "Business";
-    const svg = generateBrandBannerSvg(id);
+    const isSquare = req.query.square === "1" || req.query.square === "true" || req.path.includes("brand-logo");
+    const svg = generateBrandBannerSvg(id, isSquare);
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.send(svg);
   });
 
   function generateCustomBrandLogo(nameOrDomain?: string | null): string {
-    const raw = (nameOrDomain || "B").replace(/^(https?:\/\/)?(www\.)?/, "").trim();
-    const letter = (raw.charAt(0) || "B").toUpperCase();
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-      <rect width="128" height="128" rx="28" fill="#18181b"/>
-      <rect x="1" y="1" width="126" height="126" rx="27" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
-      <text x="64" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle">${letter}</text>
-    </svg>`;
+    return generateBrandBannerSvg(nameOrDomain, true);
   }
 
   app.get("/api/favicon", async (req, res) => {
@@ -31798,7 +31789,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
 
     const sendDefaultFavicon = (domainName: string) => {
-      const cleanSvg = generateCustomBrandLogo(domainName);
+      const cleanSvg = generateBrandBannerSvg(domainName, true);
       res.setHeader("Content-Type", "image/svg+xml");
       res.setHeader("Cache-Control", "no-cache, max-age=60");
       res.setHeader("Access-Control-Allow-Origin", "*");

@@ -348,10 +348,10 @@ export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIC
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
-  "anthoscapital.com": "https://anthoscapital.com/favicon.1db37ced.png",
-  "www.anthoscapital.com": "https://anthoscapital.com/favicon.1db37ced.png",
-  "anthos capital": "https://anthoscapital.com/favicon.1db37ced.png",
-  "anthos": "https://anthoscapital.com/favicon.1db37ced.png",
+  "anthoscapital.com": "/api/brand-banner/anthoscapital.com",
+  "www.anthoscapital.com": "/api/brand-banner/anthoscapital.com",
+  "anthos capital": "/api/brand-banner/anthoscapital.com",
+  "anthos": "/api/brand-banner/anthoscapital.com",
   "allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "www.allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "allincapital": ALL_IN_CAPITAL_LOGO_DATA_URI,
@@ -1459,10 +1459,19 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // Explicit authentic custom logo URL takes priority
+  const effectiveBanner = bannerUrl || (cleanDomain && cleanDomain.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomain)}` : null);
+  const isLowResFavicon = url && (isFaviconUrl(url) || url.includes("/api/favicon") || url.includes("favicon"));
+
+  // If the only candidate is a blurry low-res favicon and an authentic brand banner is available, use the banner as the logo so it looks clean and matches
+  if (isLowResFavicon && effectiveBanner && !isBadBanner(effectiveBanner)) {
+    return getProxiedImageUrl(effectiveBanner) || effectiveBanner;
+  }
+
+  // Explicit authentic custom high-res logo URL takes priority
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
+    !isLowResFavicon &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
@@ -1470,19 +1479,19 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isWhiteOrInvertedLogo(url)) {
+  if (url && !isWhiteOrInvertedLogo(url) && !isLowResFavicon) {
     return getProxiedImageUrl(url);
   }
 
-  // If no valid standalone logo exists and a valid banner is available, use the banner image as the logo
-  if (bannerUrl && !isBadBanner(bannerUrl)) {
-    const proxiedBanner = getProxiedImageUrl(bannerUrl);
+  // If no valid standalone high-res logo exists and a valid banner is available, use the banner image as the logo
+  if (effectiveBanner && !isBadBanner(effectiveBanner)) {
+    const proxiedBanner = getProxiedImageUrl(effectiveBanner);
     if (proxiedBanner) return proxiedBanner;
   }
 
   // High-res domain logo fallback
   if (cleanDomain) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;
