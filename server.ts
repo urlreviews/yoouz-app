@@ -29359,6 +29359,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               || (!isFaviconUrl(pData.logoUrl) && !isBrokenSvgLogo(pData.logoUrl) ? pData.logoUrl : null) 
               || (!isFaviconUrl(pData.avatarUrl) && !isBrokenSvgLogo(pData.avatarUrl) ? pData.avatarUrl : null) 
               || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) 
+              || cachedImageCandidate
               || "";
 
             const isExactMatch = isDomainQuery 
