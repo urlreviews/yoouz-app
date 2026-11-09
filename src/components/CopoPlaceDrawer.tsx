@@ -53,7 +53,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo, isCrossBrandPortfolioLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription, extractCamelCaseBrandFromText } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -756,7 +756,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 
     const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
-    const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u) || isCrossBrandPortfolioLogo(u, drawerDomain)));
     const isLogoSameAsPlaceBanner = Boolean(
       place.logoUrl &&
       (
@@ -798,7 +798,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = (bannerError || isGenericName || isLogoSameAsPlaceBanner) ? "&refresh=true" : "";
+        const refreshParam = (bannerError || isGenericName || isLogoSameAsPlaceBanner || isCrossBrandPortfolioLogo(place.logoUrl, drawerDomain)) ? "&refresh=true" : "";
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
@@ -830,7 +830,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
                   if (cacheKey) {
-                    localStorage.setItem(`yoouz_place_media_${cacheKey}`, JSON.stringify({
+                    localStorage.setItem(`yoouz_place_media_v3_${cacheKey}`, JSON.stringify({
                       bannerUrl: resolvedBanner,
                       logoUrl: (resolvedLogo && resolvedLogo !== resolvedBanner && !resolvedLogo.includes("/api/favicon")) ? resolvedLogo : ""
                     }));
@@ -952,7 +952,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     try {
       const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
       if (!cacheKey) return null;
-      const raw = localStorage.getItem(`yoouz_place_media_${cacheKey}`);
+      const raw = localStorage.getItem(`yoouz_place_media_v3_${cacheKey}`);
       if (raw) return JSON.parse(raw);
     } catch(e) {}
     return null;
@@ -1036,7 +1036,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD] && !KNOWN_BRAND_LOGOS[cleanD].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain] && !KNOWN_BRAND_LOGOS[drawerDomain].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[drawerDomain];
 
-    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u) || isCrossBrandPortfolioLogo(u, drawerDomain)));
     const isFaviconOrProxy = (u?: string | null) => Boolean(u && (isFaviconUrl(u) || u.includes("/api/favicon")));
     const fallbackBannerLogo = allPhotos[0] || effectiveBanner || place.bannerUrl || place.ogImage || "";
 

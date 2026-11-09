@@ -8425,15 +8425,16 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           rec.ogImage = "";
         }
         const isLogoCopyOfBanner = Boolean(rec.logoUrl && (rec.logoUrl === rec.bannerUrl || rec.logoUrl === rec.ogImage));
+        const isCrossBrandLogo = Boolean(rec.logoUrl && domKey && isCrossBrandPortfolioLogoServer(rec.logoUrl, domKey));
         if (
-          (!rec.logoUrl || isLogoCopyOfBanner || isGenericOrPlaceholderLogo(rec.logoUrl)) &&
+          (!rec.logoUrl || isLogoCopyOfBanner || isCrossBrandLogo || isGenericOrPlaceholderLogo(rec.logoUrl)) &&
           domKey &&
           domKey.includes(".")
         ) {
           rec.logoUrl = `/api/favicon?domain=${encodeURIComponent(domKey)}`;
           rec.avatarUrl = `/api/favicon?domain=${encodeURIComponent(domKey)}`;
         } else if (
-          (!rec.logoUrl || isGenericOrPlaceholderLogo(rec.logoUrl)) &&
+          (!rec.logoUrl || isCrossBrandLogo || isGenericOrPlaceholderLogo(rec.logoUrl)) &&
           rec.bannerUrl &&
           !isBadBanner(rec.bannerUrl)
         ) {
@@ -27859,6 +27860,72 @@ function isFaviconUrl(url?: string | null): boolean {
   return l.includes("favicon");
 }
 
+function isCrossBrandPortfolioLogoServer(url?: string | null, domain?: string | null): boolean {
+  if (!url || typeof url !== "string" || !domain) return false;
+  let raw = url.trim();
+  if (!raw || raw.startsWith("data:") || raw.includes("/api/favicon")) return false;
+  while (raw.includes("/api/proxy-image")) {
+    const idx = raw.indexOf("url=");
+    if (idx >= 0) {
+      try {
+        raw = decodeURIComponent(raw.slice(idx + 4).split("&")[0]);
+      } catch {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  const lowerUrl = raw.toLowerCase();
+  if (
+    lowerUrl.includes("/portfolio/") ||
+    lowerUrl.includes("/clients/") ||
+    lowerUrl.includes("/partners/") ||
+    lowerUrl.includes("/customers/") ||
+    lowerUrl.includes("/testimonials/") ||
+    lowerUrl.includes("/companies/") ||
+    lowerUrl.includes("/backed/") ||
+    lowerUrl.includes("/investments/")
+  ) {
+    return true;
+  }
+  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  const domStem = cleanDom.split(".")[0].replace(/[^a-z0-9]/g, "");
+  if (!domStem) return false;
+  const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
+
+  const cleanPath = lowerUrl.split("?")[0].split("#")[0];
+  const fileName = cleanPath.split("/").pop() || "";
+  const fileBase = fileName
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[_-](svg|png|webp|jpg|jpeg)$/i, "")
+    .trim();
+
+  if (!fileBase || fileBase.length < 3) return false;
+
+  const genericLogoWords = [
+    "logo", "brand", "home", "header", "navbar", "nav", "site", "main", "primary", "default",
+    "icon", "mark", "symbol", "emblem", "wordmark", "logotype", "logomark", "light", "dark",
+    "white", "black", "blue", "color", "colored", "inverse", "inverted", "negative", "positive",
+    "desktop", "mobile", "retina", "image", "img", "asset", "vector", "group", "frame", "layer",
+    "path", "untitled", "cropped", "custom", "company", "official", "new", "banner", "top",
+    "left", "favicon", "apple", "touch", "webclip", "opengraph", "og", "avatar", "badge", "footer"
+  ];
+
+  const matchesOwn =
+    fileBase.includes(domStem) ||
+    domStem.includes(fileBase) ||
+    (domPrefix.length >= 3 && fileBase.includes(domPrefix));
+  const hasGeneric = genericLogoWords.some(w => fileBase.includes(w));
+
+  // If the filename is a clean alphabetic brand word (like "Spotify.svg", "Klarna.svg", "TradeRepublic.svg", "Bolt.svg")
+  // with no digits, no generic logo keyword, and no match to the website's own domain, it is a third-party portfolio logo!
+  if (/^[a-z][a-z_\-]{2,26}$/.test(fileBase) && !matchesOwn && !hasGeneric) {
+    return true;
+  }
+  return false;
+}
+
 function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string, domain: string): string {
   if (!sc$ && !rawHtml) return "";
   const $ = sc$ || cheerio.load(rawHtml);
@@ -27867,6 +27934,21 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   const effectiveBaseUrl = (pageUrl && pageUrl.startsWith("http"))
     ? pageUrl
     : (ogCanonicalUrl && ogCanonicalUrl.startsWith("http") ? ogCanonicalUrl : `https://${cleanDom}`);
+
+  const domStem = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  let effStem = domStem;
+  try {
+    const effHost = new URL(effectiveBaseUrl).hostname.replace(/^www\./i, "").toLowerCase();
+    effStem = effHost.split(".")[0].replace(/[^a-z0-9]/g, "") || domStem;
+  } catch (e) {}
+  const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
+  const effPrefix = effStem.length >= 4 ? effStem.slice(0, 4) : effStem;
+
+  const pageTitleRaw = ($('meta[property="og:site_name"]').attr("content") || $("title").first().text() || "").toLowerCase();
+  const pageBrandTokens = pageTitleRaw
+    .split(/[\s|\-–—:,./]+/)
+    .map((t: string) => t.replace(/[^a-z0-9]/g, ""))
+    .filter((t: string) => t.length >= 3 && !["the", "and", "for", "with", "home", "welcome", "official", "website", "page", "inc", "llc", "ltd", "corp"].includes(t));
 
   function makeAbsolute(src: string): string {
     if (!src) return "";
@@ -27886,22 +27968,55 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     if (!url || typeof url !== "string") return false;
     if (isGenericOrPlaceholderLogo(url)) return false;
     if (isFaviconUrl(url)) return false;
+    if (isCrossBrandPortfolioLogoServer(url, cleanDom)) return false;
     if (url.includes("placeholder") || url.includes("blank.gif") || url.includes("pixel.gif")) return false;
     return true;
+  }
+
+  function isThirdPartyOrContentLogo(el: any, absUrl: string): boolean {
+    if (isCrossBrandPortfolioLogoServer(absUrl, cleanDom)) return true;
+    if (!el) return false;
+
+    const isInHeaderOrNav =
+      el.closest('header, nav, [role="banner"], .w-nav, .navbar, .site-header, .main-header, .global-header, #header, #navbar, #masthead, .masthead, .topbar, .top-bar').length > 0 ||
+      el.parents().toArray().some((p: any) => {
+        const c = `${$(p).attr("class") || ""} ${$(p).attr("id") || ""}`.toLowerCase();
+        return /(^|[\s_-])(header|navbar|nav-bar|topbar|top-bar|masthead|w-nav)($|[\s_-])/i.test(c);
+      });
+
+    const isInPortfolioOrContent =
+      el.closest('main, article, section, footer, blockquote, figure, i.logo, [class*="portfolio" i], [class*="client" i], [class*="partner" i], [class*="customer" i], [class*="testimonial" i], [class*="backed" i], [class*="invest" i], [class*="showcase" i], [class*="carousel" i], [class*="slider" i], [class*="swiper" i], [class*="marquee" i], [class*="stories" i], [class*="case-stud" i], [class*="companies" i], [class*="trusted" i], [class*="sponsor" i], [class*="ecosystem" i]').length > 0 ||
+      (!isInHeaderOrNav && el.closest('.content, #content, [class*="grid" i], [class*="list" i], [class*="cards" i]').length > 0);
+
+    if (!isInHeaderOrNav && isInPortfolioOrContent) return true;
+
+    const altText = (el.attr("alt") || el.attr("title") || el.attr("aria-label") || "").trim().toLowerCase();
+    if (altText && /[a-z]{2,}/.test(altText)) {
+      const genericLogoWords = [
+        "logo", "brand", "home", "header", "navbar", "nav", "site", "main", "primary", "default",
+        "icon", "mark", "symbol", "emblem", "wordmark", "logotype", "logomark", "light", "dark",
+        "white", "black", "blue", "color", "colored", "inverse", "inverted", "negative", "positive",
+        "desktop", "mobile", "retina", "image", "img", "asset", "vector", "group", "frame", "layer",
+        "untitled", "cropped", "custom", "company", "official", "new", "banner", "top", "left"
+      ];
+      const matchesOwnBrand =
+        (domStem.length >= 2 && altText.includes(domStem)) ||
+        (effStem.length >= 2 && altText.includes(effStem)) ||
+        (domPrefix.length >= 3 && altText.includes(domPrefix)) ||
+        (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
+        pageBrandTokens.some((t: string) => altText.includes(t));
+      const hasGenericWord = genericLogoWords.some(w => altText.includes(w));
+      if (!matchesOwnBrand && !hasGenericWord) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   // 0. Preloaded main brand logo in <head> (common on Vite/React SPAs like <link rel="preload" as="image" href="/lumo-logo.png">)
   try {
     let preloadedLogo = "";
-    const domStem = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-    let effStem = domStem;
-    try {
-      const effHost = new URL(effectiveBaseUrl).hostname.replace(/^www\./i, "").toLowerCase();
-      effStem = effHost.split(".")[0].replace(/[^a-z0-9]/g, "") || domStem;
-    } catch (e) {}
-    const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
-    const effPrefix = effStem.length >= 4 ? effStem.slice(0, 4) : effStem;
-
     $('link[rel="preload"][as="image"]').each((_: any, el: any) => {
       if (preloadedLogo) return;
       const href = ($(el).attr("href") || "").trim();
@@ -27958,19 +28073,22 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
 
   let fallbackHeaderLogo = "";
 
-  // 1. DOM Header & Navigation Brand Images (actual visual elements rendered on page)
+  // 1A. DOM Header & Navigation Brand Images (strictly scoped to header/nav/brand containers and guarded against portfolio/client logos)
   try {
     const imgSelectors = [
-      '.w-nav-brand:not([class*="mobile"]) img', 'a[class*="brand" i]:not([class*="mobile"]) img',
-      'header a[href="/"] img', 'header a[aria-label*="home" i] img',
+      '.w-nav-brand:not([class*="mobile"]) img',
+      'header a[href="/"] img', 'header a[to="/"] img', 'header a[aria-label*="home" i] img',
+      'header .logo img', 'header a.logo img',
       'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
-      'a[class*="logo" i]:not([class*="mobile"]) img',
-      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
-      '.logo-box .logo img', '.logo img', '#logo img',
+      'nav a[href="/"] img', 'nav a[to="/"] img', 'nav .logo img', 'nav a.logo img',
       'nav img[class*="logo" i]:not([class*="white"])', 'nav img[src*="logo" i]:not([src*="white"]):not([src*="mobile"])',
+      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
       '[class*="header" i] img[class*="logo" i]', '[class*="header" i] img[alt*="logo" i]', '[class*="header" i] img[src*="logo" i]',
       '[class*="navbar" i] img[class*="logo" i]', '[class*="navbar" i] img[alt*="logo" i]', '[class*="navbar" i] img[src*="logo" i]',
-      'header img:first-of-type'
+      'header img:first-of-type',
+      'a[href="/"][class*="logo" i]:not([class*="mobile"]) img',
+      'a[to="/"][class*="logo" i]:not([class*="mobile"]) img',
+      'a[href="/"][class*="brand" i]:not([class*="mobile"]) img'
     ];
     for (const sel of imgSelectors) {
       let matchedPreferred = "";
@@ -27980,7 +28098,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-original") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
         if (src) {
           const abs = makeAbsolute(src);
-          if (abs && isValidCandidate(abs)) {
+          if (abs && isValidCandidate(abs) && !isThirdPartyOrContentLogo(el, abs)) {
             if (!isWhiteOrLightFilename(abs, el)) {
               matchedPreferred = abs;
             } else if (!fallbackHeaderLogo) {
@@ -27993,9 +28111,180 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
   } catch(e) {}
 
+  // 1B. Header & Navigation Inline SVG Brand Logos (runs immediately if header uses <svg> instead of <img>, e.g. creandum.com)
+  // Supports both composite multi-SVG header logos (icon <svg> + wordmark <svg> inside <a class="logo">) and single <svg> header logos.
+  try {
+    const parseViewBox = (svgEl: any): { x: number; y: number; w: number; h: number } | null => {
+      const vb = (svgEl.attr("viewBox") || svgEl.attr("viewbox") || "").trim();
+      if (vb) {
+        const parts = vb.split(/[\s,]+/).map(Number);
+        if (parts.length === 4 && parts.every((n: number) => !isNaN(n)) && parts[2] > 0 && parts[3] > 0) {
+          return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+        }
+      }
+      const wAttr = parseFloat(svgEl.attr("width") || "0");
+      const hAttr = parseFloat(svgEl.attr("height") || "0");
+      if (wAttr > 0 && hAttr > 0) {
+        return { x: 0, y: 0, w: wAttr, h: hAttr };
+      }
+      return null;
+    };
+
+    const normalizeInnerSvgMarkup = (markup: string): string => {
+      let m = markup
+        .replace(/\sdata-v-[a-z0-9_-]+="[^"]*"/gi, "")
+        .replace(/\sclass="[^"]*"/gi, "")
+        .replace(/var\([^,)]+,\s*([^)]+)\)/g, "$1")
+        .replace(/var\([^)]+\)/g, "#09090b")
+        .replace(/currentColor/gi, "#09090b");
+      const visible = m
+        .toLowerCase()
+        .replace(/<defs[\s\S]*?<\/defs>/gi, "")
+        .replace(/<clippath[\s\S]*?<\/clippath>/gi, "")
+        .replace(/<mask[\s\S]*?<\/mask>/gi, "");
+      if (!visible.includes("<rect")) {
+        const isWhiteColor = (c: string) =>
+          c === "#fff" || c === "#ffffff" || c === "white" || c.startsWith("rgb(255");
+        const nonNoneFills = [
+          ...Array.from(visible.matchAll(/fill=["']([^"']+)["']/g)).map(x => x[1].trim()),
+          ...Array.from(visible.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(x => x[1].trim())
+        ].filter(f => f !== "none" && f !== "transparent");
+        if (nonNoneFills.length > 0 && nonNoneFills.every(isWhiteColor)) {
+          m = m
+            .replace(/fill=(["'])(#fff|#ffffff|white|rgb\(255[^"']*\))\1/gi, 'fill="#09090b"')
+            .replace(/fill\s*:\s*(#fff|#ffffff|white|rgb\(255[^;}"']*\))/gi, "fill:#09090b");
+        }
+        const nonNoneStrokes = [
+          ...Array.from(visible.matchAll(/stroke=["']([^"']+)["']/g)).map(x => x[1].trim()),
+          ...Array.from(visible.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(x => x[1].trim())
+        ].filter(s => s !== "none" && s !== "transparent");
+        if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0 && nonNoneStrokes.every(isWhiteColor)) {
+          m = m
+            .replace(/stroke=(["'])(#fff|#ffffff|white|rgb\(255[^"']*\))\1/gi, 'stroke="#09090b"')
+            .replace(/stroke\s*:\s*(#fff|#ffffff|white|rgb\(255[^;}"']*\))/gi, "stroke:#09090b");
+        }
+      }
+      return m;
+    };
+
+    // Check composite multi-SVG header logo containers first (e.g. <header><a class="logo"><svg class="logo-single">...</svg><svg class="logo-text">...</svg></a></header>)
+    const logoContainerSelectors = [
+      'header a.logo', 'header .logo', 'header a[class*="logo" i]',
+      'header a[href="/"]', 'header a[to="/"]',
+      'nav a.logo', 'nav .logo', 'nav a[class*="logo" i]',
+      'nav a[href="/"]', 'nav a[to="/"]',
+      '[class*="header" i] a.logo', '[class*="header" i] .logo'
+    ];
+    for (const cSel of logoContainerSelectors) {
+      const container = $(cSel).first();
+      if (container.length) {
+        const childSvgs = container.find("svg").toArray();
+        if (childSvgs.length === 2) {
+          const s0 = $(childSvgs[0]);
+          const s1 = $(childSvgs[1]);
+          const cl0 = (s0.attr("class") || "").toLowerCase();
+          const cl1 = (s1.attr("class") || "").toLowerCase();
+          const vb0 = parseViewBox(s0);
+          const vb1 = parseViewBox(s1);
+          const isNotDuplicateVariant =
+            !cl0.includes("mobile") && !cl1.includes("mobile") &&
+            !cl0.includes("hidden") && !cl1.includes("hidden") &&
+            !cl0.includes("dark") && !cl1.includes("dark") &&
+            !cl0.includes("light") && !cl1.includes("light");
+          if (vb0 && vb1 && isNotDuplicateVariant && vb1.w > vb0.w * 1.5) {
+            const inner0 = normalizeInnerSvgMarkup(s0.html() || "");
+            const inner1 = normalizeInnerSvgMarkup(s1.html() || "");
+            if (inner0 && inner1) {
+              const totalH = Math.max(vb0.h, vb1.h);
+              const gap = Math.round(totalH * 0.38 * 100) / 100;
+              const totalW = Math.round((vb0.w + gap + vb1.w) * 100) / 100;
+              const y0 = Math.round(((totalH - vb0.h) / 2 - vb0.y) * 100) / 100;
+              const y1 = Math.round(((totalH - vb1.h) / 2 - vb1.y) * 100) / 100;
+              const outW = Math.max(240, Math.round(totalW * 4));
+              const outH = Math.max(40, Math.round(totalH * 4));
+              const compositeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" viewBox="0 0 ${totalW} ${totalH}" fill="#09090b"><g transform="translate(${-vb0.x}, ${y0})">${inner0}</g><g transform="translate(${Math.round((vb0.w + gap - vb1.x) * 100) / 100}, ${y1})">${inner1}</g></svg>`;
+              return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(compositeSvg);
+            }
+          }
+        }
+      }
+    }
+
+    // Check single inline SVG brand logos inside header or nav
+    const svgSelectors = [
+      'header a[href="/"] svg', 'header a[to="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
+      'header a.logo svg', 'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
+      'nav a[href="/"] svg', 'nav a[to="/"] svg', 'nav a.logo svg', 'nav .logo svg', 'nav [class*="logo" i] svg',
+      '[class*="header" i] a.logo svg', '[class*="header" i] .logo svg', '[class*="header" i] [class*="logo" i] svg'
+    ];
+    for (const sel of svgSelectors) {
+      let matchedSvg = "";
+      $(sel).each((_: any, rawEl: any) => {
+        if (matchedSvg) return;
+        const el = $(rawEl);
+        const cl = (el.attr("class") || "").toLowerCase();
+        const ariaLabel = (el.attr("aria-label") || "").toLowerCase();
+        if (!cl.includes("search") && !cl.includes("cart") && !cl.includes("menu") && !cl.includes("close") && !cl.includes("chevron") && !cl.includes("arrow") && !cl.includes("clock") && !cl.includes("marker") && !cl.includes("icon") && !cl.includes("globe") && !cl.includes("user") && !cl.includes("social")) {
+          if (ariaLabel && !ariaLabel.includes(cleanDom.split(".")[0]) && !ariaLabel.includes("logo") && !ariaLabel.includes("home") && !ariaLabel.includes("brand")) {
+            return;
+          }
+          let svgStr = $.html(el);
+          if (svgStr && svgStr.includes("<svg") && svgStr.length > 50 && svgStr.length < 50000) {
+            const lowerSvg = svgStr.toLowerCase();
+            if (
+              lowerSvg.includes('preserveaspectratio="none"') ||
+              (lowerSvg.includes("<use") && lowerSvg.includes("#") && !lowerSvg.includes("<symbol")) ||
+              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !/<svg[^>]*\bviewbox=/i.test(lowerSvg))
+            ) {
+              return;
+            }
+            if (!svgStr.includes("xmlns=")) {
+              svgStr = svgStr.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            svgStr = svgStr.replace(/\sdata-v-[a-z0-9_-]+="[^"]*"/gi, "").replace(/\sclass="[^"]*"/gi, "");
+            if (!/\bwidth="/i.test(svgStr)) {
+              const vbMatch = svgStr.match(/viewBox="[\d.\s-]+\s+([\d.]+)\s+([\d.]+)"/i);
+              const vbW = vbMatch ? parseFloat(vbMatch[1]) : 200;
+              const vbH = vbMatch ? parseFloat(vbMatch[2]) : 80;
+              if (vbW <= 36 && vbH <= 36 && Math.abs(vbW - vbH) <= 4 && !cl.includes("logo") && !ariaLabel.includes("logo")) {
+                return;
+              }
+              const w = vbMatch ? Math.max(120, Math.round(vbW * 4)) : 200;
+              const h = vbMatch ? Math.max(40, Math.round(vbH * 4)) : 80;
+              svgStr = svgStr.replace("<svg", `<svg width="${w}" height="${h}"`);
+            }
+            svgStr = normalizeInnerSvgMarkup(svgStr);
+            // If root <svg> has fill="none" (common when external CSS sets path { fill: #fff }), and inner paths have no explicit fill or stroke, set root fill="#09090b"
+            const innerOnly = svgStr.replace(/^<svg[^>]*>/i, "").replace(/<\/svg>$/i, "");
+            const visibleInner = innerOnly
+              .toLowerCase()
+              .replace(/<defs[\s\S]*?<\/defs>/gi, "")
+              .replace(/<clippath[\s\S]*?<\/clippath>/gi, "")
+              .replace(/<mask[\s\S]*?<\/mask>/gi, "");
+            const innerFills = [
+              ...Array.from(visibleInner.matchAll(/fill=["']([^"']+)["']/g)).map(x => x[1].trim()),
+              ...Array.from(visibleInner.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(x => x[1].trim())
+            ].filter(f => f !== "none" && f !== "transparent");
+            const innerStrokes = [
+              ...Array.from(visibleInner.matchAll(/stroke=["']([^"']+)["']/g)).map(x => x[1].trim()),
+              ...Array.from(visibleInner.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(x => x[1].trim())
+            ].filter(s => s !== "none" && s !== "transparent");
+            if (innerFills.length === 0 && innerStrokes.length === 0) {
+              if (/<svg[^>]*\bfill=["']none["']/i.test(svgStr)) {
+                svgStr = svgStr.replace(/(<svg[^>]*\bfill=["'])none(["'])/i, "$1#09090b$2");
+              } else if (!/<svg[^>]*\bfill=/i.test(svgStr)) {
+                svgStr = svgStr.replace("<svg", '<svg fill="#09090b"');
+              }
+            }
+            matchedSvg = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
+          }
+        }
+      });
+      if (matchedSvg) return matchedSvg;
+    }
+  } catch(e) {}
+
   // 2. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
-  // Note: Many sites (like outlander.vc) point <link rel="apple-touch-icon"> to a crisp 155x155+ PNG named "favicon.png",
-  // so we validate apple-touch-icon candidates without rejecting high-res PNG/SVG/WebP files simply for having "favicon" in their filename.
   try {
     const isAppleTouchCandidateValid = (url: string, sizeNum: number): boolean => {
       if (!url || typeof url !== "string") return false;
@@ -28082,89 +28371,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
 
   // If the website had an explicit header/nav logo image (even if white/light, which our frontend contrast guard automatically renders dark on white), return it before falling back!
   if (fallbackHeaderLogo) return fallbackHeaderLogo;
-
-  // 5. Inline SVG Brand Logos inside header, .logo, or navbar
-  try {
-    const svgSelectors = [
-      'header a[href="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
-      'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
-      'nav a[href="/"] svg', 'nav .logo svg', 'nav [class*="logo" i] svg'
-    ];
-    for (const sel of svgSelectors) {
-      let matchedSvg = "";
-      $(sel).each((_: any, rawEl: any) => {
-        if (matchedSvg) return;
-        const el = $(rawEl);
-        const cl = (el.attr("class") || "").toLowerCase();
-        const ariaLabel = (el.attr("aria-label") || "").toLowerCase();
-        if (!cl.includes("search") && !cl.includes("cart") && !cl.includes("menu") && !cl.includes("close") && !cl.includes("chevron") && !cl.includes("arrow") && !cl.includes("clock") && !cl.includes("marker") && !cl.includes("icon") && !cl.includes("globe") && !cl.includes("user")) {
-          if (ariaLabel && !ariaLabel.includes(cleanDom.split(".")[0]) && !ariaLabel.includes("logo") && !ariaLabel.includes("home") && !ariaLabel.includes("brand")) {
-            return;
-          }
-          let svgStr = $.html(el);
-          if (svgStr && svgStr.includes("<svg") && svgStr.length > 50 && svgStr.length < 50000) {
-            const lowerSvg = svgStr.toLowerCase();
-            if (
-              lowerSvg.includes('preserveaspectratio="none"') ||
-              (lowerSvg.includes("<use") && lowerSvg.includes("#") && !lowerSvg.includes("<symbol")) ||
-              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !/<svg[^>]*\bviewbox=/i.test(lowerSvg))
-            ) {
-              return;
-            }
-            if (!svgStr.includes("xmlns=")) {
-              svgStr = svgStr.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
-            }
-            svgStr = svgStr.replace(/\sclass="[^"]*"/gi, "");
-            if (!/\bwidth="/i.test(svgStr)) {
-              const vbMatch = svgStr.match(/viewBox="[\d.\s-]+\s+([\d.]+)\s+([\d.]+)"/i);
-              const vbW = vbMatch ? parseFloat(vbMatch[1]) : 200;
-              const vbH = vbMatch ? parseFloat(vbMatch[2]) : 80;
-              if (vbW <= 36 && vbH <= 36 && Math.abs(vbW - vbH) <= 4 && !cl.includes("logo") && !ariaLabel.includes("logo")) {
-                // Skip generic small 24x24 UI icons that aren't explicitly marked as logo
-                return;
-              }
-              const w = vbMatch ? Math.max(120, Math.round(vbW * 4)) : 200;
-              const h = vbMatch ? Math.max(40, Math.round(vbH * 4)) : 80;
-              svgStr = svgStr.replace("<svg", `<svg width="${w}" height="${h}"`);
-            }
-            svgStr = svgStr
-              .replace(/var\([^,)]+,\s*([^)]+)\)/g, "$1")
-              .replace(/var\([^)]+\)/g, "#09090b")
-              .replace(/currentColor/gi, "#09090b");
-            const visibleSvg = svgStr
-              .toLowerCase()
-              .replace(/<defs[\s\S]*?<\/defs>/gi, "")
-              .replace(/<clippath[\s\S]*?<\/clippath>/gi, "")
-              .replace(/<mask[\s\S]*?<\/mask>/gi, "");
-            if (!visibleSvg.includes("<rect")) {
-              const isWhiteColor = (c: string) =>
-                c === "#fff" || c === "#ffffff" || c === "white" || c.startsWith("rgb(255");
-              const nonNoneFills = [
-                ...Array.from(visibleSvg.matchAll(/fill=["']([^"']+)["']/g)).map(m => m[1].trim()),
-                ...Array.from(visibleSvg.matchAll(/fill\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
-              ].filter(f => f !== "none" && f !== "transparent");
-              if (nonNoneFills.length > 0 && nonNoneFills.every(isWhiteColor)) {
-                svgStr = svgStr
-                  .replace(/fill=(["'])(#fff|#ffffff|white|rgb\(255[^"']*\))\1/gi, 'fill="#09090b"')
-                  .replace(/fill\s*:\s*(#fff|#ffffff|white|rgb\(255[^;}"']*\))/gi, "fill:#09090b");
-              }
-              const nonNoneStrokes = [
-                ...Array.from(visibleSvg.matchAll(/stroke=["']([^"']+)["']/g)).map(m => m[1].trim()),
-                ...Array.from(visibleSvg.matchAll(/stroke\s*:\s*([^;}"'\s]+)/g)).map(m => m[1].trim())
-              ].filter(s => s !== "none" && s !== "transparent");
-              if (nonNoneFills.length === 0 && nonNoneStrokes.length > 0 && nonNoneStrokes.every(isWhiteColor)) {
-                svgStr = svgStr
-                  .replace(/stroke=(["'])(#fff|#ffffff|white|rgb\(255[^"']*\))\1/gi, 'stroke="#09090b"')
-                  .replace(/stroke\s*:\s*(#fff|#ffffff|white|rgb\(255[^;}"']*\))/gi, "stroke:#09090b");
-              }
-            }
-            matchedSvg = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
-          }
-        }
-      });
-      if (matchedSvg) return matchedSvg;
-    }
-  } catch(e) {}
 
   // 6. High-resolution Web Icon links (strictly vector .svg or explicit sizes >= 128px; never low-res shortcut icons or favicons)
   try {
@@ -28716,28 +28922,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
               }
 
-              // Extract high-resolution Logo using extractAuthenticWebsiteLogo first
-              let scrapedLogo = extractAuthenticWebsiteLogo(d$, dHtml, targetUrl, cleanDom);
-              if (!scrapedLogo) {
-                d$('img').each((_, el) => {
-                  const src = d$(el).attr('src') || d$(el).attr('data-src') || d$(el).attr('data-lazy-src') || d$(el).attr('data-original') || '';
-                  const alt = d$(el).attr('alt') || '';
-                  if (!src || src.startsWith('data:') || src.includes('#') || src.includes('paint0_linear') || src.toLowerCase().includes('favicon') || src.toLowerCase().includes('.ico')) return;
-                  
-                  const lowerSrc = src.toLowerCase();
-                  const lowerAlt = alt.toLowerCase();
-                  
-                  if (lowerSrc.includes('logo') || lowerAlt.includes('logo') || lowerSrc.includes('brand') || lowerAlt.includes('brand')) {
-                    if (!scrapedLogo && !lowerSrc.includes('60x') && !lowerSrc.includes('32x') && !lowerSrc.includes('16x')) {
-                      try {
-                        scrapedLogo = new URL(src, targetUrl).toString();
-                      } catch (e) {
-                        scrapedLogo = src;
-                      }
-                    }
-                  }
-                });
-              }
+              // Extract high-resolution Logo using extractAuthenticWebsiteLogo
+              const scrapedLogo = extractAuthenticWebsiteLogo(d$, dHtml, targetUrl, cleanDom);
               if (scrapedLogo) domLogo = scrapedLogo;
               
               const scrapedLoc = await extractWebsiteLocationAndContact(d$, dHtml, targetUrl, cleanDom);
@@ -31046,7 +31232,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
 
             const isDuplicateBannerLogo = (u?: string) => Boolean(u && (u === existingDoc.bannerUrl || u === existingDoc.ogImage || u === rawMergedBanner || u === image));
-            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isDuplicateBannerLogo(u) || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
+            const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isDuplicateBannerLogo(u) || isCrossBrandPortfolioLogoServer(u, cleanDomain) || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = Boolean(standaloneScrapedLogo && !isPlaceholderLogo(standaloneScrapedLogo));
 
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
@@ -32067,7 +32253,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           matchedPlace.logoUrl &&
           (matchedPlace.logoUrl === matchedPlace.bannerUrl || matchedPlace.logoUrl === matchedPlace.ogImage)
         );
-        if (matchedPlace.logoUrl && !isMatchedLogoSameAsBanner && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
+        const isMatchedLogoCrossBrand = Boolean(
+          matchedPlace.logoUrl && isCrossBrandPortfolioLogoServer(matchedPlace.logoUrl, cleanDomain)
+        );
+        if (matchedPlace.logoUrl && !isMatchedLogoSameAsBanner && !isMatchedLogoCrossBrand && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
+          if (matchedPlace.logoUrl.startsWith("data:image/svg+xml")) {
+            const commaIdx = matchedPlace.logoUrl.indexOf(",");
+            const svgContent = commaIdx >= 0 ? decodeURIComponent(matchedPlace.logoUrl.slice(commaIdx + 1)) : "";
+            res.setHeader("Content-Type", "image/svg+xml");
+            res.setHeader("Cache-Control", "public, max-age=604800");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(svgContent);
+          }
           const targetLogo = matchedPlace.logoUrl.startsWith("/api/") ? matchedPlace.logoUrl : `/api/proxy-image?url=${encodeURIComponent(matchedPlace.logoUrl)}`;
           return res.redirect(302, targetLogo);
         }

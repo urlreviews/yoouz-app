@@ -1298,6 +1298,70 @@ export function isWhiteOrInvertedLogo(url: string | null | undefined): boolean {
   return false;
 }
 
+export function isCrossBrandPortfolioLogo(url?: string | null, domain?: string | null): boolean {
+  if (!url || typeof url !== "string" || !domain) return false;
+  let raw = url.trim();
+  if (!raw || raw.startsWith("data:") || raw.includes("/api/favicon")) return false;
+  while (raw.includes("/api/proxy-image")) {
+    const idx = raw.indexOf("url=");
+    if (idx >= 0) {
+      try {
+        raw = decodeURIComponent(raw.slice(idx + 4).split("&")[0]);
+      } catch {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  const lowerUrl = raw.toLowerCase();
+  if (
+    lowerUrl.includes("/portfolio/") ||
+    lowerUrl.includes("/clients/") ||
+    lowerUrl.includes("/partners/") ||
+    lowerUrl.includes("/customers/") ||
+    lowerUrl.includes("/testimonials/") ||
+    lowerUrl.includes("/companies/") ||
+    lowerUrl.includes("/backed/") ||
+    lowerUrl.includes("/investments/")
+  ) {
+    return true;
+  }
+  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  const domStem = cleanDom.split(".")[0].replace(/[^a-z0-9]/g, "");
+  if (!domStem) return false;
+  const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
+
+  const cleanPath = lowerUrl.split("?")[0].split("#")[0];
+  const fileName = cleanPath.split("/").pop() || "";
+  const fileBase = fileName
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/[_-](svg|png|webp|jpg|jpeg)$/i, "")
+    .trim();
+
+  if (!fileBase || fileBase.length < 3) return false;
+
+  const genericLogoWords = [
+    "logo", "brand", "home", "header", "navbar", "nav", "site", "main", "primary", "default",
+    "icon", "mark", "symbol", "emblem", "wordmark", "logotype", "logomark", "light", "dark",
+    "white", "black", "blue", "color", "colored", "inverse", "inverted", "negative", "positive",
+    "desktop", "mobile", "retina", "image", "img", "asset", "vector", "group", "frame", "layer",
+    "path", "untitled", "cropped", "custom", "company", "official", "new", "banner", "top",
+    "left", "favicon", "apple", "touch", "webclip", "opengraph", "og", "avatar", "badge", "footer"
+  ];
+
+  const matchesOwn =
+    fileBase.includes(domStem) ||
+    domStem.includes(fileBase) ||
+    (domPrefix.length >= 3 && fileBase.includes(domPrefix));
+  const hasGeneric = genericLogoWords.some(w => fileBase.includes(w));
+
+  if (/^[a-z][a-z_\-]{2,26}$/.test(fileBase) && !matchesOwn && !hasGeneric) {
+    return true;
+  }
+  return false;
+}
+
 export function extractDomain(str: string | null | undefined): string | null {
   if (!str) return null;
   let trimmed = str.trim();
@@ -1545,6 +1609,7 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   if (
     url &&
     !isSameAsBanner &&
+    !isCrossBrandPortfolioLogo(url, cleanDomain) &&
     !isWhiteOrInvertedLogo(url) &&
     !url.includes("/api/brand-banner") &&
     !url.includes("/api/favicon") &&
@@ -1622,6 +1687,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
     !isDuplicateOfBanner(place.logoUrl) &&
+    !isCrossBrandPortfolioLogo(place.logoUrl, cleanDomain) &&
     !isFaviconUrl(place.logoUrl) &&
     !place.logoUrl.includes("/api/favicon") &&
     !place.logoUrl.includes("/api/brand-banner") &&
@@ -1643,6 +1709,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     place.avatarUrl &&
     place.avatarUrl.trim() !== "" &&
     !isDuplicateOfBanner(place.avatarUrl) &&
+    !isCrossBrandPortfolioLogo(place.avatarUrl, cleanDomain) &&
     !isFaviconUrl(place.avatarUrl) &&
     !place.avatarUrl.includes("/api/favicon") &&
     !place.avatarUrl.includes("/api/brand-banner") &&

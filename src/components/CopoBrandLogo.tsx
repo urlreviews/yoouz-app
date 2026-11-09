@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Building2 } from "lucide-react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo, isCrossBrandPortfolioLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -90,7 +90,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
     const candidates: string[] = [];
 
-    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u) || isCrossBrandPortfolioLogo(u, cleanDomain)));
     const proxiedBannerUrl = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
     const isSameAsBanner = (u?: string | null): boolean => {
       if (!u || !bannerUrl) return false;
