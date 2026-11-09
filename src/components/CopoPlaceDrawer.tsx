@@ -1574,7 +1574,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         ) : null}
 
         {/* Overlapping Business Logo - Always render signature brand logo box */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-black/15 overflow-hidden group transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-0 ring-1 ring-black/15 overflow-hidden group transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
           <CopoBrandLogo
             key={`logo-${drawerDomain || place.id}`}
             domain={drawerDomain || undefined}
@@ -1583,7 +1583,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             logoUrl={primaryLogoUrl || place.logoUrl}
             bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
             className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-contain rounded-[16px] sm:rounded-[20px]"
+            imageClassName="w-full h-full object-contain p-2 sm:p-2.5 rounded-[16px] sm:rounded-[20px]"
             fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
             onLoad={() => {
               setLogoLoaded(true);
@@ -2847,8 +2847,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     website={effectiveWebsite}
                     logoUrl={primaryLogoUrl || place.logoUrl}
                     bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200 overflow-hidden"
-                    imageClassName="w-full h-full object-contain rounded-lg"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-0 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200 overflow-hidden"
+                    imageClassName="w-full h-full object-contain p-2 rounded-lg"
                     fallbackTextClassName="font-black text-lg text-zinc-950"
                   />
 
@@ -3062,8 +3062,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     website={effectiveWebsite}
                     logoUrl={primaryLogoUrl || place.logoUrl}
                     bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
-                    className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-200 print:bg-white print:border-zinc-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
-                    imageClassName="w-full h-full object-contain rounded-lg"
+                    className="w-14 h-14 rounded-2xl bg-white p-0 flex items-center justify-center mx-auto shadow-md border border-zinc-200 print:bg-white print:border-zinc-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
+                    imageClassName="w-full h-full object-contain p-2 rounded-lg"
                     fallbackTextClassName="font-black text-xl text-zinc-950"
                   />
 

@@ -1,5 +1,54 @@
 [
   {
+    "id": "prosus.com",
+    "name": "Prosus Ventures",
+    "category": "Marketing & Creative Agency",
+    "categoryType": "all",
+    "address": "Amsterdam, NL",
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.prosus.com%2F~%2Fmedia%2FImages%2FP%2Fprosus-corp-v2%2Flogo%2Flogo-light.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.prosus.com%2F~%2Fmedia%2FImages%2FP%2Fprosus-corp-v2%2Flogo%2Flogo-light.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.prosus.com%2F~%2Fmedia%2FImages%2FP%2Fprosus-corp-v2%2Fimages%2Fnews-insights%2Fgroup-news%2Fprosus-internship-programme-banner-img.jpg%3Fh%3D667%26iar%3D0%26w%3D1000",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.prosus.com%2F~%2Fmedia%2FImages%2FP%2Fprosus-corp-v2%2Fimages%2Fnews-insights%2Fgroup-news%2Fprosus-internship-programme-banner-img.jpg%3Fh%3D667%26iar%3D0%26w%3D1000",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.prosus.com%2F~%2Fmedia%2FImages%2FP%2Fprosus-corp-v2%2Fimages%2Fnews-insights%2Fgroup-news%2Fprosus-internship-programme-banner-img.jpg%3Fh%3D667%26iar%3D0%26w%3D1000"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.prosus.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Prosus is the power behind the world's leading lifestyle e-commerce brands.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "prosus.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "pear.vc",
     "name": "Pear VC",
     "category": "Verified Business",

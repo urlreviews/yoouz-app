@@ -174,14 +174,38 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
+  const [resolvedCurrentUrl, setResolvedCurrentUrl] = useState<string | null>(null);
 
-  const activeImageClass = imageClassName;
-  const loadedImageClass = imageClassName;
+  const isBannerCopyUrl = (u?: string | null): boolean => {
+    if (!u || !bannerUrl) return false;
+    const proxiedB = getProxiedImageUrl(bannerUrl);
+    const proxiedU = getProxiedImageUrl(u);
+    return (
+      u === bannerUrl ||
+      u === proxiedB ||
+      proxiedU === proxiedB ||
+      (proxiedB !== "" && u.endsWith(proxiedB)) ||
+      (bannerUrl !== "" && u.includes(encodeURIComponent(bannerUrl)))
+    );
+  };
+
+  const toFullFrameClass = (cls: string) =>
+    cls
+      .replace(/\bobject-contain\b/g, "object-cover")
+      .replace(/\bp-\S+/g, "")
+      .replace(/\brounded-\S+/g, "") + " object-cover !p-0 !rounded-none";
+
+  const activeIsBannerFallback = isBannerCopyUrl(currentSrc) || isBannerCopyUrl(resolvedCurrentUrl);
+  const loadedIsBannerFallback = isBannerCopyUrl(loadedSrc) || (loadedSrc === currentSrc && activeIsBannerFallback);
+
+  const activeImageClass = activeIsBannerFallback ? toFullFrameClass(imageClassName) : imageClassName;
+  const loadedImageClass = loadedIsBannerFallback ? toFullFrameClass(imageClassName) : imageClassName;
 
   // Reset state when switching to a different business domain
   useEffect(() => {
     const locked = cleanDomain ? LOCKED_DOMAIN_LOGOS.get(cleanDomain) : null;
     setCandidateIdx(0);
+    setResolvedCurrentUrl(null);
     if (locked && !failedUrlsRef.current.has(locked)) {
       setLoadedSrc(locked);
       setImgLoaded(true);
@@ -228,11 +252,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (img && currentSrc && img.complete && img.naturalWidth > 0) {
       const isLast = candidateIdx + 1 >= candidateUrls.length;
       if (isAcceptableLogoDimensions(img.naturalWidth, img.naturalHeight, currentSrc, isLast)) {
+        const finalUrl = img.currentSrc || currentSrc;
+        setResolvedCurrentUrl(finalUrl);
         const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
         setNeedsDarkContrast(darkNeeded);
         KNOWN_LOADED_LOGOS.add(currentSrc);
-        const proxiedBannerCheck = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
-        const isCurrentBannerCopy = Boolean(bannerUrl && (currentSrc === bannerUrl || currentSrc === proxiedBannerCheck));
+        const isCurrentBannerCopy = isBannerCopyUrl(currentSrc) || isBannerCopyUrl(finalUrl);
         if (cleanDomain && !currentSrc.includes("/api/favicon") && !isCurrentBannerCopy) {
           LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
         }
@@ -307,12 +332,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
               });
               return;
             }
+            const finalUrl = img.currentSrc || currentSrc;
+            setResolvedCurrentUrl(finalUrl);
             const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
             setNeedsDarkContrast(darkNeeded);
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
-              const proxiedBannerCheck = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
-              const isCurrentBannerCopy = Boolean(bannerUrl && (currentSrc === bannerUrl || currentSrc === proxiedBannerCheck));
+              const isCurrentBannerCopy = isBannerCopyUrl(currentSrc) || isBannerCopyUrl(finalUrl);
               if (cleanDomain && !currentSrc.includes("/api/favicon") && !isCurrentBannerCopy) {
                 LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
