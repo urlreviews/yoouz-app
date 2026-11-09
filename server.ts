@@ -315,7 +315,11 @@ function isLogoOrIconUrl(urlStr: string): boolean {
     l.includes('16x16') ||
     l.includes('32x32') ||
     l.includes('60x60') ||
-    l.includes('tap/0.png')
+    l.includes('tap/0.png') ||
+    l.includes('arrow') ||
+    l.includes('chevron') ||
+    l.includes('caret') ||
+    l.includes('hamburger')
   );
 }
 
@@ -405,7 +409,22 @@ function isBadBanner(url?: string | null): boolean {
       decoded.endsWith(".ico") ||
       decoded.endsWith(".gif") ||
       decoded.includes(".gif?") ||
-      decoded.includes(".gif#")
+      decoded.includes(".gif#") ||
+      decoded.endsWith(".svg") ||
+      decoded.includes(".svg?") ||
+      decoded.includes(".svg#") ||
+      decoded.endsWith(".json") ||
+      decoded.includes(".json?") ||
+      decoded.endsWith(".xml") ||
+      decoded.endsWith(".js") ||
+      decoded.endsWith(".css") ||
+      decoded.endsWith(".mp4") ||
+      decoded.endsWith(".webm") ||
+      decoded.endsWith(".mov") ||
+      decoded.includes("data:image/svg") ||
+      decoded.includes("arrow-left") ||
+      decoded.includes("arrow-right") ||
+      decoded.includes("form-arrow")
     );
   } catch (e) {
     return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit") || url.includes("demdex");
@@ -28243,6 +28262,9 @@ const sanitizeProxy = (u?: string | null): string => {
     if (c.includes('yoouz.com') || c.includes('b-cdn.net')) {
       return c;
     }
+    if (c.toLowerCase().includes('.svg')) {
+      return `/api/proxy-image?v=2&url=${encodeURIComponent(c)}`;
+    }
     return `/api/proxy-image?url=${encodeURIComponent(c)}`;
   }
   return '';
@@ -30180,7 +30202,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   candidates.push({ src, weight });
                 });
 
-                $('[data-bgset], [data-srcset], [data-src], [data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((i, el) => {
+                $('[data-bgset], [data-srcset], [data-src]:not([data-animation-type]), [data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((i, el) => {
                   let raw = $(el).attr('data-bgset') || $(el).attr('data-srcset') || $(el).attr('data-src') || $(el).attr('data-bg') || $(el).attr('data-bg-image') || '';
                   if (!raw) {
                     const style = $(el).attr('style') || '';
@@ -30191,7 +30213,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
                   const urls = raw.split(',').map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
                   urls.forEach((u: string) => {
-                    if (isLogoOrIconUrl(u) || u.startsWith('data:')) return;
+                    if (isLogoOrIconUrl(u) || isBadBanner(u) || u.startsWith('data:')) return;
                     let weight = 350;
                     const lower = u.toLowerCase();
                     if (lower.includes('banner') || lower.includes('hero') || lower.includes('slide') || lower.includes('cover') || lower.includes('untitled-design') || lower.includes('files') || lower.includes('campaign') || lower.includes('lookbook')) weight += 250;
@@ -30208,12 +30230,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '') + ' ' + ($(el).closest('section, div').attr('id') || '');
                   const parentLower = parentClasses.toLowerCase();
 
-                  // Strictly skip portfolio companies, client logos, partner grids, blog thumbnails, and team headshots
+                  // Strictly skip portfolio companies, client logos, partner grids, blog/podcast thumbnails, and team headshots
                   if (
                     lowerSrc.includes('portfolio') || lowerSrc.includes('/clients/') || lowerSrc.includes('client-') ||
                     lowerSrc.includes('partner') || lowerSrc.includes('testimonial') || lowerSrc.includes('case-study') ||
+                    lowerSrc.includes('unprompted') || lowerSrc.includes('podcast') || lowerSrc.includes('episode') ||
                     parentLower.includes('portfolio') || parentLower.includes('client') || parentLower.includes('partner') ||
                     parentLower.includes('testimonial') || parentLower.includes('investor') || parentLower.includes('blog') ||
+                    parentLower.includes('team-member') || parentLower.includes('authore-image') ||
                     altText.includes('portfolio') || altText.includes('client') || altText.includes('website')
                   ) {
                     return;
@@ -30329,15 +30353,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     }
                   }
                 }
-              }
-
-              if (!image || isLogoOrIconUrl(image) || isBadBanner(image) || image.includes('#') || image.includes('paint0_linear')) {
-                try {
-                  const archRes = await fetchArchiveMetadata(cleanDomain);
-                  if (archRes && archRes.banner && !isLogoOrIconUrl(archRes.banner) && !isBadBanner(archRes.banner) && !archRes.banner.includes('#')) {
-                    image = archRes.banner;
-                  }
-                } catch (e) {}
               }
 
               if (!image || isLogoOrIconUrl(image) || isBadBanner(image) || image.includes('#') || image.includes('paint0_linear')) {
@@ -30752,8 +30767,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = sanitizeProxy(logo);
       }
 
-      // If SPA website or anti-bot firewall prevented HTML banner/logo extraction, fetch authentic media via DuckDuckGo fallback
-      if ((!image || isBadBanner(image)) || (!logo || isGenericOrPlaceholderLogo(logo))) {
+      // If SPA website or anti-bot firewall prevented BOTH HTML banner and logo extraction, fetch authentic media via DuckDuckGo fallback
+      if ((!image || isBadBanner(image)) && (!logo || isGenericOrPlaceholderLogo(logo))) {
         try {
           const ddgMedia = await Promise.race([
             fetchDuckDuckGoMediaAndInfo(cleanDomain, title || cleanDomain),
@@ -32248,22 +32263,51 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               ...Array.from(scanTarget.matchAll(/(?:fill|stroke)\s*:\s*([^;}"'\s]+)/gi)).map(m => m[1].trim().toLowerCase())
             ].filter(c => c && c !== 'none' && c !== 'transparent' && !c.startsWith('url('));
 
-            const isWhiteLike = (c: string) =>
-              c === '#fff' || c === '#ffffff' || c === 'white' ||
-              c === '#f9f6f6' || c === '#fafafa' || c === '#f5f5f5' || c === '#fefefe' ||
-              /^rgb\(\s*25[0-5]\s*,\s*25[0-5]\s*,\s*25[0-5]\s*\)$/.test(c);
+            const parseColorRgb = (rawColor: string): [number, number, number] | null => {
+              const c = (rawColor || '').trim().toLowerCase();
+              if (!c || c === 'none' || c === 'transparent') return null;
+              if (c === 'white') return [255, 255, 255];
+              if (c === 'black' || c === 'currentcolor') return [0, 0, 0];
+              if (c.startsWith('#')) {
+                let hex = c.slice(1);
+                if (hex.length === 3 || hex.length === 4) {
+                  hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                } else if (hex.length === 8) {
+                  hex = hex.slice(0, 6);
+                }
+                if (hex.length === 6 && /^[0-9a-f]{6}$/i.test(hex)) {
+                  return [
+                    parseInt(hex.slice(0, 2), 16),
+                    parseInt(hex.slice(2, 4), 16),
+                    parseInt(hex.slice(4, 6), 16)
+                  ];
+                }
+              }
+              const rgbMatch = c.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+              if (rgbMatch) {
+                return [
+                  parseInt(rgbMatch[1], 10),
+                  parseInt(rgbMatch[2], 10),
+                  parseInt(rgbMatch[3], 10)
+                ];
+              }
+              return null;
+            };
+
+            const isWhiteLike = (c: string) => {
+              const rgb = parseColorRgb(c);
+              if (!rgb) return false;
+              const [r, g, b] = rgb;
+              const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+              return lum >= 190;
+            };
 
             const isDarkColor = (c: string) => {
-              if (c === 'black' || c === '#000' || c === '#000000' || c === 'currentcolor') return true;
-              let hex = c.startsWith('#') ? c.slice(1) : '';
-              if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-              if (hex.length === 6 && /^[0-9a-f]{6}$/i.test(hex)) {
-                const r = parseInt(hex.slice(0, 2), 16);
-                const g = parseInt(hex.slice(2, 4), 16);
-                const b = parseInt(hex.slice(4, 6), 16);
-                return (0.299 * r + 0.587 * g + 0.114 * b) < 100;
-              }
-              return false;
+              const rgb = parseColorRgb(c);
+              if (!rgb) return false;
+              const [r, g, b] = rgb;
+              const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+              return lum < 150;
             };
 
             if (rawColors.some(isWhiteLike) && !rawColors.some(isDarkColor)) {
@@ -32271,8 +32315,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const normalizedSvg = parts.map(part => {
                 if (/^<(?:clipPath|mask)/i.test(part)) return part;
                 return part
-                  .replace(/((?:fill|stroke)\s*=\s*["'])(?:#fff(?:fff)?|white|#f9f6f6|#fafafa|#f5f5f5|#fefefe|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))(["'])/gi, '$1#111111$2')
-                  .replace(/((?:fill|stroke)\s*:\s*)(?:#fff(?:fff)?|white|#f9f6f6|#fafafa|#f5f5f5|#fefefe|rgb\(\s*255\s*,\s*255\s*,\s*255\s*\))(?=[;}"'\s])/gi, '$1#111111');
+                  .replace(/((?:fill|stroke)\s*=\s*["'])([^"']+)(["'])/gi, (full, p1, colorVal, p3) => {
+                    return isWhiteLike(colorVal) ? `${p1}#111111${p3}` : full;
+                  })
+                  .replace(/((?:fill|stroke)\s*:\s*)([^;}"'\s]+)(?=[;}"'\s])/gi, (full, p1, colorVal) => {
+                    return isWhiteLike(colorVal) ? `${p1}#111111` : full;
+                  });
               }).join('');
               return res.send(Buffer.from(normalizedSvg, 'utf8'));
             }

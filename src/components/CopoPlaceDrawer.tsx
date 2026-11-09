@@ -53,7 +53,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
-import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isFalseSplitOfDomain, extractBrandFromDescription, extractCamelCaseBrandFromText } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -1450,28 +1450,33 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Sleek Dark Obsidian Mode Banner Canvas with Ambient Brand Color Lighting (Mutual Fallback: Banner displays Logo when no separate photo banner exists) */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
-          {primaryLogoUrl && (
+        {/* Full-Frame Banner Canvas (Mutual Fallback: Banner displays Logo full-frame edge-to-edge matching the entire banner frame when no separate photo banner exists) */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-white flex items-center justify-center z-10">
+          {primaryLogoUrl ? (
             <>
-              {/* Soft Ambient Brand Lighting Aura derived from Logo */}
               <img
                 src={getProxiedImageUrl(primaryLogoUrl)}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-55 scale-125 pointer-events-none z-10"
+                alt={displayedPlaceName}
+                className={`w-full h-full ${
+                  primaryLogoUrl.toLowerCase().includes(".svg") || primaryLogoUrl.startsWith("data:image/svg")
+                    ? "object-contain p-8 sm:p-10"
+                    : "object-cover p-0"
+                } pointer-events-none z-10`}
+                referrerPolicy="no-referrer"
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (checkImageNeedsDarkContrast(img, getProxiedImageUrl(primaryLogoUrl))) {
+                    img.style.filter = "brightness(0.08)";
+                  }
+                  if (img.naturalWidth > 0 && img.naturalHeight > 0 && img.naturalWidth / img.naturalHeight > 2.1) {
+                    img.className = "w-full h-full object-contain p-8 sm:p-10 pointer-events-none z-10";
+                  }
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/30 via-zinc-950/50 to-zinc-950/90 pointer-events-none z-10" />
-              {/* Centered Crisp Contained Brand Logo in Banner (Zero Cutoff, high contrast on white card so dark/colored logos are always visible) */}
-              <div className="absolute inset-0 flex items-center justify-center p-6 pl-28 pr-12 z-20 pointer-events-none">
-                <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-center max-h-24 max-w-[80%]">
-                  <img
-                    src={getProxiedImageUrl(primaryLogoUrl)}
-                    alt=""
-                    className="max-h-16 max-w-full object-contain"
-                  />
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/25 pointer-events-none z-20" />
             </>
+          ) : (
+            <div className="absolute inset-0 w-full h-full bg-zinc-950" />
           )}
         </div>
 
@@ -1520,7 +1525,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         ) : null}
 
         {/* Overlapping Business Logo - Always render signature brand logo box */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-white/25 overflow-hidden group transition-all duration-300 shadow-xl">
+        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-2 sm:p-2.5 ring-1 ring-black/15 overflow-hidden group transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
           <CopoBrandLogo
             key={`logo-${drawerDomain || place.id}`}
             domain={drawerDomain || undefined}

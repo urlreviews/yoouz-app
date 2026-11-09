@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Building2 } from "lucide-react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
 import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
 
 interface CopoBrandLogoProps {
@@ -39,6 +39,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const [candidateIdx, setCandidateIdx] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [needsDarkContrast, setNeedsDarkContrast] = useState(false);
   const prevDomainRef = React.useRef<string>("");
   const failedUrlsRef = React.useRef<Set<string>>(new Set());
   const imgRef = React.useRef<HTMLImageElement | null>(null);
@@ -221,6 +222,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (img && currentSrc && img.complete && img.naturalWidth > 0) {
       const isLast = candidateIdx + 1 >= candidateUrls.length;
       if (isAcceptableLogoDimensions(img.naturalWidth, img.naturalHeight, currentSrc, isLast)) {
+        const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
+        setNeedsDarkContrast(darkNeeded);
         KNOWN_LOADED_LOGOS.add(currentSrc);
         if (cleanDomain && !currentSrc.includes("/api/favicon")) {
           LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
@@ -258,6 +261,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const displayName = (name || cleanDomain || "Business").trim();
   const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
   const hasVisibleLogo = Boolean(imgLoaded || loadedSrc);
+  const contrastFilterClass = needsDarkContrast ? "brightness-[0.08]" : "";
 
   return (
     <div className={`relative overflow-hidden bg-transparent [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${className}`}>
@@ -266,7 +270,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         <img
           src={loadedSrc}
           alt={displayName}
-          className={`${loadedImageClass} absolute inset-0 z-10 w-full h-full opacity-100 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
+          className={`${loadedImageClass} ${contrastFilterClass} absolute inset-0 z-10 w-full h-full opacity-100 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
           referrerPolicy="no-referrer"
         />
       ) : null}
@@ -279,7 +283,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading}
           fetchPriority={fetchPriority}
           decoding="async"
-          className={`${activeImageClass} relative z-20 w-full h-full transition-opacity duration-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+          className={`${activeImageClass} ${contrastFilterClass} relative z-20 w-full h-full transition-opacity duration-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
             currentSrc === loadedSrc || (imgLoaded && !loadedSrc) ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy="no-referrer"
@@ -295,6 +299,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
               });
               return;
             }
+            const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
+            setNeedsDarkContrast(darkNeeded);
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
               if (cleanDomain && !currentSrc.includes("/api/favicon")) {

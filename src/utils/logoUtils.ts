@@ -155,6 +155,16 @@ export function isBadBanner(url?: string | null): boolean {
     u.endsWith('.svg') ||
     u.includes('.svg?') ||
     u.includes('.svg#') ||
+    u.endsWith('.json') ||
+    u.includes('.json?') ||
+    u.endsWith('.xml') ||
+    u.endsWith('.mp4') ||
+    u.endsWith('.webm') ||
+    u.endsWith('.js') ||
+    u.endsWith('.css') ||
+    u.includes('arrow-left') ||
+    u.includes('arrow-right') ||
+    u.includes('form-arrow') ||
     u.includes('data:image/svg')
   );
 }
@@ -229,10 +239,71 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
     ) {
       return clean;
     }
+    if (clean.toLowerCase().includes(".svg")) {
+      return `/api/proxy-image?v=2&url=${encodeURIComponent(clean)}`;
+    }
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
   }
 
   return "";
+}
+
+const DARK_CONTRAST_CACHE = new Map<string, boolean>();
+
+/**
+ * Inspects a loaded HTMLImageElement on a tiny offscreen canvas to detect if it is a
+ * white/off-white logo on a transparent background (designed for dark website headers).
+ * Returns true if the image needs a dark contrast filter to be visible on a white background.
+ */
+export function checkImageNeedsDarkContrast(img: HTMLImageElement, srcKey?: string): boolean {
+  const key = srcKey || img.currentSrc || img.src || "";
+  if (key && DARK_CONTRAST_CACHE.has(key)) {
+    return DARK_CONTRAST_CACHE.get(key)!;
+  }
+  try {
+    const w = 48;
+    const h = 48;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let transparentCount = 0;
+    let visibleCount = 0;
+    let lumSum = 0;
+    let darkCount = 0;
+    const totalPixels = w * h;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3];
+      if (a < 45) {
+        transparentCount++;
+      } else {
+        visibleCount++;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        lumSum += lum;
+        if (lum < 145) {
+          darkCount++;
+        }
+      }
+    }
+
+    if (visibleCount === 0) return false;
+    const hasTransparency = transparentCount > totalPixels * 0.1;
+    const avgLum = lumSum / visibleCount;
+    const darkRatio = darkCount / visibleCount;
+    const needsDark = hasTransparency && avgLum >= 190 && darkRatio < 0.08;
+    if (key) DARK_CONTRAST_CACHE.set(key, needsDark);
+    return needsDark;
+  } catch (e) {
+    return false;
+  }
 }
 
 export const YOOUZ_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
