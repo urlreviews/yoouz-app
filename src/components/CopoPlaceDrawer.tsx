@@ -974,9 +974,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       if (lower.includes("favicon") || lower.endsWith(".ico") || lower.includes("placeholder") || lower.includes("mock")) return false;
       if (lower.includes("shareimg.jpg") || lower.includes("hero desktop.jpg") || lower.includes("injury-lawyer.jpg")) return false;
       if (!lower.startsWith("http://") && !lower.startsWith("https://") && !lower.startsWith("/") && !lower.startsWith("data:")) return false;
+      const isDedicatedSmallLogoFile =
+        (clean === place.logoUrl || clean === place.avatarUrl) &&
+        (/logo|icon|favicon|apple-touch|emblem|avatar/i.test(lower) || lower.endsWith(".svg"));
       if (
-        clean === place.logoUrl ||
-        clean === place.avatarUrl ||
+        isDedicatedSmallLogoFile ||
         isFaviconUrl(clean) ||
         clean.includes("/api/favicon") ||
         clean.includes("/api/brand-banner")
@@ -1002,39 +1004,43 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner]);
+  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
 
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     const cleanD = (drawerDomain || "").replace(/^www\./, "").toLowerCase().trim();
-    if (cleanD && KNOWN_BRAND_LOGOS[cleanD]) return KNOWN_BRAND_LOGOS[cleanD];
-    if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain]) return KNOWN_BRAND_LOGOS[drawerDomain];
+    if (cleanD && KNOWN_BRAND_LOGOS[cleanD] && !KNOWN_BRAND_LOGOS[cleanD].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[cleanD];
+    if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain] && !KNOWN_BRAND_LOGOS[drawerDomain].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[drawerDomain];
 
     const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
-    const fallbackBannerLogo = effectiveBanner || allPhotos[0] || place.bannerUrl || place.ogImage || "";
+    const isFaviconOrProxy = (u?: string | null) => Boolean(u && (isFaviconUrl(u) || u.includes("/api/favicon")));
+    const fallbackBannerLogo = allPhotos[0] || effectiveBanner || place.bannerUrl || place.ogImage || "";
 
     // Priority 0: Freshly resolved rich logo from live website enrichment
     if (
       fetchedLogoUrl &&
-      !isBrokenSvg(fetchedLogoUrl)
+      !isBrokenSvg(fetchedLogoUrl) &&
+      !isFaviconOrProxy(fetchedLogoUrl)
     ) {
       return fetchedLogoUrl;
     }
 
     if (
       cachedMedia?.logoUrl &&
-      !isBrokenSvg(cachedMedia.logoUrl)
+      !isBrokenSvg(cachedMedia.logoUrl) &&
+      !isFaviconOrProxy(cachedMedia.logoUrl)
     ) {
       return cachedMedia.logoUrl;
     }
 
-    // Priority 1: Canonical place record logo
+    // Priority 1: Canonical place record logo (excluding /api/favicon so banner fallback takes priority when no standalone logo exists)
     const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
     if (
       canonicalPlaceLogo && 
       !isBrokenSvg(canonicalPlaceLogo) &&
+      !isFaviconOrProxy(canonicalPlaceLogo) &&
       !canonicalPlaceLogo.startsWith("data:;") && 
       canonicalPlaceLogo.trim() !== "" && 
       !canonicalPlaceLogo.includes("LogoHeader") && 
@@ -1049,6 +1055,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
       !isBrokenSvg(v.placeLogoUrl) &&
+      !isFaviconOrProxy(v.placeLogoUrl) &&
       !v.placeLogoUrl.startsWith("data:;") && 
       v.placeLogoUrl.trim() !== "" && 
       !v.placeLogoUrl.includes("LogoHeader") && 
@@ -1060,11 +1067,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain, fallbackBannerLogo) || matchingVidWithLogo.placeLogoUrl;
     }
 
-    // Priority 3: If there is a valid banner and no standalone logo, use the banner image as the logo so they match and the logo is never empty
-    if (fallbackBannerLogo && !isBadBanner(fallbackBannerLogo)) {
+    // Priority 3: Mutual Fallback Policy — If there is a valid banner and no standalone logo, use the banner image as the logo so they match and the logo is never empty
+    if (fallbackBannerLogo && !isBadBanner(fallbackBannerLogo) && !isFaviconOrProxy(fallbackBannerLogo)) {
       return getProxiedImageUrl(fallbackBannerLogo) || fallbackBannerLogo;
     }
 
+    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
+    if (cachedMedia?.logoUrl && !isBrokenSvg(cachedMedia.logoUrl)) return cachedMedia.logoUrl;
     if (drawerDomain) return getCleanLogoUrl(null, drawerDomain, fallbackBannerLogo);
     return null;
   }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, cachedMedia, effectiveBanner, allPhotos]);
@@ -1441,24 +1450,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Sleek Dark Obsidian Mode Banner Canvas with Ambient Brand Color Lighting */}
+        {/* Sleek Dark Obsidian Mode Banner Canvas with Ambient Brand Color Lighting (Mutual Fallback: Banner displays Logo when no separate photo banner exists) */}
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/40 via-zinc-950 to-zinc-950 pointer-events-none z-20" />
           {primaryLogoUrl && (
             <>
               {/* Soft Ambient Brand Lighting Aura derived from Logo */}
               <img
                 src={getProxiedImageUrl(primaryLogoUrl)}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-150 pointer-events-none z-10"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-55 scale-125 pointer-events-none z-10"
               />
-              {/* Centered Crisp Contained Brand Logo in Banner (Zero Cutoff, fully fitted) */}
-              <div className="absolute inset-0 flex items-center justify-center p-6 pl-28 pr-16 z-20 pointer-events-none opacity-90">
-                <img
-                  src={getProxiedImageUrl(primaryLogoUrl)}
-                  alt=""
-                  className="max-h-20 max-w-[70%] object-contain drop-shadow-2xl"
-                />
+              <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/30 via-zinc-950/50 to-zinc-950/90 pointer-events-none z-10" />
+              {/* Centered Crisp Contained Brand Logo in Banner (Zero Cutoff, high contrast on white card so dark/colored logos are always visible) */}
+              <div className="absolute inset-0 flex items-center justify-center p-6 pl-28 pr-12 z-20 pointer-events-none">
+                <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-center max-h-24 max-w-[80%]">
+                  <img
+                    src={getProxiedImageUrl(primaryLogoUrl)}
+                    alt=""
+                    className="max-h-16 max-w-full object-contain"
+                  />
+                </div>
               </div>
             </>
           )}

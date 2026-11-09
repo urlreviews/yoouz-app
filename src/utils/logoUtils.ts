@@ -1013,12 +1013,16 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "www.phoenixcourt.vc": "https://www.phoenixcourt.vc/apple-icon.png?apple-icon.249ftcom0dxfh.png",
   "smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png",
   "www.smok.vc": "https://www.smok.vc/wp-content/uploads/2025/03/Smok-Ventures-logo_SMOK-RED.png",
+  "outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+  "www.outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
   "threshold.vc": "/api/favicon?domain=threshold.vc",
   "www.threshold.vc": "/api/favicon?domain=threshold.vc"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
 const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
+  "outlander.vc": "https://outlander.vc/wp-content/uploads/2022/10/Black-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png",
+  "www.outlander.vc": "https://outlander.vc/wp-content/uploads/2022/10/Black-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png",
   "threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "www.threshold.vc": "https://cdn.prod.website-files.com/67220557145c06d73bb18490/679b3a7f89357e0da0d9ccac_OG.png",
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
@@ -1449,25 +1453,38 @@ export function isFaviconUrl(url?: string | null): boolean {
   return l.includes("favicon");
 }
 
-export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, _bannerUrl?: string | null): string | null {
+export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, bannerUrl?: string | null): string | null {
   const cleanDomain = extractDomain(domain || url);
   if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
     return YOOUZ_LOGO_DATA_URI;
   }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // Explicit authentic custom high-res logo URL takes priority
+  // Explicit authentic custom high-res logo URL takes priority (excluding /api/favicon so banner fallback can apply first if no real logo exists)
   if (
     url &&
     !isWhiteOrInvertedLogo(url) &&
     !url.includes("/api/brand-banner") &&
+    !url.includes("/api/favicon") &&
+    !isFaviconUrl(url) &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
       return getProxiedImageUrl(url);
     }
+  }
+
+  // Mutual Fallback Policy: If no standalone logo is found, use the banner image as the logo
+  const effectiveBannerFallback = bannerUrl || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : null);
+  if (
+    effectiveBannerFallback &&
+    !isBadBanner(effectiveBannerFallback) &&
+    !effectiveBannerFallback.includes("/api/brand-banner") &&
+    !effectiveBannerFallback.includes("/api/favicon")
+  ) {
+    return getProxiedImageUrl(effectiveBannerFallback);
   }
 
   if (url && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
@@ -1506,10 +1523,10 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 1. Direct match for known high-quality brand vector logos takes absolute precedence
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/brand-banner")) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/brand-banner") && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`] && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/brand-banner")) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`] && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/brand-banner") && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/favicon")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
 
@@ -1553,8 +1570,9 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 4. Fallback to banner if no standalone logo is available (so the logo is identical to the banner and never empty)
-  if (place.bannerUrl && !isBadBanner(place.bannerUrl) && !place.bannerUrl.includes("/api/brand-banner")) {
-    return getProxiedImageUrl(place.bannerUrl);
+  const fallbackBanner = place.bannerUrl || place.ogImage || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : "");
+  if (fallbackBanner && !isBadBanner(fallbackBanner) && !fallbackBanner.includes("/api/brand-banner") && !fallbackBanner.includes("/api/favicon")) {
+    return getProxiedImageUrl(fallbackBanner);
   }
 
   // 5. Guaranteed authentic domain favicon/logo fallback

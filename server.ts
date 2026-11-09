@@ -27925,27 +27925,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     return false;
   };
 
-  // 1. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
-  try {
-    const appleIcons: { url: string; size: number }[] = [];
-    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
-      const href = $(el).attr("href");
-      const sizes = $(el).attr("sizes") || "";
-      if (href) {
-        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
-        const abs = makeAbsolute(href);
-        if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs, $(el))) {
-          appleIcons.push({ url: abs, size: sizeNum });
-        }
-      }
-    });
-    if (appleIcons.length > 0) {
-      appleIcons.sort((a, b) => b.size - a.size);
-      return appleIcons[0].url;
-    }
-  } catch(e) {}
-
-  // 2. DOM Header & Navigation Brand Images (actual visual elements rendered on page)
+  // 1. DOM Header & Navigation Brand Images (actual visual elements rendered on page)
   try {
     const imgSelectors = [
       '.w-nav-brand:not([class*="mobile"]) img', 'a[class*="brand" i]:not([class*="mobile"]) img',
@@ -27966,6 +27946,36 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
           if (abs && isValidCandidate(abs) && !isWhiteOrLightFilename(abs, el)) return abs;
         }
       }
+    }
+  } catch(e) {}
+
+  // 2. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
+  // Note: Many sites (like outlander.vc) point <link rel="apple-touch-icon"> to a crisp 155x155+ PNG named "favicon.png",
+  // so we validate apple-touch-icon candidates without rejecting high-res PNG/SVG/WebP files simply for having "favicon" in their filename.
+  try {
+    const isAppleTouchCandidateValid = (url: string, sizeNum: number): boolean => {
+      if (!url || typeof url !== "string") return false;
+      if (isGenericOrPlaceholderLogo(url)) return false;
+      const l = url.toLowerCase();
+      if (l.endsWith(".ico") || l.includes(".ico?") || l.includes("16x16") || l.includes("32x32") || l.includes("48x48")) return false;
+      if (sizeNum > 0 && sizeNum < 96) return false;
+      return true;
+    };
+    const appleIcons: { url: string; size: number }[] = [];
+    $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
+      const href = $(el).attr("href");
+      const sizes = $(el).attr("sizes") || "";
+      if (href) {
+        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
+        const abs = makeAbsolute(href);
+        if (abs && isAppleTouchCandidateValid(abs, sizeNum) && !isWhiteOrLightFilename(abs, $(el))) {
+          appleIcons.push({ url: abs, size: sizeNum });
+        }
+      }
+    });
+    if (appleIcons.length > 0) {
+      appleIcons.sort((a, b) => b.size - a.size);
+      return appleIcons[0].url;
     }
   } catch(e) {}
 
@@ -28203,7 +28213,9 @@ const domainBanners: Record<string, string> = {
   "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
   "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
   "brimag.co.il": "https://www.brimag.co.il/pub/media/catalog/category/frizer.png",
-  "www.brimag.co.il": "https://www.brimag.co.il/pub/media/catalog/category/frizer.png"
+  "www.brimag.co.il": "https://www.brimag.co.il/pub/media/catalog/category/frizer.png",
+  "outlander.vc": "https://outlander.vc/wp-content/uploads/2022/10/Black-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png",
+  "www.outlander.vc": "https://outlander.vc/wp-content/uploads/2022/10/Black-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png"
 };
 
 const sanitizeProxy = (u?: string | null): string => {
@@ -29421,19 +29433,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
             const isBrokenSvgLogo = (u?: string | null) => Boolean(!u || u.includes("lg%3Ahidden") || u.includes("lg:hidden") || u.startsWith("/api/favicon") || isGenericOrPlaceholderLogo(u));
-            const cachedImageCandidate = (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) ? row.bannerUrl : "") 
+            const rawCachedImage = (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) ? row.bannerUrl : "") 
               || (!isLogoOrIconUrl(pData.bannerUrl) && !isBadBanner(pData.bannerUrl) ? pData.bannerUrl : "") 
               || (!isLogoOrIconUrl(pData.ogImage) && !isBadBanner(pData.ogImage) ? pData.ogImage : "") 
               || (!isLogoOrIconUrl(pData.image) && !isBadBanner(pData.image) ? pData.image : "") 
               || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
               || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
-            const cachedLogoCandidate = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey]) 
+            const rawCachedLogo = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey] && !KNOWN_BRAND_LOGOS[cleanDomKey].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomKey] : null) 
               || (row.logoUrl && !isFaviconUrl(row.logoUrl) && !isBrokenSvgLogo(row.logoUrl) ? row.logoUrl : null) 
               || (!isFaviconUrl(pData.logoUrl) && !isBrokenSvgLogo(pData.logoUrl) ? pData.logoUrl : null) 
               || (!isFaviconUrl(pData.avatarUrl) && !isBrokenSvgLogo(pData.avatarUrl) ? pData.avatarUrl : null) 
-              || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom]) 
-              || cachedImageCandidate
-              || "";
+              || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom] && !KNOWN_BRAND_LOGOS[matchedDom].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[matchedDom] : null);
+            const cachedImageCandidate = rawCachedImage || rawCachedLogo || "";
+            const cachedLogoCandidate = rawCachedLogo || rawCachedImage || "";
 
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
@@ -29478,14 +29490,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
           const realDomain = resolvedEntity.domain;
-          const entityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !isGenericOrPlaceholderLogo(resolvedEntity.logo)) ? resolvedEntity.logo : (KNOWN_BRAND_LOGOS[realDomain] || "");
+          const rawEntityBanner = (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
+          const rawEntityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !isGenericOrPlaceholderLogo(resolvedEntity.logo)) ? resolvedEntity.logo : ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "");
+          const entityBanner = rawEntityBanner || rawEntityLogo || "";
+          const entityLogo = rawEntityLogo || rawEntityBanner || "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain);
           return res.json({
             title: entityTitle,
             description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
-            image: (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : ""),
+            image: entityBanner,
             logo: entityLogo,
             siteName: entityTitle,
             domain: realDomain,
@@ -29498,9 +29513,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             category: resolvedEntity.category || "Verified Business",
             openingHours: resolvedEntity.openingHours || "Available 24/7",
             locations: [],
-            photos: (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) && resolvedEntity.photo) 
-              ? [resolvedEntity.photo] 
-              : (KNOWN_BRAND_BANNERS[realDomain] ? [KNOWN_BRAND_BANNERS[realDomain]] : [])
+            photos: entityBanner ? [entityBanner] : []
           });
         } else if (resolvedEntity) {
           return res.json({
@@ -29546,11 +29559,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? cleanDomainName(ent.domain) : "";
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-          const entityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
+          const rawEntityBanner = (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "");
+          const rawEntityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
+          const entityBanner = rawEntityBanner || rawEntityLogo || "";
+          const entityLogo = rawEntityLogo || rawEntityBanner || "";
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz.`,
-            image: (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : ""),
+            image: entityBanner,
             logo: entityLogo,
             siteName: ent.name,
             domain: realDomain,
@@ -30693,15 +30709,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "www.amazon.com": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
         "marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
         "www.marketplace-capital.com": "https://marketplace-capital.com/assets/mc-logo.png",
+        "outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+        "www.outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
       };
 
       // Prioritize known brand logos, otherwise verify authentic logo without placeholder fallback
       if (serverBrandLogos[cleanDomain]) {
         logo = serverBrandLogos[cleanDomain];
-      } else if (KNOWN_BRAND_LOGOS[cleanDomain]) {
+      } else if (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
         logo = KNOWN_BRAND_LOGOS[cleanDomain];
       } else if (!logo || isGenericOrPlaceholderLogo(logo) || logo.includes("brandfetch.io") || logo.startsWith("data:;") || isServerWhiteOrInverted(logo)) {
-        logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || "";
+        logo = serverBrandLogos[cleanDomain] || (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomain] : "") || "";
       }
 
       // Proactively test scraped logo reachability (never pass dead 404 assets to client)
@@ -30717,7 +30735,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           });
           if (!probe.ok && probe.status === 404) {
             console.warn(`[UrlMetadata] Scraped logo URL returned 404: ${logo}, falling back to domain icon`);
-            logo = serverBrandLogos[cleanDomain] || KNOWN_BRAND_LOGOS[cleanDomain] || (cleanDomain.includes('.') ? `https://${cleanDomain}/apple-touch-icon.png` : "");
+            logo = serverBrandLogos[cleanDomain] || (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomain] : "") || "";
           }
         } catch (eProbe) {}
       }
@@ -30762,9 +30780,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         image = "";
       }
 
-      // Final logo guarantee: If no standalone non-white logo is found and a valid banner exists, use the banner image as the logo!
+      // Bidirectional Mutual Fallback Guarantee:
+      // 1) If no standalone logo is found and a valid banner exists, use the banner image as the logo!
+      // 2) If no photographic banner is found and a valid standalone logo exists, use the logo image as the banner!
       if ((!logo || isGenericOrPlaceholderLogo(logo) || logo.startsWith("/api/favicon")) && image && !isBadBanner(image)) {
         logo = image;
+      } else if ((!image || isBadBanner(image)) && logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) {
+        image = logo;
       } else if (!logo && cleanDomain && cleanDomain.includes(".")) {
         logo = `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
       }
@@ -30827,6 +30849,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           }
           const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || siteName || cleanDomain, cleanDomain);
+          const resolvedAutoLogo = (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : ""));
+          const resolvedAutoBanner = (image && !isBadBanner(image)) ? image : ((logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : "");
           const autoPlaceDoc = {
             id: autoPlaceId,
             name: autoPlaceName,
@@ -30840,11 +30864,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             rating: 5,
             totalReviews: 1,
             ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            logoUrl: (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon")) ? logo : ((image && !isBadBanner(image)) ? image : (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "")),
-            bannerUrl: (image && !isBadBanner(image)) ? image : "",
-            ogImage: (image && !isBadBanner(image)) ? image : "",
-            photos: (image && !isBadBanner(image)) ? [image] : [],
+            avatarUrl: resolvedAutoLogo,
+            logoUrl: resolvedAutoLogo,
+            bannerUrl: resolvedAutoBanner,
+            ogImage: resolvedAutoBanner,
+            photos: resolvedAutoBanner ? [resolvedAutoBanner] : [],
             openingHours: locInfo.openingHours || (isYoouz ? "Available 24/7" : ""),
             isOpen: true,
             phone: effectivePhone,
@@ -30916,7 +30940,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
             const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
-            const mergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
+            const rawMergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
               ? existingDoc.bannerUrl
               : (!isBadBannerInternal(image)
                   ? image
@@ -30925,11 +30949,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
 
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
-            const domainLogoFallback = mergedBanner || (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "");
+            const domainLogoFallback = rawMergedBanner || (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "");
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
             const mergedLogo = (isCustomUploadedLogo || (!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl)))
               ? existingDoc.logoUrl
               : (hasBetterLogo ? logo : (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : domainLogoFallback));
+            const mergedBanner = rawMergedBanner || (!mergedLogo.startsWith("/api/favicon") ? mergedLogo : "");
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
             const mergedAddress = isCorruptAddress(rawExistingAddr) || !rawExistingAddr || (effectiveAddress && effectiveAddress.length > rawExistingAddr.length) 
@@ -31905,14 +31930,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       "toopoptiek": "https://www.toopoptiek.com/quality_auto/Logo%20toop%20officiele%20groene_edited.png",
       "vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
       "www.vandenbalck.be": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
-      "vandenbalck": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png"
+      "vandenbalck": "https://vandenbalck.be/wp-content/uploads/2024/02/Logo-slagzin_-rood.png",
+      "outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+      "www.outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+      "outlander": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png"
     };
 
     if (KNOWN_FAVICON_LOGOS[cleanDomain]) {
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_FAVICON_LOGOS[cleanDomain])}`);
     }
 
-    if (KNOWN_BRAND_LOGOS[cleanDomain]) {
+    if (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
       return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
     }
 
@@ -31920,7 +31948,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
     }
 
-    // Attempt to extract the authentic high-resolution brand logo from the website before falling back to browser favicons
+    // Check saved places index for an already-verified logo or banner fallback
+    let savedBannerFallback = "";
+    try {
+      const savedPlaces = readPlacesIndex();
+      const matchedPlace = savedPlaces.find((p: any) => {
+        const pId = String(p.id || "").toLowerCase().replace(/^www\./, "");
+        const pDom = String(p.brandDomain || "").toLowerCase().replace(/^www\./, "");
+        return pId === cleanDomain || pDom === cleanDomain;
+      });
+      if (matchedPlace) {
+        if (matchedPlace.logoUrl && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
+          const targetLogo = matchedPlace.logoUrl.startsWith("/api/") ? matchedPlace.logoUrl : `/api/proxy-image?url=${encodeURIComponent(matchedPlace.logoUrl)}`;
+          return res.redirect(302, targetLogo);
+        }
+        if (matchedPlace.bannerUrl && !isBadBanner(matchedPlace.bannerUrl) && !matchedPlace.bannerUrl.includes("/api/favicon")) {
+          savedBannerFallback = matchedPlace.bannerUrl;
+        }
+      }
+    } catch (e) {}
+
+    // Attempt to extract the authentic high-resolution brand logo (or og:image banner fallback) from the website before falling back to browser favicons
     if (cleanDomain && cleanDomain.includes(".")) {
       try {
         const ctrl = new AbortController();
@@ -31950,8 +31998,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}`);
           }
+          // Mutual Fallback Policy: If no standalone logo is found on the website, use its authentic og:image / banner as the logo!
+          const ogImg = ($f('meta[property="og:image"]').attr("content") || $f('meta[name="og:image"]').attr("content") || $f('meta[property="twitter:image"]').attr("content") || $f('meta[name="twitter:image"]').attr("content") || "").trim();
+          if (ogImg && !isBadBanner(ogImg)) {
+            try {
+              const absBanner = new URL(ogImg, finalSiteUrl).toString();
+              return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(absBanner)}`);
+            } catch {}
+          }
         }
       } catch (e) {}
+    }
+
+    if (savedBannerFallback) {
+      const targetBanner = savedBannerFallback.startsWith("/api/") ? savedBannerFallback : `/api/proxy-image?url=${encodeURIComponent(savedBannerFallback)}`;
+      return res.redirect(302, targetBanner);
+    }
+
+    if (KNOWN_BRAND_BANNERS[cleanDomain]) {
+      const knownBanner = KNOWN_BRAND_BANNERS[cleanDomain];
+      const targetBanner = knownBanner.startsWith("/api/") ? knownBanner : `/api/proxy-image?url=${encodeURIComponent(knownBanner)}`;
+      return res.redirect(302, targetBanner);
     }
 
     // High-resolution authentic brand favicon from Google s2 service fetched server-side

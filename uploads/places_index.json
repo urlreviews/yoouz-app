@@ -1,5 +1,54 @@
 [
   {
+    "id": "outlander.vc",
+    "name": "Outlander VC",
+    "category": "Healthcare & Medical",
+    "categoryType": "all",
+    "address": "",
+    "city": "New york",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+    "logoUrl": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foutlander.vc%2Fwp-content%2Fuploads%2F2022%2F10%2FBlack-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Foutlander.vc%2Fwp-content%2Fuploads%2F2022%2F10%2FBlack-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Foutlander.vc%2Fwp-content%2Fuploads%2F2022%2F10%2FBlack-and-Blue-Simple-Technology-Investor-Update-Presentation-1.png"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "info@outlander.vc",
+    "website": "https://outlander.vc/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "By focusing on founders first, we know how to identify and fund future unicorns at the earliest stages—even before revenue or product!",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "outlander.vc",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "secondsightventures.com",
     "name": "Second Sight Ventures",
     "category": "Real Estate",
