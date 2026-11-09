@@ -628,10 +628,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || (isMetaMatchingCurrent && preloadedMeta?.image && !isBadBanner(preloadedMeta.image) ? preloadedMeta.image : "") 
         || (isRealDomain ? getLiveWebsiteBannerUrl(cleanUrl) : "")
         || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
-      const instantLogo: string = (isMetaMatchingCurrent && preloadedMeta?.logo && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('/api/favicon') && !isWhiteOrInvertedLogo(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "")
+      const instantLogo: string = (isMetaMatchingCurrent && preloadedMeta?.logo && preloadedMeta.logo !== preloadedMeta?.image && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('/api/favicon') && !isWhiteOrInvertedLogo(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "")
         || (cleanUrl && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "")
-        || (instantBanner && !isBadBanner(instantBanner) ? instantBanner : "")
-        || (isRealDomain ? (getCleanLogoUrl(null, cleanUrl, instantBanner) || "") : "");
+        || (isRealDomain ? (getCleanLogoUrl(null, cleanUrl, instantBanner) || "") : "")
+        || (instantBanner && !isBadBanner(instantBanner) ? instantBanner : "");
       const validPreferredName = (preferredName && !isDomainStemName(preferredName, cleanUrl))
         ? (formatBusinessName(preferredName, cleanUrl) || preferredName)
         : ((locationDetails?.rawBusinessName && !isDomainStemName(locationDetails.rawBusinessName, cleanUrl))
@@ -717,9 +717,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.image 
                : (instantBanner || (discoveredDom ? getLiveWebsiteBannerUrl(discoveredDom) : ""));
              const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom, fetchedBanner) : null;
-             const fetchedLogo = (isValidLogo(data.logo) && !isFaviconUrl(data.logo))
+             const isInstantStandaloneLogo = Boolean(
+               instantLogo &&
+               instantLogo !== instantBanner &&
+               instantLogo !== fetchedBanner &&
+               !isFaviconUrl(instantLogo) &&
+               !instantLogo.includes("/api/favicon") &&
+               !isWhiteOrInvertedLogo(instantLogo)
+             );
+             const fetchedLogo = (isValidLogo(data.logo) && !isFaviconUrl(data.logo) && data.logo !== fetchedBanner)
                ? data.logo 
-               : ((instantLogo && !isFaviconUrl(instantLogo) && !instantLogo.includes("/api/favicon") && !isWhiteOrInvertedLogo(instantLogo)) ? instantLogo : (fetchedBanner || domainCleanLogo || instantLogo || ""));
+               : (isInstantStandaloneLogo ? instantLogo : (domainCleanLogo || (isValidLogo(data.logo) ? data.logo : "") || fetchedBanner || instantLogo || ""));
              
              const rawMetaTitle = (data.siteName && !isDomainStemName(data.siteName, discoveredDom))
                ? data.siteName

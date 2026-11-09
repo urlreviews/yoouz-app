@@ -1,5 +1,54 @@
 [
   {
+    "id": "pear.vc",
+    "name": "Pear VC",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fpear.vc%2Fwp-content%2Fuploads%2F2026%2F08%2Fpear-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fpear.vc%2Fwp-content%2Fuploads%2F2026%2F08%2Fpear-logo.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpear.vc%2Fwp-content%2Fuploads%2F2026%2F10%2F01_listenlabs_desktop.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpear.vc%2Fwp-content%2Fuploads%2F2026%2F10%2F01_listenlabs_desktop.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fpear.vc%2Fwp-content%2Fuploads%2F2026%2F10%2F01_listenlabs_desktop.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://pear.vc/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Pear VC is an early stage venture firm founded in 2013. We partner with founders at the earliest stages to build enduring companies.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "pear.vc",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "craftventures.com",
     "name": "Craft Ventures",
     "category": "Marketing & Creative Agency",

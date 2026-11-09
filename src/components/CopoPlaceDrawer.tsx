@@ -757,9 +757,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
     const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const isLogoSameAsPlaceBanner = Boolean(
+      place.logoUrl &&
+      (
+        (place.bannerUrl && (place.logoUrl === place.bannerUrl || getProxiedImageUrl(place.logoUrl) === getProxiedImageUrl(place.bannerUrl))) ||
+        (place.ogImage && (place.logoUrl === place.ogImage || getProxiedImageUrl(place.logoUrl) === getProxiedImageUrl(place.ogImage))) ||
+        (reviewBannerUrl && (place.logoUrl === reviewBannerUrl || getProxiedImageUrl(place.logoUrl) === getProxiedImageUrl(reviewBannerUrl)))
+      )
+    );
     const hasValidLogo = Boolean(
       place.logoUrl &&
       place.logoUrl.trim() !== "" &&
+      !isLogoSameAsPlaceBanner &&
+      !place.logoUrl.includes("/api/favicon") &&
+      !isFaviconUrl(place.logoUrl) &&
       !isBrokenSvgDataUri(place.logoUrl) &&
       !place.logoUrl.startsWith("data:;") &&
       !place.logoUrl.includes("760X310") &&
@@ -770,7 +781,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsPhone = !hasGenuinePhone;
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    // If core media (logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
+    // If core media (distinct standalone logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
     const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl) && !bannerError && !isSlugDomain);
     if (hasCoreMedia && !isGenericName && !isGenericDesc) {
       return;
@@ -787,7 +798,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = (bannerError || isGenericName) ? "&refresh=true" : "";
+        const refreshParam = (bannerError || isGenericName || isLogoSameAsPlaceBanner) ? "&refresh=true" : "";
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
@@ -801,16 +812,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
                 const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : (place.bannerUrl || ""));
-                const resolvedLogo = (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isBrokenSvgDataUri(data.logo))
+                const isDataLogoValid = Boolean(
+                  data.logo &&
+                  !isGenericOrPlaceholderLogo(data.logo) &&
+                  !isBrokenSvgDataUri(data.logo) &&
+                  !data.logo.includes("/api/favicon")
+                );
+                const resolvedDomainForLogo = (data.domain && isValidDomainUrl(data.domain))
+                  ? extractCleanDomain(data.domain)
+                  : (drawerDomain && isValidDomainUrl(drawerDomain) ? drawerDomain : "");
+                const resolvedLogo = isDataLogoValid
                   ? data.logo
-                  : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl)) ? place.logoUrl : (resolvedBanner || place.logoUrl || ""));
+                  : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl))
+                    ? place.logoUrl
+                    : (resolvedDomainForLogo ? `/api/favicon?domain=${encodeURIComponent(resolvedDomainForLogo)}` : (resolvedBanner || place.logoUrl || "")));
                 
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
                   if (cacheKey) {
                     localStorage.setItem(`yoouz_place_media_${cacheKey}`, JSON.stringify({
                       bannerUrl: resolvedBanner,
-                      logoUrl: resolvedLogo
+                      logoUrl: (resolvedLogo && resolvedLogo !== resolvedBanner && !resolvedLogo.includes("/api/favicon")) ? resolvedLogo : ""
                     }));
                   }
                 } catch(e) {}
@@ -1018,9 +1040,30 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const isFaviconOrProxy = (u?: string | null) => Boolean(u && (isFaviconUrl(u) || u.includes("/api/favicon")));
     const fallbackBannerLogo = allPhotos[0] || effectiveBanner || place.bannerUrl || place.ogImage || "";
 
-    // Priority 0: Freshly resolved rich logo from live website enrichment
+    const isSameAsBannerUrl = (u?: string | null): boolean => {
+      if (!u) return false;
+      const proxiedU = getProxiedImageUrl(u);
+      const bannerCandidates = [
+        fallbackBannerLogo,
+        effectiveBanner,
+        place.bannerUrl,
+        place.ogImage,
+        cachedMedia?.bannerUrl,
+        fetchedBannerUrl,
+        allPhotos[0]
+      ].filter(Boolean) as string[];
+      for (const b of bannerCandidates) {
+        if (u === b || proxiedU === b || proxiedU === getProxiedImageUrl(b)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Priority 0: Freshly resolved rich standalone logo from live website enrichment
     if (
       fetchedLogoUrl &&
+      !isSameAsBannerUrl(fetchedLogoUrl) &&
       !isBrokenSvg(fetchedLogoUrl) &&
       !isFaviconOrProxy(fetchedLogoUrl)
     ) {
@@ -1029,31 +1072,33 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     if (
       cachedMedia?.logoUrl &&
+      !isSameAsBannerUrl(cachedMedia.logoUrl) &&
       !isBrokenSvg(cachedMedia.logoUrl) &&
       !isFaviconOrProxy(cachedMedia.logoUrl)
     ) {
       return cachedMedia.logoUrl;
     }
 
-    // Priority 1: Canonical place record logo (excluding /api/favicon so banner fallback takes priority when no standalone logo exists)
-    const canonicalPlaceLogo = getPlaceLogoUrl(place) || place.logoUrl || place.avatarUrl;
+    // Priority 1: Canonical place record standalone logo (excluding banner copies)
+    const rawPlaceLogo = (!isSameAsBannerUrl(place.logoUrl) ? place.logoUrl : null) || (!isSameAsBannerUrl(place.avatarUrl) ? place.avatarUrl : null);
     if (
-      canonicalPlaceLogo && 
-      !isBrokenSvg(canonicalPlaceLogo) &&
-      !isFaviconOrProxy(canonicalPlaceLogo) &&
-      !canonicalPlaceLogo.startsWith("data:;") && 
-      canonicalPlaceLogo.trim() !== "" && 
-      !canonicalPlaceLogo.includes("LogoHeader") && 
-      !canonicalPlaceLogo.includes("1024x170") &&
-      !canonicalPlaceLogo.includes("tap/0.png") &&
-      !canonicalPlaceLogo.includes("icons/tap")
+      rawPlaceLogo && 
+      !isBrokenSvg(rawPlaceLogo) &&
+      !isFaviconOrProxy(rawPlaceLogo) &&
+      !rawPlaceLogo.startsWith("data:;") && 
+      rawPlaceLogo.trim() !== "" && 
+      !rawPlaceLogo.includes("LogoHeader") && 
+      !rawPlaceLogo.includes("1024x170") &&
+      !rawPlaceLogo.includes("tap/0.png") &&
+      !rawPlaceLogo.includes("icons/tap")
     ) {
-      return getCleanLogoUrl(canonicalPlaceLogo, drawerDomain, fallbackBannerLogo) || canonicalPlaceLogo;
+      return getCleanLogoUrl(rawPlaceLogo, drawerDomain, fallbackBannerLogo) || rawPlaceLogo;
     }
 
-    // Priority 2: Video review logo
+    // Priority 2: Video review standalone logo
     const matchingVidWithLogo = rawPlaceVideos.find((v) => Boolean(
       v.placeLogoUrl && 
+      !isSameAsBannerUrl(v.placeLogoUrl) &&
       !isBrokenSvg(v.placeLogoUrl) &&
       !isFaviconOrProxy(v.placeLogoUrl) &&
       !v.placeLogoUrl.startsWith("data:;") && 
@@ -1067,16 +1112,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain, fallbackBannerLogo) || matchingVidWithLogo.placeLogoUrl;
     }
 
-    // Priority 3: Mutual Fallback Policy — If there is a valid banner and no standalone logo, use the banner image as the logo so they match and the logo is never empty
+    // Priority 3: Live website official logo extractor (/api/favicon scrapes the official website logo first, and only falls back to the website's banner if no logo exists on the site)
+    if (drawerDomain && drawerDomain.includes(".")) {
+      return `/api/favicon?domain=${encodeURIComponent(drawerDomain)}`;
+    }
+
+    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
+
+    // Priority 4: VERY LAST RESORT ONLY — If there is no standalone logo and no domain resolver, use the banner image as the logo
     if (fallbackBannerLogo && !isBadBanner(fallbackBannerLogo) && !isFaviconOrProxy(fallbackBannerLogo)) {
       return getProxiedImageUrl(fallbackBannerLogo) || fallbackBannerLogo;
     }
 
-    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
-    if (cachedMedia?.logoUrl && !isBrokenSvg(cachedMedia.logoUrl)) return cachedMedia.logoUrl;
-    if (drawerDomain) return getCleanLogoUrl(null, drawerDomain, fallbackBannerLogo);
     return null;
-  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, cachedMedia, effectiveBanner, allPhotos]);
+  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, fetchedBannerUrl, cachedMedia, effectiveBanner, allPhotos]);
 
 
 

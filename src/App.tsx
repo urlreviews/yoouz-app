@@ -4523,6 +4523,8 @@ export function App() {
           fetchedPlace.bannerUrl &&
           !fetchedPlace.bannerUrl.includes('placeholder') &&
           fetchedPlace.logoUrl &&
+          fetchedPlace.logoUrl !== fetchedPlace.bannerUrl &&
+          fetchedPlace.logoUrl !== fetchedPlace.ogImage &&
           !isFaviconUrl(fetchedPlace.logoUrl) &&
           !fetchedPlace.logoUrl.includes('/api/favicon') &&
           !isWhiteOrInvertedLogo(fetchedPlace.logoUrl)
@@ -4543,12 +4545,14 @@ export function App() {
               return prev.map(p => {
                 if (p.id !== fetchedPlace.id) return p;
                 const keepExistingName = p.name && !isDomainStemName(p.name, fetchedPlace.id) && isDomainStemName(fetchedPlace.name, fetchedPlace.id);
+                const isFetchedLogoDistinct = Boolean(fetchedPlace.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl && fetchedPlace.logoUrl !== p.bannerUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon'));
+                const isExistingLogoDistinct = Boolean(p.logoUrl && p.logoUrl !== p.bannerUrl && p.logoUrl !== fetchedPlace.bannerUrl && !isWhiteOrInvertedLogo(p.logoUrl) && !p.logoUrl.includes('/api/favicon'));
                 return {
                   ...p,
                   ...fetchedPlace,
                   name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
                   bannerUrl: (fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || ""),
-                  logoUrl: (fetchedPlace.logoUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon')) ? fetchedPlace.logoUrl : ((p.logoUrl && !isWhiteOrInvertedLogo(p.logoUrl)) ? p.logoUrl : (fetchedPlace.bannerUrl || p.bannerUrl || fetchedPlace.logoUrl || ""))
+                  logoUrl: isFetchedLogoDistinct ? fetchedPlace.logoUrl : (isExistingLogoDistinct ? p.logoUrl : (fetchedPlace.logoUrl || p.logoUrl || fetchedPlace.bannerUrl || p.bannerUrl || ""))
                 };
               });
             }
@@ -4576,7 +4580,7 @@ export function App() {
                   if (l.startsWith("data:;") || l.includes("brandfetch.io") || isFaviconUrl(l) || l.includes("/api/favicon") || isWhiteOrInvertedLogo(l)) return false;
                   return true;
                 };
-                const existingValidLogo = fetchedPlace?.logoUrl && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon') && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
+                const existingValidLogo = fetchedPlace?.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl && fetchedPlace.logoUrl !== fetchedPlace.ogImage && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon') && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
                 const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
                 const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
                 const officialName = (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || validSelected;
@@ -4611,9 +4615,9 @@ export function App() {
                 const effectiveBannerCandidate = isGoodPhoto(metaData.image) 
                   ? metaData.image 
                   : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
-                const effectiveLogoCandidate = (isValidLogo(metaData.logo)) 
+                const effectiveLogoCandidate = (isValidLogo(metaData.logo) && metaData.logo !== effectiveBannerCandidate) 
                   ? metaData.logo 
-                  : (existingValidLogo || effectiveBannerCandidate || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : ''));
+                  : (existingValidLogo || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : '') || effectiveBannerCandidate);
                 const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
                 const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {

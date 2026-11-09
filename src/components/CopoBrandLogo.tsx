@@ -91,14 +91,19 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     const candidates: string[] = [];
 
     const isBrokenSvg = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u)));
+    const proxiedBannerUrl = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
+    const isSameAsBanner = (u?: string | null): boolean => {
+      if (!u || !bannerUrl) return false;
+      return u === bannerUrl || u === proxiedBannerUrl || getProxiedImageUrl(u) === proxiedBannerUrl;
+    };
 
-    // 0. Explicit rich brand logo URL from place data/metadata
+    // 0. Explicit rich standalone brand logo URL from place data/metadata (must not be a duplicate of bannerUrl)
     const isLowResFavicon = Boolean(logoUrl && (isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon")));
 
-    // 0. Explicit rich brand logo URL from place data/metadata (only when NOT a blurry low-res favicon)
     if (
       logoUrl &&
       logoUrl.trim() !== "" &&
+      !isSameAsBanner(logoUrl) &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
       !isBrokenSvg(logoUrl) &&
       !isLowResFavicon
@@ -122,16 +127,34 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 2. Locked verified authentic brand logo from previous successful load
+    // 2. Locked verified authentic standalone brand logo from previous successful load (excluding banner copies)
     if (cleanDomain && LOCKED_DOMAIN_LOGOS.has(cleanDomain)) {
       const locked = LOCKED_DOMAIN_LOGOS.get(cleanDomain)!;
-      if (!isGenericOrPlaceholderLogo(locked) && !isBrokenSvg(locked) && !locked.includes("/api/favicon")) {
+      if (!isSameAsBanner(locked) && !isGenericOrPlaceholderLogo(locked) && !isBrokenSvg(locked) && !locked.includes("/api/favicon")) {
         candidates.push(locked);
       }
     }
 
-    // 3. Mutual Fallback Policy: If no standalone logo is available or if the logo fails to load,
-    // fall back to the place's authentic banner image so the logo is identical to the banner (never a fake gray monogram).
+    // 3. Live website official logo extractor (/api/favicon scrapes the official website logo first, and only falls back to banner if no logo exists on the website)
+    if (cleanDomain && cleanDomain.includes(".")) {
+      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
+    }
+
+    // 4. Fallback explicit logoUrl if it was a favicon or icon (and not a banner copy)
+    if (
+      logoUrl &&
+      logoUrl.trim() !== "" &&
+      !isSameAsBanner(logoUrl) &&
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isBrokenSvg(logoUrl)
+    ) {
+      const proxiedLogo = getProxiedImageUrl(logoUrl);
+      if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
+      if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
+    }
+
+    // 5. VERY LAST RESORT ONLY: If the website has NO standalone logo at all or all logo candidates failed,
+    // fall back to the place's authentic banner image so the logo box is never a fake gray monogram.
     if (
       bannerUrl &&
       bannerUrl.trim() !== "" &&
@@ -143,23 +166,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       const proxiedBanner = getProxiedImageUrl(bannerUrl);
       if (proxiedBanner) candidates.push(proxiedBanner);
       if (bannerUrl !== proxiedBanner) candidates.push(bannerUrl);
-    }
-
-    // 4. Guaranteed authentic domain favicon/logo proxy
-    if (cleanDomain && cleanDomain.includes(".")) {
-      candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
-    }
-
-    // 5. Fallback explicit logoUrl if it was a favicon or icon
-    if (
-      logoUrl &&
-      logoUrl.trim() !== "" &&
-      !isGenericOrPlaceholderLogo(logoUrl) &&
-      !isBrokenSvg(logoUrl)
-    ) {
-      const proxiedLogo = getProxiedImageUrl(logoUrl);
-      if (proxiedLogo && !candidates.includes(proxiedLogo)) candidates.push(proxiedLogo);
-      if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
     // Filter duplicates, generic placeholders, and URLs that already failed for this domain
@@ -225,7 +231,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
         setNeedsDarkContrast(darkNeeded);
         KNOWN_LOADED_LOGOS.add(currentSrc);
-        if (cleanDomain && !currentSrc.includes("/api/favicon")) {
+        const proxiedBannerCheck = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
+        const isCurrentBannerCopy = Boolean(bannerUrl && (currentSrc === bannerUrl || currentSrc === proxiedBannerCheck));
+        if (cleanDomain && !currentSrc.includes("/api/favicon") && !isCurrentBannerCopy) {
           LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
         }
         setLoadedSrc(currentSrc);
@@ -233,7 +241,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         onLoad?.();
       }
     }
-  }, [currentSrc, cleanDomain, candidateIdx, candidateUrls.length, onLoad]);
+  }, [currentSrc, cleanDomain, candidateIdx, candidateUrls.length, onLoad, bannerUrl]);
 
   // Dedicated Yoouz emblem
   if (isYoouz) {
@@ -303,7 +311,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
             setNeedsDarkContrast(darkNeeded);
             if (currentSrc) {
               KNOWN_LOADED_LOGOS.add(currentSrc);
-              if (cleanDomain && !currentSrc.includes("/api/favicon")) {
+              const proxiedBannerCheck = bannerUrl ? getProxiedImageUrl(bannerUrl) : null;
+              const isCurrentBannerCopy = Boolean(bannerUrl && (currentSrc === bannerUrl || currentSrc === proxiedBannerCheck));
+              if (cleanDomain && !currentSrc.includes("/api/favicon") && !isCurrentBannerCopy) {
                 LOCKED_DOMAIN_LOGOS.set(cleanDomain, currentSrc);
               }
               setLoadedSrc(currentSrc);

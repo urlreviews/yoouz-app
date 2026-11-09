@@ -29461,13 +29461,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               || (!isLogoOrIconUrl(pData.image) && !isBadBanner(pData.image) ? pData.image : "") 
               || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
               || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
+            const isDistinctLogo = (u?: string | null) => Boolean(u && !isFaviconUrl(u) && !isBrokenSvgLogo(u) && u !== rawCachedImage && u !== row.bannerUrl && u !== pData.bannerUrl);
             const rawCachedLogo = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey] && !KNOWN_BRAND_LOGOS[cleanDomKey].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomKey] : null) 
-              || (row.logoUrl && !isFaviconUrl(row.logoUrl) && !isBrokenSvgLogo(row.logoUrl) ? row.logoUrl : null) 
-              || (!isFaviconUrl(pData.logoUrl) && !isBrokenSvgLogo(pData.logoUrl) ? pData.logoUrl : null) 
-              || (!isFaviconUrl(pData.avatarUrl) && !isBrokenSvgLogo(pData.avatarUrl) ? pData.avatarUrl : null) 
+              || (isDistinctLogo(row.logoUrl) ? row.logoUrl : null) 
+              || (isDistinctLogo(pData.logoUrl) ? pData.logoUrl : null) 
+              || (isDistinctLogo(pData.avatarUrl) ? pData.avatarUrl : null) 
               || (matchedDom && KNOWN_BRAND_LOGOS[matchedDom] && !KNOWN_BRAND_LOGOS[matchedDom].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[matchedDom] : null);
             const cachedImageCandidate = rawCachedImage || rawCachedLogo || "";
-            const cachedLogoCandidate = rawCachedLogo || rawCachedImage || "";
+            const cachedLogoCandidate = rawCachedLogo || "";
 
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
@@ -29511,14 +29512,51 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
         resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.')) {
-          const realDomain = resolvedEntity.domain;
-          const rawEntityBanner = (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
-          const rawEntityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !isGenericOrPlaceholderLogo(resolvedEntity.logo)) ? resolvedEntity.logo : ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "");
+          const realDomain = cleanDomainName(resolvedEntity.domain) || resolvedEntity.domain;
+          let rawEntityBanner = (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
+          let rawEntityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !resolvedEntity.logo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(resolvedEntity.logo))
+            ? resolvedEntity.logo
+            : ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "");
+
+          // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
+          if (!rawEntityLogo && !resolveOnly) {
+            try {
+              const siteResp = await fetch(`https://${realDomain}`, {
+                redirect: "follow",
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                  "Accept": "text/html,application/xhtml+xml"
+                },
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+              });
+              if (siteResp.ok) {
+                const siteHtml = await siteResp.text();
+                const $site = cheerio.load(siteHtml);
+                const extractedSiteLogo = extractAuthenticWebsiteLogo($site, siteHtml, siteResp.url || `https://${realDomain}`, realDomain);
+                if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
+                  rawEntityLogo = sanitizeProxy(extractedSiteLogo);
+                }
+                if (!rawEntityBanner) {
+                  const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
+                  if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
+                    try {
+                      rawEntityBanner = sanitizeProxy(new URL(ogImg, siteResp.url || `https://${realDomain}`).toString());
+                    } catch {}
+                  }
+                }
+              }
+            } catch (eSite) {}
+          }
+
+          if (rawEntityBanner) rawEntityBanner = sanitizeProxy(rawEntityBanner) || rawEntityBanner;
+          if (rawEntityLogo) rawEntityLogo = sanitizeProxy(rawEntityLogo) || rawEntityLogo;
+
           const entityBanner = rawEntityBanner || rawEntityLogo || "";
-          const entityLogo = rawEntityLogo || rawEntityBanner || "";
+          // Only fall back to entityBanner if the website genuinely had no logo and we are not in resolveOnly mode
+          const entityLogo = rawEntityLogo || (resolveOnly ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : (entityBanner || `/api/favicon?domain=${encodeURIComponent(realDomain)}`));
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
-          console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain);
+          console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain, "logo:", entityLogo, "banner:", entityBanner);
           return res.json({
             title: entityTitle,
             description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,

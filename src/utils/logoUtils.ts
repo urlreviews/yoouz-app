@@ -1533,9 +1533,18 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // Explicit authentic custom high-res logo URL takes priority (excluding /api/favicon so banner fallback can apply first if no real logo exists)
+  const effectiveBannerFallback = bannerUrl || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : null);
+  const proxiedBannerFallback = effectiveBannerFallback ? getProxiedImageUrl(effectiveBannerFallback) : null;
+  const isSameAsBanner = Boolean(
+    url &&
+    effectiveBannerFallback &&
+    (url === effectiveBannerFallback || url === proxiedBannerFallback || getProxiedImageUrl(url) === proxiedBannerFallback)
+  );
+
+  // 1. Explicit authentic custom high-res standalone logo URL takes top priority (must not merely be a duplicate of the banner)
   if (
     url &&
+    !isSameAsBanner &&
     !isWhiteOrInvertedLogo(url) &&
     !url.includes("/api/brand-banner") &&
     !url.includes("/api/favicon") &&
@@ -1547,8 +1556,17 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  // Mutual Fallback Policy: If no standalone logo is found, use the banner image as the logo
-  const effectiveBannerFallback = bannerUrl || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : null);
+  // 2. Live domain logo resolver (/api/favicon scrapes the official website logo first, and only falls back to the website's banner if no logo exists on the site)
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+  }
+
+  // 3. Explicit favicon/logo URL if no domain is available
+  if (url && !isSameAsBanner && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(url);
+  }
+
+  // 4. VERY LAST RESORT ONLY: If no standalone logo and no domain resolver is available, use the banner image as the logo
   if (
     effectiveBannerFallback &&
     !isBadBanner(effectiveBannerFallback) &&
@@ -1556,15 +1574,6 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     !effectiveBannerFallback.includes("/api/favicon")
   ) {
     return getProxiedImageUrl(effectiveBannerFallback);
-  }
-
-  if (url && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
-    return getProxiedImageUrl(url);
-  }
-
-  // High-res domain logo fallback
-  if (cleanDomain) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return null;
@@ -1601,10 +1610,18 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
 
-  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, fake banners, or Wikimedia URLs for known brands)
+  const fallbackBanner = place.bannerUrl || place.ogImage || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : "");
+  const proxiedFallbackBanner = fallbackBanner ? getProxiedImageUrl(fallbackBanner) : "";
+  const isDuplicateOfBanner = (u?: string | null): boolean => {
+    if (!u || !fallbackBanner) return false;
+    return u === fallbackBanner || u === place.bannerUrl || u === place.ogImage || u === proxiedFallbackBanner || getProxiedImageUrl(u) === proxiedFallbackBanner;
+  };
+
+  // 2. Explicit custom standalone logoUrl provided (must not be a duplicate of bannerUrl)
   if (
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
+    !isDuplicateOfBanner(place.logoUrl) &&
     !isFaviconUrl(place.logoUrl) &&
     !place.logoUrl.includes("/api/favicon") &&
     !place.logoUrl.includes("/api/brand-banner") &&
@@ -1621,10 +1638,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.logoUrl);
   }
 
-  // 3. Explicit avatarUrl fallback
+  // 3. Explicit standalone avatarUrl fallback (must not be a duplicate of bannerUrl)
   if (
     place.avatarUrl &&
     place.avatarUrl.trim() !== "" &&
+    !isDuplicateOfBanner(place.avatarUrl) &&
     !isFaviconUrl(place.avatarUrl) &&
     !place.avatarUrl.includes("/api/favicon") &&
     !place.avatarUrl.includes("/api/brand-banner") &&
@@ -1640,15 +1658,14 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.avatarUrl);
   }
 
-  // 4. Fallback to banner if no standalone logo is available (so the logo is identical to the banner and never empty)
-  const fallbackBanner = place.bannerUrl || place.ogImage || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : "");
-  if (fallbackBanner && !isBadBanner(fallbackBanner) && !fallbackBanner.includes("/api/brand-banner") && !fallbackBanner.includes("/api/favicon")) {
-    return getProxiedImageUrl(fallbackBanner);
+  // 4. Live domain logo resolver (/api/favicon extracts the website's official logo first, and only falls back to banner if the website has no logo)
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
-  // 5. Guaranteed authentic domain favicon/logo fallback
-  if (cleanDomain) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+  // 5. VERY LAST RESORT ONLY: Fallback to banner if no standalone logo and no domain exists
+  if (fallbackBanner && !isBadBanner(fallbackBanner) && !fallbackBanner.includes("/api/brand-banner") && !fallbackBanner.includes("/api/favicon")) {
+    return getProxiedImageUrl(fallbackBanner);
   }
 
   return null;
