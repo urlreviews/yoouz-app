@@ -99,6 +99,7 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('lovable.dev') ||
     u.includes('pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev') ||
     u.includes('mock') ||
+    u.includes('/api/brand-banner') ||
     u.includes('1789810172562') ||
     u.includes('demdex.net') ||
     u.includes('demconf') ||
@@ -348,6 +349,10 @@ export const PICO_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIC
 
 // High-fidelity vector logos for verified businesses
 export const KNOWN_BRAND_LOGOS: Record<string, string> = {
+  "anthoscapital.com": "/api/favicon?domain=anthoscapital.com",
+  "www.anthoscapital.com": "/api/favicon?domain=anthoscapital.com",
+  "anthos capital": "/api/favicon?domain=anthoscapital.com",
+  "anthos": "/api/favicon?domain=anthoscapital.com",
   "allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "www.allincapital.vc": ALL_IN_CAPITAL_LOGO_DATA_URI,
   "allincapital": ALL_IN_CAPITAL_LOGO_DATA_URI,
@@ -1444,7 +1449,7 @@ export function isFaviconUrl(url?: string | null): boolean {
   return l.includes("favicon");
 }
 
-export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, bannerUrl?: string | null): string | null {
+export function getCleanLogoUrl(url: string | null | undefined, domain?: string | null, _bannerUrl?: string | null): string | null {
   const cleanDomain = extractDomain(domain || url);
   if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
     return YOOUZ_LOGO_DATA_URI;
@@ -1453,12 +1458,11 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
 
-  // Explicit authentic custom logo URL takes priority (strictly rejecting any favicons or low-res .ico icons)
+  // Explicit authentic custom high-res logo URL takes priority
   if (
     url &&
-    !isFaviconUrl(url) &&
-    !url.includes("/api/favicon") &&
     !isWhiteOrInvertedLogo(url) &&
+    !url.includes("/api/brand-banner") &&
     (url.startsWith("/") || url.startsWith("data:image/") || url.startsWith("/api/") || url.startsWith("https://") || url.startsWith("http://"))
   ) {
     if (!url.includes("brandfetch.io") && !url.includes("clearbit.com") && url !== "data:;" && !url.startsWith("data:;")) {
@@ -1466,14 +1470,8 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  if (url && !isFaviconUrl(url) && !url.includes("/api/favicon") && !isWhiteOrInvertedLogo(url)) {
+  if (url && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
     return getProxiedImageUrl(url);
-  }
-
-  // If no valid standalone logo exists and a valid banner is available, use the banner image as the logo
-  if (bannerUrl && !isBadBanner(bannerUrl)) {
-    const proxiedBanner = getProxiedImageUrl(bannerUrl);
-    if (proxiedBanner) return proxiedBanner;
   }
 
   // High-res domain logo fallback
@@ -1508,19 +1506,20 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 1. Direct match for known high-quality brand vector logos takes absolute precedence
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain]) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/brand-banner")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
   }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]) {
+  if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`] && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/brand-banner")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
 
-  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, or Wikimedia URLs for known brands)
+  // 2. Explicit custom logoUrl provided (strictly rejecting any favicons, .ico icons, white SVGs, fake banners, or Wikimedia URLs for known brands)
   if (
     place.logoUrl &&
     place.logoUrl.trim() !== "" &&
     !isFaviconUrl(place.logoUrl) &&
     !place.logoUrl.includes("/api/favicon") &&
+    !place.logoUrl.includes("/api/brand-banner") &&
     !isWhiteOrInvertedLogo(place.logoUrl) &&
     !place.logoUrl.includes("brandfetch.io") &&
     !place.logoUrl.includes("wikimedia.org") &&
@@ -1534,12 +1533,13 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.logoUrl);
   }
 
-  // 3. Explicit avatarUrl fallback (strictly rejecting any favicons, white SVGs, or .ico icons)
+  // 3. Explicit avatarUrl fallback
   if (
     place.avatarUrl &&
     place.avatarUrl.trim() !== "" &&
     !isFaviconUrl(place.avatarUrl) &&
     !place.avatarUrl.includes("/api/favicon") &&
+    !place.avatarUrl.includes("/api/brand-banner") &&
     !isWhiteOrInvertedLogo(place.avatarUrl) &&
     !place.avatarUrl.includes("brandfetch.io") &&
     place.avatarUrl !== "data:;" &&
@@ -1553,12 +1553,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   }
 
   // 4. Fallback to banner if no standalone logo is available (so the logo is identical to the banner and never empty)
-  const banner = getPlaceBannerUrl(place);
-  if (banner && isValidImageUrl(banner) && !isBadBanner(banner)) {
-    return banner;
+  if (place.bannerUrl && !isBadBanner(place.bannerUrl) && !place.bannerUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.bannerUrl);
   }
 
-  // 5. Guaranteed high-resolution authentic domain logo fallback when neither a custom logo nor a banner is available
+  // 5. Guaranteed authentic domain favicon/logo fallback
   if (cleanDomain) {
     return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
@@ -1566,7 +1565,11 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   return null;
 }
 
-export function getLiveWebsiteBannerUrl(_domain?: string | null): string {
+export function getLiveWebsiteBannerUrl(domain?: string | null): string {
+  const cleanDomain = extractDomain(domain || "");
+  if (cleanDomain && cleanDomain.includes(".")) {
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+  }
   return "";
 }
 
@@ -1593,22 +1596,31 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
 
   const cleanDomain = domain?.trim().replace(/^www\./, "").toLowerCase();
   if (cleanDomain) {
-    if (KNOWN_BRAND_BANNERS[cleanDomain]) {
+    if (KNOWN_BRAND_BANNERS[cleanDomain] && !KNOWN_BRAND_BANNERS[cleanDomain].includes("/api/brand-banner")) {
       return KNOWN_BRAND_BANNERS[cleanDomain];
     }
-    if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) {
+    if (KNOWN_BRAND_BANNERS[`www.${cleanDomain}`] && !KNOWN_BRAND_BANNERS[`www.${cleanDomain}`].includes("/api/brand-banner")) {
       return KNOWN_BRAND_BANNERS[`www.${cleanDomain}`];
     }
   }
 
-  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl) && !place.bannerUrl.startsWith("blob:")) {
+  if (place.bannerUrl && place.bannerUrl.trim() !== "" && !isBadBanner(place.bannerUrl) && !place.bannerUrl.includes("/api/brand-banner") && !place.bannerUrl.startsWith("blob:")) {
     return getProxiedImageUrl(place.bannerUrl);
   }
-  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage)) {
+  if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage) && !place.ogImage.includes("/api/brand-banner")) {
     return getProxiedImageUrl(place.ogImage);
   }
+
+  // Fallback: If no photographic banner exists, use authentic logoUrl/avatarUrl as banner!
+  if (place.logoUrl && place.logoUrl.trim() !== "" && !isBadBanner(place.logoUrl) && !place.logoUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.logoUrl);
+  }
+  if (place.avatarUrl && place.avatarUrl.trim() !== "" && !isBadBanner(place.avatarUrl) && !place.avatarUrl.includes("/api/brand-banner")) {
+    return getProxiedImageUrl(place.avatarUrl);
+  }
+
   if (cleanDomain) {
-    return getLiveWebsiteBannerUrl(cleanDomain);
+    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return "";

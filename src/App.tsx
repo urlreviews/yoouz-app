@@ -5965,10 +5965,11 @@ export function App() {
     }
 
     const cleanText = (text || "").trim();
-    if (!cleanText) return;
+    const commentAttachments = Array.isArray(options?.commentItem?.attachments) ? options.commentItem.attachments : [];
+    if (!cleanText && commentAttachments.length === 0) return;
 
     const now = Date.now();
-    const commentKey = `${videoId}:${cleanText}`;
+    const commentKey = `${videoId}:${cleanText}:${commentAttachments.length}`;
     const lastCommentTime = pendingCommentClickRef.current.get(commentKey) || 0;
     if (now - lastCommentTime < 1500) return; // Deduplicates rapid double submissions
     pendingCommentClickRef.current.set(commentKey, now);
@@ -6012,6 +6013,7 @@ export function App() {
     const newCommentItem: ReviewComment = options?.commentItem ? {
       ...options.commentItem,
       text: cleanText,
+      attachments: commentAttachments,
       isOwner: Boolean(options.postAsOwner || options.commentItem.isOwner)
     } : {
       id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -6025,6 +6027,7 @@ export function App() {
       isLiked: false,
       isOwner: Boolean(options?.postAsOwner),
       isCreator: isTargetCreator,
+      attachments: commentAttachments,
       replies: []
     };
     if (options?.replyToId) newCommentItem.replyToId = options.replyToId;

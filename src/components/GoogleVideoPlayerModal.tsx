@@ -277,6 +277,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       authorHandle: commentAuthorHandle,
       authorAvatar: commentAuthorAvatar,
       text: commentBody,
+      attachments: [],
       createdAt: "Just now",
       createdAtMs: Date.now(),
       likesCount: 0

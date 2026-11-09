@@ -6590,6 +6590,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             {item.comment.text}
                           </div>
 
+                          {/* Attached Photos / Proof */}
+                          {Array.isArray(item.comment.attachments) && item.comment.attachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {item.comment.attachments.map((attUrl: string, attIdx: number) => (
+                                <a
+                                  key={attIdx}
+                                  href={attUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block w-16 h-16 rounded-xl overflow-hidden border border-zinc-800 hover:border-zinc-500 transition-colors shadow-xs"
+                                  title="View attached proof photo"
+                                >
+                                  <img src={attUrl} alt="Attachment" className="w-full h-full object-cover" />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+
                           {/* Parent Video / Place Context Pill & Engagement Stats */}
                           <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
                             <div className="flex flex-wrap items-center gap-2">
@@ -10652,6 +10670,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 "{selectedCommentDetailModal.comment.text}"
               </div>
             </div>
+
+            {/* Attached Photos / Proof */}
+            {Array.isArray(selectedCommentDetailModal.comment.attachments) && selectedCommentDetailModal.comment.attachments.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Attached Proof / Photos ({selectedCommentDetailModal.comment.attachments.length})</label>
+                <div className="flex flex-wrap gap-2.5">
+                  {selectedCommentDetailModal.comment.attachments.map((attUrl: string, attIdx: number) => (
+                    <a
+                      key={attIdx}
+                      href={attUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-24 h-24 rounded-xl overflow-hidden border border-zinc-800 hover:border-zinc-500 transition-colors shadow-sm relative group"
+                      title="Open full-size proof photo"
+                    >
+                      <img src={attUrl} alt="Attachment proof" className="w-full h-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Target Video & Metadata */}
             <div className="p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">

@@ -60,6 +60,7 @@ export interface ReviewComment {
   likedByCreator?: boolean;
   replyToId?: string;
   replyToHandle?: string;
+  attachments?: string[];
   
   replies?: ReviewComment[];
 }

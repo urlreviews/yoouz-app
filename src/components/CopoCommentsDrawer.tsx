@@ -18,7 +18,14 @@ import {
   Camera,
   AlertCircle,
   User,
-  LogIn
+  LogIn,
+  Paperclip,
+  Image as ImageIcon,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Loader2
 } from "lucide-react";
 import { VideoReview, ReviewComment, UserProfile } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
@@ -218,6 +225,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
   } | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [editingOwnerResponse, setEditingOwnerResponse] = useState(false);
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [lightboxState, setLightboxState] = useState<{
+    images: string[];
+    activeIndex: number;
+    authorName?: string;
+  } | null>(null);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const commentsListRef = useRef<HTMLDivElement>(null);
@@ -325,6 +340,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     setCommentText("");
     setReplyingTo(null);
     setEditingOwnerResponse(false);
+    setAttachedImages([]);
+    setLightboxState(null);
   }, [video?.id]);
 
   // Close on Escape key
@@ -676,6 +693,219 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  // Compress and process selected image files for fast proof attachments (max 5 images per comment)
+  const processAndAttachImages = async (fileList: FileList | File[]) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+
+    const remainingSlots = Math.max(0, 5 - attachedImages.length);
+    if (remainingSlots <= 0) return;
+
+    const toProcess = files.slice(0, remainingSlots);
+    setIsUploadingAttachments(true);
+    triggerHaptic("light");
+
+    try {
+      const base64List = await Promise.all(
+        toProcess.map((file) => {
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const rawData = e.target?.result as string;
+              // Client-side downscale to max 1280px for lightning performance
+              const img = new Image();
+              img.onload = () => {
+                const maxDim = 1280;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                  if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                  } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                  }
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0, width, height);
+                  resolve(canvas.toDataURL("image/jpeg", 0.84));
+                } else {
+                  resolve(rawData);
+                }
+              };
+              img.onerror = () => resolve(rawData);
+              img.src = rawData;
+            };
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+
+      const validBase64 = base64List.filter(Boolean);
+      if (validBase64.length === 0) {
+        setIsUploadingAttachments(false);
+        return;
+      }
+
+      // Try uploading to persistent /api/comments/upload-attachment
+      try {
+        const res = await fetch("/api/comments/upload-attachment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images: validBase64 })
+        });
+        const data = await res.json();
+        if (data && Array.isArray(data.urls) && data.urls.length > 0) {
+          setAttachedImages((prev) => [...prev, ...data.urls].slice(0, 5));
+        } else {
+          // Graceful fallback to compressed base64
+          setAttachedImages((prev) => [...prev, ...validBase64].slice(0, 5));
+        }
+      } catch (uploadErr) {
+        // Fallback to compressed base64
+        setAttachedImages((prev) => [...prev, ...validBase64].slice(0, 5));
+      }
+    } catch (err) {
+      console.warn("Failed to process attached images:", err);
+    } finally {
+      setIsUploadingAttachments(false);
+    }
+  };
+
+  const handleRemoveAttachedImage = (indexToRemove: number) => {
+    triggerHaptic("light");
+    setAttachedImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        const f = items[i].getAsFile();
+        if (f) files.push(f);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      processAndAttachImages(files);
+    }
+  };
+
+  // Render attached photos grid inside a comment or reply card
+  const renderAttachmentGrid = (attachments?: string[], authorTitle?: string, isReply = false) => {
+    if (!Array.isArray(attachments) || attachments.length === 0) return null;
+
+    const count = attachments.length;
+
+    return (
+      <div className={`mt-2 ${isReply ? "max-w-[280px]" : "max-w-xs sm:max-w-sm"} select-none`}>
+        {count === 1 && (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxState({ images: attachments, activeIndex: 0, authorName: authorTitle });
+            }}
+            className="group relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 cursor-pointer shadow-xs max-h-60 active:scale-[0.99] transition-transform"
+          >
+            <img
+              src={attachments[0]}
+              alt="Attachment"
+              className="w-full h-auto max-h-60 object-cover hover:opacity-95 transition-opacity"
+              loading="lazy"
+            />
+            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Maximize2 className="w-2.5 h-2.5" />
+              <span>{t("common.view", "View")}</span>
+            </div>
+          </div>
+        )}
+
+        {count === 2 && (
+          <div className="grid grid-cols-2 gap-1.5">
+            {attachments.map((imgUrl, idx) => (
+              <div
+                key={idx}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxState({ images: attachments, activeIndex: idx, authorName: authorTitle });
+                }}
+                className="group relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-square cursor-pointer active:scale-[0.98] transition-transform"
+              >
+                <img
+                  src={imgUrl}
+                  alt={`Attachment ${idx + 1}`}
+                  className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {count === 3 && (
+          <div className="grid grid-cols-3 gap-1.5">
+            {attachments.map((imgUrl, idx) => (
+              <div
+                key={idx}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxState({ images: attachments, activeIndex: idx, authorName: authorTitle });
+                }}
+                className="group relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-square cursor-pointer active:scale-[0.98] transition-transform"
+              >
+                <img
+                  src={imgUrl}
+                  alt={`Attachment ${idx + 1}`}
+                  className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {count >= 4 && (
+          <div className="grid grid-cols-2 gap-1.5">
+            {attachments.slice(0, 4).map((imgUrl, idx) => {
+              const isExtra = idx === 3 && count > 4;
+              return (
+                <div
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxState({ images: attachments, activeIndex: idx, authorName: authorTitle });
+                  }}
+                  className="group relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-square cursor-pointer active:scale-[0.98] transition-transform"
+                >
+                  <img
+                    src={imgUrl}
+                    alt={`Attachment ${idx + 1}`}
+                    className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                    loading="lazy"
+                  />
+                  {isExtra && (
+                    <div className="absolute inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center text-white font-extrabold text-sm">
+                      +{count - 3}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!video || isSubmittingComment) return;
@@ -684,7 +914,8 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
       return;
     }
     const text = commentText.trim().slice(0, 300);
-    if (!text) return;
+    const attachmentsToSave = [...attachedImages];
+    if (!text && attachmentsToSave.length === 0) return;
 
     setIsSubmittingComment(true);
 
@@ -713,6 +944,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         authorHandle,
         authorAvatar,
         text,
+        attachments: attachmentsToSave,
         createdAt: "Just now",
         createdAtMs: Date.now(),
         likesCount: 0,
@@ -773,6 +1005,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
     }
 
     setCommentText("");
+    setAttachedImages([]);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -1175,9 +1408,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         </div>
 
                         {/* Comment Text */}
-                        <p className="text-zinc-200 mt-1 text-[13px] leading-relaxed whitespace-pre-wrap font-normal">
-                          {comment.text}
-                        </p>
+                        {comment.text && (
+                          <p className="text-zinc-200 mt-1 text-[13px] leading-relaxed whitespace-pre-wrap font-normal">
+                            {comment.text}
+                          </p>
+                        )}
+
+                        {/* Attached Photos / Proof */}
+                        {renderAttachmentGrid(comment.attachments, displayName, false)}
 
                         {/* Badges & Actions Row (Likes, Reply, Creator Heart, Delete) */}
                         <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-zinc-200">
@@ -1327,9 +1565,14 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                     </div>
 
                                     {/* Reply text with optional replyTo tag */}
-                                    <p className="text-zinc-200 mt-0.5 text-xs leading-relaxed font-normal">
-                                      {reply.text}
-                                    </p>
+                                    {reply.text && (
+                                      <p className="text-zinc-200 mt-0.5 text-xs leading-relaxed font-normal">
+                                        {reply.text}
+                                      </p>
+                                    )}
+
+                                    {/* Reply Attachments / Proof */}
+                                    {renderAttachmentGrid(reply.attachments, replyDisplayName, true)}
 
                                     {/* Reply Actions (Like & Delete) */}
                                     <div className="flex items-center gap-3 mt-1.5 text-[10px] font-semibold text-zinc-200">
@@ -1464,8 +1707,46 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                 </div>
               )}
 
+              {/* Attachment Preview Tray (Photos selected before posting) */}
+              {(attachedImages.length > 0 || isUploadingAttachments) && (
+                <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-2 bg-zinc-900 border border-zinc-800 rounded-2xl animate-in slide-in-from-bottom-2 duration-150 scrollbar-none">
+                  {attachedImages.map((imgUrl, idx) => (
+                    <div key={idx} className="relative group shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950 shadow-xs">
+                      <img src={imgUrl} alt={`Attachment ${idx + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachedImage(idx)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/80 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                        title="Remove photo"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {isUploadingAttachments && (
+                    <div className="w-14 h-14 rounded-xl border border-dashed border-zinc-750 flex flex-col items-center justify-center bg-zinc-950/70 shrink-0 text-zinc-300 gap-1 animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span className="text-[9px] font-bold">Uploading...</span>
+                    </div>
+                  )}
+
+                  {attachedImages.length < 5 && !isUploadingAttachments && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-14 h-14 rounded-xl border border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center bg-zinc-950/40 hover:bg-zinc-850 shrink-0 text-zinc-400 hover:text-white transition-all cursor-pointer group"
+                      title="Add more photos (up to 5)"
+                    >
+                      <Plus className="w-4 h-4 group-hover:scale-110 transition-transform text-zinc-300" />
+                      <span className="text-[9px] font-semibold text-zinc-400">{attachedImages.length}/5</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Input Action Bar (Standalone Clean Div with Auto-Expanding Multiline Textarea) */}
-              <div className="flex items-end gap-2.5">
+              <div className="flex items-end gap-2">
                 {/* Author Avatar */}
                 <div className="pb-1 shrink-0">
                   {(isUserOwner || postAsOwner) ? (
@@ -1514,6 +1795,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     data-1p-ignore="true"
                     data-form-type="other"
                     value={commentText}
+                    onPaste={handlePaste}
                     onChange={(e) => {
                       const val = e.target.value.slice(0, 300);
                       setCommentText(val);
@@ -1530,7 +1812,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        if (commentText.trim() && commentText.length <= 300) {
+                        if ((commentText.trim() || attachedImages.length > 0) && commentText.length <= 300) {
                           handleSubmit(e);
                         }
                       }
@@ -1565,7 +1847,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
                         : t("comments.addCommentPlaceholder", "Add a comment...")
                     }
-                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-4 py-2 rounded-2xl border transition-all resize-none leading-relaxed overflow-y-auto block ${
+                    className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-3.5 py-2 rounded-2xl border transition-all resize-none leading-relaxed overflow-y-auto block ${
                       postAsOwner
                         ? "border-zinc-700 focus:border-white focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
                         : "border-zinc-800 focus:border-white/50 focus:bg-zinc-900 focus:ring-2 focus:ring-white/10"
@@ -1573,7 +1855,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     style={{ minHeight: "38px", maxHeight: "120px" }}
                   />
 
-                  {/* Subtle Character Counter (Only visible when nearing limit or on desktop hover) */}
+                  {/* Subtle Character Counter */}
                   {commentText.length >= 220 && (
                     <span
                       id="comment-char-counter"
@@ -1590,12 +1872,57 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   )}
                 </div>
 
+                {/* Hidden File Input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      processAndAttachImages(e.target.files);
+                    }
+                    e.target.value = "";
+                  }}
+                />
+
+                {/* Attach File/Image Button (Proof) */}
+                <div className="shrink-0 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (attachedImages.length >= 5) return;
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={isUploadingAttachments || attachedImages.length >= 5}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 cursor-pointer relative ${
+                      attachedImages.length > 0
+                        ? "bg-zinc-800 text-amber-400 border border-amber-400/50 shadow-xs"
+                        : "bg-zinc-850 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800"
+                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                    title={
+                      attachedImages.length >= 5
+                        ? "Maximum 5 photos attached"
+                        : "Attach photos as proof (max 5)"
+                    }
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    {attachedImages.length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-black text-[9px] font-black flex items-center justify-center shadow-xs">
+                        {attachedImages.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Send Button */}
                 <div className="shrink-0 pb-1">
                   <button
                     type="button"
                     onClick={handleSubmit}
                     id="btn-send-comment"
-                    disabled={!commentText.trim() || commentText.length > 300}
+                    disabled={(!commentText.trim() && attachedImages.length === 0) || isUploadingAttachments || commentText.length > 300}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer ${
                       postAsOwner
                         ? "bg-white hover:bg-zinc-200 text-zinc-950 disabled:opacity-40"
@@ -1611,6 +1938,110 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           )}
         </div>
       </div>
+
+      {/* Lightbox / High-Res Image Preview Modal */}
+      {lightboxState && (
+        <div
+          className="fixed inset-0 z-[11000] bg-black/92 backdrop-blur-md flex flex-col justify-between p-4 select-none animate-in fade-in duration-200 pointer-events-auto"
+          onClick={() => setLightboxState(null)}
+        >
+          {/* Top Bar */}
+          <div className="flex items-center justify-between z-10 w-full max-w-4xl mx-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-850/80 border border-zinc-750">
+                {lightboxState.activeIndex + 1} / {lightboxState.images.length}
+              </span>
+              {lightboxState.authorName && (
+                <span className="text-zinc-300 text-xs font-medium truncate max-w-[200px]">
+                  {lightboxState.authorName}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setLightboxState(null)}
+              className="w-9 h-9 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-white flex items-center justify-center transition-colors cursor-pointer"
+              title="Close image preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Centered Image */}
+          <div
+            className="flex-1 flex items-center justify-center p-2 relative max-w-5xl mx-auto w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {lightboxState.images.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxState((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          activeIndex: (prev.activeIndex - 1 + prev.images.length) % prev.images.length
+                        }
+                      : null
+                  )
+                }
+                className="absolute left-2 sm:left-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center cursor-pointer transition-all active:scale-95"
+                title="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
+            <img
+              src={lightboxState.images[lightboxState.activeIndex]}
+              alt="Attached proof preview"
+              className="max-h-[78vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200"
+            />
+
+            {lightboxState.images.length > 1 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setLightboxState((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          activeIndex: (prev.activeIndex + 1) % prev.images.length
+                        }
+                      : null
+                  )
+                }
+                className="absolute right-2 sm:right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 border border-white/20 text-white flex items-center justify-center cursor-pointer transition-all active:scale-95"
+                title="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails */}
+          {lightboxState.images.length > 1 && (
+            <div
+              className="flex items-center justify-center gap-2 py-2 max-w-4xl mx-auto z-10 overflow-x-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {lightboxState.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setLightboxState((prev) => (prev ? { ...prev, activeIndex: idx } : null))}
+                  className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                    idx === lightboxState.activeIndex
+                      ? "border-white scale-105"
+                      : "border-transparent opacity-50 hover:opacity-80"
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 

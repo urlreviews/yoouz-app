@@ -17552,6 +17552,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               authorName: row.userName || parsed.authorName || 'Guest',
               authorAvatar: row.userAvatar || parsed.authorAvatar,
               text: row.text || parsed.text || '',
+              attachments: Array.isArray(parsed.attachments) ? parsed.attachments : (parsed.attachment ? [parsed.attachment] : []),
               createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
             };
           });
@@ -17660,6 +17661,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
             authorName: row.userName || parsed.authorName || 'Guest',
             authorAvatar: row.userAvatar || parsed.authorAvatar,
             text: row.text || parsed.text || '',
+            attachments: Array.isArray(parsed.attachments) ? parsed.attachments : (parsed.attachment ? [parsed.attachment] : []),
             createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
           };
         });
@@ -18255,6 +18257,77 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Upload Comment Attachments (Proof / Photos / Documents for video review comments)
+  app.post("/api/comments/upload-attachment", (req, res, next) => {
+    multerUpload.array("files", 10)(req as any, res as any, (err: any) => {
+      if (err) {
+        console.warn("Multer comment attachment upload warning:", err);
+      }
+      next();
+    });
+  }, async (req, res) => {
+    try {
+      const attachmentsDir = path.join(serverUploadsDir, "comment-attachments");
+      if (!fs.existsSync(attachmentsDir)) {
+        fs.mkdirSync(attachmentsDir, { recursive: true });
+      }
+
+      const uploadedUrls: string[] = [];
+
+      // 1. Check if files were uploaded via multipart/form-data
+      const files = (req as any).files as Express.Multer.File[] | undefined;
+      if (Array.isArray(files) && files.length > 0) {
+        for (const file of files) {
+          const ext = path.extname(file.originalname) || ".jpg";
+          const newName = `att_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+          const destPath = path.join(attachmentsDir, newName);
+          try {
+            fs.copyFileSync(file.path, destPath);
+            uploadedUrls.push(`/uploads/comment-attachments/${newName}`);
+          } catch (copyErr) {
+            console.error("Error moving comment attachment:", copyErr);
+          }
+        }
+      }
+
+      // 2. Check if payload contains base64 images
+      const rawImages: string[] = Array.isArray(req.body?.images)
+        ? req.body.images
+        : (req.body?.image ? [req.body.image] : []);
+
+      for (const rawImg of rawImages) {
+        if (typeof rawImg === "string" && rawImg.startsWith("data:image/")) {
+          const match = rawImg.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+          if (match) {
+            const rawExt = match[1].toLowerCase().replace("jpeg", "jpg").replace("svg+xml", "svg");
+            const ext = `.${rawExt}`;
+            const base64Data = match[2];
+            const buffer = Buffer.from(base64Data, "base64");
+            const newName = `att_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+            const destPath = path.join(attachmentsDir, newName);
+            fs.writeFileSync(destPath, buffer);
+            uploadedUrls.push(`/uploads/comment-attachments/${newName}`);
+          }
+        } else if (typeof rawImg === "string" && (rawImg.startsWith("http") || rawImg.startsWith("/uploads/"))) {
+          uploadedUrls.push(rawImg);
+        }
+      }
+
+      if (uploadedUrls.length === 0) {
+        return res.status(400).json({ error: "No valid image files provided" });
+      }
+
+      return res.json({
+        success: true,
+        urls: uploadedUrls,
+        url: uploadedUrls[0]
+      });
+    } catch (err: any) {
+      console.error("Upload comment attachment error:", err);
+      return res.status(500).json({ error: err.message || "Failed to upload attachment" });
     }
   });
 

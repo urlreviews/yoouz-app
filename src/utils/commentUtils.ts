@@ -65,7 +65,8 @@ export function sanitizeCommentUser(c: any): any {
     userAvatar: avatar || c.authorAvatar || c.userAvatar,
     authorEmail: email || c.authorEmail || c.userEmail || c.userId,
     userEmail: email || c.authorEmail || c.userEmail || c.userId,
-    userId: email || c.userId || c.authorEmail || c.userEmail
+    userId: email || c.userId || c.authorEmail || c.userEmail,
+    attachments: Array.isArray(c.attachments) ? c.attachments : (c.attachment ? [c.attachment] : (c.attachments ? [c.attachments] : []))
   };
 }
 
