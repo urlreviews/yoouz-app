@@ -4926,6 +4926,21 @@ export function App() {
     }
   }, [currentVideoIndex, activeFeedVideos, activeCommentVideo]);
 
+  // Auto-synchronize Left Place Drawer with the currently active video in the feed when in Place View mode
+  // This guarantees that the business drawer on the left ALWAYS matches the video playing on the right 100%!
+  useEffect(() => {
+    if (!isPlaceView) return;
+    const currentVid = activeFeedVideos[currentVideoIndex];
+    if (!currentVid) return;
+
+    const targetPlace = places.find((p) => isPlaceReviewMatch(currentVid, p));
+    const targetPlaceId = targetPlace ? targetPlace.id : (currentVid.placeId || currentVid.placeName);
+
+    if (targetPlaceId && targetPlaceId !== selectedPlaceIdForDrawer) {
+      setSelectedPlaceIdForDrawer(targetPlaceId);
+    }
+  }, [currentVideoIndex, activeFeedVideos, isPlaceView, places, selectedPlaceIdForDrawer]);
+
   // Handle Video Selection from search/map/profile/bookmarks or place/creator drawer
   const handleSelectVideoById = (
     videoId: string,
@@ -5218,7 +5233,13 @@ export function App() {
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
     
-    setCurrentVideoIndex(0);
+    const targetPlace = places.find(p => p.id === placeId || extractCleanDomain(p.id) === extractCleanDomain(placeId) || (p as any).brandDomain === placeId);
+    const placeVidIdx = activeFeedVideos.findIndex(v => isPlaceReviewMatch(v, targetPlace || placeId));
+    if (placeVidIdx >= 0) {
+      setCurrentVideoIndex(placeVidIdx);
+    } else {
+      setCurrentVideoIndex(0);
+    }
   };
 
   // Open Creator Drawer
