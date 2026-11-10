@@ -1348,11 +1348,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     );
 
-    cardRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
+    const attachObservers = () => {
+      const cardElements = container.querySelectorAll("[data-video-index]");
+      cardElements.forEach((el) => observer.observe(el));
+    };
+
+    attachObservers();
+
+    const mutationObserver = new MutationObserver(() => {
+      attachObservers();
     });
 
+    mutationObserver.observe(container, { childList: true, subtree: true });
+
     return () => {
+      mutationObserver.disconnect();
       observer.disconnect();
     };
   }, [displayItems.length, videos, onSelectVideoIndex]);
