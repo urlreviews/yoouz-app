@@ -48,7 +48,7 @@ interface CopoVideoPlayerProps {
   activeSubTab: FeedSubTab;
   onSelectSubTab: (tab: FeedSubTab) => void;
   onOpenComments: (video: VideoReview) => void;
-  onOpenPlace: (placeId: string) => void;
+  onOpenPlace: (placeId: string, fromVideoId?: string) => void;
   onOpenCreator: (author: VideoAuthor) => void;
   onOpenShare: (video: VideoReview) => void;
   onToggleLike: (videoId: string) => void;
@@ -1312,7 +1312,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
 
         const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.45
+          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.25
         );
         if (visibleEntries.length === 0) return;
 
@@ -1344,7 +1344,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       },
       {
         root: container,
-        threshold: [0.3, 0.45, 0.75]
+        threshold: [0.15, 0.3, 0.45, 0.75]
       }
     );
 
@@ -1403,16 +1403,83 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, []);
 
-  // Zero-Latency Frame-Synchronized Settle Engine
-  // Real-time scroll frame updates via requestAnimationFrame ensuring zero delay on mobile swipes
+  // Zero-Latency Continuous Scroll & Center Settle Engine
+  // Real-time scroll frame updates via requestAnimationFrame ensuring 100% reliable active card tracking
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     let rafId: number | null = null;
 
-    // Legacy syncScrollIndex removed in favor of pure IntersectionObserver.
-  }, [videos, onSelectVideoIndex]);
+    const checkActiveCard = () => {
+      if (isProgrammaticScrollRef.current) return;
+      const containerTop = container.scrollTop;
+      const containerHeight = container.clientHeight;
+      if (!containerHeight) return;
+
+      // When near the top, snap to card 0
+      if (containerTop <= 20) {
+        if (activeCardIndexRef.current !== 0) {
+          activeCardIndexRef.current = 0;
+          lastObserverIndexRef.current = 0;
+          setActiveCardIndex(0);
+          onSelectVideoIndex(0);
+        }
+        return;
+      }
+
+      const containerCenter = containerTop + containerHeight / 2;
+      const cardElements = container.querySelectorAll<HTMLElement>("[data-video-index]");
+      if (cardElements.length === 0) return;
+
+      let closestIndex = -1;
+      let minDistance = Infinity;
+
+      cardElements.forEach((el) => {
+        const cardTop = el.offsetTop - container.offsetTop;
+        const cardCenter = cardTop + el.clientHeight / 2;
+        const distance = Math.abs(containerCenter - cardCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          const idxAttr = el.getAttribute("data-video-index");
+          if (idxAttr !== null) {
+            closestIndex = parseInt(idxAttr, 10);
+          }
+        }
+      });
+
+      const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
+      if (closestIndex >= 0 && closestIndex <= maxIdx && closestIndex !== activeCardIndexRef.current) {
+        activeCardIndexRef.current = closestIndex;
+        lastObserverIndexRef.current = closestIndex;
+        setActiveCardIndex(closestIndex);
+        const realIdx = closestIndex % (videos.length || 1);
+        onSelectVideoIndex(realIdx);
+
+        if (shouldLoop && videos.length > 0 && closestIndex >= displayItems.length - 4) {
+          setLoopCount((prev) => prev + 5);
+        }
+
+        if (realIdx < videos.length) {
+          prefetchUpcomingVideos(videos, realIdx);
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(checkActiveCard);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    container.addEventListener("scrollend", checkActiveCard, { passive: true });
+
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      container.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("scrollend", checkActiveCard);
+    };
+  }, [displayItems.length, videos, onSelectVideoIndex, shouldLoop]);
 
   // app.copo.st Touch Gesture Engine removed. Relying strictly on CSS scroll snapping for native smoothness.
   // We retain a passive tap listener merely to authorize the AudioContext synchronously.
@@ -2158,8 +2225,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       id="btn-more-option-view-place-owner"
                       onClick={() => {
                         const pid = moreMenuVideo.placeId;
+                        const vId = moreMenuVideo.id;
                         setMoreMenuVideo(null);
-                        if (pid) onOpenPlace(pid);
+                        if (pid) onOpenPlace(pid, vId);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
@@ -2251,8 +2319,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       id="btn-more-option-view-place"
                       onClick={() => {
                         const pid = moreMenuVideo.placeId;
+                        const vId = moreMenuVideo.id;
                         setMoreMenuVideo(null);
-                        if (pid) onOpenPlace(pid);
+                        if (pid) onOpenPlace(pid, vId);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >

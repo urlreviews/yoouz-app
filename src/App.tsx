@@ -5077,11 +5077,6 @@ export function App() {
     setFullscreenFeedContext(null);
     setActiveSection("home");
 
-    // Clean URL so it stays on home / feed (not /reviews/...)
-    try {
-      window.history.pushState(null, "", buildLocalizedPath("/", language));
-    } catch (e) {}
-
     const visibleVideos = videos
       .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
@@ -5185,7 +5180,7 @@ export function App() {
   };
 
   // Open Place Drawer
-  const handleOpenPlaceDrawer = (placeId: string) => {
+  const handleOpenPlaceDrawer = (placeId: string, fromVideoId?: string) => {
     if (!placeId) return;
     const cleanP = placeId.trim().toLowerCase();
 
@@ -5250,12 +5245,11 @@ export function App() {
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
     const currentVid = activeFeedVideos[currentVideoIndex];
-    if (currentVid && isPlaceReviewMatch(currentVid, targetPlace)) {
-      // If the current video being watched already belongs to this place, keep playing it at its index within this place's videos
-      const matchIdxInPlace = visiblePlaceVids.findIndex((v) => v.id === currentVid.id);
+    const targetVidId = fromVideoId || (currentVid && isPlaceReviewMatch(currentVid, targetPlace) ? currentVid.id : null);
+    if (targetVidId) {
+      const matchIdxInPlace = visiblePlaceVids.findIndex((v) => v.id === targetVidId);
       setCurrentVideoIndex(matchIdxInPlace >= 0 ? matchIdxInPlace : 0);
     } else {
-      // Otherwise, start at the latest review of this place (index 0)
       setCurrentVideoIndex(0);
     }
   };
@@ -7979,6 +7973,7 @@ export function App() {
         {/* If in Video Player mode (watching specific review, place/creator view, or full-screen feed context) */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
             <CopoVideoPlayer
+              key={currentFeedContextKey}
               commentsOpen={Boolean(activeCommentVideo)}
               isPaused={Boolean(
                 isCreateModalOpen || 
@@ -8008,7 +8003,7 @@ export function App() {
                 setCurrentVideoIndex(0);
               }}
               onOpenComments={(v) => setActiveCommentVideo(v)}
-              onOpenPlace={handleOpenPlaceDrawer}
+              onOpenPlace={(placeId, fromVideoId) => handleOpenPlaceDrawer(placeId, fromVideoId)}
               onOpenCreator={handleOpenCreatorDrawer}
               onOpenShare={handleOpenShare}
               onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}

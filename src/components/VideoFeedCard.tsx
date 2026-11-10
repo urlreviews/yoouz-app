@@ -73,7 +73,7 @@ interface VideoFeedCardProps {
   onActivateCard?: (cardIndex: number) => void;
   onPauseVideo?: () => void;
   onOpenComments: (video: VideoReview) => void;
-  onOpenPlace: (placeId: string) => void;
+  onOpenPlace: (placeId: string, fromVideoId?: string) => void;
   onOpenCreator: (author: VideoAuthor) => void;
   onOpenShare: (video: VideoReview) => void;
   onOpenMoreMenu: (video: VideoReview) => void;
@@ -1132,14 +1132,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               e.stopPropagation();
               onPauseVideo?.();
               const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
-              onOpenPlace(targetPlaceId);
+              onOpenPlace(targetPlaceId, video.id);
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => {
               e.stopPropagation();
               onPauseVideo?.();
               const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
-              onOpenPlace(targetPlaceId);
+              onOpenPlace(targetPlaceId, video.id);
             }}
             className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
           >
@@ -1363,7 +1363,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || cleanDomain || video.id;
-                          onOpenPlace(targetPlaceId);
+                          onOpenPlace(targetPlaceId, video.id);
                         }}
                         className="inline-flex items-center gap-1 text-white hover:text-white/80 active:opacity-75 transition-colors cursor-pointer text-[12px] sm:text-[13px] font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate"
                         title={`${cleanDomain}`}
