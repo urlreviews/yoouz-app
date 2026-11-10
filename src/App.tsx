@@ -1832,140 +1832,6 @@ export function App() {
     }).catch(() => {});
   };
 
-  // Synchronize URL: Keep it clean (root only) as requested by the user.
-  // Synchronize App State to URL (True Client-Side Routing for SEO)
-  useEffect(() => {
-    try {
-      const { pathWithoutLocale: currentRawPath } = parseLocaleFromPath(window.location.pathname);
-      const isPitchUrl = (
-        currentRawPath === "/pitch" || currentRawPath.startsWith("/pitch/") ||
-        currentRawPath === "/investors" || currentRawPath.startsWith("/investors/") ||
-        currentRawPath === "/deck" || currentRawPath.startsWith("/deck/") ||
-        currentRawPath === "/memorandum" || currentRawPath.startsWith("/memorandum/")
-      );
-
-      if (isPitchRoute || isPitchUrl) {
-        document.title = "Investor Memorandum | Yoouz";
-        if (window.location.pathname !== "/pitch" && currentRawPath !== "/pitch") {
-          try {
-            window.history.replaceState({}, "", "/pitch");
-          } catch (e) {}
-        }
-        return;
-      }
-
-      let path = "/";
-      let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
-
-      // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
-      const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
-
-      if ((isWatchingVideo || activeSection === "home" || isPlaceView || isCreatorView) && currentVid) {
-        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
-        path = `/review/${domainSlug}/${currentVid.id}`;
-        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
-        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
-        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-      } else if (selectedPlaceIdForDrawer) {
-        const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
-        const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
-        path = `/reviews/${slug}`;
-        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
-      } else if (selectedAuthorForDrawer) {
-        const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
-          .toLowerCase()
-          .trim()
-          .replace(/^@+/, "")
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9_-]/g, "")
-          .replace(/-+/g, "-");
-        path = `/@${cleanSlug}`;
-        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
-      } else if (activeSection === "search") {
-        path = "/search";
-        title = "Search & Explore Real Video Reviews | Yoouz";
-      } else if (activeSection === "discover") {
-        path = "/discover";
-        title = "Discover Trending Places & Video Reviews | Yoouz";
-      } else if (activeSection === "business") {
-        const bSlug = (() => {
-          try {
-            const saved = localStorage.getItem('copo_business_verified_session');
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              if (parsed) {
-                const placeObj = (places || []).find(p => p.id === parsed.placeId);
-                const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
-                if (s && s !== 'portal') return s;
-              }
-            }
-          } catch(e) {}
-          return '';
-        })();
-        path = bSlug ? `/business/${bSlug}` : "/business";
-        title = "Yoouz for Business - Verified Customer Video Reviews & Feedback";
-      } else if (activeSection === "following") {
-        path = "/following";
-        title = "Following Feed - Creator Video Reviews | Yoouz";
-      } else if (activeSection === "bookmarks") {
-        path = "/bookmarks";
-        title = "Saved Video Reviews & Bookmarks | Yoouz";
-      } else if (activeSection === "messages") {
-        path = "/messages";
-        title = "Direct Messages | Yoouz";
-      } else if (activeSection === "notifications") {
-        path = "/notifications";
-        title = "Notifications | Yoouz";
-      } else if (activeSection === "more") {
-        path = "/more";
-        title = "Settings & Community | Yoouz";
-      } else if (activeSection === "profile" && currentUser) {
-        const cleanSlug = (currentUser.name || currentUser.name || currentUser.email?.split('@')[0] || "user")
-          .toLowerCase()
-          .trim()
-          .replace(/^@+/, "")
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9_-]/g, "")
-          .replace(/-+/g, "-");
-        path = `/@${cleanSlug}`;
-        title = `${currentUser.name || "My Profile"} | Yoouz`;
-      } else {
-        path = `/${activeSection}`;
-        title = `${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} | Yoouz`;
-      }
-
-      // Update Document Meta Title for SEO
-      document.title = title;
-
-      // Localize path with the active language prefix (e.g. /lv/notifications, /fr/search, /nl/more)
-      const localizedPath = buildLocalizedPath(path, language);
-
-      // Update URL if it differs from current pathname (excluding search query string to avoid infinite loops if it exists)
-      if (window.location.pathname !== localizedPath) {
-        const isCurrentlyVideo = 
-          window.location.pathname.startsWith("/v/") || 
-          window.location.pathname.includes("/video/") || 
-          window.location.pathname.startsWith("/review/") || 
-          window.location.pathname.startsWith("/reviews/");
-        const isGoingToVideo = 
-          localizedPath.startsWith("/v/") || 
-          localizedPath.includes("/video/") || 
-          localizedPath.startsWith("/review/") || 
-          localizedPath.startsWith("/reviews/");
-        
-        if (isCurrentlyVideo || isGoingToVideo || isWatchingVideo) {
-          // Use replaceState while scrolling feed to avoid filling up the history stack
-          window.history.replaceState({}, "", localizedPath);
-        } else {
-          // Use pushState for actual navigation between different types of views (e.g., Profile -> Video)
-          window.history.pushState({}, "", localizedPath);
-        }
-      }
-    } catch (err) {
-      console.warn("URL sync warning:", err);
-    }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView]);
-
   // BunnyDB Auth state listener and multi-tab reactive sync
   useEffect(() => {
     // Purge any accidental blacklist of valid community accounts
@@ -4869,6 +4735,131 @@ export function App() {
 
     return visibleVideos;
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos, embedTargetId]);
+
+  // Real-time URL and Meta Title synchronization during feed scrolling and section transitions
+  useEffect(() => {
+    try {
+      if (isPitchRoute || isPitchUrl) {
+        document.title = "Investor Memorandum | Yoouz";
+        if (window.location.pathname !== "/pitch" && currentRawPath !== "/pitch") {
+          try {
+            window.history.replaceState({}, "", "/pitch");
+          } catch (e) {}
+        }
+        return;
+      }
+
+      let path = "/";
+      let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
+
+      // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
+      const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
+
+      if ((isWatchingVideo || activeSection === "home" || isPlaceView || isCreatorView) && currentVid) {
+        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
+        path = `/review/${domainSlug}/${currentVid.id}`;
+        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+      } else if (selectedPlaceIdForDrawer) {
+        const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
+        const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
+        path = `/reviews/${slug}`;
+        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
+      } else if (selectedAuthorForDrawer) {
+        const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
+          .toLowerCase()
+          .trim()
+          .replace(/^@+/, "")
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9_-]/g, "")
+          .replace(/-+/g, "-");
+        path = `/@${cleanSlug}`;
+        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
+      } else if (activeSection === "search") {
+        path = "/search";
+        title = "Search & Explore Real Video Reviews | Yoouz";
+      } else if (activeSection === "discover") {
+        path = "/discover";
+        title = "Discover Trending Places & Video Reviews | Yoouz";
+      } else if (activeSection === "business") {
+        const bSlug = (() => {
+          try {
+            const saved = localStorage.getItem('copo_business_verified_session');
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              if (parsed) {
+                const placeObj = (places || []).find(p => p.id === parsed.placeId);
+                const s = getPlaceSlug(placeObj || parsed.placeName || parsed.domain || parsed.placeId);
+                if (s && s !== 'portal') return s;
+              }
+            }
+          } catch(e) {}
+          return '';
+        })();
+        path = bSlug ? `/business/${bSlug}` : "/business";
+        title = "Yoouz for Business - Verified Customer Video Reviews & Feedback";
+      } else if (activeSection === "following") {
+        path = "/following";
+        title = "Following Feed - Creator Video Reviews | Yoouz";
+      } else if (activeSection === "bookmarks") {
+        path = "/bookmarks";
+        title = "Saved Video Reviews & Bookmarks | Yoouz";
+      } else if (activeSection === "messages") {
+        path = "/messages";
+        title = "Direct Messages | Yoouz";
+      } else if (activeSection === "notifications") {
+        path = "/notifications";
+        title = "Notifications | Yoouz";
+      } else if (activeSection === "more") {
+        path = "/more";
+        title = "Settings & Community | Yoouz";
+      } else if (activeSection === "profile" && currentUser) {
+        const cleanSlug = (currentUser.name || currentUser.name || currentUser.email?.split('@')[0] || "user")
+          .toLowerCase()
+          .trim()
+          .replace(/^@+/, "")
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9_-]/g, "")
+          .replace(/-+/g, "-");
+        path = `/@${cleanSlug}`;
+        title = `${currentUser.name || "My Profile"} | Yoouz`;
+      } else {
+        path = `/${activeSection}`;
+        title = `${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} | Yoouz`;
+      }
+
+      // Update Document Meta Title for SEO
+      document.title = title;
+
+      // Localize path with active language prefix
+      const localizedPath = buildLocalizedPath(path, language);
+
+      // Update URL if it differs from current pathname
+      if (window.location.pathname !== localizedPath) {
+        const isCurrentlyVideo = 
+          window.location.pathname.startsWith("/v/") || 
+          window.location.pathname.includes("/video/") || 
+          window.location.pathname.startsWith("/review/") || 
+          window.location.pathname.startsWith("/reviews/");
+        const isGoingToVideo = 
+          localizedPath.startsWith("/v/") || 
+          localizedPath.includes("/video/") || 
+          localizedPath.startsWith("/review/") || 
+          localizedPath.startsWith("/reviews/");
+        
+        if (isCurrentlyVideo || isGoingToVideo || isWatchingVideo) {
+          // Use replaceState while scrolling feed to avoid filling up history stack
+          window.history.replaceState({}, "", localizedPath);
+        } else {
+          // Use pushState for section transitions
+          window.history.pushState({}, "", localizedPath);
+        }
+      }
+    } catch (err) {
+      console.warn("URL sync warning:", err);
+    }
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
