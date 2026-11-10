@@ -1,5 +1,54 @@
 [
   {
+    "id": "kleannyc.com",
+    "name": "Klean-N-Green",
+    "category": "Healthcare & Medical",
+    "categoryType": "all",
+    "address": "(347) 883 - 4766",
+    "city": "New york",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fkleannyc.com%2Fwp-content%2Fuploads%2F2025%2F05%2FKG_Logo1-01.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fkleannyc.com%2Fwp-content%2Fuploads%2F2025%2F05%2FKG_Logo1-01.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fkleannyc.com%2Fwp-content%2Fuploads%2F2026%2F10%2FIMG_7307-scaled.webp",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fkleannyc.com%2Fwp-content%2Fuploads%2F2026%2F10%2FIMG_7307-scaled.webp",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fkleannyc.com%2Fwp-content%2Fuploads%2F2026%2F10%2FIMG_7307-scaled.webp"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+1 (347) 883-4766",
+    "email": "info@kleannyc.com",
+    "website": "https://kleannyc.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "At Klean-N-Green NYC, we offer green cleaning services in New York for homes, offices, rentals, and construction sites.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "kleannyc.com",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "havenhomecleaning.com",
     "name": "Haven Cleaning Services",
     "category": "Website",

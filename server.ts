@@ -8595,6 +8595,18 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             }
           }
           
+          if (colName === 'places' || colName === 'business_profiles') {
+            const domKey = String(parsedData.brandDomain || row.id || id || '').toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+            const rawRecordName = parsedData.name || (row as any).name || '';
+            const descBrand = extractBrandFromDescription(parsedData.description, domKey);
+            if (domKey && KNOWN_OFFICIAL_NAMES[domKey]) {
+              parsedData.name = KNOWN_OFFICIAL_NAMES[domKey];
+            } else if (descBrand && (!rawRecordName || isDomainDerivedGuess(rawRecordName, domKey) || isDomainStemName(rawRecordName, domKey))) {
+              parsedData.name = descBrand;
+            } else if (rawRecordName) {
+              parsedData.name = formatBusinessName(rawRecordName, domKey) || rawRecordName;
+            }
+          }
           return res.json({ id: String(row.id), ...parsedData });
         }
       } catch (bunnyErr) {}
@@ -8697,23 +8709,8 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           return res.status(404).json({ error: "Place not found (deleted)" });
         }
 
-        try {
-          if (bunnyDb) {
-            await bunnyDb.execute({
-              sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, logoUrl, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              args: [autoPlaceId, capitalizedTitle, cleanDomain, "Website / Business", "Online", logo, JSON.stringify(autoPlaceDoc)]
-            });
-            // Also store hyphenated alias for backwards compatibility
-            const hyphenId = cleanDomain.replace(/[^a-z0-9]/g, '-');
-            if (hyphenId !== autoPlaceId) {
-              await bunnyDb.execute({
-                sql: `INSERT OR IGNORE INTO places (id, name, address, category, city, logoUrl, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                args: [hyphenId, capitalizedTitle, cleanDomain, "Website / Business", "Online", logo, JSON.stringify(autoPlaceDoc)]
-              });
-            }
-          }
-        } catch (e) {}
-
+        // Do NOT pre-insert unscraped URL-derived domain guesses into the places table here;
+        // let /api/url-metadata scrape the live website metadata and persist the authentic official business name.
         return res.json(autoPlaceDoc);
       }
     }
@@ -8785,6 +8782,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
               // Never allow an empty or tracking-pixel banner or generic favicon logo to overwrite an existing authentic banner/logo on places
               if (colName === 'places' || colName === 'business_profiles') {
+                const domKey = String(curData.brandDomain || finalDataObj.brandDomain || id || '').toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+                if (curData.name && !isDomainDerivedGuess(curData.name, domKey) && !isDomainStemName(curData.name, domKey) && finalDataObj.name && (isDomainDerivedGuess(finalDataObj.name, domKey) || isDomainStemName(finalDataObj.name, domKey))) {
+                  delete finalDataObj.name;
+                }
                 if (curData.bannerUrl && !isBadBanner(curData.bannerUrl) && (!finalDataObj.bannerUrl || isBadBanner(finalDataObj.bannerUrl))) {
                   delete finalDataObj.bannerUrl;
                 }
@@ -8932,7 +8933,11 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             const flagPath = path.join(serverUploadsDir, 'all_places_purged.flag');
             if (fs.existsSync(flagPath)) fs.unlinkSync(flagPath);
           } catch(e) {}
-          const placeName = formatBusinessName(finalDataObj.name || id, id);
+          const descBrandForSave = extractBrandFromDescription(finalDataObj.description, id);
+          const rawCandidateName = (descBrandForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id)))
+            ? descBrandForSave
+            : (finalDataObj.name || id);
+          const placeName = formatBusinessName(rawCandidateName, id);
           finalDataObj.name = placeName;
           finalDataObj.customEdited = true;
           if (finalDataObj.claimedByEmail) {
@@ -29753,15 +29758,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
+            const cachedDescBrand = extractBrandFromDescription(pData.description, matchedDom);
             const isCachedNameStem = (
               isDomainStemName(row.name, matchedDom) ||
               isCorruptedBusinessNameServer(row.name) ||
-              (isDomainDerivedGuess(row.name, matchedDom) && (!pData.siteName || isDomainDerivedGuess(pData.siteName, matchedDom)))
+              isDomainDerivedGuess(row.name, matchedDom) ||
+              (cachedDescBrand && row.name && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
             ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
             if (matchedDom && isExactMatch && !isCachedNameStem && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
-              const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]) || (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
+              const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]) || (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || cachedDescBrand || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
               return res.json({
                 title: resolvedEntity,
                 description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
@@ -30091,7 +30098,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                        '';
               };
               
-              const rawTitle = getMetaContent('title') || $('title').text() || '';
+              const rawTitle = getMetaContent('title') || ($('head > title').first().text() || $('title').first().text() || '').replace(/WhatsApp$/i, '').trim() || '';
               description = getMetaContent('description') || $('meta[name="description"]').attr('content') || '';
               siteName = getMetaContent('site_name') || '';
 
@@ -30333,30 +30340,43 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
               } catch (e) {}
 
-              // 4. Resolve Title (Priority: Known Brand > Domain-matched Site Name / Org Name > Browser URL Tab <title> > og:title / twitter:title > og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Logo alt > Bundle phrase > domain fallback)
+              // 4. Resolve Title (Priority: Known Brand > Official Website <title> / og:title / og:site_name > JSON-LD > Description Brand > Domain fallback)
               const isGenericSeoPart = (str: string) => {
                 const l = str.toLowerCase().trim();
-                return /^(?:maid\s+service|cleaning\s+services?|house\s+cleaning|home\s+cleaning|commercial\s+cleaning|office\s+cleaning|best\s+|top[\s-]rated\s+|affordable\s+|professional\s+)/i.test(l) &&
+                return /^(?:(?:green|eco|eco[\s-]friendly|organic|natural|residential|commercial|professional|affordable|reliable|trusted|premier|luxury|custom|local|quality|expert|certified|licensed|insured|best|top|top[\s-]rated|#1)\s+)*(?:maid\s+services?|cleaning\s+services?|house\s+cleaning|home\s+cleaning|apartment\s+cleaning|commercial\s+cleaning|office\s+cleaning|carpet\s+cleaning|window\s+cleaning|deep\s+cleaning|cleaning\s+company|cleaners?|plumbing|electricians?|locksmiths?|roofing|landscaping|movers?|moving\s+company|pest\s+control|hvac|handyman|home\s+services?|law\s+firm|injury\s+attorneys?|personal\s+injury|dentist|dental\s+care|dental\s+clinic|med\s+spa|day\s+spa|massage\s+therapy|welcome|home|homepage|official\s+site|official\s+website)\b/i.test(l) &&
                   !l.replace(/[^a-z0-9]/g, '').includes(domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, ''));
               };
 
               const cleanTitleString = (str: string) => {
-                let cleaned = str.replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '').replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, '').trim();
+                let cleaned = str
+                  .replace(/WhatsApp$/i, '')
+                  .replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '')
+                  .replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, '')
+                  .trim();
                 // Strip common marketing / generic prefixes
                 cleaned = cleaned.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
                 cleaned = stripLegalEntityAndNoiseSuffixes(cleaned);
-                // Clean SEO title suffixes like "Welcome to Proximus - Internet, mobile, phone and TV | Proximus" -> "Proximus"
-                const parts = cleaned.split(/\s*(?:[|\-–—•│｜]|:)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
+                // Split ONLY on spaced hyphens (\s+-\s+) or pipe/dash/colon separators so hyphenated brands like "Klean-N-Green NYC" are NEVER broken apart!
+                const parts = cleaned.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
                   // 1. Exact match with domain root (e.g. "Proximus")
                   const exactPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot && !isGenericOrPlaceholderTitle(p));
                   if (exactPart) return stripLegalEntityAndNoiseSuffixes(exactPart);
-                  // 2. Part contains domain root OR domain root starts with part (e.g. "eMaids" in "emaidsinc", "Superb Maids" in "superbmaidsnyc")
+                  // 2. Part contains domain root OR domain root starts with part OR first word of non-generic part matches start of domain root (e.g. "Klean-N-Green NYC" on "kleannyc.com")
                   const matchPart = parts.find(p => {
                     const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, '');
                     if (!pAlpha || isGenericOrPlaceholderTitle(p) || p.length > 45) return false;
-                    return pAlpha.includes(domRoot) || (pAlpha.length >= 4 && domRoot.startsWith(pAlpha)) || (pAlpha.length >= 5 && domRoot.includes(pAlpha) && !isGenericSeoPart(p));
+                    if (pAlpha.includes(domRoot) || (pAlpha.length >= 4 && domRoot.startsWith(pAlpha)) || (pAlpha.length >= 5 && domRoot.includes(pAlpha) && !isGenericSeoPart(p))) {
+                      return true;
+                    }
+                    if (!isGenericSeoPart(p)) {
+                      const firstToken = p.toLowerCase().split(/[\s\-&+/]+/).map(t => t.replace(/[^a-z0-9]/g, '')).filter(Boolean)[0] || '';
+                      if (firstToken.length >= 4 && domRoot.startsWith(firstToken)) {
+                        return true;
+                      }
+                    }
+                    return false;
                   });
                   if (matchPart) return stripLegalEntityAndNoiseSuffixes(matchPart.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, ''));
                   const nonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && !isGenericSeoPart(p) && p.length >= 2 && p.length <= 45);
@@ -30378,7 +30398,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                               $('meta[name="apple-mobile-web-app-title"]').attr('content') ||
                               $('meta[property="al:android:app_name"]').attr('content') ||
                               $('meta[property="al:ios:app_name"]').attr('content') || '';
-              const htmlTagTitle = $('title').first().text() || '';
+              const htmlTagTitle = ($('head > title').first().text() || $('title').first().text() || '').replace(/WhatsApp$/i, '').trim();
               const logoAltTitle = $('header img[alt], nav img[alt], .logo img[alt]').first().attr('alt') || '';
 
               // Filter out agency/CMS/framework boilerplate from appName and metadata
@@ -30392,14 +30412,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               };
 
               const validAppName = (appName && !isGenericOrPlaceholderTitle(appName) && !isAgencyOrBoilerplate(appName) && appName.length <= 50) ? appName : '';
-              const validSiteName = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && !isAgencyOrBoilerplate(rawSiteName) && rawSiteName.length <= 50) ? rawSiteName : '';
+              const validSiteName = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && !isAgencyOrBoilerplate(rawSiteName) && rawSiteName.length <= 65) ? rawSiteName : '';
               const bestSiteNameCandidate = knownBrand || validSiteName || validAppName;
 
-              // Check if validSiteName or JSON-LD Organization/WebSite name directly matches the domain (e.g. "eMaids" on emaidsinc.com, "Luxury Cleaning Service New York" on luxurycleaningny.com)
-              const domainAlignedMetaBrand = [validSiteName, jsonLdOrgName, jsonLdWebSiteName, validAppName]
-                .map(s => s ? cleanTitleString(s) : '')
+              const cleanedHtmlTitle = htmlTagTitle ? cleanTitleString(htmlTagTitle) : '';
+              const cleanedOgTitle = rawTitle ? cleanTitleString(rawTitle) : '';
+              const cleanedValidSiteName = validSiteName ? cleanTitleString(validSiteName) : '';
+              const descOfficialBrand = extractBrandFromDescription(description || jsonLdDesc, cleanDomKey);
+
+              // Check if validSiteName or JSON-LD Organization/WebSite name directly matches the domain (ignoring raw URL-split guesses when richer official metadata exists)
+              const domainAlignedMetaBrand = [cleanedValidSiteName, jsonLdOrgName ? cleanTitleString(jsonLdOrgName) : '', jsonLdWebSiteName ? cleanTitleString(jsonLdWebSiteName) : '', validAppName ? cleanTitleString(validAppName) : '']
+                .filter(Boolean)
                 .find(s => {
                   if (!s || isGenericOrPlaceholderTitle(s) || isAgencyOrBoilerplate(s)) return false;
+                  // Never let a raw domain-derived guess in JSON-LD override a richer official title or og:site_name (e.g. "Klean nyc" vs "Klean-N-Green NYC")
+                  if (isDomainDerivedGuess(s, cleanDomKey) && (
+                    (cleanedHtmlTitle && !isDomainDerivedGuess(cleanedHtmlTitle, cleanDomKey) && !isGenericSeoPart(cleanedHtmlTitle)) ||
+                    (cleanedValidSiteName && !isDomainDerivedGuess(cleanedValidSiteName, cleanDomKey) && !isGenericSeoPart(cleanedValidSiteName)) ||
+                    descOfficialBrand
+                  )) {
+                    return false;
+                  }
                   const sAlpha = s.toLowerCase().replace(/[^a-z0-9]/g, '');
                   return sAlpha.length >= 4 && (sAlpha === domRoot || domRoot.startsWith(sAlpha) || sAlpha.startsWith(domRoot));
                 });
@@ -30407,17 +30440,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (knownBrand) {
                 title = knownBrand;
                 siteName = knownBrand;
-              } else if (domainAlignedMetaBrand && (!htmlTagTitle || isGenericSeoPart(cleanTitleString(htmlTagTitle)))) {
+              } else if (domainAlignedMetaBrand && (!cleanedHtmlTitle || isGenericSeoPart(cleanedHtmlTitle))) {
                 title = domainAlignedMetaBrand;
                 siteName = domainAlignedMetaBrand;
-              } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
+              } else if (cleanedHtmlTitle && !isGenericOrPlaceholderTitle(cleanedHtmlTitle)) {
                 // Official Browser URL Tab <title> tag
-                title = cleanTitleString(htmlTagTitle);
-              } else if (rawTitle && !isGenericOrPlaceholderTitle(cleanTitleString(rawTitle))) {
+                title = cleanedHtmlTitle;
+              } else if (cleanedOgTitle && !isGenericOrPlaceholderTitle(cleanedOgTitle)) {
                 // Official og:title / twitter:title
-                title = cleanTitleString(rawTitle);
-              } else if (validSiteName) {
-                title = cleanTitleString(validSiteName);
+                title = cleanedOgTitle;
+              } else if (cleanedValidSiteName) {
+                title = cleanedValidSiteName;
                 siteName = title;
               } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
                 title = cleanTitleString(jsonLdOrgName);
@@ -30449,7 +30482,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
-              if (!siteName) {
+              // If title is still a URL-derived domain guess (e.g. "Klean NYC"), upgrade from og:site_name or official description brand ("Klean-N-Green NYC")
+              if (title && cleanDomKey && isDomainDerivedGuess(title, cleanDomKey) && !knownBrand) {
+                if (cleanedValidSiteName && !isDomainDerivedGuess(cleanedValidSiteName, cleanDomKey) && !isGenericSeoPart(cleanedValidSiteName)) {
+                  title = cleanedValidSiteName;
+                  siteName = cleanedValidSiteName;
+                } else if (descOfficialBrand && !isDomainDerivedGuess(descOfficialBrand, cleanDomKey)) {
+                  title = descOfficialBrand;
+                  siteName = descOfficialBrand;
+                }
+              }
+
+              if (!siteName || (cleanDomKey && isDomainDerivedGuess(siteName, cleanDomKey) && title && !isDomainDerivedGuess(title, cleanDomKey))) {
                 siteName = title || bestSiteNameCandidate || jsonLdOrgName || jsonLdWebSiteName;
               }
 
@@ -30488,9 +30532,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
-              // If title resolved to a 1-word or partial domain stem (e.g. "Adaptvc", "Astir"), upgrade from multi-word siteName or description/heading subject (e.g. "Adapt Ventures", "Astir Ventures")
-              if (title && ((!title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot) || isDomainStemName(title, cleanDomKey))) {
-                if (siteName && siteName.includes(' ') && !isGenericOrPlaceholderTitle(siteName) && !isDomainStemName(siteName, cleanDomKey)) {
+              // If title resolved to a 1-word or partial domain stem or domain guess, upgrade from multi-word siteName or description/heading subject
+              if (title && ((!title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot) || isDomainStemName(title, cleanDomKey) || isDomainDerivedGuess(title, cleanDomKey))) {
+                if (siteName && siteName.includes(' ') && !isGenericOrPlaceholderTitle(siteName) && !isDomainStemName(siteName, cleanDomKey) && !isDomainDerivedGuess(siteName, cleanDomKey)) {
                   title = cleanTitleString(siteName);
                 } else {
                   const candidateDescBlocks = [
@@ -31355,6 +31399,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               autoPlaceName &&
               !isGenericPlaceNameServer(autoPlaceName) &&
               !isDomainStemName(autoPlaceName, cleanDomain) &&
+              !isDomainDerivedGuess(autoPlaceName, cleanDomain) &&
               autoPlaceName.length > 2
             );
             const isExistingNameGood =
@@ -31366,7 +31411,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
-              || (hasFreshOfficialMetaName && isExistingStem ? autoPlaceName : "")
+              || (hasFreshOfficialMetaName ? autoPlaceName : "")
               || (isExistingNameGood ? existingName : (autoPlaceName || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId)));
 
             const isCorruptAddress = (addr: string) => {
@@ -31493,7 +31538,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             effectiveEmail = mergedEmail || effectiveEmail;
             effectiveCategory = mergedDoc.category || effectiveCategory;
             title = formattedExistingName;
-            if (siteName) siteName = formatBusinessName(siteName, cleanDomain) || formattedExistingName;
+            siteName = formattedExistingName;
           } else {
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;

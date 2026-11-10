@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, extractBrandFromDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -220,18 +220,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
     const cleanCandidate = extractCleanDomain(trimmed);
     if (cleanCandidate && isValidDomainUrl(cleanCandidate)) {
-      if (searchMode === "review" && onRecordReview) {
-        const existing = places.find(p => {
-          const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-          return pDom?.toLowerCase() === cleanCandidate.toLowerCase();
-        });
-        if (existing) {
+      const existing = places.find(p => {
+        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+        return pDom?.toLowerCase() === cleanCandidate.toLowerCase();
+      });
+      if (existing && existing.name && !isDomainDerivedGuess(existing.name, cleanCandidate) && !isDomainStemName(existing.name, cleanCandidate)) {
+        if (searchMode === "review" && onRecordReview) {
           onRecordReview(existing);
           return;
         }
+        onOpenPlace(cleanCandidate);
+        return;
       }
-      onOpenPlace(cleanCandidate);
-      return;
     }
 
     const qLow = trimmed.toLowerCase();
@@ -263,7 +263,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         const meta = await res.json();
         const resolvedDomain = extractCleanDomain(meta.domain || meta.url || "");
         if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
-          const officialName = formatBusinessName(meta.title || meta.siteName || trimmed, resolvedDomain) || trimmed;
+          const descBrand = extractBrandFromDescription(meta.description, resolvedDomain);
+          const rawMetaName = (meta.siteName && !isDomainDerivedGuess(meta.siteName, resolvedDomain))
+            ? meta.siteName
+            : (meta.title || meta.siteName || descBrand || trimmed);
+          const officialName = KNOWN_OFFICIAL_NAMES[resolvedDomain] || formatBusinessName(rawMetaName, resolvedDomain) || descBrand || trimmed;
           const newPlace: Place = {
             id: resolvedDomain,
             name: officialName,

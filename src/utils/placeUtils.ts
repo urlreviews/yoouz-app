@@ -1048,7 +1048,13 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "highclasscleaning.co": "High Class Cleaning",
   "www.highclasscleaning.co": "High Class Cleaning",
   "highclasscleaning": "High Class Cleaning",
-  "highclass cleaning": "High Class Cleaning"
+  "highclass cleaning": "High Class Cleaning",
+  "kleannyc.com": "Klean-N-Green",
+  "www.kleannyc.com": "Klean-N-Green",
+  "kleannyc": "Klean-N-Green",
+  "klean nyc": "Klean-N-Green",
+  "klean-n-green": "Klean-N-Green",
+  "klean-n-green nyc": "Klean-N-Green"
 };
 
 export const BRAND_ACRONYMS = new Set([
@@ -1372,23 +1378,46 @@ export function extractBrandFromDescription(description?: string | null, domain?
   const cleanDesc = description.trim();
   if (!cleanDesc || cleanDesc.length < 10) return null;
 
-  const match = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+|partners\s+with|invests\s+in|builds|empowers|funds|accelerates|supports)/u);
-  if (!match || !match[1]) return null;
+  let candidate = "";
 
-  const candidate = match[1].trim();
-  if (candidate.length < 2 || candidate.length > 42) return null;
+  // 1. Pattern: "At <Brand>, we/our/you..." (e.g., "At Klean-N-Green NYC, we offer green cleaning services...")
+  const atMatch = cleanDesc.match(/^(?:At|With|From)\s+([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s*,\s*(?:we|our|you|your|every|all)\b/u);
+  if (atMatch && atMatch[1]) {
+    candidate = atMatch[1].trim();
+  }
+
+  // 2. Pattern: "Contact/Call/Visit/Choose/Book/Hire/Welcome to <Brand> today/for/in/to/at/now..."
+  if (!candidate) {
+    const actionMatch = cleanDesc.match(/^(?:Contact|Call|Visit|Choose|Book|Hire|Reach|Experience|Discover|Welcome\s+to)\s+([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:today|now|for\s+a|for\s+your|for\s+all|for\s+free|for\s+reliable|for\s+professional|in\s+|to\s+|at\s+)/u);
+    if (actionMatch && actionMatch[1]) {
+      candidate = actionMatch[1].trim();
+    }
+  }
+
+  // 3. Pattern: "<Brand> is a/an/the/your/provides/delivers/offers..."
+  if (!candidate) {
+    const subjMatch = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+your|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+|partners\s+with|invests\s+in|builds|empowers|funds|accelerates|supports)/u);
+    if (subjMatch && subjMatch[1]) {
+      candidate = subjMatch[1].trim();
+    }
+  }
+
+  if (!candidate || candidate.length < 2 || candidate.length > 42) return null;
 
   const lowerCand = candidate.toLowerCase();
-  const stopStarts = ["this", "we", "our", "welcome", "official", "discover", "watch", "verified", "the best", "leading", "trusted", "here", "there", "it"];
+  const stopStarts = ["this", "we", "our", "welcome", "official", "discover", "watch", "verified", "the best", "leading", "trusted", "here", "there", "it", "reliable", "affordable", "professional"];
   if (stopStarts.some(w => lowerCand === w || lowerCand.startsWith(w + " "))) return null;
 
   if (domain) {
     const cleanDom = extractCleanDomain(domain);
+    if (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) {
+      return KNOWN_OFFICIAL_NAMES[cleanDom];
+    }
     const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
     const candAlpha = lowerCand.replace(/[^a-z0-9]/g, "");
     if (domRoot && domRoot.length >= 3) {
       const prefix3 = domRoot.slice(0, 3);
-      if (candAlpha.startsWith(prefix3) || domRoot.startsWith(candAlpha.slice(0, 3)) || candidate.includes(" ")) {
+      if (candAlpha.startsWith(prefix3) || domRoot.startsWith(candAlpha.slice(0, 3)) || candidate.includes(" ") || candidate.includes("-")) {
         return alignTitleWithDomain(candidate, cleanDom);
       }
     }
@@ -1776,7 +1805,18 @@ export function toTitleCase(str: string): string {
     if (/^\s+$/.test(word)) return word;
     
     if (word.includes("-") && /^[\p{L}0-9\-]+$/u.test(word)) {
-      return word.split("-").map(p => toTitleCase(p)).join("-");
+      const wordHasLower = /[\p{Ll}]/u.test(word);
+      const wordLetters = word.replace(/[^\p{Lu}\p{Ll}]/gu, "");
+      const isAllCapsHyphenWord = !wordHasLower && wordLetters.length >= 5;
+      return word.split("-").map(p => {
+        if (!p) return p;
+        const pUpper = p.toUpperCase();
+        if (BRAND_ACRONYMS.has(pUpper)) return pUpper;
+        if (isAllCapsSentence || isAllCapsHyphenWord) {
+          return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+        }
+        return toTitleCase(p);
+      }).join("-");
     }
 
     return word.replace(/([\p{L}0-9]+)/gu, (m) => {
@@ -1944,21 +1984,33 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       }
     }
 
-    // Second try finding a part that matches domRoot (both direct substring and space-insensitive alphanumeric match, e.g. "Amino Capital" === "aminocapital", or "Superb Maids" in "superbmaidsnyc")
+    // Second try finding a part that matches domRoot (direct match, prefix match, or first-word brand prefix match, e.g. "Klean-N-Green NYC" on "kleannyc.com", "Haven Cleaning Services" on "havenhomecleaning.com")
     if (!bestCandidate && domAlpha) {
       const isGenericSeoPart = (s: string) => {
-        const cleanPart = s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-        return /^(?:maid|maids|house|home|office|apartment|commercial|residential|deep|top|rated|best|professional|premier|cleaning|cleaner|cleaners|service|services|company|agency|nyc|ny|new\s+york|manhattan|brooklyn|queens|bronx|\s)+$/i.test(cleanPart);
+        const cleanPart = s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+        return /^(?:green|eco|friendly|organic|natural|maid|maids|house|home|homes|office|apartment|commercial|residential|industrial|deep|top|rated|best|affordable|reliable|trusted|local|certified|licensed|professional|premier|luxury|quality|expert|cleaning|cleaner|cleaners|housekeeping|janitorial|plumbing|plumber|roofing|roofer|hvac|heating|cooling|electrical|electrician|painting|landscaping|moving|movers|auto|repair|detailing|law|firm|legal|lawyer|lawyers|attorney|attorneys|dental|dentist|clinic|medical|therapy|service|services|solutions|company|agency|contractors|in|of|for|near|me|nyc|ny|new\s+york|manhattan|brooklyn|queens|bronx|los\s+angeles|la|chicago|miami|houston|dallas|boston|seattle|london|uk|usa|us|\s)+$/i.test(cleanPart);
+      };
+      const getFirstBrandToken = (s: string) => {
+        const first = s.trim().split(/[\s\-&]+/)[0] || "";
+        return first.toLowerCase().replace(/[^a-z0-9]/g, "");
       };
       bestCandidate = rawParts.find(p => {
         const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
-        return pAlpha === domAlpha && !isGenericPlaceName(p);
+        return pAlpha === domAlpha && !isGenericPlaceName(p) && !isGenericSeoPart(p);
       }) || rawParts.find(p => {
         const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
-        return (p.toLowerCase().includes(domRoot.toLowerCase()) || pAlpha.includes(domAlpha) || (pAlpha.length >= 3 && domAlpha.startsWith(pAlpha))) && p.length <= 45 && !isGenericPlaceName(p);
+        const firstToken = getFirstBrandToken(p);
+        return !isGenericSeoPart(p) && !isGenericPlaceName(p) && p.length <= 45 && (
+          p.toLowerCase().includes(domRoot.toLowerCase()) ||
+          pAlpha.includes(domAlpha) ||
+          (pAlpha.length >= 3 && domAlpha.startsWith(pAlpha)) ||
+          (firstToken.length >= 3 && domAlpha.startsWith(firstToken))
+        );
       }) || rawParts.find(p => {
         const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
         return pAlpha.length >= 5 && domAlpha.includes(pAlpha) && !isGenericSeoPart(p) && p.length <= 45 && !isGenericPlaceName(p);
+      }) || rawParts.find(p => {
+        return !isGenericSeoPart(p) && !isGenericPlaceName(p) && p.length >= 2 && p.length <= 45;
       });
     }
 
