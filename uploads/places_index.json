@@ -1,5 +1,54 @@
 [
   {
+    "id": "havenhomecleaning.com",
+    "name": "Haven Cleaning Services",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "NY 10017, New York",
+    "city": "New york",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fhavenhomecleaning.com%2Fwp-content%2Fuploads%2F2024%2F12%2FHaven-300x89-1.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fhavenhomecleaning.com%2Fwp-content%2Fuploads%2F2024%2F12%2FHaven-300x89-1.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhavenhomecleaning.com%2Fwp-content%2Fuploads%2F2025%2F11%2Fbanner_bg.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhavenhomecleaning.com%2Fwp-content%2Fuploads%2F2025%2F11%2Fbanner_bg.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fhavenhomecleaning.com%2Fwp-content%2Fuploads%2F2025%2F11%2Fbanner_bg.png"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+64 62 090 48874",
+    "email": "Email: support@havencleaningservice.com",
+    "website": "https://havenhomecleaning.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Reliable and professional apartment cleaning, house cleaning, office cleaning and maid services. One-time cleaning, recurring cleaning and same-day cleaning service available. Find the best cleaning service today.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "havenhomecleaning.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "highclasscleaning.co",
     "name": "High Class Cleaning",
     "category": "Website",

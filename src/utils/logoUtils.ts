@@ -165,6 +165,7 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('arrow-left') ||
     u.includes('arrow-right') ||
     u.includes('form-arrow') ||
+    u.includes('frame-2147207294656') ||
     u.includes('data:image/svg')
   );
 }
@@ -1222,7 +1223,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "switchmalta": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
   "www.2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
-  "2b": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png"
+  "2b": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
+  "www.havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
+  "havenhomecleaning": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();

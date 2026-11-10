@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, extractBrandFromDescription } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -630,11 +630,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
       const instantLogo: string = (isMetaMatchingCurrent && preloadedMeta?.logo && preloadedMeta.logo !== preloadedMeta?.image && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('/api/favicon') && !isWhiteOrInvertedLogo(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "")
         || (cleanUrl && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "")
-        || (isRealDomain ? (getCleanLogoUrl(null, cleanUrl, instantBanner) || "") : "")
-        || (instantBanner && !isBadBanner(instantBanner) ? instantBanner : "");
-      const validPreferredName = (preferredName && !isDomainStemName(preferredName, cleanUrl))
+        || (isRealDomain ? (getCleanLogoUrl(null, cleanUrl, instantBanner) || "") : "");
+      const validPreferredName = (preferredName && !isDomainDerivedGuess(preferredName, cleanUrl))
         ? (formatBusinessName(preferredName, cleanUrl) || preferredName)
-        : ((locationDetails?.rawBusinessName && !isDomainStemName(locationDetails.rawBusinessName, cleanUrl))
+        : ((locationDetails?.rawBusinessName && !isDomainDerivedGuess(locationDetails.rawBusinessName, cleanUrl))
           ? (formatBusinessName(locationDetails.rawBusinessName, cleanUrl) || locationDetails.rawBusinessName)
           : "");
       const preloadedDescBrand = extractBrandFromDescription(preloadedMeta?.description, cleanUrl);
@@ -727,21 +726,21 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              );
              const fetchedLogo = (isValidLogo(data.logo) && !isFaviconUrl(data.logo) && data.logo !== fetchedBanner)
                ? data.logo 
-               : (isInstantStandaloneLogo ? instantLogo : (domainCleanLogo || (isValidLogo(data.logo) ? data.logo : "") || fetchedBanner || instantLogo || ""));
+               : (isInstantStandaloneLogo ? instantLogo : (domainCleanLogo || (isValidLogo(data.logo) ? data.logo : "") || instantLogo || ""));
              
-             const rawMetaTitle = (data.siteName && !isDomainStemName(data.siteName, discoveredDom))
+             const rawMetaTitle = (data.siteName && !isDomainDerivedGuess(data.siteName, discoveredDom))
                ? data.siteName
-               : (data.title && !isDomainStemName(data.title, discoveredDom) ? data.title : (data.siteName || data.title));
+               : (data.title && !isDomainDerivedGuess(data.title, discoveredDom) ? data.title : (data.siteName || data.title));
              const descBrandName = extractBrandFromDescription(data.description, discoveredDom);
              const formattedMetaName = (descBrandName && isDomainStemName(rawMetaTitle, discoveredDom))
                ? descBrandName
                : formatBusinessName(rawMetaTitle, data.domain || discoveredDom);
-             const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isDomainStemName(currentPlace.name, discoveredDom))
+             const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isDomainDerivedGuess(currentPlace.name, discoveredDom))
                ? currentPlace.name
                : "";
              const targetName = (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
-               || (formattedMetaName && !isDomainStemName(formattedMetaName, discoveredDom) && (!validPreferredName || (!validPreferredName.includes(" ") && formattedMetaName.includes(" "))) ? formattedMetaName : "")
+               || (formattedMetaName && !isDomainStemName(formattedMetaName, discoveredDom) ? formattedMetaName : "")
                || validPreferredName
                || formattedMetaName
                || descBrandName

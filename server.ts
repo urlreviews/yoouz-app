@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -408,6 +408,7 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("no-featured-image") ||
       decoded.includes("thrive-visual-editor") ||
       decoded.includes("editor/css/images") ||
+      decoded.includes("frame-2147207294656") ||
       decoded.endsWith(".ico") ||
       decoded.endsWith(".gif") ||
       decoded.includes(".gif?") ||
@@ -8133,16 +8134,19 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
         if (KNOWN_OFFICIAL_NAMES[key]) {
           p.name = KNOWN_OFFICIAL_NAMES[key];
-          if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
-        } else if (isDomainStemName(p.name, key) || !/[\p{Ll}][\p{Lu}]/u.test(p.name || "")) {
+          if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
+        } else if (isDomainStemName(p.name, key) || isDomainDerivedGuess(p.name, key) || !/[\p{Ll}][\p{Lu}]/u.test(p.name || "")) {
           const descBrand = extractBrandFromDescription(p.description, key);
           const camelBrand = extractCamelCaseBrandFromText(p.description, key);
-          if (descBrand && (/[\p{Ll}][\p{Lu}]/u.test(descBrand) || isDomainStemName(p.name, key))) {
+          const cleanedName = formatBusinessName(p.name || key, key);
+          if (descBrand && (/[\p{Ll}][\p{Lu}]/u.test(descBrand) || isDomainDerivedGuess(p.name, key))) {
             p.name = descBrand;
-            if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
+            if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
           } else if (camelBrand) {
             p.name = camelBrand;
-            if (p.selectedName && isDomainStemName(p.selectedName, key)) delete p.selectedName;
+            if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
+          } else if (cleanedName && !isDomainStemName(cleanedName, key)) {
+            p.name = cleanedName;
           }
         } else if (p.name) {
           const cleanedName = formatBusinessName(p.name, key);
@@ -8151,9 +8155,13 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           }
         }
         if (p.selectedName) {
-          const cleanedSel = formatBusinessName(p.selectedName, key);
-          if (cleanedSel && !isDomainStemName(cleanedSel, key)) {
-            p.selectedName = cleanedSel;
+          if (isDomainDerivedGuess(p.selectedName, key) && p.name && !isDomainDerivedGuess(p.name, key)) {
+            delete p.selectedName;
+          } else {
+            const cleanedSel = formatBusinessName(p.selectedName, key);
+            if (cleanedSel && !isDomainStemName(cleanedSel, key)) {
+              p.selectedName = cleanedSel;
+            }
           }
         }
         if ((!p.bannerUrl || isBadBanner(p.bannerUrl)) && key && KNOWN_BRAND_BANNERS[key]) {
@@ -8396,16 +8404,16 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         const domKey = String(rec.brandDomain || rec.id || id || "").toLowerCase().replace(/^www\./, "").trim();
         if (KNOWN_OFFICIAL_NAMES[domKey]) {
           rec.name = KNOWN_OFFICIAL_NAMES[domKey];
-          if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
-        } else if (isDomainStemName(rec.name, domKey)) {
+          if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
+        } else if (isDomainStemName(rec.name, domKey) || isDomainDerivedGuess(rec.name, domKey)) {
           const descBrand = extractBrandFromDescription(rec.description, domKey);
           const alignedName = formatBusinessName(rec.name || domKey, domKey);
           if (descBrand) {
             rec.name = descBrand;
-            if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+            if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
           } else if (alignedName && !isDomainStemName(alignedName, domKey)) {
             rec.name = alignedName;
-            if (rec.selectedName && isDomainStemName(rec.selectedName, domKey)) delete rec.selectedName;
+            if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
           }
         } else if (rec.name) {
           const cleanedName = formatBusinessName(rec.name, domKey);
@@ -8414,9 +8422,13 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           }
         }
         if (rec.selectedName) {
-          const cleanedSel = formatBusinessName(rec.selectedName, domKey);
-          if (cleanedSel && !isDomainStemName(cleanedSel, domKey)) {
-            rec.selectedName = cleanedSel;
+          if (isDomainDerivedGuess(rec.selectedName, domKey) && rec.name && !isDomainDerivedGuess(rec.name, domKey)) {
+            delete rec.selectedName;
+          } else {
+            const cleanedSel = formatBusinessName(rec.selectedName, domKey);
+            if (cleanedSel && !isDomainStemName(cleanedSel, domKey)) {
+              rec.selectedName = cleanedSel;
+            }
           }
         }
         if ((!rec.bannerUrl || isBadBanner(rec.bannerUrl)) && domKey && KNOWN_BRAND_BANNERS[domKey]) {
@@ -29741,7 +29753,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
               : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
-            const isCachedNameStem = (isDomainStemName(row.name, matchedDom) || isCorruptedBusinessNameServer(row.name)) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
+            const isCachedNameStem = (
+              isDomainStemName(row.name, matchedDom) ||
+              isCorruptedBusinessNameServer(row.name) ||
+              (isDomainDerivedGuess(row.name, matchedDom) && (!pData.siteName || isDomainDerivedGuess(pData.siteName, matchedDom)))
+            ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
             if (matchedDom && isExactMatch && !isCachedNameStem && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
@@ -30507,9 +30523,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                                    $(`meta[itemprop="image"]`).attr('content') ||
                                    '';
 
+              const ogImgW = parseInt($('meta[property="og:image:width"], meta[name="og:image:width"]').first().attr('content') || '0', 10);
+              const ogImgH = parseInt($('meta[property="og:image:height"], meta[name="og:image:height"]').first().attr('content') || '0', 10);
+              const isThinDividerOgImage = Boolean(
+                (ogImgW > 0 && ogImgH > 0 && ogImgW / ogImgH > 4.2 && ogImgH < 350) ||
+                /frame-2147207294656|divider|separator|wave-bg|cloud-strip/i.test(rawMetaImage)
+              );
+              const rejectedDividerUrl = isThinDividerOgImage && rawMetaImage ? rawMetaImage.trim() : "";
+
               scrapedPhotosList = [];
 
-              if (rawMetaImage && !isLogoOrIconUrl(rawMetaImage) && !isBadBanner(rawMetaImage) && !rawMetaImage.includes('#') && !rawMetaImage.includes('paint0_linear')) {
+              if (rawMetaImage && !isThinDividerOgImage && !isLogoOrIconUrl(rawMetaImage) && !isBadBanner(rawMetaImage) && !rawMetaImage.includes('#') && !rawMetaImage.includes('paint0_linear')) {
                 try {
                   image = new URL(rawMetaImage, finalUrl).toString();
                 } catch (e) {
@@ -30522,7 +30546,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               // Collect additional og:image and twitter:image variants
               $('meta[property="og:image"], meta[name="og:image"], meta[property="twitter:image"], meta[name="twitter:image"], meta[itemprop="image"]').each((i, el) => {
                 const content = $(el).attr('content');
-                if (content && !isLogoOrIconUrl(content) && !isBadBanner(content) && !content.includes('#') && !content.includes('paint0_linear')) {
+                if (content && content !== rejectedDividerUrl && !isLogoOrIconUrl(content) && !isBadBanner(content) && !content.includes('#') && !content.includes('paint0_linear')) {
                   try {
                     const abs = new URL(content, finalUrl).toString();
                     scrapedPhotosList.push(abs);
@@ -30667,7 +30691,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   candidates.push({ src: preloadImg, weight: 450 });
                 }
 
-                const validCandidates = candidates.filter(c => c.src && c.weight >= 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
+                // If no valid og:image (e.g., Elementor stores the hero banner background-image inside /elementor/css/post-*.css), inspect linked Elementor post stylesheets before ranking candidates
+                if (!image) {
+                  const elementorCssLinks: string[] = [];
+                  $('link[rel="stylesheet"][href*="/elementor/css/post-"]').each((_, el) => {
+                    const href = ($(el).attr('href') || '').trim();
+                    if (href) {
+                      try {
+                        const absCss = new URL(href, finalUrl).toString();
+                        if (!elementorCssLinks.includes(absCss)) elementorCssLinks.push(absCss);
+                      } catch {}
+                    }
+                  });
+                  if (elementorCssLinks.length > 0) {
+                    await Promise.all(
+                      elementorCssLinks.slice(0, 3).map(async (cssUrl) => {
+                        try {
+                          const cssRes = await fetch(cssUrl, {
+                            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1800) : undefined
+                          });
+                          if (!cssRes.ok) return;
+                          const cssText = await cssRes.text();
+                          const bgMatches = Array.from(cssText.matchAll(/background-image\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/gi));
+                          for (const m of bgMatches) {
+                            const rawBg = (m[1] || '').trim();
+                            if (!rawBg || rawBg === rejectedDividerUrl || rawBg.startsWith('data:') || isLogoOrIconUrl(rawBg) || isBadBanner(rawBg) || /frame-2147207294656|divider|separator/i.test(rawBg)) continue;
+                            try {
+                              const absBg = new URL(rawBg, cssUrl).toString();
+                              const lowerBg = absBg.toLowerCase();
+                              let w = 650;
+                              if (lowerBg.includes('banner') || lowerBg.includes('hero') || lowerBg.includes('cover') || lowerBg.includes('header') || lowerBg.includes('slide')) w += 500;
+                              if (lowerBg.includes('bg')) w += 200;
+                              candidates.push({ src: absBg, weight: w });
+                            } catch {}
+                          }
+                        } catch {}
+                      })
+                    );
+                  }
+                }
+
+                const validCandidates = candidates.filter(c => c.src && c.src !== rejectedDividerUrl && c.weight >= 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
                 validCandidates.sort((a, b) => b.weight - a.weight);
 
                 const resolvedDomCandidates: string[] = [];
@@ -31280,12 +31345,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             
             const rawExistingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
             const existingName = formatBusinessName(rawExistingName, cleanDomain) || rawExistingName;
-            const isExistingStem = !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean) || isDomainStemName(rawExistingName, cleanDomain) || isDomainStemName(existingName, cleanDomain);
-            const hasBetterMultiWordName = Boolean(autoPlaceName && !isDomainStemName(autoPlaceName, cleanDomain) && (autoPlaceName.split(/\s+/).length >= existingName.split(/\s+/).length || autoPlaceName !== existingName));
-            const isExistingNameGood = existingName && !isGenericPlaceNameServer(existingName) && existingName.length > 2 && !(isExistingStem && hasBetterMultiWordName);
+            const isExistingStem =
+              !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean) ||
+              isDomainStemName(rawExistingName, cleanDomain) ||
+              isDomainStemName(existingName, cleanDomain) ||
+              isDomainDerivedGuess(rawExistingName, cleanDomain) ||
+              isDomainDerivedGuess(existingName, cleanDomain);
+            const hasFreshOfficialMetaName = Boolean(
+              autoPlaceName &&
+              !isGenericPlaceNameServer(autoPlaceName) &&
+              !isDomainStemName(autoPlaceName, cleanDomain) &&
+              autoPlaceName.length > 2
+            );
+            const isExistingNameGood =
+              existingName &&
+              !isGenericPlaceNameServer(existingName) &&
+              existingName.length > 2 &&
+              !isExistingStem &&
+              !hasFreshOfficialMetaName;
 
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
+              || (hasFreshOfficialMetaName && isExistingStem ? autoPlaceName : "")
               || (isExistingNameGood ? existingName : (autoPlaceName || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId)));
 
             const isCorruptAddress = (addr: string) => {
