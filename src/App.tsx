@@ -1107,6 +1107,9 @@ export function App() {
 
           setSelectedPlaceIdForDrawer(cleanPlaceId);
           setSelectedAuthorForDrawer(null);
+          if (!videoParam) {
+            setCurrentVideoIndex(0);
+          }
 
           const shouldTriggerRecord = 
             params.get("action") === "record" || 
@@ -4755,19 +4758,19 @@ export function App() {
       // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
       const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
 
-      if ((isWatchingVideo || activeSection === "home" || isPlaceView || isCreatorView) && currentVid) {
-        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
-        path = `/review/${domainSlug}/${currentVid.id}`;
-        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
-        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
-        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+      // Hierarchy of URL synchronization:
+      // 1. Business Profile Drawer is open -> /reviews/:slug
+      if (isPlaceView && drawerPlace) {
+        const slug = getPlaceSlug(drawerPlace || selectedPlaceIdForDrawer);
+        path = `/reviews/${slug}`;
+        title = `${drawerPlace.name} - Real Video Reviews & Ratings | Yoouz`;
       } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
         title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
-      } else if (selectedAuthorForDrawer) {
-        const cleanSlug = (selectedAuthorForDrawer.name || selectedAuthorForDrawer.name || "reviewer")
+      } else if (isCreatorView && selectedAuthorForDrawer) {
+        const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()
           .trim()
           .replace(/^@+/, "")
@@ -4776,6 +4779,26 @@ export function App() {
           .replace(/-+/g, "-");
         path = `/@${cleanSlug}`;
         title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
+      } else if (selectedAuthorForDrawer) {
+        const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
+          .toLowerCase()
+          .trim()
+          .replace(/^@+/, "")
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9_-]/g, "")
+          .replace(/-+/g, "-");
+        path = `/@${cleanSlug}`;
+        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
+      } else if (isWatchingVideo && currentVid) {
+        // Video Watching Feed (scrolling through full feed, 'View All', or direct video playback)
+        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
+        path = `/review/${domainSlug}/${currentVid.id}`;
+        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+      } else if (activeSection === "home") {
+        path = "/";
+        title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
       } else if (activeSection === "search") {
         path = "/search";
         title = "Search & Explore Real Video Reviews | Yoouz";
@@ -4926,20 +4949,6 @@ export function App() {
     }
   }, [currentVideoIndex, activeFeedVideos, activeCommentVideo]);
 
-  // Auto-synchronize Left Place Drawer with the currently active video in the feed when in Place View mode
-  // This guarantees that the business drawer on the left ALWAYS matches the video playing on the right 100%!
-  useEffect(() => {
-    if (!isPlaceView) return;
-    const currentVid = activeFeedVideos[currentVideoIndex];
-    if (!currentVid) return;
-
-    const targetPlace = places.find((p) => isPlaceReviewMatch(currentVid, p));
-    const targetPlaceId = targetPlace ? targetPlace.id : (currentVid.placeId || currentVid.placeName);
-
-    if (targetPlaceId && targetPlaceId !== selectedPlaceIdForDrawer) {
-      setSelectedPlaceIdForDrawer(targetPlaceId);
-    }
-  }, [currentVideoIndex, activeFeedVideos, isPlaceView, places, selectedPlaceIdForDrawer]);
 
   // Handle Video Selection from search/map/profile/bookmarks or place/creator drawer
   const handleSelectVideoById = (
@@ -5233,11 +5242,20 @@ export function App() {
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
     
-    const targetPlace = places.find(p => p.id === placeId || extractCleanDomain(p.id) === extractCleanDomain(placeId) || (p as any).brandDomain === placeId);
-    const placeVidIdx = activeFeedVideos.findIndex(v => isPlaceReviewMatch(v, targetPlace || placeId));
-    if (placeVidIdx >= 0) {
-      setCurrentVideoIndex(placeVidIdx);
+    const targetPlace = places.find(p => p.id === placeId || extractCleanDomain(p.id) === extractCleanDomain(placeId) || (p as any).brandDomain === placeId) || placeId;
+    
+    // Find all reviews belonging to this place (sorted latest first, matching activeFeedVideos order in place view)
+    const visiblePlaceVids = videos
+      .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName) && isPlaceReviewMatch(v, targetPlace))
+      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+
+    const currentVid = activeFeedVideos[currentVideoIndex];
+    if (currentVid && isPlaceReviewMatch(currentVid, targetPlace)) {
+      // If the current video being watched already belongs to this place, keep playing it at its index within this place's videos
+      const matchIdxInPlace = visiblePlaceVids.findIndex((v) => v.id === currentVid.id);
+      setCurrentVideoIndex(matchIdxInPlace >= 0 ? matchIdxInPlace : 0);
     } else {
+      // Otherwise, start at the latest review of this place (index 0)
       setCurrentVideoIndex(0);
     }
   };
@@ -7570,10 +7588,7 @@ export function App() {
               handleCloseDrawers();
             }}
             onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
-            onOpenPlace={(placeId) => {
-              setSelectedAuthorForDrawer(null);
-              setSelectedPlaceIdForDrawer(placeId);
-            }}
+            onOpenPlace={handleOpenPlaceDrawer}
           />
         )}
 
@@ -7846,10 +7861,7 @@ export function App() {
             handleCloseDrawers();
           }}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
-          onOpenPlace={(placeId) => {
-            setSelectedAuthorForDrawer(null);
-            setSelectedPlaceIdForDrawer(placeId);
-          }}
+          onOpenPlace={handleOpenPlaceDrawer}
         />
        ) : (activeSection === "business" || activeSection === "admin") ? null : (
         <CopoSidebar
