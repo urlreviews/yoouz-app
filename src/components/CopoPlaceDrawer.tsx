@@ -825,7 +825,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   ? data.logo
                   : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl))
                     ? place.logoUrl
-                    : (resolvedDomainForLogo ? `/api/favicon?domain=${encodeURIComponent(resolvedDomainForLogo)}` : (resolvedBanner || place.logoUrl || "")));
+                    : (resolvedDomainForLogo ? `/api/favicon?domain=${encodeURIComponent(resolvedDomainForLogo)}` : (place.logoUrl || "")));
                 
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
@@ -1112,17 +1112,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       return getCleanLogoUrl(matchingVidWithLogo.placeLogoUrl, drawerDomain, fallbackBannerLogo) || matchingVidWithLogo.placeLogoUrl;
     }
 
-    // Priority 3: Live website official logo extractor (/api/favicon scrapes the official website logo first, and only falls back to the website's banner if no logo exists on the site)
+    // Priority 3: Live website official logo & favicon extractor (/api/favicon scrapes the official website logo first, and falls back to the website's favicon — NEVER the banner)
     if (drawerDomain && drawerDomain.includes(".")) {
       return `/api/favicon?domain=${encodeURIComponent(drawerDomain)}`;
     }
 
-    if (fetchedLogoUrl && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
-
-    // Priority 4: VERY LAST RESORT ONLY — If there is no standalone logo and no domain resolver, use the banner image as the logo
-    if (fallbackBannerLogo && !isBadBanner(fallbackBannerLogo) && !isFaviconOrProxy(fallbackBannerLogo)) {
-      return getProxiedImageUrl(fallbackBannerLogo) || fallbackBannerLogo;
-    }
+    if (fetchedLogoUrl && !isSameAsBannerUrl(fetchedLogoUrl) && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
 
     return null;
   }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, fetchedBannerUrl, cachedMedia, effectiveBanner, allPhotos]);

@@ -1621,24 +1621,14 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     }
   }
 
-  // 2. Live domain logo resolver (/api/favicon scrapes the official website logo first, and only falls back to the website's banner if no logo exists on the site)
+  // 2. Live domain logo & favicon resolver (/api/favicon scrapes the official website logo first, and falls back to the website's favicon)
   if (cleanDomain && cleanDomain.includes(".")) {
     return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
-  // 3. Explicit favicon/logo URL if no domain is available
+  // 3. Explicit favicon/logo URL if no domain is available (never use the banner photo as a logo)
   if (url && !isSameAsBanner && !isWhiteOrInvertedLogo(url) && !url.includes("/api/brand-banner")) {
     return getProxiedImageUrl(url);
-  }
-
-  // 4. VERY LAST RESORT ONLY: If no standalone logo and no domain resolver is available, use the banner image as the logo
-  if (
-    effectiveBannerFallback &&
-    !isBadBanner(effectiveBannerFallback) &&
-    !effectiveBannerFallback.includes("/api/brand-banner") &&
-    !effectiveBannerFallback.includes("/api/favicon")
-  ) {
-    return getProxiedImageUrl(effectiveBannerFallback);
   }
 
   return null;
@@ -1688,6 +1678,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     place.logoUrl.trim() !== "" &&
     !isDuplicateOfBanner(place.logoUrl) &&
     !isCrossBrandPortfolioLogo(place.logoUrl, cleanDomain) &&
+    !isGenericOrPlaceholderLogo(place.logoUrl) &&
     !isFaviconUrl(place.logoUrl) &&
     !place.logoUrl.includes("/api/favicon") &&
     !place.logoUrl.includes("/api/brand-banner") &&
@@ -1710,6 +1701,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     place.avatarUrl.trim() !== "" &&
     !isDuplicateOfBanner(place.avatarUrl) &&
     !isCrossBrandPortfolioLogo(place.avatarUrl, cleanDomain) &&
+    !isGenericOrPlaceholderLogo(place.avatarUrl) &&
     !isFaviconUrl(place.avatarUrl) &&
     !place.avatarUrl.includes("/api/favicon") &&
     !place.avatarUrl.includes("/api/brand-banner") &&
@@ -1725,14 +1717,9 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return getProxiedImageUrl(place.avatarUrl);
   }
 
-  // 4. Live domain logo resolver (/api/favicon extracts the website's official logo first, and only falls back to banner if the website has no logo)
+  // 4. Live domain logo & favicon resolver (/api/favicon extracts the website's official logo first, and falls back to the website's favicon — NEVER the banner)
   if (cleanDomain && cleanDomain.includes(".")) {
     return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
-  }
-
-  // 5. VERY LAST RESORT ONLY: Fallback to banner if no standalone logo and no domain exists
-  if (fallbackBanner && !isBadBanner(fallbackBanner) && !fallbackBanner.includes("/api/brand-banner") && !fallbackBanner.includes("/api/favicon")) {
-    return getProxiedImageUrl(fallbackBanner);
   }
 
   return null;

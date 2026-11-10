@@ -216,6 +216,8 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("og-banner.png") ||
     clean.includes("tap/0.png") ||
     clean.includes("icons/tap") ||
+    clean.includes("68c02a057cf8d6b9057abd86") ||
+    clean.includes("cdn.trustindex.io") ||
     clean.includes("dummy") ||
     clean.includes("no-logo") ||
     clean.includes("blank-logo") ||
@@ -8433,13 +8435,6 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         ) {
           rec.logoUrl = `/api/favicon?domain=${encodeURIComponent(domKey)}`;
           rec.avatarUrl = `/api/favicon?domain=${encodeURIComponent(domKey)}`;
-        } else if (
-          (!rec.logoUrl || isCrossBrandLogo || isGenericOrPlaceholderLogo(rec.logoUrl)) &&
-          rec.bannerUrl &&
-          !isBadBanner(rec.bannerUrl)
-        ) {
-          rec.logoUrl = rec.bannerUrl;
-          rec.avatarUrl = rec.bannerUrl;
         }
         return rec;
       };
@@ -27966,6 +27961,12 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
 
   function isValidCandidate(url: string): boolean {
     if (!url || typeof url !== "string") return false;
+    if (url.startsWith("data:image/svg")) {
+      const dec = (() => { try { return decodeURIComponent(url); } catch { return url; } })().toLowerCase();
+      if (!dec.includes("<path") && !dec.includes("<text") && !dec.includes("<g") && !dec.includes("<circle") && !dec.includes("<polygon") && !dec.includes("<image")) {
+        return false;
+      }
+    }
     if (isGenericOrPlaceholderLogo(url)) return false;
     if (isFaviconUrl(url)) return false;
     if (isCrossBrandPortfolioLogoServer(url, cleanDom)) return false;
@@ -27973,24 +27974,59 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     return true;
   }
 
+  function getBestLogoImgSrc(el: any): string {
+    const lazyCand =
+      el.attr("data-lazy-src") ||
+      el.attr("data-src") ||
+      el.attr("data-original") ||
+      el.attr("data-orig-file") ||
+      el.attr("data-large-file") ||
+      el.attr("data-lazy") ||
+      el.attr("data-srcset")?.split(",")[0]?.trim()?.split(" ")[0] ||
+      "";
+    const rawSrc = (el.attr("src") || "").trim();
+    const isLazyPlaceholderSrc =
+      !rawSrc ||
+      rawSrc.startsWith("data:image/svg+xml") ||
+      rawSrc.startsWith("data:image/gif") ||
+      rawSrc.includes("placeholder") ||
+      rawSrc.includes("blank.gif") ||
+      rawSrc.includes("pixel.gif") ||
+      rawSrc.includes("spacer") ||
+      rawSrc.includes("1x1");
+    if (isLazyPlaceholderSrc && lazyCand) {
+      return lazyCand.trim();
+    }
+    return rawSrc || lazyCand || el.attr("srcset")?.split(",")[0]?.trim()?.split(" ")[0] || "";
+  }
+
   function isThirdPartyOrContentLogo(el: any, absUrl: string): boolean {
     if (isCrossBrandPortfolioLogoServer(absUrl, cleanDom)) return true;
     if (!el) return false;
 
+    const altText = (el.attr("alt") || el.attr("title") || el.attr("aria-label") || "").trim().toLowerCase();
+    const matchesOwnBrand =
+      (domStem.length >= 2 && altText.includes(domStem)) ||
+      (effStem.length >= 2 && altText.includes(effStem)) ||
+      (domPrefix.length >= 3 && altText.includes(domPrefix)) ||
+      (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
+      pageBrandTokens.some((t: string) => altText.includes(t));
+
     const isInHeaderOrNav =
-      el.closest('header, nav, [role="banner"], .w-nav, .navbar, .site-header, .main-header, .global-header, #header, #navbar, #masthead, .masthead, .topbar, .top-bar').length > 0 ||
+      el.closest('header, nav, [role="banner"], .w-nav, .navbar, .site-header, .main-header, .global-header, #header, #navbar, #masthead, .masthead, .topbar, .top-bar, .before-header-wrap, .menu-layout, .logo_container, .logo-container, .hh-logo, [class*="__logo" i], [class*="site-logo" i], [class*="brand-logo" i], [class*="header-logo" i]').length > 0 ||
+      (matchesOwnBrand && altText.includes("logo")) ||
+      altText === "brand logo" ||
       el.parents().toArray().some((p: any) => {
         const c = `${$(p).attr("class") || ""} ${$(p).attr("id") || ""}`.toLowerCase();
-        return /(^|[\s_-])(header|navbar|nav-bar|topbar|top-bar|masthead|w-nav)($|[\s_-])/i.test(c);
+        return /(^|[\s_-])(header|navbar|nav-bar|topbar|top-bar|masthead|w-nav|menu-layout|logo_container|logo-container|hh-logo)($|[\s_-])/i.test(c);
       });
 
     const isInPortfolioOrContent =
-      el.closest('main, article, section, footer, blockquote, figure, i.logo, [class*="portfolio" i], [class*="client" i], [class*="partner" i], [class*="customer" i], [class*="testimonial" i], [class*="backed" i], [class*="invest" i], [class*="showcase" i], [class*="carousel" i], [class*="slider" i], [class*="swiper" i], [class*="marquee" i], [class*="stories" i], [class*="case-stud" i], [class*="companies" i], [class*="trusted" i], [class*="sponsor" i], [class*="ecosystem" i]').length > 0 ||
+      el.closest('main, article, section, footer, blockquote, figure, i.logo, [class*="portfolio" i], [class*="client" i], [class*="partner" i], [class*="customer" i], [class*="testimonial" i], [class*="backed" i], [class*="invest" i], [class*="showcase" i], [class*="carousel" i], [class*="slider" i], [class*="swiper" i], [class*="marquee" i], [class*="stories" i], [class*="case-stud" i], [class*="companies" i], [class*="trusted" i], [class*="sponsor" i], [class*="ecosystem" i], [class*="ti-widget" i]').length > 0 ||
       (!isInHeaderOrNav && el.closest('.content, #content, [class*="grid" i], [class*="list" i], [class*="cards" i]').length > 0);
 
     if (!isInHeaderOrNav && isInPortfolioOrContent) return true;
 
-    const altText = (el.attr("alt") || el.attr("title") || el.attr("aria-label") || "").trim().toLowerCase();
     if (altText && /[a-z]{2,}/.test(altText)) {
       const genericLogoWords = [
         "logo", "brand", "home", "header", "navbar", "nav", "site", "main", "primary", "default",
@@ -27999,12 +28035,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         "desktop", "mobile", "retina", "image", "img", "asset", "vector", "group", "frame", "layer",
         "untitled", "cropped", "custom", "company", "official", "new", "banner", "top", "left"
       ];
-      const matchesOwnBrand =
-        (domStem.length >= 2 && altText.includes(domStem)) ||
-        (effStem.length >= 2 && altText.includes(effStem)) ||
-        (domPrefix.length >= 3 && altText.includes(domPrefix)) ||
-        (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
-        pageBrandTokens.some((t: string) => altText.includes(t));
       const hasGenericWord = genericLogoWords.some(w => altText.includes(w));
       if (!matchesOwnBrand && !hasGenericWord) {
         return true;
@@ -28082,20 +28112,28 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
       'nav a[href="/"] img', 'nav a[to="/"] img', 'nav .logo img', 'nav a.logo img',
       'nav img[class*="logo" i]:not([class*="white"])', 'nav img[src*="logo" i]:not([src*="white"]):not([src*="mobile"])',
-      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img',
+      '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img', '.logo_container img', '.hh-logo img',
       '[class*="header" i] img[class*="logo" i]', '[class*="header" i] img[alt*="logo" i]', '[class*="header" i] img[src*="logo" i]',
       '[class*="navbar" i] img[class*="logo" i]', '[class*="navbar" i] img[alt*="logo" i]', '[class*="navbar" i] img[src*="logo" i]',
       'header img:first-of-type',
       'a[href="/"][class*="logo" i]:not([class*="mobile"]) img',
       'a[to="/"][class*="logo" i]:not([class*="mobile"]) img',
-      'a[href="/"][class*="brand" i]:not([class*="mobile"]) img'
+      'a[href="/"][class*="brand" i]:not([class*="mobile"]) img',
+      'a[class*="logo" i]:not([class*="mobile"]):not([class*="footer"]) img',
+      '[class*="logo" i]:not([class*="mobile"]):not([class*="footer"]) img',
+      '[id*="logo" i]:not([id*="mobile"]):not([id*="footer"]) img',
+      'img[alt="Brand Logo" i]',
+      'img[alt*="brand logo" i]',
+      'img[alt*="logo" i]',
+      'img[class*="logo" i]:not([class*="mobile"])',
+      'img[src*="logo" i]:not([src*="mobile"])'
     ];
     for (const sel of imgSelectors) {
       let matchedPreferred = "";
       $(sel).each((_: any, rawEl: any) => {
         if (matchedPreferred) return;
         const el = $(rawEl);
-        const src = el.attr("src") || el.attr("data-src") || el.attr("data-lazy-src") || el.attr("data-original") || el.attr("data-srcset")?.split(" ")[0] || el.attr("srcset")?.split(" ")[0];
+        const src = getBestLogoImgSrc(el);
         if (src) {
           const abs = makeAbsolute(src);
           if (abs && isValidCandidate(abs) && !isThirdPartyOrContentLogo(el, abs)) {
@@ -29782,8 +29820,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (rawEntityLogo) rawEntityLogo = sanitizeProxy(rawEntityLogo) || rawEntityLogo;
 
           const entityBanner = rawEntityBanner || rawEntityLogo || "";
-          // Only fall back to entityBanner if the website genuinely had no logo and we are not in resolveOnly mode
-          const entityLogo = rawEntityLogo || (resolveOnly ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : (entityBanner || `/api/favicon?domain=${encodeURIComponent(realDomain)}`));
+          // One-way fallback ONLY: logo falls back to /api/favicon, never to entityBanner!
+          const entityLogo = rawEntityLogo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain, "logo:", entityLogo, "banner:", entityBanner);
@@ -29852,7 +29890,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const rawEntityBanner = (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "");
           const rawEntityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
           const entityBanner = rawEntityBanner || rawEntityLogo || "";
-          const entityLogo = rawEntityLogo || rawEntityBanner || "";
+          const entityLogo = rawEntityLogo || (realDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           return res.json({
             title: ent.name,
             description: ent.description || `${ent.name} is a verified business on Yoouz.`,
@@ -29951,8 +29989,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           lowerHtmlCheck.includes("turnstile") ||
           (lowerHtmlCheck.includes("enable javascript") && lowerHtmlCheck.includes("cloudflare"));
 
-        // If live website blocked our server with Cloudflare/WAF or failed, load clean snapshot HTML from Wayback Machine CDX!
+        // If live website blocked our server with Cloudflare/WAF/403 or failed, first try Jina HTML reader proxy, then Wayback Machine CDX!
         if (isSecurityShield || !html || html.length < 500) {
+          try {
+            const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
+              headers: {
+                "X-Return-Format": "html",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+              },
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6500) : undefined
+            });
+            if (jinaResp.ok) {
+              const jinaHtml = await jinaResp.text();
+              if (jinaHtml && jinaHtml.length >= 500 && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
+                html = jinaHtml;
+                finalUrl = canonicalBaseUrl;
+                fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
+              }
+            }
+          } catch (eJina) {}
+        }
+
+        if (!fetchResponse || !fetchResponse.ok || !html || html.length < 500) {
           try {
             const arcSnap = await fetchArchiveMetadata(cleanDomain);
             if (arcSnap && arcSnap.html && arcSnap.html.length >= 500) {
@@ -30259,7 +30317,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
               } catch (e) {}
 
-              // 4. Resolve Title (Priority: Known Brand > Browser URL Tab <title> > og:title / twitter:title > og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Logo alt > Bundle phrase > domain fallback)
+              // 4. Resolve Title (Priority: Known Brand > Domain-matched Site Name / Org Name > Browser URL Tab <title> > og:title / twitter:title > og:site_name > JSON-LD Organization name > JSON-LD WebSite name > Logo alt > Bundle phrase > domain fallback)
+              const isGenericSeoPart = (str: string) => {
+                const l = str.toLowerCase().trim();
+                return /^(?:maid\s+service|cleaning\s+services?|house\s+cleaning|home\s+cleaning|commercial\s+cleaning|office\s+cleaning|best\s+|top[\s-]rated\s+|affordable\s+|professional\s+)/i.test(l) &&
+                  !l.replace(/[^a-z0-9]/g, '').includes(domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, ''));
+              };
+
               const cleanTitleString = (str: string) => {
                 let cleaned = str.replace(/\s+(?:logo|icon|brand|badge|watermark)$/i, '').replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, '').trim();
                 // Strip common marketing / generic prefixes
@@ -30269,13 +30333,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const parts = cleaned.split(/\s*(?:[|\-–—•│｜]|:)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                  // Check if any part matches domRoot exactly (e.g. "Proximus")
+                  // 1. Exact match with domain root (e.g. "Proximus")
                   const exactPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot && !isGenericOrPlaceholderTitle(p));
                   if (exactPart) return stripLegalEntityAndNoiseSuffixes(exactPart);
-                  const matchPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '').includes(domRoot) && p.length <= 40 && !isGenericOrPlaceholderTitle(p));
+                  // 2. Part contains domain root OR domain root starts with part (e.g. "eMaids" in "emaidsinc", "Superb Maids" in "superbmaidsnyc")
+                  const matchPart = parts.find(p => {
+                    const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (!pAlpha || isGenericOrPlaceholderTitle(p) || p.length > 45) return false;
+                    return pAlpha.includes(domRoot) || (pAlpha.length >= 4 && domRoot.startsWith(pAlpha)) || (pAlpha.length >= 5 && domRoot.includes(pAlpha) && !isGenericSeoPart(p));
+                  });
                   if (matchPart) return stripLegalEntityAndNoiseSuffixes(matchPart.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, ''));
-                  const nonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && p.length >= 2 && p.length <= 45);
+                  const nonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && !isGenericSeoPart(p) && p.length >= 2 && p.length <= 45);
                   if (nonGeneric.length > 0) return stripLegalEntityAndNoiseSuffixes(nonGeneric[0]);
+                  const fallbackNonGeneric = parts.filter(p => !isGenericOrPlaceholderTitle(p) && p.length >= 2 && p.length <= 45);
+                  if (fallbackNonGeneric.length > 0) return stripLegalEntityAndNoiseSuffixes(fallbackNonGeneric[0]);
                 }
                 return stripLegalEntityAndNoiseSuffixes(cleaned);
               };
@@ -30308,9 +30379,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const validSiteName = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && !isAgencyOrBoilerplate(rawSiteName) && rawSiteName.length <= 50) ? rawSiteName : '';
               const bestSiteNameCandidate = knownBrand || validSiteName || validAppName;
 
+              // Check if validSiteName or JSON-LD Organization/WebSite name directly matches the domain (e.g. "eMaids" on emaidsinc.com, "Luxury Cleaning Service New York" on luxurycleaningny.com)
+              const domainAlignedMetaBrand = [validSiteName, jsonLdOrgName, jsonLdWebSiteName, validAppName]
+                .map(s => s ? cleanTitleString(s) : '')
+                .find(s => {
+                  if (!s || isGenericOrPlaceholderTitle(s) || isAgencyOrBoilerplate(s)) return false;
+                  const sAlpha = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                  return sAlpha.length >= 4 && (sAlpha === domRoot || domRoot.startsWith(sAlpha) || sAlpha.startsWith(domRoot));
+                });
+
               if (knownBrand) {
                 title = knownBrand;
                 siteName = knownBrand;
+              } else if (domainAlignedMetaBrand && (!htmlTagTitle || isGenericSeoPart(cleanTitleString(htmlTagTitle)))) {
+                title = domainAlignedMetaBrand;
+                siteName = domainAlignedMetaBrand;
               } else if (htmlTagTitle && !isGenericOrPlaceholderTitle(cleanTitleString(htmlTagTitle))) {
                 // Official Browser URL Tab <title> tag
                 title = cleanTitleString(htmlTagTitle);
@@ -30498,8 +30581,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '') + ' ' + ($(el).closest('section, div').attr('id') || '');
                   const parentLower = parentClasses.toLowerCase();
 
-                  // Strictly skip portfolio companies, client logos, partner grids, blog/podcast thumbnails, and team headshots
+                  const isHeroBgContainer = parentLower.includes('hh-bg') || parentLower.includes('hero-bg') || parentLower.includes('bg-img') || parentLower.includes('bg-image');
+                  if (src.startsWith('data:') && !(isHeroBgContainer && src.startsWith('data:image/') && src.length > 15000)) return;
+
+                  // Strictly skip brand logos, header logos, portfolio companies, client logos, partner grids, blog/podcast thumbnails, and team headshots
                   if (
+                    altText.includes('logo') ||
+                    parentLower.includes('logo') || parentLower.includes('hh-logo') || parentLower.includes('brand-logo') || parentLower.includes('site-logo') ||
                     lowerSrc.includes('portfolio') || lowerSrc.includes('/clients/') || lowerSrc.includes('client-') ||
                     lowerSrc.includes('partner') || lowerSrc.includes('testimonial') || lowerSrc.includes('case-study') ||
                     lowerSrc.includes('unprompted') || lowerSrc.includes('podcast') || lowerSrc.includes('episode') ||
@@ -30520,6 +30608,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   // High-fidelity CMS container scoring (Shopify, WordPress, Wix, Squarespace, Webflow, Custom)
                   if (
                     parentLower.includes('hero') || 
+                    isHeroBgContainer ||
                     parentLower.includes('banner') || 
                     parentLower.includes('slider') || 
                     parentLower.includes('slideshow') || 
@@ -30540,6 +30629,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   }
 
                   if (
+                    lowerSrc.includes('squarespace-cdn.com') ||
                     lowerSrc.includes('summer') || 
                     lowerSrc.includes('banner') || 
                     lowerSrc.includes('hero') || 
@@ -30604,7 +30694,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       });
                       const ct = (r.headers.get('content-type') || '').toLowerCase();
                       if (r.ok && !ct.includes('text/html')) return true;
-                      if (r.status === 404 || r.status === 410 || ct.includes('text/html')) return false;
+                      if (r.status === 404 || r.status === 410 || (r.ok && ct.includes('text/html'))) return false;
                     } catch (e) {}
                     return true;
                   };
@@ -30736,7 +30826,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 if (src.includes('#') || src.includes('paint0_linear') || src.includes('credit-card')) return false;
                 if (isGenericOrPlaceholderLogo(src)) return false;
                 if (isFaviconUrl(src)) return false;
-                if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png')) return false;
+                if (src.startsWith('data:') && !src.startsWith('data:image/svg') && !src.startsWith('data:image/png') && !src.startsWith('data:image/webp') && !src.startsWith('data:image/jpeg')) return false;
                 if (src.includes('brandfetch.io') || src.includes('clearbit.com')) return false;
                 if (src.includes('wikimedia.org') || src.includes('wikipedia.org')) return false;
                 if (isCandidateWhiteOrInverted(src)) return false;
@@ -31064,16 +31154,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       // Track whether we extracted a genuine standalone website logo (distinct from the banner)
-      const standaloneScrapedLogo = (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon") && logo !== image) ? logo : "";
+      const rawScrapedBanner = (image && !isBadBanner(image)) ? image : "";
+      const standaloneScrapedLogo = (logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon") && logo !== rawScrapedBanner) ? logo : "";
 
-      // Bidirectional Mutual Fallback Guarantee:
-      // 1) If no standalone logo is found on the website, use /api/favicon?domain=... (or banner as last resort if no domain)
+      // Strict One-Way Fallback Policy:
+      // 1) If no standalone logo is found on the website, use /api/favicon?domain=... (NEVER put the banner photo inside the logo box!)
       // 2) If no photographic banner is found and a valid standalone logo exists, use the logo image as the banner!
-      if (!logo || isGenericOrPlaceholderLogo(logo) || logo.startsWith("/api/favicon")) {
+      if (!logo || isGenericOrPlaceholderLogo(logo) || logo.startsWith("/api/favicon") || logo === rawScrapedBanner) {
         if (cleanDomain && cleanDomain.includes(".")) {
           logo = `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
-        } else if (image && !isBadBanner(image)) {
-          logo = image;
+        } else {
+          logo = "";
         }
       }
       if ((!image || isBadBanner(image)) && standaloneScrapedLogo) {
@@ -31138,7 +31229,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           }
           const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || siteName || cleanDomain, cleanDomain);
-          const resolvedAutoLogo = standaloneScrapedLogo || (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : (image && !isBadBanner(image) ? image : ""));
+          const resolvedAutoLogo = standaloneScrapedLogo || (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
           const resolvedAutoBanner = (image && !isBadBanner(image)) ? image : standaloneScrapedLogo;
           const autoPlaceDoc = {
             id: autoPlaceId,
@@ -31231,12 +31322,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       ? existingDoc.bannerUrl
                       : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
 
-            const isDuplicateBannerLogo = (u?: string) => Boolean(u && (u === existingDoc.bannerUrl || u === existingDoc.ogImage || u === rawMergedBanner || u === image));
+            const isDuplicateBannerLogo = (u?: string) => Boolean(u && u !== standaloneScrapedLogo && (u === existingDoc.bannerUrl || u === existingDoc.ogImage || u === rawMergedBanner || (rawScrapedBanner && u === rawScrapedBanner)));
             const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isDuplicateBannerLogo(u) || isCrossBrandPortfolioLogoServer(u, cleanDomain) || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
             const hasBetterLogo = Boolean(standaloneScrapedLogo && !isPlaceholderLogo(standaloneScrapedLogo));
 
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
-            const domainLogoFallback = (effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "") || rawMergedBanner;
+            const domainLogoFallback = effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "";
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
             const mergedLogo = isCustomUploadedLogo
               ? existingDoc.logoUrl
@@ -32239,8 +32330,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
     }
 
-    // Check saved places index for an already-verified logo or banner fallback
-    let savedBannerFallback = "";
+    // Check saved places index for an already-verified standalone logo (NEVER use bannerUrl as logo!)
     try {
       const savedPlaces = readPlacesIndex();
       const matchedPlace = savedPlaces.find((p: any) => {
@@ -32256,7 +32346,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const isMatchedLogoCrossBrand = Boolean(
           matchedPlace.logoUrl && isCrossBrandPortfolioLogoServer(matchedPlace.logoUrl, cleanDomain)
         );
-        if (matchedPlace.logoUrl && !isMatchedLogoSameAsBanner && !isMatchedLogoCrossBrand && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
+        if (matchedPlace.logoUrl && !isMatchedLogoSameAsBanner && !isMatchedLogoCrossBrand && !isGenericOrPlaceholderLogo(matchedPlace.logoUrl) && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
           if (matchedPlace.logoUrl.startsWith("data:image/svg+xml")) {
             const commaIdx = matchedPlace.logoUrl.indexOf(",");
             const svgContent = commaIdx >= 0 ? decodeURIComponent(matchedPlace.logoUrl.slice(commaIdx + 1)) : "";
@@ -32265,36 +32355,63 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             res.setHeader("Access-Control-Allow-Origin", "*");
             return res.status(200).send(svgContent);
           }
+          if (matchedPlace.logoUrl.startsWith("data:image/")) {
+            const parts = matchedPlace.logoUrl.split(",");
+            const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+            const buf = Buffer.from(parts[1] || "", "base64");
+            res.setHeader("Content-Type", mime);
+            res.setHeader("Cache-Control", "public, max-age=604800");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.status(200).send(buf);
+          }
           const targetLogo = matchedPlace.logoUrl.startsWith("/api/") ? matchedPlace.logoUrl : `/api/proxy-image?url=${encodeURIComponent(matchedPlace.logoUrl)}`;
           return res.redirect(302, targetLogo);
-        }
-        if (matchedPlace.bannerUrl && !isBadBanner(matchedPlace.bannerUrl) && !matchedPlace.bannerUrl.includes("/api/favicon")) {
-          savedBannerFallback = matchedPlace.bannerUrl;
         }
       }
     } catch (e) {}
 
-    // Attempt to extract the authentic high-resolution brand logo (or og:image banner fallback) from the website before falling back to browser favicons
+    // Attempt to extract the authentic brand logo OR high-res HTML <link rel="icon" / "apple-touch-icon"> from the website before falling back to Google S2 / DuckDuckGo favicons
     if (cleanDomain && cleanDomain.includes(".")) {
       try {
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 2500);
-        const siteResp = await fetch(`https://${cleanDomain}`, {
-          signal: ctrl.signal,
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml"
+        let html = "";
+        let finalSiteUrl = `https://${cleanDomain}`;
+        let redirDom = cleanDomain;
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 2800);
+          const siteResp = await fetch(`https://${cleanDomain}`, {
+            signal: ctrl.signal,
+            redirect: "follow",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml"
+            }
+          });
+          clearTimeout(tid);
+          if (siteResp.ok) {
+            finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
+            redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
+            html = await siteResp.text();
+          } else if (siteResp.status === 403 || siteResp.status === 503) {
+            // Bypass WAF via r.jina.ai HTML reader
+            const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
+              headers: {
+                "X-Return-Format": "html",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+              },
+              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
+            });
+            if (jinaResp.ok) {
+              const jinaHtml = await jinaResp.text();
+              if (jinaHtml && jinaHtml.includes("<")) html = jinaHtml;
+            }
           }
-        });
-        clearTimeout(tid);
-        if (siteResp.ok) {
-          const finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
-          const redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
-          const html = await siteResp.text();
+        } catch (fetchErr) {}
+
+        if (html) {
           const $f = cheerio.load(html);
           const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
-          if (extractedLogo && !isFaviconUrl(extractedLogo)) {
+          if (extractedLogo && !isFaviconUrl(extractedLogo) && !isGenericOrPlaceholderLogo(extractedLogo)) {
             if (extractedLogo.startsWith("data:image/svg+xml")) {
               const commaIdx = extractedLogo.indexOf(",");
               const svgContent = commaIdx >= 0 ? decodeURIComponent(extractedLogo.slice(commaIdx + 1)) : "";
@@ -32303,74 +32420,76 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               res.setHeader("Access-Control-Allow-Origin", "*");
               return res.status(200).send(svgContent);
             }
+            if (extractedLogo.startsWith("data:image/")) {
+              const parts = extractedLogo.split(",");
+              const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+              const buf = Buffer.from(parts[1] || "", "base64");
+              res.setHeader("Content-Type", mime);
+              res.setHeader("Cache-Control", "public, max-age=604800");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(buf);
+            }
             return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}`);
           }
-          // Mutual Fallback Policy: If no standalone logo is found on the website, use its authentic og:image / banner as the logo!
-          const ogImg = ($f('meta[property="og:image"]').attr("content") || $f('meta[name="og:image"]').attr("content") || $f('meta[property="twitter:image"]').attr("content") || $f('meta[name="twitter:image"]').attr("content") || "").trim();
-          if (ogImg && !isBadBanner(ogImg)) {
-            try {
-              const absBanner = new URL(ogImg, finalSiteUrl).toString();
-              return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(absBanner)}`);
-            } catch {}
+
+          // Extract explicit <link rel="apple-touch-icon"> or <link rel="icon"> declared on the website (e.g. Squarespace / WordPress / custom favicons)
+          const iconSelectors = [
+            'link[rel="apple-touch-icon"]',
+            'link[rel="apple-touch-icon-precomposed"]',
+            'link[rel="icon"][sizes="192x192"]',
+            'link[rel="icon"][sizes="180x180"]',
+            'link[rel="icon"][sizes="152x152"]',
+            'link[rel="icon"][sizes="128x128"]',
+            'link[rel="icon"][sizes="96x96"]',
+            'link[rel="icon"][sizes="64x64"]',
+            'link[rel="icon"][sizes="32x32"]',
+            'link[rel="icon"]',
+            'link[rel="shortcut icon"]'
+          ];
+          for (const sel of iconSelectors) {
+            const href = ($f(sel).first().attr("href") || "").trim();
+            if (href && !isGenericOrPlaceholderLogo(href)) {
+              try {
+                let absIcon = new URL(href, finalSiteUrl).toString();
+                if (absIcon.includes("squarespace-cdn.com") && absIcon.includes("format=")) {
+                  absIcon = absIcon.replace(/format=\d+w/, "format=500w");
+                }
+                return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(absIcon)}`);
+              } catch {}
+            }
           }
         }
       } catch (e) {}
     }
 
-    if (savedBannerFallback) {
-      const targetBanner = savedBannerFallback.startsWith("/api/") ? savedBannerFallback : `/api/proxy-image?url=${encodeURIComponent(savedBannerFallback)}`;
-      return res.redirect(302, targetBanner);
-    }
-
-    if (KNOWN_BRAND_BANNERS[cleanDomain]) {
-      const knownBanner = KNOWN_BRAND_BANNERS[cleanDomain];
-      const targetBanner = knownBanner.startsWith("/api/") ? knownBanner : `/api/proxy-image?url=${encodeURIComponent(knownBanner)}`;
-      return res.redirect(302, targetBanner);
-    }
-
-    // High-resolution authentic brand favicon from Google s2 service fetched server-side
+    // High-resolution authentic brand favicon from Google gstatic / s2 service fetched server-side
     if (cleanDomain && cleanDomain.includes(".")) {
-      try {
-        const s2Url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=128`;
-        const s2Resp = await fetch(s2Url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-          },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
-        });
-        const cType = (s2Resp.headers.get('content-type') || '').toLowerCase();
-        if (s2Resp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
-          const s2Buf = Buffer.from(await s2Resp.arrayBuffer());
-          // Ensure valid image payload (>200 bytes)
-          if (s2Buf.length > 200) {
-            res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(s2Buf);
+      const faviconEndpoints = [
+        `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDomain)}&size=256`,
+        `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=256`,
+        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`
+      ];
+      for (const favUrl of faviconEndpoints) {
+        try {
+          const favResp = await fetch(favUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3200) : undefined
+          });
+          const cType = (favResp.headers.get('content-type') || '').toLowerCase();
+          if (favResp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
+            const favBuf = Buffer.from(await favResp.arrayBuffer());
+            if (favBuf.length > 120) {
+              res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
+              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.status(200).send(favBuf);
+            }
           }
-        }
-      } catch (s2Err) {}
-
-      // Fallback 2: DuckDuckGo icon service if Google s2 timed out
-      try {
-        const ddgIconUrl = `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`;
-        const ddgResp = await fetch(ddgIconUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-          },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-        });
-        if (ddgResp.ok) {
-          const ddgBuf = Buffer.from(await ddgResp.arrayBuffer());
-          if (ddgBuf.length > 200) {
-            res.setHeader("Content-Type", ddgResp.headers.get("content-type") || "image/x-icon");
-            res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(ddgBuf);
-          }
-        }
-      } catch (ddgErr) {}
+        } catch (favErr) {}
+      }
     }
 
     return sendDefaultFavicon(cleanDomain);
@@ -32433,47 +32552,61 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         return res.send(buffer);
       }
 
-      const response = await fetch(targetUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-          'Referer': 'https://yoouz.com/'
-        },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(10000) : undefined
-      });
-
-      let contentType = (response.headers.get('content-type') || '').toLowerCase();
+      let response: any = null;
+      let contentType = '';
+      try {
+        let sameOriginReferer = 'https://www.google.com/';
+        try {
+          sameOriginReferer = new URL(targetUrl).origin + '/';
+        } catch {}
+        response = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Referer': sameOriginReferer
+          },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+        });
+        contentType = (response.headers.get('content-type') || '').toLowerCase();
+      } catch (directFetchErr) {
+        response = null;
+      }
       
-      // Strict Image Validation: If upstream server returned HTML or failed, try Wayback Machine 2im_ archive or return fallback
-      if (!response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
-        // Fallback: Fetch authentic image bytes from Wayback Machine archive (2im_ matches latest 20xx snapshot)
+      // Strict Image Validation: If upstream server returned 403/HTML or failed, try wsrv.nl / Photon CDN / Wayback Machine 2im_ archive before fallback
+      if (!response || !response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
-          try {
-            const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
-            const wbUrl = `https://web.archive.org/web/2im_/https://${cleanTarget}`;
-            const wbResp = await fetch(wbUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-              },
-              redirect: 'follow',
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6000) : undefined
-            });
-            const wbType = (wbResp.headers.get('content-type') || wbResp.headers.get('x-archive-guessed-content-type') || '').toLowerCase();
-            if (wbResp.ok && !wbType.includes('text/html') && !wbType.includes('text/plain') && (wbType.includes('image') || wbType.includes('octet-stream') || wbType === '')) {
-              const inferredMime = wbType.includes('image')
-                ? wbType
-                : (cleanTarget.endsWith('.png') ? 'image/png' : (cleanTarget.endsWith('.webp') ? 'image/webp' : (cleanTarget.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg')));
-              res.setHeader('Content-Type', inferredMime);
-              res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
-              res.setHeader('Access-Control-Allow-Origin', '*');
-              res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-              const buf = Buffer.from(await wbResp.arrayBuffer());
-              if (buf.length > 100) {
-                return res.send(buf);
+          const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
+          const cdnMirrors = [
+            `https://wsrv.nl/?url=${encodeURIComponent(targetUrl)}`,
+            ...(cleanTarget.includes('/wp-content/') ? [`https://i0.wp.com/${cleanTarget}`] : []),
+            `https://web.archive.org/web/2im_/https://${cleanTarget}`
+          ];
+          for (const mirrorUrl of cdnMirrors) {
+            try {
+              const mResp = await fetch(mirrorUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                  'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                },
+                redirect: 'follow',
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
+              });
+              const mType = (mResp.headers.get('content-type') || mResp.headers.get('x-archive-guessed-content-type') || '').toLowerCase();
+              if (mResp.ok && !mType.includes('text/html') && !mType.includes('text/plain') && (mType.includes('image') || mType.includes('octet-stream') || mType === '')) {
+                const inferredMime = mType.includes('image')
+                  ? mType
+                  : (cleanTarget.endsWith('.png') ? 'image/png' : (cleanTarget.endsWith('.webp') ? 'image/webp' : (cleanTarget.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg')));
+                const buf = Buffer.from(await mResp.arrayBuffer());
+                if (buf.length > 100) {
+                  res.setHeader('Content-Type', inferredMime);
+                  res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+                  res.setHeader('Access-Control-Allow-Origin', '*');
+                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                  return res.send(buf);
+                }
               }
-            }
-          } catch(eWb) {}
+            } catch (eMirror) {}
+          }
         }
 
         // Automatic recovery for failed logo/icon assets: probe authentic domain icons

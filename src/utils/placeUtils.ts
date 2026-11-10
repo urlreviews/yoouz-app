@@ -1025,7 +1025,25 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "v3.ventures": "V3 Ventures",
   "www.v3.ventures": "V3 Ventures",
   "v3-ventures.com": "V3 Ventures",
-  "www.v3-ventures.com": "V3 Ventures"
+  "www.v3-ventures.com": "V3 Ventures",
+  "emaidsinc.com": "eMaids",
+  "www.emaidsinc.com": "eMaids",
+  "emaidsinc": "eMaids",
+  "emaids": "eMaids",
+  "e maids": "eMaids",
+  "superbmaidsnyc.com": "Superb Maids NYC",
+  "www.superbmaidsnyc.com": "Superb Maids NYC",
+  "superbmaidsnyc": "Superb Maids NYC",
+  "sparklymaidnyc.com": "Sparkly Maid NYC",
+  "www.sparklymaidnyc.com": "Sparkly Maid NYC",
+  "sparklymaidnyc": "Sparkly Maid NYC",
+  "luxurycleaningny.com": "Luxury Cleaning Service New York",
+  "www.luxurycleaningny.com": "Luxury Cleaning Service New York",
+  "luxurycleaningny": "Luxury Cleaning Service New York",
+  "highclasscleaning.co": "High Class Cleaning",
+  "www.highclasscleaning.co": "High Class Cleaning",
+  "highclasscleaning": "High Class Cleaning",
+  "highclass cleaning": "High Class Cleaning"
 };
 
 export const BRAND_ACRONYMS = new Set([
@@ -1057,8 +1075,9 @@ const DOMAIN_ENTITY_SUFFIXES = new Set([
   "care", "health", "wellness", "hotel", "hotels", "resort", "resorts", "motors",
   "auto", "leasing", "realty", "homes", "properties", "bank", "banking", "finance",
   "financial", "insurance", "tech", "technologies", "technology", "systems",
-  "solutions", "services", "global", "international", "collective", "network",
-  "associates", "management"
+  "solutions", "services", "service", "global", "international", "collective", "network",
+  "associates", "management", "cleaning", "cleaners", "maid", "maids",
+  "nyc", "ny", "la", "sf", "dc", "uk", "us", "uae", "usa"
 ]);
 
 const SEMANTIC_ENTITY_TLDS = new Set([
@@ -1435,7 +1454,8 @@ const COMPOUND_PREFIX_WORDS = new Set([
   "smart", "wise", "good", "best", "top", "prime", "premier", "grand", "royal", "noble",
   "crown", "king", "queen", "lion", "eagle", "hawk", "falcon", "swan", "fox", "wolf",
   "bear", "bull", "stag", "deer", "horse", "whale", "shark", "dolphin", "phoenix",
-  "dragon", "tiger", "panther"
+  "dragon", "tiger", "panther", "luxury", "sparkly", "superb", "elite", "classic",
+  "modern", "urban", "metro", "city", "pro", "eco", "fresh", "shine", "clean", "maid", "maids"
 ]);
 
 const COMPOUND_ROOT_WORDS = new Set([
@@ -1461,7 +1481,8 @@ const COMPOUND_ROOT_WORDS = new Set([
   "voice", "word", "story", "book", "books", "page", "note", "notes", "scale", "scope",
   "sphere", "zone", "world", "earth", "globe", "atlas", "nexus", "vertex", "apex",
   "zenith", "horizon", "frontier", "pioneer", "voyager", "nomad", "citizen", "guild",
-  "table", "house", "room", "street", "avenue", "road", "lane"
+  "table", "house", "room", "street", "avenue", "road", "lane", "class", "maid", "maids",
+  "clean", "cleaning", "cleaner", "cleaners", "care", "service", "services", "ny", "nyc", "la", "sf", "uk", "us"
 ]);
 
 function splitSingleCompoundToken(token: string): string {
@@ -1476,8 +1497,11 @@ function splitSingleCompoundToken(token: string): string {
     const right = lower.slice(i);
     if (COMPOUND_PREFIX_WORDS.has(left) && COMPOUND_ROOT_WORDS.has(right)) {
       // Only allow 2-letter right word ("in", "on", "up") when left is "all" (e.g. "allin" -> "All In")
-      if (right.length === 2 && left !== "all") continue;
-      return `${left.charAt(0).toUpperCase() + left.slice(1)} ${right.charAt(0).toUpperCase() + right.slice(1)}`;
+      if (right.length === 2 && left !== "all" && right !== "ny" && right !== "la" && right !== "sf" && right !== "uk" && right !== "us") continue;
+      const formattedRight = BRAND_ACRONYMS.has(right.toUpperCase())
+        ? right.toUpperCase()
+        : right.charAt(0).toUpperCase() + right.slice(1);
+      return `${left.charAt(0).toUpperCase() + left.slice(1)} ${formattedRight}`;
     }
   }
   return token;
@@ -1485,7 +1509,7 @@ function splitSingleCompoundToken(token: string): string {
 
 /**
  * Splits concatenated compound words, slugs, and camelCase domain strings into separate human-readable words.
- * Never splits single-word brand names into arbitrary syllables (e.g. "elaia" -> "Elaia", "proximus" -> "Proximus").
+ * Never splits single-word brand names into arbitrary syllables (e.g. "elaia" -> "Elaia", "proximus" -> "Proximus", "eMaids" -> "eMaids").
  */
 export function splitCompoundWords(str: string): string {
   let s = str.trim();
@@ -1494,15 +1518,20 @@ export function splitCompoundWords(str: string): string {
     return KNOWN_OFFICIAL_NAMES[cleanKey];
   }
 
-  // If already a multi-word string with spaces, check if any individual word is an unsplit compound token (like "Allin Capital" or "Redswan Ventures")
+  // Preserve e/i-prefixed camelCase brand words directly (e.g. "eMaids", "eBay", "iRobot", "iPhone")
+  if (/^[ei][A-Z][a-zA-Z]+$/.test(s)) {
+    return s;
+  }
+
+  // If already a multi-word string with spaces, check if any individual word is an unsplit compound token (like "Allin Capital", "Highclass Cleaning", or "Redswan Ventures")
   if (s.includes(" ") && /^[0-9\p{L}\s&'’\.,\-]+$/u.test(s)) {
     const parts = s.split(/\s+/);
-    const expanded = parts.map(p => splitSingleCompoundToken(p)).join(" ");
+    const expanded = parts.map(p => (/^[ei][A-Z][a-zA-Z]+$/.test(p) ? p : splitSingleCompoundToken(p))).join(" ");
     return expanded;
   }
 
-  // 1. Split camelCase/PascalCase (e.g., FirstStrikeElectrical -> First Strike Electrical)
-  s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  // 1. Split camelCase/PascalCase ONLY when preceded by at least 2 characters or a digit (never split eMaids / eBay / iPhone into "e Maids")
+  s = s.replace(/(?<=[a-zA-Z]{2}|[0-9])([a-z0-9])([A-Z])/g, "$1 $2");
 
   // 1.5 Do not split short alphanumeric acronyms/brands (e.g., 2B, 3M, 10MK, 7PC, F1, N26, B2B, A1)
   if (/^[0-9]+[a-zA-Z]{1,2}$/i.test(s) || /^[a-zA-Z]{1,2}[0-9]+$/i.test(s) || /^[a-zA-Z][0-9][a-zA-Z]$/i.test(s) || (s.length <= 4 && /^[a-zA-Z0-9]+$/.test(s) && /\d/.test(s) && /[a-zA-Z]/.test(s))) {
@@ -1513,21 +1542,23 @@ export function splitCompoundWords(str: string): string {
   s = s.replace(/([a-zA-Z]{3,})([0-9]+)/g, "$1 $2").replace(/([0-9]+)([a-zA-Z]{3,})/g, "$1 $2");
   
   // 3. Known brand/locational prefixes ONLY when followed by an explicit standalone compound word
-  s = s.replace(/^(the|first|second|third|smart|super|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:sight|sights|angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
+  s = s.replace(/^(the|first|second|third|smart|super|superb|sparkly|luxury|high|grand|royal|premier|prime|express|trusted|london|dubai|paris|nyc|uae|sv|digital|best|top|pro)(?=(?:sight|sights|angel|angels|vc|strike|electric|electrical|capital|avenue|park|trusted|therapy|legal|law|dental|hotel|hotels|resort|resorts|clinic|care|group|labs|ventures|partners|media|agency|studio|shop|store|market|homes|realty|realestate|auto|motors|garage|plumbing|cleaning|cleaners|cleaner|maid|maids|class|security|logistics|finance|bank|school|academy|center|centre|plaza|mall|world|zone|global|direct|virtual)\b)/i, "$1 ");
   s = s.replace(/^(al|el)(?=[-_ ]|(?:dhabi|khaleej|hilal|ain|wasl|ittihad|rawda|wathba|ahli|saad)(?:$|[a-z]{3,}))/i, "$1 ");
 
   // 4. Lookbehind compound word splitters for concatenated business suffixes at word boundaries (never splitting inside unrelated words like planet, vespa, marshall, calabasas)
   if (!COMPOUND_WORD_EXCEPTIONS.has(cleanKey)) {
     s = s.replace(/(?<=[a-z]{2,})(angel|angels|vc|fund|funds)(?=$|[-_ ])/gi, " $1 ");
-    s = s.replace(/(?<=[a-z]{3,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|virtual|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|ventures|court|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|online|prime|select|choice|smart|master|star|stars|tandartsen|optiek|apotheek|werkplaats)(?=$|[-_ ]|(?:center|centre|clinic|group|firm|agency|services|solutions|partners|capital|ventures|labs|studio|shop|store|market|hotel|hotels|resort|resorts|srl)\b)/gi, " $1 ");
+    s = s.replace(/(?<=[a-z]{3,})(strike|electric|electrical|electrician|electricals|electronics|electronic|bookstore|books|book|shop|shops|store|stores|market|markets|boutique|fashion|apparel|barber|barbershop|bakery|cafe|coffee|roasters|crafts|craft|builders|builder|building|construction|works|workshop|repairs|repair|plumbing|plumber|plumbers|roofing|roofer|painting|painter|landscaping|cleaners|cleaning|cleaner|maid|maids|class|security|logistics|transport|express|freight|courier|storage|realty|realestate|homes|home|house|housing|apartments|villa|villas|resort|resorts|hotel|hotels|suites|suite|hostel|hospital|dentist|dentists|dental|orthodontics|clinic|clinics|medical|pharma|pharmacy|care|health|wellness|fitness|gym|workout|spa|spas|salon|salons|studio|studios|media|agency|consulting|partners|group|solutions|services|service|tech|technologies|technology|systems|system|software|labs|lab|digital|virtual|data|cloud|mobile|energy|power|lighting|supply|supplies|hardware|tools|parts|motors|motor|autos|auto|automotive|garage|garages|mechanic|tires|tyres|rentals|rental|leasing|finance|financial|bank|banking|investments|capital|ventures|court|advisors|advisory|accounting|accountants|legal|law|firm|lawyers|attorneys|notary|insurance|education|school|academy|college|university|institute|center|centers|centre|centres|plaza|square|mall|malls|warehouse|depot|hub|hubs|station|park|parks|garden|gardens|village|tower|towers|hall|world|zone|global|international|direct|link|online|prime|select|choice|smart|master|star|stars|tandartsen|optiek|apotheek|werkplaats)(?=$|[-_ ]|(?:center|centre|clinic|group|firm|agency|services|solutions|partners|capital|ventures|labs|studio|shop|store|market|hotel|hotels|resort|resorts|srl|nyc|ny|la|sf|dc|nj|ct|fl|tx|ca|uk|us|uae|inc|llc|ltd|corp|co)\b)/gi, " $1 ");
+    s = s.replace(/(?<=[a-z]{3,})(nyc|ny|la|sf|uk|uae|usa|inc|llc|ltd|corp)(?=$|[-_ ])/gi, " $1 ");
   }
 
-  // 4.5 Split remaining compound prefix+root tokens (e.g. "redswan" -> "Red Swan", "redsea" -> "Red Sea", "allin" -> "All In")
+  // 4.5 Split remaining compound prefix+root tokens (e.g. "redswan" -> "Red Swan", "redsea" -> "Red Sea", "allin" -> "All In", "highclass" -> "High Class")
   const rawTokens = s.split(/[-_ ]+/).filter(Boolean);
-  const expandedTokens = rawTokens.flatMap(t => splitSingleCompoundToken(t).split(/\s+/));
+  const expandedTokens = rawTokens.flatMap(t => (/^[ei][A-Z][a-zA-Z]+$/.test(t) ? [t] : splitSingleCompoundToken(t).split(/\s+/)));
 
   // 5. Clean up any multiple spaces and format each word cleanly with title case / acronym preservation
   const words = expandedTokens.filter(Boolean).map(w => {
+    if (/^[ei][A-Z][a-zA-Z]+$/.test(w)) return w;
     const upper = w.toUpperCase();
     if (BRAND_ACRONYMS.has(upper)) return upper;
     if (/^[A-Z0-9]+$/.test(w)) return w;
@@ -1794,14 +1825,21 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
       }
     }
 
-    // Second try finding a part that matches domRoot (both direct substring and space-insensitive alphanumeric match, e.g. "Amino Capital" === "aminocapital")
+    // Second try finding a part that matches domRoot (both direct substring and space-insensitive alphanumeric match, e.g. "Amino Capital" === "aminocapital", or "Superb Maids" in "superbmaidsnyc")
     if (!bestCandidate && domAlpha) {
+      const isGenericSeoPart = (s: string) => {
+        const cleanPart = s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+        return /^(?:maid|maids|house|home|office|apartment|commercial|residential|deep|top|rated|best|professional|premier|cleaning|cleaner|cleaners|service|services|company|agency|nyc|ny|new\s+york|manhattan|brooklyn|queens|bronx|\s)+$/i.test(cleanPart);
+      };
       bestCandidate = rawParts.find(p => {
         const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
         return pAlpha === domAlpha && !isGenericPlaceName(p);
       }) || rawParts.find(p => {
         const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
         return (p.toLowerCase().includes(domRoot.toLowerCase()) || pAlpha.includes(domAlpha) || (pAlpha.length >= 3 && domAlpha.startsWith(pAlpha))) && p.length <= 45 && !isGenericPlaceName(p);
+      }) || rawParts.find(p => {
+        const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return pAlpha.length >= 5 && domAlpha.includes(pAlpha) && !isGenericSeoPart(p) && p.length <= 45 && !isGenericPlaceName(p);
       });
     }
 
@@ -1813,8 +1851,8 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
         return (
           s.length > 26 ||
           wordCount > 4 ||
-          /^(we|our|building|backing|empowering|helping|investing|discover|explore|welcome|find|get|your)\b/i.test(lower) ||
-          /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|official website|welcome to|the best|top rated|from day one|we back|personal injury|attorneys at law|car rental|rent a car)\b/i.test(lower)
+          /^(we|our|building|backing|empowering|helping|investing|discover|explore|welcome|find|get|your|top-rated|top\s+rated)\b/i.test(lower) ||
+          /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|official website|welcome to|the best|top rated|from day one|we back|personal injury|attorneys at law|car rental|rent a car|designed around you)\b/i.test(lower)
         );
       };
 
@@ -1823,7 +1861,8 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
         .map((p, idx) => {
           let score = idx === 0 ? 60 : 50;
           const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
-          if (domAlpha && (pAlpha === domAlpha || pAlpha.includes(domAlpha) || domAlpha.includes(pAlpha))) score += 100;
+          if (domAlpha && (pAlpha === domAlpha || pAlpha.includes(domAlpha) || domAlpha.startsWith(pAlpha))) score += 120;
+          else if (domAlpha && pAlpha.length >= 4 && domAlpha.includes(pAlpha)) score += 80;
           if (isSlogan(p)) score -= 80;
           if (p.length >= 2 && p.length <= 25) score += 30; // Bonus for concise brand names
           return { part: p, score };
