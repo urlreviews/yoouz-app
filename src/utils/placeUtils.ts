@@ -1054,7 +1054,12 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "kleannyc": "Klean-N-Green",
   "klean nyc": "Klean-N-Green",
   "klean-n-green": "Klean-N-Green",
-  "klean-n-green nyc": "Klean-N-Green"
+  "klean-n-green nyc": "Klean-N-Green",
+  "wowcleannyc.com": "Wow Clean NYC",
+  "www.wowcleannyc.com": "Wow Clean NYC",
+  "wowcleannyc": "Wow Clean NYC",
+  "wowclean nyc": "Wow Clean NYC",
+  "wow clean nyc": "Wow Clean NYC"
 };
 
 export const BRAND_ACRONYMS = new Set([
@@ -1394,9 +1399,9 @@ export function extractBrandFromDescription(description?: string | null, domain?
     }
   }
 
-  // 3. Pattern: "<Brand> is a/an/the/your/provides/delivers/offers..."
+  // 3. Pattern: "<Brand> is a/an/the/your/here to help/provides/delivers/offers/hires..."
   if (!candidate) {
-    const subjMatch = cleanDesc.match(/^([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Za-z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+your|is\s+one\s+of|are\s+a|provides|delivers|offers|specializes\s+in|backs\s+|helps\s+|partners\s+with|invests\s+in|builds|empowers|funds|accelerates|supports)/u);
+    const subjMatch = cleanDesc.match(/(?:^|[.!?;]\s+)([A-Z0-9][\p{L}0-9&'’\.\-]*(?:\s+[A-Z0-9&][\p{L}0-9&'’\.\-]*){0,4})\s+(?:is\s+a|is\s+an|is\s+the|is\s+your|is\s+one\s+of|is\s+here\s+to\s+help|is\s+always|are\s+a|provides|delivers|offers|hires\s+and|specializes\s+in|backs\s+|helps\s+|partners\s+with|invests\s+in|builds|empowers|funds|accelerates|supports)/u);
     if (subjMatch && subjMatch[1]) {
       candidate = subjMatch[1].trim();
     }
@@ -1508,7 +1513,9 @@ const COMPOUND_PREFIX_WORDS = new Set([
   "haven", "home", "homes", "house", "apartment", "office", "happy", "spotless", "tidy", "neat",
   "safe", "trust", "trusted", "reliable", "quality", "master", "expert", "total", "complete",
   "diamond", "crystal", "emerald", "ruby", "pearl", "amber", "jade", "liberty", "freedom",
-  "empire", "heritage", "legacy", "pioneer", "frontier", "global", "world", "national", "state"
+  "empire", "heritage", "legacy", "pioneer", "frontier", "global", "world", "national", "state",
+  "wow", "glow", "flow", "joy", "zen", "ace", "max", "lux", "vip", "bio", "ez", "magic", "wonder",
+  "dream", "lucky", "apex", "nova", "aqua", "terra", "vita", "vero", "vera", "alta", "omni", "core"
 ]);
 
 const COMPOUND_ROOT_WORDS = new Set([
@@ -1792,6 +1799,75 @@ export function isGenericPlaceName(name?: string | null): boolean {
   return false;
 }
 
+const GENERIC_SEO_VOCABULARY = new Set([
+  "1", "1st", "no", "number", "top", "rated", "best", "affordable", "reliable", "trusted", "local",
+  "certified", "licensed", "insured", "bonded", "professional", "premier", "luxury", "quality", "expert",
+  "leading", "award", "winning", "guaranteed", "free", "quote", "estimate", "booking", "online", "24", "7",
+  "green", "eco", "friendly", "organic", "natural", "non", "toxic", "sustainable",
+  "maid", "maids", "house", "home", "homes", "office", "apartment", "condo", "commercial", "residential",
+  "industrial", "corporate", "deep", "move", "in", "out", "post", "construction", "renovation", "airbnb",
+  "rental", "vacation", "turnover", "spring", "same", "day", "emergency", "weekly", "biweekly", "monthly",
+  "cleaning", "cleaner", "cleaners", "clean", "housekeeping", "housekeeper", "janitorial", "sanitizing",
+  "disinfecting", "carpet", "rug", "upholstery", "window", "floor", "pressure", "washing", "laundry",
+  "plumbing", "plumber", "plumbers", "drain", "rooter", "sewer", "water", "heater",
+  "roofing", "roofer", "roofers", "roof", "siding", "gutter", "gutters",
+  "hvac", "heating", "cooling", "air", "conditioning", "furnace", "ac", "duct",
+  "electrical", "electrician", "electricians", "electric", "wiring", "lighting",
+  "painting", "painter", "painters", "drywall", "handyman", "remodeling", "renovation", "contractors", "contractor",
+  "landscaping", "lawn", "tree", "garden", "gardening", "irrigation", "paving", "masonry", "deck", "fence",
+  "pest", "control", "exterminator", "termite", "bed", "bug", "rodent",
+  "locksmith", "locksmiths", "lock", "key", "security", "alarm",
+  "moving", "movers", "mover", "storage", "packing", "relocation", "junk", "removal", "hauling",
+  "auto", "car", "truck", "vehicle", "repair", "mechanic", "body", "collision", "detailing", "wash", "towing", "glass", "tire",
+  "law", "firm", "legal", "lawyer", "lawyers", "attorney", "attorneys", "counsel", "solicitors", "advocates",
+  "injury", "accident", "personal", "divorce", "family", "criminal", "defense", "litigation", "immigration", "bankruptcy", "estate",
+  "dental", "dentist", "dentists", "dentistry", "orthodontics", "orthodontist", "implants", "cosmetic", "oral", " pediatric",
+  "clinic", "clinics", "medical", "health", "healthcare", "wellness", "therapy", "therapist", "counseling", "psychology",
+  "chiropractic", "chiropractor", "physical", "rehab", "acupuncture", "optometry", "optical", "eye", "vet", "veterinary", "pet", "grooming",
+  "spa", "med", "medspa", "day", "massage", "facial", "skincare", "aesthetics", "laser", "beauty", "salon", "hair", "nail", "nails", "barber", "barbershop",
+  "service", "services", "solutions", "company", "co", "agency", "group", "center", "centre", "specialists", "pros", "team", "inc", "llc", "ltd", "corp",
+  "and", "or", "the", "a", "an", "to", "by", "with", "at", "on", "of", "for", "from", "near", "me", "your", "our", "we", "you", "all",
+  "welcome", "homepage", "official", "site", "website",
+  "nyc", "ny", "new", "york", "manhattan", "brooklyn", "queens", "bronx", "staten", "island", "long", "hamptons", "westchester",
+  "nj", "jersey", "ct", "connecticut", "pa", "philadelphia", "philly", "boston", "ma", "dc", "washington", "md", "va",
+  "la", "los", "angeles", "hollywood", "beverly", "hills", "santa", "monica", "san", "francisco", "sf", "bay", "area", "diego", "jose", "sacramento", "ca", "california",
+  "chicago", "il", "miami", "fl", "florida", "orlando", "tampa", "houston", "dallas", "austin", "san", "antonio", "tx", "texas",
+  "seattle", "wa", "portland", "or", "denver", "co", "phoenix", "scottsdale", "az", "las", "vegas", "nv", "atlanta", "ga", "charlotte", "nc",
+  "london", "uk", "united", "kingdom", "england", "manchester", "birmingham", "toronto", "vancouver", "montreal", "canada",
+  "sydney", "melbourne", "brisbane", "australia", "dubai", "abu", "dhabi", "uae", "paris", "france", "berlin", "germany", "amsterdam", "brussels", "belgium", "usa", "us"
+]);
+
+/**
+ * Detects if a string (e.g. "#1 NYC Maid Service & House Cleaners" or "Cleaning Service NYC")
+ * is a generic SEO keyword phrase rather than a distinctive business brand name.
+ */
+export function isGenericSeoSlogan(str?: string | null, domain?: string | null): boolean {
+  if (!str || !str.trim()) return true;
+  const cleanWords = str
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (cleanWords.length === 0) return true;
+
+  const allGeneric = cleanWords.every(w => GENERIC_SEO_VOCABULARY.has(w));
+  if (!allGeneric) return false;
+
+  if (domain) {
+    const cleanDom = extractCleanDomain(domain);
+    const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const firstWord = cleanWords[0];
+    const strAlpha = cleanWords.join("");
+    // If the domain itself starts with the exact same descriptive first word (e.g. "Luxury Cleaning Service New York" on "luxurycleaningny.com")
+    // and has at least 2 words matching the domain prefix, allow it
+    if (domRoot && firstWord.length >= 4 && domRoot.startsWith(firstWord) && (strAlpha.includes(domRoot) || domRoot.startsWith(cleanWords.slice(0, 2).join("")))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function toTitleCase(str: string): string {
   if (!str) return "";
   const trimmedStr = str.trim();
@@ -1986,10 +2062,7 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
 
     // Second try finding a part that matches domRoot (direct match, prefix match, or first-word brand prefix match, e.g. "Klean-N-Green NYC" on "kleannyc.com", "Haven Cleaning Services" on "havenhomecleaning.com")
     if (!bestCandidate && domAlpha) {
-      const isGenericSeoPart = (s: string) => {
-        const cleanPart = s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
-        return /^(?:green|eco|friendly|organic|natural|maid|maids|house|home|homes|office|apartment|commercial|residential|industrial|deep|top|rated|best|affordable|reliable|trusted|local|certified|licensed|professional|premier|luxury|quality|expert|cleaning|cleaner|cleaners|housekeeping|janitorial|plumbing|plumber|roofing|roofer|hvac|heating|cooling|electrical|electrician|painting|landscaping|moving|movers|auto|repair|detailing|law|firm|legal|lawyer|lawyers|attorney|attorneys|dental|dentist|clinic|medical|therapy|service|services|solutions|company|agency|contractors|in|of|for|near|me|nyc|ny|new\s+york|manhattan|brooklyn|queens|bronx|los\s+angeles|la|chicago|miami|houston|dallas|boston|seattle|london|uk|usa|us|\s)+$/i.test(cleanPart);
-      };
+      const isGenericSeoPart = (s: string) => isGenericSeoSlogan(s, cleanDom);
       const getFirstBrandToken = (s: string) => {
         const first = s.trim().split(/[\s\-&]+/)[0] || "";
         return first.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -2022,13 +2095,14 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
         return (
           s.length > 26 ||
           wordCount > 4 ||
-          /^(we|our|building|backing|empowering|helping|investing|discover|explore|welcome|find|get|your|top-rated|top\s+rated)\b/i.test(lower) ||
+          isGenericSeoSlogan(s, cleanDom) ||
+          /^(we|our|building|backing|empowering|helping|investing|discover|explore|welcome|find|get|your|top-rated|top\s+rated|#1)\b/i.test(lower) ||
           /\b(בגדים|נעליים|לנשים|גברים|ילדים|דתיות|השכרת|מכירת|שירות|איכותי|חנות|אונליין|מבחר|מגוון|אינטרנט|משלוח|חינם|official site|official website|welcome to|the best|top rated|from day one|we back|personal injury|attorneys at law|car rental|rent a car|designed around you)\b/i.test(lower)
         );
       };
 
       const ranked = rawParts
-        .filter(p => !isGenericPlaceName(p))
+        .filter(p => !isGenericPlaceName(p) && (!cleanDom || !isGenericSeoSlogan(p, cleanDom)))
         .map((p, idx) => {
           let score = idx === 0 ? 60 : 50;
           const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -2048,6 +2122,11 @@ export function formatBusinessName(name?: string | null, domain?: string | null,
     if (bestCandidate) {
       trimmed = stripLegalEntityAndNoiseSuffixes(bestCandidate);
     }
+  }
+
+  // If the entire string is a generic SEO slogan (e.g. "#1 NYC Maid Service & House Cleaners" or "Cleaning Service NYC" on "wowcleannyc.com") that omits the domain brand, fall back to cleanDom
+  if (cleanDom && isGenericSeoSlogan(trimmed, cleanDom)) {
+    return formatBusinessName(cleanDom);
   }
 
   // 3.05 Truncate at common verb/slogan marketing phrases (e.g. "Law Firm Wanted Law Is A Group of Law Firm S Offering Accessible Law...")

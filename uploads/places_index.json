@@ -1,5 +1,54 @@
 [
   {
+    "id": "wowcleannyc.com",
+    "name": "Wow Clean NYC",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "New york",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwowcleannyc.com%2Fwp-content%2Fuploads%2F2019%2F05%2Fcropped-icon-1-180x180.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwowcleannyc.com%2Fwp-content%2Fuploads%2F2019%2F05%2Fcropped-icon-1-180x180.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwowcleannyc.com%2Fwp-content%2Fuploads%2F2025%2F02%2Ffinal.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwowcleannyc.com%2Fwp-content%2Fuploads%2F2025%2F02%2Ffinal.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwowcleannyc.com%2Fwp-content%2Fuploads%2F2025%2F02%2Ffinal.png"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+1 (516) 758-2898",
+    "email": "hello@wowcleannyc.com",
+    "website": "https://wowcleannyc.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Wow Clean",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "wowcleannyc.com",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "kleannyc.com",
     "name": "Klean-N-Green",
     "category": "Healthcare & Medical",
