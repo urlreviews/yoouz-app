@@ -23,6 +23,7 @@ interface CopoSearchViewProps {
   isMobileModal?: boolean;
   initialQuery?: string;
   hideSearchBar?: boolean;
+  onViewAll?: () => void;
 }
 
 export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
@@ -34,7 +35,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   onAddPlace,
   isMobileModal = false,
   initialQuery = "",
-  hideSearchBar = false
+  hideSearchBar = false,
+  onViewAll
 }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState(initialQuery);
@@ -895,7 +897,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (trendingVideos.length > 0) onSelectVideo(trendingVideos[0].id);
+                    if (onViewAll) onViewAll();
+                    else if (trendingVideos.length > 0) onSelectVideo(trendingVideos[0].id);
                   }}
                   className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 hover:text-white uppercase transition-colors cursor-pointer"
                 >

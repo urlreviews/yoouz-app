@@ -5030,20 +5030,53 @@ export function App() {
         setPendingVideoId(videoId);
       }
     } else {
-      // Default (search, map, bookmarks, home): open place view with this video as the ONLY context
+      // General / Trending Feed / Search video selection:
+      // Play video within the FULL feed so the user can scroll to previous & next videos!
+      // Do NOT restrict or lock the feed to a single business.
       setFullscreenFeedContext(null);
-      setSelectedPlaceIdForDrawer(targetVid.placeId);
+      setSelectedPlaceIdForDrawer(null);
       setSelectedAuthorForDrawer(null);
       setActiveSection("home");
-      
-      const vids = videos.filter((v) => v.placeId === targetVid.placeId || v.placeName === targetVid.placeName);
-      const idx = vids.findIndex(v => v.id === videoId);
+
+      const visibleVideos = videos
+        .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
+        .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+
+      const idx = visibleVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
         setCurrentVideoIndex(idx);
       } else {
         setPendingVideoId(videoId);
       }
     }
+  };
+
+  // Handle "View All" on Trending Video Reviews: opens full feed starting at the latest video (index 0)
+  // so the user can freely scroll through all videos without being trapped in a single business page.
+  const handleViewAllTrending = (startVideoId?: string) => {
+    setIsWatchingVideo(true);
+    setSelectedPlaceIdForDrawer(null);
+    setSelectedAuthorForDrawer(null);
+    setFullscreenFeedContext(null);
+    setActiveSection("home");
+
+    // Clean URL so it stays on home / feed (not /reviews/...)
+    try {
+      window.history.pushState(null, "", buildLocalizedPath("/", language));
+    } catch (e) {}
+
+    const visibleVideos = videos
+      .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
+      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+
+    if (startVideoId) {
+      const idx = visibleVideos.findIndex((v) => v.id === startVideoId);
+      if (idx !== -1) {
+        setCurrentVideoIndex(idx);
+        return;
+      }
+    }
+    setCurrentVideoIndex(0);
   };
 
   // TikTok Back button handler (takes you back to the profile drawer where you came from)
@@ -7677,7 +7710,11 @@ export function App() {
             onAddPlace={handleUpdatePlace}
             onSelectVideo={(id) => {
               setIsSearchModalOpen(false);
-              handleSelectVideoById(id);
+              handleSelectVideoById(id, "feed");
+            }}
+            onViewAll={() => {
+              setIsSearchModalOpen(false);
+              handleViewAllTrending();
             }}
             onOpenPlace={(id) => {
               setIsSearchModalOpen(false);
@@ -8033,16 +8070,13 @@ export function App() {
             searchMode="general"
             onSelectVideo={(vidId) => {
               setIsWatchingVideo(true);
-              handleSelectVideoById(vidId);
+              handleSelectVideoById(vidId, "feed");
             }}
             onOpenPlace={handleOpenPlaceDrawer}
             onAddPlace={handleUpdatePlace}
             onOpenCreator={handleOpenCreatorDrawer}
             onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
-            onViewAll={() => {
-              setIsWatchingVideo(true);
-              if (videos.length > 0) handleSelectVideoById(videos[0].id);
-            }}
+            onViewAll={() => handleViewAllTrending()}
             onRecordReview={(place) => {
               setPreselectedPlaceForRecording(place || null);
               setIsCreateModalOpen(true);
@@ -8082,7 +8116,7 @@ export function App() {
                 searchMode="review"
                 onSelectVideo={(vidId) => {
                   setIsWatchingVideo(true);
-                  handleSelectVideoById(vidId);
+                  handleSelectVideoById(vidId, "feed");
                 }}
                 onOpenPlace={(placeId) => {
                   const p = places.find(p => p.id === placeId || p.brandDomain === placeId);
@@ -8092,10 +8126,7 @@ export function App() {
                 onAddPlace={handleUpdatePlace}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
-                onViewAll={() => {
-                  setIsWatchingVideo(true);
-                  if (videos.length > 0) handleSelectVideoById(videos[0].id);
-                }}
+                onViewAll={() => handleViewAllTrending()}
                 onRecordReview={(place) => {
                   setPreselectedPlaceForRecording(place || null);
                   setIsCreateModalOpen(true);
@@ -8852,7 +8883,11 @@ export function App() {
           videos={videos}
           onSelectVideo={(id) => {
             setIsSearchModalOpen(false);
-            handleSelectVideoById(id);
+            handleSelectVideoById(id, "feed");
+          }}
+          onViewAll={() => {
+            setIsSearchModalOpen(false);
+            handleViewAllTrending();
           }}
           onOpenPlace={(id) => {
             setIsSearchModalOpen(false);

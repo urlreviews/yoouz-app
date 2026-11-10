@@ -14,6 +14,7 @@ interface CopoMobileSearchViewProps {
   unreadNotifsCount?: number;
   searchMode?: "general" | "review";
   autoFocusSearch?: boolean;
+  onViewAll?: () => void;
 }
 
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
@@ -27,7 +28,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   onOpenNotifications,
   unreadNotifsCount = 0,
   searchMode = "general",
-  autoFocusSearch = true
+  autoFocusSearch = true,
+  onViewAll
 }) => {
   return (
     <div className="fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans">
@@ -49,7 +51,12 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         }}
         unreadNotifsCount={unreadNotifsCount}
         onViewAll={() => {
-          if (videos.length > 0) onSelectVideo(videos[0].id);
+          onClose();
+          if (onViewAll) {
+            onViewAll();
+          } else if (videos.length > 0) {
+            onSelectVideo(videos[0].id);
+          }
         }}
         onRecordReview={(place) => {
           if (place && onRecordForPlace) {
