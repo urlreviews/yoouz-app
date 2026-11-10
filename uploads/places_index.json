@@ -4060,7 +4060,7 @@
   {
     "id": "cetaphil.com",
     "name": "Cetaphil",
-    "category": "Skincare & Beauty",
+    "category": "Real Estate",
     "categoryType": "all",
     "address": "5 Signs of Sensitive Skin",
     "city": "Gent",
@@ -4076,22 +4076,22 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "avatarUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+    "logoUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D500",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D500",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200"
+      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D500"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://cetaphil.com",
+    "website": "https://www.cetaphil.com/us/homepage/",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Cetaphil is a dermatologist-recommended skincare brand offering gentle cleansers, moisturizers, and sensitive skin treatments.",
+    "description": "Cetaphil is a dermatologist-recommended brand offering sensitive skincare products that improve skin resilience and protect against various skin concerns.",
     "popularKeywords": [],
     "amenities": [],
     "topDishes": [],

@@ -629,7 +629,7 @@ export function App() {
   const [isWatchingVideo, setIsWatchingVideo] = useState<boolean>(() => {
     try {
       const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
-      return pathname.startsWith("/review/") || pathname.startsWith("/video/") || pathname.startsWith("/v/") || /(rev-[a-zA-Z0-9_\-]+)/i.test(pathname);
+      return pathname.startsWith("/review/") || pathname.startsWith("/reviews/") || pathname.startsWith("/video/") || pathname.startsWith("/v/") || /(rev-[a-zA-Z0-9_\-]+)/i.test(pathname);
     } catch (e) {}
     return false;
   });
@@ -1857,7 +1857,16 @@ export function App() {
       let path = "/";
       let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
 
-      if (selectedPlaceIdForDrawer) {
+      // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
+      const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
+
+      if ((isWatchingVideo || activeSection === "home" || isPlaceView || isCreatorView) && currentVid) {
+        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
+        path = `/review/${domainSlug}/${currentVid.id}`;
+        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+      } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
@@ -1872,25 +1881,6 @@ export function App() {
           .replace(/-+/g, "-");
         path = `/@${cleanSlug}`;
         title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
-      } else if (activeSection === "home") {
-        const currentVid = videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null;
-        const isDirectVideoRoute = window.location.pathname.startsWith("/review/") || window.location.pathname.startsWith("/v/") || window.location.pathname.startsWith("/video/") || window.location.search.includes("reviewId");
-        if (currentVid && isDirectVideoRoute) {
-          const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
-          path = `/review/${domainSlug}/${currentVid.id}`;
-          const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
-          const placeName = formatBusinessName(currentVid.placeName || domainSlug);
-          title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-        } else if (isDirectVideoRoute) {
-          // Keep video route preserved while initial video data finishes resolving
-          return;
-        } else if (!selectedPlaceIdForDrawer && window.location.pathname.startsWith("/reviews/")) {
-          // Keep business reviews route preserved while place data resolves
-          return;
-        } else {
-          path = "/";
-          title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
-        }
       } else if (activeSection === "search") {
         path = "/search";
         title = "Search & Explore Real Video Reviews | Yoouz";
@@ -1952,10 +1942,18 @@ export function App() {
 
       // Update URL if it differs from current pathname (excluding search query string to avoid infinite loops if it exists)
       if (window.location.pathname !== localizedPath) {
-        const isCurrentlyVideo = window.location.pathname.startsWith("/v/") || window.location.pathname.includes("/video/");
-        const isGoingToVideo = localizedPath.startsWith("/v/") || localizedPath.includes("/video/");
+        const isCurrentlyVideo = 
+          window.location.pathname.startsWith("/v/") || 
+          window.location.pathname.includes("/video/") || 
+          window.location.pathname.startsWith("/review/") || 
+          window.location.pathname.startsWith("/reviews/");
+        const isGoingToVideo = 
+          localizedPath.startsWith("/v/") || 
+          localizedPath.includes("/video/") || 
+          localizedPath.startsWith("/review/") || 
+          localizedPath.startsWith("/reviews/");
         
-        if (isCurrentlyVideo && isGoingToVideo) {
+        if (isCurrentlyVideo || isGoingToVideo || isWatchingVideo) {
           // Use replaceState while scrolling feed to avoid filling up the history stack
           window.history.replaceState({}, "", localizedPath);
         } else {
@@ -1966,7 +1964,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView]);
 
   // BunnyDB Auth state listener and multi-tab reactive sync
   useEffect(() => {
@@ -4840,12 +4838,16 @@ export function App() {
 
     // Priority 1: Place Drawer context (business profile open on desktop/mobile)
     if (isPlaceView && drawerPlace) {
-      return visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
+      const placeVids = visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
+      const otherVids = visibleVideos.filter(v => !isPlaceReviewMatch(v, drawerPlace));
+      return placeVids.length > 0 ? [...placeVids, ...otherVids] : visibleVideos;
     }
 
     // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
     if (isCreatorView && selectedAuthorForDrawer) {
-      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
+      const creatorVids = visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
+      const otherVids = visibleVideos.filter(v => !isAuthorMatch(v, selectedAuthorForDrawer));
+      return creatorVids.length > 0 ? [...creatorVids, ...otherVids] : visibleVideos;
     }
 
     // Priority 3: User Profile context
