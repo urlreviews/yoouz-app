@@ -27,6 +27,7 @@ interface CopoHomePageProps {
   headerTitle?: string;
   headerSubtitle?: string;
   onClose?: () => void;
+  setIsSearchActive?: (active: boolean) => void;
 }
 
 export interface SuggestionItem {
@@ -59,7 +60,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   searchMode = "general",
   headerTitle,
   headerSubtitle,
-  onClose
+  onClose,
+  setIsSearchActive
 }) => {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -67,12 +69,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
   const [isResolvingPlace, setIsResolvingPlace] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
-  const [isMobile, setIsMobile] = useState(false);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    setIsSearchActive?.(isMobile && showDropdown);
+  }, [isMobile, showDropdown, setIsSearchActive]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -80,6 +86,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
 
   useEffect(() => {
     setSelectedIndex(-1);

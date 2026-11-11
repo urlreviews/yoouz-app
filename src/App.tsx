@@ -570,6 +570,7 @@ export function App() {
     loadUserData();
   }, [currentUser?.email]);
 
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [inAppToast, setInAppToast] = useState<InAppToastPayload | null>(null);
   const prevNotifIdsRef = useRef<Set<string>>(new Set());
@@ -8122,6 +8123,7 @@ export function App() {
             onAddPlace={handleUpdatePlace}
             onOpenCreator={handleOpenCreatorDrawer}
             onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+            setIsSearchActive={setIsSearchActive}
             onViewAll={() => handleViewAllTrending()}
             onRecordReview={(place) => {
               setPreselectedPlaceForRecording(place || null);
@@ -8876,7 +8878,7 @@ export function App() {
       />
 
       {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
-      {!embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
+      {!isSearchActive && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}
@@ -8912,12 +8914,21 @@ export function App() {
             }
             setSelectedPlaceIdForDrawer(null);
             setSelectedAuthorForDrawer(null);
-            setActiveSection(section);
+            setIsWatchingVideo(false);
+            setFullscreenFeedContext(null);
+            setActiveSection(section as NavSection);
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          onOpenSearch={handleOpenSearchModal}
+          onOpenSearch={() => {
+            handleOpenSearchModal();
+          }}
           onOpenCreateModal={() => {
-            setPreselectedPlaceForRecording(null);
-            setIsCreateModalOpen(true);
+            if (!currentUser) {
+              setAuthIntent('review');
+              setIsAuthModalOpen(true);
+            } else {
+              setIsCreateModalOpen(true);
+            }
           }}
         />
       )}
