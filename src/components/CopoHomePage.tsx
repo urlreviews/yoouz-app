@@ -270,24 +270,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       }
     }
 
-    // 4. Match creators / people when in general search mode
-    if (searchMode !== "review") {
-      for (const creator of knownCreators) {
-        if (localMatches.length >= 8) break;
-        const cNameLow = creator.name.toLowerCase();
-        if (cNameLow.includes(qLow)) {
-          pushLocal({
-            id: `creator:${creator.name}`,
-            title: creator.name,
-            domain: "Reviewer Profile",
-            logoUrl: creator.avatar,
-            category: "Creator",
-            isCreator: true,
-            creatorAuthor: creator
-          });
-        }
-      }
-    }
+
 
     if (localMatches.length > 0) {
       setSuggestions(localMatches);
@@ -462,18 +445,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
-    // 5. Exact or strong match in Creators / Users (when user searches their own name or a reviewer's name)
-    if (searchMode !== "review" && onOpenCreator) {
-      const creatorMatch =
-        knownCreators.find((c) => c.name.toLowerCase() === qLow) ||
-        knownCreators.find((c) => c.name.toLowerCase().startsWith(qLow) || c.name.toLowerCase().includes(qLow));
-      // If exact match to a creator name, or if no business suggestion matches and a creator matches
-      const hasBusinessSuggestion = suggestions.some((s) => !s.isCreator && s.domain && isValidDomainUrl(s.domain));
-      if (creatorMatch && (creatorMatch.name.toLowerCase() === qLow || !hasBusinessSuggestion)) {
-        onOpenCreator(creatorMatch);
-        return;
-      }
-    }
+
 
     // 6. Fast path from pre-fetched suggestions if available
     const topBusinessSuggestion = suggestions.find(
@@ -569,13 +541,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
-    if (searchMode !== "review" && onOpenCreator) {
-      const partialCreator = knownCreators.find((c) => c.name.toLowerCase().includes(qLow));
-      if (partialCreator) {
-        onOpenCreator(partialCreator);
-        return;
-      }
-    }
+
 
     onOpenPlace(trimmed);
   };
@@ -584,10 +550,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     setShowDropdown(false);
     setQuery(item.title);
 
-    if (item.isCreator && item.creatorAuthor && onOpenCreator) {
-      onOpenCreator(item.creatorAuthor);
-      return;
-    }
+
 
     if (searchMode === "review") {
       const qLow = (item.title || "").toLowerCase().trim();
