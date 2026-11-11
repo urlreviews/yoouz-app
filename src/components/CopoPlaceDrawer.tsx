@@ -1583,7 +1583,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             logoUrl={primaryLogoUrl || place.logoUrl}
             bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
             className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-contain p-2 sm:p-2.5 rounded-[16px] sm:rounded-[20px]"
+            imageClassName="w-full h-full object-contain p-1 sm:p-1.5 rounded-[18px] sm:rounded-[22px]"
             fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
             onLoad={() => {
               setLogoLoaded(true);
@@ -2848,7 +2848,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     logoUrl={primaryLogoUrl || place.logoUrl}
                     bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-0 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-200 overflow-hidden"
-                    imageClassName="w-full h-full object-contain p-2 rounded-lg"
+                    imageClassName="w-full h-full object-contain p-1 rounded-xl"
                     fallbackTextClassName="font-black text-lg text-zinc-950"
                   />
 
@@ -3063,7 +3063,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     logoUrl={primaryLogoUrl || place.logoUrl}
                     bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
                     className="w-14 h-14 rounded-2xl bg-white p-0 flex items-center justify-center mx-auto shadow-md border border-zinc-200 print:bg-white print:border-zinc-300 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
-                    imageClassName="w-full h-full object-contain p-2 rounded-lg"
+                    imageClassName="w-full h-full object-contain p-1 rounded-xl"
                     fallbackTextClassName="font-black text-xl text-zinc-950"
                   />
 

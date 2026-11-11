@@ -1,5 +1,254 @@
 [
   {
+    "id": "flipper.net",
+    "name": "Flipper Zero",
+    "website": "https://flipper.net",
+    "brandDomain": "flipper.net",
+    "rating": 5,
+    "totalReviews": 1,
+    "city": "",
+    "country": "",
+    "address": "",
+    "phone": "",
+    "email": "business@flipper.net",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
+    ],
+    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "avatarUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "priceRange": "N/A",
+    "plusCode": "",
+    "description": "Flipper Zero · verified business · flipper.net",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "selectedName": "Flipper Zero",
+    "customEdited": true,
+    "hours": "Available 24/7",
+    "locations": [],
+    "videoReviewCount": 1,
+    "reviews": [
+      {
+        "id": "rev-1792740198020-gknyb",
+        "userId": "yudansha14@gmail.com",
+        "userEmail": "yudansha14@gmail.com",
+        "createdAtMs": 1792740198021,
+        "isLocalUpload": true,
+        "localBlobUrl": "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
+        "blobUrl": "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
+        "isCurrentSessionBlob": true,
+        "placeId": "flipper.net",
+        "placeName": "Flipper Zero",
+        "placeCategory": "Verified Business",
+        "placeAddress": "",
+        "placeCity": "",
+        "placeCountry": "",
+        "placePhone": "",
+        "placeEmail": "business@flipper.net",
+        "placeRating": 5,
+        "placeWebsite": "https://flipper.net",
+        "placeLogoUrl": "/api/favicon?domain=flipper.net",
+        "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+        "placeDescription": "Flipper Zero · verified business · flipper.net",
+        "author": {
+          "name": "Josh Montgomery",
+          "handle": "@joshmontgomery",
+          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+          "isLocalGuide": true,
+          "videoReviewCount": 1,
+          "photosCount": 0,
+          "isVerified": true
+        },
+        "rating": 5,
+        "durationSeconds": 47,
+        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
+        "fallbackVideoUrls": [
+          "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
+          "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
+          "/api/videos/stream/rev-1792740198020-gknyb.mp4",
+          "/default-review.mp4"
+        ],
+        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/thumbnail.jpg",
+        "caption": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+        "title": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+        "transcriptText": "Hey guys, I just got news that my flipper zero is coming in the mail Saturday, and I'm excited to open it up This is a product. I've been excited too Check out and a little bit to Do different things with I don't know I will actually come back here and revise this review probably once I have some input on the product. But at this point, it's just super exciting to get my Flipper Zero finally. Yay! This is a test. ABC123, check,",
+        "segments": [
+          {
+            "start": 1.54,
+            "end": 2.28,
+            "text": "Hey guys,",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 2.82,
+            "end": 4.05,
+            "text": "I just got news",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 4.18,
+            "end": 6.15,
+            "text": "that my flipper zero is coming",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 6.24,
+            "end": 7.78,
+            "text": "in the mail Saturday,",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 7.87,
+            "end": 10.04,
+            "text": "and I'm excited to open it up",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 11.1,
+            "end": 12.3,
+            "text": "This is a product.",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 12.52,
+            "end": 14.67,
+            "text": "I've been excited too Check out",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 15.73,
+            "end": 18.82,
+            "text": "and a little bit to Do",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 20.88,
+            "end": 22.28,
+            "text": "different things with",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 23.02,
+            "end": 25.5,
+            "text": "I don't know",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 26.29,
+            "end": 28.84,
+            "text": "I will actually come back here",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 28.97,
+            "end": 31.01,
+            "text": "and revise this review probably",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 31.36,
+            "end": 32.51,
+            "text": "once I have some input",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 32.51,
+            "end": 33.05,
+            "text": "on the product.",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 33.33,
+            "end": 34.3,
+            "text": "But at this point,",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 34.3,
+            "end": 36.19,
+            "text": "it's just super exciting to get",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 36.19,
+            "end": 38,
+            "text": "my Flipper Zero finally.",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 39.16,
+            "end": 39.61,
+            "text": "Yay!",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 39.97,
+            "end": 40.88,
+            "text": "This is a test.",
+            "isHardwareTimed": true
+          },
+          {
+            "start": 41.96,
+            "end": 42.6,
+            "text": "ABC123, check,",
+            "isHardwareTimed": true
+          }
+        ],
+        "hasBunnySmartCaptions": true,
+        "dishOrItem": "Flipper Zero",
+        "businessName": "Flipper Zero",
+        "likes": 0,
+        "isLiked": false,
+        "commentsCount": 0,
+        "comments": [],
+        "bookmarksCount": 0,
+        "isBookmarked": false,
+        "repostsCount": 0,
+        "views": 1,
+        "viewsCount": 1,
+        "sharesCount": 0,
+        "tags": [
+          "Verified Business"
+        ],
+        "recordedAt": "Just now",
+        "isLandscape": false,
+        "aspectRatio": "portrait",
+        "bunnyVideoId": "189297f7-78ae-4049-963a-6ac619762152",
+        "bunnyGuid": "189297f7-78ae-4049-963a-6ac619762152",
+        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
+        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/captions/en-auto.vtt",
+        "isReady": true,
+        "isProcessing": false,
+        "aiTitle": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
+        "description": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product.",
+        "hasHardwareSilenceSync": true,
+        "hasOfficialBunnyTitle": true
+      }
+    ],
+    "isSavedToProfile": true,
+    "placeLogoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500"
+  },
+  {
     "id": "wowcleannyc.com",
     "name": "Wow Clean NYC",
     "category": "Website",
@@ -4429,7 +4678,7 @@
   {
     "id": "bk.com",
     "name": "Burger King",
-    "category": "Fast Food Restaurant",
+    "category": "Restaurant & Cafe",
     "categoryType": "all",
     "address": "",
     "city": "Online",
@@ -4445,22 +4694,22 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
+    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png"
     ],
-    "openingHours": "Available 24/7",
+    "openingHours": "",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://bk.com",
+    "website": "https://www.bk.com/",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Burger King is a global quick-service restaurant brand famous for its flame-grilled Whopper sandwiches, burgers, fries, and shakes.",
+    "description": "Explore the Burger King menu, find a location near you, and order your favorite flame-grilled burgers for pickup or delivery.",
     "popularKeywords": [],
     "amenities": [],
     "topDishes": [],
@@ -4605,7 +4854,8 @@
         "hasHardwareSilenceSync": true
       }
     ],
-    "isSavedToProfile": true
+    "isSavedToProfile": true,
+    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
   },
   {
     "id": "refalo.legal",

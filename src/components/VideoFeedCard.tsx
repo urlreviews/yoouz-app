@@ -1156,8 +1156,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     bannerUrl={businessBannerUrl || video.placeBannerUrl}
                     loading={isActive || isNear ? "eager" : "lazy"}
                     fetchPriority={isActive ? "high" : "auto"}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-md self-center"
-                    imageClassName="w-full h-full object-contain rounded-lg"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-0.5 sm:p-1 shadow-md self-center"
+                    imageClassName="w-full h-full object-contain rounded-lg sm:rounded-xl"
                     fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                   />
                   <div className="min-w-0 flex-1 py-0.5">

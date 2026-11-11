@@ -36,7 +36,7 @@ import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
 import Hls from "hls.js";
 import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 import { isPurgedItem, normalizeReview } from "../hooks/useFeedPagination";
-import { getPlaceLogoUrl, getCleanLogoUrl } from "../utils/logoUtils";
+import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS } from "../utils/logoUtils";
 import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES, toTitleCase, getReviewTime } from "../utils/placeUtils";
 
 interface CopoVideoPlayerProps {
@@ -1157,10 +1157,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     (vid: VideoReview | undefined): string | null => {
       if (!vid) return null;
 
+      const vidCleanId = extractCleanDomain(vid.placeId || "");
+      const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
+      const vidCleanName = extractCleanDomain(vid.placeName || "");
+      const vidDomain = vidCleanWeb || vidCleanId || (vidCleanName?.includes(".") ? vidCleanName : "");
+      const strippedDomain = vidDomain ? vidDomain.replace(/^www\./, "") : "";
+
+      // 0. High-resolution verified vector brand logo match takes absolute precedence
+      if (vidDomain && KNOWN_BRAND_LOGOS[vidDomain]) {
+        return KNOWN_BRAND_LOGOS[vidDomain];
+      }
+      if (strippedDomain && KNOWN_BRAND_LOGOS[strippedDomain]) {
+        return KNOWN_BRAND_LOGOS[strippedDomain];
+      }
+
       if (places && places.length > 0) {
-        const vidCleanId = extractCleanDomain(vid.placeId || "");
-        const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
-        const vidCleanName = extractCleanDomain(vid.placeName || "");
 
         const p = places.find((place) => {
           if (!place) return false;

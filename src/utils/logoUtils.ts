@@ -1059,11 +1059,14 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
       <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
     </svg>`),
-  "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-  "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-  "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-  "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-  "burgerking": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+  "bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "www.bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "www.burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "burgerking": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+  "www.flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+  "flipper": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
   "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
   "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
   "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
@@ -1567,6 +1570,8 @@ export function isFaviconUrl(url?: string | null): boolean {
     l.endsWith(".ico") ||
     l.includes(".ico?") ||
     l.includes(".ico#") ||
+    l.includes("duckduckgo.com/ip3") ||
+    l.includes("icons.duckduckgo.com") ||
     l.includes("google.com/s2/favicons") ||
     l.includes("gstatic.com/favicon") ||
     l.includes("icon.horse")
@@ -1688,7 +1693,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     !place.logoUrl.includes("/api/brand-banner") &&
     !isWhiteOrInvertedLogo(place.logoUrl) &&
     !place.logoUrl.includes("brandfetch.io") &&
-    !place.logoUrl.includes("wikimedia.org") &&
+    !(place.logoUrl.includes("wikimedia.org") && (place.logoUrl.includes(".jpg") || place.logoUrl.includes(".jpeg") || (!place.logoUrl.toLowerCase().includes("logo") && !place.logoUrl.toLowerCase().includes(".svg")))) &&
     place.logoUrl !== "data:;" &&
     !place.logoUrl.startsWith("data:;") &&
     !place.logoUrl.includes("tap/0.png") &&

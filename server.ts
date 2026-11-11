@@ -2805,8 +2805,14 @@ function resolveBrandLogo(name: string, website?: string, category?: string): { 
   }
   if (norm.includes("burger king")) {
     return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=bk.com&sz=128",
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
       brandDomain: "bk.com"
+    };
+  }
+  if (norm.includes("flipper") || norm.includes("flipper zero")) {
+    return {
+      logoUrl: "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+      brandDomain: "flipper.net"
     };
   }
   if (norm.includes("starbucks")) {
@@ -31170,10 +31176,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
         "nfx": "https://www.nfx.com/apple-touch-icon.png",
-        "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-        "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-        "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-        "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+        "bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+        "www.bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+        "burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+        "www.burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+        "flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+        "www.flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+        "flipper": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
         "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
         "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
         "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",
@@ -32422,10 +32431,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       "nfx.com": "https://www.nfx.com/apple-touch-icon.png",
       "www.nfx.com": "https://www.nfx.com/apple-touch-icon.png",
       "nfx": "https://www.nfx.com/apple-touch-icon.png",
-      "bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-      "www.bk.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-      "burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
-      "www.burgerking.com": "https://icons.duckduckgo.com/ip3/bk.com.ico",
+      "bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+      "www.bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+      "burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+      "www.burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+      "flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+      "www.flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+      "flipper": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
       "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
       "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
       "proximus.be": "https://www.proximus.be/dam/jcr:5411f90f-ae6e-4d87-a4c9-583a7f2e4e47/cdn/brand/logos/proximus~2017-08-29-13-57-34~cache.png",

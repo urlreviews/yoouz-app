@@ -28,7 +28,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   website,
   logoUrl,
   bannerUrl,
-  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-2 z-30",
+  className = "w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white overflow-hidden flex items-center justify-center p-1 sm:p-1.5 z-30",
   imageClassName = "w-full h-full object-contain rounded-xl",
   fallbackTextClassName,
   loading = "eager",
@@ -97,8 +97,22 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return u === bannerUrl || u === proxiedBannerUrl || getProxiedImageUrl(u) === proxiedBannerUrl;
     };
 
-    // 0. Explicit rich standalone brand logo URL from place data/metadata (must not be a duplicate of bannerUrl)
-    const isLowResFavicon = Boolean(logoUrl && (isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon")));
+    // 0. Direct match for verified high-resolution vector brand logos takes absolute precedence!
+    if (cleanDomain) {
+      const strippedDomain = cleanDomain.replace(/^www\./, "");
+      if (KNOWN_BRAND_LOGOS[cleanDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[cleanDomain])) {
+        const proxiedKnown = getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
+        if (proxiedKnown) candidates.push(proxiedKnown);
+        candidates.push(KNOWN_BRAND_LOGOS[cleanDomain]);
+      } else if (KNOWN_BRAND_LOGOS[strippedDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[strippedDomain])) {
+        const proxiedKnown = getProxiedImageUrl(KNOWN_BRAND_LOGOS[strippedDomain]);
+        if (proxiedKnown) candidates.push(proxiedKnown);
+        candidates.push(KNOWN_BRAND_LOGOS[strippedDomain]);
+      }
+    }
+
+    // 1. Explicit rich standalone brand logo URL from place data/metadata (must not be a duplicate of bannerUrl or low-res icon)
+    const isLowResFavicon = Boolean(logoUrl && (isFaviconUrl(logoUrl) || logoUrl.includes("/api/favicon") || logoUrl.includes("duckduckgo.com/ip3") || logoUrl.includes("icons.duckduckgo.com")));
 
     if (
       logoUrl &&
@@ -111,20 +125,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       const proxiedLogo = getProxiedImageUrl(logoUrl);
       if (proxiedLogo) candidates.push(proxiedLogo);
       if (logoUrl !== proxiedLogo) candidates.push(logoUrl);
-    }
-
-    // 1. Direct match in KNOWN_BRAND_LOGOS
-    if (cleanDomain) {
-      const strippedDomain = cleanDomain.replace(/^www\./, "");
-      if (KNOWN_BRAND_LOGOS[cleanDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[cleanDomain])) {
-        const proxiedKnown = getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
-        if (proxiedKnown) candidates.push(proxiedKnown);
-        candidates.push(KNOWN_BRAND_LOGOS[cleanDomain]);
-      } else if (KNOWN_BRAND_LOGOS[strippedDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[strippedDomain])) {
-        const proxiedKnown = getProxiedImageUrl(KNOWN_BRAND_LOGOS[strippedDomain]);
-        if (proxiedKnown) candidates.push(proxiedKnown);
-        candidates.push(KNOWN_BRAND_LOGOS[strippedDomain]);
-      }
     }
 
     // 2. Locked verified authentic standalone brand logo from previous successful load (excluding banner copies)
@@ -153,9 +153,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       if (logoUrl !== proxiedLogo && !candidates.includes(logoUrl)) candidates.push(logoUrl);
     }
 
-    // 5. High-resolution favicon fallback (never use the banner image inside the logo box)
+    // 5. High-resolution 256px favicon fallback (never use the banner image inside the logo box)
     if (cleanDomain && cleanDomain.includes(".")) {
+      const gstaticFavicon = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDomain)}&size=256`;
       const googleFavicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=256`;
+      if (!candidates.includes(gstaticFavicon)) candidates.push(gstaticFavicon);
       if (!candidates.includes(googleFavicon)) candidates.push(googleFavicon);
     }
 
@@ -165,17 +167,15 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
-  const [isCompactFavicon, setIsCompactFavicon] = useState<boolean>(false);
 
-  const compactFaviconClass = `${imageClassName.replace(/\bw-full\b/g, "").replace(/\bh-full\b/g, "")} !w-11 !h-11 sm:!w-12 sm:!h-12 object-contain m-auto`;
-  const activeImageClass = isCompactFavicon ? compactFaviconClass : imageClassName;
-  const loadedImageClass = isCompactFavicon ? compactFaviconClass : imageClassName;
+  // Always render the full-frame logo with object-contain so logos look bold, prestigious, and fill the container cleanly
+  const activeImageClass = imageClassName;
+  const loadedImageClass = imageClassName;
 
   // Reset state when switching to a different business domain
   useEffect(() => {
     const locked = cleanDomain ? LOCKED_DOMAIN_LOGOS.get(cleanDomain) : null;
     setCandidateIdx(0);
-    setIsCompactFavicon(false);
     if (locked && !failedUrlsRef.current.has(locked)) {
       setLoadedSrc(locked);
       setImgLoaded(true);
@@ -216,18 +216,11 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     return false;
   };
 
-  const checkIsSmallFavicon = (w: number, h: number, src: string): boolean => {
-    const isSvg = Boolean(src.includes(".svg") || src.startsWith("data:image/svg") || src.includes("image/svg+xml"));
-    if (isSvg) return false;
-    return w > 0 && h > 0 && w <= 64 && h <= 64;
-  };
-
   // Synchronously handle images that are already complete in browser memory cache
   useEffect(() => {
     const img = imgRef.current;
     if (img && currentSrc && img.complete && img.naturalWidth > 0) {
       if (isAcceptableLogoDimensions(img.naturalWidth, img.naturalHeight, currentSrc)) {
-        setIsCompactFavicon(checkIsSmallFavicon(img.naturalWidth, img.naturalHeight, currentSrc));
         const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
         setNeedsDarkContrast(darkNeeded);
         KNOWN_LOADED_LOGOS.add(currentSrc);
@@ -304,7 +297,6 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
               });
               return;
             }
-            setIsCompactFavicon(checkIsSmallFavicon(img.naturalWidth, img.naturalHeight, currentSrc));
             const darkNeeded = checkImageNeedsDarkContrast(img, currentSrc);
             setNeedsDarkContrast(darkNeeded);
             if (currentSrc) {
