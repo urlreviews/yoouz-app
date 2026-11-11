@@ -1,5 +1,54 @@
 [
   {
+    "id": "neatlyyours.com",
+    "name": "Neatly Yours",
+    "category": "Restaurant & Cafe",
+    "categoryType": "all",
+    "address": "125 W 31st St, 10001 New York",
+    "city": "New York",
+    "country": "US",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=neatlyyours.com",
+    "logoUrl": "/api/favicon?domain=neatlyyours.com",
+    "bannerUrl": "",
+    "ogImage": "",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fneatlyyours.com%2Ffavicon.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (914) 650-3993",
+    "email": "support@neatlyyours.com",
+    "website": "https://neatlyyours.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Professional home and commercial cleaning across NYC & NJ. Background-checked, insured, community-driven. Book your free quote today.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "neatlyyours.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "nyccleantinc.com",
     "name": "New York Commercial Clean Team",
     "category": "Restaurant & Cafe",

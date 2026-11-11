@@ -209,6 +209,9 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   const bunnyId = String(v.bunnyVideoId || v.bunnyGuid || "").trim();
   const vUrl = String(v.videoUrl || "").trim();
 
+  if (!vUrl || vUrl.includes("placeholder") || vUrl.includes("blank") || vUrl.length < 5) return true;
+  if (id.includes("renevolt") || String(v.placeId || "").includes("renevolt") || String(v.placeName || "").includes("renevolt")) return true;
+
   if (extraDeletedIds) {
     if (extraDeletedIds instanceof Set) {
       if (extraDeletedIds.has(id) || extraDeletedIds.has(id.toLowerCase())) return true;

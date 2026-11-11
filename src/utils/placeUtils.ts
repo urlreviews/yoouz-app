@@ -1349,6 +1349,13 @@ export function isDomainDerivedGuess(name?: string | null, domain?: string | nul
   if (!domain || !cleanDom) return false;
   const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   const domRootStripped = domRoot.replace(/(?:inc|llc|ltd|corp|co|plc|gmbh|bv|nv|sa|srl|ag|kg|oy|ab|as|aps|pty)$/i, "");
+  
+  // If the candidate name has spaces and its alphanumeric form matches domRoot or domRootStripped (e.g. "Neatly Yours" for "neatlyyours.com"),
+  // it is an authentic spaced brand name, NOT a domain-derived guess!
+  if (trimmed.includes(" ") && (cleanName === domRoot || (domRootStripped.length >= 3 && cleanName === domRootStripped))) {
+    return false;
+  }
+
   return Boolean(domRoot && (cleanName === domRoot || (domRootStripped.length >= 3 && cleanName === domRootStripped)));
 }
 

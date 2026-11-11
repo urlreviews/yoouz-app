@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -38459,11 +38459,11 @@ function injectOpenGraphTags(html: string, meta: any) {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return;
     try {
-      // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs
-      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe'").catch(() => {});
+      // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs or mention renevolt
+      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe' OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
 
       // 2. Purge only broken, unnamed, or legacy synthesized .co.il fallback place records
-      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR id IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il')").catch(() => {});
+      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR id LIKE '%renevolt%' OR name LIKE '%renevolt%' OR id IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il')").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'Elaia' WHERE LOWER(id) IN ('elaia.com', 'www.elaia.com') AND name != 'Elaia'").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'All In Capital' WHERE LOWER(id) IN ('allincapital.vc', 'www.allincapital.vc') OR LOWER(name) = 'allin capital'").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'Red Swan Ventures' WHERE LOWER(id) IN ('redswanventures.com', 'www.redswanventures.com') OR LOWER(name) IN ('redswan ventures', 'red swan')").catch(() => {});
@@ -38487,13 +38487,14 @@ function injectOpenGraphTags(html: string, meta: any) {
         } catch (e) {}
       }
 
-      // Heal any other existing place records in BunnyDB whose name had an unsplit compound stem
+      // Heal all existing place records in BunnyDB whose name had an unsplit compound stem or domain guess
       const allPlacesRs = await bunnyDb.execute("SELECT id, name, data FROM places").catch(() => null);
       if (allPlacesRs && allPlacesRs.rows) {
         for (const r of allPlacesRs.rows as any[]) {
-          if (!r || !r.id || !r.name) continue;
-          const healed = formatBusinessName(r.name, r.id);
-          if (healed && healed !== r.name && healed.split(/\s+/).length >= r.name.split(/\s+/).length) {
+          if (!r || !r.id) continue;
+          const cleanDom = extractCleanDomain(r.id);
+          const healed = KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(cleanDom, cleanDom) || formatBusinessName(r.name, r.id);
+          if (healed && (isDomainStemName(r.name, r.id) || isDomainDerivedGuess(r.name, r.id) || (!r.name.includes(" ") && healed.includes(" ")) || healed !== r.name)) {
             let dObj: any = {};
             try { dObj = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch {}
             dObj.name = healed;
@@ -38504,7 +38505,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           }
         }
       }
-      console.log("🧹 [Server] Cleaned up broken and unnamed place records safely.");
+      console.log("🧹 [Server] Cleaned up broken, renevolt, and unnamed place records safely.");
     } catch (e) {
       console.warn("Purge notice:", e);
     }
