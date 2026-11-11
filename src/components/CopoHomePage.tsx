@@ -111,28 +111,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const trendingVideos = useMemo(() => {
     if (!Array.isArray(videos)) return [];
     
-    // Filter valid reviews, de-duplicate by place to show diverse businesses
-    const seenPlaces = new Set<string>();
-    const filtered: VideoReview[] = [];
-
-    // Order: Verified/authentic seed videos first (Cetaphil, Zara, Art Coffee Gallery, Anthropic, Burger King, etc.)
-    const sorted = [...videos].sort((a, b) => {
-      // Prioritize high-rated, captioned videos
-      const aScore = (a.rating || 5) * 10 + (a.thumbnailUrl ? 5 : 0) + (a.caption ? 3 : 0);
-      const bScore = (b.rating || 5) * 10 + (b.thumbnailUrl ? 5 : 0) + (b.caption ? 3 : 0);
-      return bScore - aScore;
-    });
-
-    for (const v of sorted) {
-      if (!v || !v.id) continue;
-      const pKey = (v.placeName || v.placeId || v.businessName || "").toLowerCase().trim();
-      if (!seenPlaces.has(pKey)) {
-        seenPlaces.add(pKey);
-        filtered.push(v);
-      }
-    }
-
-    return filtered.length > 0 ? filtered : sorted.slice(0, 10);
+    return sorted;
   }, [videos]);
 
   // Carousel scroll controls for desktop
