@@ -18,6 +18,7 @@ interface CopoMobileSearchViewProps {
   searchMode?: "general" | "review";
   autoFocusSearch?: boolean;
   onViewAll?: () => void;
+  setIsSearchActive?: (active: boolean) => void;
 }
 
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
@@ -35,7 +36,8 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   unreadNotifsCount = 0,
   searchMode = "general",
   autoFocusSearch = true,
-  onViewAll
+  onViewAll,
+  setIsSearchActive
 }) => {
   return (
     <div className="fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans">
@@ -46,6 +48,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
         currentUser={currentUser}
         searchMode={searchMode}
         autoFocusSearch={autoFocusSearch}
+        setIsSearchActive={setIsSearchActive}
         onSelectVideo={onSelectVideo}
         onOpenPlace={onOpenPlace}
         onOpenCreator={(author) => {

@@ -8879,7 +8879,7 @@ export function App() {
       />
 
       {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
-      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && (
+      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}
@@ -8942,6 +8942,7 @@ export function App() {
           videos={videos}
           allUsers={allRegisteredUsers}
           currentUser={currentUser}
+          setIsSearchActive={setIsSearchActive}
           onSelectVideo={(id) => {
             setIsSearchModalOpen(false);
             handleSelectVideoById(id, "feed");
