@@ -1,5 +1,103 @@
 [
   {
+    "id": "thenycmaid.com",
+    "name": "The NYC Maid",
+    "category": "Legal Services",
+    "categoryType": "all",
+    "address": "150 W 47th St, 10036 New York",
+    "city": "New York",
+    "country": "US",
+    "lat": 40.7589,
+    "lng": -73.9851,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://www.thenycmaid.com/_next/image?url=%2Flogo.png&w=384&q=75&dpl=dpl_BHqtZi3xNTSR2rtpVmEKbHFpUZ78",
+    "logoUrl": "https://www.thenycmaid.com/_next/image?url=%2Flogo.png&w=384&q=75&dpl=dpl_BHqtZi3xNTSR2rtpVmEKbHFpUZ78",
+    "bannerUrl": "https://www.fullloopcrm.com/site/nycmaid/opengraph-image?202300cf76c96dad",
+    "ogImage": "https://www.fullloopcrm.com/site/nycmaid/opengraph-image?202300cf76c96dad",
+    "photos": [
+      "https://www.fullloopcrm.com/site/nycmaid/opengraph-image?202300cf76c96dad"
+    ],
+    "openingHours": "Monday, Tuesday, Wednesday, Thursday, Friday, Saturday: 07:00 - 19:00",
+    "isOpen": true,
+    "phone": "+1 (212) 202-8400",
+    "email": "hi@thenycmaid.com",
+    "website": "https://www.thenycmaid.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "NYC's top-rated maid service from $59/hr. House cleaning across Manhattan, Brooklyn, Queens, the Bronx, Staten Island, Long Island, Westchester & NJ. Licensed, insured. 5.0★ Rated. (212) 202-8400",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "thenycmaid.com"
+  },
+  {
+    "id": "maidservicenyc.com",
+    "name": "Maid Service NYC",
+    "category": "Healthcare & Medical",
+    "categoryType": "all",
+    "address": "",
+    "city": "New York",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmaidservicenyc.com%2Fwp-content%2Fuploads%2F2023%2F09%2FMaid-Service-1.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmaidservicenyc.com%2Fwp-content%2Fuploads%2F2023%2F09%2FMaid-Service-1.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmaidservicenyc.com%2Fwp-content%2Fuploads%2F2023%2F09%2FNew-Project-27.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmaidservicenyc.com%2Fwp-content%2Fuploads%2F2023%2F09%2FNew-Project-27.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fmaidservicenyc.com%2Fwp-content%2Fuploads%2F2023%2F09%2FNew-Project-27.png"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+1 (212) 837-8596",
+    "email": "info@maidservicenyc.com",
+    "website": "https://maidservicenyc.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "220 E 72nd Street, New York NY 10021",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "maidservicenyc.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "flipper.net",
     "name": "Flipper Zero",
     "website": "https://flipper.net",
@@ -5181,10 +5279,10 @@
         ],
         "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
         "caption": "Long-lasting winter scent matching my style perfectly!",
-        "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
+        "transcriptText": "I found another Zara perfume that I am obsessed with. It's called Night Pour Homme II Winter, and it matches my style perfectly. And honestly, it lasts way longer than anything else I have tried at this price point. So you should try it.",
         "segments": [
           {
-            "start": 1.31,
+            "start": 0.94,
             "end": 3.87,
             "text": "I found another Zara perfume",
             "isHardwareTimed": true
@@ -5192,49 +5290,43 @@
           {
             "start": 4.03,
             "end": 6.56,
-            "text": "that I am obsessed with",
+            "text": "that I am obsessed with.",
             "isHardwareTimed": true
           },
           {
-            "start": 7.82,
+            "start": 7.84,
             "end": 11.24,
-            "text": "it's called night for a home",
+            "text": "It's called Night Pour Homme II Winter,",
             "isHardwareTimed": true
           },
           {
             "start": 11.87,
-            "end": 13.21,
-            "text": "version to winter",
+            "end": 15.46,
+            "text": "and it matches my style perfectly.",
             "isHardwareTimed": true
           },
           {
-            "start": 13.21,
-            "end": 15.31,
-            "text": "and it matches my style perfectly",
+            "start": 15.67,
+            "end": 16.19,
+            "text": "And honestly,",
             "isHardwareTimed": true
           },
           {
-            "start": 15.31,
-            "end": 16.75,
-            "text": "and honestly it lasts",
+            "start": 16.36,
+            "end": 18.18,
+            "text": "it lasts way longer than anything else",
             "isHardwareTimed": true
           },
           {
-            "start": 16.83,
-            "end": 18.12,
-            "text": "way longer than anything else",
+            "start": 18.18,
+            "end": 20.48,
+            "text": "I have tried at this price point.",
             "isHardwareTimed": true
           },
           {
-            "start": 18.12,
-            "end": 20.03,
-            "text": "I have tried at this price point",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 20.03,
-            "end": 20.95,
-            "text": "so you should you",
+            "start": 20.86,
+            "end": 21.59,
+            "text": "So you should try it.",
             "isHardwareTimed": true
           }
         ],

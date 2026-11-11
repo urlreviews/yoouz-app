@@ -1358,10 +1358,14 @@ export function isCrossBrandPortfolioLogo(url?: string | null, domain?: string |
     "left", "favicon", "apple", "touch", "webclip", "opengraph", "og", "avatar", "badge", "footer"
   ];
 
+  const fileAlpha = fileBase.replace(/[^a-z0-9]/g, "");
+  const fileTokens = fileBase.split(/[\-_.\s]+/).filter((t: string) => t.length >= 3);
   const matchesOwn =
     fileBase.includes(domStem) ||
     domStem.includes(fileBase) ||
-    (domPrefix.length >= 3 && fileBase.includes(domPrefix));
+    (fileAlpha.length >= 4 && (domStem.includes(fileAlpha) || fileAlpha.includes(domStem))) ||
+    (domPrefix.length >= 3 && fileBase.includes(domPrefix)) ||
+    fileTokens.some((t: string) => domStem.includes(t));
   const hasGeneric = genericLogoWords.some(w => fileBase.includes(w));
 
   if (/^[a-z][a-z_\-]{2,26}$/.test(fileBase) && !matchesOwn && !hasGeneric) {

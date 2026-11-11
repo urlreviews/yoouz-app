@@ -801,7 +801,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = (bannerError || isGenericName || isLogoSameAsPlaceBanner || isCrossBrandPortfolioLogo(place.logoUrl, drawerDomain)) ? "&refresh=true" : "";
+        const refreshParam = (bannerError || isGenericName || needsLogo || isLogoSameAsPlaceBanner || isCrossBrandPortfolioLogo(place.logoUrl, drawerDomain)) ? "&refresh=true" : "";
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
@@ -833,7 +833,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
                   if (cacheKey) {
-                    localStorage.setItem(`yoouz_place_media_v3_${cacheKey}`, JSON.stringify({
+                    localStorage.setItem(`yoouz_place_media_v4_${cacheKey}`, JSON.stringify({
                       bannerUrl: resolvedBanner,
                       logoUrl: (resolvedLogo && resolvedLogo !== resolvedBanner && !resolvedLogo.includes("/api/favicon")) ? resolvedLogo : ""
                     }));
@@ -957,7 +957,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     try {
       const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
       if (!cacheKey) return null;
-      const raw = localStorage.getItem(`yoouz_place_media_v3_${cacheKey}`);
+      const raw = localStorage.getItem(`yoouz_place_media_v4_${cacheKey}`);
       if (raw) return JSON.parse(raw);
     } catch(e) {}
     return null;

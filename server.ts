@@ -27986,10 +27986,14 @@ function isCrossBrandPortfolioLogoServer(url?: string | null, domain?: string | 
     "left", "favicon", "apple", "touch", "webclip", "opengraph", "og", "avatar", "badge", "footer"
   ];
 
+  const fileAlpha = fileBase.replace(/[^a-z0-9]/g, "");
+  const fileTokens = fileBase.split(/[\-_.\s]+/).filter((t: string) => t.length >= 3);
   const matchesOwn =
     fileBase.includes(domStem) ||
     domStem.includes(fileBase) ||
-    (domPrefix.length >= 3 && fileBase.includes(domPrefix));
+    (fileAlpha.length >= 4 && (domStem.includes(fileAlpha) || fileAlpha.includes(domStem))) ||
+    (domPrefix.length >= 3 && fileBase.includes(domPrefix)) ||
+    fileTokens.some((t: string) => domStem.includes(t));
   const hasGeneric = genericLogoWords.some(w => fileBase.includes(w));
 
   // If the filename is a clean alphabetic brand word (like "Spotify.svg", "Klarna.svg", "TradeRepublic.svg", "Bolt.svg")
@@ -28038,7 +28042,86 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
   }
 
-  function isValidCandidate(url: string): boolean {
+  function isHomepageHref(rawHref?: string | null): boolean {
+    if (!rawHref || typeof rawHref !== "string") return false;
+    const h = rawHref.trim();
+    if (!h || h === "#" || h.startsWith("javascript:") || h.startsWith("mailto:") || h.startsWith("tel:")) return false;
+    if (h === "/" || h === "./" || h === "/index.html" || h === "/index.php" || h === "index.html" || h === "index.php" || h === "/home" || h === "/home/") {
+      return true;
+    }
+    try {
+      const parsed = new URL(h, effectiveBaseUrl);
+      const hostClean = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+      const hostStem = hostClean.split(".")[0].replace(/[^a-z0-9]/g, "");
+      const isSameSite = hostClean === cleanDom || (domStem.length >= 3 && hostStem === domStem) || (effStem.length >= 3 && hostStem === effStem);
+      if (!isSameSite) return false;
+      if (parsed.search || parsed.hash) return false;
+      const cleanP = parsed.pathname.replace(/\/+$/, "").toLowerCase();
+      return (
+        cleanP === "" ||
+        cleanP === "/index.html" ||
+        cleanP === "/index.php" ||
+        cleanP === "/home" ||
+        /^\/(en|fr|nl|de|es|it|pt|he|ar)(-[a-z]{2})?$/i.test(cleanP)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function isLikelyLogoImageDimensions(el: any, absUrl: string): boolean {
+    const wAttr = parseInt(el?.attr("width") || "0", 10);
+    const hAttr = parseInt(el?.attr("height") || "0", 10);
+    if (wAttr > 0 && hAttr > 0) {
+      if (wAttr <= 1 || hAttr <= 1) return false;
+      // Reject giant tall/square hero banners (e.g. 1920x1080, 1200x800, 1024x683), but allow wide wordmark logos (e.g. 900x222) and standard logos
+      if (hAttr > 420 && wAttr / hAttr < 2.2) return false;
+      if (wAttr > 1100 && hAttr > 360) return false;
+      return true;
+    }
+    const dimMatch = absUrl.match(/[-_](\d{2,4})x(\d{2,4})(?=\.[a-z0-9]+|\?|$)/i);
+    if (dimMatch) {
+      const dw = parseInt(dimMatch[1], 10);
+      const dh = parseInt(dimMatch[2], 10);
+      if (dw > 0 && dh > 0) {
+        if (dh > 420 && dw / dh < 2.2) return false;
+        if (dw > 1100 && dh > 360) return false;
+      }
+    }
+    return true;
+  }
+
+  function doesFileOrAltMatchBrand(el: any, absUrl: string): boolean {
+    const altText = ((el?.attr("alt") || el?.attr("title") || el?.attr("aria-label") || "") as string).trim().toLowerCase();
+    const cleanPath = (absUrl || "").toLowerCase().split("?")[0].split("#")[0];
+    const fileName = cleanPath.split("/").pop() || "";
+    const fileBase = fileName
+      .replace(/\.[a-z0-9]+$/i, "")
+      .replace(/[-_]\d+x\d+$/i, "")
+      .replace(/[-_]\d+$/i, "")
+      .trim();
+    const fileAlpha = fileBase.replace(/[^a-z0-9]/g, "");
+    const fileTokens = fileBase.split(/[\-_.\s]+/).filter((t: string) => t.length >= 3);
+
+    const altMatches =
+      (domStem.length >= 2 && altText.includes(domStem)) ||
+      (effStem.length >= 2 && altText.includes(effStem)) ||
+      (domPrefix.length >= 3 && altText.includes(domPrefix)) ||
+      (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
+      pageBrandTokens.some((t: string) => altText.includes(t));
+
+    const fileMatches =
+      (domStem.length >= 3 && fileAlpha.includes(domStem)) ||
+      (effStem.length >= 3 && fileAlpha.includes(effStem)) ||
+      (fileAlpha.length >= 4 && (domStem.includes(fileAlpha) || effStem.includes(fileAlpha))) ||
+      (domPrefix.length >= 4 && fileAlpha.startsWith(domPrefix)) ||
+      (effPrefix.length >= 4 && fileAlpha.startsWith(effPrefix)) ||
+      (fileTokens.length >= 2 && fileTokens.filter((t: string) => domStem.includes(t) || effStem.includes(t) || pageBrandTokens.includes(t)).length >= 2);
+
+    return Boolean(altMatches || fileMatches);
+  }
+
+  function isValidCandidate(url: string, allowFavicon = false): boolean {
     if (!url || typeof url !== "string") return false;
     if (url.startsWith("data:image/svg")) {
       const dec = (() => { try { return decodeURIComponent(url); } catch { return url; } })().toLowerCase();
@@ -28047,7 +28130,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       }
     }
     if (isGenericOrPlaceholderLogo(url)) return false;
-    if (isFaviconUrl(url)) return false;
+    if (!allowFavicon && isFaviconUrl(url)) return false;
     if (isCrossBrandPortfolioLogoServer(url, cleanDom)) return false;
     if (url.includes("placeholder") || url.includes("blank.gif") || url.includes("pixel.gif")) return false;
     return true;
@@ -28082,18 +28165,24 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   function isThirdPartyOrContentLogo(el: any, absUrl: string): boolean {
     if (isCrossBrandPortfolioLogoServer(absUrl, cleanDom)) return true;
     if (!el) return false;
+    if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return true;
 
     const altText = (el.attr("alt") || el.attr("title") || el.attr("aria-label") || "").trim().toLowerCase();
-    const matchesOwnBrand =
-      (domStem.length >= 2 && altText.includes(domStem)) ||
-      (effStem.length >= 2 && altText.includes(effStem)) ||
-      (domPrefix.length >= 3 && altText.includes(domPrefix)) ||
-      (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
-      pageBrandTokens.some((t: string) => altText.includes(t));
+    const matchesOwnBrand = doesFileOrAltMatchBrand(el, absUrl);
+
+    const parentAnchor = el.closest("a");
+    const isWrappedInHomepageLink = parentAnchor.length > 0 && isHomepageHref(parentAnchor.attr("href"));
+
+    const topSectionContainer = el.closest('section, .elementor-top-section, .e-con, .et_pb_section, .fl-row');
+    const isInTopNavSection =
+      topSectionContainer.length > 0 &&
+      topSectionContainer.find('nav, [role="navigation"], [class*="nav-menu" i], .menu, .navbar-nav').length > 0;
 
     const isInHeaderOrNav =
-      el.closest('header, nav, [role="banner"], .w-nav, .navbar, .site-header, .main-header, .global-header, #header, #navbar, #masthead, .masthead, .topbar, .top-bar, .before-header-wrap, .menu-layout, .logo_container, .logo-container, .hh-logo, [class*="__logo" i], [class*="site-logo" i], [class*="brand-logo" i], [class*="header-logo" i]').length > 0 ||
-      (matchesOwnBrand && altText.includes("logo")) ||
+      isWrappedInHomepageLink ||
+      isInTopNavSection ||
+      el.closest('header, nav, [role="banner"], [data-elementor-type="header"], .elementor-location-header, .elementor-widget-theme-site-logo, .hfe-site-logo, .w-nav, .navbar, .site-header, .main-header, .global-header, #header, #navbar, #masthead, .masthead, .topbar, .top-bar, .before-header-wrap, .menu-layout, .logo_container, .logo-container, .hh-logo, [class*="__logo" i], [class*="site-logo" i], [class*="brand-logo" i], [class*="header-logo" i]').length > 0 ||
+      (matchesOwnBrand && (altText.includes("logo") || isLikelyLogoImageDimensions(el, absUrl))) ||
       altText === "brand logo" ||
       el.parents().toArray().some((p: any) => {
         const c = `${$(p).attr("class") || ""} ${$(p).attr("id") || ""}`.toLowerCase();
@@ -28101,8 +28190,8 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       });
 
     const isInPortfolioOrContent =
-      el.closest('main, article, section, footer, blockquote, figure, i.logo, [class*="portfolio" i], [class*="client" i], [class*="partner" i], [class*="customer" i], [class*="testimonial" i], [class*="backed" i], [class*="invest" i], [class*="showcase" i], [class*="carousel" i], [class*="slider" i], [class*="swiper" i], [class*="marquee" i], [class*="stories" i], [class*="case-stud" i], [class*="companies" i], [class*="trusted" i], [class*="sponsor" i], [class*="ecosystem" i], [class*="ti-widget" i]').length > 0 ||
-      (!isInHeaderOrNav && el.closest('.content, #content, [class*="grid" i], [class*="list" i], [class*="cards" i]').length > 0);
+      el.closest('article, blockquote, i.logo, [class*="portfolio" i], [class*="client" i], [class*="partner" i], [class*="customer" i], [class*="testimonial" i], [class*="backed" i], [class*="invest" i], [class*="showcase" i], [class*="carousel" i], [class*="slider" i], [class*="swiper" i], [class*="marquee" i], [class*="stories" i], [class*="case-stud" i], [class*="companies" i], [class*="trusted" i], [class*="sponsor" i], [class*="ecosystem" i], [class*="ti-widget" i]').length > 0 ||
+      (!isInHeaderOrNav && el.closest('main, section, figure, .content, #content, [class*="grid" i], [class*="list" i], [class*="cards" i]').length > 0);
 
     if (!isInHeaderOrNav && isInPortfolioOrContent) return true;
 
@@ -28115,7 +28204,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         "untitled", "cropped", "custom", "company", "official", "new", "banner", "top", "left"
       ];
       const hasGenericWord = genericLogoWords.some(w => altText.includes(w));
-      if (!matchesOwnBrand && !hasGenericWord) {
+      if (!matchesOwnBrand && !hasGenericWord && !isWrappedInHomepageLink) {
         return true;
       }
     }
@@ -28186,6 +28275,10 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   try {
     const imgSelectors = [
       '.w-nav-brand:not([class*="mobile"]) img',
+      '[data-elementor-type="header"] img',
+      '.elementor-location-header img',
+      '.elementor-widget-theme-site-logo img',
+      '.hfe-site-logo img',
       'header a[href="/"] img', 'header a[to="/"] img', 'header a[aria-label*="home" i] img',
       'header .logo img', 'header a.logo img',
       'header img[class*="logo" i]', 'header img[alt*="logo" i]', 'header img[src*="logo" i]',
@@ -28215,7 +28308,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         const src = getBestLogoImgSrc(el);
         if (src) {
           const abs = makeAbsolute(src);
-          if (abs && isValidCandidate(abs) && !isThirdPartyOrContentLogo(el, abs)) {
+          if (abs && isValidCandidate(abs) && isLikelyLogoImageDimensions(el, abs) && !isThirdPartyOrContentLogo(el, abs)) {
             if (!isWhiteOrLightFilename(abs, el)) {
               matchedPreferred = abs;
             } else if (!fallbackHeaderLogo) {
@@ -28226,6 +28319,58 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       });
       if (matchedPreferred) return matchedPreferred;
     }
+
+    // 1A-2. Universal Homepage-Linked Header Images (<a href="https://domain.com/"><img ... /></a> or <a href="/"><img ... /></a>)
+    // Covers Elementor, Divi, WordPress, Wix, Squarespace, and custom headers where the logo image is linked to the root homepage URL without a "logo" class
+    let homepageLinkedLogo = "";
+    $("a[href] img").each((_: any, rawEl: any) => {
+      if (homepageLinkedLogo) return;
+      const el = $(rawEl);
+      if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return;
+      const anchor = el.closest("a");
+      const href = anchor.attr("href") || "";
+      if (!isHomepageHref(href)) return;
+      const src = getBestLogoImgSrc(el);
+      if (!src) return;
+      const abs = makeAbsolute(src);
+      if (abs && isValidCandidate(abs) && isLikelyLogoImageDimensions(el, abs) && !isThirdPartyOrContentLogo(el, abs)) {
+        if (!isWhiteOrLightFilename(abs, el)) {
+          homepageLinkedLogo = abs;
+        } else if (!fallbackHeaderLogo) {
+          fallbackHeaderLogo = abs;
+        }
+      }
+    });
+    if (homepageLinkedLogo) return homepageLinkedLogo;
+
+    // 1A-3. Top-of-Page Brand-Named Images (first 12 images in DOM whose filename or alt matches the domain/brand stem, e.g. Maid-Service-1.png on maidservicenyc.com)
+    let topBrandNamedLogo = "";
+    $("img").slice(0, 12).each((_: any, rawEl: any) => {
+      if (topBrandNamedLogo) return;
+      const el = $(rawEl);
+      if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return;
+      const src = getBestLogoImgSrc(el);
+      if (!src) return;
+      const abs = makeAbsolute(src);
+      if (!abs || !isValidCandidate(abs) || !isLikelyLogoImageDimensions(el, abs)) return;
+      if (doesFileOrAltMatchBrand(el, abs) && !isThirdPartyOrContentLogo(el, abs)) {
+        // Ensure it has logo-like dimensions/aspect ratio or sits in the top navigation bar
+        const wAttr = parseInt(el.attr("width") || "0", 10);
+        const hAttr = parseInt(el.attr("height") || "0", 10);
+        const isHorizontalWordmarkOrCompact =
+          (wAttr > 0 && hAttr > 0 && ((wAttr / hAttr >= 1.5 && hAttr <= 350) || (wAttr <= 500 && hAttr <= 300))) ||
+          /logo|brand|header|icon|mark/i.test(abs) ||
+          el.attr("fetchpriority") === "high";
+        if (isHorizontalWordmarkOrCompact) {
+          if (!isWhiteOrLightFilename(abs, el)) {
+            topBrandNamedLogo = abs;
+          } else if (!fallbackHeaderLogo) {
+            fallbackHeaderLogo = abs;
+          }
+        }
+      }
+    });
+    if (topBrandNamedLogo) return topBrandNamedLogo;
   } catch(e) {}
 
   // 1B. Header & Navigation Inline SVG Brand Logos (runs immediately if header uses <svg> instead of <img>, e.g. creandum.com)
@@ -28327,12 +28472,13 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       }
     }
 
-    // Check single inline SVG brand logos inside header or nav
+    // Check single inline SVG brand logos inside header, nav, or homepage links
     const svgSelectors = [
       'header a[href="/"] svg', 'header a[to="/"] svg', 'header a[aria-label*="home" i] svg', 'header .brand svg',
       'header a.logo svg', 'header .logo svg', 'header [class*="logo" i] svg', 'header [id*="logo" i] svg',
       'nav a[href="/"] svg', 'nav a[to="/"] svg', 'nav a.logo svg', 'nav .logo svg', 'nav [class*="logo" i] svg',
-      '[class*="header" i] a.logo svg', '[class*="header" i] .logo svg', '[class*="header" i] [class*="logo" i] svg'
+      '[class*="header" i] a.logo svg', '[class*="header" i] .logo svg', '[class*="header" i] [class*="logo" i] svg',
+      '[data-elementor-type="header"] a svg', '.elementor-location-header a svg'
     ];
     for (const sel of svgSelectors) {
       let matchedSvg = "";
@@ -28371,7 +28517,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
               svgStr = svgStr.replace("<svg", `<svg width="${w}" height="${h}"`);
             }
             svgStr = normalizeInnerSvgMarkup(svgStr);
-            // If root <svg> has fill="none" (common when external CSS sets path { fill: #fff }), and inner paths have no explicit fill or stroke, set root fill="#09090b"
             const innerOnly = svgStr.replace(/^<svg[^>]*>/i, "").replace(/<\/svg>$/i, "");
             const visibleInner = innerOnly
               .toLowerCase()
@@ -28408,7 +28553,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       if (isGenericOrPlaceholderLogo(url)) return false;
       const l = url.toLowerCase();
       if (l.endsWith(".ico") || l.includes(".ico?") || l.includes("16x16") || l.includes("32x32") || l.includes("48x48")) return false;
-      if (sizeNum > 0 && sizeNum < 96) return false;
+      if (sizeNum > 0 && sizeNum < 72) return false;
       return true;
     };
     const appleIcons: { url: string; size: number }[] = [];
@@ -28489,24 +28634,28 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   // If the website had an explicit header/nav logo image (even if white/light, which our frontend contrast guard automatically renders dark on white), return it before falling back!
   if (fallbackHeaderLogo) return fallbackHeaderLogo;
 
-  // 6. High-resolution Web Icon links (strictly vector .svg or explicit sizes >= 128px; never low-res shortcut icons or favicons)
+  // 6. Website Icon & Favicon links (<link rel="icon">, <link rel="shortcut icon">, <meta name="msapplication-TileImage">)
+  // Ranked from highest resolution (.svg / 512px / 256px / 192px / 180px) down to standard favicons so we never show a fake letter fallback when the site has a real icon!
   try {
     const siteIcons: { url: string; size: number }[] = [];
-    $('link[rel="icon"]').each((_: any, el: any) => {
-      const href = $(el).attr("href");
+    $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="fluid-icon"], meta[name="msapplication-TileImage"]').each((_: any, el: any) => {
+      const rawHref = ($(el).attr("href") || $(el).attr("content") || "").trim();
+      if (!rawHref) return;
       const sizes = $(el).attr("sizes") || "";
       const typeAttr = ($(el).attr("type") || "").toLowerCase();
-      if (href && typeAttr !== "image/x-icon" && typeAttr !== "image/vnd.microsoft.icon") {
-        const lowerHref = href.toLowerCase();
-        const isSvg = lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || typeAttr === "image/svg+xml";
-        const explicitSize = parseInt(sizes.split("x")[0], 10) || 0;
-        const sizeNum = isSvg ? 512 : explicitSize;
-        if (sizeNum >= 128) {
-          const abs = makeAbsolute(href);
-          if (abs && isValidCandidate(abs)) {
-            siteIcons.push({ url: abs, size: sizeNum });
-          }
-        }
+      const lowerHref = rawHref.toLowerCase();
+      const isSvg = lowerHref.endsWith(".svg") || lowerHref.includes(".svg?") || typeAttr === "image/svg+xml";
+      const explicitSize = parseInt(sizes.split("x")[0], 10) || 0;
+      const urlSizeMatch = lowerHref.match(/[-_](\d{2,3})x\1(?=\.[a-z0-9]+|\?|$)/);
+      const urlSize = urlSizeMatch ? parseInt(urlSizeMatch[1], 10) : 0;
+      const isIco = lowerHref.endsWith(".ico") || lowerHref.includes(".ico?") || typeAttr === "image/x-icon" || typeAttr === "image/vnd.microsoft.icon";
+      const sizeNum = isSvg ? 512 : (explicitSize || urlSize || (isIco ? 32 : 128));
+      let abs = makeAbsolute(rawHref);
+      if (abs && abs.includes("squarespace-cdn.com") && abs.includes("format=")) {
+        abs = abs.replace(/format=\d+w/, "format=500w");
+      }
+      if (abs && isValidCandidate(abs, true)) {
+        siteIcons.push({ url: abs, size: sizeNum });
       }
     });
     if (siteIcons.length > 0) {
@@ -29824,8 +29973,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isCachedNameStem = (
               isDomainStemName(row.name, matchedDom) ||
               isCorruptedBusinessNameServer(row.name) ||
-              isDomainDerivedGuess(row.name, matchedDom) ||
-              (cachedDescBrand && row.name && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
+              (cachedDescBrand && row.name && !row.name.includes(" ") && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
             ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
             if (matchedDom && isExactMatch && !isCachedNameStem && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
@@ -30622,6 +30770,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 siteName = formatBusinessName(siteName, cleanDomKey) || siteName;
               }
 
+              if (!logo) {
+                logo = extractAuthenticWebsiteLogo($, html, finalUrl, domain);
+              }
+
               // 5. EXTRACT BANNER IMAGE & PAGE PHOTOS
               const rawMetaImage = getMetaContent('image') || 
                                    getMetaContent('image:url') || 
@@ -30642,9 +30794,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               if (rawMetaImage && !isThinDividerOgImage && !isLogoOrIconUrl(rawMetaImage) && !isBadBanner(rawMetaImage) && !rawMetaImage.includes('#') && !rawMetaImage.includes('paint0_linear')) {
                 try {
-                  image = new URL(rawMetaImage, finalUrl).toString();
+                  const candImg = new URL(rawMetaImage, finalUrl).toString();
+                  if (candImg !== logo) image = candImg;
                 } catch (e) {
-                  image = rawMetaImage;
+                  if (rawMetaImage !== logo) image = rawMetaImage;
                 }
                 if (image) scrapedPhotosList.push(image);
                 console.log('[DEBUG BANNER Step 1 ogImg]:', image);
@@ -30846,6 +30999,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 validCandidates.slice(0, 6).forEach(c => {
                   try {
                     const abs = new URL(c.src, finalUrl).toString();
+                    if (abs === logo) return;
                     if (!resolvedDomCandidates.includes(abs)) resolvedDomCandidates.push(abs);
                     if (!scrapedPhotosList.includes(abs)) scrapedPhotosList.push(abs);
                   } catch(e) {}
@@ -32606,7 +32760,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (html) {
           const $f = cheerio.load(html);
           const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
-          if (extractedLogo && !isFaviconUrl(extractedLogo) && !isGenericOrPlaceholderLogo(extractedLogo)) {
+          if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo)) {
             if (extractedLogo.startsWith("data:image/svg+xml")) {
               const commaIdx = extractedLogo.indexOf(",");
               const svgContent = commaIdx >= 0 ? decodeURIComponent(extractedLogo.slice(commaIdx + 1)) : "";
@@ -32657,9 +32811,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       } catch (e) {}
     }
 
-    // High-resolution authentic brand favicon from Google gstatic / s2 service fetched server-side
+    // High-resolution authentic brand favicon from website root / Google gstatic / s2 service fetched server-side
     if (cleanDomain && cleanDomain.includes(".")) {
       const faviconEndpoints = [
+        `https://${cleanDomain}/apple-touch-icon.png`,
+        `https://${cleanDomain}/favicon.ico`,
         `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDomain)}&size=256`,
         `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=256`,
         `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`
