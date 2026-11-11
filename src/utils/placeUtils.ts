@@ -4553,27 +4553,46 @@ export const AUTHENTIC_CANONICAL_REVIEW_IDS = new Set([
  * Case-insensitive check if a video ID or review object is marked as deleted on the client.
  */
 export function isClientDeletedVideo(item: any): boolean {
-  if (!item || typeof window === "undefined" || !window.localStorage) return false;
+  if (!item) return false;
   try {
-    const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-    const deletedVideos: string[] = JSON.parse(deletedStr);
-    if (!Array.isArray(deletedVideos) || deletedVideos.length === 0) return false;
+    const HARD_DELETED = new Set([
+      "rev-1792588172597-vb7nk",
+      "7ca2740c-cfc8-4afe-ab43-8350298cda87",
+      "renevolt-by-solar-x.co.il",
+      "rev-1792505354614-j01wo",
+      "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
+      "rev-1789841701519-2l6x8",
+      "rev-1789577075627-3488d"
+    ]);
 
-    const deletedSet = new Set(deletedVideos.map(id => String(id).trim().toLowerCase()));
+    let deletedSet = new Set<string>();
+    if (typeof window !== "undefined" && window.localStorage) {
+      const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+      try {
+        const deletedVideos: string[] = JSON.parse(deletedStr);
+        if (Array.isArray(deletedVideos)) {
+          deletedVideos.forEach(id => {
+            if (id) deletedSet.add(String(id).trim().toLowerCase());
+          });
+        }
+      } catch (e) {}
+    }
 
     if (typeof item === "object") {
       const id = item.id ? String(item.id).trim().toLowerCase() : "";
       const bunnyId = item.bunnyVideoId ? String(item.bunnyVideoId).trim().toLowerCase() : "";
       const guid = item.bunnyGuid ? String(item.bunnyGuid).trim().toLowerCase() : "";
+      const placeId = item.placeId ? String(item.placeId).trim().toLowerCase() : "";
 
-      if (id && deletedSet.has(id)) return true;
-      if (bunnyId && deletedSet.has(bunnyId)) return true;
-      if (guid && deletedSet.has(guid)) return true;
+      if (id && (deletedSet.has(id) || HARD_DELETED.has(id))) return true;
+      if (bunnyId && (deletedSet.has(bunnyId) || HARD_DELETED.has(bunnyId))) return true;
+      if (guid && (deletedSet.has(guid) || HARD_DELETED.has(guid))) return true;
+      if (placeId && HARD_DELETED.has(placeId)) return true;
       return false;
     }
 
     const strId = String(item).trim().toLowerCase();
-    return Boolean(strId && deletedSet.has(strId));
+    return Boolean(strId && (deletedSet.has(strId) || HARD_DELETED.has(strId)));
   } catch (e) {}
   return false;
 }

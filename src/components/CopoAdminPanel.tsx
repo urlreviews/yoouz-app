@@ -1559,12 +1559,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const activeVideos = useMemo(() => {
     const map = new Map<string, VideoReview>();
     (videos || []).forEach((v) => {
-      if (v && v.id && !isClientDeletedVideo(v.id)) {
+      if (v && v.id && !isClientDeletedVideo(v)) {
         map.set(String(v.id), v);
       }
     });
     (dbVideos || []).forEach((v) => {
-      if (v && v.id && !isClientDeletedVideo(v.id)) {
+      if (v && v.id && !isClientDeletedVideo(v)) {
         map.set(String(v.id), v);
       }
     });
