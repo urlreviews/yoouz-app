@@ -111,7 +111,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const trendingVideos = useMemo(() => {
     if (!Array.isArray(videos)) return [];
     
-    return sorted;
+    return videos;
   }, [videos]);
 
   // Carousel scroll controls for desktop
