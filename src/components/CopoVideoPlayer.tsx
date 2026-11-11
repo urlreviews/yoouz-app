@@ -137,7 +137,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   // Fallback to static seed reviews ONLY if main home feed is hydrating without explicit videos prop or context
   const effectiveVideos = useMemo(() => {
     if (Array.isArray(videos)) {
-      return videos.filter(v => v && !isPurgedItem(v)).sort((a, b) => getReviewTime(b) - getReviewTime(a));
+      return videos.filter(v => v && !isPurgedItem(v));
     }
     if (feedContextTitle) {
       return [];
@@ -1396,10 +1396,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [videos, onSelectVideoIndex]);
 
-  // Initial mount top-lock
+  // Initial mount scroll to currentIndex
   useEffect(() => {
-    if (currentIndex === 0 && containerRef.current) {
-      containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+    if (containerRef.current) {
+      if (currentIndex === 0) {
+        containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+      } else if (currentIndex > 0 && currentIndex < displayItems.length) {
+        scrollToCard(currentIndex, "instant");
+      }
     }
   }, []);
 
