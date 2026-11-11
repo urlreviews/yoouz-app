@@ -7761,6 +7761,7 @@ export function App() {
               setIsSearchModalOpen(false);
               handleOpenPlaceDrawer(id);
             }}
+            onClose={() => setIsSearchModalOpen(false)}
             onOpenCreator={(author) => {
               setIsSearchModalOpen(false);
               handleOpenCreatorDrawer(author);
@@ -8951,6 +8952,7 @@ export function App() {
             setIsSearchModalOpen(false);
             handleViewAllTrending();
           }}
+          onClose={() => setIsSearchModalOpen(false)}
           onOpenPlace={(id) => {
             setIsSearchModalOpen(false);
             handleOpenPlaceDrawer(id);

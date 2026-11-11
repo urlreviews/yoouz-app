@@ -782,7 +782,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               setQuery={setQuery}
               suggestions={suggestions}
               isOpen={showDropdown}
-              onClose={() => setShowDropdown(false)}
+              onClose={() => { setShowDropdown(false); onClose?.(); }}
               onSelectSuggestion={handleSelectSuggestion}
               onSubmit={handleSearchSubmit}
               isLoading={isLoadingSuggest}
