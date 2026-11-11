@@ -29904,10 +29904,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const resolveOnly = req.query.resolveOnly === 'true';
       const forceRefresh = req.query.refresh === 'true' || req.query.nocache === 'true';
 
-      // Fast-path: If user wants resolve-only and passed a direct domain, return instantly in 0.0s
+      const activeDb = (global as any).bunnyDb || getBunnyDb() || db;
+
+      // Fast-path: If user wants resolve-only and passed a direct domain, check DB cache or KNOWN_OFFICIAL_NAMES first
       if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ') && !forceRefresh) {
         const cleanDom = cleanDomainName(rawQuery);
-        const fastTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(cleanDom, cleanDom) || cleanDom;
+        let dbFastName = "";
+        if (activeDb) {
+          try {
+            const rs = await activeDb.execute({
+              sql: `SELECT name FROM places WHERE LOWER(id) = ? OR LOWER(id) = ? LIMIT 1`,
+              args: [cleanDom, `www.${cleanDom}`]
+            });
+            const candidateName = (rs?.rows?.[0] as any)?.name || "";
+            if (candidateName && !isDomainStemName(candidateName, cleanDom) && !isDomainDerivedGuess(candidateName, cleanDom)) {
+              dbFastName = candidateName;
+            }
+          } catch (e) {}
+        }
+        const fastTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || dbFastName || formatBusinessName(cleanDom, cleanDom) || cleanDom;
         console.log(`[Fast Resolve Only] Bypassing scrape for domain: ${cleanDom}`);
         return res.json({
           title: fastTitle,
@@ -29919,7 +29934,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
       
       // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path)
-      const activeDb = (global as any).bunnyDb || db;
       if (activeDb && rawQuery && !forceRefresh) {
         try {
           const cleanQDom = cleanDomainName(rawQuery);
@@ -30617,17 +30631,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                        l === "my blog" || l === "untitled" || l === "hostinger" || l === "drupal";
               };
 
+              const rawTwitterTitle = ($('meta[property="twitter:title"]').attr('content') || $('meta[name="twitter:title"]').attr('content') || '').trim();
               const validAppName = (appName && !isGenericOrPlaceholderTitle(appName) && !isAgencyOrBoilerplate(appName) && appName.length <= 50) ? appName : '';
               const validSiteName = (rawSiteName && !isGenericOrPlaceholderTitle(rawSiteName) && !isAgencyOrBoilerplate(rawSiteName) && rawSiteName.length <= 65) ? rawSiteName : '';
+              const validTwitterTitle = (rawTwitterTitle && !isGenericOrPlaceholderTitle(rawTwitterTitle) && !isAgencyOrBoilerplate(rawTwitterTitle) && rawTwitterTitle.length <= 65) ? rawTwitterTitle : '';
               const bestSiteNameCandidate = knownBrand || validSiteName || validAppName;
 
               const cleanedHtmlTitle = htmlTagTitle ? cleanTitleString(htmlTagTitle) : '';
               const cleanedOgTitle = rawTitle ? cleanTitleString(rawTitle) : '';
+              const cleanedTwitterTitle = validTwitterTitle ? cleanTitleString(validTwitterTitle) : '';
               const cleanedValidSiteName = validSiteName ? cleanTitleString(validSiteName) : '';
+              const cleanedJsonLdOrgName = (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 65) ? cleanTitleString(jsonLdOrgName) : '';
+              const cleanedJsonLdWebSiteName = (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && !isAgencyOrBoilerplate(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 65) ? cleanTitleString(jsonLdWebSiteName) : '';
               const descOfficialBrand = extractBrandFromDescription(description || jsonLdDesc, cleanDomKey);
 
+              const isHtmlTitleStemOrSlogan = !cleanedHtmlTitle || isGenericSeoPart(cleanedHtmlTitle) || isDomainStemName(cleanedHtmlTitle, cleanDomKey) || isDomainDerivedGuess(cleanedHtmlTitle, cleanDomKey);
+              const isOgTitleStemOrSlogan = !cleanedOgTitle || isGenericSeoPart(cleanedOgTitle) || isDomainStemName(cleanedOgTitle, cleanDomKey) || isDomainDerivedGuess(cleanedOgTitle, cleanDomKey);
+
               // Check if validSiteName or JSON-LD Organization/WebSite name directly matches the domain (ignoring raw URL-split guesses when richer official metadata exists)
-              const domainAlignedMetaBrand = [cleanedValidSiteName, jsonLdOrgName ? cleanTitleString(jsonLdOrgName) : '', jsonLdWebSiteName ? cleanTitleString(jsonLdWebSiteName) : '', validAppName ? cleanTitleString(validAppName) : '']
+              const domainAlignedMetaBrand = [cleanedValidSiteName, cleanedJsonLdOrgName, cleanedJsonLdWebSiteName, cleanedTwitterTitle, validAppName ? cleanTitleString(validAppName) : '']
                 .filter(Boolean)
                 .find(s => {
                   if (!s || isGenericOrPlaceholderTitle(s) || isAgencyOrBoilerplate(s) || isGenericSeoPart(s)) return false;
@@ -30640,23 +30662,32 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     return false;
                   }
                   const sAlpha = s.toLowerCase().replace(/[^a-z0-9]/g, '');
-                  return sAlpha.length >= 4 && (sAlpha === domRoot || domRoot.startsWith(sAlpha) || sAlpha.startsWith(domRoot));
+                  return sAlpha.length >= 4 && (sAlpha === domRoot || domRoot.startsWith(sAlpha) || sAlpha.startsWith(domRoot) || !isDomainDerivedGuess(s, cleanDomKey));
                 });
 
               if (knownBrand) {
                 title = knownBrand;
                 siteName = knownBrand;
-              } else if (domainAlignedMetaBrand && (!cleanedHtmlTitle || isGenericSeoPart(cleanedHtmlTitle))) {
+              } else if (domainAlignedMetaBrand && isHtmlTitleStemOrSlogan) {
                 title = domainAlignedMetaBrand;
                 siteName = domainAlignedMetaBrand;
-              } else if (cleanedHtmlTitle && !isGenericOrPlaceholderTitle(cleanedHtmlTitle) && !isGenericSeoPart(cleanedHtmlTitle)) {
-                // Official Browser URL Tab <title> tag (only when not a generic SEO slogan)
+              } else if (cleanedHtmlTitle && !isGenericOrPlaceholderTitle(cleanedHtmlTitle) && !isHtmlTitleStemOrSlogan) {
+                // Official Browser URL Tab <title> tag (only when not a generic SEO slogan and not a bare domain stem)
                 title = cleanedHtmlTitle;
-              } else if (cleanedOgTitle && !isGenericOrPlaceholderTitle(cleanedOgTitle) && !isGenericSeoPart(cleanedOgTitle)) {
-                // Official og:title / twitter:title
+              } else if (cleanedOgTitle && !isGenericOrPlaceholderTitle(cleanedOgTitle) && !isOgTitleStemOrSlogan) {
+                // Official og:title
                 title = cleanedOgTitle;
-              } else if (cleanedValidSiteName && !isGenericSeoPart(cleanedValidSiteName)) {
+              } else if (cleanedValidSiteName && !isGenericSeoPart(cleanedValidSiteName) && !isDomainStemName(cleanedValidSiteName, cleanDomKey)) {
                 title = cleanedValidSiteName;
+                siteName = title;
+              } else if (cleanedJsonLdOrgName && !isGenericSeoPart(cleanedJsonLdOrgName) && !isDomainStemName(cleanedJsonLdOrgName, cleanDomKey)) {
+                title = cleanedJsonLdOrgName;
+                siteName = title;
+              } else if (cleanedJsonLdWebSiteName && !isGenericSeoPart(cleanedJsonLdWebSiteName) && !isDomainStemName(cleanedJsonLdWebSiteName, cleanDomKey)) {
+                title = cleanedJsonLdWebSiteName;
+                siteName = title;
+              } else if (cleanedTwitterTitle && !isGenericSeoPart(cleanedTwitterTitle) && !isDomainStemName(cleanedTwitterTitle, cleanDomKey)) {
+                title = cleanedTwitterTitle;
                 siteName = title;
               } else if (descOfficialBrand && !isGenericSeoPart(descOfficialBrand)) {
                 title = descOfficialBrand;
@@ -30664,11 +30695,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               } else if (jsonLdDesc && jsonLdDesc.trim().length >= 3 && jsonLdDesc.trim().length <= 40 && !isGenericSeoPart(jsonLdDesc) && !isGenericOrPlaceholderTitle(jsonLdDesc)) {
                 title = cleanTitleString(jsonLdDesc);
                 siteName = title;
-              } else if (jsonLdOrgName && !isGenericOrPlaceholderTitle(jsonLdOrgName) && !isAgencyOrBoilerplate(jsonLdOrgName) && jsonLdOrgName.length <= 50) {
-                title = cleanTitleString(jsonLdOrgName);
+              } else if (cleanedJsonLdOrgName) {
+                title = cleanedJsonLdOrgName;
                 siteName = title;
-              } else if (jsonLdWebSiteName && !isGenericOrPlaceholderTitle(jsonLdWebSiteName) && !isAgencyOrBoilerplate(jsonLdWebSiteName) && jsonLdWebSiteName.length <= 50) {
-                title = cleanTitleString(jsonLdWebSiteName);
+              } else if (cleanedJsonLdWebSiteName) {
+                title = cleanedJsonLdWebSiteName;
                 siteName = title;
               } else if (validAppName) {
                 title = cleanTitleString(validAppName);
@@ -30677,6 +30708,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 title = cleanTitleString(jsonLdGenericName);
               } else if (logoAltTitle && !isGenericOrPlaceholderTitle(logoAltTitle) && logoAltTitle.length >= 3 && logoAltTitle.length <= 50 && !isGenericSeoPart(logoAltTitle)) {
                 title = cleanTitleString(logoAltTitle.replace(/^logo\s*(?:of|van|de)?\s*/i, ''));
+              } else if (cleanedHtmlTitle && !isGenericOrPlaceholderTitle(cleanedHtmlTitle) && !isGenericSeoPart(cleanedHtmlTitle)) {
+                title = cleanedHtmlTitle;
               } else {
                 const domainKeyword = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
                 
@@ -30693,11 +30726,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
-              // If title is still a URL-derived domain guess (e.g. "Klean NYC"), upgrade from og:site_name or official description brand ("Klean-N-Green NYC")
+              // If title is still a URL-derived domain guess (e.g. "Klean NYC" or "Nyccleant"), upgrade from og:site_name, JSON-LD, twitter:title, or official description brand
               if (title && cleanDomKey && isDomainDerivedGuess(title, cleanDomKey) && !knownBrand) {
                 if (cleanedValidSiteName && !isDomainDerivedGuess(cleanedValidSiteName, cleanDomKey) && !isGenericSeoPart(cleanedValidSiteName)) {
                   title = cleanedValidSiteName;
                   siteName = cleanedValidSiteName;
+                } else if (cleanedJsonLdOrgName && !isDomainDerivedGuess(cleanedJsonLdOrgName, cleanDomKey) && !isGenericSeoPart(cleanedJsonLdOrgName)) {
+                  title = cleanedJsonLdOrgName;
+                  siteName = cleanedJsonLdOrgName;
+                } else if (cleanedJsonLdWebSiteName && !isDomainDerivedGuess(cleanedJsonLdWebSiteName, cleanDomKey) && !isGenericSeoPart(cleanedJsonLdWebSiteName)) {
+                  title = cleanedJsonLdWebSiteName;
+                  siteName = cleanedJsonLdWebSiteName;
+                } else if (cleanedTwitterTitle && !isDomainDerivedGuess(cleanedTwitterTitle, cleanDomKey) && !isGenericSeoPart(cleanedTwitterTitle)) {
+                  title = cleanedTwitterTitle;
+                  siteName = cleanedTwitterTitle;
                 } else if (descOfficialBrand && !isDomainDerivedGuess(descOfficialBrand, cleanDomKey)) {
                   title = descOfficialBrand;
                   siteName = descOfficialBrand;
@@ -32084,9 +32126,35 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const ogSiteName = ($d('meta[property="og:site_name"]').attr('content') || $d('meta[name="application-name"]').attr('content') || $d('meta[name="apple-mobile-web-app-title"]').attr('content') || "").trim();
                 const htmlTitleText = ($d('title').first().text() || "").trim();
                 const ogTitle = ($d('meta[property="og:title"]').attr('content') || htmlTitleText || "").trim();
+                const twitterTitle = ($d('meta[name="twitter:title"]').attr('content') || $d('meta[property="twitter:title"]').attr('content') || "").trim();
                 const ogDesc = ($d('meta[property="og:description"]').attr('content') || $d('meta[name="description"]').attr('content') || "").trim();
+                let suggestJsonLdName = "";
+                try {
+                  $d('script[type="application/ld+json"]').each((_: any, el: any) => {
+                    if (suggestJsonLdName) return;
+                    try {
+                      const parsed = JSON.parse($d(el).html() || "{}");
+                      const scan = (node: any) => {
+                        if (!node || suggestJsonLdName) return;
+                        if (Array.isArray(node)) { node.forEach(scan); return; }
+                        if (typeof node === "object") {
+                          const t = String(node["@type"] || node.type || "").toLowerCase();
+                          const n = (typeof node.name === "string" && node.name.trim()) || (typeof node.legalName === "string" && node.legalName.trim()) || "";
+                          if (n && n.length <= 65 && (t.includes("organization") || t.includes("localbusiness") || t.includes("corporation") || t.includes("store") || t.includes("service") || t.includes("website"))) {
+                            suggestJsonLdName = n;
+                            return;
+                          }
+                          for (const k in node) scan(node[k]);
+                        }
+                      };
+                      scan(parsed);
+                    } catch (e) {}
+                  });
+                } catch (e) {}
                 const rawCandidates = [
                   ogSiteName,
+                  suggestJsonLdName,
+                  twitterTitle,
                   htmlTitleText.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
                   ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
                   extractDomainAlignedNameFromText(`${htmlTitleText} | ${ogTitle} | ${ogSiteName} | ${ogDesc}`, redirDom),
@@ -32096,8 +32164,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   extractBrandFromDescription(ogDesc, cleanQDom)
                 ].filter(Boolean);
                 for (const rawCand of rawCandidates) {
+                  if (isGenericSeoSlogan(String(rawCand), redirDom)) continue;
                   const cand = formatBusinessName(String(rawCand), redirDom) || String(rawCand);
-                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom)) {
+                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom) && !isDomainDerivedGuess(cand, redirDom)) {
                     resolvedDirectTitle = cand;
                     break;
                   }

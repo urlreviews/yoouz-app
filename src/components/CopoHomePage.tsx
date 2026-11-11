@@ -345,10 +345,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
       return pDom?.toLowerCase() === cleanDom.toLowerCase();
     });
+    const existingValidName = existing?.name && !isDomainStemName(existing.name, cleanDom) ? existing.name : "";
     const officialName =
       KNOWN_OFFICIAL_NAMES[cleanDom] ||
       (preferredTitle && !isDomainStemName(preferredTitle, cleanDom) ? preferredTitle : "") ||
-      existing?.name ||
+      existingValidName ||
       formatBusinessName(cleanDom, cleanDom) ||
       cleanDom;
 
@@ -407,7 +408,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     // 1. Direct URL or domain input (e.g. "https://apple.com", "www.zara.com", "booking.com")
     const cleanCandidate = extractCleanDomain(trimmed);
     if (cleanCandidate && isValidDomainUrl(cleanCandidate)) {
-      seedAndOpenDomainPlace(cleanCandidate);
+      const matchedSugg = suggestions.find(
+        (s) => !s.isCreator && extractCleanDomain(s.domain || s.id || "")?.toLowerCase() === cleanCandidate.toLowerCase()
+      );
+      seedAndOpenDomainPlace(cleanCandidate, matchedSugg?.title, matchedSugg?.logoUrl);
       return;
     }
 

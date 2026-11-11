@@ -1306,8 +1306,9 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
   if (!cleanName) return true;
   if (domain) {
     const domTld = cleanDom.split(".").pop()?.toLowerCase() || "";
-    const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (domRoot && cleanName === domRoot) {
+    const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const domRootStripped = domRoot.replace(/(?:inc|llc|ltd|corp|co|plc|gmbh|bv|nv|sa|srl|ag|kg|oy|ab|as|aps|pty)$/i, "");
+    if (domRoot && (cleanName === domRoot || (domRootStripped.length >= 3 && cleanName === domRootStripped))) {
       // If the domain uses a semantic entity TLD (like .ventures, .partners, .capital) and the 1-word name omits it (e.g. "V3" on "v3.ventures"), it IS an incomplete stem!
       if (SEMANTIC_ENTITY_TLDS.has(domTld) && !trimmed.toLowerCase().includes(domTld)) {
         return true;
@@ -1324,7 +1325,7 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
       if (trimmed.length <= 6 && trimmed === trimmed.toUpperCase() && BRAND_ACRONYMS.has(trimmed)) {
         return false;
       }
-      // All other single-word tokens matching domRoot (e.g. "V3", "scifi", "Scifi", "adaptvc", "Adaptvc", "phoenixcourt", "Phoenixcourt") are domain stems
+      // All other single-word tokens matching domRoot or corporate-suffix-stripped domRoot (e.g. "Nyccleant" on "nyccleantinc.com", "Adaptvc", "Phoenixcourt") are domain stems
       return true;
     }
   }
@@ -1332,8 +1333,8 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
 }
 
 /**
- * Checks if a candidate name was derived solely by splitting the domain root (e.g., "Haven Home Cleaning" or "Havenhome Cleaning" for "havenhomecleaning.com")
- * so that an authentic website metadata title (e.g., "Haven Cleaning Services" from <title> / og:site_name / JSON-LD) always takes priority over a domain guess.
+ * Checks if a candidate name was derived solely by splitting the domain root (e.g., "Haven Home Cleaning" or "Havenhome Cleaning" for "havenhomecleaning.com", or "Nyccleant" for "nyccleantinc.com")
+ * so that an authentic website metadata title (e.g., "Haven Cleaning Services" or "New York Commercial Clean Team" from <title> / og:site_name / JSON-LD) always takes priority over a domain guess.
  */
 export function isDomainDerivedGuess(name?: string | null, domain?: string | null): boolean {
   if (!name || !name.trim()) return true;
@@ -1347,7 +1348,8 @@ export function isDomainDerivedGuess(name?: string | null, domain?: string | nul
   if (isDomainStemName(name, domain)) return true;
   if (!domain || !cleanDom) return false;
   const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-  return Boolean(domRoot && cleanName === domRoot);
+  const domRootStripped = domRoot.replace(/(?:inc|llc|ltd|corp|co|plc|gmbh|bv|nv|sa|srl|ag|kg|oy|ab|as|aps|pty)$/i, "");
+  return Boolean(domRoot && (cleanName === domRoot || (domRootStripped.length >= 3 && cleanName === domRootStripped)));
 }
 
 /**
@@ -1841,13 +1843,33 @@ const GENERIC_SEO_VOCABULARY = new Set([
   "sydney", "melbourne", "brisbane", "australia", "dubai", "abu", "dhabi", "uae", "paris", "france", "berlin", "germany", "amsterdam", "brussels", "belgium", "usa", "us"
 ]);
 
+const SEO_HYPE_WORDS = new Set([
+  "1", "1st", "best", "rated", "affordable", "reliable", "trusted", "certified", "licensed",
+  "insured", "bonded", "guaranteed", "free", "quote", "estimate", "booking", "online",
+  "24", "7", "emergency", "weekly", "biweekly", "monthly", "near", "me"
+]);
+
+const ENTITY_ORGANIZATION_NOUNS = new Set([
+  "team", "group", "company", "co", "firm", "agency", "partners", "associates", "studio", "studios",
+  "labs", "lab", "institute", "academy", "center", "centre", "clinic", "clinics", "hospital",
+  "foundation", "society", "club", "enterprises", "holdings", "ventures", "capital",
+  "inc", "llc", "ltd", "corp"
+]);
+
 /**
  * Detects if a string (e.g. "#1 NYC Maid Service & House Cleaners" or "Cleaning Service NYC")
  * is a generic SEO keyword phrase rather than a distinctive business brand name.
  */
 export function isGenericSeoSlogan(str?: string | null, domain?: string | null): boolean {
   if (!str || !str.trim()) return true;
-  const cleanWords = str
+  const rawTrimmed = str.trim();
+
+  // If the string explicitly ends with a legal corporate registration suffix (Inc., LLC, Ltd., Corp.), it is an official registered company name
+  if (/(?:,\s*|\s+)(?:LLC|L\.L\.C\.|Inc\.?|Incorporated|Ltd\.?|Limited|Corp\.?|Corporation|GmbH|B\.V\.|N\.V\.|S\.A\.|S\.R\.L\.|P\.C\.|PLLC|LLP)\.?$/i.test(rawTrimmed)) {
+    return false;
+  }
+
+  const cleanWords = rawTrimmed
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
@@ -1857,15 +1879,45 @@ export function isGenericSeoSlogan(str?: string | null, domain?: string | null):
   const allGeneric = cleanWords.every(w => GENERIC_SEO_VOCABULARY.has(w));
   if (!allGeneric) return false;
 
+  const hasHypeMarker = cleanWords.some(w => SEO_HYPE_WORDS.has(w)) || /#1|\b24\/7\b|\btop[\s\-]+rated\b|\bnear\s+me\b/i.test(rawTrimmed);
+  const lastWord = cleanWords[cleanWords.length - 1];
+
+  // An organization name ending with a collective entity noun (e.g. "New York Commercial Clean Team", "Al Dhabi Dental Center") without SEO hype words is a real business name
+  if (!hasHypeMarker && cleanWords.length >= 2 && cleanWords.length <= 6 && ENTITY_ORGANIZATION_NOUNS.has(lastWord)) {
+    return false;
+  }
+
   if (domain) {
     const cleanDom = extractCleanDomain(domain);
     const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const domRootStripped = domRoot.replace(/(?:inc|llc|ltd|corp|co|plc|gmbh|bv|nv|sa|srl)$/i, "");
     const firstWord = cleanWords[0];
     const strAlpha = cleanWords.join("");
+    if (domRoot && (strAlpha === domRoot || strAlpha === domRootStripped)) {
+      return false;
+    }
     // If the domain itself starts with the exact same descriptive first word (e.g. "Luxury Cleaning Service New York" on "luxurycleaningny.com")
     // and has at least 2 words matching the domain prefix, allow it
-    if (domRoot && firstWord.length >= 4 && domRoot.startsWith(firstWord) && (strAlpha.includes(domRoot) || domRoot.startsWith(cleanWords.slice(0, 2).join("")))) {
+    if (domRoot && firstWord.length >= 3 && domRoot.startsWith(firstWord) && (strAlpha.includes(domRoot) || domRoot.startsWith(cleanWords.slice(0, 2).join("")))) {
       return false;
+    }
+    // Check regional acronym alignment (e.g. "New York Commercial Clean Team" -> "nyc..." on "nyccleantinc.com")
+    const normalizedPhrase = cleanWords.join(" ")
+      .replace(/\bnew york city\b/g, "nyc")
+      .replace(/\bnew york\b/g, "nyc")
+      .replace(/\blos angeles\b/g, "la")
+      .replace(/\bsan francisco\b/g, "sf")
+      .replace(/\bunited kingdom\b/g, "uk")
+      .replace(/\bunited states\b/g, "us");
+    const normWords = normalizedPhrase.split(/\s+/).filter(Boolean);
+    const normFirst = normWords[0] || "";
+    if (domRoot && normFirst.length >= 2 && domRoot.startsWith(normFirst) && !hasHypeMarker) {
+      // Check if at least one more non-location word or initial sequence matches domRoot
+      const restWords = normWords.slice(1);
+      const matchedTokens = restWords.filter(w => w.length >= 3 && domRoot.includes(w));
+      if (matchedTokens.length >= 1) {
+        return false;
+      }
     }
   }
 

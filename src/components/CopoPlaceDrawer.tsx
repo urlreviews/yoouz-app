@@ -727,7 +727,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (!targetKey) return;
     
     // If we already successfully fetched data for this key, don't re-run unless it was a partial failure
+    const isGenericName = !place.name ||
+      place.name === place.brandDomain ||
+      place.name === drawerDomain ||
+      isDomainStemName(place.name, drawerDomain) ||
+      isDomainDerivedGuess(place.name, drawerDomain) ||
+      place.name.toLowerCase().includes("hostinger") ||
+      place.name.toLowerCase().includes("untitled") ||
+      place.name.toLowerCase() === "website";
+
     const hasCoreData = Boolean(
+      !isGenericName &&
       place.logoUrl && !place.logoUrl.includes('tap/0.png') && !isFaviconUrl(place.logoUrl) &&
       place.bannerUrl && !isBadBanner(place.bannerUrl) && !bannerError &&
       place.address && place.address !== "Verified Location"
@@ -747,14 +757,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       place.description.includes("committed to delivering high-quality") ||
       place.description.includes("exceptional client satisfaction") ||
       place.description === "No description available.";
-
-    const isGenericName = !place.name ||
-      place.name === place.brandDomain ||
-      place.name === drawerDomain ||
-      isDomainStemName(place.name, drawerDomain) ||
-      place.name.toLowerCase().includes("hostinger") ||
-      place.name.toLowerCase().includes("untitled") ||
-      place.name.toLowerCase() === "website";
 
     const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 

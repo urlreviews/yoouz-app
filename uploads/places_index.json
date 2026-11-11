@@ -1,5 +1,54 @@
 [
   {
+    "id": "nyccleantinc.com",
+    "name": "New York Commercial Clean Team",
+    "category": "Restaurant & Cafe",
+    "categoryType": "all",
+    "address": "146-61 107th Ave, Suite 1, 11435 Jamaica",
+    "city": "Jamaica",
+    "country": "US",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fnyccleantinc.com%2F_next%2Fimage%3Furl%3D%252F_next%252Fstatic%252Fmedia%252Fnyc-logo.09e85617.png%26w%3D256%26q%3D75",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fnyccleantinc.com%2F_next%2Fimage%3Furl%3D%252F_next%252Fstatic%252Fmedia%252Fnyc-logo.09e85617.png%26w%3D256%26q%3D75",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fnyccleantinc.com%2Fimages%2Fhome%2Fservices%2Ffloor-moping.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fnyccleantinc.com%2Fimages%2Fhome%2Fservices%2Ffloor-moping.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fnyccleantinc.com%2Fimages%2Fhome%2Fservices%2Ffloor-moping.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "+1 (631) 381-7252",
+    "email": "",
+    "website": "https://nyccleantinc.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "NYC’s trusted commercial cleaning company for offices, retail, medical facilities & more. Serving all 5 boroughs. Request a free quote today.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "nyccleantinc.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "thenycmaid.com",
     "name": "The NYC Maid",
     "category": "Legal Services",
