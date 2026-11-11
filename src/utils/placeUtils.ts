@@ -4559,8 +4559,6 @@ export function isClientDeletedVideo(item: any): boolean {
       "rev-1792588172597-vb7nk",
       "7ca2740c-cfc8-4afe-ab43-8350298cda87",
       "renevolt-by-solar-x.co.il",
-      "rev-1792505354614-j01wo",
-      "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
       "rev-1789841701519-2l6x8",
       "rev-1789577075627-3488d"
     ]);

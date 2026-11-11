@@ -1251,6 +1251,153 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "hasOfficialBunnyTitle": true
   },
   {
+    "id": "rev-1792505354614-j01wo",
+    "userId": "krtpcq@gmail.com",
+    "userEmail": "krtpcq@gmail.com",
+    "createdAtMs": 1792505354615,
+    "isLocalUpload": false,
+    "isCurrentSessionBlob": true,
+    "placeId": "zara.com",
+    "placeName": "Zara",
+    "placeCategory": "Real Estate",
+    "placeAddress": "Online",
+    "placeCity": "Online",
+    "placeCountry": "Belgium",
+    "placePhone": "",
+    "placeEmail": "",
+    "placeRating": 5,
+    "placeWebsite": "https://www.zara.com/",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "placeDescription": "Zara · real estate · Online",
+    "author": {
+      "name": "Kert P",
+      "handle": "@kertp",
+      "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+      "isLocalGuide": true,
+      "videoReviewCount": 2,
+      "photosCount": 0,
+      "isVerified": true,
+      "location": "",
+      "city": "",
+      "country": "",
+      "firstName": "Kert",
+      "lastName": "P"
+    },
+    "rating": 5,
+    "durationSeconds": 23,
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "fallbackVideoUrls": [
+      "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
+      "/api/videos/stream/rev-1792505354614-j01wo.mp4"
+    ],
+    "thumbnailUrl": "/api/videos/stream/rev-1792505354614-j01wo.jpg",
+    "caption": "Long-lasting winter scent matching my style perfectly!",
+    "transcriptText": "I found another Zara perfume that I am obsessed with it's called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
+    "segments": [
+      {
+        "start": 1.31,
+        "end": 3.87,
+        "text": "I found another Zara perfume",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.03,
+        "end": 6.56,
+        "text": "that I am obsessed with",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.82,
+        "end": 11.24,
+        "text": "it's called night for a home",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.87,
+        "end": 13.21,
+        "text": "version to winter",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 13.21,
+        "end": 15.31,
+        "text": "and it matches my style perfectly",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.31,
+        "end": 16.75,
+        "text": "and honestly it lasts",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.83,
+        "end": 18.12,
+        "text": "way longer than anything else",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.12,
+        "end": 20.03,
+        "text": "I have tried at this price point",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.03,
+        "end": 20.95,
+        "text": "so you should you",
+        "isHardwareTimed": true
+      }
+    ],
+    "dishOrItem": "Zara",
+    "businessName": "Zara",
+    "likes": 0,
+    "isLiked": false,
+    "commentsCount": 0,
+    "comments": [],
+    "bookmarksCount": 0,
+    "isBookmarked": false,
+    "repostsCount": 0,
+    "views": 80,
+    "viewsCount": 80,
+    "sharesCount": 0,
+    "tags": [
+      "Real Estate"
+    ],
+    "recordedAt": "Just now",
+    "isLandscape": false,
+    "aspectRatio": "portrait",
+    "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
+    "hasBunnySmartCaptions": true,
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "authorName": "Kert P",
+    "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "duration": 23,
+    "createdAt": "2026-10-20T14:09:14.615Z",
+    "likesCount": 0,
+    "bookmarks": 0,
+    "shares": 0,
+    "reviewsCount": 3,
+    "reviewCount": 3,
+    "totalReviews": 3,
+    "updatedAt": 1792514318491,
+    "aiTitle": "Long-lasting winter scent matching my style perfectly!",
+    "title": "Long-lasting winter scent matching my style perfectly!",
+    "bunnyDescription": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
+    "description": "The speaker discovered a new Zara perfume called Night that they are obsessed with. They describe it as a perfect match for winter and their style. They praise its long-lasting scent, stating it outperforms other perfumes at a similar price point. The speaker recommends trying out this perfume due to its quality and longevity.",
+    "isProcessing": false,
+    "isReady": true,
+    "hasHardwareSilenceSync": true,
+    "hasOfficialBunnyTitle": true
+  },
+  {
     "id": "rev-1792505047137-smiho",
     "userId": "krtpcq@gmail.com",
     "userEmail": "krtpcq@gmail.com",
