@@ -4682,16 +4682,12 @@ export function App() {
 
     // Priority 1: Place Drawer context (business profile open on desktop/mobile)
     if (isPlaceView && drawerPlace) {
-      const placeVids = visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
-      const otherVids = visibleVideos.filter(v => !isPlaceReviewMatch(v, drawerPlace));
-      return placeVids.length > 0 ? [...placeVids, ...otherVids] : visibleVideos;
+      return visibleVideos.filter(v => isPlaceReviewMatch(v, drawerPlace));
     }
 
     // Priority 2: Creator Drawer context (creator profile open on desktop/mobile)
     if (isCreatorView && selectedAuthorForDrawer) {
-      const creatorVids = visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
-      const otherVids = visibleVideos.filter(v => !isAuthorMatch(v, selectedAuthorForDrawer));
-      return creatorVids.length > 0 ? [...creatorVids, ...otherVids] : visibleVideos;
+      return visibleVideos.filter(v => isAuthorMatch(v, selectedAuthorForDrawer));
     }
 
     // Priority 3: User Profile context
@@ -4714,18 +4710,20 @@ export function App() {
     return visibleVideos;
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos, embedTargetId]);
 
-  // Option A (Dynamic Live Sync): When watching videos or in place split-view on desktop,
-  // the drawer place dynamically tracks the video currently on screen (activeFeedVideos[currentVideoIndex]),
-  // ensuring the business profile on the left always matches the video on the right as the user scrolls.
+  // Keep drawerPlace strictly authoritative when a specific business profile is selected (selectedPlaceIdForDrawer).
+  // Only synthesize from the active video when watching the general feed without an explicit place drawer open.
   const activeDrawerPlace = useMemo(() => {
-    if ((isWatchingVideo || isPlaceView) && activeFeedVideos && activeFeedVideos[currentVideoIndex]) {
+    if (selectedPlaceIdForDrawer && drawerPlace) {
+      return drawerPlace;
+    }
+    if (isWatchingVideo && activeFeedVideos && activeFeedVideos[currentVideoIndex]) {
       const currentVid = activeFeedVideos[currentVideoIndex];
       const match = places.find(p => isPlaceReviewMatch(currentVid, p));
       if (match) return match;
       return synthesizePlaceFromReview(currentVid, places);
     }
     return drawerPlace;
-  }, [isWatchingVideo, isPlaceView, activeFeedVideos, currentVideoIndex, places, drawerPlace]);
+  }, [selectedPlaceIdForDrawer, isWatchingVideo, activeFeedVideos, currentVideoIndex, places, drawerPlace]);
 
   const displayedDrawerPlaceName = useMemo(() => {
     const targetPlace = activeDrawerPlace || drawerPlace;
@@ -4772,12 +4770,11 @@ export function App() {
       let path = "/";
       let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
 
-      // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
-      const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
+      // Current active video being watched in the feed (never fall back to global videos[0] when activeFeedVideos is empty!)
+      const currentVid = activeFeedVideos[currentVideoIndex] || null;
 
-      // Hierarchy of URL synchronization (Option A):
-      // 1. Dynamic Video Playback (Feed scroll, split-view, or direct review) -> ALWAYS updates to /review/:domain/:id in real-time!
-      if ((isWatchingVideo || isPlaceView) && currentVid) {
+      // Hierarchy of URL synchronization:
+      if (isWatchingVideo && !isPlaceView && !isCreatorView && currentVid) {
         const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
         path = `/review/${domainSlug}/${currentVid.id}`;
         const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
@@ -5250,6 +5247,7 @@ export function App() {
       previousSectionRef.current = activeSection;
     }
 
+    setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);
     setSelectedPlaceIdForDrawer(placeId);
@@ -7747,6 +7745,8 @@ export function App() {
             key={searchResetKey}
             places={places}
             videos={videos}
+            allUsers={allRegisteredUsers}
+            currentUser={currentUser}
             onAddPlace={handleUpdatePlace}
             onSelectVideo={(id) => {
               setIsSearchModalOpen(false);
@@ -7759,6 +7759,10 @@ export function App() {
             onOpenPlace={(id) => {
               setIsSearchModalOpen(false);
               handleOpenPlaceDrawer(id);
+            }}
+            onOpenCreator={(author) => {
+              setIsSearchModalOpen(false);
+              handleOpenCreatorDrawer(author);
             }}
             onRecordForPlace={(place) => {
               setIsSearchModalOpen(false);
@@ -8001,11 +8005,13 @@ export function App() {
               )}
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
+                const targetPlaceForReview = isPlaceView ? (activeDrawerPlace || drawerPlace) : null;
                 if (!currentUser || !isProfileComplete(currentUser)) {
                   setAuthIntent('record');
+                  setPreselectedPlaceForRecording(targetPlaceForReview);
                   setIsAuthModalOpen(true);
                 } else {
-                  setPreselectedPlaceForRecording(null);
+                  setPreselectedPlaceForRecording(targetPlaceForReview);
                   setIsCreateModalOpen(true);
                 }
               }}
@@ -8105,6 +8111,7 @@ export function App() {
             key={`copo-main-home-search-${searchResetKey}`}
             places={places}
             videos={videos}
+            allUsers={allRegisteredUsers}
             autoFocusSearch={activeSection === "search"}
             searchMode="general"
             onSelectVideo={(vidId) => {
@@ -8151,6 +8158,7 @@ export function App() {
                 key={`record-review-${recordReviewResetKey}`}
                 places={places}
                 videos={videos}
+                allUsers={allRegisteredUsers}
                 autoFocusSearch={true}
                 searchMode="review"
                 onSelectVideo={(vidId) => {
@@ -8920,6 +8928,8 @@ export function App() {
           key={searchResetKey}
           places={places}
           videos={videos}
+          allUsers={allRegisteredUsers}
+          currentUser={currentUser}
           onSelectVideo={(id) => {
             setIsSearchModalOpen(false);
             handleSelectVideoById(id, "feed");
@@ -8931,6 +8941,10 @@ export function App() {
           onOpenPlace={(id) => {
             setIsSearchModalOpen(false);
             handleOpenPlaceDrawer(id);
+          }}
+          onOpenCreator={(author) => {
+            setIsSearchModalOpen(false);
+            handleOpenCreatorDrawer(author);
           }}
           onRecordForPlace={(place) => {
             setIsSearchModalOpen(false);

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video } from "lucide-react";
+import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video, User } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, extractBrandFromDescription, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, extractBrandFromDescription, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
+import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoHomePageProps {
   places: Place[];
   videos: VideoReview[];
+  allUsers?: any[];
   onSelectVideo: (videoId: string) => void;
   onOpenPlace: (placeId: string) => void;
   onAddPlace?: (place: Place) => void;
@@ -33,11 +35,14 @@ interface SuggestionItem {
   logoUrl?: string;
   category?: string;
   address?: string;
+  isCreator?: boolean;
+  creatorAuthor?: VideoAuthor;
 }
 
 export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   places,
   videos,
+  allUsers = [],
   onSelectVideo,
   onOpenPlace,
   onAddPlace,
@@ -138,6 +143,55 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
   };
 
+  // Build deduplicated list of creators/users for person search
+  const knownCreators = useMemo(() => {
+    const map = new Map<string, VideoAuthor>();
+    const addAuthor = (author?: VideoAuthor | null) => {
+      if (!author || !author.name) return;
+      const cleanName = author.name.trim();
+      const key = cleanName.toLowerCase();
+      if (!cleanName || key === "reviewer" || key === "verified reviewer" || key === "user" || key === "registered user" || key.includes("@")) return;
+      if (!map.has(key)) {
+        map.set(key, {
+          ...author,
+          name: cleanName,
+          avatar: getSafeAvatarUrl(author.avatar, cleanName, author.handle || cleanName),
+          isVerified: author.isVerified !== false
+        });
+      }
+    };
+
+    for (const v of videos || []) {
+      const resolved = resolveSafeAuthor(v, currentUser, allUsers);
+      addAuthor(resolved);
+    }
+    for (const u of allUsers || []) {
+      if (u && u.name) {
+        addAuthor({
+          id: u.id || u.userId,
+          userId: u.userId || u.id,
+          name: u.name,
+          avatar: u.avatar,
+          bio: u.bio || "Community Reviewer",
+          location: u.location || "",
+          isVerified: true
+        });
+      }
+    }
+    if (currentUser && currentUser.name) {
+      addAuthor({
+        id: currentUser.id,
+        userId: currentUser.id,
+        name: currentUser.name,
+        avatar: currentUser.avatar,
+        bio: currentUser.bio || "Community Reviewer",
+        location: currentUser.location || "",
+        isVerified: true
+      });
+    }
+    return Array.from(map.values());
+  }, [videos, allUsers, currentUser]);
+
   // Live Auto-Suggest debounce
   useEffect(() => {
     const trimmed = query.trim();
@@ -148,26 +202,95 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
-    // Fast local match (0ms)
     const qLow = trimmed.toLowerCase();
-    const localMatches: SuggestionItem[] = places
-      .filter((p) => {
-        const pName = (p.name || "").toLowerCase();
-        const pDom = (p.brandDomain || p.website || p.id || "").toLowerCase();
-        return pName.includes(qLow) || pDom.includes(qLow);
-      })
-      .slice(0, 5)
-      .map((p) => {
-        const dom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
-        return {
+    const localMatches: SuggestionItem[] = [];
+    const seenLocal = new Set<string>();
+
+    const pushLocal = (item: SuggestionItem) => {
+      const k = `${item.isCreator ? "creator:" : "place:"}${(item.id || item.domain || item.title).toLowerCase().trim()}`;
+      if (!seenLocal.has(k)) {
+        seenLocal.add(k);
+        localMatches.push(item);
+      }
+    };
+
+    // 1. If user typed a URL or domain directly (e.g. "https://apple.com" or "apple.com"), always put it #1
+    const directDomain = extractCleanDomain(trimmed);
+    if (directDomain && isValidDomainUrl(directDomain)) {
+      const existingPlace = places.find((p) => {
+        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+        return pDom?.toLowerCase() === directDomain.toLowerCase();
+      });
+      const officialTitle =
+        KNOWN_OFFICIAL_NAMES[directDomain] ||
+        (existingPlace?.name && !isDomainStemName(existingPlace.name, directDomain) ? existingPlace.name : "") ||
+        formatBusinessName(directDomain, directDomain) ||
+        directDomain;
+      pushLocal({
+        id: existingPlace?.id || directDomain,
+        title: officialTitle,
+        domain: directDomain,
+        logoUrl:
+          (existingPlace?.logoUrl && !existingPlace.logoUrl.includes("favicon") ? existingPlace.logoUrl : "") ||
+          KNOWN_BRAND_LOGOS[directDomain] ||
+          "",
+        category: existingPlace?.category || "Website",
+        address: existingPlace?.city || existingPlace?.address || ""
+      });
+    }
+
+    // 2. Match local places
+    for (const p of places) {
+      if (localMatches.length >= 6) break;
+      const pName = (p.name || "").toLowerCase();
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
+      const pDomLow = pDom.toLowerCase();
+      if (pName.includes(qLow) || pDomLow.includes(qLow)) {
+        pushLocal({
           id: p.id,
-          title: p.name || dom,
-          domain: dom.includes(".") ? dom : "",
-          logoUrl: p.logoUrl && !p.logoUrl.includes("favicon") ? p.logoUrl : "",
+          title: KNOWN_OFFICIAL_NAMES[pDomLow] || p.name || pDom,
+          domain: pDom.includes(".") ? pDom : "",
+          logoUrl: (p.logoUrl && !p.logoUrl.includes("favicon") ? p.logoUrl : "") || (pDomLow && KNOWN_BRAND_LOGOS[pDomLow] ? KNOWN_BRAND_LOGOS[pDomLow] : ""),
           category: p.category || "Business",
           address: p.city || p.address || ""
-        };
-      });
+        });
+      }
+    }
+
+    // 3. Match businesses from video reviews if not already in places
+    for (const v of videos) {
+      if (localMatches.length >= 7) break;
+      const vName = (v.placeName || v.businessName || "").trim();
+      const vDom = extractCleanDomain(v.placeWebsite || v.placeId || "") || "";
+      if (vName.toLowerCase().includes(qLow) || (vDom && vDom.toLowerCase().includes(qLow))) {
+        pushLocal({
+          id: vDom || v.placeId || vName,
+          title: (vDom && KNOWN_OFFICIAL_NAMES[vDom.toLowerCase()]) || vName || vDom,
+          domain: vDom.includes(".") ? vDom : "",
+          logoUrl: v.placeLogoUrl || (vDom && KNOWN_BRAND_LOGOS[vDom.toLowerCase()]) || "",
+          category: "Business"
+        });
+      }
+    }
+
+    // 4. Match creators / people when in general search mode
+    if (searchMode !== "review") {
+      for (const creator of knownCreators) {
+        if (localMatches.length >= 8) break;
+        const cNameLow = creator.name.toLowerCase();
+        if (cNameLow.includes(qLow)) {
+          pushLocal({
+            id: `creator:${creator.name}`,
+            title: creator.name,
+            domain: "Reviewer Profile",
+            logoUrl: creator.avatar,
+            category: "Creator",
+            isCreator: true,
+            creatorAuthor: creator
+          });
+        }
+      }
+    }
 
     if (localMatches.length > 0) {
       setSuggestions(localMatches);
@@ -175,9 +298,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
 
     setIsLoadingSuggest(true);
+    const searchParam = directDomain && isValidDomainUrl(directDomain) ? directDomain : trimmed;
     const timer = setTimeout(async () => {
       try {
-        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(searchParam)}`);
         if (resp.ok) {
           const data = await resp.json();
           const serverList: SuggestionItem[] = data.suggestions || [];
@@ -185,7 +309,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           const merged: SuggestionItem[] = [];
 
           for (const item of [...localMatches, ...serverList]) {
-            const key = (item.id || item.domain || item.title).toLowerCase();
+            const key = `${item.isCreator ? "creator:" : ""}${(item.id || item.domain || item.title).toLowerCase().trim()}`;
             if (!seen.has(key)) {
               seen.add(key);
               merged.push(item);
@@ -201,7 +325,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }, 120);
 
     return () => clearTimeout(timer);
-  }, [query, places]);
+  }, [query, places, videos, knownCreators, searchMode]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -214,34 +338,89 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const seedAndOpenDomainPlace = (domain: string, preferredTitle?: string, logoUrl?: string) => {
+    const cleanDom = extractCleanDomain(domain);
+    if (!cleanDom) return;
+    const existing = places.find((p) => {
+      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
+      return pDom?.toLowerCase() === cleanDom.toLowerCase();
+    });
+    const officialName =
+      KNOWN_OFFICIAL_NAMES[cleanDom] ||
+      (preferredTitle && !isDomainStemName(preferredTitle, cleanDom) ? preferredTitle : "") ||
+      existing?.name ||
+      formatBusinessName(cleanDom, cleanDom) ||
+      cleanDom;
+
+    const placeObj: Place = existing
+      ? {
+          ...existing,
+          name: officialName || existing.name,
+          brandDomain: cleanDom,
+          website: existing.website || `https://${cleanDom}`
+        }
+      : {
+          id: cleanDom,
+          name: officialName,
+          brandDomain: cleanDom,
+          category: "Verified Business",
+          categoryType: "all",
+          address: "",
+          city: "",
+          country: "",
+          lat: 0,
+          lng: 0,
+          rating: 5.0,
+          totalReviews: 0,
+          ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
+          avatarUrl: logoUrl || KNOWN_BRAND_LOGOS[cleanDom] || "",
+          logoUrl: logoUrl || KNOWN_BRAND_LOGOS[cleanDom] || "",
+          bannerUrl: KNOWN_BRAND_BANNERS[cleanDom] || "",
+          ogImage: KNOWN_BRAND_BANNERS[cleanDom] || "",
+          photos: KNOWN_BRAND_BANNERS[cleanDom] ? [KNOWN_BRAND_BANNERS[cleanDom]] : [],
+          openingHours: "",
+          isOpen: true,
+          phone: "",
+          email: "",
+          website: `https://${cleanDom}`,
+          priceRange: "N/A",
+          plusCode: "",
+          description: "",
+          popularKeywords: [],
+          amenities: [],
+          topDishes: [],
+          locations: []
+        };
+
+    onAddPlace?.(placeObj);
+    if (searchMode === "review" && onRecordReview) {
+      onRecordReview(placeObj);
+    } else {
+      onOpenPlace(placeObj.id);
+    }
+  };
+
   const resolveAndOpenBusiness = async (rawQuery: string) => {
     const trimmed = rawQuery.trim();
     if (!trimmed) return;
 
+    // 1. Direct URL or domain input (e.g. "https://apple.com", "www.zara.com", "booking.com")
     const cleanCandidate = extractCleanDomain(trimmed);
     if (cleanCandidate && isValidDomainUrl(cleanCandidate)) {
-      const existing = places.find(p => {
-        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-        return pDom?.toLowerCase() === cleanCandidate.toLowerCase();
-      });
-      if (existing && existing.name && !isDomainDerivedGuess(existing.name, cleanCandidate) && !isDomainStemName(existing.name, cleanCandidate)) {
-        if (searchMode === "review" && onRecordReview) {
-          onRecordReview(existing);
-          return;
-        }
-        onOpenPlace(cleanCandidate);
-        return;
-      }
+      seedAndOpenDomainPlace(cleanCandidate);
+      return;
     }
 
     const qLow = trimmed.toLowerCase();
-    const match = places.find(p => {
+
+    // 2. Exact match in local places
+    const match = places.find((p) => {
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-      if (!pDom || !isValidDomainUrl(pDom)) return false;
+      const pNameLow = (p.name || "").toLowerCase().trim();
       return (
-        (p.name || "").toLowerCase() === qLow ||
-        pDom.toLowerCase() === qLow ||
-        (p.website || "").toLowerCase().includes(qLow)
+        pNameLow === qLow ||
+        (pDom && pDom.toLowerCase() === qLow) ||
+        p.id.toLowerCase() === qLow
       );
     });
     if (match) {
@@ -253,6 +432,65 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
+    // 3. Exact match in KNOWN_OFFICIAL_NAMES dictionary
+    const brandEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([domKey, officialName]) => {
+      if (!domKey.includes(".")) return false;
+      const domLow = domKey.toLowerCase();
+      const domRoot = domLow.split(".")[0];
+      const nameLow = officialName.toLowerCase().trim();
+      return nameLow === qLow || domLow === qLow || domRoot === qLow;
+    });
+    if (brandEntry) {
+      seedAndOpenDomainPlace(brandEntry[0], brandEntry[1]);
+      return;
+    }
+
+    // 4. Match in video reviews' businesses
+    const matchedVideoBiz = videos.find((v) => {
+      const vNameLow = (v.placeName || v.businessName || "").toLowerCase().trim();
+      const vDomLow = (extractCleanDomain(v.placeWebsite || v.placeId || "") || "").toLowerCase();
+      return vNameLow === qLow || (vDomLow && vDomLow === qLow);
+    });
+    if (matchedVideoBiz) {
+      const vDom = extractCleanDomain(matchedVideoBiz.placeWebsite || matchedVideoBiz.placeId || "");
+      if (vDom && isValidDomainUrl(vDom)) {
+        seedAndOpenDomainPlace(vDom, matchedVideoBiz.placeName || matchedVideoBiz.businessName, matchedVideoBiz.placeLogoUrl);
+        return;
+      }
+      onOpenPlace(matchedVideoBiz.placeId || matchedVideoBiz.placeName);
+      return;
+    }
+
+    // 5. Exact or strong match in Creators / Users (when user searches their own name or a reviewer's name)
+    if (searchMode !== "review" && onOpenCreator) {
+      const creatorMatch =
+        knownCreators.find((c) => c.name.toLowerCase() === qLow) ||
+        knownCreators.find((c) => c.name.toLowerCase().startsWith(qLow) || c.name.toLowerCase().includes(qLow));
+      // If exact match to a creator name, or if no business suggestion matches and a creator matches
+      const hasBusinessSuggestion = suggestions.some((s) => !s.isCreator && s.domain && isValidDomainUrl(s.domain));
+      if (creatorMatch && (creatorMatch.name.toLowerCase() === qLow || !hasBusinessSuggestion)) {
+        onOpenCreator(creatorMatch);
+        return;
+      }
+    }
+
+    // 6. Fast path from pre-fetched suggestions if available
+    const topBusinessSuggestion = suggestions.find(
+      (s) =>
+        !s.isCreator &&
+        s.domain &&
+        isValidDomainUrl(extractCleanDomain(s.domain)) &&
+        (s.title.toLowerCase() === qLow ||
+          s.title.toLowerCase().includes(qLow) ||
+          qLow.includes(s.title.toLowerCase()) ||
+          s.domain.toLowerCase().includes(qLow))
+    );
+    if (topBusinessSuggestion) {
+      seedAndOpenDomainPlace(topBusinessSuggestion.domain, topBusinessSuggestion.title, topBusinessSuggestion.logoUrl);
+      return;
+    }
+
+    // 7. Backend metadata & domain resolution for any business name or URL
     setIsResolvingPlace(true);
     try {
       const endpoint = isValidDomainUrl(trimmed)
@@ -282,10 +520,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             rating: 5.0,
             totalReviews: 0,
             ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            avatarUrl: meta.logo || "",
-            logoUrl: meta.logo || "",
-            bannerUrl: meta.image || "",
-            ogImage: meta.image || "",
+            avatarUrl: meta.logo || KNOWN_BRAND_LOGOS[resolvedDomain] || "",
+            logoUrl: meta.logo || KNOWN_BRAND_LOGOS[resolvedDomain] || "",
+            bannerUrl: meta.image || KNOWN_BRAND_BANNERS[resolvedDomain] || "",
+            ogImage: meta.image || KNOWN_BRAND_BANNERS[resolvedDomain] || "",
             photos: meta.image ? [meta.image] : [],
             openingHours: meta.openingHours || "",
             isOpen: true,
@@ -315,26 +553,45 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       setIsResolvingPlace(false);
     }
 
-    if (searchMode === "review" && onRecordReview) {
-      const fallback = places.find(p => p.id.toLowerCase() === trimmed.toLowerCase() || (p.name || "").toLowerCase() === trimmed.toLowerCase());
-      if (fallback) {
-        onRecordReview(fallback);
+    // 8. Final fallback: check partial local match or creator match before opening raw query
+    const partialLocal = places.find(
+      (p) =>
+        (p.name || "").toLowerCase().includes(qLow) ||
+        (p.brandDomain || p.website || p.id || "").toLowerCase().includes(qLow)
+    );
+    if (partialLocal) {
+      if (searchMode === "review" && onRecordReview) {
+        onRecordReview(partialLocal);
       } else {
-        onOpenPlace(trimmed);
+        onOpenPlace(partialLocal.id);
       }
-    } else {
-      onOpenPlace(trimmed);
+      return;
     }
+
+    if (searchMode !== "review" && onOpenCreator) {
+      const partialCreator = knownCreators.find((c) => c.name.toLowerCase().includes(qLow));
+      if (partialCreator) {
+        onOpenCreator(partialCreator);
+        return;
+      }
+    }
+
+    onOpenPlace(trimmed);
   };
 
   const handleSelectSuggestion = (item: SuggestionItem) => {
     setShowDropdown(false);
     setQuery(item.title);
 
+    if (item.isCreator && item.creatorAuthor && onOpenCreator) {
+      onOpenCreator(item.creatorAuthor);
+      return;
+    }
+
     if (searchMode === "review") {
       const qLow = (item.title || "").toLowerCase().trim();
       const domLow = extractCleanDomain(item.domain || item.id || "")?.toLowerCase() || "";
-      const match = places.find(p => {
+      const match = places.find((p) => {
         const pDom = extractCleanDomain(p.brandDomain || p.website || p.id)?.toLowerCase() || "";
         const pName = (p.name || "").toLowerCase().trim();
         return (domLow && pDom === domLow) || (qLow && pName === qLow) || (item.id && p.id === item.id);
@@ -349,12 +606,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       }
     }
 
-    const candidateId = extractCleanDomain(item.id || "");
     const candidateDom = extractCleanDomain(item.domain || "");
-    if (candidateId && isValidDomainUrl(candidateId)) {
-      onOpenPlace(candidateId);
-    } else if (candidateDom && isValidDomainUrl(candidateDom)) {
-      onOpenPlace(candidateDom);
+    const candidateId = extractCleanDomain(item.id || "");
+    if (candidateDom && isValidDomainUrl(candidateDom)) {
+      seedAndOpenDomainPlace(candidateDom, item.title, item.logoUrl);
+    } else if (candidateId && isValidDomainUrl(candidateId)) {
+      seedAndOpenDomainPlace(candidateId, item.title, item.logoUrl);
     } else {
       resolveAndOpenBusiness(item.title || item.domain || item.id || "");
     }
@@ -565,9 +822,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     selectedIndex === idx ? "bg-zinc-800/90 text-white" : "hover:bg-zinc-800/60"
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
+                  <div className={`w-9 h-9 ${item.isCreator ? "rounded-full" : "rounded-xl"} bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs`}>
                     {item.logoUrl ? (
-                      <img src={item.logoUrl} alt={item.title} className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                      <img src={item.logoUrl} alt={item.title} className={`w-full h-full ${item.isCreator ? "object-cover" : "object-contain p-1"}`} referrerPolicy="no-referrer" />
+                    ) : item.isCreator ? (
+                      <User className="w-4 h-4 text-zinc-400" />
                     ) : (
                       <Building2 className="w-4 h-4 text-zinc-400" />
                     )}

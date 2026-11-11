@@ -688,10 +688,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
       let currentPlace: Place = instantPlace;
       setSearchedPlace(currentPlace);
-      if (onAddPlace && !isDomainDerivedGuess(currentPlace.name, cleanUrl) && !isDomainStemName(currentPlace.name, cleanUrl)) {
+      if (onAddPlace) {
         onAddPlace(currentPlace);
       }
-      if (onOpenPlace && (!isRealDomain || (!isDomainDerivedGuess(currentPlace.name, cleanUrl) && !isDomainStemName(currentPlace.name, cleanUrl)))) {
+      if (onOpenPlace) {
         onOpenPlace(currentPlace.id);
       }
       

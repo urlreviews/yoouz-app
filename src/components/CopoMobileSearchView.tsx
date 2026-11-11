@@ -1,12 +1,15 @@
 import React from "react";
-import { Place, VideoReview } from "../types";
+import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoHomePage } from "./CopoHomePage";
 
 interface CopoMobileSearchViewProps {
   places: Place[];
   videos: VideoReview[];
+  allUsers?: any[];
+  currentUser?: UserProfile | null;
   onSelectVideo: (videoId: string) => void;
   onOpenPlace: (placeId: string) => void;
+  onOpenCreator?: (author: VideoAuthor) => void;
   onRecordForPlace?: (place: Place) => void;
   onAddPlace?: (place: Place) => void;
   onClose: () => void;
@@ -20,8 +23,11 @@ interface CopoMobileSearchViewProps {
 export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   places,
   videos,
+  allUsers = [],
+  currentUser = null,
   onSelectVideo,
   onOpenPlace,
+  onOpenCreator,
   onRecordForPlace,
   onAddPlace,
   onClose,
@@ -36,10 +42,18 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
       <CopoHomePage
         places={places}
         videos={videos}
+        allUsers={allUsers}
+        currentUser={currentUser}
         searchMode={searchMode}
         autoFocusSearch={autoFocusSearch}
         onSelectVideo={onSelectVideo}
         onOpenPlace={onOpenPlace}
+        onOpenCreator={(author) => {
+          onClose();
+          if (onOpenCreator) {
+            onOpenCreator(author);
+          }
+        }}
         onAddPlace={onAddPlace}
         onOpenMenu={onClose}
         onClose={onClose}

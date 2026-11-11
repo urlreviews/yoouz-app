@@ -1337,12 +1337,16 @@ export function isDomainStemName(name?: string | null, domain?: string | null): 
  */
 export function isDomainDerivedGuess(name?: string | null, domain?: string | null): boolean {
   if (!name || !name.trim()) return true;
+  const trimmed = name.trim();
+  const cleanDom = domain ? extractCleanDomain(domain) : "";
+  const cleanName = trimmed.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const knownOfficial = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || (cleanName && KNOWN_OFFICIAL_NAMES[cleanName]);
+  if (knownOfficial && trimmed.toLowerCase() === knownOfficial.toLowerCase()) {
+    return false;
+  }
   if (isDomainStemName(name, domain)) return true;
-  if (!domain) return false;
-  const cleanDom = extractCleanDomain(domain);
-  if (!cleanDom) return false;
+  if (!domain || !cleanDom) return false;
   const domRoot = cleanDom.replace(/\.(co\.[a-z]{2}|co\.[a-z]{3}|[a-z]{2,10})$/i, "").split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-  const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
   return Boolean(domRoot && cleanName === domRoot);
 }
 
