@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { VideoReview } from "../types";
-import { resolveVideoPosterUrl } from "../utils/videoUtils";
-import { getCategoryThematicBanner } from "../utils/logoUtils";
+import { resolveVideoPosterCascade, extractBunnyIdFromVideo } from "../utils/videoUtils";
 
 interface CopoVideoThumbnailProps {
   video: VideoReview;
@@ -14,15 +13,15 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
   className = "w-full h-full object-cover",
   alt,
 }) => {
-  const [errorStage, setErrorStage] = useState(0); // 0: primary poster, 1: category/banner fallback, 2: svg fallback
-  const [isLoaded, setIsLoaded] = useState(true);
+  const [candidateIdx, setCandidateIdx] = useState(0);
 
-  const posterSrc = React.useMemo(() => {
-    if (errorStage === 0) {
-      return resolveVideoPosterUrl(video);
-    }
-    return "";
-  }, [video, errorStage]);
+  const candidates = React.useMemo(() => {
+    return resolveVideoPosterCascade(video);
+  }, [video]);
+
+  useEffect(() => {
+    setCandidateIdx(0);
+  }, [video?.id, video?.thumbnailUrl]);
 
   const placeInitial = (video.placeName || video.placeId || "V").charAt(0).toUpperCase();
 
@@ -42,7 +41,7 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
   <text x="150" y="330" font-family="-apple-system, sans-serif" font-weight="600" font-size="13" fill="#a1a1aa" text-anchor="middle">${video.placeName || "Video Review"}</text>
 </svg>`);
 
-  const activeSrc = errorStage >= 2 || !posterSrc ? FALLBACK_POSTER_SVG : posterSrc;
+  const activeSrc = candidateIdx < candidates.length ? candidates[candidateIdx] : FALLBACK_POSTER_SVG;
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center">
@@ -53,10 +52,9 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
         loading="eager"
         decoding="async"
         fetchPriority="high"
-        onLoad={() => setIsLoaded(true)}
         onError={() => {
-          if (errorStage < 2) {
-            setErrorStage(prev => prev + 1);
+          if (candidateIdx < candidates.length) {
+            setCandidateIdx((prev) => prev + 1);
           }
         }}
       />

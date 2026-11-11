@@ -37,16 +37,65 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     },
     "rating": 5,
     "durationSeconds": 23,
-    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
+    "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
     "fallbackVideoUrls": [
-      "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-      "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
+      "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+      "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
       "/api/videos/stream/rev-1792505354614-j01wo.mp4"
     ],
-    "thumbnailUrl": "/api/videos/stream/rev-1792505354614-j01wo.jpg",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
     "caption": "Long-lasting winter scent matching my style perfectly!",
-    "transcriptText": "I found another Zara perfume that I am obsessed with it is called night for a home version to winter and it matches my style perfectly and honestly it lasts way longer than anything else I have tried at this price point so you should you",
-    "segments": [],
+    "transcriptText": "I found another Zara perfume that I am obsessed with. It's called Night Pour Homme II Winter, and it matches my style perfectly. And honestly, it lasts way longer than anything else I have tried at this price point. So you should try it.",
+    "segments": [
+      {
+        "start": 0.94,
+        "end": 3.87,
+        "text": "I found another Zara perfume",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 4.03,
+        "end": 6.56,
+        "text": "that I am obsessed with.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 7.84,
+        "end": 11.24,
+        "text": "It's called Night Pour Homme II Winter,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 11.87,
+        "end": 15.46,
+        "text": "and it matches my style perfectly.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 15.67,
+        "end": 16.19,
+        "text": "And honestly,",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 16.36,
+        "end": 18.18,
+        "text": "it lasts way longer than anything else",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 18.18,
+        "end": 20.48,
+        "text": "I have tried at this price point.",
+        "isHardwareTimed": true
+      },
+      {
+        "start": 20.86,
+        "end": 21.59,
+        "text": "So you should try it.",
+        "isHardwareTimed": true
+      }
+    ],
     "dishOrItem": "Zara",
     "businessName": "Zara",
     "likes": 0,
@@ -65,10 +114,10 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "recordedAt": "Just now",
     "isLandscape": false,
     "aspectRatio": "portrait",
-    "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-    "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
+    "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
+    "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
+    "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
+    "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
@@ -1384,7 +1433,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
       "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
       "/api/videos/stream/rev-1792505047137-smiho.mp4"
     ],
-    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
+    "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg",
     "caption": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
     "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
     "segments": [

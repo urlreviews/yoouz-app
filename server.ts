@@ -14282,23 +14282,34 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         if (!filePath && bunnyVideoId) {
           const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
           if (isImageRequest) {
-            try {
-              const thumbUrl = `${streamCdn}/${bunnyVideoId}/thumbnail.jpg`;
-              const tResp = await fetch(thumbUrl, { headers: { "Referer": "https://yoouz.com/" } });
-              if (tResp.ok) {
-                const arrBuf = await tResp.arrayBuffer();
-                const buf = Buffer.from(arrBuf);
-                const cachedPath = path.join(serverUploadsDir, rawFilename);
-                try { fs.writeFileSync(cachedPath, buf); } catch (e) {}
-                res.writeHead(200, {
-                  "Content-Type": "image/jpeg",
-                  "Content-Length": buf.length,
-                  "Cache-Control": "public, max-age=2592000, immutable",
-                  "Access-Control-Allow-Origin": "*"
-                });
-                return res.end(buf);
-              }
-            } catch (tErr) {}
+            const thumbCandidates = [
+              matchedReviewDoc?.thumbnailUrl && typeof matchedReviewDoc.thumbnailUrl === "string" && matchedReviewDoc.thumbnailUrl.startsWith("https://")
+                ? matchedReviewDoc.thumbnailUrl.replace("f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg", "f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg")
+                : "",
+              bunnyVideoId === "f5452859-5b43-43f1-857f-7b13fcfa80d8"
+                ? `${streamCdn}/${bunnyVideoId}/thumbnail_9d571ef3.jpg`
+                : `${streamCdn}/${bunnyVideoId}/thumbnail.jpg`,
+              `${streamCdn}/${bunnyVideoId}/thumbnail_1.jpg`,
+              `${streamCdn}/${bunnyVideoId}/preview.webp`
+            ].filter(Boolean);
+            for (const thumbUrl of thumbCandidates) {
+              try {
+                const tResp = await fetch(thumbUrl, { headers: { "Referer": "https://yoouz.com/" } });
+                if (tResp.ok) {
+                  const arrBuf = await tResp.arrayBuffer();
+                  const buf = Buffer.from(arrBuf);
+                  const cachedPath = path.join(serverUploadsDir, rawFilename);
+                  try { fs.writeFileSync(cachedPath, buf); } catch (e) {}
+                  res.writeHead(200, {
+                    "Content-Type": tResp.headers.get("content-type") || "image/jpeg",
+                    "Content-Length": buf.length,
+                    "Cache-Control": "public, max-age=2592000, immutable",
+                    "Access-Control-Allow-Origin": "*"
+                  });
+                  return res.end(buf);
+                }
+              } catch (tErr) {}
+            }
           } else {
             // Video proxy from Bunny CDN with Range header support
             const candidates = [
@@ -15837,6 +15848,14 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       placePhone: r.placePhone || (matchedLoc as any)?.phone || "",
       placeCategory: (r.placeCategory && r.placeCategory !== "Website" && r.placeCategory !== "General") ? r.placeCategory : ((matchedLoc as any)?.category || r.placeCategory || "")
     };
+
+    if (
+      cleanResult.id === "rev-1792505047137-smiho" ||
+      cleanResult.bunnyVideoId === "f5452859-5b43-43f1-857f-7b13fcfa80d8" ||
+      (typeof cleanResult.thumbnailUrl === "string" && cleanResult.thumbnailUrl.includes("f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg"))
+    ) {
+      cleanResult.thumbnailUrl = "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg";
+    }
 
     if (cleanResult.place && typeof cleanResult.place === 'object') {
       cleanResult.place.name = effectivePlaceName;
@@ -25255,7 +25274,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
         // Find existing review matching this Bunny Video GUID
         let existingIdx = list.findIndex((v: any) => v && (v.bunnyVideoId === guid || v.bunnyGuid === guid || v.id === guid));
-        const officialThumb = `${streamPullZone}/${guid}/thumbnail.jpg`;
+        const thumbFileName = (item.thumbnailFileName && typeof item.thumbnailFileName === "string" && item.thumbnailFileName.trim())
+          ? item.thumbnailFileName.trim()
+          : "thumbnail.jpg";
+        const officialThumb = `${streamPullZone}/${guid}/${thumbFileName}`;
 
         if (existingIdx === -1 && item.title) {
           // 🩹 Auto-heal stale GUIDs: Match reviews with broken/stale GUIDs by title or place name & duration
@@ -25293,7 +25315,13 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           const cur = list[existingIdx];
           let updated = false;
 
-          if (!cur.thumbnailUrl || cur.thumbnailUrl.startsWith("blob:") || cur.thumbnailUrl.startsWith("data:image") || cur.thumbnailUrl.includes("default-review")) {
+          if (
+            !cur.thumbnailUrl ||
+            cur.thumbnailUrl.startsWith("blob:") ||
+            cur.thumbnailUrl.startsWith("data:image") ||
+            cur.thumbnailUrl.includes("default-review") ||
+            (thumbFileName !== "thumbnail.jpg" && cur.thumbnailUrl.endsWith("/thumbnail.jpg"))
+          ) {
             cur.thumbnailUrl = officialThumb;
             updated = true;
           }
@@ -38218,6 +38246,21 @@ function injectOpenGraphTags(html: string, meta: any) {
       await bunnyDb.execute("UPDATE videoReviews SET placeName = 'All In Capital' WHERE LOWER(placeId) IN ('allincapital.vc', 'www.allincapital.vc') OR LOWER(placeName) = 'allin capital'").catch(() => {});
       await bunnyDb.execute("UPDATE videoReviews SET placeName = 'Red Swan Ventures' WHERE LOWER(placeId) IN ('redswanventures.com', 'www.redswanventures.com') OR LOWER(placeName) = 'redswan ventures'").catch(() => {});
       await bunnyDb.execute("UPDATE videoReviews SET placeName = 'Red Sea Ventures' WHERE LOWER(placeId) IN ('redseaventures.com', 'www.redseaventures.com') OR LOWER(placeName) = 'redsea ventures'").catch(() => {});
+
+      // Heal Zara review rev-1792505047137-smiho thumbnail filename in BunnyDB
+      const smihoRs = await bunnyDb.execute({ sql: "SELECT id, data FROM videoReviews WHERE id = ?", args: ["rev-1792505047137-smiho"] }).catch(() => null);
+      if (smihoRs && smihoRs.rows && smihoRs.rows[0]) {
+        try {
+          const row = smihoRs.rows[0] as any;
+          const dObj = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {});
+          const fixedThumb = "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg";
+          dObj.thumbnailUrl = fixedThumb;
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET thumbnailUrl = ?, data = ? WHERE id = ?",
+            args: [fixedThumb, JSON.stringify(dObj), "rev-1792505047137-smiho"]
+          }).catch(() => {});
+        } catch (e) {}
+      }
 
       // Heal any other existing place records in BunnyDB whose name had an unsplit compound stem
       const allPlacesRs = await bunnyDb.execute("SELECT id, name, data FROM places").catch(() => null);

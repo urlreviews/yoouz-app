@@ -243,6 +243,8 @@ export function extractBunnyIdFromVideo(video?: VideoReview | null): string | nu
 export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
 
+  const bunnyId = extractBunnyIdFromVideo(video);
+
   const rawThumb = video.thumbnailUrl;
   if (rawThumb && typeof rawThumb === "string" && rawThumb.trim()) {
     let trimmed = rawThumb.trim();
@@ -253,7 +255,15 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
       trimmed = decodeURIComponent(parts[parts.length - 1]);
     }
 
-    // Direct base64, blob, or local video stream thumbnail takes top priority
+    // Heal known Bunny Stream custom thumbnail filename for f5452859-5b43-43f1-857f-7b13fcfa80d8
+    if (trimmed.includes("f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg")) {
+      trimmed = trimmed.replace(
+        "f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg",
+        "f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg"
+      );
+    }
+
+    // Direct base64, blob, or valid image URL
     if (
       trimmed.startsWith("data:image/") ||
       (trimmed.startsWith("blob:") && video.isCurrentSessionBlob) ||
@@ -266,20 +276,60 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
     }
   }
 
+  // Direct Bunny Stream official video thumbnail
+  if (bunnyId) {
+    const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
+    if (bunnyId === "f5452859-5b43-43f1-857f-7b13fcfa80d8") {
+      return `${streamCdn}/${bunnyId}/thumbnail_9d571ef3.jpg`;
+    }
+    return `${streamCdn}/${bunnyId}/thumbnail.jpg`;
+  }
+
   // Local server thumbnail fallback for any review starting with rev-
   if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
     const cleanId = video.id.replace(/\.[^.]+$/, "");
     return `/api/videos/stream/${cleanId}.jpg`;
   }
 
-  // Direct Bunny Stream official video thumbnail
+  return "";
+}
+
+/**
+ * Resolves a prioritized cascade of authentic video frame thumbnail URLs.
+ * Ensures that if a custom Bunny Stream thumbnail filename changes or 404s,
+ * it automatically falls back to thumbnail_1.jpg, preview.webp, and local server stream snapshot.
+ */
+export function resolveVideoPosterCascade(video?: VideoReview | null): string[] {
+  if (!video) return [];
+  const candidates: string[] = [];
+  const addCandidate = (url?: string | null) => {
+    if (url && typeof url === "string" && url.trim() && !candidates.includes(url.trim())) {
+      candidates.push(url.trim());
+    }
+  };
+
+  // 1. Primary resolved poster URL
+  addCandidate(resolveVideoPosterUrl(video));
+
+  // 2. Bunny Stream guaranteed frame fallbacks (thumbnail_1.jpg and preview.webp always exist on encoded Bunny videos)
   const bunnyId = extractBunnyIdFromVideo(video);
   if (bunnyId) {
     const streamCdn = "https://vz-dcd9e101-437.b-cdn.net";
-    return `${streamCdn}/${bunnyId}/thumbnail.jpg`;
+    if (bunnyId === "f5452859-5b43-43f1-857f-7b13fcfa80d8") {
+      addCandidate(`${streamCdn}/${bunnyId}/thumbnail_9d571ef3.jpg`);
+    }
+    addCandidate(`${streamCdn}/${bunnyId}/thumbnail_1.jpg`);
+    addCandidate(`${streamCdn}/${bunnyId}/preview.webp`);
+    addCandidate(`${streamCdn}/${bunnyId}/thumbnail.jpg`);
   }
 
-  return "";
+  // 3. Local server cached JPEG snapshot endpoint (/api/videos/stream/:id.jpg)
+  if (video.id && typeof video.id === "string" && video.id.startsWith("rev-")) {
+    const cleanId = video.id.replace(/\.[^.]+$/, "");
+    addCandidate(`/api/videos/stream/${cleanId}.jpg`);
+  }
+
+  return candidates;
 }
 
 /**

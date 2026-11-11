@@ -67,9 +67,19 @@ export function normalizeReview(v: any): VideoReview {
       }
     }
 
+    let healedThumbnailUrl = v.thumbnailUrl;
+    if (
+      String(videoId) === "rev-1792505047137-smiho" ||
+      v.bunnyVideoId === "f5452859-5b43-43f1-857f-7b13fcfa80d8" ||
+      (typeof healedThumbnailUrl === "string" && healedThumbnailUrl.includes("f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg"))
+    ) {
+      healedThumbnailUrl = "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg";
+    }
+
     return {
       ...v,
       id: videoId,
+      thumbnailUrl: healedThumbnailUrl,
       title: officialTitle,
       bunnyTitle: officialTitle,
       videoTitle: officialTitle,
