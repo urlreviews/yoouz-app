@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video, User } from "lucide-react";
+import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, extractBrandFromDescription, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
@@ -28,7 +29,7 @@ interface CopoHomePageProps {
   onClose?: () => void;
 }
 
-interface SuggestionItem {
+export interface SuggestionItem {
   id?: string;
   title: string;
   domain: string;
@@ -70,7 +71,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [isMobile, setIsMobile] = useState(false);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     setSelectedIndex(-1);
@@ -792,8 +801,22 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             </div>
           </form>
 
+          {/* Mobile Overlay */}
+          {isMobile && showDropdown && (
+            <MobileSearchOverlay
+              query={query}
+              setQuery={setQuery}
+              suggestions={suggestions}
+              isOpen={showDropdown}
+              onClose={() => setShowDropdown(false)}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSubmit={handleSearchSubmit}
+              isLoading={isLoadingSuggest}
+            />
+          )}
+
           {/* Autocomplete Dropdown: No scrollbar on mobile PWA, smooth custom thin scrollbar on desktop */}
-          {showDropdown && suggestions.length > 0 && (
+          {!isMobile && showDropdown && suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2.5 bg-zinc-900/98 backdrop-blur-2xl border border-zinc-800/90 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.9)] overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin md:[scrollbar-width:thin] md:scrollbar-thumb-zinc-700/60 hover:md:scrollbar-thumb-zinc-500 md:scrollbar-track-transparent animate-in fade-in duration-150 overscroll-contain">
               {suggestions.map((item, idx) => (
                 <button
