@@ -275,7 +275,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
             setIsPlaying(true);
-            if (lastLoadedVideoIdRef.current) {
+            if (lastLoadedVideoIdRef.current && vid.readyState >= 2) {
               setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
             }
           }
@@ -298,11 +298,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         vid.addEventListener("canplay", () => {
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
+            if (!vid.paused && lastLoadedVideoIdRef.current && vid.readyState >= 2) {
+              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+            }
           }
         });
         vid.addEventListener("loadeddata", () => {
           if (feedVideoRef.current === vid) {
             setIsBuffering(false);
+            if (lastLoadedVideoIdRef.current && vid.readyState >= 2) {
+              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
+            }
           }
         });
         vid.addEventListener("loadedmetadata", () => {
@@ -314,7 +320,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (feedVideoRef.current === vid) {
             const curTime = typeof vid.currentTime === 'number' && !isNaN(vid.currentTime) ? vid.currentTime : 0;
             setVideoTime(curTime);
-            if (!vid.paused && curTime >= 0.05) {
+            if (!vid.paused && (curTime >= 0.01 || vid.readyState >= 2)) {
               setIsPlaying(true);
               setIsBuffering(false);
               if (lastLoadedVideoIdRef.current) {
@@ -487,6 +493,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       
       const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[cascade.length - 1];
       if (!activeSrc) return;
+
+      vid.dataset.boundVideoId = video.id;
       
       // Cleanup existing HLS if any
       const existingHls = hlsPoolRef.current.get(vid);
@@ -513,6 +521,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           const hls = new Hls({
             capLevelToPlayerSize: true,
             autoStartLoad: true,
+            startFragPrefetch: true,
             maxMaxBufferLength: 15,
             manifestLoadingMaxRetry: 1,
             levelLoadingMaxRetry: 1
@@ -530,12 +539,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           // Native Safari HLS
           vid.src = activeSrc;
           vid.onerror = () => triggerFallback(activeSrc);
+          try { vid.load(); } catch (e) {}
         } else {
           triggerFallback(activeSrc);
         }
       } else {
         vid.src = activeSrc;
         vid.onerror = () => triggerFallback(activeSrc);
+        try { vid.load(); } catch (e) {}
       }
 
       // Clean up any native track elements and ensure textTracks are disabled to prevent duplicate bottom captions
@@ -613,17 +624,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     activeVid.style.objectFit = "cover";
 
     const currentVidSrc = activeVid.currentSrc || activeVid.src;
-    // CRITICAL: For HLS videos, activeVid.src becomes a blob URL, so it won't match activeSrc (.m3u8).
-    // We must rely on lastLoadedVideoIdRef to prevent unnecessary reloads of the same video.
-    const isAlreadyUsingWorkingCascadeSrc = !isNewVideo && currentVidSrc && (
-      cascade.some(s => isSameSrc(currentVidSrc, s)) || 
-      hlsPoolRef.current.has(activeVid) // If HLS is active, assume it is using the correct source
-    );
+    // CRITICAL: Preserve pre-warmed HLS/MP4 buffer when swiping to nextVid/prevVid!
+    // Previously, isNewVideo triggered loadVideoSource() which destroyed the pre-warmed Hls instance.
+    const isAlreadyBoundToThisVideo =
+      activeVid.dataset.boundVideoId === activeVideo.id &&
+      (Boolean(currentVidSrc) || hlsPoolRef.current.has(activeVid));
 
-    if (isNewVideo || !isAlreadyUsingWorkingCascadeSrc) {
-      if (!isSameSrc(activeVid.src, activeSrc)) {
-        loadVideoSource(activeVid, activeVideo, localBlob);
-      }
+    if (!isAlreadyBoundToThisVideo) {
+      loadVideoSource(activeVid, activeVideo, localBlob);
     }
 
     // Strict Guard: If this video is already correctly loaded and playing (or paused at a specific time), DO NOT interrupt it
@@ -671,7 +679,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           playPromiseRef.current = null;
           setIsPlaying(true);
           setIsBuffering(false);
-          setFirstFrameRenderedId(activeVideo.id);
+          if (activeVid.readyState >= 2) {
+            setFirstFrameRenderedId(activeVideo.id);
+          }
         }).catch((err) => {
           playPromiseRef.current = null;
           if (err?.name === "NotAllowedError") {
@@ -685,7 +695,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 retryP.then(() => {
                   setIsPlaying(true);
                   setIsBuffering(false);
-                  setFirstFrameRenderedId(activeVideo.id);
+                  if (activeVid.readyState >= 2) {
+                    setFirstFrameRenderedId(activeVideo.id);
+                  }
                 }).catch(() => {});
               }
             }
@@ -708,15 +720,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     } else {
       // New active video detected - rewind to start
       lastLoadedVideoIdRef.current = activeVideo.id;
-      setFirstFrameRenderedId(null);
+      // If the video element was already pre-warmed in the pool and has decoded Frame #1 (readyState >= 2),
+      // mark firstFrameRenderedId immediately so there is zero delay on swipe!
+      const alreadyDecodedFirstFrame = isAlreadyBoundToThisVideo && activeVid.readyState >= 2;
+      setFirstFrameRenderedId(alreadyDecodedFirstFrame ? activeVideo.id : null);
       setIsPlaying(false);
       setProgressPercent(0);
       if (activeVideo?.durationSeconds && activeVideo.durationSeconds > 0) {
         setVideoDuration(activeVideo.durationSeconds);
       }
-      try {
-        activeVid.currentTime = 0;
-      } catch (e) {}
+      if (!alreadyDecodedFirstFrame || activeVid.currentTime > 0.1) {
+        try {
+          activeVid.currentTime = 0;
+        } catch (e) {}
+      }
 
       if (isPaused || initialAutoplayPaused) {
         if (initialAutoplayPaused) {
@@ -736,7 +753,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         // Hardware GPU presentation callback
         if ("requestVideoFrameCallback" in activeVid) {
           (activeVid as any).requestVideoFrameCallback(() => {
-            if (feedVideoRef.current === activeVid && !activeVid.paused) {
+            if (feedVideoRef.current === activeVid) {
               setIsPlaying(true);
               setIsBuffering(false);
               setFirstFrameRenderedId(activeVideo.id);
@@ -748,9 +765,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
     }
 
-    // 2 & 3. PRE-WARM NEXT & PREVIOUS VIDEOS IN POOL AFTER SHORT GRACE PERIOD
-    // Giving the active video 100% of bandwidth and network connections on desktop startup
+    // 2 & 3. PRE-WARM NEXT & PREVIOUS VIDEOS IN POOL IMMEDIATELY ON NEXT FRAME
+    // Also pre-decode poster images into browser memory so mobile swipes never flash black
     const prewarmTimer = setTimeout(() => {
+      // Pre-decode upcoming poster images into mobile GPU bitmap cache
+      [nextVideo, displayItems[activeCardIndex + 2]?.video, prevVideo].forEach((upcomingVid) => {
+        if (!upcomingVid) return;
+        const pUrl = resolveVideoPosterUrl(upcomingVid);
+        if (pUrl && typeof Image !== "undefined") {
+          const img = new Image();
+          img.decoding = "sync";
+          img.src = pUrl;
+        }
+      });
+
       // Pre-warm next upcoming video
       if (nextCard && nextVideo) {
         let nextVid = slotBindingRef.current.get(nextVideo.id);
@@ -773,11 +801,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (nextSlot && nextVid.parentElement !== nextSlot) {
             nextSlot.appendChild(nextVid);
           }
-          const nextSrc = resolvePlayableVideoSource(nextVideo);
-          if (!isSameSrc(nextVid.src, nextSrc)) {
+          nextVid.preload = "auto";
+          const isNextAlreadyBound =
+            nextVid.dataset.boundVideoId === nextVideo.id &&
+            (Boolean(nextVid.currentSrc || nextVid.src) || hlsPoolRef.current.has(nextVid));
+          if (!isNextAlreadyBound) {
             loadVideoSource(nextVid, nextVideo);
-            nextVid.preload = "auto";
-            try { nextVid.load(); } catch (e) {}
           }
           const nextPoster = resolveVideoPosterUrl(nextVideo);
           if (nextVid.poster !== nextPoster) {
@@ -808,11 +837,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (prevSlot && prevVid.parentElement !== prevSlot) {
             prevSlot.appendChild(prevVid);
           }
-          const prevSrc = resolvePlayableVideoSource(prevVideo);
-          if (!isSameSrc(prevVid.src, prevSrc)) {
+          prevVid.preload = "auto";
+          const isPrevAlreadyBound =
+            prevVid.dataset.boundVideoId === prevVideo.id &&
+            (Boolean(prevVid.currentSrc || prevVid.src) || hlsPoolRef.current.has(prevVid));
+          if (!isPrevAlreadyBound) {
             loadVideoSource(prevVid, prevVideo);
-            prevVid.preload = "auto";
-            try { prevVid.load(); } catch (e) {}
           }
           const prevPoster = resolveVideoPosterUrl(prevVideo);
           if (prevVid.poster !== prevPoster) {
@@ -820,7 +850,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           }
         }
       }
-    }, 150);
+    }, 16);
 
     // 4. Pause and unmount any idle element outside active, next, and prev
     pool.forEach((v) => {
@@ -834,6 +864,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           hls.destroy();
           hlsPoolRef.current.delete(v);
         }
+        delete v.dataset.boundVideoId;
         v.muted = true;
         try { v.pause(); } catch (e) {}
         v.remove();

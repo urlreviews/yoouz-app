@@ -34,7 +34,7 @@ import { formatRecordedDate } from "../utils/dateUtils";
 import { formatBusinessName, resolveSafeAuthor, extractCleanDomain, getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug, isPlaceReviewMatch, generateSmartReviewTitle } from "../utils/placeUtils";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolvePlayableVideoSourcesCascade, resolveVideoPosterUrl, resolveVideoPosterCascade } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import {  saveVideoBlobToIndexedDB } from "../lib/videoStorage";
@@ -487,24 +487,25 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     };
   }, [isScrubbing, calculatePctFromClientX, updateSeekPosition, onScrubEnd]);
 
-  // High-fidelity poster URL with graceful user avatar fallback (NEVER falls back to company logos)
-  const [posterLoadError, setPosterLoadError] = useState(false);
+  // High-fidelity poster URL cascade with automatic fallback across Bunny CDN thumbnail variants
+  const [posterCandidateIdx, setPosterCandidateIdx] = useState(0);
   const userAvatarFallback = React.useMemo(() => {
     return getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
   }, [safeAuthor]);
 
-  const realVideoPoster = React.useMemo(() => {
-    return resolveVideoPosterUrl(video) || video.thumbnailUrl || "";
+  const posterCandidates = React.useMemo(() => {
+    const rawList = resolveVideoPosterCascade(video);
+    const proxied = rawList.map((u) => getProxiedImageUrl(u)).filter(Boolean);
+    return proxied;
   }, [video]);
 
-  const posterUrl = React.useMemo(() => {
-    if (posterLoadError || !realVideoPoster) {
-      return userAvatarFallback;
-    }
-    return getProxiedImageUrl(realVideoPoster);
-  }, [posterLoadError, realVideoPoster, userAvatarFallback]);
+  // Reset candidate index when video changes
+  useEffect(() => {
+    setPosterCandidateIdx(0);
+  }, [video?.id]);
 
-  const hasRealPoster = Boolean(realVideoPoster && !posterLoadError);
+  const hasRealPoster = posterCandidateIdx < posterCandidates.length;
+  const posterUrl = hasRealPoster ? posterCandidates[posterCandidateIdx] : userAvatarFallback;
 
   // Keep iOS / Android Lock Screen & Media Controls in sync with rich metadata & app logo artwork
   useEffect(() => {
@@ -965,23 +966,22 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         data-video-slot="true"
         className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-black pointer-events-none"
       >
-        {/* High-Fidelity Poster (visible during loading or until active video starts playback) */}
+        {/* High-Fidelity Poster (stays 100% visible until hardware decoder paints the first video frame) */}
         {hasRealPoster ? (
           <img
             src={posterUrl}
             alt={video.caption || formatBusinessName(video.placeName) || "Video review poster"}
-            loading={isActive || isNear ? "eager" : "lazy"}
-            decoding="async"
-            fetchPriority={isActive ? "high" : "auto"}
-            onError={() => setPosterLoadError(true)}
-            className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-300 z-10 ${
-              isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
+            loading="eager"
+            decoding={isActive || isNear ? "sync" : "async"}
+            fetchPriority={isActive || isNear ? "high" : "auto"}
+            onError={() => setPosterCandidateIdx((prev) => prev + 1)}
+            className={`w-full h-full object-cover pointer-events-none absolute inset-0 transition-opacity duration-150 z-10 ${
+              isActive && hasRenderedFirstFrame ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
-            referrerPolicy="no-referrer"
           />
         ) : (
           <div
-            className={`w-full h-full pointer-events-none absolute inset-0 bg-black transition-opacity duration-300 z-10 ${
+            className={`w-full h-full pointer-events-none absolute inset-0 bg-black transition-opacity duration-150 z-10 ${
               isActive && (hasRenderedFirstFrame || isPlaying) ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           />
