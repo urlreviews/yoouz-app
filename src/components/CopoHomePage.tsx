@@ -768,6 +768,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 data-lpignore="true"
                 data-form-type="other"
                 aria-autocomplete="none"
+                autoComplete="new-password"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}
@@ -779,8 +780,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     ? t("search.placeholder", "Search any business, place, or URL...")
                     : t("search.placeholder", "Search any business, place, or URL...")
                 }
-                style={{ caretColor: "#007aff" }}
-                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate caret-[#007aff]"
+                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
               />
 
               {/* Right Side: Subtle Spinner / Clear Button */}

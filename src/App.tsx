@@ -8175,6 +8175,7 @@ export function App() {
                 onAddPlace={handleUpdatePlace}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
+                setIsSearchActive={setIsSearchActive}
                 onViewAll={() => handleViewAllTrending()}
                 onRecordReview={(place) => {
                   setPreselectedPlaceForRecording(place || null);
@@ -8878,7 +8879,7 @@ export function App() {
       />
 
       {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
-      {!isSearchActive && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
+      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}

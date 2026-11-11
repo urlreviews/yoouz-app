@@ -40,13 +40,18 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
         <form onSubmit={onSubmit} className="flex-1">
           <div className="relative flex items-center w-full bg-zinc-900 rounded-full px-4 py-3 border border-zinc-700 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10 transition-all">
             <Search className="w-5 h-5 text-zinc-400 mr-3 shrink-0" />
-            <input
+              <input
               ref={inputRef}
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search..."
               className="w-full bg-transparent text-white text-base focus:outline-none"
+              autoComplete="new-password"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-lpignore="true"
             />
             {isLoading && <Loader2 className="w-5 h-5 text-zinc-400 animate-spin ml-2" />}
           </div>
