@@ -1037,7 +1037,10 @@ export function App() {
           }
         }
         if (!placeParam && !pathname.startsWith("/business/")) {
-          if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+          const revDomainMatch = pathname.match(/^\/review\/([^\/]+)\/([^\/]+)/);
+          if (revDomainMatch && !revDomainMatch[1].startsWith("rev-")) {
+            placeParam = revDomainMatch[1];
+          } else if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
             placeParam = "sample";
           } else {
             const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
@@ -4577,40 +4580,12 @@ export function App() {
   const isPlaceView = Boolean(selectedPlaceIdForDrawer && drawerPlace);
   const isCreatorView = Boolean(selectedAuthorForDrawer);
 
-  const displayedDrawerPlaceName = useMemo(() => {
-    if (!drawerPlace) return undefined;
-    const dom = (drawerPlace.brandDomain || drawerPlace.id || "").toLowerCase().replace(/^www\./, "");
-    if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
-    if ((drawerPlace as any).selectedName && !isDomainStemName((drawerPlace as any).selectedName, dom) && !isDomainDerivedGuess((drawerPlace as any).selectedName, dom)) {
-      return (drawerPlace as any).selectedName;
-    }
-    const descBrand = extractBrandFromDescription(drawerPlace.description, dom);
-    const camelBrand = extractCamelCaseBrandFromText(drawerPlace.description, dom);
-    if (descBrand && (isDomainStemName(drawerPlace.name, dom) || isDomainDerivedGuess(drawerPlace.name, dom) || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(drawerPlace.name || "")))) {
-      return descBrand;
-    }
-    if (camelBrand && (isDomainStemName(drawerPlace.name, dom) || isDomainDerivedGuess(drawerPlace.name, dom) || !/[\p{Ll}][\p{Lu}]/u.test(drawerPlace.name || ""))) {
-      return camelBrand;
-    }
-    if (drawerPlace.name && !isGenericPlaceName(drawerPlace.name) && !drawerPlace.name.includes(".com") && !isDomainStemName(drawerPlace.name, dom)) {
-      const pLower = drawerPlace.name.toLowerCase().trim();
-      if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
-      const formattedCurrent = formatBusinessName(drawerPlace.name, dom);
-      if (formattedCurrent && !isDomainDerivedGuess(formattedCurrent, dom)) return formattedCurrent;
-      return toTitleCase(drawerPlace.name);
-    }
-    if (descBrand) return descBrand;
-    if (camelBrand) return camelBrand;
-    const formatted = formatBusinessName(drawerPlace.name || drawerPlace.id, dom);
-    return toTitleCase(formatted || drawerPlace.name || drawerPlace.id);
-  }, [drawerPlace]);
-
   const currentFeedContextKey = useMemo(() => {
-    if (isPlaceView) return `place_${drawerPlace?.id || selectedPlaceIdForDrawer}`;
+    if (isPlaceView) return "feed_watching_place";
     if (isCreatorView) return `creator_${selectedAuthorForDrawer?.name || selectedAuthorForDrawer?.name}`;
     if (fullscreenFeedContext) return `fullscreen_${fullscreenFeedContext.type}_${fullscreenFeedContext.id}`;
     return `section_${activeSection}_${activeSubTab}`;
-  }, [isPlaceView, drawerPlace, selectedPlaceIdForDrawer, isCreatorView, selectedAuthorForDrawer, fullscreenFeedContext, activeSection, activeSubTab]);
+  }, [isPlaceView, isCreatorView, selectedAuthorForDrawer, fullscreenFeedContext, activeSection, activeSubTab]);
 
   const userVideos = useMemo(() => {
     let filtered = videos;
@@ -4739,6 +4714,48 @@ export function App() {
     return visibleVideos;
   }, [videos, activeSubTab, hiddenVideoIds, fullscreenFeedContext, isPlaceView, drawerPlace, isCreatorView, selectedAuthorForDrawer, activeSection, userVideos, embedTargetId]);
 
+  // Option A (Dynamic Live Sync): When watching videos or in place split-view on desktop,
+  // the drawer place dynamically tracks the video currently on screen (activeFeedVideos[currentVideoIndex]),
+  // ensuring the business profile on the left always matches the video on the right as the user scrolls.
+  const activeDrawerPlace = useMemo(() => {
+    if ((isWatchingVideo || isPlaceView) && activeFeedVideos && activeFeedVideos[currentVideoIndex]) {
+      const currentVid = activeFeedVideos[currentVideoIndex];
+      const match = places.find(p => isPlaceReviewMatch(currentVid, p));
+      if (match) return match;
+      return synthesizePlaceFromReview(currentVid, places);
+    }
+    return drawerPlace;
+  }, [isWatchingVideo, isPlaceView, activeFeedVideos, currentVideoIndex, places, drawerPlace]);
+
+  const displayedDrawerPlaceName = useMemo(() => {
+    const targetPlace = activeDrawerPlace || drawerPlace;
+    if (!targetPlace) return undefined;
+    const dom = (targetPlace.brandDomain || targetPlace.id || "").toLowerCase().replace(/^www\./, "");
+    if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
+    if ((targetPlace as any).selectedName && !isDomainStemName((targetPlace as any).selectedName, dom) && !isDomainDerivedGuess((targetPlace as any).selectedName, dom)) {
+      return (targetPlace as any).selectedName;
+    }
+    const descBrand = extractBrandFromDescription(targetPlace.description, dom);
+    const camelBrand = extractCamelCaseBrandFromText(targetPlace.description, dom);
+    if (descBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || "")))) {
+      return descBrand;
+    }
+    if (camelBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || ""))) {
+      return camelBrand;
+    }
+    if (targetPlace.name && !isGenericPlaceName(targetPlace.name) && !targetPlace.name.includes(".com") && !isDomainStemName(targetPlace.name, dom)) {
+      const pLower = targetPlace.name.toLowerCase().trim();
+      if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
+      const formattedCurrent = formatBusinessName(targetPlace.name, dom);
+      if (formattedCurrent && !isDomainDerivedGuess(formattedCurrent, dom)) return formattedCurrent;
+      return toTitleCase(targetPlace.name);
+    }
+    if (descBrand) return descBrand;
+    if (camelBrand) return camelBrand;
+    const formatted = formatBusinessName(targetPlace.name || targetPlace.id, dom);
+    return toTitleCase(formatted || targetPlace.name || targetPlace.id);
+  }, [activeDrawerPlace, drawerPlace]);
+
   // Real-time URL and Meta Title synchronization during feed scrolling and section transitions
   useEffect(() => {
     try {
@@ -4758,12 +4775,19 @@ export function App() {
       // Current active video being watched in the feed takes priority so URL updates in real-time as user scrolls!
       const currentVid = activeFeedVideos[currentVideoIndex] || (videos && currentVideoIndex >= 0 ? videos[currentVideoIndex] : null);
 
-      // Hierarchy of URL synchronization:
-      // 1. Business Profile Drawer is open -> /reviews/:slug
-      if (isPlaceView && drawerPlace) {
-        const slug = getPlaceSlug(drawerPlace || selectedPlaceIdForDrawer);
+      // Hierarchy of URL synchronization (Option A):
+      // 1. Dynamic Video Playback (Feed scroll, split-view, or direct review) -> ALWAYS updates to /review/:domain/:id in real-time!
+      if ((isWatchingVideo || isPlaceView) && currentVid) {
+        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
+        path = `/review/${domainSlug}/${currentVid.id}`;
+        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+      } else if (isPlaceView && (activeDrawerPlace || drawerPlace)) {
+        const p = activeDrawerPlace || drawerPlace;
+        const slug = getPlaceSlug(p || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = `${drawerPlace.name} - Real Video Reviews & Ratings | Yoouz`;
+        title = `${p?.name || "Business"} - Real Video Reviews & Ratings | Yoouz`;
       } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
@@ -4789,13 +4813,6 @@ export function App() {
           .replace(/-+/g, "-");
         path = `/@${cleanSlug}`;
         title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
-      } else if (isWatchingVideo && currentVid) {
-        // Video Watching Feed (scrolling through full feed, 'View All', or direct video playback)
-        const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
-        path = `/review/${domainSlug}/${currentVid.id}`;
-        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
-        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
-        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
       } else if (activeSection === "home") {
         path = "/";
         title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
@@ -4871,7 +4888,7 @@ export function App() {
           localizedPath.startsWith("/review/") || 
           localizedPath.startsWith("/reviews/");
         
-        if (isCurrentlyVideo || isGoingToVideo || isWatchingVideo) {
+        if (isCurrentlyVideo || isGoingToVideo || isWatchingVideo || isPlaceView) {
           // Use replaceState while scrolling feed to avoid filling up history stack
           window.history.replaceState({}, "", localizedPath);
         } else {
@@ -4882,7 +4899,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -7510,10 +7527,10 @@ export function App() {
         />
 
         {/* Place Drawer */}
-        {selectedPlaceIdForDrawer && drawerPlace && (
+        {selectedPlaceIdForDrawer && (activeDrawerPlace || drawerPlace) && (
           <CopoPlaceDrawer
-            key={`${drawerPlace.id}_${drawerPlace.brandDomain || ''}_${drawerPlace.website || ''}`}
-            place={drawerPlace}
+            key={(activeDrawerPlace || drawerPlace)!.id}
+            place={activeDrawerPlace || drawerPlace}
             allVideos={videos}
             onClose={handleCloseDrawers}
             onSelectVideo={(videoId) => handleSelectVideoById(videoId, "place")}
@@ -7521,7 +7538,7 @@ export function App() {
             onUpdatePlace={handleUpdatePlace}
             onToggleFollowPlace={handleToggleFollowPlace}
             onOpenReport={handleOpenReport}
-            isSaved={isPlaceSaved(drawerPlace)}
+            isSaved={isPlaceSaved(activeDrawerPlace || drawerPlace)}
             reviewSort={placeReviewSort}
             onSortChange={(sort) => {
               setPlaceReviewSort(sort);
@@ -7789,7 +7806,8 @@ export function App() {
       {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
        {isPlaceView ? (
         <CopoPlaceDrawer
-          place={drawerPlace}
+          key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
+          place={activeDrawerPlace || drawerPlace}
           allVideos={videos}
           onClose={handleCloseDrawers}
           onSelectVideo={(videoId) => handleSelectVideoById(videoId, "place")}
@@ -7797,7 +7815,7 @@ export function App() {
           onUpdatePlace={handleUpdatePlace}
           onToggleFollowPlace={handleToggleFollowPlace}
           onOpenReport={handleOpenReport}
-          isSaved={isPlaceSaved(drawerPlace)}
+          isSaved={isPlaceSaved(activeDrawerPlace || drawerPlace)}
           reviewSort={placeReviewSort}
           onSortChange={(sort) => {
             setPlaceReviewSort(sort);
