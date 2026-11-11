@@ -69,6 +69,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
   const [isResolvingPlace, setIsResolvingPlace] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(autoFocusSearch || false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,10 +78,20 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  const handleCancelMobileSearch = () => {
+    setQuery("");
+    setSuggestions([]);
+    setShowDropdown(false);
+    setIsMobileSearchOpen(false);
+    setIsFocused(false);
+    if (onClose) onClose();
+    if (setIsSearchActive) setIsSearchActive(false);
+  };
+
   useEffect(() => {
     // Hiding nav when search overlay is open OR focused on mobile
-    setIsSearchActive?.(isMobile && (showDropdown || isFocused));
-  }, [isMobile, showDropdown, isFocused, setIsSearchActive]);
+    setIsSearchActive?.(isMobile && (isMobileSearchOpen || showDropdown || isFocused));
+  }, [isMobile, isMobileSearchOpen, showDropdown, isFocused, setIsSearchActive]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
@@ -115,6 +126,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       setQuery("");
       setSuggestions([]);
       setShowDropdown(false);
+      setIsMobileSearchOpen(true);
       setSelectedIndex(-1);
       const timer = setTimeout(() => {
         if (searchInputRef.current) {
@@ -739,6 +751,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 onKeyDown={handleInputKeyDown}
                 onFocus={() => {
                   setIsFocused(true);
+                  if (isMobile) setIsMobileSearchOpen(true);
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
                 onBlur={() => setIsFocused(false)}
@@ -776,15 +789,21 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </form>
 
           {/* Mobile Overlay */}
-          {isMobile && showDropdown && (
+          {isMobile && isMobileSearchOpen && (
             <MobileSearchOverlay
               query={query}
               setQuery={setQuery}
               suggestions={suggestions}
-              isOpen={showDropdown}
-              onClose={() => { setShowDropdown(false); onClose?.(); }}
-              onSelectSuggestion={handleSelectSuggestion}
-              onSubmit={handleSearchSubmit}
+              isOpen={isMobileSearchOpen}
+              onClose={handleCancelMobileSearch}
+              onSelectSuggestion={(item) => {
+                setIsMobileSearchOpen(false);
+                handleSelectSuggestion(item);
+              }}
+              onSubmit={(e) => {
+                setIsMobileSearchOpen(false);
+                handleSearchSubmit(e);
+              }}
               isLoading={isLoadingSuggest}
             />
           )}

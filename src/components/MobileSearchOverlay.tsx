@@ -54,11 +54,17 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
               data-lpignore="true"
             />
             {isLoading && <Loader2 className="w-4 h-4 text-zinc-400 animate-spin ml-2 shrink-0" />}
-            {query.trim() && !isLoading && (
+            {query.length > 0 && !isLoading && (
               <button
                 type="button"
-                onClick={() => setQuery("")}
-                className="p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white ml-2 shrink-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setQuery("");
+                  setTimeout(() => inputRef.current?.focus(), 10);
+                }}
+                className="p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white ml-2 shrink-0 cursor-pointer active:scale-90"
+                aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
