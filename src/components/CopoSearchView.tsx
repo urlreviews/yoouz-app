@@ -934,7 +934,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   ref={carouselRef}
                   className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
                 >
-                  {trendingVideos.slice(0, 10).map((video) => {
+                  {trendingVideos.map((video) => {
                     const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
                     const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
 
