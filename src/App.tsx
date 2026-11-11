@@ -8879,7 +8879,7 @@ export function App() {
       />
 
       {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
-      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && (
+      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}

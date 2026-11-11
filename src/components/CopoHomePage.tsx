@@ -70,6 +70,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [isResolvingPlace, setIsResolvingPlace] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -77,11 +78,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
-    setIsSearchActive?.(isMobile && showDropdown);
-  }, [isMobile, showDropdown, setIsSearchActive]);
+    // Hiding nav when search overlay is open OR focused on mobile
+    setIsSearchActive?.(isMobile && (showDropdown || isFocused));
+  }, [isMobile, showDropdown, isFocused, setIsSearchActive]);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -773,8 +775,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}
                 onFocus={() => {
+                  setIsFocused(true);
                   if (suggestions.length > 0) setShowDropdown(true);
                 }}
+                onBlur={() => setIsFocused(false)}
                 placeholder={
                   searchMode === "review"
                     ? t("search.placeholder", "Search any business, place, or URL...")

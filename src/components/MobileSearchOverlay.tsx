@@ -34,31 +34,36 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col h-[100dvh]">
-      {/* Header with Search Bar */}
-      <div className="flex items-center gap-3 p-4 border-b border-zinc-800/60 bg-zinc-950">
-        <form onSubmit={onSubmit} className="flex-1">
-          <div className="relative flex items-center w-full bg-zinc-900 rounded-full px-4 py-3 border border-zinc-700 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10 transition-all">
-            <Search className="w-5 h-5 text-zinc-400 mr-3 shrink-0" />
+    <div className="fixed inset-0 z-[100] bg-zinc-950 flex flex-col h-[100dvh] safe-area-bottom">
+      {/* Premium Header with Search Bar */}
+      <div className="flex flex-col gap-4 px-6 pt-10 pb-5 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-2xl sticky top-0">
+        <div className="flex items-center gap-4">
+          <form onSubmit={onSubmit} className="flex-1">
+            <div className="relative flex items-center w-full bg-zinc-900/80 rounded-2xl px-5 py-[18px] border border-white/10 focus-within:border-white/30 focus-within:ring-4 focus-within:ring-white/5 transition-all shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+              <Search className="w-6 h-6 text-zinc-400 mr-4 shrink-0" />
               <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full bg-transparent text-white text-base focus:outline-none"
-              autoComplete="new-password"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              data-lpignore="true"
-            />
-            {isLoading && <Loader2 className="w-5 h-5 text-zinc-400 animate-spin ml-2" />}
-          </div>
-        </form>
-        <button onClick={onClose} className="text-white font-medium p-2">
-          Cancel
-        </button>
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full bg-transparent text-white text-[18px] font-bold focus:outline-none placeholder:text-zinc-600 placeholder:font-medium"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+              />
+              {isLoading && <Loader2 className="w-5 h-5 text-zinc-400 animate-spin ml-2" />}
+            </div>
+          </form>
+          <button 
+            onClick={onClose} 
+            className="text-zinc-400 hover:text-white font-bold text-[17px] transition-colors whitespace-nowrap active:scale-95 py-2 px-1"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
       {/* Results List */}
