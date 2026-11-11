@@ -19,10 +19,7 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
 
   const posterSrc = React.useMemo(() => {
     if (errorStage === 0) {
-      return resolveVideoPosterUrl(video) || video.placeBannerUrl || getCategoryThematicBanner(video.placeCategory, video.placeName);
-    }
-    if (errorStage === 1) {
-      return video.placeBannerUrl || getCategoryThematicBanner(video.placeCategory, video.placeName);
+      return resolveVideoPosterUrl(video);
     }
     return "";
   }, [video, errorStage]);
