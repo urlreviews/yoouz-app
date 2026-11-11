@@ -1362,10 +1362,19 @@ function readDeletedReviewsIndex(): string[] {
 
 function isDeletedReviewServer(videoId: any): boolean {
   if (!videoId) return false;
+  readDeletedReviewsIndex();
+  if (typeof videoId === "object") {
+    const id = videoId.id ? String(videoId.id).trim() : "";
+    const bId = (videoId.bunnyVideoId || videoId.bunnyGuid) ? String(videoId.bunnyVideoId || videoId.bunnyGuid).trim() : "";
+    const vUrl = videoId.videoUrl ? String(videoId.videoUrl).trim() : "";
+    if (id && (inMemoryDeletedReviewsSet.has(id) || inMemoryDeletedReviewsSet.has(id.toLowerCase()))) return true;
+    if (bId && (inMemoryDeletedReviewsSet.has(bId) || inMemoryDeletedReviewsSet.has(bId.toLowerCase()))) return true;
+    if (vUrl && Array.from(inMemoryDeletedReviewsSet).some(d => d && vUrl.includes(d))) return true;
+    return false;
+  }
   const strId = String(videoId).trim();
   if (!strId) return false;
   const lowerId = strId.toLowerCase();
-  readDeletedReviewsIndex();
   return inMemoryDeletedReviewsSet.has(strId) || inMemoryDeletedReviewsSet.has(lowerId);
 }
 
@@ -5794,13 +5803,26 @@ async function purgeVideoFromAllStores(videoId: string) {
         fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
       }
     } catch (sErr) {}
+
+    // Also purge from data/reviews_index.json
+    try {
+      const dataReviewsPath = path.join(process.cwd(), "data", "reviews_index.json");
+      if (fs.existsSync(dataReviewsPath)) {
+        const dRaw = fs.readFileSync(dataReviewsPath, "utf8");
+        const dList = JSON.parse(dRaw);
+        if (Array.isArray(dList)) {
+          const dFiltered = dList.filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && (!existingVideoObj?.bunnyVideoId || item.bunnyVideoId !== existingVideoObj.bunnyVideoId));
+          fs.writeFileSync(dataReviewsPath, JSON.stringify(dFiltered, null, 2), "utf8");
+        }
+      }
+    } catch (dErr) {}
   } catch (e) {
     console.warn("Failed to remove video from reviews_index.json:", e);
   }
 
   // 3. Purge from in-memory feed cache & force immediate fresh fetch
   try {
-    feedCache.videos = (feedCache.videos || []).filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && item.bunnyVideoId !== existingVideoObj?.bunnyVideoId);
+    feedCache.videos = (feedCache.videos || []).filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && (!existingVideoObj?.bunnyVideoId || item.bunnyVideoId !== existingVideoObj.bunnyVideoId));
     feedCache.lastFetched = 0;
   } catch (e) {}
 
@@ -5821,16 +5843,22 @@ async function purgeVideoFromAllStores(videoId: string) {
       const cleanVidStr = String(videoId).trim();
       const lowerVidStr = cleanVidStr.toLowerCase();
       await bunnyClient.execute({
-        sql: `DELETE FROM videoReviews WHERE id = ? OR LOWER(id) = ?`,
-        args: [cleanVidStr, lowerVidStr]
+        sql: `DELETE FROM videoReviews WHERE id = ? OR LOWER(id) = ? OR data LIKE ?`,
+        args: [cleanVidStr, lowerVidStr, `%${cleanVidStr}%`]
+      });
+      if (existingVideoObj?.bunnyVideoId) {
+        await bunnyClient.execute({
+          sql: `DELETE FROM videoReviews WHERE data LIKE ?`,
+          args: [`%${existingVideoObj.bunnyVideoId}%`]
+        });
+      }
+      await bunnyClient.execute({
+        sql: `DELETE FROM video_reviews WHERE id = ? OR LOWER(id) = ? OR data LIKE ?`,
+        args: [cleanVidStr, lowerVidStr, `%${cleanVidStr}%`]
       });
       await bunnyClient.execute({
-        sql: `DELETE FROM video_reviews WHERE id = ? OR LOWER(id) = ?`,
-        args: [cleanVidStr, lowerVidStr]
-      });
-      await bunnyClient.execute({
-        sql: `DELETE FROM videos WHERE id = ? OR LOWER(id) = ?`,
-        args: [cleanVidStr, lowerVidStr]
+        sql: `DELETE FROM videos WHERE id = ? OR LOWER(id) = ? OR data LIKE ?`,
+        args: [cleanVidStr, lowerVidStr, `%${cleanVidStr}%`]
       });
       // Cascade delete comments, likes, bookmarks, and shares for this video
       try {
@@ -35848,6 +35876,10 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
   const lowerDomain = domain.toLowerCase();
   const cleanSlug = raw.toLowerCase().replace(/^www[\.-]/, '');
 
+  if (isDeletedPlaceServer(raw) || isDeletedPlaceServer(domain) || isDeletedPlaceServer(cleanSlug) || isDeletedPlaceServer(lowerDomain)) {
+    return null;
+  }
+
   let place: any = {
     id: raw,
     name: formattedName,
@@ -35862,7 +35894,7 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
 
   // 1. In-Memory Video Reviews & Indexes
   try {
-    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+    const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v)) : [];
     const matchedVideos = localList.filter((v: any) =>
       (v.placeName && v.placeName.toLowerCase() === formattedName.toLowerCase()) ||
       (v.placeName && cleanDomainName(v.placeName) === domain) ||
@@ -35940,8 +35972,10 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
       if (revRes.rows && revRes.rows.length > 0) {
         const cleanT = domain.toLowerCase();
         const matching = revRes.rows.filter((r: any) => {
+          if (isDeletedReviewServer(r.id)) return false;
           const rawData = r.data;
           const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
+          if (isDeletedReviewServer(v) || isDeletedReviewServer(v.id) || isDeletedReviewServer(v.bunnyVideoId) || isDeletedReviewServer(v.bunnyGuid)) return false;
           const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || r.placeId || r.placeName || '').toLowerCase();
           return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
         });

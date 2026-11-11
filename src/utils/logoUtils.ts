@@ -383,6 +383,15 @@ export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0
 </svg>`;
 export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
 
+export const BURGER_KING_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="26" fill="#FAF2E7"/>
+  <path d="M 18 42 C 22 16, 98 16, 102 42 Z" fill="#F47F24"/>
+  <text x="60" y="58" font-family="'Impact', 'Arial Black', -apple-system, sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">BURGER</text>
+  <text x="60" y="76" font-family="'Impact', 'Arial Black', -apple-system, sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">KING</text>
+  <path d="M 22 84 C 32 102, 88 102, 98 84 Z" fill="#F47F24"/>
+</svg>`;
+export const BURGER_KING_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(BURGER_KING_LOGO_SVG)}`;
+
 export const INTUITION_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <rect width="120" height="120" rx="26" fill="#0d1117"/>
   <rect x="0.75" y="0.75" width="118.5" height="118.5" rx="25.25" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
@@ -454,6 +463,12 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "zara.com": ZARA_LOGO_DATA_URI,
   "www.zara.com": ZARA_LOGO_DATA_URI,
   "zara": ZARA_LOGO_DATA_URI,
+  "bk.com": BURGER_KING_LOGO_DATA_URI,
+  "www.bk.com": BURGER_KING_LOGO_DATA_URI,
+  "burgerking.com": BURGER_KING_LOGO_DATA_URI,
+  "www.burgerking.com": BURGER_KING_LOGO_DATA_URI,
+  "burgerking": BURGER_KING_LOGO_DATA_URI,
+  "burger king": BURGER_KING_LOGO_DATA_URI,
   "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
@@ -1059,11 +1074,11 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <circle cx="60" cy="42" r="14" fill="#f59e0b"/>
       <text x="60" y="78" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="18" fill="#065f46" text-anchor="middle" letter-spacing="0.5">SÜTAŞ</text>
     </svg>`),
-  "bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-  "www.bk.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-  "burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-  "www.burgerking.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-  "burgerking": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+  "bk.com": BURGER_KING_LOGO_DATA_URI,
+  "www.bk.com": BURGER_KING_LOGO_DATA_URI,
+  "burgerking.com": BURGER_KING_LOGO_DATA_URI,
+  "www.burgerking.com": BURGER_KING_LOGO_DATA_URI,
+  "burgerking": BURGER_KING_LOGO_DATA_URI,
   "flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
   "www.flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
   "flipper": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",

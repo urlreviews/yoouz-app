@@ -168,7 +168,10 @@ const HARD_DELETED_IDS = [
   "rev-1792168311201-mc11u",
   "rev-1792053448121-182jk",
   "rev-1792432790505-8re2s",
-  "rev-1792432790505-4ovhe"
+  "rev-1792432790505-4ovhe",
+  "rev-1792588172597-vb7nk",
+  "7ca2740c-cfc8-4afe-ab43-8350298cda87",
+  "renevolt-by-solar-x.co.il"
 ];
 
 const PROTECTED_FEED_PLACES = new Set([
@@ -193,11 +196,22 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
   const id = String(v.id).trim();
   if (!id || id.length < 3) return true;
 
+  const bunnyId = String(v.bunnyVideoId || v.bunnyGuid || "").trim();
+  const vUrl = String(v.videoUrl || "").trim();
+
   if (extraDeletedIds) {
-    if (extraDeletedIds instanceof Set && (extraDeletedIds.has(id) || extraDeletedIds.has(id.toLowerCase()))) return true;
-    if (Array.isArray(extraDeletedIds) && extraDeletedIds.some(item => item && (String(item).trim() === id || String(item).trim().toLowerCase() === id.toLowerCase()))) return true;
+    if (extraDeletedIds instanceof Set) {
+      if (extraDeletedIds.has(id) || extraDeletedIds.has(id.toLowerCase())) return true;
+      if (bunnyId && (extraDeletedIds.has(bunnyId) || extraDeletedIds.has(bunnyId.toLowerCase()))) return true;
+    }
+    if (Array.isArray(extraDeletedIds)) {
+      if (extraDeletedIds.some(item => item && (String(item).trim() === id || String(item).trim().toLowerCase() === id.toLowerCase()))) return true;
+      if (bunnyId && extraDeletedIds.some(item => item && (String(item).trim() === bunnyId || String(item).trim().toLowerCase() === bunnyId.toLowerCase()))) return true;
+    }
   }
   if (HARD_DELETED_IDS.includes(id) || HARD_DELETED_IDS.includes(id.toLowerCase())) return true;
+  if (bunnyId && (HARD_DELETED_IDS.includes(bunnyId) || HARD_DELETED_IDS.includes(bunnyId.toLowerCase()))) return true;
+  if (vUrl && HARD_DELETED_IDS.some(hd => hd && vUrl.includes(hd))) return true;
   if (id === "rev-12345" || id.startsWith("rev-test") || id.startsWith("rev-err-")) return true;
 
   const uId = (v.userId || "").toLowerCase().trim();
