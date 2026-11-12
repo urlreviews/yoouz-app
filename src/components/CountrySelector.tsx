@@ -67,7 +67,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
             <input
               type="text"
               value={search}
-              autoComplete="new-password"
+              autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               onChange={(e) => setSearch(e.target.value)}

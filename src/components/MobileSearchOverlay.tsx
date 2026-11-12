@@ -42,16 +42,19 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
             <Search className="w-4.5 h-4.5 text-zinc-400 mr-3 shrink-0" />
             <input
               ref={inputRef}
-              type="search"
+              name="yoouz_mobile_q_disabled"
+              type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search any business, place, or URL..."
               className="w-full bg-transparent text-white text-[15px] font-medium focus:outline-none placeholder:text-zinc-500 caret-[#007aff]"
-              autoComplete="new-password"
+              autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
               data-lpignore="true"
+              data-form-type="other"
+              aria-autocomplete="none"
             />
             {isLoading && <Loader2 className="w-4 h-4 text-zinc-400 animate-spin ml-2 shrink-0" />}
             {query.length > 0 && !isLoading && (

@@ -4675,7 +4675,7 @@ ${jsonLd}
                           inputMode="tel"
                           id="input-profile-phone"
                           name="business_contact_phone_no_autofill"
-                          autoComplete="new-password"
+                          autoComplete="off"
                           autoCorrect="off"
                           autoCapitalize="off"
                           spellCheck={false}

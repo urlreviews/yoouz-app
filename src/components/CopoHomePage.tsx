@@ -735,8 +735,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               <input
                 ref={searchInputRef}
                 id="copo-main-search-input"
-                name="yoouz_search_query"
-                type="search"
+                name="yoouz_search_q_disabled"
+                type="text"
                 dir="auto"
                 autoComplete="off"
                 autoCorrect="off"
@@ -745,7 +745,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 data-lpignore="true"
                 data-form-type="other"
                 aria-autocomplete="none"
-                autoComplete="new-password"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleInputKeyDown}

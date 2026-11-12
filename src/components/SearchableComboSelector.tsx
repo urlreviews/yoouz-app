@@ -79,7 +79,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search..."
-              autoComplete="new-password"
+              autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
               className="w-full bg-transparent border-0 p-0 text-xs text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-0 focus:border-transparent"
