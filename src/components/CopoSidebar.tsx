@@ -139,7 +139,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               return (
                 <React.Fragment key={item.id}>
                   <button
-                    key={item.id}
                     id={`nav-btn-${item.id}`}
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center transition-all duration-150 cursor-pointer group ${

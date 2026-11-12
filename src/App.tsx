@@ -7779,7 +7779,6 @@ export function App() {
             }}
             onOpenNotifications={handleOpenNotifications}
             unreadNotifsCount={effectiveUnreadNotifsCount}
-            onClose={() => setIsSearchModalOpen(false)}
           />
         )}
       </div>
@@ -8998,7 +8997,6 @@ export function App() {
           }}
           onOpenNotifications={handleOpenNotifications}
           unreadNotifsCount={effectiveUnreadNotifsCount}
-          onClose={() => setIsSearchModalOpen(false)}
         />
       )}
 
