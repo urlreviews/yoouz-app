@@ -267,7 +267,6 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
               return (
                 <React.Fragment key={item.id}>
                   <button
-                    key={item.id}
                     onClick={() => onSelectSection(item.id)}
                     className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
                       isActive

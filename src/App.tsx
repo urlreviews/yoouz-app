@@ -4758,9 +4758,9 @@ export function App() {
   // Real-time URL and Meta Title synchronization during feed scrolling and section transitions
   useEffect(() => {
     try {
-      if (isPitchRoute || isPitchUrl) {
+      if (isPitchRoute) {
         document.title = "Investor Memorandum | Yoouz";
-        if (window.location.pathname !== "/pitch" && currentRawPath !== "/pitch") {
+        if (window.location.pathname !== "/pitch") {
           try {
             window.history.replaceState({}, "", "/pitch");
           } catch (e) {}
