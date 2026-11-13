@@ -1256,7 +1256,16 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "2b": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
   "havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
   "www.havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
-  "havenhomecleaning": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png"
+  "havenhomecleaning": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
+  "dominos.com": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
+  "www.dominos.com": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
+  "dominos": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
+  "toureiffel.paris": "https://www.toureiffel.paris/themes/custom/tour_eiffel/img/decouvrir-la-tour-eiffel-landing.jpg",
+  "www.toureiffel.paris": "https://www.toureiffel.paris/themes/custom/tour_eiffel/img/decouvrir-la-tour-eiffel-landing.jpg",
+  "villaggiohotels.ae": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1a/59/2b/40/villaggio-hotel-abu-dhabi.jpg?w=1200&h=-1&s=1",
+  "www.villaggiohotels.ae": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1a/59/2b/40/villaggio-hotel-abu-dhabi.jpg?w=1200&h=-1&s=1",
+  "ritzcarlton.com": "https://cdn.travelpeacockmagazine.com/wp-content/uploads/2023/03/Ritz-Carlton_4.jpg",
+  "www.ritzcarlton.com": "https://cdn.travelpeacockmagazine.com/wp-content/uploads/2023/03/Ritz-Carlton_4.jpg"
 };
 
 export const KNOWN_LOADED_BANNERS = new Set<string>();

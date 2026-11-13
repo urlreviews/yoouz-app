@@ -1,5 +1,55 @@
 [
   {
+    "id": "dominos.com",
+    "name": "Domino's Pizza",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "UnsubscribeYou have successfully opted out of U.S. Email Offers.",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fonline.nihilistdominos.com%2Fgoodies%2Fwallpaper1-1024-768.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fonline.nihilistdominos.com%2Fgoodies%2Fwallpaper1-1024-768.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fonline.nihilistdominos.com%2Fgoodies%2Fwallpaper1-1024-768.jpg"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.dominos.com/en/pages/international/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "CUSTOMER SUPPORT Domino's values its customers and the neighborhoods we serve. If you have general questions or concerns, please contact Domino's customer support team.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "dominos.com",
+    "ratingCount": 1,
+    "videoReviewCount": 0,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "customEdited": true
+  },
+  {
     "id": "easyhotel.com",
     "name": "easyHotel",
     "category": "Hotel & Hospitality",

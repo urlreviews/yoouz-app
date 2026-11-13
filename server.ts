@@ -670,36 +670,81 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     }
   } catch (e) {}
 
+  const domStem = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const isSameOrBrandDomain = (urlStr: string): boolean => {
+    if (!urlStr) return false;
+    try {
+      const u = new URL(urlStr.startsWith("http") ? urlStr : `https://${urlStr}`);
+      const h = u.hostname.toLowerCase().replace(/^www\./, "");
+      if (h === cleanDom || h.endsWith(`.${cleanDom}`)) return true;
+      if (domStem.length >= 4) {
+        const parts = h.split(".");
+        if (parts[0] === domStem || parts.slice(0, -1).includes(domStem)) return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const verifyBannerCandidateReachable = async (imgUrl: string): Promise<boolean> => {
+    try {
+      const checkRes = await fetch(imgUrl, {
+        method: "HEAD",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+        },
+        redirect: "follow",
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      const ct = (checkRes.headers.get("content-type") || "").toLowerCase();
+      if (checkRes.ok && ct.startsWith("image/")) return true;
+    } catch {}
+    try {
+      const cleanT = imgUrl.replace(/^https?:\/\//, "");
+      const wpRes = await fetch(`https://i0.wp.com/${cleanT}`, {
+        method: "HEAD",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+        redirect: "follow",
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      const wpCt = (wpRes.headers.get("content-type") || "").toLowerCase();
+      if (wpRes.ok && wpCt.startsWith("image/")) return true;
+    } catch {}
+    return false;
+  };
+
   // 2. Dedicated Logo Query Pass via DuckDuckGo (strictly verified against cleanDom)
   if (!options.skipLogo) {
-  const logoQueries = [
-    `${cleanDom} logo`,
-    `${cleanDom} official logo`
-  ];
+    const logoQueries = [
+      `${cleanDom} logo`,
+      `${cleanDom} official logo`
+    ];
 
-  for (const lq of logoQueries) {
-    if (logoUrl) break;
-    const items = await queryDDGImages(lq);
-    for (const item of items) {
-      const img = item.image;
-      if (!img || typeof img !== "string" || !img.startsWith("http")) continue;
-      if (isBadBanner(img)) continue;
-      const lowerImg = img.toLowerCase();
-      const lowerTitle = (item.title || "").toLowerCase();
-      const sourcePageUrl = String(item.url || "").toLowerCase();
-      const width = Number(item.width) || 0;
-      const height = Number(item.height) || 0;
+    for (const lq of logoQueries) {
+      if (logoUrl) break;
+      const items = await queryDDGImages(lq);
+      for (const item of items) {
+        const img = item.image;
+        if (!img || typeof img !== "string" || !img.startsWith("http")) continue;
+        if (isBadBanner(img)) continue;
+        const lowerImg = img.toLowerCase();
+        const lowerTitle = (item.title || "").toLowerCase();
+        const sourcePageUrl = String(item.url || "").toLowerCase();
+        const width = Number(item.width) || 0;
+        const height = Number(item.height) || 0;
 
-      if (lowerImg.includes("favicon") || lowerImg.endsWith(".ico") || width < 64 || height < 64) continue;
-      if (isGenericOrPlaceholderLogo(img)) continue;
+        if (lowerImg.includes("favicon") || lowerImg.endsWith(".ico") || width < 64 || height < 64) continue;
+        if (isGenericOrPlaceholderLogo(img)) continue;
 
-      const isFromOwnDomain = lowerImg.includes(cleanDom) || sourcePageUrl.includes(cleanDom);
-      if (isFromOwnDomain && (lowerImg.includes("logo") || lowerTitle.includes("logo") || lowerImg.endsWith(".svg") || lowerImg.includes("brand"))) {
-        logoUrl = img;
-        break;
+        const isFromOwnDomain = isSameOrBrandDomain(lowerImg) || isSameOrBrandDomain(sourcePageUrl);
+        if (isFromOwnDomain && (lowerImg.includes("logo") || lowerTitle.includes("logo") || lowerImg.endsWith(".svg") || lowerImg.includes("brand"))) {
+          logoUrl = img;
+          break;
+        }
       }
     }
-  }
   }
 
   // 3. Dedicated Banner / Storefront Query Pass via DuckDuckGo
@@ -710,6 +755,7 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     `${brandName} headquarters`
   ];
 
+  const collectedBannerItems: any[] = [];
   for (const bq of bannerQueries) {
     if (bannerUrl) break;
     const items = await queryDDGImages(bq);
@@ -722,26 +768,43 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
       const width = Number(item.width) || 0;
       const height = Number(item.height) || 0;
 
-      if (lowerImg.includes("favicon") || lowerImg.includes("logo") || lowerImg.endsWith(".ico") || lowerTitle.includes("logo")) continue;
+      if (lowerImg.includes("favicon") || lowerImg.includes("logo") || lowerImg.endsWith(".ico") || lowerImg.endsWith(".svg") || lowerTitle.includes("logo")) continue;
+      collectedBannerItems.push(item);
 
       const sourcePageUrl = String(item.url || "").toLowerCase();
-      const isFromOwnDomain = lowerImg.includes(cleanDom) || sourcePageUrl.includes(cleanDom);
-      // Only accept images that originate from the business's own domain AND actually resolve to an image
+      const isFromOwnDomain = isSameOrBrandDomain(lowerImg) || isSameOrBrandDomain(sourcePageUrl);
+      // Pass 1: Prioritize images that originate from the business's own domain family
       if (isFromOwnDomain && width >= 400 && (height === 0 || width >= height * 1.1)) {
-        try {
-          const checkRes = await fetch(img, {
-            method: "HEAD",
-            headers: { "User-Agent": "Mozilla/5.0" },
-            redirect: "follow",
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
-          });
-          const ct = (checkRes.headers.get("content-type") || "").toLowerCase();
-          if (checkRes.ok && ct.startsWith("image/")) {
-            bannerUrl = img;
-            photos.push(img);
-            break;
-          }
-        } catch (e) {}
+        if (await verifyBannerCandidateReachable(img)) {
+          bannerUrl = img;
+          photos.push(img);
+          break;
+        }
+      }
+    }
+  }
+
+  // Pass 2: If the website hosts its photos on external hospitality/press CDNs, accept a high-res landscape photo matching the brand name
+  if (!bannerUrl && collectedBannerItems.length > 0) {
+    const brandTokens = (businessName || brandName || "")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length >= 3 && !["the", "and", "for", "inc", "llc", "ltd", "com", "www"].includes(t));
+    for (const item of collectedBannerItems) {
+      const img = String(item.image || "");
+      const lowerImg = img.toLowerCase();
+      const lowerTitle = String(item.title || "").toLowerCase();
+      const width = Number(item.width) || 0;
+      const height = Number(item.height) || 0;
+      if (width < 600 || (height > 0 && width < height * 1.15)) continue;
+      if (/(?:flag|map|clipart|vector|icon|diagram|chart|screenshot|coupon|voucher|card-front|nihilist)/i.test(lowerImg + " " + lowerTitle)) continue;
+      const matchesBrand =
+        (domStem.length >= 4 && (lowerTitle.includes(domStem) || lowerImg.includes(domStem))) ||
+        (brandTokens.length > 0 && brandTokens.every((tk) => lowerTitle.includes(tk) || lowerImg.includes(tk)));
+      if (matchesBrand && (await verifyBannerCandidateReachable(img))) {
+        bannerUrl = img;
+        photos.push(img);
+        break;
       }
     }
   }
@@ -35053,8 +35116,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
           const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
           const cdnMirrors = [
+            `https://i0.wp.com/${cleanTarget}`,
             `https://wsrv.nl/?url=${encodeURIComponent(targetUrl)}`,
-            ...(cleanTarget.includes('/wp-content/') ? [`https://i0.wp.com/${cleanTarget}`] : []),
             `https://web.archive.org/web/2im_/https://${cleanTarget}`
           ];
           for (const mirrorUrl of cdnMirrors) {
@@ -37268,10 +37331,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const placeRatingStr = placeAvgRating.toFixed(1);
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
 
-      // 2. Comprehensive Banner / Cover Photo Resolution
+      // 2. Comprehensive Banner / Cover Photo Resolution (with live multi-mirror fetch & on-the-fly discovery)
       let bannerCandidateUrl = explicitBannerUrl || placeObj?.bannerUrl || placeObj?.placeBannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
       
-      if (!bannerCandidateUrl && (KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`])) {
+      if ((KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`]) && (!bannerCandidateUrl || bannerCandidateUrl.includes('nihilist') || bannerCandidateUrl.includes('favicon') || bannerCandidateUrl.includes('apple-touch-icon'))) {
         bannerCandidateUrl = KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`];
       }
       if (!bannerCandidateUrl && isYoouzPlace) {
@@ -37294,40 +37357,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      let bannerBuf: Buffer | null = null;
-      if (bannerCandidateUrl && typeof bannerCandidateUrl === 'string') {
-        try {
-          if (bannerCandidateUrl.startsWith('data:')) {
-            const buf = decodeDataUrl(bannerCandidateUrl);
-            if (buf && buf.length > 50) bannerBuf = buf;
-          } else if (bannerCandidateUrl.startsWith('/api/proxy-image?url=')) {
-            const actualUrl = decodeURIComponent(bannerCandidateUrl.replace('/api/proxy-image?url=', ''));
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4500);
-            const resp = await fetch(actualUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 YoouzOgBot" } });
-            clearTimeout(timeout);
-            if (resp.ok) {
-              const ab = await resp.arrayBuffer();
-              const buf = Buffer.from(ab);
-              if (buf.length > 50) bannerBuf = buf;
-            }
-          } else if (bannerCandidateUrl.startsWith('http')) {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4500);
-            const resp = await fetch(bannerCandidateUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 YoouzOgBot" } });
-            clearTimeout(timeout);
-            if (resp.ok) {
-              const ab = await resp.arrayBuffer();
-              const buf = Buffer.from(ab);
-              if (buf.length > 50) bannerBuf = buf;
-            }
-          } else if (bannerCandidateUrl.startsWith('/') && !bannerCandidateUrl.startsWith('//')) {
-            const localP = path.join(process.cwd(), bannerCandidateUrl);
-            if (fs.existsSync(localP)) {
-              bannerBuf = fs.readFileSync(localP);
-            }
-          }
-        } catch(e) {}
+      const resolvedBannerResult = await resolveAndFetchPlaceBannerBuffer(rawDomain, placeName, bannerCandidateUrl);
+      const bannerBuf: Buffer | null = resolvedBannerResult.buf;
+      if (resolvedBannerResult.url) {
+        bannerCandidateUrl = resolvedBannerResult.url;
       }
 
       // 3. Resolve Business Logo Buffer
@@ -37617,38 +37650,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       let bannerBuf: Buffer | null = null;
       if (bannerCandidateUrl && typeof bannerCandidateUrl === 'string' && bannerCandidateUrl.trim() !== '') {
-        try {
-          if (bannerCandidateUrl.startsWith('data:')) {
-            const buf = decodeDataUrl(bannerCandidateUrl);
-            if (buf && buf.length > 50) bannerBuf = buf;
-          } else if (bannerCandidateUrl.startsWith('/api/proxy-image?url=')) {
-            const actualUrl = decodeURIComponent(bannerCandidateUrl.replace('/api/proxy-image?url=', ''));
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4500);
-            const resp = await fetch(actualUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 YoouzOgBot" } });
-            clearTimeout(timeout);
-            if (resp.ok) {
-              const ab = await resp.arrayBuffer();
-              const buf = Buffer.from(ab);
-              if (buf.length > 50) bannerBuf = buf;
-            }
-          } else if (bannerCandidateUrl.startsWith('http')) {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4500);
-            const resp = await fetch(bannerCandidateUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 YoouzOgBot" } });
-            clearTimeout(timeout);
-            if (resp.ok) {
-              const ab = await resp.arrayBuffer();
-              const buf = Buffer.from(ab);
-              if (buf.length > 50) bannerBuf = buf;
-            }
-          } else if (bannerCandidateUrl.startsWith('/') && !bannerCandidateUrl.startsWith('//')) {
-            const localP = path.join(process.cwd(), bannerCandidateUrl);
-            if (fs.existsSync(localP)) {
-              bannerBuf = fs.readFileSync(localP);
-            }
-          }
-        } catch(e) {}
+        bannerBuf = await fetchBannerImageBuffer(bannerCandidateUrl);
       }
 
       let avatarBuf: Buffer | null = null;
@@ -38590,6 +38592,331 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   return logoBuf;
 }
 
+const placeBannerBufferCache = new Map<string, { buf: Buffer; url: string; timestamp: number }>();
+
+function unwrapProxiedBannerUrl(rawUrl?: string | null): string {
+  if (!rawUrl || typeof rawUrl !== "string") return "";
+  let targetUrl = rawUrl.trim();
+  let guard = 0;
+  while (targetUrl.includes("/api/proxy-image") && guard < 5) {
+    guard++;
+    try {
+      const uObj = new URL(targetUrl, "https://www.yoouz.com");
+      const inner = uObj.searchParams.get("url");
+      if (inner) {
+        targetUrl = decodeURIComponent(inner).trim();
+        continue;
+      }
+    } catch {}
+    const parts = targetUrl.split("url=");
+    if (parts.length > 1) {
+      try {
+        targetUrl = decodeURIComponent(parts[parts.length - 1].split("&")[0]).trim();
+      } catch {
+        targetUrl = parts[parts.length - 1].split("&")[0].trim();
+      }
+    } else {
+      break;
+    }
+  }
+  try {
+    if (targetUrl.startsWith("http%3A") || targetUrl.startsWith("https%3A")) {
+      targetUrl = decodeURIComponent(targetUrl).trim();
+    }
+  } catch {}
+  return targetUrl;
+}
+
+function isNonPhotographicBannerUrl(urlStr?: string | null): boolean {
+  if (!urlStr || typeof urlStr !== "string") return true;
+  const unwrapped = unwrapProxiedBannerUrl(urlStr);
+  const low = unwrapped.toLowerCase();
+  if (!low || low === "undefined" || low === "null" || low.startsWith("data:;")) return true;
+  if (isBadBanner(unwrapped)) return true;
+  if (
+    low.includes("/api/favicon") ||
+    low.includes("/api/brand-banner") ||
+    low.includes("/api/monogram") ||
+    low.includes("favicon") ||
+    low.includes("apple-touch-icon") ||
+    low.endsWith(".ico") ||
+    low.endsWith(".svg") ||
+    low.startsWith("data:image/svg") ||
+    low.includes("nihilistdominos.com")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+async function validateAndNormalizeBannerBuffer(rawBuf: Buffer | null): Promise<Buffer | null> {
+  if (!rawBuf || rawBuf.length < 150) return null;
+  try {
+    const meta = await sharp(rawBuf, { density: 300 }).metadata();
+    if (!meta || !meta.width || !meta.height) return null;
+    if (meta.width < 120 || meta.height < 60) return null;
+    // If image has transparency (e.g. PNG banner), flatten onto dark #09090b backdrop so it never renders black/transparent artifacts
+    if (meta.hasAlpha) {
+      return await sharp(rawBuf, { density: 300 })
+        .flatten({ background: { r: 9, g: 9, b: 11 } })
+        .jpeg({ quality: 92 })
+        .toBuffer();
+    }
+    return rawBuf;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchBannerImageBuffer(rawBannerUrl?: string | null): Promise<Buffer | null> {
+  if (!rawBannerUrl || typeof rawBannerUrl !== "string") return null;
+  const targetUrl = unwrapProxiedBannerUrl(rawBannerUrl);
+  if (!targetUrl) return null;
+
+  if (placeBannerBufferCache.has(targetUrl)) {
+    const cached = placeBannerBufferCache.get(targetUrl)!;
+    if (Date.now() - cached.timestamp < 3600000) {
+      return cached.buf;
+    }
+  }
+
+  try {
+    if (targetUrl.startsWith("data:")) {
+      const decoded = decodeDataUrl(targetUrl);
+      const valid = await validateAndNormalizeBannerBuffer(decoded);
+      if (valid) {
+        placeBannerBufferCache.set(targetUrl, { buf: valid, url: targetUrl, timestamp: Date.now() });
+        return valid;
+      }
+      return null;
+    }
+
+    if (targetUrl.startsWith("/") && !targetUrl.startsWith("//")) {
+      const rel = targetUrl.split("?")[0];
+      const candidates = [
+        path.join(process.cwd(), rel),
+        path.join(process.cwd(), "public", rel)
+      ];
+      for (const localP of candidates) {
+        if (fs.existsSync(localP) && fs.statSync(localP).isFile()) {
+          const valid = await validateAndNormalizeBannerBuffer(fs.readFileSync(localP));
+          if (valid) {
+            placeBannerBufferCache.set(targetUrl, { buf: valid, url: targetUrl, timestamp: Date.now() });
+            return valid;
+          }
+        }
+      }
+      return null;
+    }
+
+    const fullHttpUrl = targetUrl.startsWith("http://")
+      ? `https://${targetUrl.slice(7)}`
+      : (targetUrl.startsWith("https://") ? targetUrl : `https://${targetUrl}`);
+
+    let sameOriginReferer = "https://www.google.com/";
+    try {
+      sameOriginReferer = new URL(fullHttpUrl).origin + "/";
+    } catch {}
+
+    const cleanNoProto = fullHttpUrl.replace(/^https?:\/\//, "");
+    const attemptUrls = [
+      fullHttpUrl,
+      `https://i0.wp.com/${cleanNoProto}`,
+      `https://wsrv.nl/?url=${encodeURIComponent(fullHttpUrl)}&w=1200&h=630&fit=cover&output=jpg`,
+      `https://web.archive.org/web/2im_/https://${cleanNoProto}`
+    ];
+
+    for (const candidateFetchUrl of attemptUrls) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4200);
+        const resp = await fetch(candidateFetchUrl, {
+          signal: controller.signal,
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            "Referer": candidateFetchUrl === fullHttpUrl ? sameOriginReferer : "https://www.google.com/"
+          }
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) continue;
+        const ct = (resp.headers.get("content-type") || "").toLowerCase();
+        if (ct.includes("text/html") || ct.includes("text/plain") || ct.includes("application/json")) continue;
+        const rawBuf = Buffer.from(await resp.arrayBuffer());
+        const validBuf = await validateAndNormalizeBannerBuffer(rawBuf);
+        if (validBuf) {
+          placeBannerBufferCache.set(targetUrl, { buf: validBuf, url: targetUrl, timestamp: Date.now() });
+          return validBuf;
+        }
+      } catch {}
+    }
+  } catch {}
+
+  return null;
+}
+
+async function persistDiscoveredPlaceBanner(domain: string, placeName: string, discoveredBannerUrl: string): Promise<void> {
+  if (!domain || !discoveredBannerUrl || isNonPhotographicBannerUrl(discoveredBannerUrl)) return;
+  const cleanDom = cleanDomainName(domain);
+  const proxiedBanner = discoveredBannerUrl.startsWith("/api/proxy-image") || discoveredBannerUrl.startsWith("data:")
+    ? discoveredBannerUrl
+    : `/api/proxy-image?url=${encodeURIComponent(unwrapProxiedBannerUrl(discoveredBannerUrl))}`;
+
+  try {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      const rs = await bunnyDb.execute({
+        sql: "SELECT id, data FROM places WHERE id = ? OR brandDomain = ? LIMIT 1",
+        args: [cleanDom, cleanDom]
+      });
+      if (rs.rows && rs.rows.length > 0) {
+        const row: any = rs.rows[0];
+        let doc: any = {};
+        try { doc = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+        doc.bannerUrl = proxiedBanner;
+        doc.ogImage = proxiedBanner;
+        if (!Array.isArray(doc.photos)) doc.photos = [];
+        doc.photos = [proxiedBanner, ...doc.photos.filter((p: string) => p && p !== proxiedBanner && !isNonPhotographicBannerUrl(p))];
+        await bunnyDb.execute({
+          sql: "UPDATE places SET bannerUrl = ?, ogImage = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+          args: [proxiedBanner, proxiedBanner, JSON.stringify(doc), row.id]
+        });
+      }
+    }
+  } catch {}
+
+  try {
+    if (typeof readPlacesIndex === "function" && typeof writePlacesIndex === "function") {
+      const list = readPlacesIndex();
+      let changed = false;
+      for (const p of list) {
+        if (p && (p.id === cleanDom || p.brandDomain === cleanDom)) {
+          p.bannerUrl = proxiedBanner;
+          p.ogImage = proxiedBanner;
+          changed = true;
+        }
+      }
+      if (changed) writePlacesIndex(list);
+    }
+  } catch {}
+}
+
+async function resolveAndFetchPlaceBannerBuffer(
+  rawDomain: string,
+  placeName: string,
+  initialCandidateUrl?: string | null
+): Promise<{ buf: Buffer | null; url: string }> {
+  const cleanDom = cleanDomainName(rawDomain || "");
+  if (cleanDom && placeBannerBufferCache.has(`domain:${cleanDom}`)) {
+    const cached = placeBannerBufferCache.get(`domain:${cleanDom}`)!;
+    if (Date.now() - cached.timestamp < 3600000) {
+      return { buf: cached.buf, url: cached.url };
+    }
+  }
+
+  const candidateList: string[] = [];
+  if (cleanDom && (KNOWN_BRAND_BANNERS[cleanDom] || KNOWN_BRAND_BANNERS[`www.${cleanDom}`])) {
+    candidateList.push(KNOWN_BRAND_BANNERS[cleanDom] || KNOWN_BRAND_BANNERS[`www.${cleanDom}`]);
+  }
+  if (cleanDom && KNOWN_PLACE_METADATA[cleanDom]?.bannerUrl) {
+    candidateList.push(KNOWN_PLACE_METADATA[cleanDom].bannerUrl);
+  }
+  if (initialCandidateUrl && !isNonPhotographicBannerUrl(initialCandidateUrl)) {
+    candidateList.push(initialCandidateUrl);
+  }
+
+  for (const cand of candidateList) {
+    const buf = await fetchBannerImageBuffer(cand);
+    if (buf) {
+      const proxied = cand.startsWith("/api/proxy-image") || cand.startsWith("data:")
+        ? cand
+        : `/api/proxy-image?url=${encodeURIComponent(unwrapProxiedBannerUrl(cand))}`;
+      if (cleanDom) {
+        placeBannerBufferCache.set(`domain:${cleanDom}`, { buf, url: proxied, timestamp: Date.now() });
+      }
+      if (!initialCandidateUrl || isNonPhotographicBannerUrl(initialCandidateUrl)) {
+        persistDiscoveredPlaceBanner(cleanDom, placeName, proxied).catch(() => {});
+      }
+      return { buf, url: proxied };
+    }
+  }
+
+  // On-the-fly live discovery for any existing or newly shared business missing a reachable banner
+  if (cleanDom && cleanDom.includes(".") && cleanDom !== "business.com") {
+    // Step A: Direct website og:image / twitter:image / hero image scrape
+    for (const siteUrl of [`https://${cleanDom}`, `https://www.${cleanDom}`]) {
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 3200);
+        const resp = await fetch(siteUrl, {
+          signal: ctrl.signal,
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml"
+          }
+        });
+        clearTimeout(tid);
+        if (resp.ok) {
+          const html = await resp.text();
+          const $ = cheerio.load(html);
+          const rawCandidates = [
+            $('meta[property="og:image"]').attr("content"),
+            $('meta[property="og:image:secure_url"]').attr("content"),
+            $('meta[name="twitter:image"]').attr("content"),
+            $('meta[name="twitter:image:src"]').attr("content")
+          ].filter(Boolean) as string[];
+
+          for (const rawImg of rawCandidates) {
+            let resolvedImg = rawImg.trim();
+            if (resolvedImg.startsWith("//")) resolvedImg = `https:${resolvedImg}`;
+            else if (resolvedImg.startsWith("/")) resolvedImg = new URL(resolvedImg, resp.url || siteUrl).href;
+            else if (!resolvedImg.startsWith("http")) resolvedImg = new URL(resolvedImg, resp.url || siteUrl).href;
+
+            if (!isNonPhotographicBannerUrl(resolvedImg) && !isLogoOrIconUrl(resolvedImg)) {
+              const buf = await fetchBannerImageBuffer(resolvedImg);
+              if (buf) {
+                const proxied = `/api/proxy-image?url=${encodeURIComponent(resolvedImg)}`;
+                placeBannerBufferCache.set(`domain:${cleanDom}`, { buf, url: proxied, timestamp: Date.now() });
+                persistDiscoveredPlaceBanner(cleanDom, placeName, proxied).catch(() => {});
+                return { buf, url: proxied };
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    // Step B: DuckDuckGo Enterprise Media & Wikipedia discovery
+    try {
+      const ddgMedia = await Promise.race([
+        fetchDuckDuckGoMediaAndInfo(cleanDom, placeName, { skipLogo: true }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
+      ]);
+      if (ddgMedia && ddgMedia.bannerUrl && !isNonPhotographicBannerUrl(ddgMedia.bannerUrl)) {
+        const buf = await fetchBannerImageBuffer(ddgMedia.bannerUrl);
+        if (buf) {
+          const proxied = `/api/proxy-image?url=${encodeURIComponent(unwrapProxiedBannerUrl(ddgMedia.bannerUrl))}`;
+          placeBannerBufferCache.set(`domain:${cleanDom}`, { buf, url: proxied, timestamp: Date.now() });
+          persistDiscoveredPlaceBanner(cleanDom, placeName, proxied).catch(() => {});
+          return { buf, url: proxied };
+        }
+      }
+    } catch {}
+  }
+
+  // Final fallback: if initialCandidateUrl was a logo/icon, still try rendering it rather than empty grid
+  if (initialCandidateUrl) {
+    const fallbackBuf = await fetchBannerImageBuffer(initialCandidateUrl);
+    if (fallbackBuf) {
+      return { buf: fallbackBuf, url: initialCandidateUrl };
+    }
+  }
+
+  return { buf: null, url: initialCandidateUrl || "" };
+}
+
 function decodeDataUrl(dataUrl?: string | null): Buffer | null {
   if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) return null;
   const commaIdx = dataUrl.indexOf(",");
@@ -38780,7 +39107,12 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="twitter:title" content="${safeTitle}" />
     <meta name="twitter:description" content="${safeDesc}" />
     <meta name="twitter:image" content="${safeImage}" />
+    <meta name="twitter:image:src" content="${safeImage}" />
     <meta name="twitter:image:alt" content="${safeTitle}" />
+    <meta itemprop="name" content="${safeTitle}" />
+    <meta itemprop="description" content="${safeDesc}" />
+    <meta itemprop="image" content="${safeImage}" />
+    <link rel="image_src" href="${safeImage}" />
     
     <link rel="canonical" href="${safeUrl}" />
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
@@ -39389,19 +39721,27 @@ function injectOpenGraphTags(html: string, meta: any) {
             : brand;
         }
 
-        if (!foundBanner && (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`])) {
+        if ((KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) && (!foundBanner || isNonPhotographicBannerUrl(foundBanner))) {
           foundBanner = KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`];
         }
         if (!foundBanner && placeVideos.length > 0) {
           const v = placeVideos[0];
           foundBanner = v.placeBannerUrl || v.thumbnailUrl || v.videoThumbnail || (v.id ? `https://rev1.b-cdn.net/videos/${v.id}.jpg` : "");
         }
+        if (!isYoouzPlace && (!foundBanner || isNonPhotographicBannerUrl(foundBanner))) {
+          try {
+            const discovered = await resolveAndFetchPlaceBannerBuffer(domain, placeName, foundBanner);
+            if (discovered.url) {
+              foundBanner = discovered.url;
+            }
+          } catch (e) {}
+        }
 
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=23`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=28`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 

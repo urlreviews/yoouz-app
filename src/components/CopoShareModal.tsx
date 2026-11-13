@@ -344,12 +344,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   })();
 
   // Pre-generate dynamic social preview image url (server generated composite)
-  const previewImageUrl = `${appOrigin}/api/og?${
+  const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
+  const previewImageUrl = `${appOrigin}/api/og-image.png?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&v=26`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&v=28`
       : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${resolvedBannerUrl ? `&bannerUrl=${encodeURIComponent(resolvedBannerUrl)}` : ''}&v=26`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=26`
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=28`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=28`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -362,7 +363,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : "";
 
   useEffect(() => {
-    if (!isModalOpen || !resolvedTouchIcon) return;
+    if (!isModalOpen) return;
+    if (previewImageUrl) {
+      try {
+        const prewarmImg = new Image();
+        prewarmImg.src = previewImageUrl;
+      } catch (e) {}
+    }
+    if (!resolvedTouchIcon) return;
     const updateLinkTag = (rel: string, href: string, extraAttrs?: Record<string, string>) => {
       try {
         let selector = `link[rel="${rel}"]`;
@@ -384,7 +392,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
     updateLinkTag('apple-touch-icon', resolvedTouchIcon, { sizes: '180x180' });
     updateLinkTag('apple-touch-icon', resolvedTouchIcon);
-  }, [isModalOpen, resolvedTouchIcon]);
+  }, [isModalOpen, resolvedTouchIcon, previewImageUrl]);
 
   const shareText = isVideoMode && video
     ? `Watch authentic 60s video review of ${title} by ${video.author?.name || "a local guide"} on Yoouz! ${video.rating ? `★ ${video.rating}/5` : ""}`
