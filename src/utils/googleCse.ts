@@ -41,10 +41,22 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   "opencorporates.com", "corporationwiki.com", "companieshouse.gov.uk", "sunbiz.org", "bizapedia.com",
   "localemirates.com", "2gis.ae", "2gis.com", "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
 
-  // OTAs, Booking, Travel & Restaurant Aggregators, Ticket Resellers & Trivia/Facts Sites
+  // Parked domain brokers, domain marketplaces & registrars
+  "sedo.com", "sedoparking.com", "hugedomains.com", "dan.com", "afternic.com", "godaddy.com", "bodis.com",
+  "parkingcrew.net", "above.com", "voodoo.com", "undeveloped.com", "domainmarket.com", "buydomains.com",
+  "atom.com", "squadhelp.com", "brandbucket.com", "brandpa.com", "namecheap.com", "namesilo.com",
+  "dynadot.com", "porkbun.com", "networksolutions.com", "register.com", "sav.com", "epik.com",
+  "dropcatch.com", "snapnames.com", "flippa.com", "domainagents.com", "uniregistry.com", "cashparking.com",
+
+  // OTAs, Booking, Travel & Restaurant Aggregators, Affiliate Doorways, Ticket Resellers & Trivia/Facts Sites
   "booking.com", "trip.com", "trivago.com", "trivago.co.uk", "trivago.ae", "trivago.de", "expedia.com", "hotels.com",
   "agoda.com", "kayak.com", "skyscanner.com", "skyscanner.net", "priceline.com", "orbitz.com", "travelocity.com",
   "hotwire.com", "hostelworld.com", "airbnb.com", "vrbo.com", "getyourguide.com", "viator.com", "klook.com", "tiqets.com",
+  "guestreservations.com", "reservations.com", "hotelbeds.com", "hotelplanner.com", "hotelvalues.com",
+  "planetofhotels.com", "travelmyth.com", "hotelmix.com", "hotelmix.co.uk", "booked.net", "bookeder.com",
+  "albooked.com", "hoteis.com", "stayforlong.com", "findhotel.net", "all-hotels.com", "ehotel.com",
+  "ehotelsreviews.com", "readyto.trip", "hrs.de", "hotel.info", "hotel.de", "wotif.com", "stayz.com.au",
+  "abudhabinhotel.com", "hotelabudhabi.net", "hotelsofabudhabi.com",
   "opentable.com", "resy.com", "thefork.com", "zomato.com", "deliveroo.com", "doordash.com", "ubereats.com", "grubhub.com",
   "funworldfacts.com", "facts.net", "worldatlas.com", "britannica.com", "fandom.com", "lonelyplanet.com", "timeout.com",
   "visitdubai.com", "forbestravelguide.com", "michelin.com", "reddit.com", "quora.com",
@@ -85,6 +97,23 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
 
   if (!domain || !domain.includes(".")) return false;
   if (domain.includes("xn--")) return false;
+
+  // Reject SEO doorway patterns (e.g. villaggioabudhabi.com-abudhabi.com, villaggiohotel.ae-abudhabi.com)
+  if (/\.(?:com|net|org|ae|uk|fr|de|es|it|nl|be|ch|au|ca|co)-[a-z0-9-]+\.[a-z]{2,}$/i.test(domain)) {
+    return false;
+  }
+  const labels = domain.split(".");
+  if (labels.length >= 3) {
+    const sub = labels[0];
+    const sld = labels[labels.length - 2];
+    if (
+      sub &&
+      !["www", "m", "book", "booking", "reservations", "en", "fr", "de", "ar", "es"].includes(sub) &&
+      /(?:hotels?(?:in|of|at|near)[a-z]{3,}|[a-z]{3,}n?hotels?$)/i.test(sld)
+    ) {
+      return false;
+    }
+  }
 
   const isDisallowed = DISALLOWED_SEARCH_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
   if (isDisallowed) return false;
