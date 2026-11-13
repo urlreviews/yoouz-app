@@ -119,7 +119,17 @@ export function App() {
 
   // Fast local storage state setup without page reload
   useEffect(() => {
-    // Preserved: Do not clear user videos or data
+    // Purge legacy media caches from prior versions to prevent stale banner flashes
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("yoouz_place_media_v1_") || k.startsWith("yoouz_place_media_v2_") || k.startsWith("yoouz_place_media_v3_") || k.startsWith("yoouz_place_media_v4_"))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
   }, []);
 
   // 1. Core State with LocalStorage Persistence (Instant Logo & Banner Caching)
@@ -4282,7 +4292,7 @@ export function App() {
             rating: 5.0,
             totalReviews: 0,
             ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-            photos: [],
+            photos: (isRealDomain && (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`])) ? [KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]] : [],
             openingHours: "",
             isOpen: undefined,
             phone: "",
@@ -4295,10 +4305,10 @@ export function App() {
             topDishes: [],
             lat: 0,
             lng: 0,
-            bannerUrl: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
-            ogImage: (isRealDomain && KNOWN_BRAND_BANNERS[domain]) ? KNOWN_BRAND_BANNERS[domain] : "",
-            avatarUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
-            logoUrl: (isRealDomain && KNOWN_BRAND_LOGOS[domain]) ? KNOWN_BRAND_LOGOS[domain] : "",
+            bannerUrl: (isRealDomain && (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`])) ? (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) : "",
+            ogImage: (isRealDomain && (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`])) ? (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) : "",
+            avatarUrl: (isRealDomain && (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`])) ? (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`]) : "",
+            logoUrl: (isRealDomain && (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`])) ? (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`]) : "",
             isSavedToProfile: true,
             isSkeleton: true,
             isSynthetic: true

@@ -512,6 +512,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [place]);
 
   useEffect(() => {
+    setBannerError(false);
+    setBannerLoaded(false);
+    setPhotoIndex(0);
     if (place) {
       if (place.bannerUrl) prewarmBannerImage(place.bannerUrl);
       if (place.ogImage) prewarmBannerImage(place.ogImage);
@@ -857,7 +860,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 try {
                   const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
                   if (cacheKey) {
-                    localStorage.setItem(`yoouz_place_media_v4_${cacheKey}`, JSON.stringify({
+                    localStorage.setItem(`yoouz_place_media_v5_${cacheKey}`, JSON.stringify({
                       bannerUrl: resolvedBanner,
                       logoUrl: (resolvedLogo && resolvedLogo !== resolvedBanner && !resolvedLogo.includes("/api/favicon")) ? resolvedLogo : ""
                     }));
@@ -990,7 +993,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     try {
       const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
       if (!cacheKey) return null;
-      const raw = localStorage.getItem(`yoouz_place_media_v4_${cacheKey}`);
+      const raw = localStorage.getItem(`yoouz_place_media_v5_${cacheKey}`);
       if (raw) return JSON.parse(raw);
     } catch(e) {}
     return null;
@@ -1049,8 +1052,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanDomainKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().replace(/^www\./, "").trim();
     const domainDirectBanner = cleanDomainKey ? (KNOWN_BRAND_BANNERS[cleanDomainKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomainKey}`] || "") : "";
 
+    // 1. Authoritative verified domain banner takes absolute precedence and locks to ONE image
+    if (domainDirectBanner && isAuthentic(domainDirectBanner)) {
+      return [domainDirectBanner];
+    }
+
+    // 2. Authoritative place.bannerUrl from verified database record
+    const authenticPlaceBanner = isAuthentic(place.bannerUrl) ? place.bannerUrl : "";
+    if (authenticPlaceBanner) {
+      return [authenticPlaceBanner, ...(place.photos || []).filter(isAuthentic)].filter((v, i, a) => a.indexOf(v) === i);
+    }
+
     const photoCandidates = [
-      domainDirectBanner,
       knownDomainBanner,
       cleanBannerUrl,
       validCachedBanner,
@@ -1064,7 +1077,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl]);
+  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl, place.bannerUrl]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
   const currentBannerCandidate = React.useMemo(
@@ -1563,38 +1576,24 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Full-Frame Banner Canvas (Mutual Fallback: Banner displays Logo full-frame edge-to-edge matching the entire banner frame when no separate photo banner exists) */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-white flex items-center justify-center z-10">
-          {primaryLogoUrl ? (
-            <>
+        {/* Full-Frame Banner Canvas */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center z-10">
+          {(!hasAuthenticPhoto || bannerError) && primaryLogoUrl ? (
+            <div className="flex flex-col items-center justify-center p-6 opacity-35 select-none pointer-events-none">
               <img
                 src={getProxiedImageUrl(primaryLogoUrl)}
-                alt={displayedPlaceName}
-                className={`w-full h-full ${
-                  primaryLogoUrl.toLowerCase().includes(".svg") || primaryLogoUrl.startsWith("data:image/svg")
-                    ? "object-contain p-8 sm:p-10"
-                    : "object-cover p-0"
-                } pointer-events-none z-10`}
+                alt=""
+                className="max-w-[140px] max-h-[70px] object-contain drop-shadow"
                 referrerPolicy="no-referrer"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  if (checkImageNeedsDarkContrast(img, getProxiedImageUrl(primaryLogoUrl))) {
-                    img.style.filter = "brightness(0.08)";
-                  }
-                  if (img.naturalWidth > 0 && img.naturalHeight > 0 && img.naturalWidth / img.naturalHeight > 2.1) {
-                    img.className = "w-full h-full object-contain p-8 sm:p-10 pointer-events-none z-10";
-                  }
-                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/25 pointer-events-none z-20" />
-            </>
+            </div>
           ) : (
             <div className="absolute inset-0 w-full h-full bg-zinc-950" />
           )}
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
-          <div className={`absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center ${bannerLoaded ? "bg-zinc-950" : "bg-transparent pointer-events-none"} z-10`}>
+          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               ref={bannerImgRef}
@@ -1604,7 +1603,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              className={`absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 ${bannerLoaded ? "opacity-100" : "opacity-0"}`}
+              className="absolute inset-0 w-full h-full object-cover p-0"
               referrerPolicy="no-referrer"
               onLoad={(e) => {
                 const img = e.currentTarget;
@@ -1636,9 +1635,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               }}
             />
             {/* Subtle dark gradient overlay once banner photo is visibly loaded */}
-            {bannerLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
-            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
           </div>
         ) : null}
 

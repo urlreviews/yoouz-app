@@ -502,6 +502,11 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "www.burgerking.com": BURGER_KING_LOGO_DATA_URI,
   "burgerking": BURGER_KING_LOGO_DATA_URI,
   "burger king": BURGER_KING_LOGO_DATA_URI,
+  "dominos.com": "https://cache.dominos.com/intl/assets/img-logo-home.png",
+  "www.dominos.com": "https://cache.dominos.com/intl/assets/img-logo-home.png",
+  "dominos": "https://cache.dominos.com/intl/assets/img-logo-home.png",
+  "domino's pizza": "https://cache.dominos.com/intl/assets/img-logo-home.png",
+  "domino's": "https://cache.dominos.com/intl/assets/img-logo-home.png",
   "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
@@ -1825,18 +1830,6 @@ export function getPlaceBannerUrl(place?: Partial<Place> | null): string {
   }
   if (place.ogImage && place.ogImage.trim() !== "" && !isBadBanner(place.ogImage) && !place.ogImage.includes("/api/brand-banner")) {
     return getProxiedImageUrl(place.ogImage);
-  }
-
-  // Fallback: If no photographic banner exists, use authentic logoUrl/avatarUrl as banner!
-  if (place.logoUrl && place.logoUrl.trim() !== "" && !isBadBanner(place.logoUrl) && !place.logoUrl.includes("/api/brand-banner")) {
-    return getProxiedImageUrl(place.logoUrl);
-  }
-  if (place.avatarUrl && place.avatarUrl.trim() !== "" && !isBadBanner(place.avatarUrl) && !place.avatarUrl.includes("/api/brand-banner")) {
-    return getProxiedImageUrl(place.avatarUrl);
-  }
-
-  if (cleanDomain) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
   }
 
   return "";
