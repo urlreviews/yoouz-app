@@ -36591,7 +36591,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         if (typeof readReviewsIndex === 'function') {
           try {
             const localList = readReviewsIndex();
-            foundVideo = localList.find((v: any) => v.id === videoId);
+            foundVideo = localList.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
           } catch (e) {}
         }
         if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
@@ -36605,8 +36605,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           if (bunnyDb) {
             try {
               const bRes = await bunnyDb.execute({
-                sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
-                args: [videoId]
+                sql: "SELECT data FROM videoReviews WHERE id = ? OR data LIKE ? LIMIT 1",
+                args: [videoId, `%"${videoId}"%`]
               });
               if (bRes.rows && bRes.rows.length > 0 && (bRes.rows[0] as any).data) {
                 const raw = (bRes.rows[0] as any).data;
@@ -36615,72 +36615,111 @@ app.get('/api/og-preview-v2', async (req, res) => {
             } catch (e) {}
           }
         }
-
-        if (foundVideo) {
-          let thumbArg = foundVideo.videoThumbnail || foundVideo.videoPreviewUrl || foundVideo.coverUrl || foundVideo.thumbnailUrl || "";
-          if (thumbArg.startsWith('data:image')) {
-            try {
-              const b64 = thumbArg.split(',')[1];
-              if (b64) thumbBuf = Buffer.from(b64, 'base64');
-            } catch(e) {}
-          } else if (thumbArg && !thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
-            try {
-              const fetchUrl = thumbArg.startsWith('http') ? thumbArg : `${baseUrl}${thumbArg.startsWith('/') ? '' : '/'}${thumbArg}`;
-              const controller = new AbortController();
-              const timeout = setTimeout(() => controller.abort(), 4000);
-              const tr = await fetch(fetchUrl, { signal: controller.signal });
-              clearTimeout(timeout);
-              if (tr.ok) {
-                const ab = await tr.arrayBuffer();
-                if (ab.byteLength > 500) thumbBuf = Buffer.from(ab);
+        if (!foundVideo) {
+          try {
+            const seedsPath = path.join(process.cwd(), 'public', 'seeds', 'reviews_index.json');
+            if (fs.existsSync(seedsPath)) {
+              const raw = fs.readFileSync(seedsPath, 'utf8');
+              const seeds = JSON.parse(raw);
+              if (Array.isArray(seeds)) {
+                foundVideo = seeds.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
               }
-            } catch(e) {}
-          }
-        }
-      }
-
-      if (!thumbBuf && queryParams.thumbUrl) {
-        const tUrl = queryParams.thumbUrl as string;
-        if (!tUrl.startsWith('data:image')) {
-          try {
-            const fetchUrl = tUrl.startsWith('http') ? tUrl : `${baseUrl}${tUrl.startsWith('/') ? '' : '/'}${tUrl}`;
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4000);
-            const tr = await fetch(fetchUrl, { signal: controller.signal });
-            clearTimeout(timeout);
-            if (tr.ok) {
-              const ab = await tr.arrayBuffer();
-              if (ab.byteLength > 500) thumbBuf = Buffer.from(ab);
             }
-          } catch(e) {}
-        } else {
-          try {
-            const b64 = tUrl.split(',')[1];
-            if (b64) thumbBuf = Buffer.from(b64, 'base64');
-          } catch(e) {}
+          } catch (e) {}
         }
       }
 
-      if (!thumbBuf && videoId) {
+      // Mandatory BunnyCDN and external referrer headers to prevent 403 Forbidden hotlink blocks
+      const bunnyFetchHeaders = {
+        "Referer": "https://www.yoouz.com/",
+        "Origin": "https://www.yoouz.com",
+        "User-Agent": "Yoouz-Bot/1.0 (compatible; Mozilla/5.0; +https://www.yoouz.com)"
+      };
+
+      // Check for direct data:image URLs
+      const directDataUrl = (foundVideo?.thumbnailUrl?.startsWith('data:image') ? foundVideo.thumbnailUrl : null) ||
+                            (foundVideo?.videoThumbnail?.startsWith('data:image') ? foundVideo.videoThumbnail : null) ||
+                            (typeof queryParams.thumbUrl === 'string' && queryParams.thumbUrl.startsWith('data:image') ? queryParams.thumbUrl : null);
+      if (directDataUrl) {
         try {
-          const directBunnyUrl = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000);
-          const tr = await fetch(directBunnyUrl, { signal: controller.signal });
-          clearTimeout(timeout);
-          if (tr.ok) {
-            const ab = await tr.arrayBuffer();
-            if (ab.byteLength > 500) thumbBuf = Buffer.from(ab);
-          }
+          const b64 = directDataUrl.split(',')[1];
+          if (b64) thumbBuf = Buffer.from(b64, 'base64');
         } catch(e) {}
       }
 
-      if (!thumbBuf && videoId) {
-        const localJpg = path.join(process.cwd(), 'uploads', 'videos', `${videoId}.jpg`);
-        if (fs.existsSync(localJpg)) {
+      // Comprehensive priority-ordered candidate list of thumbnail URLs
+      const candidateThumbUrls: string[] = [];
+      if (foundVideo) {
+        if (foundVideo.thumbnailUrl && typeof foundVideo.thumbnailUrl === 'string' && !foundVideo.thumbnailUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.thumbnailUrl);
+        if (foundVideo.videoThumbnail && typeof foundVideo.videoThumbnail === 'string' && !foundVideo.videoThumbnail.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoThumbnail);
+        if (foundVideo.videoPreviewUrl && typeof foundVideo.videoPreviewUrl === 'string' && !foundVideo.videoPreviewUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoPreviewUrl);
+        if (foundVideo.coverUrl && typeof foundVideo.coverUrl === 'string' && !foundVideo.coverUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.coverUrl);
+        if (foundVideo.posterUrl && typeof foundVideo.posterUrl === 'string' && !foundVideo.posterUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.posterUrl);
+        const bGuid = foundVideo.bunnyVideoId || foundVideo.bunnyGuid;
+        if (bGuid) {
+          candidateThumbUrls.push(`https://vz-dcd9e101-437.b-cdn.net/${bGuid}/thumbnail.jpg`);
+          candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${bGuid}.jpg`);
+        }
+      }
+
+      if (queryParams.thumbUrl && typeof queryParams.thumbUrl === 'string' && !queryParams.thumbUrl.startsWith('data:')) {
+        candidateThumbUrls.push(queryParams.thumbUrl);
+      }
+      if (queryParams.thumbnailUrl && typeof queryParams.thumbnailUrl === 'string' && !queryParams.thumbnailUrl.startsWith('data:')) {
+        candidateThumbUrls.push(queryParams.thumbnailUrl);
+      }
+      if (videoId) {
+        if (videoId.startsWith('rev-') || videoId.length > 20) {
+          candidateThumbUrls.push(`https://vz-dcd9e101-437.b-cdn.net/${videoId}/thumbnail.jpg`);
+          candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${videoId}.jpg`);
+        }
+      }
+
+      if (!thumbBuf) {
+        const seenCandidateUrls = new Set<string>();
+        for (const rawUrl of candidateThumbUrls) {
+          if (thumbBuf) break;
+          if (!rawUrl || typeof rawUrl !== 'string' || rawUrl.startsWith('blob:') || seenCandidateUrls.has(rawUrl)) continue;
+          if (rawUrl.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) continue;
+          seenCandidateUrls.add(rawUrl);
+
           try {
-            thumbBuf = fs.readFileSync(localJpg);
+            const fetchUrl = rawUrl.startsWith('http') ? rawUrl : `${baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4500);
+            const tr = await fetch(fetchUrl, {
+              signal: controller.signal,
+              headers: bunnyFetchHeaders
+            });
+            clearTimeout(timeout);
+            if (tr.ok) {
+              const ab = await tr.arrayBuffer();
+              if (ab.byteLength > 800) {
+                thumbBuf = Buffer.from(ab);
+                break;
+              }
+            }
           } catch(e) {}
+        }
+      }
+
+      if (!thumbBuf && videoId) {
+        const possibleLocalPaths = [
+          path.join(process.cwd(), 'uploads', 'videos', `${videoId}.jpg`),
+          path.join(process.cwd(), 'uploads', `${videoId}.jpg`),
+          path.join(process.cwd(), 'public', 'videos', `${videoId}.jpg`),
+          path.join('/tmp', 'yoouz_uploads', 'videos', `${videoId}.jpg`)
+        ];
+        for (const lp of possibleLocalPaths) {
+          if (fs.existsSync(lp)) {
+            try {
+              const b = fs.readFileSync(lp);
+              if (b.length > 800) {
+                thumbBuf = b;
+                break;
+              }
+            } catch(e) {}
+          }
         }
       }
 
@@ -37000,8 +37039,40 @@ app.get('/api/og-preview-v2', async (req, res) => {
           .png()
           .toBuffer();
 
-        return await sharp(thumbBuf)
-          .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
+        let baseImageBuffer: Buffer;
+        try {
+          const meta = await sharp(thumbBuf).metadata();
+          const isPortrait = Boolean(meta.width && meta.height && meta.width < meta.height);
+          if (isPortrait) {
+            // Ambient soft-blurred backdrop + crisp centered portrait video frame
+            const bg = await sharp(thumbBuf)
+              .resize(1200, 630, { fit: 'cover', position: 'center' })
+              .blur(32)
+              .modulate({ brightness: 0.5, saturation: 1.15 })
+              .toBuffer();
+
+            const fg = await sharp(thumbBuf)
+              .resize(null, 630, { fit: 'inside' })
+              .toBuffer();
+
+            const fgMeta = await sharp(fg).metadata();
+            const left = Math.round((1200 - (fgMeta.width || 473)) / 2);
+
+            baseImageBuffer = await sharp(bg)
+              .composite([{ input: fg, top: 0, left: left }])
+              .toBuffer();
+          } else {
+            baseImageBuffer = await sharp(thumbBuf)
+              .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
+              .toBuffer();
+          }
+        } catch (composeErr) {
+          baseImageBuffer = await sharp(thumbBuf)
+            .resize(1200, 630, { fit: 'cover', position: 'center' })
+            .toBuffer();
+        }
+
+        return await sharp(baseImageBuffer)
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
           .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
@@ -39593,12 +39664,15 @@ function injectOpenGraphTags(html: string, meta: any) {
               : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`);
         keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
-        let thumbArg = foundVideo?.videoThumbnail || foundVideo?.videoPreviewUrl || foundVideo?.coverUrl || foundVideo?.thumbnailUrl || "";
+        let thumbArg = foundVideo?.thumbnailUrl || foundVideo?.videoThumbnail || foundVideo?.videoPreviewUrl || foundVideo?.coverUrl || "";
         if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
            thumbArg = "";
         }
         if (thumbArg.startsWith('data:image')) {
            thumbArg = ""; // Prevent massive URLs
+        }
+        if (!thumbArg && (foundVideo?.bunnyVideoId || foundVideo?.bunnyGuid)) {
+           thumbArg = `https://vz-dcd9e101-437.b-cdn.net/${foundVideo.bunnyVideoId || foundVideo.bunnyGuid}/thumbnail.jpg`;
         }
         if (!thumbArg && videoId.startsWith('rev-')) {
            thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
@@ -39613,7 +39687,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         const rawPlaceLogo = foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
         const placeLogoParam = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
         const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}&v=16`;
+        const thumbUrlParam = thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=18`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
@@ -40540,7 +40615,10 @@ function injectOpenGraphTags(html: string, meta: any) {
         const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Steven Akan");
         const rating = r.rating || 5.0;
 
-        let thumbArg = r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || r.thumbnailUrl || "";
+        let thumbArg = r.thumbnailUrl || r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || "";
+        if (!thumbArg && (r.bunnyVideoId || r.bunnyGuid)) {
+          thumbArg = `https://vz-dcd9e101-437.b-cdn.net/${r.bunnyVideoId || r.bunnyGuid}/thumbnail.jpg`;
+        }
         if (!thumbArg && r.id.startsWith('rev-')) {
           thumbArg = `https://rev1.b-cdn.net/videos/${r.id}.jpg`;
         }

@@ -347,7 +347,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
   const previewImageUrl = `${appOrigin}/api/og-image.png?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&v=28`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=29`
       : (isBusiness || propIsBusinessProfile)
       ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=28`
       : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=28`
