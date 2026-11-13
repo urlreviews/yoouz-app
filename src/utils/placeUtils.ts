@@ -2572,6 +2572,22 @@ export function formatBusinessName(
   return toTitleCase(result || stripLegalEntityAndNoiseSuffixes(trimmed));
 }
 
+export const KNOWN_DOMAIN_ALIASES: Record<string, string[]> = {
+  "bk.com": ["burgerking.com", "www.bk.com", "www.burgerking.com", "burgerking"],
+  "burgerking.com": ["bk.com", "www.bk.com", "www.burgerking.com", "burgerking"],
+  "dominos.com": ["www.dominos.com", "dominos", "dominos.com.au"],
+  "dominos.com.au": ["dominos.com", "www.dominos.com", "dominos"],
+};
+
+export function areDomainAliases(d1?: string | null, d2?: string | null): boolean {
+  if (!d1 || !d2) return false;
+  const c1 = d1.toLowerCase().replace(/^www\./, "").trim();
+  const c2 = d2.toLowerCase().replace(/^www\./, "").trim();
+  if (c1 === c2) return true;
+  if (KNOWN_DOMAIN_ALIASES[c1]?.includes(c2) || KNOWN_DOMAIN_ALIASES[c2]?.includes(c1)) return true;
+  return false;
+}
+
 /**
  * Checks if a VideoReview belongs to a given Place or Place identifier.
  * Extremely robust matching across IDs, URLs, domains, names, and slugs.
@@ -2607,21 +2623,26 @@ export function isPlaceReviewMatch(
   const vDomain = extractCleanDomain(vPlaceWebsite || (vPlaceId.includes(".") ? vPlaceId : "") || (vPlaceName.includes(".") ? vPlaceName : ""));
 
   // 1. STRICT DOMAIN ANTI-COLLISION CHECK:
-  // If BOTH entities have domains, they ONLY match if the domains are IDENTICAL!
-  // If domains differ (e.g. dentiste-namur.be vs dentisteerpent.be or tandis.be), they are definitively DIFFERENT businesses!
+  // If BOTH entities have domains, they ONLY match if the domains are IDENTICAL or known brand aliases!
   if (placeDomain && vDomain) {
-    return placeDomain.toLowerCase() === vDomain.toLowerCase();
+    if (placeDomain.toLowerCase() === vDomain.toLowerCase()) return true;
+    if (areDomainAliases(placeDomain, vDomain)) return true;
+    return false;
   }
 
-  // If one has a domain and the other does not, but one ID is a domain (contains dot or tld), they DO NOT match unless domains match!
+  // If one has a domain and the other does not, but one ID is a domain (contains dot or tld), they DO NOT match unless domains match or are aliases!
   if (placeDomain || vDomain) {
     if (placeDomain && vPlaceId && vPlaceId.includes(".")) {
       const vClean = extractCleanDomain(vPlaceId);
-      return vClean.toLowerCase() === placeDomain.toLowerCase();
+      if (vClean.toLowerCase() === placeDomain.toLowerCase()) return true;
+      if (areDomainAliases(vClean, placeDomain)) return true;
+      return false;
     }
     if (vDomain && placeId && placeId.includes(".")) {
       const pClean = extractCleanDomain(placeId);
-      return pClean.toLowerCase() === vDomain.toLowerCase();
+      if (pClean.toLowerCase() === vDomain.toLowerCase()) return true;
+      if (areDomainAliases(pClean, vDomain)) return true;
+      return false;
     }
   }
 

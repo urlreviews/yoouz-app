@@ -7578,12 +7578,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Ficons.duckduckgo.com%2Fip3%2Fbk.com.ico",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
+    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png"
+      "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -7598,7 +7598,7 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "burgerking.com",
-    "selectedName": "Bureau Groningen",
+    "selectedName": "Burger King",
     "customEdited": true,
     "ratingCount": 1,
     "videoReviewCount": 1,
@@ -7737,7 +7737,8 @@
         "hasOfficialBunnyTitle": true,
         "hasHardwareSilenceSync": true
       }
-    ]
+    ],
+    "image": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png"
   },
   {
     "id": "bk.com",
@@ -7760,10 +7761,10 @@
     },
     "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png"
+      "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg"
     ],
     "openingHours": "",
     "isOpen": true,

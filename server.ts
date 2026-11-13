@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName, areDomainAliases } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -38305,14 +38305,18 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
         args: []
       });
       if (revRes.rows && revRes.rows.length > 0) {
-        const cleanT = domain.toLowerCase();
+        const cleanT = domain.toLowerCase().replace(/^www\./, "").trim();
         const matching = revRes.rows.filter((r: any) => {
           if (isDeletedReviewServer(r.id)) return false;
           const rawData = r.data;
           const v = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || {});
           if (isDeletedReviewServer(v) || isDeletedReviewServer(v.id) || isDeletedReviewServer(v.bunnyVideoId) || isDeletedReviewServer(v.bunnyGuid)) return false;
-          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || r.placeId || r.placeName || '').toLowerCase();
-          return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || r.placeId || r.placeName || '').toLowerCase().replace(/^www\./, "").trim();
+          if (cleanT && (vDom === cleanT || vDom.includes(cleanT) || cleanT.includes(vDom))) return true;
+          if (areDomainAliases(cleanT, vDom)) return true;
+          const vPlaceName = String(v.placeName || r.placeName || "").toLowerCase().trim();
+          if (vPlaceName && formattedName && vPlaceName === formattedName.toLowerCase()) return true;
+          return false;
         });
         if (matching.length > 0) {
           place.reviews = matching.map((r: any) => {
@@ -38336,7 +38340,7 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
           if (!place.logoUrl && (first.placeLogo || first.placeLogoUrl || first.logoUrl)) {
             place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
           }
-        } else {
+        } else if (!place.reviews || place.reviews.length === 0) {
           place.reviews = [];
           place.reviewCount = 0;
           place.totalReviews = 0;
@@ -39744,14 +39748,20 @@ function injectOpenGraphTags(html: string, meta: any) {
           }
         } catch(e) {}
 
-        let foundBanner = (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) || placeObj?.bannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
+        const cleanDomainLookup = (domain || placeId || "").toLowerCase().replace(/^www\./, "").trim();
+        let foundBanner = (cleanDomainLookup && (KNOWN_BRAND_BANNERS[cleanDomainLookup] || KNOWN_BRAND_BANNERS[`www.${cleanDomainLookup}`])) || (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) || placeObj?.bannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
         const isYoouzPlace = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || placeName?.toLowerCase() === 'yoouz';
         if (isYoouzPlace) {
           foundLogo = 'https://www.yoouz.com/favicon.svg';
           foundBanner = 'https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg';
           placeName = 'Yoouz';
-        } else if (!foundLogo && KNOWN_BRAND_LOGOS[domain]) {
-          const brand = KNOWN_BRAND_LOGOS[domain];
+        } else if (cleanDomainLookup && (KNOWN_BRAND_LOGOS[cleanDomainLookup] || KNOWN_BRAND_LOGOS[`www.${cleanDomainLookup}`])) {
+          const brand = KNOWN_BRAND_LOGOS[cleanDomainLookup] || KNOWN_BRAND_LOGOS[`www.${cleanDomainLookup}`];
+          foundLogo = brand.startsWith('<svg')
+            ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
+            : brand;
+        } else if (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`]) {
+          const brand = KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`];
           foundLogo = brand.startsWith('<svg')
             ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
             : brand;
