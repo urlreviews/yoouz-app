@@ -1576,7 +1576,7 @@ export function mergeOfficialBrandSpelling(rawTitle?: string | null, extractedBr
   if (!cleanBrand) return cleanRaw;
 
   const firstSeg = cleanRaw
-    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]
+    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+|\s+\/\s+)\s*/)[0]
     .trim();
   const foldCompact = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const rawCompact = foldCompact(firstSeg || cleanRaw);
@@ -2271,7 +2271,7 @@ export function formatBusinessName(
   trimmed = stripLegalEntityAndNoiseSuffixes(trimmed.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim());
 
   // 3. Clean up scraped SEO titles FIRST by splitting on separators (e.g., "Amino Capital — We back builders from day one", "JetBlue | Flights & travel deals | Book here for low fares | JetBlue")
-  const rawParts = trimmed.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.replace(/^[\s|\-–—•·:│｜]+|[\s|\-–—•·:│｜]+$/g, "").trim())).filter(Boolean);
+  const rawParts = trimmed.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+|\s+\/\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.replace(/^[\s|\-–—•·:│｜\/]+|[\s|\-–—•·:│｜\/]+$/g, "").trim())).filter(Boolean);
   if (rawParts.length > 1) {
     let bestCandidate: string | undefined = undefined;
     const domAlpha = domRoot ? domRoot.toLowerCase().replace(/[^a-z0-9]/g, "") : "";

@@ -1,5 +1,103 @@
 [
   {
+    "id": "fourseasons.com",
+    "name": "Four Seasons",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=fourseasons.com",
+    "logoUrl": "/api/favicon?domain=fourseasons.com",
+    "bannerUrl": "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg",
+    "ogImage": "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg",
+    "photos": [
+      "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.fourseasons.com/abudhabi/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Four Seasons Hotels and Resorts is happy to assist with any questions, concerns or inquiries you may have regarding our luxury properties around the world.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "fourseasons.com"
+  },
+  {
+    "id": "rotana.com",
+    "name": "Park Rotana Abu Dhabi",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "Al Salam St., Eastern Ring Road, Abu Dhabi",
+    "city": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "lat": 24.423941239669585,
+    "lng": 54.47327256202698,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://cdb.rotana.com/rcnimagelib/nx_logo_w_10.png",
+    "logoUrl": "https://cdb.rotana.com/rcnimagelib/nx_logo_w_10.png",
+    "bannerUrl": "https://media.rotana.com/images/edgeriyadhalrabie/rc_177037889211_518.jpg",
+    "ogImage": "https://media.rotana.com/images/edgeriyadhalrabie/rc_177037889211_518.jpg",
+    "photos": [
+      "https://media.rotana.com/images/edgeriyadhalrabie/rc_177037889211_518.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+971 2 657 3333",
+    "email": "park.hotel@rotana.com",
+    "website": "https://www.rotana.com/rotanahotelandresorts/unitedarabemirates/abudhabi/parkrotana",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Park Rotana Abu Dhabi provides a combination of deluxe accommodation, diverse culinary experiences, state-of-the-art meeting and events rooms along with recreational facilities.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "rotana.com"
+  },
+  {
     "id": "mandarinoriental.com",
     "name": "Emirates Palace Mandarin Oriental, Abu Dhabi",
     "category": "Hotel & Hospitality",
@@ -456,10 +554,10 @@
     },
     "avatarUrl": "/api/favicon?domain=jetblue.com",
     "logoUrl": "/api/favicon?domain=jetblue.com",
-    "bannerUrl": "https://s202.q4cdn.com/521076508/files/doc_downloads/gallery/a320/new/JetBlue-A320-In-Flight.jpeg",
-    "ogImage": "https://s202.q4cdn.com/521076508/files/doc_downloads/gallery/a320/new/JetBlue-A320-In-Flight.jpeg",
+    "bannerUrl": "https://s202.q4cdn.com/521076508/files/images/thumbs/IMG_1541.png",
+    "ogImage": "https://s202.q4cdn.com/521076508/files/images/thumbs/IMG_1541.png",
     "photos": [
-      "https://s202.q4cdn.com/521076508/files/doc_downloads/gallery/a320/new/JetBlue-A320-In-Flight.jpeg"
+      "https://s202.q4cdn.com/521076508/files/images/thumbs/IMG_1541.png"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,

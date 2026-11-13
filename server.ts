@@ -29305,7 +29305,7 @@ function isDisallowedNonOfficialHost(host: string, query: string = ""): boolean 
     return true;
   }
 
-  // Reject affiliate city-hotel doorway subdomains (e.g. villaggio.abudhabinhotel.com, villaggio.hotelabudhabi.net, grand-villaggio-hotel.hotelsofabudhabi.com)
+  // Reject affiliate city-hotel doorway subdomains (e.g. villaggio.abudhabinhotel.com, park-rotana.abu-dhabi-hotels.net, park-rotana-abu-dhabi.abudhabi-hotels-ae.com)
   const labels = cleanHost.split(".");
   if (labels.length >= 3) {
     const sub = labels[0];
@@ -29313,7 +29313,7 @@ function isDisallowedNonOfficialHost(host: string, query: string = ""): boolean 
     if (
       sub &&
       !["www", "m", "book", "booking", "reservations", "en", "fr", "de", "ar", "es"].includes(sub) &&
-      /(?:hotels?(?:in|of|at|near)[a-z]{3,}|[a-z]{3,}n?hotels?$)/i.test(sld)
+      /(?:hotels?(?:[-_]?in|[-_]?of|[-_]?at|[-_]?near)[a-z0-9-]{2,}|[a-z0-9-]{2,}-hotels?(?:-[a-z0-9-]{2,})?$|[a-z]{3,}n?hotels?$)/i.test(sld)
     ) {
       return true;
     }
@@ -29388,7 +29388,7 @@ function mergeOfficialBrandSpellingServer(rawTitle?: string | null, extractedBra
   if (!cleanBrand) return cleanRaw;
 
   const firstSeg = cleanRaw
-    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]
+    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+|\s+\/\s+)\s*/)[0]
     .trim();
   const foldCompact = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const rawCompact = foldCompact(firstSeg || cleanRaw);
@@ -29417,7 +29417,7 @@ function mergeOfficialBrandSpellingServer(rawTitle?: string | null, extractedBra
 
 function selectBestTitleSegmentServer(rawTitle: string, domain: string): string {
   const parts = (rawTitle || "")
-    .split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/)
+    .split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+|\s+\/\s+)\s*/)
     .map(p => stripLegalEntityAndNoiseSuffixes(p.trim()))
     .filter(Boolean);
   if (parts.length <= 1) return parts[0] || (rawTitle || "").trim();
@@ -29568,16 +29568,21 @@ async function lookupWikidataOfficialWebsite(cleanQ: string, timeoutMs = 2100): 
       .replace(/[^\p{L}\p{N}\s]/gu, " ")
       .split(/\s+/)
       .filter(w => w.length >= 2 && !GENERIC_QUERY_STOPWORDS.has(w));
-    if (qTokens.length === 0) return null;
+    const brandTokens = qTokens.filter(w => !GEO_STOPWORDS_FOR_SCORING.has(w));
+    // Never resolve a general city/country Wikipedia page (e.g. "Abu Dhabi" -> tamm.abudhabi) when the user searched for a business!
+    if (brandTokens.length === 0) return null;
 
     const findBestWikiHit = (hitList: any[]) => hitList.find(h => {
       const tLow = String(h?.title || "").toLowerCase();
       const sLow = String(h?.snippet || "").replace(/<[^>]+>/g, " ").toLowerCase();
+      // Reject pure geographic/city articles whose title has ZERO non-geographic brand tokens
+      const brandTitleMatches = brandTokens.filter(t => tLow.includes(t)).length;
+      if (brandTitleMatches === 0) return false;
+      const brandCombinedMatches = brandTokens.filter(t => tLow.includes(t) || sLow.includes(t)).length;
+      if (brandTokens.length >= 2 && brandCombinedMatches < Math.ceil(brandTokens.length * 0.75)) return false;
       const titleMatches = qTokens.filter(t => tLow.includes(t)).length;
       const combinedMatches = qTokens.filter(t => tLow.includes(t) || sLow.includes(t)).length;
-      if (qTokens.length >= 2 && titleMatches < Math.ceil(qTokens.length * 0.55)) return false;
-      if (qTokens.length === 1 && titleMatches === 0) return false;
-      return combinedMatches >= qTokens.length || titleMatches >= Math.min(2, qTokens.length);
+      return combinedMatches >= qTokens.length || (brandTitleMatches >= Math.ceil(brandTokens.length * 0.6) && titleMatches >= 1);
     });
 
     let wpRes: any = await fetch(`https://${wikiLang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ)}&format=json&srlimit=3`, {
@@ -29617,8 +29622,10 @@ async function lookupWikidataOfficialWebsite(cleanQ: string, timeoutMs = 2100): 
         signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
       }).then(r => r.ok ? r.json() : null).catch(() => null);
       const wdMatch = (wdSearch?.search || []).find((s: any) => {
-        const comb = `${s?.label || ""} ${s?.description || ""}`.toLowerCase();
-        return qTokens.filter(t => comb.includes(t)).length >= Math.max(1, Math.ceil(qTokens.length * 0.6));
+        const labelLow = String(s?.label || "").toLowerCase();
+        const comb = `${labelLow} ${s?.description || ""}`.toLowerCase();
+        const hasBrandInLabel = brandTokens.some(t => labelLow.includes(t));
+        return hasBrandInLabel && brandTokens.every(t => comb.includes(t));
       });
       if (wdMatch?.id) {
         qid = wdMatch.id;
@@ -29687,6 +29694,21 @@ async function lookupOsmOfficialWebsite(cleanQ: string, timeoutMs = 2400): Promi
         const host = cleanDomainName(normalizedWeb);
         if (host && host.includes(".") && !isDisallowedNonOfficialHost(host, cleanQ)) {
           return { url: normalizedWeb, name: nameStr || cleanQ, address: dispStr, wikidata: item?.extratags?.wikidata };
+        }
+      }
+      // If OSM has an official corporate contact email (e.g. park.hotel@rotana.com) whose domain matches a core brand token, extract the official domain
+      const rawEmail = String(item?.extratags?.email || item?.extratags?.["contact:email"] || "").trim();
+      if (rawEmail && rawEmail.includes("@")) {
+        const emailDom = cleanDomainName(rawEmail.split("@")[1] || "");
+        const freeMailHosts = new Set(["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com", "live.com", "msn.com", "mail.com", "protonmail.com", "yandex.com", "gmx.com", "zoho.com", "walla.co.il", "012.net.il", "bezeqint.net", "emirates.net.ae", "eim.ae"]);
+        if (
+          emailDom &&
+          emailDom.includes(".") &&
+          !freeMailHosts.has(emailDom) &&
+          !isDisallowedNonOfficialHost(emailDom, cleanQ) &&
+          coreTokens.some(t => emailDom.includes(t))
+        ) {
+          return { url: `https://www.${emailDom}/`, name: nameStr || cleanQ, address: dispStr, wikidata: item?.extratags?.wikidata };
         }
       }
       // If OSM has a linked Wikidata ID without website tag, try resolving Wikidata P856 directly
@@ -29991,18 +30013,24 @@ async function discoverOfficialBusinessWebsite(cleanQ: string, options: { fast?:
     } catch {}
   };
 
-  if (ddgIaResult?.url) {
+  const hasBrandAlignmentForKg = (url: string, label: string, abstractText: string = ""): boolean => {
+    const comb = `${url} ${label} ${abstractText}`.toLowerCase();
+    return scoringBrandTokens.some(t => comb.includes(t));
+  };
+
+  if (ddgIaResult?.url && hasBrandAlignmentForKg(ddgIaResult.url, ddgIaResult.heading, ddgIaResult.abstract)) {
     const hLow = (ddgIaResult.heading || "").toLowerCase();
     const headingHits = qTokens.filter(t => hLow.includes(t) || ddgIaResult.abstract.toLowerCase().includes(t)).length;
     const iaScore = qTokens.length === 0 || headingHits >= Math.min(2, qTokens.length) ? 1200 : 750;
     registerCandidate(ddgIaResult.url, ddgIaResult.heading, ddgIaResult.abstract, iaScore, "ddg_ia", true);
   }
 
-  if (osmResult?.url) {
+  if (osmResult?.url && hasBrandAlignmentForKg(osmResult.url, osmResult.name, osmResult.address)) {
+    // If OSM returned a root domain while DDG found a specific property subpage on the same domain, registerCandidate merges them and keeps the specific URL!
     registerCandidate(osmResult.url, osmResult.name, osmResult.address, 1120, "osm_nominatim", true);
   }
 
-  if (wikidataResult?.url) {
+  if (wikidataResult?.url && hasBrandAlignmentForKg(wikidataResult.url, wikidataResult.title)) {
     registerCandidate(wikidataResult.url, wikidataResult.title, "", 1050, "wikidata_p856", true);
   }
 
@@ -30800,8 +30828,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const items = Array.isArray(parsed) ? parsed : (parsed['@graph'] && Array.isArray(parsed['@graph']) ? parsed['@graph'] : [parsed]);
                 for (const item of items) {
                   const t = String(item?.['@type'] || '').toLowerCase();
-                  if ((t.includes('organization') || t.includes('localbusiness') || t.includes('legalservice') || t.includes('attorney') || t.includes('website')) && typeof item?.name === 'string' && item.name.trim().length > 1) {
-                    if (!jsonLdOrg || t.includes('organization') || t.includes('localbusiness')) {
+                  if ((t.includes('organization') || t.includes('localbusiness') || t.includes('hotel') || t.includes('resort') || t.includes('lodging') || t.includes('restaurant') || t.includes('foodestablishment') || t.includes('store') || t.includes('medical') || t.includes('hospital') || t.includes('airline') || t.includes('legalservice') || t.includes('attorney') || t.includes('website')) && typeof item?.name === 'string' && item.name.trim().length > 1) {
+                    if (!jsonLdOrg || t.includes('organization') || t.includes('localbusiness') || t.includes('hotel') || t.includes('resort') || t.includes('lodging') || t.includes('restaurant')) {
                       jsonLdOrg = item.name.trim();
                     }
                   }
@@ -31792,7 +31820,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                                          (typeof item.alternateName === 'string' && item.alternateName.trim()) || '';
 
                         if (itemName && !isGenericOrPlaceholderTitle(itemName) && itemName.length <= 60) {
-                          if (typeStr.includes('organization') || typeStr.includes('corporation') || typeStr.includes('localbusiness') || typeStr.includes('store') || typeStr.includes('restaurant') || typeStr.includes('medical') || typeStr.includes('service') || typeStr.includes('brand')) {
+                          if (typeStr.includes('organization') || typeStr.includes('corporation') || typeStr.includes('localbusiness') || typeStr.includes('hotel') || typeStr.includes('resort') || typeStr.includes('lodging') || typeStr.includes('store') || typeStr.includes('restaurant') || typeStr.includes('foodestablishment') || typeStr.includes('medical') || typeStr.includes('hospital') || typeStr.includes('airline') || typeStr.includes('service') || typeStr.includes('brand')) {
                             if (!jsonLdOrgName) jsonLdOrgName = itemName;
                           } else if (typeStr.includes('website') || typeStr.includes('webpage')) {
                             if (!jsonLdWebSiteName) jsonLdWebSiteName = itemName;
@@ -31833,7 +31861,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const isGenericSeoPart = (str: string) =>
                 isGenericSeoSlogan(str, domain) ||
                 /^(?:luxury\s+)?(?:\d-star\s+)?(?:hotel|hotels|resort|resorts|restaurant|cafe|spa|clinic|agency|property)\s+(?:in|at|near|on)\b/i.test((str || '').trim()) ||
-                /^(?:luxury\s+\d-star\s+hotel|\d-star\s+(?:luxury\s+)?hotel|official\s+(?:site|website)|hotels?\s*[&+]\s*resorts?)$/i.test((str || '').trim());
+                /^(?:luxury\s+\d-star\s+hotel|\d-star\s+(?:luxury\s+)?hotel|official\s+(?:site|website)|hotels?\s*[&+]\s*resorts?|at\s+a\s+glance)$/i.test((str || '').trim());
 
               const cleanTitleString = (str: string) => {
                 let cleaned = str
@@ -31844,8 +31872,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 // Strip common marketing / generic prefixes
                 cleaned = cleaned.replace(/^(?:Welcome\s+to|Bienvenue\s+(?:chez|sur)|Welkom\s+bij)\s+/i, '');
                 cleaned = stripLegalEntityAndNoiseSuffixes(cleaned);
-                // Split ONLY on spaced hyphens (\s+-\s+) or pipe/dash/colon separators so hyphenated brands like "Klean-N-Green NYC" are NEVER broken apart!
-                const parts = cleaned.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
+                // Split ONLY on spaced hyphens (\s+-\s+), spaced slashes (\s+\/\s+), or pipe/dash/colon separators so hyphenated brands like "Klean-N-Green NYC" are NEVER broken apart!
+                const parts = cleaned.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+|\s+\/\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
                   const domRootStem = domRoot.replace(/(?:hotels?|resorts?|group|international|official|global|online|site)$/i, '');
@@ -39958,7 +39986,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe' OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
 
       // 2. Purge broken, unnamed, broker/parked/doorway domains, or legacy synthesized .co.il fallback place records
-      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR LOWER(name) = 'domain details page' OR id LIKE '%renevolt%' OR name LIKE '%renevolt%' OR LOWER(id) IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il', 'sedo.com', 'sedoparking.com', 'hugedomains.com', 'dan.com', 'afternic.com', 'godaddy.com', 'guestreservations.com', 'abudhabinhotel.com', 'hotelabudhabi.net', 'hotelsofabudhabi.com')").catch(() => {});
+      await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR LOWER(name) = 'domain details page' OR id LIKE '%renevolt%' OR name LIKE '%renevolt%' OR LOWER(id) IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il', 'sedo.com', 'sedoparking.com', 'hugedomains.com', 'dan.com', 'afternic.com', 'godaddy.com', 'guestreservations.com', 'abudhabinhotel.com', 'hotelabudhabi.net', 'hotelsofabudhabi.com', 'abudhabi-hotels-ae.com', 'abu-dhabi-hotels.net', 'tamm.abudhabi', 'www.tamm.abudhabi')").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'Elaia' WHERE LOWER(id) IN ('elaia.com', 'www.elaia.com') AND name != 'Elaia'").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'All In Capital' WHERE LOWER(id) IN ('allincapital.vc', 'www.allincapital.vc') OR LOWER(name) = 'allin capital'").catch(() => {});
       await bunnyDb.execute("UPDATE places SET name = 'Red Swan Ventures' WHERE LOWER(id) IN ('redswanventures.com', 'www.redswanventures.com') OR LOWER(name) IN ('redswan ventures', 'red swan')").catch(() => {});
@@ -39992,7 +40020,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           try { dObj = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch {}
           const curName = String(r.name || "").trim();
 
-          if ((cleanDom && isDisallowedNonOfficialHost(cleanDom, curName)) || /^domain\s+details\s+page$/i.test(curName)) {
+          if ((cleanDom && isDisallowedNonOfficialHost(cleanDom, curName)) || cleanDom === 'tamm.abudhabi' || /^domain\s+details\s+page$/i.test(curName)) {
             await bunnyDb.execute({ sql: "DELETE FROM places WHERE id = ?", args: [r.id] }).catch(() => {});
             continue;
           }
@@ -40048,7 +40076,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const cleanedIdx = idxPlaces.filter((p: any) => {
           const pDom = extractCleanDomain(p.brandDomain || p.id || "");
           const pName = String(p.name || "").trim();
-          if ((pDom && isDisallowedNonOfficialHost(pDom, pName)) || /^domain\s+details\s+page$/i.test(pName)) {
+          if ((pDom && isDisallowedNonOfficialHost(pDom, pName)) || pDom === 'tamm.abudhabi' || /^domain\s+details\s+page$/i.test(pName)) {
             idxChanged = true;
             return false;
           }

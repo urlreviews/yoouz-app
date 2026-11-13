@@ -98,7 +98,7 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
   if (!domain || !domain.includes(".")) return false;
   if (domain.includes("xn--")) return false;
 
-  // Reject SEO doorway patterns (e.g. villaggioabudhabi.com-abudhabi.com, villaggiohotel.ae-abudhabi.com)
+  // Reject SEO doorway patterns (e.g. villaggioabudhabi.com-abudhabi.com, park-rotana.abu-dhabi-hotels.net, park-rotana-abu-dhabi.abudhabi-hotels-ae.com)
   if (/\.(?:com|net|org|ae|uk|fr|de|es|it|nl|be|ch|au|ca|co)-[a-z0-9-]+\.[a-z]{2,}$/i.test(domain)) {
     return false;
   }
@@ -109,7 +109,7 @@ export function isAllowedOrganicUrl(rawHref: string): boolean {
     if (
       sub &&
       !["www", "m", "book", "booking", "reservations", "en", "fr", "de", "ar", "es"].includes(sub) &&
-      /(?:hotels?(?:in|of|at|near)[a-z]{3,}|[a-z]{3,}n?hotels?$)/i.test(sld)
+      /(?:hotels?(?:[-_]?in|[-_]?of|[-_]?at|[-_]?near)[a-z0-9-]{2,}|[a-z0-9-]{2,}-hotels?(?:-[a-z0-9-]{2,})?$|[a-z]{3,}n?hotels?$)/i.test(sld)
     ) {
       return false;
     }
