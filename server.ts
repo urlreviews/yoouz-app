@@ -321,7 +321,21 @@ function isLogoOrIconUrl(urlStr: string): boolean {
     l.includes('arrow') ||
     l.includes('chevron') ||
     l.includes('caret') ||
-    l.includes('hamburger')
+    l.includes('hamburger') ||
+    l.includes('play-pause') ||
+    l.includes('pause-play') ||
+    l.includes('play-btn') ||
+    l.includes('play_btn') ||
+    l.includes('pause-btn') ||
+    l.includes('pause_btn') ||
+    l.includes('video-play') ||
+    l.includes('/chrome/rebrand/') ||
+    l.includes('/chrome/images/') ||
+    l.includes('/ui-icons/') ||
+    l.includes('sprite') ||
+    l.includes('close-btn') ||
+    l.includes('scroll-top') ||
+    l.includes('back-to-top')
   );
 }
 
@@ -427,10 +441,119 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("data:image/svg") ||
       decoded.includes("arrow-left") ||
       decoded.includes("arrow-right") ||
-      decoded.includes("form-arrow")
+      decoded.includes("form-arrow") ||
+      decoded.includes("play-pause") ||
+      decoded.includes("pause-play") ||
+      decoded.includes("play-btn") ||
+      decoded.includes("play_btn") ||
+      decoded.includes("pause-btn") ||
+      decoded.includes("/chrome/rebrand/") ||
+      decoded.includes("sprite")
     );
   } catch (e) {
     return url.includes("${") || url.includes("%24%7B") || url.includes("#") || url.includes("blocked") || url.includes("og-banner") || url.includes("clearbit") || url.includes("demdex");
+  }
+}
+
+function parseImageDimensionsFromBuffer(buf: Buffer): { width: number; height: number } | null {
+  try {
+    if (!buf || buf.length < 12) return null;
+    // PNG: 89 50 4E 47 ... IHDR width/height at offsets 16 & 20
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 && buf.length >= 24) {
+      return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+    }
+    // GIF: GIF87a / GIF89a
+    if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf.length >= 10) {
+      return { width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) };
+    }
+    // WebP: RIFF .... WEBP
+    if (buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP" && buf.length >= 30) {
+      const chunk = buf.toString("ascii", 12, 16);
+      if (chunk === "VP8X") {
+        const w = 1 + (buf[24] | (buf[25] << 8) | (buf[26] << 16));
+        const h = 1 + (buf[27] | (buf[28] << 8) | (buf[29] << 16));
+        return { width: w, height: h };
+      }
+      if (chunk === "VP8 " && buf.length >= 30) {
+        return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+      }
+      if (chunk === "VP8L" && buf.length >= 25) {
+        const b = buf.readUInt32LE(21);
+        return { width: (b & 0x3fff) + 1, height: ((b >> 14) & 0x3fff) + 1 };
+      }
+    }
+    // JPEG: FF D8 ... SOFn markers
+    if (buf[0] === 0xff && buf[1] === 0xd8) {
+      let i = 2;
+      while (i + 9 < buf.length) {
+        if (buf[i] !== 0xff) { i++; continue; }
+        const marker = buf[i + 1];
+        if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) { i += 2; continue; }
+        if (i + 4 > buf.length) break;
+        const segLen = buf.readUInt16BE(i + 2);
+        if ((marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7) || (marker >= 0xc9 && marker <= 0xcb)) {
+          if (i + 9 <= buf.length) {
+            return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
+          }
+          break;
+        }
+        if (segLen < 2) break;
+        i += 2 + segLen;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+async function probeBannerImageSuitability(testUrl: string): Promise<boolean> {
+  if (!testUrl || !testUrl.startsWith("http") || isBadBanner(testUrl)) return false;
+  try {
+    const r = await fetch(testUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        "Range": "bytes=0-65535"
+      },
+      redirect: "follow",
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
+    });
+    if (!r.ok && r.status !== 206) {
+      if (r.status === 404 || r.status === 410) return false;
+      // 403/hotlink blocks may still resolve via /api/proxy-image mirrors unless filename is suspicious
+      return true;
+    }
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("text/html") || ct.includes("text/plain") || ct.includes("svg") || ct.includes("icon")) return false;
+    const cl = parseInt(r.headers.get("content-length") || "0", 10);
+    if (r.status === 200 && cl > 0 && cl < 1800) return false;
+
+    const reader = r.body?.getReader?.();
+    let buf: Buffer;
+    if (reader) {
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      while (total < 65536) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+        chunks.push(value);
+        total += value.length;
+      }
+      try { reader.cancel().catch(() => {}); } catch {}
+      buf = Buffer.concat(chunks.map(c => Buffer.from(c)));
+    } else {
+      buf = Buffer.from(await r.arrayBuffer());
+    }
+    if (buf.length < 32) return false;
+    const dims = parseImageDimensionsFromBuffer(buf);
+    if (dims && dims.width > 0 && dims.height > 0) {
+      if (dims.width < 200 || dims.height < 75 || dims.width * dims.height < 20000) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return true;
   }
 }
 
@@ -454,7 +577,7 @@ interface ResolvedBusinessData {
 
 // Enterprise DuckDuckGo Scraper: Scrapes authentic banner images, logos, titles & descriptions for any business or website
 // Enterprise DuckDuckGo Scraper: Scrapes authentic banner images, logos, titles & descriptions for any business or website
-async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string): Promise<{
+async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string, options: { skipLogo?: boolean } = {}): Promise<{
   bannerUrl: string;
   logoUrl: string;
   title: string;
@@ -536,6 +659,7 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
   } catch (e) {}
 
   // 2. Dedicated Logo Query Pass via DuckDuckGo (strictly verified against cleanDom)
+  if (!options.skipLogo) {
   const logoQueries = [
     `${cleanDom} logo`,
     `${cleanDom} official logo`
@@ -563,6 +687,7 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
         break;
       }
     }
+  }
   }
 
   // 3. Dedicated Banner / Storefront Query Pass via DuckDuckGo
@@ -632,21 +757,59 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
 
   if (!bannerUrl) {
     try {
-      const cleanBrand = (brandName || "").trim();
-      // Never search Wikipedia for short <= 3 character tokens or isolated digits+letters (prevents "2 B" or "2B" matching anime characters)
-      if (cleanBrand.length >= 4 && !/^[0-9]+\s*[a-zA-Z]{1,2}$/i.test(cleanBrand) && !/^[a-zA-Z]{1,2}\s*[0-9]+$/i.test(cleanBrand)) {
-        const wikiSummaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanBrand)}`;
-        const wRes = await fetch(wikiSummaryUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined });
-        if (wRes.ok) {
-          const wJson = await wRes.json();
-          const extractLow = (wJson.extract || '').toLowerCase();
-          const isBusinessOrPlace = /\b(company|firm|corporation|fund|venture|business|enterprise|agency|brand|retailer|organization|group|bank|hotel|restaurant|store|chain|platform|service|founded|headquarters|headquartered)\b/i.test(extractLow);
-          if (wJson.originalimage?.source && !isBadBanner(wJson.originalimage.source) && isBusinessOrPlace) {
-            bannerUrl = wJson.originalimage.source;
+      const candidateTitles = Array.from(new Set([businessName, title, brandName]
+        .map(s => (s || "").trim())
+        .filter(s => s.length >= 4 && !/^[0-9]+\s*[a-zA-Z]{1,2}$/i.test(s) && !/^[a-zA-Z]{1,2}\s*[0-9]+$/i.test(s))));
+      const isBusinessOrPlaceText = (extractText: string) => /\b(company|firm|corporation|fund|venture|business|enterprise|agency|brand|retailer|organization|group|bank|hotel|resort|airline|airlines|airways|aviation|carrier|restaurant|store|chain|platform|service|museum|landmark|tower|founded|headquarters|headquartered)\b/i.test(extractText);
+      const isGoodWikiPhoto = (src: string, w?: number, h?: number) => {
+        if (!src || isBadBanner(src)) return false;
+        const low = src.toLowerCase();
+        if (/(?:flag|coat_of_arms|seal_of|map|location_map|wordmark|signature|emblem|crest|banner_logo)/i.test(low)) return false;
+        if (typeof w === "number" && typeof h === "number" && (w < 300 || h < 120)) return false;
+        return true;
+      };
+
+      for (const wikiTerm of candidateTitles) {
+        if (bannerUrl) break;
+        const wikiSummaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTerm.replace(/\s+/g, "_"))}`;
+        const wRes = await fetch(wikiSummaryUrl, {
+          headers: { "User-Agent": "YoouzDiscovery/1.0" },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+        }).catch(() => null);
+        if (wRes && wRes.ok) {
+          const wJson: any = await wRes.json().catch(() => null);
+          const extractText = (wJson?.extract || "").toLowerCase();
+          const origSrc = wJson?.originalimage?.source || wJson?.thumbnail?.source || "";
+          if (wJson && isBusinessOrPlaceText(extractText) && isGoodWikiPhoto(origSrc, wJson?.originalimage?.width, wJson?.originalimage?.height)) {
+            bannerUrl = origSrc;
             photos.push(bannerUrl);
+            if (!description && wJson.extract) description = wJson.extract;
+            break;
           }
-          if (!description && wJson.extract && isBusinessOrPlace) {
-            description = wJson.extract;
+        }
+      }
+
+      if (!bannerUrl && candidateTitles.length > 0) {
+        const searchTerm = candidateTitles[0];
+        const mwUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchTerm)}&gsrlimit=2&prop=pageimages|extracts&piprop=original|thumbnail&pithumbsize=1600&exintro=1&explaintext=1&format=json`;
+        const mwRes = await fetch(mwUrl, {
+          headers: { "User-Agent": "YoouzDiscovery/1.0" },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2800) : undefined
+        }).catch(() => null);
+        if (mwRes && mwRes.ok) {
+          const mwJson: any = await mwRes.json().catch(() => null);
+          const pages = Object.values(mwJson?.query?.pages || {}) as any[];
+          for (const pg of pages) {
+            const extLow = (pg?.extract || "").toLowerCase();
+            const imgSrc = pg?.original?.source || pg?.thumbnail?.source || "";
+            const imgW = pg?.original?.width || pg?.thumbnail?.width;
+            const imgH = pg?.original?.height || pg?.thumbnail?.height;
+            if (isBusinessOrPlaceText(extLow) && isGoodWikiPhoto(imgSrc, imgW, imgH)) {
+              bannerUrl = imgSrc;
+              photos.push(bannerUrl);
+              if (!description && pg?.extract) description = pg.extract;
+              break;
+            }
           }
         }
       }
@@ -30369,27 +30532,39 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             // Extract authentic brand logo
             extractedLogo = extractAuthenticWebsiteLogo(sc$, scHtml, discoveredUrl, discoveredDom);
 
-            // Banner Extraction (STRICTLY NO LOGOS OR SMALL ICONS IN BANNER)
+            // Banner Extraction (STRICTLY NO LOGOS OR SMALL UI SPRITES IN BANNER)
+            const bannerCands: string[] = [];
             const metaImg = sc$('meta[property="og:image"]').attr('content') || sc$('meta[name="twitter:image"]').attr('content') || scrapeMetadata?.ogImage || sc$('link[rel="preload"][as="image"]').attr('href');
             if (metaImg && !isBadBanner(metaImg) && !isLogoOrIconUrl(metaImg) && metaImg !== 'none') {
-              extractedBanner = makeAbsolute(metaImg);
+              bannerCands.push(makeAbsolute(metaImg));
             }
-
-            if (!extractedBanner) {
-              sc$('img[fetchpriority="high"], main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/"], article img').each((_: any, el: any) => {
-                if (extractedBanner) return;
-                const src = sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
-                if (src) {
-                  const abs = makeAbsolute(src);
-                  if (abs && abs !== extractedLogo && !isBadBanner(abs) && !isLogoOrIconUrl(abs)) {
-                    extractedBanner = abs;
-                  }
+            sc$('video[poster], img[fetchpriority="high"], main img, .hero img, .slider img, .banner img, section img, img[src*="/cdn/shop/files/"], img[src*="/wp-content/"], article img').each((_: any, el: any) => {
+              const src = sc$(el).attr('poster') || sc$(el).attr('src') || sc$(el).attr('data-src') || sc$(el).attr('data-lazy-src');
+              if (src) {
+                const abs = makeAbsolute(src);
+                if (abs && abs !== extractedLogo && !isBadBanner(abs) && !isLogoOrIconUrl(abs) && !bannerCands.includes(abs)) {
+                  bannerCands.push(abs);
                 }
-              });
+              }
+            });
+            for (const cand of bannerCands.slice(0, 5)) {
+              if (await probeBannerImageSuitability(cand)) {
+                extractedBanner = cand;
+                break;
+              }
             }
 
             if (!extractedBanner && KNOWN_BRAND_BANNERS[discoveredDom]) {
               extractedBanner = KNOWN_BRAND_BANNERS[discoveredDom];
+            }
+            if (!extractedBanner) {
+              const ddgMedia = await Promise.race([
+                fetchDuckDuckGoMediaAndInfo(discoveredDom, scTitle || cleanQ, { skipLogo: Boolean(extractedLogo) }),
+                new Promise<any>((resolve) => setTimeout(() => resolve(null), 3200))
+              ]).catch(() => null);
+              if (ddgMedia?.bannerUrl && !isBadBanner(ddgMedia.bannerUrl)) {
+                extractedBanner = ddgMedia.bannerUrl;
+              }
             }
 
             scImage = extractedBanner || scImage;
@@ -31830,30 +32005,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   image = resolvedDomCandidates[0];
                 }
 
-                // Verify primary banner image is reachable (not a dead 404 link like astir.vc/images/bg.jpg)
+                // Verify primary banner image is reachable AND is large enough to be an authentic banner (never a 30x60 UI sprite or 404 link)
                 if (image && image.startsWith('http')) {
-                  const checkImageReachable = async (testUrl: string): Promise<boolean> => {
-                    try {
-                      const r = await fetch(testUrl, {
-                        method: 'HEAD',
-                        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-                        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2000) : undefined
-                      });
-                      const ct = (r.headers.get('content-type') || '').toLowerCase();
-                      if (r.ok && !ct.includes('text/html')) return true;
-                      if (r.status === 404 || r.status === 410 || (r.ok && ct.includes('text/html'))) return false;
-                    } catch (e) {}
-                    return true;
-                  };
-
-                  const isPrimaryOk = await checkImageReachable(image);
+                  const isPrimaryOk = await probeBannerImageSuitability(image);
                   if (!isPrimaryOk) {
                     scrapedPhotosList = scrapedPhotosList.filter(u => u !== image);
                     image = '';
                     for (const fallbackCand of resolvedDomCandidates) {
-                      if (await checkImageReachable(fallbackCand)) {
+                      if (await probeBannerImageSuitability(fallbackCand)) {
                         image = fallbackCand;
                         break;
+                      } else {
+                        scrapedPhotosList = scrapedPhotosList.filter(u => u !== fallbackCand);
                       }
                     }
                   }
@@ -32285,18 +32448,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = sanitizeProxy(logo);
       }
 
-      // If SPA website or anti-bot firewall prevented BOTH HTML banner and logo extraction, fetch authentic media via DuckDuckGo fallback
-      if ((!image || isBadBanner(image)) && (!logo || isGenericOrPlaceholderLogo(logo))) {
+      // Whenever banner or logo is missing/blocked (even when a brand logo is already known), fetch authentic media via DuckDuckGo & Wikipedia fallback
+      if (!image || isBadBanner(image) || !logo || isGenericOrPlaceholderLogo(logo)) {
         try {
+          const alreadyHasLogo = Boolean(logo && !isGenericOrPlaceholderLogo(logo) && !logo.startsWith("/api/favicon"));
           const ddgMedia = await Promise.race([
-            fetchDuckDuckGoMediaAndInfo(cleanDomain, title || cleanDomain),
+            fetchDuckDuckGoMediaAndInfo(cleanDomain, title || cleanDomain, { skipLogo: alreadyHasLogo }),
             new Promise<any>((resolve) => setTimeout(() => resolve(null), 4200))
           ]);
           if (ddgMedia) {
             const ddgBanner = ddgMedia.bannerUrl || ddgMedia.banner;
             const ddgLogo = ddgMedia.logoUrl || ddgMedia.logo;
             if ((!image || isBadBanner(image)) && ddgBanner && !isBadBanner(ddgBanner)) {
-              image = sanitizeProxy(ddgBanner);
+              const sanitizedDdgBanner = sanitizeProxy(ddgBanner);
+              image = sanitizedDdgBanner;
+              if (!scrapedPhotosList.includes(sanitizedDdgBanner)) {
+                scrapedPhotosList.unshift(sanitizedDdgBanner);
+              }
             }
             if ((!logo || isGenericOrPlaceholderLogo(logo)) && ddgLogo && !isGenericOrPlaceholderLogo(ddgLogo)) {
               logo = sanitizeProxy(ddgLogo);

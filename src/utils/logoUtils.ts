@@ -165,6 +165,15 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('arrow-left') ||
     u.includes('arrow-right') ||
     u.includes('form-arrow') ||
+    u.includes('play-pause') ||
+    u.includes('pause-play') ||
+    u.includes('play-btn') ||
+    u.includes('play_btn') ||
+    u.includes('pause-btn') ||
+    u.includes('/chrome/rebrand/') ||
+    u.includes('/ui-icons/') ||
+    u.includes('sprite') ||
+    u.includes('hamburger') ||
     u.includes('frame-2147207294656') ||
     u.includes('data:image/svg')
   );

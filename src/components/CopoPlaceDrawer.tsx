@@ -144,6 +144,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [forcedHeaderReady, setForcedHeaderReady] = useState(false);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
+  const bannerImgRef = React.useRef<HTMLImageElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
   // Reset image errors, photo index, logo errors, and fetched media state synchronously when place identity changes
@@ -171,7 +172,6 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   useEffect(() => {
     if (fetchedBannerUrl && !isBadBanner(fetchedBannerUrl)) {
       setBannerError(false);
-      setBannerLoaded(false);
       setPhotoIndex(0);
     }
   }, [fetchedBannerUrl]);
@@ -832,7 +832,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
-                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : (place.bannerUrl || ""));
+                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : "");
                 const isDataLogoValid = Boolean(
                   data.logo &&
                   !isGenericOrPlaceholderLogo(data.logo) &&
@@ -938,13 +938,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
                   lat: data.lat || place.lat || 0,
                   lng: data.lng || place.lng || 0,
-                  bannerUrl: resolvedBanner || place.bannerUrl || "",
-                  ogImage: resolvedBanner || place.ogImage || "",
+                  bannerUrl: resolvedBanner || (isRealPhoto(place.bannerUrl) ? place.bannerUrl : ""),
+                  ogImage: resolvedBanner || (isRealPhoto(place.ogImage) ? place.ogImage : ""),
                   logoUrl: resolvedLogo || place.logoUrl || "",
                   avatarUrl: resolvedLogo || place.avatarUrl || "",
                   brandDomain: resolvedDomainClean || undefined,
                   website: (place.website && isValidDomainUrl(place.website)) ? place.website : (data.url || (resolvedDomainClean ? `https://${resolvedDomainClean}` : "")),
-                  photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : place.photos
+                  photos: resolvedBanner ? Array.from(new Set([...(place.photos || []).filter(isRealPhoto), resolvedBanner])) : (place.photos || []).filter(isRealPhoto)
                 };
                 if (onUpdatePlace) {
                   onUpdatePlace(updatedPlaceObj);
@@ -1061,6 +1061,37 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
+  const currentBannerCandidate = React.useMemo(
+    () => (hasAuthenticPhoto && !bannerError && (allPhotos[photoIndex] || allPhotos[0]))
+      ? getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])
+      : "",
+    [hasAuthenticPhoto, bannerError, allPhotos, photoIndex]
+  );
+
+  useEffect(() => {
+    const img = bannerImgRef.current;
+    if (!currentBannerCandidate) {
+      setBannerLoaded(false);
+      return;
+    }
+    if (img && img.complete) {
+      if (img.naturalWidth >= 160 && img.naturalHeight >= 70 && img.naturalWidth * img.naturalHeight >= 15000) {
+        setBannerLoaded(true);
+        setBannerError(false);
+      } else if (img.naturalWidth > 0) {
+        setBannerLoaded(false);
+        if (photoIndex + 1 < allPhotos.length) {
+          setPhotoIndex(prev => prev + 1);
+        } else {
+          setBannerError(true);
+        }
+      } else {
+        setBannerLoaded(false);
+      }
+    } else {
+      setBannerLoaded(false);
+    }
+  }, [currentBannerCandidate, photoIndex, allPhotos.length]);
 
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
@@ -1557,20 +1588,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
-          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
+          <div className={`absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center ${bannerLoaded ? "bg-zinc-950" : "bg-transparent pointer-events-none"} z-10`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
+              ref={bannerImgRef}
               key={`banner-${place.id}-${allPhotos[photoIndex] || allPhotos[0]}`}
-              src={getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
+              src={currentBannerCandidate || getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
               alt={displayedPlaceName}
               loading="eager"
               decoding="async"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 opacity-100"
+              className={`absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-300 ${bannerLoaded ? "opacity-100" : "opacity-0"}`}
               referrerPolicy="no-referrer"
               onLoad={(e) => {
                 const img = e.currentTarget;
-                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
+                if (img.naturalWidth < 160 || img.naturalHeight < 70 || img.naturalWidth * img.naturalHeight < 15000) {
+                  setBannerLoaded(false);
                   if (photoIndex + 1 < allPhotos.length) {
                     setPhotoIndex(prev => prev + 1);
                   } else {
@@ -1588,6 +1621,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 }
               }}
               onError={() => {
+                setBannerLoaded(false);
                 if (photoIndex + 1 < allPhotos.length) {
                   setPhotoIndex(prev => prev + 1);
                 } else {
@@ -1595,8 +1629,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 }
               }}
             />
-            {/* Subtle dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
+            {/* Subtle dark gradient overlay once banner photo is visibly loaded */}
+            {bannerLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
+            )}
           </div>
         ) : null}
 
