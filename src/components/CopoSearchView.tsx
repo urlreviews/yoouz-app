@@ -540,25 +540,25 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     // Fast Path: Check if suggestions already resolved an exact clean domain or matching place while typing
     if (!isValidDomainUrl(cleanUrl) && suggestions && suggestions.length > 0) {
       const qLower = (baseName || rawQuery).toLowerCase().trim();
+      const qNoSpace = qLower.replace(/\s+/g, "");
       const matchInSuggest = suggestions.find(s => {
         const sDom = s.domain ? extractCleanDomain(s.domain) : "";
         const sTitle = (s.title || "").toLowerCase().trim();
+        const sTitleNoSpace = sTitle.replace(/\s+/g, "");
         if (!sDom && !sTitle) return false;
         const domMatches = isValidDomainUrl(sDom) && (
-          sDom === qLower || 
-          sDom.startsWith(qLower) ||
-          qLower.startsWith(sDom) ||
+          sDom === qLower ||
+          sDom === qNoSpace ||
           sDom.split('.')[0] === qLower ||
-          sDom.split('.')[0].startsWith(qLower)
+          sDom.split('.')[0] === qNoSpace
         );
-        const titleMatches = sTitle && (
+        const titleMatches = Boolean(sTitle) && (
           sTitle === qLower ||
-          sTitle.startsWith(qLower) ||
-          qLower.startsWith(sTitle) ||
-          sTitle.includes(qLower)
+          sTitleNoSpace === qNoSpace ||
+          sTitle.startsWith(qLower)
         );
         return domMatches || (isValidDomainUrl(sDom) && titleMatches);
-      }) || (suggestions[0]?.domain ? suggestions[0] : null);
+      });
 
       if (matchInSuggest) {
         if (matchInSuggest.domain && isValidDomainUrl(extractCleanDomain(matchInSuggest.domain))) {

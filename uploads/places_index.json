@@ -1,5 +1,54 @@
 [
   {
+    "id": "thestrat.com",
+    "name": "The STRAT",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "",
+    "city": "Las Vegas",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=thestrat.com",
+    "logoUrl": "/api/favicon?domain=thestrat.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthestrat.com%2Fuserfiles%2Fcms%2Fbanners%2F34%2Flarge_Strat-Web-Exterior.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthestrat.com%2Fuserfiles%2Fcms%2Fbanners%2F34%2Flarge_Strat-Web-Exterior.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fthestrat.com%2Fuserfiles%2Fcms%2Fbanners%2F34%2Flarge_Strat-Web-Exterior.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "314-498-1283",
+    "email": "admin@thestrat.ai",
+    "website": "https://thestrat.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Contact Us The STRAT Hotel, Casino & Tower is centrally located right on Las Vegas Boulevard, just blocks from the I-15 Sahara exit with easy access to Center Strip, Downtown and the Convention Center - without all the traffic and crowds.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "thestrat.com"
+  },
+  {
     "id": "fourseasons.com",
     "name": "Four Seasons",
     "category": "Hotel & Hospitality",

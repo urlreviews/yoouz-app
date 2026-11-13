@@ -492,10 +492,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         isValidDomainUrl(extractCleanDomain(s.domain)) &&
         (s.title.toLowerCase() === qLow ||
           s.title.toLowerCase().replace(/\s+/g, "") === qNoSpace ||
-          s.title.toLowerCase().includes(qLow) ||
-          qLow.includes(s.title.toLowerCase()) ||
-          s.domain.toLowerCase().includes(qLow) ||
-          s.domain.toLowerCase().includes(qNoSpace))
+          s.title.toLowerCase().startsWith(qLow) ||
+          extractCleanDomain(s.domain) === qLow ||
+          extractCleanDomain(s.domain).split(".")[0] === qNoSpace)
     );
     if (topBusinessSuggestion) {
       seedAndOpenDomainPlace(topBusinessSuggestion.domain, topBusinessSuggestion.title, topBusinessSuggestion.logoUrl, topBusinessSuggestion.websiteUrl);

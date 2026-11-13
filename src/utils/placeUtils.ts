@@ -1541,6 +1541,10 @@ export function extractOfficialBrandSpellingFromText(text?: string | null, domai
         if (words.length >= 2) {
           const allWordsCapped = words.every((w, idx) => /^[A-Z0-9]/.test(w) || (idx > 0 && /^(of|and|in|on|the|for|de|et|van|von)$/i.test(w)));
           if (allWordsCapped) quality += 25;
+          // Reward intentional multi-word stylization where a core brand word is ALL-CAPS alongside a normal cased word (e.g. "The STRAT", "LUMO Labs")
+          const hasAllCapsWord = words.some(w => w.length >= 2 && w.length <= 6 && w === w.toUpperCase() && /[A-Z]/.test(w));
+          const hasLowerWord = words.some(w => /[a-z]/.test(w));
+          if (hasAllCapsWord && hasLowerWord) quality += 18;
         }
         // Penalize screaming ALL CAPS single token when mixed-case form may exist
         if (rawForm.length > 5 && rawForm === rawForm.toUpperCase() && !rawForm.includes(" ")) quality -= 15;
