@@ -36904,7 +36904,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const starsWidth = 5 * 19;
       const maxBottomWidth = Math.max(authorPrefixWidth + 28, starsWidth + 12 + domainDisplayWidth);
-      const authorPillWidth = Math.min(840, Math.max(280, 92 + maxBottomWidth + 28));
+      const authorPillWidth = Math.min(540, Math.max(280, 92 + maxBottomWidth + 28));
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -36932,7 +36932,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const ratingLineWidth = 22 + getTextAdvanceWidth(ratingLineText, 20, true);
       
       const maxTopWidth = Math.max(placeWidth + 28, ratingLineWidth);
-      const placePillWidth = Math.min(800, Math.max(280, 92 + maxTopWidth + 28));
+      const placePillWidth = Math.min(520, Math.max(280, 92 + maxTopWidth + 28));
+
+      // Centered Safe Zone Alignment: Guaranteed 100% visible across 1:1 square crops (comments, WhatsApp) and 1.91:1 wide layouts
+      const topPillX = Math.round((1200 - placePillWidth) / 2);
+      const bottomPillX = Math.round((1200 - authorPillWidth) / 2);
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 30, true);
       const initialX = 46 - (initialWidth / 2);
@@ -36955,8 +36959,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Squircle Logo & Rating Pill (Sleek Compact 2-Row) -->
-            <g transform="translate(48, 38)" filter="url(#cardShadow)">
+            <!-- TOP CENTERED: Business Squircle Logo & Rating Pill (Safe across all crops) -->
+            <g transform="translate(${topPillX}, 34)" filter="url(#cardShadow)">
               <rect width="${placePillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
               
               <!-- Left Squircle Logo Container with inner padding -->
@@ -37004,8 +37008,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <path d="M54 44 L88 65 L54 86 Z" fill="#ffffff"/>
             </g>
 
-            <!-- BOTTOM LEFT: Reviewer Profile Pill (Sleek Compact 2-Row: By Name • Date, 5 Stars domain.com) -->
-            <g transform="translate(48, 492)" filter="url(#cardShadow)">
+            <!-- BOTTOM CENTERED: Reviewer Profile Pill (Safe across all crops) -->
+            <g transform="translate(${bottomPillX}, 502)" filter="url(#cardShadow)">
               <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
               ${authorAvatarPngBase64 ? `
                 <g transform="translate(16, 18)">
@@ -37100,8 +37104,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <circle cx="600" cy="315" r="320" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-          <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
-          <g transform="translate(48, 38)" filter="url(#fallbackCardShadow)">
+          <!-- TOP CENTERED: Business Squircle Logo & Rating Pill -->
+          <g transform="translate(${topPillX}, 34)" filter="url(#fallbackCardShadow)">
             <rect width="${placePillWidth}" height="90" rx="26" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             ${isYoouzPlace ? `
@@ -37148,8 +37152,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
           </g>
 
-          <!-- BOTTOM LEFT: Reviewer Profile Pill (Sleek Compact 2-Row) -->
-          <g transform="translate(48, 492)" filter="url(#fallbackCardShadow)">
+          <!-- BOTTOM CENTERED: Reviewer Profile Pill -->
+          <g transform="translate(${bottomPillX}, 502)" filter="url(#fallbackCardShadow)">
             <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             ${authorAvatarPngBase64 ? `
               <g transform="translate(16, 18)">
@@ -37483,7 +37487,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       
       const line2TotalTextWidth = ratingNumWidth + 8 + starsRowWidth + 10 + reviewsLabelWidth + 10 + domainSuffixWidth;
       const maxTextWidth = Math.max(placeWidth + 28, line2TotalTextWidth);
-      const businessPillWidth = Math.min(960, Math.max(300, 96 + maxTextWidth + 36));
+      const businessPillWidth = Math.min(580, Math.max(300, 96 + maxTextWidth + 36));
+      const businessPillX = Math.round((1200 - businessPillWidth) / 2);
 
       // Build 5-Star Vector Row with Fractional Rating Support
       const starsStartX = 96 + ratingNumWidth + 8;
@@ -37528,8 +37533,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM LEFT: Prominent Business Profile Pill (Sleek Compact 2-Row) -->
-          <g transform="translate(48, 484)" filter="url(#placeCardShadow)">
+          <!-- BOTTOM CENTERED: Prominent Business Profile Pill (Safe across all crops) -->
+          <g transform="translate(${businessPillX}, 484)" filter="url(#placeCardShadow)">
             <rect width="${businessPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Logo Container (White background container matching profile drawer) -->
@@ -37812,7 +37817,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 26, true);
       const subWidth = getTextAdvanceWidth(subtitleText, 17, true);
       const maxTextWidth = Math.max(authorWidth + 28, subWidth);
-      const authorPillWidth = Math.min(840, Math.max(280, 102 + maxTextWidth + 36));
+      const authorPillWidth = Math.min(540, Math.max(280, 102 + maxTextWidth + 36));
+      const authorPillX = Math.round((1200 - authorPillWidth) / 2);
 
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
@@ -37831,8 +37837,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
-          <g transform="translate(48, 484)" filter="url(#profileCardShadow)">
+          <!-- BOTTOM CENTERED: Single Author Profile Pill (Safe across all crops) -->
+          <g transform="translate(${authorPillX}, 484)" filter="url(#profileCardShadow)">
             <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Avatar Container -->
