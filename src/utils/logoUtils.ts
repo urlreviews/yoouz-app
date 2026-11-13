@@ -9,6 +9,12 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     return false;
   }
 
+  if (clean.startsWith("data:image/svg")) {
+    if (!/<(?:path|text|circle|rect|polygon|polyline|image|ellipse|line)\b/i.test(clean)) {
+      return true;
+    }
+  }
+
   return (
     clean === "" ||
     clean === "data:;" ||
@@ -54,6 +60,17 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("freepik.com") ||
     clean.includes("pngtree.com") ||
     clean.includes("vecteezy.com") ||
+    clean.includes("580c414092d3df51d343") ||
+    clean.includes("e843fe934c18f30e4eb8") ||
+    clean.includes("07293044abd359a61471") ||
+    clean.includes("ec135e1bfc741e0a4799") ||
+    clean.includes("575f1cabfedea5beed55") ||
+    clean.includes("e38a618dc3d7f77ef4d2") ||
+    clean.includes("32d4ea2b0431a78ba799") ||
+    clean.includes("8340a3798fa52257a148") ||
+    /\/flags?\//i.test(clean) ||
+    /[-_/](?:flag|flags|flagicon|flag[-_]?icon|locale[-_]?icon|lang[-_]?icon|country[-_]?flag|language[-_]?flag)[-_/.]/i.test(clean) ||
+    /\/(?:wpml-ls|gtranslate|polylang|weglot|trp-language)\//i.test(clean) ||
     clean.endsWith(".gif") ||
     clean.includes(".gif?") ||
     clean.includes(".gif#")

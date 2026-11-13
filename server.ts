@@ -157,7 +157,8 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
       clean.includes('aria-label="openai"') ||
       clean.includes('preserveaspectratio="none"') ||
       (clean.includes("<use") && clean.includes("#") && !clean.includes("<symbol")) ||
-      !/<svg[^>]*\bwidth=/i.test(clean)
+      !/<svg[^>]*\bwidth=/i.test(clean) ||
+      !/<(?:path|text|circle|rect|polygon|polyline|image|ellipse|line)\b/i.test(clean)
     ) {
       return true;
     }
@@ -232,6 +233,17 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("freepik.com") ||
     clean.includes("pngtree.com") ||
     clean.includes("vecteezy.com") ||
+    clean.includes("580c414092d3df51d343") ||
+    clean.includes("e843fe934c18f30e4eb8") ||
+    clean.includes("07293044abd359a61471") ||
+    clean.includes("ec135e1bfc741e0a4799") ||
+    clean.includes("575f1cabfedea5beed55") ||
+    clean.includes("e38a618dc3d7f77ef4d2") ||
+    clean.includes("32d4ea2b0431a78ba799") ||
+    clean.includes("8340a3798fa52257a148") ||
+    /\/flags?\//i.test(clean) ||
+    /[-_/](?:flag|flags|flagicon|flag[-_]?icon|locale[-_]?icon|lang[-_]?icon|country[-_]?flag|language[-_]?flag)[-_/.]/i.test(clean) ||
+    /\/(?:wpml-ls|gtranslate|polylang|weglot|trp-language)\//i.test(clean) ||
     clean.endsWith(".gif") ||
     clean.includes(".gif?") ||
     clean.includes(".gif#")
@@ -734,15 +746,36 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     }
   }
 
-  // 4. Resilient Fallback to Wikimedia Commons API if logo or banner still needed
-  if (!logoUrl) {
+  // 4. Resilient Fallback to Wikidata Official Logo (P154) & Wikimedia Commons API if logo or banner still needed
+  if (!logoUrl && !options.skipLogo) {
     try {
-      const wikiCommonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanDom + " logo")}&gsrlimit=5&prop=imageinfo&iiprop=url|mime|size&format=json`;
-      const wcRes = await fetch(wikiCommonsUrl, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined });
+      const wdLogo = await lookupWikidataOfficialLogo(cleanDom, brandName);
+      if (wdLogo && !isGenericOrPlaceholderLogo(wdLogo)) {
+        logoUrl = wdLogo;
+      }
+    } catch (e) {}
+  }
+  if (!logoUrl && !options.skipLogo) {
+    try {
+      const domStemCompact = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const brandCompact = (brandName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const searchLabel = (brandName && brandName.length >= 3) ? brandName : cleanDom.split(".")[0];
+      const wikiCommonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent("File:" + searchLabel + " logo")}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|mime|size&format=json`;
+      const wcRes = await fetch(wikiCommonsUrl, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+      });
       if (wcRes.ok) {
         const wcJson = await wcRes.json();
         const pages = Object.values(wcJson?.query?.pages || {});
         for (const p of pages as any[]) {
+          const fileTitleLow = String(p?.title || "").toLowerCase();
+          const fileTitleCompact = fileTitleLow.replace(/^file:/, "").replace(/[^a-z0-9]/g, "");
+          if (/\b(?:flag|flags|coat_of_arms|map)\b/i.test(fileTitleLow)) continue;
+          const matchesBrand =
+            (domStemCompact.length >= 3 && fileTitleCompact.includes(domStemCompact)) ||
+            (brandCompact.length >= 3 && fileTitleCompact.includes(brandCompact));
+          if (!matchesBrand || !fileTitleLow.includes("logo")) continue;
           const info = p.imageinfo?.[0];
           if (info && info.url && (info.url.endsWith(".svg") || info.url.endsWith(".png"))) {
             if (!isGenericOrPlaceholderLogo(info.url) && !isFaviconUrl(info.url)) {
@@ -28357,8 +28390,52 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     return rawSrc || lazyCand || el.attr("srcset")?.split(",")[0]?.trim()?.split(" ")[0] || "";
   }
 
+  function isLanguageOrFlagOrUiControl(el: any, absUrl: string): boolean {
+    const cleanU = (absUrl || "").toLowerCase();
+    if (
+      /\/flags?\//i.test(cleanU) ||
+      /[-_/](?:flag|flags|flagicon|flag[-_]?icon|locale[-_]?icon|lang[-_]?icon|country[-_]?flag|language[-_]?flag)[-_/.]/i.test(cleanU) ||
+      /\/(?:wpml-ls|gtranslate|polylang|weglot|trp-language)\//i.test(cleanU)
+    ) {
+      return true;
+    }
+    if (!el) return false;
+    const altText = ((el.attr("alt") || el.attr("title") || el.attr("aria-label") || "") as string).trim().toLowerCase();
+    if (altText) {
+      if (/\b(?:flag|flags|drapeau|flagge|bandera|vlag|bandiera|flaga)\b/i.test(altText) && !domStem.includes("flag")) {
+        return true;
+      }
+      if (/^(?:english|français|francais|deutsch|german|french|spanish|español|espanol|italian|italiano|dutch|nederlands|portuguese|português|portugues|polish|polski|russian|русский|arabic|العربية|hebrew|עברית|chinese|中文|japanese|日本語|turkish|türkçe|greek|bulgarian|uk|gb|us|usa|eu|en|fr|de|es|it|nl|pt|bg|ru|zh|ja|ar|he|language|locale|currency)(?:\s+(?:flag|icon|language|locale|selector|currency))?$/i.test(altText)) {
+        return true;
+      }
+    }
+    const selfAndAncestors = [el, ...el.parents().toArray().slice(0, 8).map((p: any) => $(p))];
+    for (const node of selfAndAncestors) {
+      const attrs = [
+        node.attr("class") || "",
+        node.attr("id") || "",
+        node.attr("data-test-id") || "",
+        node.attr("data-testid") || "",
+        node.attr("aria-label") || "",
+        node.attr("name") || ""
+      ].join(" ").toLowerCase();
+      if (/(?:locale|language|lang[-_]|[-_]lang\b|langselect|langswitch|flagicon|flag[-_]?icon|localeselect|currencyselect|countryselect|country[-_]?select|country[-_]?switch|language[-_]?switch|languageholder|wpml[-_]ls|gtranslate|weglot|polylang|trp[-_]language|goog[-_]te|skiptranslate|avatar[-_]login|user[-_]avatar|cart[-_]icon|search[-_]icon)/i.test(attrs)) {
+        return true;
+      }
+    }
+    const parentAnchor = el.closest("a, button");
+    if (parentAnchor.length > 0) {
+      const anchorText = parentAnchor.text().replace(/\s+/g, " ").trim().toLowerCase();
+      if (anchorText && /^(?:english|français|francais|deutsch|español|espanol|italiano|nederlands|português|portugues|polski|русский|bulgarian|en|fr|de|es|it|nl|pt|bg|gbp|eur|usd|chf|aed|ils)(?:\s*\([^)]+\))?$/i.test(anchorText)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function isThirdPartyOrContentLogo(el: any, absUrl: string): boolean {
     if (isCrossBrandPortfolioLogoServer(absUrl, cleanDom)) return true;
+    if (isLanguageOrFlagOrUiControl(el, absUrl)) return true;
     if (/\/(?:cms\/)?menu\/images\/|\/promotions\/|\/shows\/|\/events\/|opentable[\-_]?logo|true[\-_]?rewards/i.test(absUrl)) return true;
     if (!el) return false;
     if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return true;
@@ -28415,8 +28492,11 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
         .replace(/[^a-z0-9\s]/g, " ")
         .split(/\s+/)
         .filter(w => w.length >= 2 && !genericLogoWords.has(w));
-      if (!matchesOwnBrand && !isWrappedInHomepageLink && nonGenericTokens.length > 0) {
-        return true;
+      if (!matchesOwnBrand && nonGenericTokens.length > 0) {
+        const hasLogoOrHomeWord = /\b(?:logo|brand|home|homepage)\b/i.test(altText);
+        if (!isWrappedInHomepageLink || !hasLogoOrHomeWord) {
+          return true;
+        }
       }
     }
 
@@ -28498,7 +28578,6 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       '.site-logo img', '.custom-logo', '.navbar-brand img', '.header-logo img', '.brand-logo img', '.logo_container img', '.hh-logo img',
       '[class*="header" i] img[class*="logo" i]', '[class*="header" i] img[alt*="logo" i]', '[class*="header" i] img[src*="logo" i]',
       '[class*="navbar" i] img[class*="logo" i]', '[class*="navbar" i] img[alt*="logo" i]', '[class*="navbar" i] img[src*="logo" i]',
-      'header img:first-of-type',
       'a[href="/"][class*="logo" i]:not([class*="mobile"]) img',
       'a[to="/"][class*="logo" i]:not([class*="mobile"]) img',
       'a[href="/"][class*="brand" i]:not([class*="mobile"]) img',
@@ -28541,6 +28620,8 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       const anchor = el.closest("a");
       const href = anchor.attr("href") || "";
       if (!isHomepageHref(href)) return;
+      const anchorAttrs = `${anchor.attr("class") || ""} ${anchor.attr("id") || ""} ${anchor.attr("data-test-id") || ""}`.toLowerCase();
+      if (el.closest('ul, .dropdown, [class*="dropdown" i], [class*="locale" i], [class*="language" i]').length > 0 && !/logo|brand/i.test(anchorAttrs)) return;
       const src = getBestLogoImgSrc(el);
       if (!src) return;
       const abs = makeAbsolute(src);
@@ -28708,7 +28789,8 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
             if (
               lowerSvg.includes('preserveaspectratio="none"') ||
               (lowerSvg.includes("<use") && lowerSvg.includes("#") && !lowerSvg.includes("<symbol")) ||
-              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !/<svg[^>]*\bviewbox=/i.test(lowerSvg))
+              (!/<svg[^>]*\bwidth=/i.test(lowerSvg) && !/<svg[^>]*\bviewbox=/i.test(lowerSvg)) ||
+              !/<(?:path|text|circle|rect|polygon|polyline|image|ellipse|line)\b/i.test(lowerSvg)
             ) {
               return;
             }
@@ -28759,22 +28841,24 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
 
   // 2. High-resolution Apple Touch Icon (<link rel="apple-touch-icon"> / <link rel="apple-touch-icon-precomposed">)
   try {
-    const isAppleTouchCandidateValid = (url: string, sizeNum: number): boolean => {
+    const isAppleTouchCandidateValid = (url: string, sizeNum: number, hasExplicitSizes: boolean): boolean => {
       if (!url || typeof url !== "string") return false;
       if (isGenericOrPlaceholderLogo(url)) return false;
       const l = url.toLowerCase();
       if (l.endsWith(".ico") || l.includes(".ico?") || l.includes("16x16") || l.includes("32x32") || l.includes("48x48")) return false;
+      if (!hasExplicitSizes && /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(l)) return false;
       if (sizeNum > 0 && sizeNum < 72) return false;
       return true;
     };
     const appleIcons: { url: string; size: number }[] = [];
     $('link[rel*="apple-touch-icon"], link[rel*="apple-touch-icon-precomposed"]').each((_: any, el: any) => {
       const href = $(el).attr("href");
-      const sizes = $(el).attr("sizes") || "";
+      const sizes = ($(el).attr("sizes") || "").trim();
       if (href) {
-        const sizeNum = parseInt(sizes.split("x")[0], 10) || 180;
+        const parsedSize = parseInt(sizes.split("x")[0], 10);
+        const sizeNum = parsedSize || 180;
         const abs = makeAbsolute(href);
-        if (abs && isAppleTouchCandidateValid(abs, sizeNum) && !isWhiteOrLightFilename(abs, $(el))) {
+        if (abs && isAppleTouchCandidateValid(abs, sizeNum, Boolean(parsedSize)) && !isWhiteOrLightFilename(abs, $(el))) {
           appleIcons.push({ url: abs, size: sizeNum });
         }
       }
@@ -29252,6 +29336,132 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
   }
 }
 
+async function lookupWikidataOfficialLogo(domain: string, businessName?: string): Promise<string> {
+  if (!domain || !domain.includes(".")) return "";
+  const cleanDom = domain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+  const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!domRoot || domRoot.length < 2) return "";
+
+  const searchTerms = Array.from(
+    new Set(
+      [
+        businessName ? businessName.trim() : "",
+        KNOWN_OFFICIAL_NAMES[cleanDom] || "",
+        cleanDom.split(".")[0]
+      ].filter(t => t && t.length >= 2)
+    )
+  );
+
+  for (const term of searchTerms.slice(0, 2)) {
+    try {
+      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=en&limit=5&format=json`;
+      const sResp = await fetch(searchUrl, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
+      });
+      if (!sResp.ok) continue;
+      const sData: any = await sResp.json();
+      const ids: string[] = (sData?.search || []).map((x: any) => x?.id).filter(Boolean);
+      if (ids.length === 0) continue;
+
+      const entUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|labels|descriptions&languages=en&format=json`;
+      const eResp = await fetch(entUrl, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      if (!eResp.ok) continue;
+      const eData: any = await eResp.json();
+
+      for (const id of ids) {
+        const ent = eData?.entities?.[id];
+        if (!ent) continue;
+        const p154Claims = (ent.claims?.P154 || [])
+          .map((c: any) => c?.mainsnak?.datavalue?.value)
+          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
+        if (p154Claims.length === 0) continue;
+
+        const p856Claims = (ent.claims?.P856 || [])
+          .map((c: any) => c?.mainsnak?.datavalue?.value)
+          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
+
+        const websiteMatches = p856Claims.some((w: string) => {
+          try {
+            const h = new URL(w).hostname.replace(/^www\./i, "").toLowerCase();
+            return h === cleanDom || h.split(".")[0].replace(/[^a-z0-9]/g, "") === domRoot;
+          } catch {
+            return false;
+          }
+        });
+
+        const labelNorm = String(ent.labels?.en?.value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const descLow = String(ent.descriptions?.en?.value || "").toLowerCase();
+        const isBusinessEntity = /\b(hotel|airline|company|chain|brand|corporation|business|restaurant|bank|retailer|group|service|enterprise|resort|casino|firm|platform|store|carrier)\b/i.test(descLow);
+
+        if (websiteMatches || (labelNorm === domRoot && isBusinessEntity && p856Claims.length === 0)) {
+          const fileName = p154Claims[0].trim();
+          if (!/\b(?:flag|coat_of_arms)\b/i.test(fileName)) {
+            return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
+          }
+        }
+      }
+    } catch {}
+  }
+  return "";
+}
+
+async function verifyLogoUrlReachable(logoUrl: string): Promise<boolean> {
+  if (!logoUrl || typeof logoUrl !== "string") return false;
+  let target = logoUrl.trim();
+  if (!target || isGenericOrPlaceholderLogo(target)) return false;
+  if (target.startsWith("data:image/") || target.startsWith("/api/favicon")) return true;
+  while (target.includes("/api/proxy-image")) {
+    try {
+      const u = new URL(target, "http://127.0.0.1:3000");
+      target = u.searchParams.get("url") || "";
+    } catch {
+      break;
+    }
+  }
+  try { target = decodeURIComponent(target); } catch {}
+  if (!target.startsWith("http://") && !target.startsWith("https://")) return true;
+  if (target.includes("commons.wikimedia.org/wiki/Special:FilePath/") || target.includes("upload.wikimedia.org/")) {
+    return true;
+  }
+
+  try {
+    let originRef = "https://www.google.com/";
+    try { originRef = new URL(target).origin + "/"; } catch {}
+    const probe = await fetch(target, {
+      method: "GET",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Referer": originRef,
+        "Range": "bytes=0-1023"
+      },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1600) : undefined
+    });
+    const ct = (probe.headers.get("content-type") || "").toLowerCase();
+    if (probe.ok && !ct.includes("text/html") && !ct.includes("text/plain") && (ct.includes("image") || ct.includes("svg") || ct.includes("octet-stream"))) {
+      return true;
+    }
+  } catch {}
+
+  try {
+    const wsrv = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(target)}`, {
+      method: "HEAD",
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1600) : undefined
+    });
+    const wct = (wsrv.headers.get("content-type") || "").toLowerCase();
+    if (wsrv.ok && wct.includes("image")) {
+      return true;
+    }
+  } catch {}
+
+  return false;
+}
+
 async function getVerifiedBrandLogo(domain: string, name?: string): Promise<string> {
   if (!domain || !domain.includes('.')) return "";
   const cleanDom = domain.replace(/^www\./i, "").toLowerCase().trim();
@@ -29260,19 +29470,10 @@ async function getVerifiedBrandLogo(domain: string, name?: string): Promise<stri
     return KNOWN_BRAND_LOGOS[cleanDom];
   }
 
-  try {
-    const clearbitUrl = `https://logo.clearbit.com/${cleanDom}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-    const resp = await fetch(clearbitUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (resp.ok) {
-      const len = resp.headers.get("content-length");
-      if (!len || parseInt(len, 10) > 100) {
-        return clearbitUrl;
-      }
-    }
-  } catch(e) {}
+  const wikidataLogo = await lookupWikidataOfficialLogo(cleanDom, name);
+  if (wikidataLogo) {
+    return wikidataLogo;
+  }
 
   return `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
 }
@@ -31179,11 +31380,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return s;
             }
 
-            // Extract authentic brand logo + stylesheet fallback
+            // Extract authentic brand logo + stylesheet fallback + reachability verification
             extractedLogo = extractAuthenticWebsiteLogo(sc$, scHtml, discoveredUrl, discoveredDom);
-            if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)$/i.test(extractedLogo)) {
+            if (extractedLogo && extractedLogo.startsWith("http") && !(await verifyLogoUrlReachable(extractedLogo))) {
+              extractedLogo = "";
+            }
+            if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
               const cssLogo = await extractStylesheetLogoFallback(sc$, discoveredUrl, discoveredDom);
-              if (cssLogo) extractedLogo = cssLogo;
+              if (cssLogo && (cssLogo.startsWith("data:") || await verifyLogoUrlReachable(cssLogo))) {
+                extractedLogo = cssLogo;
+              }
+            }
+            if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
+              const wdLogo = await lookupWikidataOfficialLogo(discoveredDom, scTitle || cleanQ);
+              if (wdLogo) extractedLogo = wdLogo;
             }
 
             // Banner Extraction (STRICTLY NO LOGOS OR SMALL UI SPRITES IN BANNER)
@@ -31974,7 +32184,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 // 1. Check data-srcset / srcset for highest quality candidate
                 const dataSrcset = $el.attr('data-srcset') || $el.attr('srcset') || '';
                 if (dataSrcset) {
-                  const parts = dataSrcset.split(',').map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
+                  const parts = dataSrcset.split(/,\s+(?=(?:https?:\/\/|\/|[a-zA-Z0-9_-]+\/))/).map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
                   const valid = parts.filter((s: string) => !s.startsWith('data:') && !s.includes('blank.gif') && !s.includes('pixel.gif'));
                   if (valid.length > 0) {
                     return valid[valid.length - 1]; // Pick largest resolution candidate
@@ -32581,7 +32791,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   }
                   if (!raw) return;
 
-                  const urls = raw.split(',').map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
+                  const urls = raw.split(/,\s+(?=(?:https?:\/\/|\/|[a-zA-Z0-9_-]+\/))/).map((p: string) => p.trim().split(' ')[0]).filter(Boolean);
                   urls.forEach((u: string) => {
                     if (isLogoOrIconUrl(u) || isBadBanner(u) || u.startsWith('data:')) return;
                     let weight = 350;
@@ -33173,22 +33383,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         logo = serverBrandLogos[cleanDomain] || (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomain] : "") || "";
       }
 
-      // Proactively test scraped logo reachability (never pass dead 404 assets to client)
+      // Proactively test scraped logo reachability (never pass dead 404/403 assets to client)
       if (logo && logo.startsWith("http") && !logo.includes("/api/favicon")) {
-        try {
-          const probe = await fetch(logo, {
-            method: "HEAD",
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-              "Accept": "image/*,*/*;q=0.8"
-            },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(900) : undefined
-          });
-          if (!probe.ok && probe.status === 404) {
-            console.warn(`[UrlMetadata] Scraped logo URL returned 404: ${logo}, falling back to domain icon`);
-            logo = serverBrandLogos[cleanDomain] || (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomain] : "") || "";
-          }
-        } catch (eProbe) {}
+        const isReachable = await verifyLogoUrlReachable(logo);
+        if (!isReachable) {
+          console.warn(`[UrlMetadata] Scraped logo URL unreachable: ${logo}, resolving official brand logo`);
+          logo = serverBrandLogos[cleanDomain] || (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomain] : "") || "";
+        }
+      }
+
+      if (!logo || isGenericOrPlaceholderLogo(logo) || isFaviconUrl(logo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(logo)) {
+        const wdLogo = await lookupWikidataOfficialLogo(cleanDomain, title || siteName || cleanDomain);
+        if (wdLogo) {
+          logo = wdLogo;
+        }
       }
 
       if (image && isBadBanner(image)) {
@@ -34669,7 +34877,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         if (html) {
           const $f = cheerio.load(html);
-          const extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
+          let extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
+          if (extractedLogo && extractedLogo.startsWith("http") && !(await verifyLogoUrlReachable(extractedLogo))) {
+            extractedLogo = "";
+          }
+          if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
+            const wdLogo = await lookupWikidataOfficialLogo(redirDom);
+            if (wdLogo) extractedLogo = wdLogo;
+          }
           if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo)) {
             if (extractedLogo.startsWith("data:image/svg+xml")) {
               const commaIdx = extractedLogo.indexOf(",");

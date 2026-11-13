@@ -1,5 +1,54 @@
 [
   {
+    "id": "easyhotel.com",
+    "name": "easyHotel",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "3rd Floor, 52 Grosvenor Gardens, SW1W 0AU London",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/EasyHotel%20Logo%20New.svg",
+    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/EasyHotel%20Logo%20New.svg",
+    "bannerUrl": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
+    "ogImage": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
+    "photos": [
+      "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.easyhotel.com/hotels/belgium/brussels/brussels-city-centre",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Need to get in contact or have a question about your hotel or stay? Find all you need to know or send us a request here.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "easyhotel.com",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "thestrat.com",
     "name": "The STRAT",
     "category": "Hotel & Hospitality",
