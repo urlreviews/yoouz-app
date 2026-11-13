@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, extractBrandFromDescription, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -248,16 +248,25 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       });
     }
 
-    // 2. Match local places
+    const qNoSpace = qLow.replace(/\s+/g, "");
+
+    // 2. Match local places (space-insensitive so "jet blue" matches "JetBlue" and "doordash" matches "DoorDash")
     for (const p of places) {
       if (localMatches.length >= 6) break;
       const pName = (p.name || "").toLowerCase();
+      const pNameNoSpace = pName.replace(/\s+/g, "");
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
       const pDomLow = pDom.toLowerCase();
-      if (pName.includes(qLow) || pDomLow.includes(qLow)) {
+      if (pName.includes(qLow) || (qNoSpace.length >= 2 && pNameNoSpace.includes(qNoSpace)) || pDomLow.includes(qLow) || (qNoSpace.length >= 2 && pDomLow.includes(qNoSpace))) {
+        const officialFromDesc = pDomLow ? extractOfficialBrandSpellingFromText(p.description, pDomLow) : null;
+        const resolvedPlaceTitle =
+          KNOWN_OFFICIAL_NAMES[pDomLow] ||
+          ((isFalseSplitOfDomain(p.name, pDomLow) || isFalseSplitAgainstText(p.name, p.description, pDomLow)) && officialFromDesc ? officialFromDesc : "") ||
+          p.name ||
+          pDom;
         pushLocal({
           id: p.id,
-          title: KNOWN_OFFICIAL_NAMES[pDomLow] || p.name || pDom,
+          title: resolvedPlaceTitle,
           domain: pDom.includes(".") ? pDom : "",
           logoUrl: (p.logoUrl && !p.logoUrl.includes("favicon") ? p.logoUrl : "") || (pDomLow && KNOWN_BRAND_LOGOS[pDomLow] ? KNOWN_BRAND_LOGOS[pDomLow] : ""),
           category: p.category || "Business",
@@ -270,13 +279,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     for (const v of videos) {
       if (localMatches.length >= 7) break;
       const vName = (v.placeName || v.businessName || "").trim();
+      const vNameLow = vName.toLowerCase();
+      const vNameNoSpace = vNameLow.replace(/\s+/g, "");
       const vDom = extractCleanDomain(v.placeWebsite || v.placeId || "") || "";
-      if (vName.toLowerCase().includes(qLow) || (vDom && vDom.toLowerCase().includes(qLow))) {
+      const vDomLow = vDom.toLowerCase();
+      if (vNameLow.includes(qLow) || (qNoSpace.length >= 2 && vNameNoSpace.includes(qNoSpace)) || (vDomLow && (vDomLow.includes(qLow) || (qNoSpace.length >= 2 && vDomLow.includes(qNoSpace))))) {
         pushLocal({
           id: vDom || v.placeId || vName,
-          title: (vDom && KNOWN_OFFICIAL_NAMES[vDom.toLowerCase()]) || vName || vDom,
+          title: (vDomLow && KNOWN_OFFICIAL_NAMES[vDomLow]) || vName || vDom,
           domain: vDom.includes(".") ? vDom : "",
-          logoUrl: v.placeLogoUrl || (vDom && KNOWN_BRAND_LOGOS[vDom.toLowerCase()]) || "",
+          logoUrl: v.placeLogoUrl || (vDomLow && KNOWN_BRAND_LOGOS[vDomLow]) || "",
           category: "Business"
         });
       }
@@ -337,10 +349,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
       return pDom?.toLowerCase() === cleanDom.toLowerCase();
     });
-    const existingValidName = existing?.name && !isDomainStemName(existing.name, cleanDom) ? existing.name : "";
+    const existingValidName = existing?.name && !isDomainStemName(existing.name, cleanDom) && !isFalseSplitOfDomain(existing.name, cleanDom) && !isFalseSplitAgainstText(existing.name, existing.description, cleanDom) && !isGenericSeoSlogan(existing.name, cleanDom) ? existing.name : "";
+    const validPreferred = preferredTitle && !isDomainStemName(preferredTitle, cleanDom) && !isFalseSplitOfDomain(preferredTitle, cleanDom) && !isGenericSeoSlogan(preferredTitle, cleanDom) ? preferredTitle : "";
     const officialName =
       KNOWN_OFFICIAL_NAMES[cleanDom] ||
-      (preferredTitle && !isDomainStemName(preferredTitle, cleanDom) ? preferredTitle : "") ||
+      validPreferred ||
       existingValidName ||
       formatBusinessName(cleanDom, cleanDom) ||
       cleanDom;
@@ -408,13 +421,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
 
     const qLow = trimmed.toLowerCase();
+    const qNoSpace = qLow.replace(/\s+/g, "");
 
-    // 2. Exact match in local places
+    // 2. Exact match in local places (or space-collapsed exact brand match)
     const match = places.find((p) => {
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
       const pNameLow = (p.name || "").toLowerCase().trim();
+      const pNameNoSpace = pNameLow.replace(/\s+/g, "");
       return (
         pNameLow === qLow ||
+        (qNoSpace.length >= 3 && pNameNoSpace === qNoSpace) ||
         (pDom && pDom.toLowerCase() === qLow) ||
         p.id.toLowerCase() === qLow
       );
@@ -434,7 +450,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       const domLow = domKey.toLowerCase();
       const domRoot = domLow.split(".")[0];
       const nameLow = officialName.toLowerCase().trim();
-      return nameLow === qLow || domLow === qLow || domRoot === qLow;
+      const nameNoSpace = nameLow.replace(/\s+/g, "");
+      return nameLow === qLow || (qNoSpace.length >= 3 && nameNoSpace === qNoSpace) || domLow === qLow || domRoot === qLow;
     });
     if (brandEntry) {
       seedAndOpenDomainPlace(brandEntry[0], brandEntry[1]);
@@ -444,8 +461,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     // 4. Match in video reviews' businesses
     const matchedVideoBiz = videos.find((v) => {
       const vNameLow = (v.placeName || v.businessName || "").toLowerCase().trim();
+      const vNameNoSpace = vNameLow.replace(/\s+/g, "");
       const vDomLow = (extractCleanDomain(v.placeWebsite || v.placeId || "") || "").toLowerCase();
-      return vNameLow === qLow || (vDomLow && vDomLow === qLow);
+      return vNameLow === qLow || (qNoSpace.length >= 3 && vNameNoSpace === qNoSpace) || (vDomLow && vDomLow === qLow);
     });
     if (matchedVideoBiz) {
       const vDom = extractCleanDomain(matchedVideoBiz.placeWebsite || matchedVideoBiz.placeId || "");
@@ -457,8 +475,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
-
-
     // 6. Fast path from pre-fetched suggestions if available
     const topBusinessSuggestion = suggestions.find(
       (s) =>
@@ -466,9 +482,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         s.domain &&
         isValidDomainUrl(extractCleanDomain(s.domain)) &&
         (s.title.toLowerCase() === qLow ||
+          s.title.toLowerCase().replace(/\s+/g, "") === qNoSpace ||
           s.title.toLowerCase().includes(qLow) ||
           qLow.includes(s.title.toLowerCase()) ||
-          s.domain.toLowerCase().includes(qLow))
+          s.domain.toLowerCase().includes(qLow) ||
+          s.domain.toLowerCase().includes(qNoSpace))
     );
     if (topBusinessSuggestion) {
       seedAndOpenDomainPlace(topBusinessSuggestion.domain, topBusinessSuggestion.title, topBusinessSuggestion.logoUrl);
@@ -487,10 +505,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         const resolvedDomain = extractCleanDomain(meta.domain || meta.url || "");
         if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
           const descBrand = extractBrandFromDescription(meta.description, resolvedDomain);
-          const rawMetaName = (meta.siteName && !isDomainDerivedGuess(meta.siteName, resolvedDomain))
+          const officialBrand = extractOfficialBrandSpellingFromText([meta.siteName, meta.title, meta.description].filter(Boolean).join(" | "), resolvedDomain);
+          const rawMetaName = (meta.siteName && !isDomainDerivedGuess(meta.siteName, resolvedDomain) && !isFalseSplitOfDomain(meta.siteName, resolvedDomain))
             ? meta.siteName
             : (meta.title || meta.siteName || descBrand || trimmed);
-          const officialName = KNOWN_OFFICIAL_NAMES[resolvedDomain] || formatBusinessName(rawMetaName, resolvedDomain) || descBrand || trimmed;
+          const officialName = KNOWN_OFFICIAL_NAMES[resolvedDomain]
+            || officialBrand
+            || formatBusinessName(rawMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description })
+            || descBrand
+            || trimmed;
           const newPlace: Place = {
             id: resolvedDomain,
             name: officialName,

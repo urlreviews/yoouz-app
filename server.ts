@@ -33,7 +33,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -749,7 +749,11 @@ async function persistToDb(data: ResolvedBusinessData) {
   if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
   try {
     const autoPlaceId = data.domain.toLowerCase().replace(/^www\./, "").trim();
-    const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || data.name || autoPlaceId;
+    const officialDescBrand = extractOfficialBrandSpellingFromText(data.description, autoPlaceId);
+    const rawPersistName = (officialDescBrand && isFalseSplitAgainstText(data.name, data.description, autoPlaceId))
+      ? officialDescBrand
+      : (data.name || autoPlaceId);
+    const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || formatBusinessName(rawPersistName, autoPlaceId, undefined, { fromWebsite: Boolean(data.name), fallbackText: data.description }) || autoPlaceId;
     // Fetch existing place row if present to preserve custom rating / reviews if not calculated
     let existingDoc: any = {};
     let existingRowData: any = null;
@@ -8168,31 +8172,38 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
 
         if (KNOWN_OFFICIAL_NAMES[key]) {
           p.name = KNOWN_OFFICIAL_NAMES[key];
-          if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
-        } else if (isDomainStemName(p.name, key) || isDomainDerivedGuess(p.name, key) || !/[\p{Ll}][\p{Lu}]/u.test(p.name || "")) {
+          if (p.selectedName && (isDomainDerivedGuess(p.selectedName, key) || isFalseSplitOfDomain(p.selectedName, key))) delete p.selectedName;
+        } else {
+          const officialTextBrand = extractOfficialBrandSpellingFromText(p.description, key);
           const descBrand = extractBrandFromDescription(p.description, key);
           const camelBrand = extractCamelCaseBrandFromText(p.description, key);
-          const cleanedName = formatBusinessName(p.name || key, key);
-          if (descBrand && (/[\p{Ll}][\p{Lu}]/u.test(descBrand) || isDomainDerivedGuess(p.name, key))) {
-            p.name = descBrand;
-            if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
-          } else if (camelBrand) {
-            p.name = camelBrand;
-            if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
-          } else if (cleanedName && !isDomainStemName(cleanedName, key)) {
-            p.name = cleanedName;
-          }
-        } else if (p.name) {
-          const cleanedName = formatBusinessName(p.name, key);
-          if (cleanedName && !isDomainStemName(cleanedName, key)) {
-            p.name = cleanedName;
+          const needsHeal = isDomainStemName(p.name, key) || isDomainDerivedGuess(p.name, key) || isFalseSplitOfDomain(p.name, key) || isFalseSplitAgainstText(p.name, p.description, key);
+          if (officialTextBrand && (needsHeal || p.name?.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "") === officialTextBrand.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ""))) {
+            p.name = officialTextBrand;
+            if (p.selectedName && (isDomainDerivedGuess(p.selectedName, key) || isFalseSplitOfDomain(p.selectedName, key) || isFalseSplitAgainstText(p.selectedName, p.description, key))) delete p.selectedName;
+          } else if (needsHeal) {
+            const cleanedName = formatBusinessName(p.name || key, key, undefined, { fromWebsite: true, fallbackText: p.description });
+            if (descBrand && (/[\p{Ll}][\p{Lu}]/u.test(descBrand) || isDomainDerivedGuess(p.name, key))) {
+              p.name = descBrand;
+              if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
+            } else if (camelBrand) {
+              p.name = camelBrand;
+              if (p.selectedName && isDomainDerivedGuess(p.selectedName, key)) delete p.selectedName;
+            } else if (cleanedName && !isDomainStemName(cleanedName, key)) {
+              p.name = cleanedName;
+            }
+          } else if (p.name) {
+            const cleanedName = formatBusinessName(p.name, key, undefined, { fromWebsite: true, fallbackText: p.description });
+            if (cleanedName && !isDomainStemName(cleanedName, key)) {
+              p.name = cleanedName;
+            }
           }
         }
         if (p.selectedName) {
-          if (isDomainDerivedGuess(p.selectedName, key) && p.name && !isDomainDerivedGuess(p.name, key)) {
+          if ((isDomainDerivedGuess(p.selectedName, key) || isFalseSplitOfDomain(p.selectedName, key) || isFalseSplitAgainstText(p.selectedName, p.description, key)) && p.name && !isDomainDerivedGuess(p.name, key)) {
             delete p.selectedName;
           } else {
-            const cleanedSel = formatBusinessName(p.selectedName, key);
+            const cleanedSel = formatBusinessName(p.selectedName, key, undefined, { fromWebsite: true, fallbackText: p.description });
             if (cleanedSel && !isDomainStemName(cleanedSel, key)) {
               p.selectedName = cleanedSel;
             }
@@ -8436,12 +8447,16 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       const normalizePlaceRecord = (rec: any) => {
         if (!rec) return rec;
         const domKey = String(rec.brandDomain || rec.id || id || "").toLowerCase().replace(/^www\./, "").trim();
+        const officialTextBrand = extractOfficialBrandSpellingFromText(rec.description, domKey);
         if (KNOWN_OFFICIAL_NAMES[domKey]) {
           rec.name = KNOWN_OFFICIAL_NAMES[domKey];
-          if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
-        } else if (isDomainStemName(rec.name, domKey) || isDomainDerivedGuess(rec.name, domKey)) {
+          if (rec.selectedName && (isDomainDerivedGuess(rec.selectedName, domKey) || isFalseSplitOfDomain(rec.selectedName, domKey))) delete rec.selectedName;
+        } else if (officialTextBrand && (isDomainStemName(rec.name, domKey) || isDomainDerivedGuess(rec.name, domKey) || isFalseSplitOfDomain(rec.name, domKey) || isFalseSplitAgainstText(rec.name, rec.description, domKey))) {
+          rec.name = officialTextBrand;
+          if (rec.selectedName && (isDomainDerivedGuess(rec.selectedName, domKey) || isFalseSplitOfDomain(rec.selectedName, domKey))) delete rec.selectedName;
+        } else if (isDomainStemName(rec.name, domKey) || isDomainDerivedGuess(rec.name, domKey) || isFalseSplitOfDomain(rec.name, domKey)) {
           const descBrand = extractBrandFromDescription(rec.description, domKey);
-          const alignedName = formatBusinessName(rec.name || domKey, domKey);
+          const alignedName = formatBusinessName(rec.name || domKey, domKey, undefined, { fromWebsite: true, fallbackText: rec.description });
           if (descBrand) {
             rec.name = descBrand;
             if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
@@ -8450,16 +8465,16 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             if (rec.selectedName && isDomainDerivedGuess(rec.selectedName, domKey)) delete rec.selectedName;
           }
         } else if (rec.name) {
-          const cleanedName = formatBusinessName(rec.name, domKey);
+          const cleanedName = formatBusinessName(rec.name, domKey, undefined, { fromWebsite: true, fallbackText: rec.description });
           if (cleanedName && !isDomainStemName(cleanedName, domKey)) {
             rec.name = cleanedName;
           }
         }
         if (rec.selectedName) {
-          if (isDomainDerivedGuess(rec.selectedName, domKey) && rec.name && !isDomainDerivedGuess(rec.name, domKey)) {
+          if ((isDomainDerivedGuess(rec.selectedName, domKey) || isFalseSplitOfDomain(rec.selectedName, domKey) || isFalseSplitAgainstText(rec.selectedName, rec.description, domKey)) && rec.name && !isDomainDerivedGuess(rec.name, domKey)) {
             delete rec.selectedName;
           } else {
-            const cleanedSel = formatBusinessName(rec.selectedName, domKey);
+            const cleanedSel = formatBusinessName(rec.selectedName, domKey, undefined, { fromWebsite: true, fallbackText: rec.description });
             if (cleanedSel && !isDomainStemName(cleanedSel, domKey)) {
               rec.selectedName = cleanedSel;
             }
@@ -8632,13 +8647,16 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           if (colName === 'places' || colName === 'business_profiles') {
             const domKey = String(parsedData.brandDomain || row.id || id || '').toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
             const rawRecordName = parsedData.name || (row as any).name || '';
+            const officialTextBrand = extractOfficialBrandSpellingFromText(parsedData.description, domKey);
             const descBrand = extractBrandFromDescription(parsedData.description, domKey);
             if (domKey && KNOWN_OFFICIAL_NAMES[domKey]) {
               parsedData.name = KNOWN_OFFICIAL_NAMES[domKey];
-            } else if (descBrand && (!rawRecordName || isDomainDerivedGuess(rawRecordName, domKey) || isDomainStemName(rawRecordName, domKey))) {
+            } else if (officialTextBrand && (!rawRecordName || isDomainDerivedGuess(rawRecordName, domKey) || isDomainStemName(rawRecordName, domKey) || isFalseSplitOfDomain(rawRecordName, domKey) || isFalseSplitAgainstText(rawRecordName, parsedData.description, domKey))) {
+              parsedData.name = officialTextBrand;
+            } else if (descBrand && (!rawRecordName || isDomainDerivedGuess(rawRecordName, domKey) || isDomainStemName(rawRecordName, domKey) || isFalseSplitOfDomain(rawRecordName, domKey))) {
               parsedData.name = descBrand;
             } else if (rawRecordName) {
-              parsedData.name = formatBusinessName(rawRecordName, domKey) || rawRecordName;
+              parsedData.name = formatBusinessName(rawRecordName, domKey, undefined, { fromWebsite: true, fallbackText: parsedData.description }) || rawRecordName;
             }
           }
           return res.json({ id: String(row.id), ...parsedData });
@@ -8967,11 +8985,14 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             const flagPath = path.join(serverUploadsDir, 'all_places_purged.flag');
             if (fs.existsSync(flagPath)) fs.unlinkSync(flagPath);
           } catch(e) {}
+          const officialTextForSave = extractOfficialBrandSpellingFromText(finalDataObj.description, id);
           const descBrandForSave = extractBrandFromDescription(finalDataObj.description, id);
-          const rawCandidateName = (descBrandForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id)))
-            ? descBrandForSave
-            : (finalDataObj.name || id);
-          const placeName = formatBusinessName(rawCandidateName, id);
+          const rawCandidateName = (officialTextForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id) || isFalseSplitOfDomain(finalDataObj.name, id) || isFalseSplitAgainstText(finalDataObj.name, finalDataObj.description, id)))
+            ? officialTextForSave
+            : ((descBrandForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id) || isFalseSplitOfDomain(finalDataObj.name, id)))
+              ? descBrandForSave
+              : (finalDataObj.name || id));
+          const placeName = formatBusinessName(rawCandidateName, id, undefined, { fromWebsite: Boolean(finalDataObj.name), fallbackText: finalDataObj.description });
           finalDataObj.name = placeName;
           finalDataObj.customEdited = true;
           if (finalDataObj.claimedByEmail) {
@@ -12903,39 +12924,38 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
-          const placesRs = await bunnyDb.execute("SELECT id, name FROM places;");
-          const unspacedNames = (placesRs.rows as any[]).filter(r => {
-            const n = (r.name || "").trim();
-            const id = (r.id || "").trim();
-            const cleanDom = cleanDomainName(id);
-            if (KNOWN_OFFICIAL_NAMES[id.toLowerCase()] || KNOWN_OFFICIAL_NAMES[cleanDom]) return false;
-            
-            // Check if compound word split detects hidden words
-            const splitFromName = splitCompoundWords(n);
-            const splitFromId = splitCompoundWords(cleanDom.replace(/\.[a-z]{2,}$/i, ""));
-            const hasMultipleWordsInSplit = splitFromName.split(/\s+/).filter(Boolean).length > 1 || splitFromId.split(/\s+/).filter(Boolean).length > 1;
-            const currentHasSingleWord = !n.includes(" ") && !n.includes("-");
-            
-            return currentHasSingleWord && hasMultipleWordsInSplit && n.length > 8;
-          });
-          if (unspacedNames.length > 0) {
-            // Auto-repair any unspaced single-word domain names in Bunny DB on the fly!
-            for (const item of unspacedNames) {
-              try {
-                const repName = formatBusinessName(item.id || item.name);
-                if (repName && repName.includes(" ") && repName !== item.name) {
-                  let pData: any = {};
-                  try { pData = typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {}); } catch (e) {}
-                  pData.name = repName;
-                  await bunnyDb.execute("UPDATE places SET name = ?, data = ? WHERE id = ?", [repName, JSON.stringify(pData), item.id]);
-                }
-              } catch (repErr) {}
-            }
-            check48Status = "ok";
-            check48Details = `Multi-language compound word separation engine active. Auto-repaired ${unspacedNames.length} place title(s). All registered business places and video reviews formatted with clean separate-word official titles.`;
-          } else {
-            check48Details = `Multi-language compound word separation engine active. All ${placesRs.rows.length} registered business places and video reviews verified with clean separate-word official titles.`;
+          const placesRs = await bunnyDb.execute("SELECT id, name, data FROM places;");
+          let repairedCount = 0;
+          for (const item of (placesRs.rows as any[])) {
+            try {
+              const n = String(item.name || "").trim();
+              const itemId = String(item.id || "").trim();
+              const cleanDom = cleanDomainName(itemId);
+              let pData: any = {};
+              try { pData = typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {}); } catch (e) {}
+              const desc = String(pData.description || "");
+              const officialTextBrand = extractOfficialBrandSpellingFromText(desc, cleanDom);
+              let repName = "";
+
+              if (KNOWN_OFFICIAL_NAMES[itemId.toLowerCase()] || KNOWN_OFFICIAL_NAMES[cleanDom]) {
+                repName = KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[itemId.toLowerCase()];
+              } else if (officialTextBrand && isFalseSplitAgainstText(n, desc, cleanDom)) {
+                repName = officialTextBrand;
+              } else if (isFalseSplitOfDomain(n, cleanDom) || isCorruptedBusinessName(n) || /^[a-z0-9\-_]+$/.test(n) || n.includes('.')) {
+                repName = officialTextBrand || formatBusinessName(cleanDom || n, cleanDom, undefined, { fromWebsite: false, fallbackText: desc });
+              }
+
+              if (repName && repName !== n) {
+                pData.name = repName;
+                await bunnyDb.execute("UPDATE places SET name = ?, data = ? WHERE id = ?", [repName, JSON.stringify(pData), itemId]);
+                repairedCount++;
+              }
+            } catch (repErr) {}
           }
+          check48Status = "ok";
+          check48Details = repairedCount > 0
+            ? `Official website business name integrity guard active. Auto-repaired ${repairedCount} corrupted/mis-split place title(s) using official website spelling across ${placesRs.rows.length} places.`
+            : `Official website business name integrity guard active. All ${placesRs.rows.length} registered business places verified with authentic official website names.`;
         }
       } catch (e: any) {
         check48Details = `Business name separation guard active. ${e?.message || String(e)}`;
@@ -28988,6 +29008,90 @@ async function getVerifiedBrandLogo(domain: string, name?: string): Promise<stri
   return `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
 }
 
+async function resolveOfficialSiteMetaFromSearch(cleanDom: string): Promise<{ title: string; description: string } | null> {
+  if (!cleanDom || !cleanDom.includes('.')) return null;
+  const known = KNOWN_OFFICIAL_NAMES[cleanDom.toLowerCase()];
+  if (known) return { title: known, description: "" };
+
+  const genericNavRegex = /^(?:official\s+site|home|homepage|welcome|log\s*in|login|sign\s*in|signin|sign\s*up|contact|contact\s+us|about|about\s+us|help|support|faq|careers|blog|pricing|manage(?:\s+trips?)?|book\s+now|search)$/i;
+  const domParts = cleanDom.toLowerCase().split('.');
+  const domRoot = domParts[0].replace(/[^a-z0-9]/g, '');
+
+  const extractTitleFromDdg = (rawTitle: string, snippet: string): string => {
+    const combined = `${rawTitle} | ${snippet}`;
+    const officialSpelling = extractOfficialBrandSpellingFromText(combined, cleanDom);
+    if (officialSpelling && !genericNavRegex.test(officialSpelling) && !isFalseSplitOfDomain(officialSpelling, cleanDom)) {
+      return officialSpelling;
+    }
+    const parts = rawTitle
+      .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)
+      .map(p => stripLegalEntityAndNoiseSuffixes(p.trim()))
+      .filter(p => p && !genericNavRegex.test(p) && !isGenericOrPlaceholderTitle(p));
+
+    const matchPart = parts.find(p => {
+      const pFold = p.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+      return pFold === domRoot || (domRoot.length >= 4 && (pFold.includes(domRoot) || domRoot.includes(pFold)));
+    });
+    const chosen = matchPart || parts[0] || "";
+    if (!chosen || genericNavRegex.test(chosen) || isGenericSeoSlogan(chosen, cleanDom)) return "";
+    const formatted = formatBusinessName(chosen, cleanDom, undefined, { fromWebsite: true, fallbackText: snippet }) || chosen;
+    if (!formatted || genericNavRegex.test(formatted) || isDomainStemName(formatted, cleanDom) || isFalseSplitOfDomain(formatted, cleanDom)) {
+      return officialSpelling || "";
+    }
+    return formatted;
+  };
+
+  for (const queryStr of [cleanDom, `site:${cleanDom}`]) {
+    try {
+      const resp = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryStr)}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9"
+        },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
+      });
+      if (!resp.ok) continue;
+      const html = await resp.text();
+      if (!html || html.length < 400) continue;
+      const $ = cheerio.load(html);
+      let bestResult: { title: string; description: string; score: number } | null = null;
+      $(".result").each((_: any, el: any) => {
+        const $a = $(el).find(".result__a").first();
+        const rawHref = $a.attr("href") || "";
+        let targetUrl = rawHref;
+        const uddgM = rawHref.match(/uddg=([^&]+)/i);
+        if (uddgM) {
+          try { targetUrl = decodeURIComponent(uddgM[1]); } catch {}
+        }
+        const urlText = $(el).find(".result__url").text().trim();
+        const resultHost = cleanDomainName(targetUrl) || cleanDomainName(urlText);
+        if (!resultHost || (resultHost !== cleanDom && !resultHost.endsWith(`.${cleanDom}`) && !cleanDom.endsWith(`.${resultHost}`))) {
+          return;
+        }
+        const rawTitle = $a.text().replace(/\s+/g, " ").trim();
+        const snippet = $(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
+        if (!rawTitle || genericNavRegex.test(rawTitle)) return;
+
+        let pathDepth = 0;
+        try { pathDepth = new URL(targetUrl).pathname.split("/").filter(Boolean).length; } catch {}
+        const extracted = extractTitleFromDdg(rawTitle, snippet);
+        if (!extracted) return;
+
+        let score = pathDepth === 0 ? 100 : Math.max(10, 80 - pathDepth * 20);
+        if (/[\p{Ll}][\p{Lu}]/u.test(extracted)) score += 20;
+        if (!bestResult || score > bestResult.score) {
+          bestResult = { title: extracted, description: snippet, score };
+        }
+      });
+      if (bestResult) {
+        return { title: (bestResult as any).title, description: (bestResult as any).description };
+      }
+    } catch {}
+  }
+  return null;
+}
+
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
   async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false, forceRefresh = false): Promise<ResolvedBusinessData | null> {
@@ -29006,7 +29110,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const l = cachedEntry.data.logo || "";
       const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear") || p.includes("/api/brand-banner");
       const isBadLogo = !l || isFaviconUrl(l) || l.includes("#") || l.includes("paint0_linear") || l.includes("/api/brand-banner") || l.includes("/api/monogram");
-      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || isBadPhoto || isBadLogo;
+      const isBadName = Boolean(
+        cachedEntry.data.domain &&
+        !KNOWN_OFFICIAL_NAMES[cachedEntry.data.domain] &&
+        (isFalseSplitOfDomain(cachedEntry.data.name, cachedEntry.data.domain) ||
+         isFalseSplitAgainstText(cachedEntry.data.name, cachedEntry.data.description, cachedEntry.data.domain))
+      );
+      const isMissing = (!cachedEntry.data.phone && !cachedEntry.data.email && (!cachedEntry.data.description || cachedEntry.data.description.includes('is a verified business on Yoouz.'))) || isBadPhoto || isBadLogo || isBadName;
       if (!isMissing) {
         return cachedEntry.data;
       }
@@ -29015,7 +29125,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const bunnyDb = getBunnyDb();
 
     // 0. Persistent Database Cache Lookup (Global Brain)
-    if (bunnyDb) {
+    if (bunnyDb && !forceRefresh) {
       try {
         const cleanQDom = cleanDomainName(cleanQ);
         // ONLY allow database lookup by exact domain/ID. 
@@ -29049,6 +29159,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
             const rowName = (row.name as string) || parsedData.title || parsedData.name || "";
             const isGeneric = isGenericPlaceNameServer(rowName);
+            const isFalseSplit = !KNOWN_OFFICIAL_NAMES[rowId] && (
+              isDomainStemName(rowName, rowId) ||
+              isFalseSplitOfDomain(rowName, rowId) ||
+              isFalseSplitAgainstText(rowName, parsedData.description, rowId)
+            );
             const cachedBanner = parsedData.bannerUrl || parsedData.ogImage || parsedData.image || parsedData.photo || "";
             const isBadCachedBanner = !cachedBanner ||
               cachedBanner.toLowerCase().includes('logo') ||
@@ -29063,11 +29178,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (isFabricatedNameDomain) {
               console.info(`[Database Cache] Purged fabricated domain: ${rowId}`);
               bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
-            } else if (isMissingDetails) {
-              console.info(`[Database Cache] Ignored low-quality generic cache for: ${rowName}`);
+            } else if (isMissingDetails || isGeneric || isFalseSplit) {
+              console.info(`[Database Cache] Ignored low-quality or split cache for: ${rowName}`);
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
-                const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || formatBusinessName(rowName, rowId, cleanQ) || rowName;
+                const officialDescBrand = extractOfficialBrandSpellingFromText(parsedData.description, rowId);
+                const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || officialDescBrand || formatBusinessName(rowName, rowId, undefined, { fromWebsite: true, fallbackText: parsedData.description }) || rowName;
                 const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner');
                 const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : ""));
                 const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isFaviconUrl(u) || u.includes('/api/favicon') || u === cleanPhoto || u === parsedData.bannerUrl || u === parsedData.ogImage || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
@@ -29111,6 +29227,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const loc = KNOWN_ENTITY_LOCATIONS[cleanDom] || KNOWN_ENTITY_LOCATIONS[cleanDom.split('.')[0]];
       
       let domTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name || formatBusinessName(cleanDom);
+      let hasVerifiedWebsiteTitle = Boolean(KNOWN_OFFICIAL_NAMES[cleanDom] || loc?.name);
       let domDesc = loc?.description || "";
       let domPhoto = (loc as any)?.bannerUrl || (loc as any)?.photo || "";
       let domLogo = (loc as any)?.logoUrl || "";
@@ -29125,7 +29242,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let domLng = loc?.lng || 0;
 
       try {
-        const protocols = [`https://${cleanDom}`, `http://${cleanDom}`, `https://www.${cleanDom}`];
+        const protocols = [`https://${cleanDom}`, `https://www.${cleanDom}`, `http://${cleanDom}`];
         for (const targetUrl of protocols) {
           try {
             console.log(`[Firecrawl] Scraping official domain candidate: ${targetUrl}`);
@@ -29151,11 +29268,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   }
                 } catch {}
               });
-              const ogTitle = jsonLdBrandName || ogSiteName || d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || d$('title').text() || scrapeData.metadata?.title;
-              if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
-                domTitle = formatBusinessName(ogTitle.trim(), cleanDom);
-              }
-              
+
               const ogDesc = d$('meta[property="og:description"]').attr('content') || d$('meta[name="description"]').attr('content') || scrapeData.metadata?.description;
               if (ogDesc && ogDesc.trim().length > 10) {
                 domDesc = ogDesc.trim();
@@ -29163,6 +29276,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const firstP = d$('main p, article p, .about p, #about p, p').first().text().trim();
                 if (firstP && firstP.length > 20 && firstP.length < 350) {
                   domDesc = firstP;
+                }
+              }
+
+              const htmlTitleTag = (d$('head > title').first().text() || d$('title').first().text() || '').trim();
+              const ogTitleRaw = (d$('meta[property="og:title"]').attr('content') || d$('meta[name="twitter:title"]').attr('content') || scrapeData.metadata?.title || '').trim();
+              const officialPageBrand = extractOfficialBrandSpellingFromText(
+                [jsonLdBrandName, ogSiteName, htmlTitleTag, ogTitleRaw, domDesc].filter(Boolean).join(' | '),
+                cleanDom
+              );
+              const ogTitle = officialPageBrand || jsonLdBrandName || ogSiteName || htmlTitleTag || ogTitleRaw;
+              if (ogTitle && ogTitle.trim().length > 1 && !KNOWN_OFFICIAL_NAMES[cleanDom]) {
+                const formattedPageTitle = formatBusinessName(ogTitle.trim(), cleanDom, undefined, { fromWebsite: true, fallbackText: domDesc });
+                if (formattedPageTitle && !isGenericPlaceNameServer(formattedPageTitle)) {
+                  domTitle = formattedPageTitle;
+                  if (!isDomainStemName(formattedPageTitle, cleanDom) && !isFalseSplitOfDomain(formattedPageTitle, cleanDom)) {
+                    hasVerifiedWebsiteTitle = true;
+                  }
                 }
               }
               
@@ -29208,6 +29338,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       } catch (scrapeErr) {}
 
+      // If official website title was blocked/shielded or still unresolved/stem/split, resolve via DuckDuckGo official site listing
+      if (!hasVerifiedWebsiteTitle || isGenericPlaceNameServer(domTitle) || isDomainStemName(domTitle, cleanDom) || isFalseSplitOfDomain(domTitle, cleanDom) || isFalseSplitAgainstText(domTitle, domDesc, cleanDom)) {
+        const searchMeta = await resolveOfficialSiteMetaFromSearch(cleanDom).catch(() => null);
+        if (searchMeta && searchMeta.title) {
+          domTitle = searchMeta.title;
+          hasVerifiedWebsiteTitle = true;
+          if (!domDesc && searchMeta.description) domDesc = searchMeta.description;
+        }
+      }
+
       // Fallback: If site was protected by CAPTCHA/bot shield or lacked contact info, enrich via search engine intelligence
       if (!domDesc || !domPhone || !domEmail || domAddress === "Verified Location" || isGenericPlaceNameServer(domTitle)) {
         try {
@@ -29241,10 +29381,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (eMatch) domEmail = eMatch[0];
             }
             const firstTitle = i$(".result__title").first().text().trim();
-            if (firstTitle) {
-              const formattedTitle = formatBusinessName(firstTitle, cleanDom, cleanQ);
+            if (firstTitle && (!hasVerifiedWebsiteTitle || isGenericPlaceNameServer(domTitle) || isDomainStemName(domTitle, cleanDom) || isFalseSplitOfDomain(domTitle, cleanDom))) {
+              const formattedTitle = formatBusinessName(firstTitle, cleanDom, undefined, { fromWebsite: true, fallbackText: domDesc });
               if (formattedTitle && formattedTitle.length > 1) {
                 domTitle = formattedTitle;
+                hasVerifiedWebsiteTitle = true;
               }
             }
           }
@@ -29261,7 +29402,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (ddgMedia.bannerUrl && (!domPhoto || isBadBanner(domPhoto))) domPhoto = ddgMedia.bannerUrl;
           if (ddgMedia.logoUrl && (!domLogo || isFaviconUrl(domLogo) || isGenericOrPlaceholderLogo(domLogo))) domLogo = ddgMedia.logoUrl;
           if (ddgMedia.description && !domDesc) domDesc = ddgMedia.description;
-          if (ddgMedia.title && (!domTitle || isGenericPlaceNameServer(domTitle))) domTitle = ddgMedia.title;
+          if (ddgMedia.title && (!hasVerifiedWebsiteTitle || !domTitle || isGenericPlaceNameServer(domTitle) || isDomainStemName(domTitle, cleanDom) || isFalseSplitOfDomain(domTitle, cleanDom))) {
+            domTitle = formatBusinessName(ddgMedia.title, cleanDom, undefined, { fromWebsite: true, fallbackText: domDesc }) || ddgMedia.title;
+            hasVerifiedWebsiteTitle = true;
+          }
           if (ddgMedia.phone && !domPhone) domPhone = ddgMedia.phone;
         } catch(eDDG) {
           console.warn(`[DuckDuckGo Media Enrichment Error] for ${cleanDom}:`, eDDG);
@@ -29276,7 +29420,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (archiveData.banner && !domPhoto) domPhoto = archiveData.banner;
             if (archiveData.logo && !domLogo) domLogo = archiveData.logo;
             if (archiveData.description && !domDesc) domDesc = archiveData.description;
-            if (archiveData.title && (!domTitle || isGenericPlaceNameServer(domTitle))) domTitle = archiveData.title;
+            if (archiveData.title && (!hasVerifiedWebsiteTitle || !domTitle || isGenericPlaceNameServer(domTitle) || isDomainStemName(domTitle, cleanDom) || isFalseSplitOfDomain(domTitle, cleanDom))) {
+              domTitle = formatBusinessName(archiveData.title, cleanDom, undefined, { fromWebsite: true, fallbackText: domDesc }) || archiveData.title;
+              hasVerifiedWebsiteTitle = true;
+            }
           }
         } catch(eArc) {}
       }
@@ -29288,10 +29435,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (KNOWN_BRAND_BANNERS[cleanDom]) domPhoto = KNOWN_BRAND_BANNERS[cleanDom];
       }
 
+      const officialFromDomDesc = extractOfficialBrandSpellingFromText(domDesc, cleanDom);
+      const resolvedFinalDomName =
+        (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) ||
+        (hasVerifiedWebsiteTitle ? (formatBusinessName(domTitle, cleanDom, undefined, { fromWebsite: true, fallbackText: domDesc }) || domTitle) : "") ||
+        officialFromDomDesc ||
+        formatBusinessName(domTitle, cleanDom, undefined, { fallbackText: domDesc }) ||
+        domTitle ||
+        cleanQ;
+
       const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
         websiteUrl: `https://${cleanDom}`,
-        name: (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom]) || formatBusinessName(domTitle, cleanDom, cleanQ) || domTitle || cleanQ,
+        name: resolvedFinalDomName,
         category: domCategory,
         address: domAddress,
         city: domCity,
@@ -29385,6 +29541,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     // 3. Official Discovery Engine (Google Search)
     let discoveredUrl: string = "";
+    let discoveredDdgTitle: string = "";
+    let discoveredDdgSnippet: string = "";
     try {
       const broadenLocal = (q: string, att: number): string => {
         let cl = q.trim().replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
@@ -29444,108 +29602,114 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (!html || html.length < 500) continue;
           
           // Extract and score candidates to prioritize official business sites over portals/directories
-          const candidates: { url: string; score: number }[] = [];
-          const regex = /uddg=([^&"'>\s]+)/gi;
-          let match;
-          while ((match = regex.exec(html)) !== null) {
-            let u = match[1];
+          const candidates: { url: string; score: number; ddgTitle: string; ddgSnippet: string }[] = [];
+          const portalDomains = [
+            "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
+            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
+            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
+            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
+            "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
+            "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
+            "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk", "wheree.com", "wheree.", "directory", "portal", "yellowpages", "yelp"
+          ];
+
+          const scoreUrlCandidate = (u: string, ddgTitle: string, ddgSnippet: string) => {
             try {
-              u = decodeURIComponent(u);
-              if (u.startsWith('http')) {
-                const uLower = u.toLowerCase();
-                let host = "";
-                try {
-                  host = new URL(u).hostname.toLowerCase();
-                } catch {
-                  continue;
-                }
-                
-                // Exclude pure IP addresses and localhost
-                if (!host || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) || host === "localhost") {
-                  continue;
-                }
-
-                // Exclude bad schemes
-                if (uLower.includes("javascript:") || uLower.includes("mailto:") || uLower.includes("tel:")) continue;
-
-                const cleanHost = host.replace(/^www\./, "");
-                const hostParts = cleanHost.split('.');
-                const domainNameOnly = hostParts[0];
-
-                // 1. Identify Portal/Directory/News/Aggregator domains that should be heavily deprioritized or excluded
-                const portalDomains = [
-                  "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-                  "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
-                  "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
-                  "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
-                  "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
-                  "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
-                  "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk", "wheree.com", "wheree.", "directory", "portal", "yellowpages", "yelp"
-                ];
-
-                // Check for embedded business domains inside aggregators (e.g. milonic.com/bluechillicars.com, trustpilot.com/review/domain.co.uk)
-                const embeddedMatch = u.match(/(?:websites\.milonic\.com\/|trustpilot\.com\/review\/|sur\.ly\/i\/)([a-z0-9\.\-]+\.[a-z]{2,})/i);
-                if (embeddedMatch && embeddedMatch[1] && !portalDomains.some(pd => embeddedMatch[1].includes(pd))) {
-                  const embeddedDom = embeddedMatch[1].toLowerCase().replace(/^www\./, '');
-                  candidates.push({ url: `https://${embeddedDom}/`, score: 180 });
-                }
-
-                const isPortal = portalDomains.some(d => host.includes(d));
-
-                if (isPortal) {
-                  // Strictly skip/exclude all directories, social portals, and fake directory URLs!
-                  continue;
-                }
-
-                let score = 100 - (candidates.length * 5); // Initial score based on search rank
-                
-                // 2. Bonus for domain name matching query keywords (strong official website signal across all languages)
-                const queryWords = cleanQ.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length >= 2 && !['car', 'auto', 'the', 'and', 'inc', 'llc', 'ltd', 'service', 'services', 'leasing', 'lease', 'השכרת', 'רכב', 'בעמ'].includes(w));
-                for (const word of queryWords) {
-                  if (cleanHost.includes(word) || domainNameOnly.includes(word)) {
-                    score += 80;
-                  }
-                }
-                // Phonetic / Hebrew / Transliteration brand matching
-                const qLower = cleanQ.toLowerCase();
-                if ((qLower.includes('בלו סקאי') || qLower.includes('בלוסקאי')) && cleanHost.includes('blue-sky')) score += 150;
-                if ((qLower.includes('בסט קאר') || qLower.includes('באסט קאר')) && cleanHost.includes('best-car')) score += 150;
-                if (qLower.includes('אופרן') && cleanHost.includes('ofran')) score += 150;
-                if (qLower.includes('אלפא') && cleanHost.includes('alfaleasing')) score += 150;
-                if (qLower.includes('איטריידר') && cleanHost.includes('etrader')) score += 150;
-
-                // Prioritize global TLDs (.com, .vc, .io, .co, .ai, .org) and penalize .co.il for non-Hebrew queries
-                if (!isHebrewOrIsraelQuery) {
-                  if (cleanHost.endsWith('.co.il') || cleanHost.endsWith('.org.il') || cleanHost.endsWith('.il')) {
-                    score -= 150;
-                  } else if (/\.(com|vc|io|co|ai|org|net)$/i.test(cleanHost)) {
-                    score += 45;
-                    const cleanQueryAlpha = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (cleanQueryAlpha && domainNameOnly === cleanQueryAlpha) {
-                      score += 120;
-                    }
-                  }
-                }
-
-                // 3. Minor penalty for deep sub-paths (Official sites are root or shallow)
-                const pathParts = new URL(u).pathname.split('/').filter(Boolean);
-                if (pathParts.length > 2) {
-                  score -= (pathParts.length * 10);
-                } else if (pathParts.length === 0) {
-                  score += 20; // Root domain bonus
-                }
-
-                // Use the root domain URL if this candidate is an official site with deep internal links
-                const rootCandidateUrl = `https://${cleanHost}/`;
-                candidates.push({ url: (pathParts.length > 1 && !isPortal) ? rootCandidateUrl : u, score });
+              if (!u.startsWith('http')) return;
+              const uLower = u.toLowerCase();
+              let host = "";
+              try {
+                host = new URL(u).hostname.toLowerCase();
+              } catch {
+                return;
               }
-            } catch (err) {}
+              if (!host || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) || host === "localhost") return;
+              if (uLower.includes("javascript:") || uLower.includes("mailto:") || uLower.includes("tel:")) return;
+
+              const cleanHost = host.replace(/^www\./, "");
+              const hostParts = cleanHost.split('.');
+              const domainNameOnly = hostParts[0];
+
+              const embeddedMatch = u.match(/(?:websites\.milonic\.com\/|trustpilot\.com\/review\/|sur\.ly\/i\/)([a-z0-9\.\-]+\.[a-z]{2,})/i);
+              if (embeddedMatch && embeddedMatch[1] && !portalDomains.some(pd => embeddedMatch[1].includes(pd))) {
+                const embeddedDom = embeddedMatch[1].toLowerCase().replace(/^www\./, '');
+                candidates.push({ url: `https://${embeddedDom}/`, score: 180, ddgTitle, ddgSnippet });
+              }
+
+              const isPortal = portalDomains.some(d => host.includes(d));
+              if (isPortal) return;
+
+              let score = 100 - (candidates.length * 5);
+              const queryWords = cleanQ.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length >= 2 && !['car', 'auto', 'the', 'and', 'inc', 'llc', 'ltd', 'service', 'services', 'leasing', 'lease', 'השכרת', 'רכב', 'בעמ'].includes(w));
+              for (const word of queryWords) {
+                if (cleanHost.includes(word) || domainNameOnly.includes(word)) {
+                  score += 80;
+                }
+              }
+              const qLowerLocal = cleanQ.toLowerCase();
+              if ((qLowerLocal.includes('בלו סקאי') || qLowerLocal.includes('בלוסקאי')) && cleanHost.includes('blue-sky')) score += 150;
+              if ((qLowerLocal.includes('בסט קאר') || qLowerLocal.includes('באסט קאר')) && cleanHost.includes('best-car')) score += 150;
+              if (qLowerLocal.includes('אופרן') && cleanHost.includes('ofran')) score += 150;
+              if (qLowerLocal.includes('אלפא') && cleanHost.includes('alfaleasing')) score += 150;
+              if (qLowerLocal.includes('איטריידר') && cleanHost.includes('etrader')) score += 150;
+
+              const cleanQueryAlpha = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (cleanQueryAlpha && domainNameOnly === cleanQueryAlpha) {
+                score += 120;
+              }
+              if (!isHebrewOrIsraelQuery) {
+                if (cleanHost.endsWith('.co.il') || cleanHost.endsWith('.org.il') || cleanHost.endsWith('.il')) {
+                  score -= 150;
+                } else if (/\.(com|vc|io|co|ai|org|net)$/i.test(cleanHost)) {
+                  score += 45;
+                }
+              }
+
+              const pathParts = new URL(u).pathname.split('/').filter(Boolean);
+              if (pathParts.length > 2) {
+                score -= (pathParts.length * 10);
+              } else if (pathParts.length === 0) {
+                score += 20;
+              }
+
+              const rootCandidateUrl = `https://${cleanHost}/`;
+              candidates.push({ url: (pathParts.length > 1 && !isPortal) ? rootCandidateUrl : u, score, ddgTitle, ddgSnippet });
+            } catch {}
+          };
+
+          const $ddg = cheerio.load(html);
+          $ddg(".result").each((_: any, el: any) => {
+            const $a = $ddg(el).find(".result__a").first();
+            const href = $a.attr("href") || "";
+            const uddgM = href.match(/uddg=([^&]+)/i);
+            let decodedUrl = href;
+            if (uddgM) {
+              try { decodedUrl = decodeURIComponent(uddgM[1]); } catch {}
+            } else if (!decodedUrl.startsWith("http")) {
+              const rawUrlText = $ddg(el).find(".result__url").text().trim();
+              if (rawUrlText) decodedUrl = rawUrlText.startsWith("http") ? rawUrlText : `https://${rawUrlText.split(/\s+/)[0]}`;
+            }
+            const rTitle = $a.text().replace(/\s+/g, " ").trim();
+            const rSnippet = $ddg(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
+            if (decodedUrl) scoreUrlCandidate(decodedUrl, rTitle, rSnippet);
+          });
+
+          if (candidates.length === 0) {
+            const regex = /uddg=([^&"'>\s]+)/gi;
+            let match;
+            while ((match = regex.exec(html)) !== null) {
+              try {
+                scoreUrlCandidate(decodeURIComponent(match[1]), "", "");
+              } catch {}
+            }
           }
 
           if (candidates.length > 0) {
             // Sort by score descending
             candidates.sort((a, b) => b.score - a.score);
             discoveredUrl = candidates[0].url;
+            discoveredDdgTitle = candidates[0].ddgTitle || "";
+            discoveredDdgSnippet = candidates[0].ddgSnippet || "";
             console.log(`[DuckDuckGo Discovery] Best Candidate (Score ${candidates[0].score}): ${discoveredUrl}`);
             break; 
           }
@@ -29611,8 +29775,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       logSearchIntel(cleanQ, cleanDomainName(discoveredUrl), "resolved_by_discovery", { source: "google_discovery_loop" });
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
-        let scTitle = formatBusinessName(cleanQ, discoveredDom);
-        let scDesc = `${scTitle} is a verified business on Yoouz.`;
+        const ddgOfficialSpelling = extractOfficialBrandSpellingFromText(`${discoveredDdgTitle} | ${discoveredDdgSnippet}`, discoveredDom);
+        const ddgTitleParts = discoveredDdgTitle
+          ? discoveredDdgTitle.split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean)
+          : [];
+        const ddgFormattedFromSearch = ddgTitleParts[0] && !isGenericSeoSlogan(ddgTitleParts[0], discoveredDom)
+          ? formatBusinessName(ddgTitleParts[0], discoveredDom, undefined, { fromWebsite: true, fallbackText: discoveredDdgSnippet })
+          : "";
+        let hasVerifiedScTitle = Boolean(KNOWN_OFFICIAL_NAMES[discoveredDom] || ddgOfficialSpelling || (ddgFormattedFromSearch && !isDomainStemName(ddgFormattedFromSearch, discoveredDom) && !isFalseSplitOfDomain(ddgFormattedFromSearch, discoveredDom)));
+        let scTitle = KNOWN_OFFICIAL_NAMES[discoveredDom] || ddgOfficialSpelling || ddgFormattedFromSearch || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet });
+        let scDesc = discoveredDdgSnippet || `${scTitle} is a verified business on Yoouz.`;
         let scImage = "";
         let scAddress = "";
         let scCity = "Online";
@@ -29629,7 +29801,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const fastResult: ResolvedBusinessData = {
             domain: discoveredDom,
             websiteUrl: discoveredUrl,
-            name: scTitle || formatBusinessName(cleanQ, discoveredDom),
+            name: scTitle || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet }),
             category: scCategory || detectedCategory,
             address: "",
             city: "Online",
@@ -29660,29 +29832,62 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             scrapeMetadata = scrapeData.metadata;
           } else {
             console.log(`[Direct Fetch Fallback] Fetching HTML for: ${discoveredUrl}`);
-            try {
-              const directResp = await fetch(discoveredUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                  'Accept-Language': 'en-US,en;q=0.9',
-                  'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US'
-                },
-                redirect: 'follow',
-                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
-              });
-              if (directResp.ok) {
-                scHtml = await directResp.text();
+            for (const candFetchUrl of Array.from(new Set([discoveredUrl, `https://${discoveredDom}`, `https://www.${discoveredDom}`]))) {
+              try {
+                const directResp = await fetch(candFetchUrl, {
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Cookie': 'IRAC_LOCALE=en_US; irac_user_locale=en_US; htz_lang=en; htz_country=US'
+                  },
+                  redirect: 'follow',
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
+                });
+                if (directResp.ok) {
+                  const candidateHtml = await directResp.text();
+                  if (candidateHtml && candidateHtml.length > 500 && !candidateHtml.toLowerCase().includes('<title>attention required') && !candidateHtml.toLowerCase().includes('<title>just a moment')) {
+                    scHtml = candidateHtml;
+                    break;
+                  }
+                }
+              } catch (eDirect: any) {
+                console.warn(`[Direct Fetch Fallback Error] failed for ${candFetchUrl}:`, eDirect.message);
               }
-            } catch (eDirect) {
-              console.warn(`[Direct Fetch Fallback Error] failed for ${discoveredUrl}:`, eDirect.message);
+            }
+          }
+
+          if (!scHtml || scHtml.length < 500) {
+            for (const jinaUrl of [`https://r.jina.ai/https://${discoveredDom}`, `https://r.jina.ai/https://www.${discoveredDom}`]) {
+              try {
+                const jinaResp = await fetch(jinaUrl, {
+                  headers: {
+                    "X-Return-Format": "html",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                  },
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5500) : undefined
+                });
+                if (jinaResp.ok) {
+                  const jinaHtml = await jinaResp.text();
+                  if (jinaHtml && jinaHtml.length >= 500 && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
+                    scHtml = jinaHtml;
+                    break;
+                  }
+                }
+              } catch {}
             }
           }
           
           if (scHtml) {
             const sc$ = cheerio.load(scHtml);
-            const metaT = sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || sc$('title').text() || scrapeMetadata?.title;
+            const htmlTagT = (sc$('head > title').first().text() || sc$('title').first().text() || '').trim();
+            const metaT = (sc$('meta[property="og:title"]').attr('content') || sc$('meta[name="twitter:title"]').attr('content') || htmlTagT || scrapeMetadata?.title || '').trim();
             const ogSiteN = sc$('meta[property="og:site_name"]').attr('content') || '';
+            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeMetadata?.description;
+            if (metaDesc && metaDesc.trim().length > 10) {
+              scDesc = metaDesc.trim();
+            }
+
             let jsonLdOrg = '';
             sc$('script[type="application/ld+json"]').each((_: any, el: any) => {
               try {
@@ -29704,10 +29909,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                             sc$('[itemprop="publisher"] [itemprop="name"]').text() ||
                             sc$('[itemprop="name"]').first().attr('content') ||
                             sc$('[itemprop="name"]').first().text();
-            if (pubName && pubName.trim().length > 1 && !isGenericPlaceNameServer(pubName.trim())) {
-              scTitle = formatBusinessName(pubName.trim(), discoveredDom, cleanQ);
+            const officialScBrand = extractOfficialBrandSpellingFromText(
+              [pubName, htmlTagT, metaT, scDesc, discoveredDdgSnippet].filter(Boolean).join(' | '),
+              discoveredDom
+            );
+            if (officialScBrand && !KNOWN_OFFICIAL_NAMES[discoveredDom]) {
+              scTitle = officialScBrand;
+              hasVerifiedScTitle = true;
+            } else if (pubName && pubName.trim().length > 1 && !isGenericPlaceNameServer(pubName.trim())) {
+              const formattedPub = formatBusinessName(pubName.trim(), discoveredDom, undefined, { fromWebsite: true, fallbackText: scDesc });
+              if (formattedPub && !isFalseSplitOfDomain(formattedPub, discoveredDom)) {
+                scTitle = formattedPub;
+                hasVerifiedScTitle = true;
+              }
             } else if (metaT && metaT.trim().length > 1) {
-              const formattedScTitle = formatBusinessName(metaT.trim(), discoveredDom, cleanQ);
+              const formattedScTitle = formatBusinessName(metaT.trim(), discoveredDom, undefined, { fromWebsite: true, fallbackText: scDesc });
               const cleanQWords = cleanQ.toLowerCase().split(/\s+/).filter(w => w.length >= 2);
               const formattedLower = formattedScTitle.toLowerCase();
               const isGenericSentence = formattedScTitle.length > 25 && /\b(בגדים|נעליים|לנשים|גברים|השכרת|מכירת|שירות|חנות|אונליין|במבחר|מגוון|איכותי)\b/i.test(formattedLower);
@@ -29715,14 +29931,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               
               if (!isGenericSentence || matchesCleanQ) {
                 scTitle = formattedScTitle;
-              } else {
-                scTitle = formatBusinessName(cleanQ, discoveredDom) || cleanQ;
+                if (!isDomainStemName(formattedScTitle, discoveredDom) && !isFalseSplitOfDomain(formattedScTitle, discoveredDom)) {
+                  hasVerifiedScTitle = true;
+                }
+              } else if (!hasVerifiedScTitle) {
+                scTitle = formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: scDesc }) || cleanQ;
               }
-            }
-            
-            const metaDesc = sc$('meta[property="og:description"]').attr('content') || sc$('meta[name="description"]').attr('content') || scrapeMetadata?.description;
-            if (metaDesc && metaDesc.trim().length > 10) {
-              scDesc = metaDesc.trim();
             }
 
             function makeAbsolute(src: string): string {
@@ -29785,14 +29999,33 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         } catch (scErr) {}
 
+        if (!hasVerifiedScTitle || isDomainStemName(scTitle, discoveredDom) || isFalseSplitOfDomain(scTitle, discoveredDom) || isFalseSplitAgainstText(scTitle, scDesc, discoveredDom)) {
+          const siteSearchMeta = await resolveOfficialSiteMetaFromSearch(discoveredDom).catch(() => null);
+          if (siteSearchMeta && siteSearchMeta.title) {
+            scTitle = siteSearchMeta.title;
+            hasVerifiedScTitle = true;
+            if ((!scDesc || scDesc.includes('is a verified business on Yoouz.')) && siteSearchMeta.description) {
+              scDesc = siteSearchMeta.description;
+            }
+          }
+        }
+
         const finalLogo = (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo) && !isFaviconUrl(extractedLogo)) 
           ? extractedLogo 
           : await getVerifiedBrandLogo(discoveredDom, scTitle || cleanQ);
 
+        const postDescBrand = extractOfficialBrandSpellingFromText(scDesc, discoveredDom);
+        const resolvedScName =
+          (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom]) ||
+          (hasVerifiedScTitle ? scTitle : "") ||
+          postDescBrand ||
+          scTitle ||
+          formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: scDesc });
+
         const finalResult = {
           domain: discoveredDom,
           websiteUrl: discoveredUrl,
-          name: (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom]) || scTitle || formatBusinessName(cleanQ, discoveredDom),
+          name: resolvedScName,
           category: scCategory || detectedCategory,
           address: scAddress,
           city: scCity || "Online",
@@ -29917,7 +30150,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               args: [cleanDom, `www.${cleanDom}`]
             });
             const candidateName = (rs?.rows?.[0] as any)?.name || "";
-            if (candidateName && !isDomainStemName(candidateName, cleanDom) && !isDomainDerivedGuess(candidateName, cleanDom)) {
+            if (candidateName && !isDomainStemName(candidateName, cleanDom) && !isDomainDerivedGuess(candidateName, cleanDom) && !isFalseSplitOfDomain(candidateName, cleanDom) && !isCorruptedBusinessName(candidateName)) {
               dbFastName = candidateName;
             }
           } catch (e) {}
@@ -29944,9 +30177,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                  WHERE LOWER(id) = ? OR LOWER(id) = ? 
                  LIMIT 1`
               : `SELECT id, name, category, address, city, country, logoUrl, bannerUrl, data FROM places 
-                 WHERE LOWER(name) = ? 
+                 WHERE LOWER(name) = ? OR REPLACE(LOWER(name), ' ', '') = ?
                  LIMIT 1`,
-            args: isDomainQuery ? [cleanQDom, `www.${cleanQDom}`] : [rawQuery.toLowerCase()]
+            args: isDomainQuery ? [cleanQDom, `www.${cleanQDom}`] : [rawQuery.toLowerCase(), rawQuery.toLowerCase().replace(/\s+/g, '')]
           });
           if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
             const row: any = cachedPlace.rows[0];
@@ -29982,17 +30215,30 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
-              : (row.name && row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim());
+              : (row.name && (row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim() || row.name.toLowerCase().replace(/\s+/g, '') === rawQuery.toLowerCase().replace(/\s+/g, '')));
+            const cachedOfficialBrand = extractOfficialBrandSpellingFromText(pData.description, matchedDom);
             const cachedDescBrand = extractBrandFromDescription(pData.description, matchedDom);
+            const isCachedFalseSplit = Boolean(
+              matchedDom &&
+              (isFalseSplitOfDomain(row.name, matchedDom) ||
+               isFalseSplitAgainstText(row.name, pData.description, matchedDom))
+            );
             const isCachedNameStem = (
               isDomainStemName(row.name, matchedDom) ||
               isCorruptedBusinessNameServer(row.name) ||
+              isCachedFalseSplit ||
               (cachedDescBrand && row.name && !row.name.includes(" ") && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
             ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
             if (matchedDom && isExactMatch && !isCachedNameStem && !isBadBanner(cachedBanner) && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
-              const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]) || (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()]) || cachedDescBrand || formatBusinessName(row.name || matchedDom, matchedDom) || row.name || rawQuery;
+              const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey])
+                || (matchedDom && KNOWN_OFFICIAL_NAMES[matchedDom.toLowerCase()])
+                || cachedOfficialBrand
+                || formatBusinessName(row.name || matchedDom, matchedDom, undefined, { fromWebsite: true, fallbackText: pData.description })
+                || cachedDescBrand
+                || row.name
+                || rawQuery;
               return res.json({
                 title: resolvedEntity,
                 description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
@@ -30035,32 +30281,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
           if (!rawEntityLogo && !resolveOnly) {
-            try {
-              const siteResp = await fetch(`https://${realDomain}`, {
-                redirect: "follow",
-                headers: {
-                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                  "Accept": "text/html,application/xhtml+xml"
-                },
-                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-              });
-              if (siteResp.ok) {
-                const siteHtml = await siteResp.text();
-                const $site = cheerio.load(siteHtml);
-                const extractedSiteLogo = extractAuthenticWebsiteLogo($site, siteHtml, siteResp.url || `https://${realDomain}`, realDomain);
-                if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
-                  rawEntityLogo = sanitizeProxy(extractedSiteLogo);
-                }
-                if (!rawEntityBanner) {
-                  const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
-                  if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
-                    try {
-                      rawEntityBanner = sanitizeProxy(new URL(ogImg, siteResp.url || `https://${realDomain}`).toString());
-                    } catch {}
+            for (const trySiteUrl of [`https://${realDomain}`, `https://www.${realDomain}`]) {
+              try {
+                const siteResp = await fetch(trySiteUrl, {
+                  redirect: "follow",
+                  headers: {
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml"
+                  },
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+                });
+                if (siteResp.ok) {
+                  const siteHtml = await siteResp.text();
+                  const $site = cheerio.load(siteHtml);
+                  const extractedSiteLogo = extractAuthenticWebsiteLogo($site, siteHtml, siteResp.url || trySiteUrl, realDomain);
+                  if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
+                    rawEntityLogo = sanitizeProxy(extractedSiteLogo);
                   }
+                  if (!rawEntityBanner) {
+                    const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
+                    if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
+                      try {
+                        rawEntityBanner = sanitizeProxy(new URL(ogImg, siteResp.url || trySiteUrl).toString());
+                      } catch {}
+                    }
+                  }
+                  if ((!resolvedEntity.name || isDomainStemName(resolvedEntity.name, realDomain) || isFalseSplitOfDomain(resolvedEntity.name, realDomain))) {
+                    const sTitle = ($site('meta[property="og:site_name"]').attr('content') || $site('title').first().text() || '').trim();
+                    const sDesc = ($site('meta[property="og:description"]').attr('content') || $site('meta[name="description"]').attr('content') || '').trim();
+                    const sOfficial = extractOfficialBrandSpellingFromText(`${sTitle} | ${sDesc}`, realDomain);
+                    if (sOfficial) resolvedEntity.name = sOfficial;
+                    else if (sTitle) {
+                      const fmtSite = formatBusinessName(sTitle, realDomain, undefined, { fromWebsite: true, fallbackText: sDesc });
+                      if (fmtSite && !isDomainStemName(fmtSite, realDomain)) resolvedEntity.name = fmtSite;
+                    }
+                    if ((!resolvedEntity.description || resolvedEntity.description.includes('is a verified business on Yoouz.')) && sDesc) {
+                      resolvedEntity.description = sDesc;
+                    }
+                  }
+                  break;
                 }
-              }
-            } catch (eSite) {}
+              } catch (eSite) {}
+            }
           }
 
           if (rawEntityBanner) rawEntityBanner = sanitizeProxy(rawEntityBanner) || rawEntityBanner;
@@ -30070,7 +30332,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           // One-way fallback ONLY: logo falls back to /api/favicon, never to entityBanner!
           const entityLogo = rawEntityLogo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
-          const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || formatBusinessName(resolvedEntity.name, realDomain, rawQuery) || resolvedEntity.name;
+          const entityOfficial = extractOfficialBrandSpellingFromText(resolvedEntity.description, realDomain);
+          const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || entityOfficial || formatBusinessName(resolvedEntity.name, realDomain, undefined, { fromWebsite: true, fallbackText: resolvedEntity.description }) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain, "logo:", entityLogo, "banner:", entityBanner);
           return res.json({
             title: entityTitle,
@@ -30166,6 +30429,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       url = canonicalBaseUrl;
       
       let title = '';
+      let hasRealExtractedTitle = false;
       let description = '';
       let image = '';
       let logo = '';
@@ -30238,23 +30502,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         // If live website blocked our server with Cloudflare/WAF/403 or failed, first try Jina HTML reader proxy, then Wayback Machine CDX!
         if (isSecurityShield || !html || html.length < 500) {
-          try {
-            const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
-              headers: {
-                "X-Return-Format": "html",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-              },
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6500) : undefined
-            });
-            if (jinaResp.ok) {
-              const jinaHtml = await jinaResp.text();
-              if (jinaHtml && jinaHtml.length >= 500 && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
-                html = jinaHtml;
-                finalUrl = canonicalBaseUrl;
-                fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
+          for (const jinaCandidateUrl of [`https://r.jina.ai/https://${cleanDomain}`, `https://r.jina.ai/https://www.${cleanDomain}`]) {
+            try {
+              const jinaResp = await fetch(jinaCandidateUrl, {
+                headers: {
+                  "X-Return-Format": "html",
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                },
+                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(6500) : undefined
+              });
+              if (jinaResp.ok) {
+                const jinaHtml = await jinaResp.text();
+                if (jinaHtml && jinaHtml.length >= 500 && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
+                  html = jinaHtml;
+                  finalUrl = canonicalBaseUrl;
+                  fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
+                  break;
+                }
               }
-            }
-          } catch (eJina) {}
+            } catch (eJina) {}
+          }
         }
 
         if (!fetchResponse || !fetchResponse.ok || !html || html.length < 500) {
@@ -30580,18 +30847,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const parts = cleaned.split(/\s*(?:\||│|｜|–|—|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean);
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                  // 1. Exact match with domain root (e.g. "Proximus")
-                  const exactPart = parts.find(p => p.toLowerCase().replace(/[^a-z0-9]/g, '') === domRoot && !isGenericOrPlaceholderTitle(p));
+                  const foldAlphaNum = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                  // 1. Exact match with domain root (e.g. "Proximus", "Sütaş", "JetBlue")
+                  const exactPart = parts.find(p => foldAlphaNum(p) === domRoot && !isGenericOrPlaceholderTitle(p));
                   if (exactPart) return stripLegalEntityAndNoiseSuffixes(exactPart);
                   // 2. Part contains domain root OR domain root starts with part OR first word of non-generic part matches start of domain root (e.g. "Klean-N-Green NYC" on "kleannyc.com")
                   const matchPart = parts.find(p => {
-                    const pAlpha = p.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const pAlpha = foldAlphaNum(p);
                     if (!pAlpha || isGenericOrPlaceholderTitle(p) || p.length > 45) return false;
                     if (pAlpha.includes(domRoot) || (pAlpha.length >= 4 && domRoot.startsWith(pAlpha)) || (pAlpha.length >= 5 && domRoot.includes(pAlpha) && !isGenericSeoPart(p))) {
                       return true;
                     }
                     if (!isGenericSeoPart(p)) {
-                      const firstToken = p.toLowerCase().split(/[\s\-&+/]+/).map(t => t.replace(/[^a-z0-9]/g, '')).filter(Boolean)[0] || '';
+                      const firstToken = foldAlphaNum(p.split(/[\s\-&+/]+/).filter(Boolean)[0] || '');
                       if (firstToken.length >= 4 && domRoot.startsWith(firstToken)) {
                         return true;
                       }
@@ -30762,22 +31030,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 siteName = alignTitleWithDomain(siteName, cleanDomKey);
               }
 
-              // Scan page headings, about copy, footer copyright, and description for exact multi-word brand alignment matching domRoot
+              // Scan page headings, about copy, footer copyright, and description for exact multi-word brand alignment & official website spelling matching domRoot
+              const domElementsText = $
+                ? $('h1, h2, h3, h4, p, footer, .footer, [class*="footer"], [class*="copyright"]')
+                    .map((_: any, el: any) => $(el).text().replace(/\s+/g, ' ').trim())
+                    .get()
+                    .filter(Boolean)
+                    .slice(0, 40)
+                    .join(' | ')
+                : '';
+              const pageBrandText = [
+                htmlTagTitle,
+                rawTitle,
+                rawSiteName,
+                description,
+                jsonLdDesc,
+                domElementsText
+              ].filter(Boolean).join(' | ');
+              const officialPageBrandSpelling = cleanDomKey ? extractOfficialBrandSpellingFromText(pageBrandText, cleanDomKey) : null;
+
               if (cleanDomKey && (!title || isDomainStemName(title, cleanDomKey) || isCorruptedBusinessNameServer(title))) {
-                const domElementsText = $
-                  ? $('h1, h2, h3, h4, p, footer, .footer, [class*="footer"], [class*="copyright"]')
-                      .map((_: any, el: any) => $(el).text().replace(/\s+/g, ' ').trim())
-                      .get()
-                      .filter(Boolean)
-                      .join(' | ')
-                  : '';
-                const pageBrandText = [
-                  htmlTagTitle,
-                  rawTitle,
-                  rawSiteName,
-                  description,
-                  domElementsText
-                ].filter(Boolean).join(' | ');
                 const alignedFromPage = extractDomainAlignedNameFromText(pageBrandText, cleanDomKey);
                 if (alignedFromPage) {
                   title = alignedFromPage;
@@ -30805,11 +31077,66 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
+              // Prefer exact surface spelling observed directly on the website over stem, false split, long unpunctuated tagline, or generic marketing copy
+              const titleWords = (title || "").trim().split(/\s+/).filter(Boolean);
+              const titleAlphaNorm = (title || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+              const domRootNorm = domRoot.toLowerCase().replace(/[^a-z0-9]/g, "");
+              const isConciseSiteNamePrefixOfLongTitle = Boolean(
+                cleanedValidSiteName &&
+                !isGenericSeoPart(cleanedValidSiteName) &&
+                !isDomainStemName(cleanedValidSiteName, cleanDomKey) &&
+                cleanedValidSiteName.length <= 32 &&
+                titleWords.length >= 4 &&
+                title.length > 32 &&
+                title.toLowerCase().startsWith(cleanedValidSiteName.toLowerCase() + " ")
+              );
+              if (!knownBrand && isConciseSiteNamePrefixOfLongTitle) {
+                title = cleanedValidSiteName;
+                siteName = cleanedValidSiteName;
+              }
+              const isUnrelatedMarketingTagline = Boolean(
+                title &&
+                cleanDomKey &&
+                titleWords.length >= 4 &&
+                domRootNorm.length >= 3 &&
+                !titleAlphaNorm.includes(domRootNorm) &&
+                (/^(?:your|our|we|welcome|discover|explore|find|get|shop|buy|the\s+best|experience)\b/i.test(title) || isGenericSeoSlogan(title, cleanDomKey))
+              );
+              const isLongTaglineStartingWithOfficial = Boolean(
+                officialPageBrandSpelling &&
+                titleWords.length >= 4 &&
+                title.length > 32 &&
+                title.toLowerCase().startsWith(officialPageBrandSpelling.toLowerCase() + " ")
+              );
+              if (!knownBrand && officialPageBrandSpelling && (
+                !title ||
+                isDomainStemName(title, cleanDomKey) ||
+                isDomainDerivedGuess(title, cleanDomKey) ||
+                isFalseSplitOfDomain(title, cleanDomKey) ||
+                isFalseSplitAgainstText(title, pageBrandText, cleanDomKey) ||
+                isUnrelatedMarketingTagline ||
+                isLongTaglineStartingWithOfficial
+              )) {
+                // Keep concise official case from og:site_name if it matches officialPageBrandSpelling case-insensitively (e.g. "4Ventures" vs "4VENTURES")
+                if (cleanedValidSiteName && cleanedValidSiteName.toLowerCase().replace(/\s+/g, '') === officialPageBrandSpelling.toLowerCase().replace(/\s+/g, '')) {
+                  title = cleanedValidSiteName;
+                  siteName = cleanedValidSiteName;
+                } else {
+                  title = officialPageBrandSpelling;
+                  siteName = officialPageBrandSpelling;
+                }
+              }
+
+              hasRealExtractedTitle = Boolean(
+                knownBrand ||
+                (title && !isGenericPlaceNameServer(title) && !isDomainStemName(title, cleanDomKey) && !isFalseSplitOfDomain(title, cleanDomKey) && !isGenericSeoSlogan(title, cleanDomKey))
+              );
+
               if (title && cleanDomKey) {
-                title = formatBusinessName(title, cleanDomKey) || title;
+                title = formatBusinessName(title, cleanDomKey, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: description || jsonLdDesc || pageBrandText }) || title;
               }
               if (siteName && cleanDomKey) {
-                siteName = formatBusinessName(siteName, cleanDomKey) || siteName;
+                siteName = formatBusinessName(siteName, cleanDomKey, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: description || jsonLdDesc || pageBrandText }) || siteName;
               }
 
               if (!logo) {
@@ -31263,13 +31590,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 lowerTitle.trim() === '' ||
                 lowerTitle.includes('attention required')
               ) {
-                const parts = domain.split('.');
-                if (parts.length >= 2) {
-                  const mainPart = parts[parts.length - 2];
-                  title = mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
-                } else {
-                  title = domain;
-                }
+                title = '';
+                hasRealExtractedTitle = false;
               }
             } catch (cheerioErr) {
               console.error('Cheerio parse error:', cheerioErr);
@@ -31288,12 +31610,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               effectiveEmail = businessFallback.email || effectiveEmail;
               effectiveCategory = businessFallback.category || effectiveCategory;
               locInfo.openingHours = businessFallback.openingHours || locInfo.openingHours;
+              if (title && !isGenericPlaceNameServer(title) && !isDomainStemName(title, cleanDomain) && !isFalseSplitOfDomain(title, cleanDomain)) {
+                hasRealExtractedTitle = true;
+              }
             }
           } catch (fallbackErr) {}
-          if (!title) {
-            title = domain;
-            siteName = domain;
-          }
         }
       } catch (e) {
         // Direct page fetch failed, try resolveBusinessQuery
@@ -31310,11 +31631,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             effectiveEmail = businessFallback.email || effectiveEmail;
             effectiveCategory = businessFallback.category || effectiveCategory;
             locInfo.openingHours = businessFallback.openingHours || locInfo.openingHours;
+            if (title && !isGenericPlaceNameServer(title) && !isDomainStemName(title, cleanDomain) && !isFalseSplitOfDomain(title, cleanDomain)) {
+              hasRealExtractedTitle = true;
+            }
           }
         } catch (fallbackErr) {}
-        if (!title) {
-          title = domain;
-          siteName = domain;
+      }
+
+      if (!KNOWN_OFFICIAL_NAMES[cleanDomain] && (!title || !hasRealExtractedTitle || cleanDomainName(title) === cleanDomain || isGenericPlaceNameServer(title) || isDomainStemName(title, cleanDomain) || isFalseSplitOfDomain(title, cleanDomain))) {
+        const searchSiteMeta = await resolveOfficialSiteMetaFromSearch(cleanDomain).catch(() => null);
+        if (searchSiteMeta && searchSiteMeta.title) {
+          title = searchSiteMeta.title;
+          siteName = searchSiteMeta.title;
+          hasRealExtractedTitle = true;
+          if (!description && searchSiteMeta.description) {
+            description = searchSiteMeta.description;
+          }
+        } else if (!title) {
+          title = cleanDomain;
+          siteName = cleanDomain;
         }
       }
 
@@ -31352,8 +31687,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (domainTitles[cleanDomain]) {
         title = domainTitles[cleanDomain];
+        hasRealExtractedTitle = true;
       } else {
-        title = formatBusinessName(title || cleanDomain, cleanDomain);
+        title = formatBusinessName(title || cleanDomain, cleanDomain, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: description });
       }
 
       if (!image || isBadBanner(image)) {
@@ -31588,6 +31924,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (bunnyDb) {
           const autoPlaceId = cleanDomain;
           const domRootClean = cleanDomain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+          const officialDescSpelling = extractOfficialBrandSpellingFromText([title, siteName, description].filter(Boolean).join(' | '), cleanDomain);
+          if (officialDescSpelling && (!title || isDomainStemName(title, cleanDomain) || isFalseSplitOfDomain(title, cleanDomain) || isFalseSplitAgainstText(title, description, cleanDomain))) {
+            title = officialDescSpelling;
+            siteName = officialDescSpelling;
+            hasRealExtractedTitle = true;
+          }
           if (title && !title.includes(' ') && title.toLowerCase().replace(/[^a-z0-9]/g, '') === domRootClean) {
             if (siteName && siteName.includes(' ')) {
               title = siteName;
@@ -31599,7 +31941,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               }
             }
           }
-          const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || siteName || cleanDomain, cleanDomain);
+          const autoPlaceName = isYoouz ? "Yoouz" : formatBusinessName(title || siteName || cleanDomain, cleanDomain, undefined, { fromWebsite: hasRealExtractedTitle || Boolean(officialDescSpelling), fallbackText: description });
           const resolvedAutoLogo = standaloneScrapedLogo || (cleanDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(cleanDomain)}` : "");
           const resolvedAutoBanner = (image && !isBadBanner(image)) ? image : standaloneScrapedLogo;
           const autoPlaceDoc = {
@@ -31650,23 +31992,37 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const cleanDomainExact = cleanDomain.toLowerCase();
             
             const rawExistingName = (existingPlaceRs.rows[0] as any).name || existingDoc.name || "";
-            const existingName = formatBusinessName(rawExistingName, cleanDomain) || rawExistingName;
+            const mergedDescForCheck = description || existingDoc.description || "";
+            const existingName = formatBusinessName(rawExistingName, cleanDomain, undefined, { fromWebsite: true, fallbackText: mergedDescForCheck }) || rawExistingName;
+            const isExistingFalseSplit = Boolean(
+              isFalseSplitOfDomain(rawExistingName, cleanDomain) ||
+              isFalseSplitOfDomain(existingName, cleanDomain) ||
+              isFalseSplitAgainstText(rawExistingName, mergedDescForCheck, cleanDomain) ||
+              isFalseSplitAgainstText(existingName, mergedDescForCheck, cleanDomain)
+            );
             const isExistingStem =
               !existingName.includes(" ") && (existingName.toLowerCase().replace(/[^a-z0-9]/g, "") === domRootClean) ||
               isDomainStemName(rawExistingName, cleanDomain) ||
               isDomainStemName(existingName, cleanDomain) ||
               isDomainDerivedGuess(rawExistingName, cleanDomain) ||
-              isDomainDerivedGuess(existingName, cleanDomain);
+              isDomainDerivedGuess(existingName, cleanDomain) ||
+              isGenericSeoSlogan(rawExistingName, cleanDomain) ||
+              isGenericSeoSlogan(existingName, cleanDomain) ||
+              isExistingFalseSplit;
             const hasFreshOfficialMetaName = Boolean(
               autoPlaceName &&
               !isGenericPlaceNameServer(autoPlaceName) &&
+              !isGenericSeoSlogan(autoPlaceName, cleanDomain) &&
               !isDomainStemName(autoPlaceName, cleanDomain) &&
               !isDomainDerivedGuess(autoPlaceName, cleanDomain) &&
+              !isFalseSplitOfDomain(autoPlaceName, cleanDomain) &&
+              !isFalseSplitAgainstText(autoPlaceName, mergedDescForCheck, cleanDomain) &&
               autoPlaceName.length > 2
             );
             const isExistingNameGood =
               existingName &&
               !isGenericPlaceNameServer(existingName) &&
+              !isGenericSeoSlogan(existingName, cleanDomain) &&
               existingName.length > 2 &&
               !isExistingStem &&
               !hasFreshOfficialMetaName;
@@ -31674,7 +32030,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const formattedExistingName = KNOWN_OFFICIAL_NAMES[cleanDomainExact]
               || (existingDoc.name === "Pro Ximus" ? "Proximus" : "")
               || (hasFreshOfficialMetaName ? autoPlaceName : "")
-              || (isExistingNameGood ? existingName : (autoPlaceName || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId)));
+              || officialDescSpelling
+              || (isExistingNameGood ? existingName : (autoPlaceName || formatBusinessName(title || existingDoc.name || (existingPlaceRs.rows[0] as any).name || autoPlaceDoc.name, autoPlaceId, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: mergedDescForCheck })));
 
             const isCorruptAddress = (addr: string) => {
               if (!addr) return true;
@@ -31805,7 +32162,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;
             title = autoPlaceName;
-            if (siteName) siteName = formatBusinessName(siteName, cleanDomain) || autoPlaceName;
+            if (siteName) siteName = formatBusinessName(siteName, cleanDomain, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: description }) || autoPlaceName;
             await bunnyDb.execute({
               sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
@@ -31873,7 +32230,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
   // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache
   const searchSuggestCache = new Map<string, { timestamp: number; data: any }>();
-  const SPAM_AUTOCOMPLETE_REGEX = /\b(?:list|lists|school|schools|review|reviews|phone|phones|number|numbers|salary|salaries|jobs|job|career|careers|wiki|wikipedia|pdf|app|login|signup|reddit|forum|quora|contact|email|hours|rating|ratings|fake|scam|glassdoor|indeed|linkedin|facebook|instagram|youtube|twitter|tiktok)\b/i;
+  const suggestBrandResolutionCache = new Map<string, { timestamp: number; title: string; domain: string; category?: string } | null>();
+  const SPAM_AUTOCOMPLETE_REGEX = /\b(?:list|lists|school|schools|review|reviews|phone|phones|number|numbers|salary|salaries|jobs|job|career|careers|wiki|wikipedia|pdf|app|login|signup|reddit|forum|quora|contact|email|hours|rating|ratings|fake|scam|glassdoor|indeed|linkedin|facebook|instagram|youtube|twitter|tiktok|meaning|definition|valuation|portfolio|net\s*worth|stock\s*price|share\s*price)\b/i;
 
   app.get('/api/search-suggest', async (req, res) => {
     try {
@@ -31897,6 +32255,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         source: string;
       }> = [];
       const seenKeys = new Set<string>();
+      const seenDomains = new Set<string>();
 
       const addSuggestion = (item: {
         id?: string;
@@ -31912,19 +32271,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         let dom = (item.domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").trim();
         const normTitle = item.title.toLowerCase().trim();
+        const compactTitle = normTitle.replace(/[^\p{L}\p{N}]/gu, '');
 
         // If domain is empty but title looks like a domain name (e.g. "example.com")
         if (!dom && normTitle.includes(".") && !normTitle.includes(" ") && normTitle.length > 3) {
           dom = normTitle;
         }
 
+        const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
+        if (hasValidDomain && seenDomains.has(dom)) return;
+
         const key = dom ? `${dom}:${normTitle}` : normTitle;
         if (seenKeys.has(normTitle) && !dom) return;
+        if (compactTitle && seenKeys.has(`compact:${compactTitle}`)) return;
         if (seenKeys.has(key)) return;
         seenKeys.add(normTitle);
+        if (compactTitle) seenKeys.add(`compact:${compactTitle}`);
+        if (hasValidDomain) seenDomains.add(dom);
         if (key !== normTitle) seenKeys.add(key);
-
-        const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         
         // Only assign logo if item has official logo or is a known verified brand
         let logo = item.logoUrl || "";
@@ -31932,7 +32296,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || "";
         }
 
-        const cleanTitle = formatBusinessName(item.title, dom) || item.title;
+        const cleanTitle = formatBusinessName(item.title, dom, undefined, { fromWebsite: item.source !== 'domain_guess' }) || item.title;
 
         suggestions.push({
           id: item.id || (hasValidDomain ? dom : undefined),
@@ -31945,14 +32309,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         });
       };
 
-      // 1. Search local DB places (Instant Database Index)
+      // 1. Search local DB places (Instant Database Index, including space-insensitive match)
+      const qNoSpaces = qLower.replace(/\s+/g, '');
       const activeDb = getBunnyDb();
       if (activeDb) {
         try {
           const dbRes = await activeDb.execute({
-            sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website FROM places 
-                  WHERE name LIKE ? OR id LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
-            args: [`${q}%`, `${q}%`, `${q}%`, `${q}%`, `${q}%`]
+            sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website, data FROM places 
+                  WHERE name LIKE ? OR REPLACE(LOWER(name), ' ', '') LIKE ? OR id LIKE ? OR REPLACE(LOWER(id), ' ', '') LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
+            args: [`${q}%`, `${qNoSpaces}%`, `${q}%`, `${qNoSpaces}%`, `${q}%`, `${q}%`, `${q}%`]
           });
           if (dbRes && dbRes.rows) {
             const isHebrewSuggest = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat)\b/i.test(q);
@@ -31961,8 +32326,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (!isHebrewSuggest && bDom.endsWith(".co.il") && !KNOWN_OFFICIAL_NAMES[bDom] && !row.address) {
                 continue;
               }
+              let pData: any = {};
+              try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
               const hasDot = bDom.includes(".");
-              const title = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+              const descOfficial = hasDot ? extractOfficialBrandSpellingFromText(pData.description, bDom) : null;
+              const rawTitle = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+              const title = (hasDot && (isFalseSplitOfDomain(rawTitle, bDom) || isFalseSplitAgainstText(rawTitle, pData.description, bDom) || isDomainStemName(rawTitle, bDom)) && descOfficial)
+                ? descOfficial
+                : (formatBusinessName(rawTitle, bDom, undefined, { fromWebsite: true, fallbackText: pData.description }) || rawTitle);
               addSuggestion({
                 id: row.id,
                 title,
@@ -31983,7 +32354,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
         const domLower = domKey.toLowerCase();
         const nameLower = officialName.toLowerCase();
-        if (domLower.startsWith(qLower) || nameLower.startsWith(qLower) || wordRegex.test(domLower) || wordRegex.test(nameLower)) {
+        const nameNoSpaces = nameLower.replace(/\s+/g, '');
+        if (domLower.startsWith(qLower) || nameLower.startsWith(qLower) || (qNoSpaces.length >= 2 && nameNoSpaces.startsWith(qNoSpaces)) || wordRegex.test(domLower) || wordRegex.test(nameLower)) {
           const hasDot = domKey.includes(".");
           const validDomain = hasDot 
             ? domKey 
@@ -31999,8 +32371,78 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       }
 
-      // 3. Multi-Language Live Auto-Complete (Google Complete)
-      if (suggestions.length < 8) {
+      // 2.5 Fast Live Official Website Resolution for unseen queries not yet in DB or KNOWN_OFFICIAL_NAMES
+      if (!q.includes('.') && q.length >= 3 && !suggestions.some(s => s.domain && s.title.toLowerCase().replace(/\s+/g, '').includes(qNoSpaces))) {
+        try {
+          const suggestCacheKey = qNoSpaces;
+          const cachedBrand = suggestBrandResolutionCache.get(suggestCacheKey);
+          if (cachedBrand !== undefined) {
+            if (cachedBrand && cachedBrand.domain && cachedBrand.title) {
+              addSuggestion({
+                title: cachedBrand.title,
+                domain: cachedBrand.domain,
+                logoUrl: KNOWN_BRAND_LOGOS[cachedBrand.domain] || "",
+                category: cachedBrand.category || "",
+                source: "brand_index"
+              });
+            }
+          } else {
+            const ddgCtrl = new AbortController();
+            const ddgTid = setTimeout(() => ddgCtrl.abort(), 1400);
+            const ddgResp = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
+              signal: ddgCtrl.signal,
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+                "Accept": "text/html,application/xhtml+xml",
+                "Accept-Language": "en-US,en;q=0.9"
+              }
+            });
+            clearTimeout(ddgTid);
+            if (ddgResp.ok) {
+              const ddgHtml = await ddgResp.text();
+              const $ddg = cheerio.load(ddgHtml);
+              const skipHosts = new Set(["en.wikipedia.org", "wikipedia.org", "www.wikipedia.org", "linkedin.com", "www.linkedin.com", "facebook.com", "www.facebook.com", "instagram.com", "www.instagram.com", "youtube.com", "www.youtube.com", "twitter.com", "x.com", "reddit.com", "yelp.com", "tripadvisor.com", "glassdoor.com", "crunchbase.com", "bloomberg.com", "forbes.com"]);
+              let resolvedTop: { title: string; domain: string } | null = null;
+              $ddg(".result").slice(0, 6).each((_: any, el: any) => {
+                if (resolvedTop) return;
+                const $a = $ddg(el).find(".result__a").first();
+                const rawHref = $a.attr("href") || "";
+                let targetUrl = rawHref;
+                const uddgM = rawHref.match(/uddg=([^&]+)/i);
+                if (uddgM) {
+                  try { targetUrl = decodeURIComponent(uddgM[1]); } catch {}
+                }
+                const host = cleanDomainName(targetUrl || $ddg(el).find(".result__url").text().trim());
+                if (!host || !host.includes('.') || skipHosts.has(host)) return;
+                const rawTitle = $a.text().replace(/\s+/g, " ").trim();
+                const snippet = $ddg(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
+                if (!rawTitle) return;
+                const spelled = extractOfficialBrandSpellingFromText(`${rawTitle} | ${snippet}`, host);
+                const firstPart = rawTitle.split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "";
+                const cand = spelled || formatBusinessName(firstPart || rawTitle, host, undefined, { fromWebsite: true, fallbackText: snippet });
+                if (cand && cand.length >= 2 && cand.length <= 50 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
+                  resolvedTop = { title: cand, domain: host };
+                }
+              });
+              if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
+              suggestBrandResolutionCache.set(suggestCacheKey, resolvedTop);
+              if (resolvedTop) {
+                addSuggestion({
+                  title: (resolvedTop as any).title,
+                  domain: (resolvedTop as any).domain,
+                  logoUrl: KNOWN_BRAND_LOGOS[(resolvedTop as any).domain] || "",
+                  category: "",
+                  source: "brand_index"
+                });
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Multi-Language Live Auto-Complete (Google Complete — skip when user typed a direct domain URL)
+      const isDirectDomainInput = q.includes('.') && !q.includes(' ') && cleanDomainName(q).includes('.');
+      if (suggestions.length < 8 && !isDirectDomainInput) {
         const combinedPhrases: string[] = [];
         try {
           const ctrl = new AbortController();
@@ -32021,14 +32463,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         } catch(e) {}
 
-        const JUNK_KEYWORDS = ['menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook', 'instagram', 'twitter', 'near me', 'wiki', 'wikipedia'];
+        const JUNK_KEYWORDS = ['menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook', 'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in', 'checkin', 'portfolio', 'valuation', 'net worth', 'logo', 'founder', 'founders', 'ceo', 'stock', 'share price', 'flight', 'flights'];
 
         for (const phrase of combinedPhrases) {
           if (suggestions.length >= 8) break;
           const phraseClean = phrase.trim();
           const phraseLower = phraseClean.toLowerCase();
+          const phraseNoSpaces = phraseLower.replace(/\s+/g, '');
 
-          // Skip junk phrases (e.g., "smith's tavern menu", "smith's tavern photos")
+          // Skip junk phrases (e.g., "smith's tavern menu", "jet blue flight 292", "door dashing meaning")
           if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
             continue;
           }
@@ -32039,10 +32482,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (phraseClean.includes(".") && !phraseClean.includes(" ") && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(phraseClean)) {
             targetDom = cleanDomainName(phraseClean);
           } else {
-            // Check if matches known brand / location dictionary (forward and reverse)
+            // Check if matches known brand / location dictionary (forward, reverse, and space-insensitive)
             const matchedEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
               const kLower = k.toLowerCase();
               const vLower = v.toLowerCase();
+              const vNoSpaces = vLower.replace(/\s+/g, '');
               
               // Prevent tiny brand keywords (like "ing" or "at") from matching substrings of longer words (like "cleaning" or "creative")
               if (kLower.length <= 3 || vLower.length <= 3) {
@@ -32054,6 +32498,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               return (
                 kLower === phraseLower ||
                 vLower === phraseLower ||
+                vNoSpaces === phraseNoSpaces ||
                 phraseLower.includes(kLower) ||
                 phraseLower.includes(vLower)
               );
@@ -32063,11 +32508,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           }
 
+          // Skip redundant/typo-spaced raw Google autocomplete sub-queries when an official/DB business with the same compact brand prefix is already resolved
+          // e.g. skip "Jet Blue Airlines", "Jetblue Airways", "Door Dashing", "Cloud Flare Login" when "JetBlue", "DoorDash", "Cloudflare" is already present!
+          if (!targetDom && suggestions.some(s => {
+            if (!s.domain) return false;
+            const sNoSpace = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+            return sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace));
+          })) {
+            continue;
+          }
+
           const knownLoc = targetDom ? (KNOWN_ENTITY_LOCATIONS[targetDom] || KNOWN_ENTITY_LOCATIONS[targetDom.split('.')[0]]) : null;
 
           const displayTitle = knownLoc?.name 
             || (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
-            || formatBusinessName(phraseClean) 
+            || formatBusinessName(phraseClean, targetDom, undefined, { fromWebsite: true }) 
             || phraseClean;
 
           addSuggestion({
@@ -32086,7 +32541,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const cleanQDom = cleanDomainName(q);
         if (cleanQDom && cleanQDom.includes('.')) {
           const existingIdx = suggestions.findIndex(s => s.domain === cleanQDom || s.id === cleanQDom);
-          const existingHasGoodName = existingIdx >= 0 && suggestions[existingIdx].title && !isDomainStemName(suggestions[existingIdx].title, cleanQDom);
+          const existingHasGoodName = existingIdx >= 0 && suggestions[existingIdx].title && !isDomainStemName(suggestions[existingIdx].title, cleanQDom) && !isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom);
           let resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[cleanQDom] || "";
           let resolvedDirectLogo = KNOWN_BRAND_LOGOS[cleanQDom] || KNOWN_PLACE_METADATA[cleanQDom]?.logoUrl || "";
 
@@ -32151,12 +32606,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     } catch (e) {}
                   });
                 } catch (e) {}
+                const officialSuggestSpelling = extractOfficialBrandSpellingFromText([ogSiteName, suggestJsonLdName, htmlTitleText, ogTitle, twitterTitle, ogDesc].filter(Boolean).join(" | "), redirDom)
+                  || extractOfficialBrandSpellingFromText([ogSiteName, suggestJsonLdName, htmlTitleText, ogTitle, twitterTitle, ogDesc].filter(Boolean).join(" | "), cleanQDom);
                 const rawCandidates = [
+                  officialSuggestSpelling,
                   ogSiteName,
                   suggestJsonLdName,
                   twitterTitle,
-                  htmlTitleText.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
-                  ogTitle.split(/\s*[\|\-–—:]\s*/)[0]?.trim() || "",
+                  htmlTitleText.split(/\s*(?:\||—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "",
+                  ogTitle.split(/\s*(?:\||—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "",
                   extractDomainAlignedNameFromText(`${htmlTitleText} | ${ogTitle} | ${ogSiteName} | ${ogDesc}`, redirDom),
                   extractCamelCaseBrandFromText(ogDesc, redirDom),
                   extractCamelCaseBrandFromText(ogDesc, cleanQDom),
@@ -32165,8 +32623,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 ].filter(Boolean);
                 for (const rawCand of rawCandidates) {
                   if (isGenericSeoSlogan(String(rawCand), redirDom)) continue;
-                  const cand = formatBusinessName(String(rawCand), redirDom) || String(rawCand);
-                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom) && !isDomainDerivedGuess(cand, redirDom)) {
+                  const cand = formatBusinessName(String(rawCand), redirDom, undefined, { fromWebsite: true, fallbackText: ogDesc }) || String(rawCand);
+                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom) && !isDomainDerivedGuess(cand, redirDom) && !isFalseSplitOfDomain(cand, cleanQDom)) {
                     resolvedDirectTitle = cand;
                     break;
                   }
@@ -32179,13 +32637,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
             } catch (e) {}
+
+            if (!resolvedDirectTitle) {
+              const searchSiteMeta = await resolveOfficialSiteMetaFromSearch(cleanQDom).catch(() => null);
+              if (searchSiteMeta && searchSiteMeta.title) {
+                resolvedDirectTitle = searchSiteMeta.title;
+              }
+            }
           }
 
           const finalTitle = resolvedDirectTitle || formatBusinessName(cleanQDom, cleanQDom) || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || cleanQDom;
           if (existingIdx >= 0) {
-            if (resolvedDirectTitle && (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || (!suggestions[existingIdx].title.includes(" ") && resolvedDirectTitle.includes(" ")))) {
+            if (resolvedDirectTitle && (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom) || (!suggestions[existingIdx].title.includes(" ") && resolvedDirectTitle.includes(" ")))) {
               suggestions[existingIdx].title = resolvedDirectTitle;
-            } else if (isDomainStemName(suggestions[existingIdx].title, cleanQDom)) {
+            } else if (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom)) {
               suggestions[existingIdx].title = finalTitle;
             }
             if (resolvedDirectLogo && !suggestions[existingIdx].logoUrl) {
@@ -32197,7 +32662,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               domain: cleanQDom,
               logoUrl: resolvedDirectLogo,
               category: "Direct Domain Search",
-              source: "direct"
+              source: resolvedDirectTitle ? "direct" : "domain_guess"
             });
             // Ensure addSuggestion didn't overwrite resolvedDirectTitle with a stem
             const addedIdx = suggestions.findIndex(s => s.domain === cleanQDom);
@@ -37866,7 +38331,10 @@ function injectOpenGraphTags(html: string, meta: any) {
         } catch (e) {}
 
         const cleanDom = cleanDomainName(placeId || placeDoc.brandDomain || placeDoc.website || "");
-        const formattedName = formatBusinessName(currentName || placeDoc.name || placeId, cleanDom);
+        const descOfficialSpelling = extractOfficialBrandSpellingFromText(placeDoc.description, cleanDom);
+        const formattedName = KNOWN_OFFICIAL_NAMES[cleanDom]
+          || (descOfficialSpelling && (isDomainStemName(currentName, cleanDom) || isFalseSplitOfDomain(currentName, cleanDom) || isFalseSplitAgainstText(currentName, placeDoc.description, cleanDom)) ? descOfficialSpelling : "")
+          || formatBusinessName(currentName || placeDoc.name || placeId, cleanDom, undefined, { fromWebsite: Boolean(currentName || placeDoc.name), fallbackText: placeDoc.description });
 
         // Check if known entity has authoritative location
         const matchedKnown = KNOWN_ENTITY_LOCATIONS[cleanDom] || KNOWN_ENTITY_LOCATIONS[placeId.toLowerCase()];
@@ -38001,7 +38469,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         } catch (e) {}
 
         const cleanDom = cleanDomainName(rawData.placeWebsite || rawData.brandDomain || placeId || "");
-        const formattedPlaceName = formatBusinessName(currentPlaceName || rawData.placeName || rawData.name || placeId, cleanDom);
+        const formattedPlaceName = KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(currentPlaceName || rawData.placeName || rawData.name || placeId, cleanDom, undefined, { fromWebsite: Boolean(currentPlaceName || rawData.placeName || rawData.name) });
 
         const matchedKnown = KNOWN_ENTITY_LOCATIONS[cleanDom] || KNOWN_ENTITY_LOCATIONS[placeId.toLowerCase()];
         const matchedMeta = KNOWN_PLACE_METADATA[cleanDom] || KNOWN_PLACE_METADATA[placeId.toLowerCase()];
@@ -38487,16 +38955,28 @@ function injectOpenGraphTags(html: string, meta: any) {
         } catch (e) {}
       }
 
-      // Heal all existing place records in BunnyDB whose name had an unsplit compound stem or domain guess
+      // Heal existing place records in BunnyDB ONLY when name is genuinely corrupted, a false syllable split, or an unspaced raw lowercase domain slug
       const allPlacesRs = await bunnyDb.execute("SELECT id, name, data FROM places").catch(() => null);
       if (allPlacesRs && allPlacesRs.rows) {
         for (const r of allPlacesRs.rows as any[]) {
           if (!r || !r.id) continue;
           const cleanDom = extractCleanDomain(r.id);
-          const healed = KNOWN_OFFICIAL_NAMES[cleanDom] || formatBusinessName(cleanDom, cleanDom) || formatBusinessName(r.name, r.id);
-          if (healed && (isDomainStemName(r.name, r.id) || isDomainDerivedGuess(r.name, r.id) || (!r.name.includes(" ") && healed.includes(" ")) || healed !== r.name)) {
-            let dObj: any = {};
-            try { dObj = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch {}
+          let dObj: any = {};
+          try { dObj = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch {}
+          const descBrand = extractOfficialBrandSpellingFromText(dObj.description, cleanDom);
+          const curName = String(r.name || "").trim();
+          const needsRepair = Boolean(
+            (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom] && curName !== KNOWN_OFFICIAL_NAMES[cleanDom]) ||
+            isCorruptedBusinessName(curName) ||
+            isFalseSplitOfDomain(curName, r.id) ||
+            isFalseSplitAgainstText(curName, dObj.description, r.id) ||
+            (curName.includes(".") && /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(curName))
+          );
+          if (!needsRepair) continue;
+          const healed = (cleanDom && KNOWN_OFFICIAL_NAMES[cleanDom])
+            || descBrand
+            || formatBusinessName(curName || cleanDom, cleanDom, undefined, { fromWebsite: !curName.includes("."), fallbackText: dObj.description });
+          if (healed && healed !== r.name) {
             dObj.name = healed;
             await bunnyDb.execute({
               sql: "UPDATE places SET name = ?, data = ? WHERE id = ?",

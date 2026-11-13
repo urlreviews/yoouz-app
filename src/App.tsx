@@ -46,7 +46,7 @@ import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleB
 import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc, where, setDoc, updateDoc, increment, serverTimestamp } from "./lib/bunnydb";
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
-import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractCamelCaseBrandFromText } from "./utils/placeUtils";
+import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -4321,14 +4321,16 @@ export function App() {
         }
       );
       if (matchingVideoWithName?.placeName) {
-        const candidateName = formatBusinessName(matchingVideoWithName.placeName);
-        const isCurrentNameDomainLike = !found.name ||
+        const candidateName = formatBusinessName(matchingVideoWithName.placeName, foundDomain, undefined, { fromWebsite: true, fallbackText: found.description });
+        const isCurrentNameBad = !found.name ||
           found.name.toLowerCase() === (found.id || "").toLowerCase() ||
           found.name.toLowerCase() === (found.brandDomain || "").toLowerCase() ||
           found.name.includes(".") ||
           !found.name.includes(" ") ||
+          isFalseSplitOfDomain(found.name, foundDomain) ||
+          isFalseSplitAgainstText(found.name, found.description, foundDomain) ||
           found.name.toLowerCase() === "website";
-        if (candidateName && (isCurrentNameDomainLike || !found.name)) {
+        if (candidateName && !isFalseSplitOfDomain(candidateName, foundDomain) && (isCurrentNameBad || !found.name)) {
           found = {
             ...found,
             name: candidateName
@@ -4415,7 +4417,12 @@ export function App() {
             if (exists) {
               return prev.map(p => {
                 if (p.id !== fetchedPlace.id) return p;
-                const keepExistingName = p.name && !isDomainStemName(p.name, fetchedPlace.id) && !isDomainDerivedGuess(p.name, fetchedPlace.id) && (isDomainStemName(fetchedPlace.name, fetchedPlace.id) || isDomainDerivedGuess(fetchedPlace.name, fetchedPlace.id));
+                const keepExistingName = p.name &&
+                  !isDomainStemName(p.name, fetchedPlace.id) &&
+                  !isDomainDerivedGuess(p.name, fetchedPlace.id) &&
+                  !isFalseSplitOfDomain(p.name, fetchedPlace.id) &&
+                  !isFalseSplitAgainstText(p.name, fetchedPlace.description || p.description, fetchedPlace.id) &&
+                  (isDomainStemName(fetchedPlace.name, fetchedPlace.id) || isDomainDerivedGuess(fetchedPlace.name, fetchedPlace.id) || isFalseSplitOfDomain(fetchedPlace.name, fetchedPlace.id) || isFalseSplitAgainstText(fetchedPlace.name, fetchedPlace.description || p.description, fetchedPlace.id));
                 const isFetchedLogoDistinct = Boolean(fetchedPlace.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl && fetchedPlace.logoUrl !== p.bannerUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon'));
                 const isExistingLogoDistinct = Boolean(p.logoUrl && p.logoUrl !== p.bannerUrl && p.logoUrl !== fetchedPlace.bannerUrl && !isWhiteOrInvertedLogo(p.logoUrl) && !p.logoUrl.includes('/api/favicon'));
                 return {
@@ -4431,16 +4438,21 @@ export function App() {
           });
         }
 
-        const hasStemName = !fetchedPlace?.name || isDomainStemName(fetchedPlace.name, cleanId) || isDomainDerivedGuess(fetchedPlace.name, cleanId);
+        const hasStemName = !fetchedPlace?.name ||
+          isDomainStemName(fetchedPlace.name, cleanId) ||
+          isDomainDerivedGuess(fetchedPlace.name, cleanId) ||
+          isFalseSplitOfDomain(fetchedPlace.name, cleanId) ||
+          isFalseSplitAgainstText(fetchedPlace.name, fetchedPlace.description, cleanId);
 
         if (!hasCoreMedia || hasStemName || !isValidDomainUrl(cleanId)) {
-          // If not in database or missing rich banner/contact data or stem name or non-domain query, enrich immediately from /api/url-metadata
+          // If not in database or missing rich banner/contact data or stem/false-split name or non-domain query, enrich immediately from /api/url-metadata
           const validFetchedWeb = fetchedPlace?.website && isValidDomainUrl(fetchedPlace.website) ? fetchedPlace.website : "";
           const validFetchedDom = fetchedPlace?.brandDomain && isValidDomainUrl(fetchedPlace.brandDomain) ? fetchedPlace.brandDomain : "";
           const targetDomainOrUrl = validFetchedWeb || validFetchedDom || (isValidDomainUrl(cleanId) ? cleanId : "");
+          const refreshParam = hasStemName ? "&refresh=true" : "";
           const metadataEndpoint = targetDomainOrUrl
-            ? `/api/url-metadata?url=${encodeURIComponent(targetDomainOrUrl)}`
-            : `/api/url-metadata?q=${encodeURIComponent((fetchedPlace && fetchedPlace.name) || cleanId)}`;
+            ? `/api/url-metadata?url=${encodeURIComponent(targetDomainOrUrl)}${refreshParam}`
+            : `/api/url-metadata?q=${encodeURIComponent((fetchedPlace && fetchedPlace.name) || cleanId)}${refreshParam}`;
 
           fetch(metadataEndpoint)
             .then(r => r.ok ? r.json() : null)
@@ -4453,31 +4465,39 @@ export function App() {
                 };
                 const existingValidLogo = fetchedPlace?.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl && fetchedPlace.logoUrl !== fetchedPlace.ogImage && !fetchedPlace.logoUrl.includes('tap/0.png') && !fetchedPlace.logoUrl.startsWith('data:;') && !isFaviconUrl(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon') && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) ? fetchedPlace.logoUrl : null;
                 const resolvedDom = (metaData.domain && isValidDomainUrl(metaData.domain)) ? extractCleanDomain(metaData.domain) : (isValidDomainUrl(cleanId) ? extractCleanDomain(cleanId) : "");
-                const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId) && !isDomainDerivedGuess((fetchedPlace as any).selectedName, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
+                const mergedDescText = metaData.description || fetchedPlace?.description;
+                const validSelected = ((fetchedPlace as any)?.selectedName && !isDomainStemName((fetchedPlace as any).selectedName, resolvedDom || cleanId) && !isDomainDerivedGuess((fetchedPlace as any).selectedName, resolvedDom || cleanId) && !isFalseSplitOfDomain((fetchedPlace as any).selectedName, resolvedDom || cleanId) && !isFalseSplitAgainstText((fetchedPlace as any).selectedName, mergedDescText, resolvedDom || cleanId)) ? (fetchedPlace as any).selectedName : "";
                 const officialName = (cleanId && KNOWN_OFFICIAL_NAMES[cleanId]) || (resolvedDom && KNOWN_OFFICIAL_NAMES[resolvedDom]) || validSelected;
-                const rawMetaBrand = (metaData.siteName && !isDomainStemName(metaData.siteName, resolvedDom || cleanId) && !isDomainDerivedGuess(metaData.siteName, resolvedDom || cleanId))
+                const officialMetaSpelling = extractOfficialBrandSpellingFromText([metaData.siteName, metaData.title, mergedDescText].filter(Boolean).join(" | "), resolvedDom || cleanId);
+                const rawMetaBrand = (metaData.siteName && !isDomainStemName(metaData.siteName, resolvedDom || cleanId) && !isDomainDerivedGuess(metaData.siteName, resolvedDom || cleanId) && !isFalseSplitOfDomain(metaData.siteName, resolvedDom || cleanId))
                   ? metaData.siteName
-                  : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) && !isDomainDerivedGuess(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
-                const descBrand = extractBrandFromDescription(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
-                const camelBrand = extractCamelCaseBrandFromText(metaData.description || fetchedPlace?.description, resolvedDom || cleanId);
-                const formattedMeta = formatBusinessName(rawMetaBrand, resolvedDom || cleanId);
-                const resolvedCleanMetaName = (formattedMeta && !isDomainStemName(formattedMeta, resolvedDom || cleanId) && !isDomainDerivedGuess(formattedMeta, resolvedDom || cleanId))
-                  ? formattedMeta
-                  : (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || isDomainDerivedGuess(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
-                  ? descBrand
-                  : (camelBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || isDomainDerivedGuess(rawMetaBrand, resolvedDom || cleanId)))
-                  ? camelBrand
-                  : (formattedMeta || descBrand || camelBrand || cleanId);
+                  : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) && !isDomainDerivedGuess(metaData.title, resolvedDom || cleanId) && !isFalseSplitOfDomain(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
+                const descBrand = extractBrandFromDescription(mergedDescText, resolvedDom || cleanId);
+                const camelBrand = extractCamelCaseBrandFromText(mergedDescText, resolvedDom || cleanId);
+                const formattedMeta = formatBusinessName(rawMetaBrand, resolvedDom || cleanId, undefined, { fromWebsite: true, fallbackText: mergedDescText });
+                const resolvedCleanMetaName = officialMetaSpelling
+                  || ((formattedMeta && !isDomainStemName(formattedMeta, resolvedDom || cleanId) && !isDomainDerivedGuess(formattedMeta, resolvedDom || cleanId) && !isFalseSplitOfDomain(formattedMeta, resolvedDom || cleanId))
+                    ? formattedMeta
+                    : (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || isDomainDerivedGuess(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
+                    ? descBrand
+                    : (camelBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || isDomainDerivedGuess(rawMetaBrand, resolvedDom || cleanId)))
+                    ? camelBrand
+                    : (formattedMeta || descBrand || camelBrand || cleanId));
                 const isFetchedNameSearchQuery = Boolean(
                   fetchedPlace?.name && (
                     /\s+in\s+/i.test(fetchedPlace.name) ||
                     fetchedPlace.name.toLowerCase() === cleanId.toLowerCase() ||
                     isDomainStemName(fetchedPlace.name, resolvedDom || cleanId) ||
                     isDomainDerivedGuess(fetchedPlace.name, resolvedDom || cleanId) ||
+                    isFalseSplitOfDomain(fetchedPlace.name, resolvedDom || cleanId) ||
+                    isFalseSplitAgainstText(fetchedPlace.name, mergedDescText, resolvedDom || cleanId) ||
                     (!fetchedPlace.name.trim().includes(" ") && resolvedCleanMetaName && resolvedCleanMetaName.trim().includes(" "))
                   )
                 );
-                const preservedName = officialName || (resolvedCleanMetaName && !isDomainDerivedGuess(resolvedCleanMetaName, resolvedDom || cleanId) ? resolvedCleanMetaName : "") || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? formatBusinessName(fetchedPlace.name, resolvedDom || cleanId) : resolvedCleanMetaName);
+                const preservedName = officialName
+                  || officialMetaSpelling
+                  || (resolvedCleanMetaName && !isDomainDerivedGuess(resolvedCleanMetaName, resolvedDom || cleanId) ? resolvedCleanMetaName : "")
+                  || (fetchedPlace?.name && !isGenericPlaceName(fetchedPlace.name) && !isFetchedNameSearchQuery ? formatBusinessName(fetchedPlace.name, resolvedDom || cleanId, undefined, { fromWebsite: true, fallbackText: mergedDescText }) : resolvedCleanMetaName);
                 const cleanBanner = (url?: string | null): string => {
                   if (!url || typeof url !== "string") return "";
                   const u = url.toLowerCase();
@@ -4731,28 +4751,34 @@ export function App() {
     if (!targetPlace) return undefined;
     const dom = (targetPlace.brandDomain || targetPlace.id || "").toLowerCase().replace(/^www\./, "");
     if (KNOWN_OFFICIAL_NAMES[dom]) return KNOWN_OFFICIAL_NAMES[dom];
-    if ((targetPlace as any).selectedName && !isDomainStemName((targetPlace as any).selectedName, dom) && !isDomainDerivedGuess((targetPlace as any).selectedName, dom)) {
+    if ((targetPlace as any).selectedName && !isDomainStemName((targetPlace as any).selectedName, dom) && !isDomainDerivedGuess((targetPlace as any).selectedName, dom) && !isFalseSplitOfDomain((targetPlace as any).selectedName, dom) && !isFalseSplitAgainstText((targetPlace as any).selectedName, targetPlace.description, dom)) {
       return (targetPlace as any).selectedName;
     }
+    const officialBrand = extractOfficialBrandSpellingFromText(targetPlace.description, dom);
     const descBrand = extractBrandFromDescription(targetPlace.description, dom);
     const camelBrand = extractCamelCaseBrandFromText(targetPlace.description, dom);
-    if (descBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || "")))) {
+    const isPlaceFalseSplit = Boolean(targetPlace.name && (isFalseSplitOfDomain(targetPlace.name, dom) || isFalseSplitAgainstText(targetPlace.name, targetPlace.description, dom)));
+    if (officialBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || isPlaceFalseSplit || !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || ""))) {
+      return officialBrand;
+    }
+    if (descBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || isPlaceFalseSplit || (/[\p{Ll}][\p{Lu}]/u.test(descBrand) && !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || "")))) {
       return descBrand;
     }
-    if (camelBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || ""))) {
+    if (camelBrand && (isDomainStemName(targetPlace.name, dom) || isDomainDerivedGuess(targetPlace.name, dom) || isPlaceFalseSplit || !/[\p{Ll}][\p{Lu}]/u.test(targetPlace.name || ""))) {
       return camelBrand;
     }
-    if (targetPlace.name && !isGenericPlaceName(targetPlace.name) && !targetPlace.name.includes(".com") && !isDomainStemName(targetPlace.name, dom)) {
+    if (targetPlace.name && !isGenericPlaceName(targetPlace.name) && !targetPlace.name.includes(".com") && !isDomainStemName(targetPlace.name, dom) && !isPlaceFalseSplit) {
       const pLower = targetPlace.name.toLowerCase().trim();
       if (KNOWN_OFFICIAL_NAMES[pLower]) return KNOWN_OFFICIAL_NAMES[pLower];
-      const formattedCurrent = formatBusinessName(targetPlace.name, dom);
+      const formattedCurrent = formatBusinessName(targetPlace.name, dom, undefined, { fromWebsite: true, fallbackText: targetPlace.description });
       if (formattedCurrent && !isDomainDerivedGuess(formattedCurrent, dom)) return formattedCurrent;
-      return toTitleCase(targetPlace.name);
+      return targetPlace.name;
     }
+    if (officialBrand) return officialBrand;
     if (descBrand) return descBrand;
     if (camelBrand) return camelBrand;
-    const formatted = formatBusinessName(targetPlace.name || targetPlace.id, dom);
-    return toTitleCase(formatted || targetPlace.name || targetPlace.id);
+    const formatted = formatBusinessName(targetPlace.name || targetPlace.id, dom, undefined, { fromWebsite: Boolean(targetPlace.name && !targetPlace.name.includes(".")), fallbackText: targetPlace.description });
+    return formatted || targetPlace.name || targetPlace.id;
   }, [activeDrawerPlace, drawerPlace]);
 
   // Real-time URL and Meta Title synchronization during feed scrolling and section transitions
@@ -4779,18 +4805,18 @@ export function App() {
         const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
         path = `/review/${domainSlug}/${currentVid.id}`;
         const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
-        const placeName = formatBusinessName(currentVid.placeName || domainSlug);
+        const placeName = formatBusinessName(currentVid.placeName || domainSlug, domainSlug, undefined, { fromWebsite: Boolean(currentVid.placeName) });
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
       } else if (isPlaceView && (activeDrawerPlace || drawerPlace)) {
         const p = activeDrawerPlace || drawerPlace;
         const slug = getPlaceSlug(p || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = `${p?.name || "Business"} - Real Video Reviews & Ratings | Yoouz`;
+        title = `${displayedDrawerPlaceName || p?.name || "Business"} - Real Video Reviews & Ratings | Yoouz`;
       } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = place ? `${place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug)} - Business Profile | Yoouz`;
+        title = place ? `${displayedDrawerPlaceName || place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug, slug)} - Business Profile | Yoouz`;
       } else if (isCreatorView && selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()
