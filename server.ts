@@ -37331,12 +37331,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const placeRatingStr = placeAvgRating.toFixed(1);
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
 
-      // 2. Comprehensive Banner / Cover Photo Resolution (with live multi-mirror fetch & on-the-fly discovery)
-      let bannerCandidateUrl = explicitBannerUrl || placeObj?.bannerUrl || placeObj?.placeBannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
+      // 2. Comprehensive Banner / Cover Photo Resolution (Known Brand Banners have absolute priority)
+      let bannerCandidateUrl = (KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`]) || explicitBannerUrl || placeObj?.bannerUrl || placeObj?.placeBannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
       
-      if ((KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`]) && (!bannerCandidateUrl || bannerCandidateUrl.includes('nihilist') || bannerCandidateUrl.includes('favicon') || bannerCandidateUrl.includes('apple-touch-icon'))) {
-        bannerCandidateUrl = KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`];
-      }
       if (!bannerCandidateUrl && isYoouzPlace) {
         bannerCandidateUrl = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
       }
@@ -39708,7 +39705,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           }
         } catch(e) {}
 
-        let foundBanner = placeObj?.bannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
+        let foundBanner = (KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) || placeObj?.bannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
         const isYoouzPlace = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || placeName?.toLowerCase() === 'yoouz';
         if (isYoouzPlace) {
           foundLogo = 'https://www.yoouz.com/favicon.svg';
@@ -39721,9 +39718,6 @@ function injectOpenGraphTags(html: string, meta: any) {
             : brand;
         }
 
-        if ((KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`]) && (!foundBanner || isNonPhotographicBannerUrl(foundBanner))) {
-          foundBanner = KNOWN_BRAND_BANNERS[domain] || KNOWN_BRAND_BANNERS[`www.${domain}`];
-        }
         if (!foundBanner && placeVideos.length > 0) {
           const v = placeVideos[0];
           foundBanner = v.placeBannerUrl || v.thumbnailUrl || v.videoThumbnail || (v.id ? `https://rev1.b-cdn.net/videos/${v.id}.jpg` : "");
