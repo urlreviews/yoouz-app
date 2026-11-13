@@ -37533,8 +37533,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM CENTERED: Prominent Business Profile Pill (Safe across all crops) -->
-          <g transform="translate(${businessPillX}, 484)" filter="url(#placeCardShadow)">
+          <!-- BOTTOM LEFT: Prominent Business Profile Pill (Sleek Compact 2-Row) -->
+          <g transform="translate(48, 484)" filter="url(#placeCardShadow)">
             <rect width="${businessPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Logo Container (White background container matching profile drawer) -->
@@ -37837,8 +37837,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM CENTERED: Single Author Profile Pill (Safe across all crops) -->
-          <g transform="translate(${authorPillX}, 484)" filter="url(#profileCardShadow)">
+          <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
+          <g transform="translate(48, 484)" filter="url(#profileCardShadow)">
             <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Avatar Container -->
