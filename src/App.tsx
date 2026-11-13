@@ -4425,11 +4425,13 @@ export function App() {
                   (isDomainStemName(fetchedPlace.name, fetchedPlace.id) || isDomainDerivedGuess(fetchedPlace.name, fetchedPlace.id) || isFalseSplitOfDomain(fetchedPlace.name, fetchedPlace.id) || isFalseSplitAgainstText(fetchedPlace.name, fetchedPlace.description || p.description, fetchedPlace.id));
                 const isFetchedLogoDistinct = Boolean(fetchedPlace.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl && fetchedPlace.logoUrl !== p.bannerUrl && !isWhiteOrInvertedLogo(fetchedPlace.logoUrl) && !fetchedPlace.logoUrl.includes('/api/favicon'));
                 const isExistingLogoDistinct = Boolean(p.logoUrl && p.logoUrl !== p.bannerUrl && p.logoUrl !== fetchedPlace.bannerUrl && !isWhiteOrInvertedLogo(p.logoUrl) && !p.logoUrl.includes('/api/favicon'));
+                const cleanDomKey = (fetchedPlace.id || cleanId || "").toLowerCase().replace(/^www\./, "").trim();
+                const knownBrandBanner = (cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`])) || "";
                 return {
                   ...p,
                   ...fetchedPlace,
                   name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
-                  bannerUrl: (fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || ""),
+                  bannerUrl: knownBrandBanner || ((fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || "")),
                   logoUrl: isFetchedLogoDistinct ? fetchedPlace.logoUrl : (isExistingLogoDistinct ? p.logoUrl : (fetchedPlace.logoUrl || p.logoUrl || fetchedPlace.bannerUrl || p.bannerUrl || ""))
                 };
               });
@@ -4517,12 +4519,16 @@ export function App() {
                   return url;
                 };
                 const isGoodPhoto = (u?: string | null) => Boolean(u && !isBadBanner(u) && !u.includes("/api/brand-banner"));
-                const effectiveBannerCandidate = isGoodPhoto(metaData.image) 
-                  ? metaData.image 
-                  : (isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : (metaData.image || ""));
-                const effectiveLogoCandidate = (isValidLogo(metaData.logo) && metaData.logo !== effectiveBannerCandidate) 
-                  ? metaData.logo 
-                  : (existingValidLogo || (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : '') || effectiveBannerCandidate);
+                const cleanDomainLookup = (resolvedDom || cleanId || "").toLowerCase().replace(/^www\./, "").trim();
+                const existingGoodBanner = isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : "";
+                const effectiveBannerCandidate = knownBrandBanner 
+                  || existingGoodBanner
+                  || (isGoodPhoto(metaData.image) ? metaData.image : "");
+                const effectiveLogoCandidate = (existingValidLogo && !isWhiteOrInvertedLogo(existingValidLogo))
+                  ? existingValidLogo
+                  : ((isValidLogo(metaData.logo) && metaData.logo !== effectiveBannerCandidate) 
+                    ? metaData.logo 
+                    : (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : '') || effectiveBannerCandidate);
                 const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
                 const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {

@@ -776,7 +776,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const isSlugDomain = !drawerDomain || !isValidDomainUrl(drawerDomain);
 
-    const needsBanner = (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || bannerError;
+    const cleanDomKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().replace(/^www\./, "").trim();
+    const verifiedBrandBanner = (cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`])) || getPlaceBannerUrl(place) || "";
+
+    const needsBanner = !verifiedBrandBanner && (!reviewBannerUrl || isBadBanner(reviewBannerUrl)) && (!place.bannerUrl || isBadBanner(place.bannerUrl)) && (!place.ogImage || isBadBanner(place.ogImage)) || (bannerError && !verifiedBrandBanner);
     const isBrokenSvgDataUri = (u?: string | null) => Boolean(u && (u.includes("lg%3Ahidden") || u.includes("lg:hidden") || isWhiteOrInvertedLogo(u) || isCrossBrandPortfolioLogo(u, drawerDomain)));
     const isLogoSameAsPlaceBanner = Boolean(
       place.logoUrl &&
@@ -803,7 +806,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
     // If core media (distinct standalone logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
-    const hasCoreMedia = Boolean(hasValidLogo && (place.bannerUrl || reviewBannerUrl) && !bannerError && !isSlugDomain);
+    const hasCoreMedia = Boolean((hasValidLogo || place.logoUrl) && (verifiedBrandBanner || place.bannerUrl || reviewBannerUrl) && !bannerError && !isSlugDomain);
     if (hasCoreMedia && !isGenericName && !isGenericDesc) {
       return;
     }
@@ -832,7 +835,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               
               if (data) {
                 const isRealPhoto = (url?: string | null) => Boolean(url && typeof url === "string" && !isBadBanner(url) && !url.includes("/api/brand-banner"));
-                const resolvedBanner = isRealPhoto(data.image) ? data.image : (isRealPhoto(place.bannerUrl) ? place.bannerUrl : "");
+                const existingValidPhotoBanner = (place.bannerUrl && isRealPhoto(place.bannerUrl))
+                  ? place.bannerUrl
+                  : (place.ogImage && isRealPhoto(place.ogImage) ? place.ogImage : "");
+                const resolvedBanner = verifiedBrandBanner || existingValidPhotoBanner || (isRealPhoto(data.image) ? data.image : "");
                 const isDataLogoValid = Boolean(
                   data.logo &&
                   !isGenericOrPlaceholderLogo(data.logo) &&
@@ -842,10 +848,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 const resolvedDomainForLogo = (data.domain && isValidDomainUrl(data.domain))
                   ? extractCleanDomain(data.domain)
                   : (drawerDomain && isValidDomainUrl(drawerDomain) ? drawerDomain : "");
-                const resolvedLogo = isDataLogoValid
-                  ? data.logo
-                  : ((hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl))
-                    ? place.logoUrl
+                const resolvedLogo = (hasValidLogo && place.logoUrl && !isBrokenSvgDataUri(place.logoUrl))
+                  ? place.logoUrl
+                  : (isDataLogoValid
+                    ? data.logo
                     : (resolvedDomainForLogo ? `/api/favicon?domain=${encodeURIComponent(resolvedDomainForLogo)}` : (place.logoUrl || "")));
                 
                 try {
@@ -1044,14 +1050,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const domainDirectBanner = cleanDomainKey ? (KNOWN_BRAND_BANNERS[cleanDomainKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomainKey}`] || "") : "";
 
     const photoCandidates = [
+      domainDirectBanner,
+      knownDomainBanner,
       cleanBannerUrl,
       validCachedBanner,
       cleanOgImage,
       cleanFetchedBanner,
       activeBanner,
       cleanReviewBanner,
-      domainDirectBanner,
-      knownDomainBanner,
       domainFallbackBanner,
       ...(place.photos || []).filter(isAuthentic),
       (isYoouzPlace ? YOOUZ_CDN_BANNER : "")

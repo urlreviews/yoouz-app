@@ -97,6 +97,13 @@ export function isBadBanner(url?: string | null): boolean {
     u = decodeURIComponent(u).toLowerCase();
   } catch (e) {}
   return (
+    u.includes('nihilist') ||
+    u.includes('nihilistdominos') ||
+    u.includes('parody') ||
+    u.includes('fanpop') ||
+    u.includes('deviantart') ||
+    u.includes('knowyourmeme') ||
+    (u.includes('wallpaper') && (u.includes('dominos') || u.includes('cartoon') || u.includes('anime') || u.includes('comic') || u.includes('goodies') || u.includes('1024-768'))) ||
     u.includes('yoouz.com/og-banner.png') ||
     u.includes('unsplash.com') ||
     u.includes('pexels.com') ||

@@ -358,6 +358,13 @@ function isBadBanner(url?: string | null): boolean {
     const u = url.toLowerCase().trim();
     const decoded = decodeURIComponent(u);
     return (
+      decoded.includes("nihilist") ||
+      decoded.includes("nihilistdominos") ||
+      decoded.includes("parody") ||
+      decoded.includes("fanpop") ||
+      decoded.includes("deviantart") ||
+      decoded.includes("knowyourmeme") ||
+      (decoded.includes("wallpaper") && (decoded.includes("dominos") || decoded.includes("cartoon") || decoded.includes("anime") || decoded.includes("comic") || decoded.includes("goodies") || decoded.includes("1024-768"))) ||
       decoded.includes("${") || 
       decoded.includes("%24%7b") ||
       decoded.includes("#") ||
@@ -8751,12 +8758,21 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
             }
           }
         }
-        if ((!rec.bannerUrl || isBadBanner(rec.bannerUrl)) && domKey && KNOWN_BRAND_BANNERS[domKey]) {
-          rec.bannerUrl = KNOWN_BRAND_BANNERS[domKey];
-          rec.ogImage = KNOWN_BRAND_BANNERS[domKey];
+        const knownBrandBanner = (domKey && (KNOWN_BRAND_BANNERS[domKey] || KNOWN_BRAND_BANNERS[`www.${domKey}`])) || "";
+        if (knownBrandBanner) {
+          rec.bannerUrl = knownBrandBanner;
+          rec.ogImage = knownBrandBanner;
+          if (Array.isArray(rec.photos)) {
+            rec.photos = [knownBrandBanner, ...rec.photos.filter((p: string) => p !== knownBrandBanner && !isBadBanner(p))];
+          } else {
+            rec.photos = [knownBrandBanner];
+          }
         } else if (rec.bannerUrl && isBadBanner(rec.bannerUrl)) {
           rec.bannerUrl = "";
           rec.ogImage = "";
+          if (Array.isArray(rec.photos)) {
+            rec.photos = rec.photos.filter((p: string) => !isBadBanner(p));
+          }
         }
         const isLogoCopyOfBanner = Boolean(rec.logoUrl && (rec.logoUrl === rec.bannerUrl || rec.logoUrl === rec.ogImage));
         const isCrossBrandLogo = Boolean(rec.logoUrl && domKey && isCrossBrandPortfolioLogoServer(rec.logoUrl, domKey));
@@ -31715,13 +31731,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
 
             const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
+            const verifiedBrandBanner = (cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`]))
+              ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`])
+              : "";
             const isMismatchedBanner = (b?: string | null) => Boolean(b && b.toLowerCase().includes('chipotle') && !cleanDomKey.includes('chipotle'));
             const isBrokenSvgLogo = (u?: string | null) => Boolean(!u || u.includes("lg%3Ahidden") || u.includes("lg:hidden") || u.startsWith("/api/favicon") || isGenericOrPlaceholderLogo(u));
-            const rawCachedImage = (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) && !isMismatchedBanner(row.bannerUrl) ? row.bannerUrl : "") 
+            const rawCachedImage = verifiedBrandBanner
+              || (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) && !isMismatchedBanner(row.bannerUrl) ? row.bannerUrl : "") 
               || (!isLogoOrIconUrl(pData.bannerUrl) && !isBadBanner(pData.bannerUrl) && !isMismatchedBanner(pData.bannerUrl) ? pData.bannerUrl : "") 
               || (!isLogoOrIconUrl(pData.ogImage) && !isBadBanner(pData.ogImage) && !isMismatchedBanner(pData.ogImage) ? pData.ogImage : "") 
               || (!isLogoOrIconUrl(pData.image) && !isBadBanner(pData.image) && !isMismatchedBanner(pData.image) ? pData.image : "") 
-              || (cleanDomKey && KNOWN_BRAND_BANNERS[cleanDomKey] ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey]) : "") 
               || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
             const isDistinctLogo = (u?: string | null) => Boolean(u && !isFaviconUrl(u) && !isBrokenSvgLogo(u) && u !== rawCachedImage && u !== row.bannerUrl && u !== pData.bannerUrl);
             const rawCachedLogo = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey] && !KNOWN_BRAND_LOGOS[cleanDomKey].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomKey] : null) 
@@ -33705,14 +33724,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const isRedirectedDomain = Boolean(redirectedCleanDom && redirectedCleanDom.includes(".") && redirectedCleanDom !== cleanDomain);
             const isStaleRedirectedLogo = (u?: string) => Boolean(isRedirectedDomain && u && typeof u === 'string' && u.toLowerCase().includes(cleanDomain));
             const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
+            const knownBrandBanner = (cleanDomain && (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]))
+              ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`])
+              : "";
             const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
-            const rawMergedBanner = (isCustomUploadedBanner && !isBadBannerInternal(existingDoc.bannerUrl))
-              ? existingDoc.bannerUrl
-              : (!isBadBannerInternal(image)
-                  ? image
-                  : (!forceRefresh && !isBadBannerInternal(existingDoc.bannerUrl)
-                      ? existingDoc.bannerUrl
-                      : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")));
+            const hasExistingGoodBanner = Boolean(existingDoc.bannerUrl && !isBadBannerInternal(existingDoc.bannerUrl));
+            const rawMergedBanner = knownBrandBanner
+              || (isCustomUploadedBanner ? existingDoc.bannerUrl : "")
+              || (hasExistingGoodBanner && !forceRefresh
+                ? existingDoc.bannerUrl
+                : (!isBadBannerInternal(image)
+                    ? image
+                    : (hasExistingGoodBanner
+                        ? existingDoc.bannerUrl
+                        : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""))));
 
             const isDuplicateBannerLogo = (u?: string) => Boolean(u && u !== standaloneScrapedLogo && (u === existingDoc.bannerUrl || u === existingDoc.ogImage || u === rawMergedBanner || (rawScrapedBanner && u === rawScrapedBanner)));
             const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isDuplicateBannerLogo(u) || isCrossBrandPortfolioLogoServer(u, cleanDomain) || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
@@ -33721,13 +33746,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
             const domainLogoFallback = effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "";
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
+            const existingSavedLogo = (!isPlaceholderLogo(existingDoc.logoUrl) ? existingDoc.logoUrl : "") || (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : "");
+            const hasExistingGoodLogo = Boolean(existingSavedLogo);
             const mergedLogo = isCustomUploadedLogo
               ? existingDoc.logoUrl
-              : (hasBetterLogo
-                  ? standaloneScrapedLogo
-                  : ((!forceRefresh && !isPlaceholderLogo(existingDoc.logoUrl))
-                      ? existingDoc.logoUrl
-                      : ((!forceRefresh && !isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl)) ? (existingPlaceRs.rows[0] as any).logoUrl : domainLogoFallback)));
+              : (hasExistingGoodLogo && !forceRefresh
+                  ? existingSavedLogo
+                  : (hasBetterLogo
+                      ? standaloneScrapedLogo
+                      : (existingSavedLogo || domainLogoFallback)));
             const mergedBanner = rawMergedBanner || (!mergedLogo.startsWith("/api/favicon") ? mergedLogo : "");
 
             const rawExistingAddr = existingDoc.address || (existingPlaceRs.rows[0] as any).address || "";
@@ -38374,14 +38401,26 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
   }
 
   // Final sanitization of banners across all data sources
-  if (place.bannerUrl && (place.bannerUrl.includes('unsplash.com') || place.bannerUrl.includes('placeholder') || place.bannerUrl.includes('mock'))) {
-    place.bannerUrl = "";
-  }
-  if (place.ogImage && (place.ogImage.includes('unsplash.com') || place.ogImage.includes('placeholder') || place.ogImage.includes('mock'))) {
-    place.ogImage = "";
-  }
-  if (Array.isArray(place.photos)) {
-    place.photos = place.photos.filter((p: string) => !p.includes('unsplash.com') && !p.includes('placeholder') && !p.includes('mock'));
+  const domKey = (domain || raw || "").toLowerCase().replace(/^www\./, "").trim();
+  const knownBrandBanner = (domKey && (KNOWN_BRAND_BANNERS[domKey] || KNOWN_BRAND_BANNERS[`www.${domKey}`])) || "";
+  if (knownBrandBanner) {
+    place.bannerUrl = knownBrandBanner;
+    place.ogImage = knownBrandBanner;
+    if (Array.isArray(place.photos)) {
+      place.photos = [knownBrandBanner, ...place.photos.filter((p: string) => p !== knownBrandBanner && !isBadBanner(p))];
+    } else {
+      place.photos = [knownBrandBanner];
+    }
+  } else {
+    if (place.bannerUrl && isBadBanner(place.bannerUrl)) {
+      place.bannerUrl = "";
+    }
+    if (place.ogImage && isBadBanner(place.ogImage)) {
+      place.ogImage = "";
+    }
+    if (Array.isArray(place.photos)) {
+      place.photos = place.photos.filter((p: string) => !isBadBanner(p));
+    }
   }
   if ((!place.logoUrl || isGenericOrPlaceholderLogo(place.logoUrl) || String(place.logoUrl).startsWith('/api/favicon')) && place.bannerUrl && !isBadBanner(place.bannerUrl)) {
     place.logoUrl = place.bannerUrl;
