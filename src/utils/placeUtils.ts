@@ -1565,6 +1565,42 @@ export function extractOfficialBrandSpellingFromText(text?: string | null, domai
 }
 
 /**
+ * Applies an extracted official brand spelling (e.g. "JetBlue") when the raw title is compactly equal
+ * ("Jet Blue" -> "JetBlue"), without truncating specific entity/property names on parent domains
+ * (e.g. "Jumeirah Burj Al Arab" on jumeirah.com must stay "Jumeirah Burj Al Arab", not become "Jumeirah").
+ */
+export function mergeOfficialBrandSpelling(rawTitle?: string | null, extractedBrand?: string | null, domain?: string | null): string {
+  const cleanRaw = (rawTitle || "").trim();
+  const cleanBrand = (extractedBrand || "").trim();
+  if (!cleanRaw) return cleanBrand;
+  if (!cleanBrand) return cleanRaw;
+
+  const firstSeg = cleanRaw
+    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]
+    .trim();
+  const foldCompact = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const rawCompact = foldCompact(firstSeg || cleanRaw);
+  const brandCompact = foldCompact(cleanBrand);
+
+  if (rawCompact && brandCompact && rawCompact === brandCompact) {
+    return cleanBrand;
+  }
+
+  const words = (firstSeg || cleanRaw).split(/\s+/).filter(Boolean);
+  if (
+    firstSeg &&
+    rawCompact.length > brandCompact.length &&
+    words.length >= 2 &&
+    words.length <= 7 &&
+    !isGenericPlaceName(firstSeg) &&
+    !isGenericSeoSlogan(firstSeg, domain || "")
+  ) {
+    return firstSeg;
+  }
+  return cleanBrand;
+}
+
+/**
  * Checks whether a candidate name (e.g. "Jet Blue", "Khos LA Ventures", "8 Xventures", "Foundersfuture")
  * contradicts the exact official brand spelling appearing in the website's own text/description.
  */

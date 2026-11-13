@@ -4474,9 +4474,21 @@ export function App() {
                   : (metaData.title && !isDomainStemName(metaData.title, resolvedDom || cleanId) && !isDomainDerivedGuess(metaData.title, resolvedDom || cleanId) && !isFalseSplitOfDomain(metaData.title, resolvedDom || cleanId) ? metaData.title : (metaData.siteName || metaData.title));
                 const descBrand = extractBrandFromDescription(mergedDescText, resolvedDom || cleanId);
                 const camelBrand = extractCamelCaseBrandFromText(mergedDescText, resolvedDom || cleanId);
-                const formattedMeta = formatBusinessName(rawMetaBrand, resolvedDom || cleanId, undefined, { fromWebsite: true, fallbackText: mergedDescText });
-                const resolvedCleanMetaName = officialMetaSpelling
-                  || ((formattedMeta && !isDomainStemName(formattedMeta, resolvedDom || cleanId) && !isDomainDerivedGuess(formattedMeta, resolvedDom || cleanId) && !isFalseSplitOfDomain(formattedMeta, resolvedDom || cleanId))
+                const mergedMeta = rawMetaBrand && officialMetaSpelling
+                  ? (() => {
+                      const firstSeg = rawMetaBrand.split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0].trim();
+                      const rawCompact = firstSeg.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+                      const brandCompact = officialMetaSpelling.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+                      if (rawCompact && brandCompact && rawCompact.length > brandCompact.length && firstSeg.split(/\s+/).length >= 2 && firstSeg.split(/\s+/).length <= 7) {
+                        return firstSeg;
+                      }
+                      return officialMetaSpelling;
+                    })()
+                  : officialMetaSpelling;
+                const formattedMeta = formatBusinessName(mergedMeta || rawMetaBrand, resolvedDom || cleanId, undefined, { fromWebsite: true, fallbackText: mergedDescText });
+                const resolvedCleanMetaName = (mergedMeta && !isDomainStemName(mergedMeta, resolvedDom || cleanId) && !isFalseSplitOfDomain(mergedMeta, resolvedDom || cleanId))
+                  ? (formattedMeta || mergedMeta)
+                  : ((formattedMeta && !isDomainStemName(formattedMeta, resolvedDom || cleanId) && !isDomainDerivedGuess(formattedMeta, resolvedDom || cleanId) && !isFalseSplitOfDomain(formattedMeta, resolvedDom || cleanId))
                     ? formattedMeta
                     : (descBrand && (isDomainStemName(rawMetaBrand, resolvedDom || cleanId) || isDomainDerivedGuess(rawMetaBrand, resolvedDom || cleanId) || /[\p{Ll}][\p{Lu}]/u.test(descBrand)))
                     ? descBrand

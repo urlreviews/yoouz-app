@@ -41,6 +41,14 @@ export const DISALLOWED_SEARCH_DOMAINS = [
   "opencorporates.com", "corporationwiki.com", "companieshouse.gov.uk", "sunbiz.org", "bizapedia.com",
   "localemirates.com", "2gis.ae", "2gis.com", "yalwa.ae", "yalwa.com", "cybo.com", "tuugo.ae", "tuugo.com", "yello.ae", "b2bhint.com",
 
+  // OTAs, Booking, Travel & Restaurant Aggregators, Ticket Resellers & Trivia/Facts Sites
+  "booking.com", "trip.com", "trivago.com", "trivago.co.uk", "trivago.ae", "trivago.de", "expedia.com", "hotels.com",
+  "agoda.com", "kayak.com", "skyscanner.com", "skyscanner.net", "priceline.com", "orbitz.com", "travelocity.com",
+  "hotwire.com", "hostelworld.com", "airbnb.com", "vrbo.com", "getyourguide.com", "viator.com", "klook.com", "tiqets.com",
+  "opentable.com", "resy.com", "thefork.com", "zomato.com", "deliveroo.com", "doordash.com", "ubereats.com", "grubhub.com",
+  "funworldfacts.com", "facts.net", "worldatlas.com", "britannica.com", "fandom.com", "lonelyplanet.com", "timeout.com",
+  "visitdubai.com", "forbestravelguide.com", "michelin.com", "reddit.com", "quora.com",
+
   // News portals
   "themarker.com", "calcalist.co.il", "ynet.co.il", "mako.co.il", "haaretz.co.il", "globes.co.il", "maariv.co.il", "walla.co.il",
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -568,6 +568,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           preloadedMeta = {
             title: matchInSuggest.title,
             domain: cleanUrl,
+            url: matchInSuggest.websiteUrl || (cleanUrl ? `https://${cleanUrl}` : ""),
             logo: matchInSuggest.logoUrl,
             category: matchInSuggest.category,
             address: matchInSuggest.address
@@ -641,12 +642,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         ? extractOfficialBrandSpellingFromText([preloadedMeta?.siteName, preloadedMeta?.title, preloadedMeta?.description].filter(Boolean).join(" | "), cleanUrl)
         : null;
       const preloadedDescBrand = extractBrandFromDescription(preloadedMeta?.description, cleanUrl);
-      const cleanedPreloadedTitle = isMetaMatchingCurrent
-        ? (preloadedOfficialBrand || preloadedDescBrand || formatBusinessName(preloadedMeta?.siteName || preloadedMeta?.title, cleanUrl, undefined, { fromWebsite: true, fallbackText: preloadedMeta?.description }))
+      const mergedPreloadedName = isMetaMatchingCurrent
+        ? mergeOfficialBrandSpelling(preloadedMeta?.siteName || preloadedMeta?.title, preloadedOfficialBrand, cleanUrl)
         : "";
-      const instantName = (isRealDomain && KNOWN_OFFICIAL_NAMES[cleanUrl])
+      const cleanedPreloadedTitle = isMetaMatchingCurrent
+        ? (mergedPreloadedName || preloadedDescBrand || formatBusinessName(preloadedMeta?.siteName || preloadedMeta?.title, cleanUrl, undefined, { fromWebsite: true, fallbackText: preloadedMeta?.description }))
+        : "";
+      const preloadedHasSpecificPath = (() => {
+        try {
+          const segs = new URL(preloadedMeta?.url || "").pathname.split("/").filter(Boolean);
+          return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
+        } catch { return false; }
+      })();
+      const instantName = (!preloadedHasSpecificPath && isRealDomain ? KNOWN_OFFICIAL_NAMES[cleanUrl] : undefined)
         || cleanedPreloadedTitle
         || validPreferredName
+        || (isRealDomain ? KNOWN_OFFICIAL_NAMES[cleanUrl] : undefined)
         || formatBusinessName(baseName, isRealDomain ? cleanUrl : undefined)
         || baseName
         || rawQuery;
@@ -700,7 +711,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
       setIsEnriching(true);
       try {
-         const queryParam = isRealDomain ? `url=${encodeURIComponent(cleanUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
+         const enrichTargetUrl = (preloadedMeta?.url && typeof preloadedMeta.url === "string" && preloadedMeta.url.startsWith("http") && !preloadedMeta.url.includes("wikipedia.org"))
+           ? preloadedMeta.url
+           : cleanUrl;
+         const queryParam = isRealDomain ? `url=${encodeURIComponent(enrichTargetUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
          const resp = await fetch(`/api/url-metadata?${queryParam}`, {
            signal: AbortSignal.timeout(30000)
          });
@@ -737,18 +751,26 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.siteName
                : (data.title && !isDomainDerivedGuess(data.title, discoveredDom) && !isGenericSeoSlogan(data.title, discoveredDom) ? data.title : (data.siteName || data.title));
              const descBrandName = extractBrandFromDescription(data.description, discoveredDom);
-             const formattedMetaName = officialMetaSpelling
+             const mergedDataName = mergeOfficialBrandSpelling(rawMetaTitle, officialMetaSpelling, discoveredDom);
+             const formattedMetaName = mergedDataName
                || ((descBrandName && isDomainStemName(rawMetaTitle, discoveredDom)) ? descBrandName : formatBusinessName(rawMetaTitle, data.domain || discoveredDom, undefined, { fromWebsite: true, fallbackText: data.description }));
+             const dataHasSpecificPath = (() => {
+               try {
+                 const segs = new URL(data.url || enrichTargetUrl || "").pathname.split("/").filter(Boolean);
+                 return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
+               } catch { return false; }
+             })();
              const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isDomainDerivedGuess(currentPlace.name, discoveredDom) && !isFalseSplitOfDomain(currentPlace.name, discoveredDom) && !isGenericSeoSlogan(currentPlace.name, discoveredDom))
                ? currentPlace.name
                : "";
-             const targetName = (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
-               || (data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
+             const targetName = (!dataHasSpecificPath && discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
+               || (!dataHasSpecificPath && data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
                || (formattedMetaName && !isDomainStemName(formattedMetaName, discoveredDom) && !isFalseSplitOfDomain(formattedMetaName, discoveredDom) && !isGenericSeoSlogan(formattedMetaName, discoveredDom) ? formattedMetaName : "")
                || validPreferredName
                || formattedMetaName
                || descBrandName
                || validCurrentName
+               || KNOWN_OFFICIAL_NAMES[discoveredDom]
                || formatBusinessName(discoveredDom)
                || instantName;
 

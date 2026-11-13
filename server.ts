@@ -29008,21 +29008,580 @@ async function getVerifiedBrandLogo(domain: string, name?: string): Promise<stri
   return `/api/favicon?domain=${encodeURIComponent(cleanDom)}`;
 }
 
+// Comprehensive non-official hosts: OTAs, booking sites, resellers, delivery marketplaces, directories, wikis, trivia/facts, news, social, ads
+const NON_OFFICIAL_DISALLOWED_HOSTS = new Set([
+  // OTAs, hotel booking, flights, metasearch & comparison
+  "booking.com", "trip.com", "trivago.com", "trivago.co.uk", "trivago.de", "trivago.ae", "trivago.fr", "trivago.es", "trivago.it", "trivago.nl",
+  "expedia.com", "expedia.co.uk", "expedia.de", "expedia.fr", "expedia.ca", "expedia.ae",
+  "hotels.com", "agoda.com", "kayak.com", "kayak.co.uk", "skyscanner.com", "skyscanner.net",
+  "priceline.com", "orbitz.com", "travelocity.com", "hotwire.com", "hostelworld.com", "ebookers.com", "lastminute.com",
+  "cheaptickets.com", "momondo.com", "wego.com", "almosafer.com", "rehlat.com", "makemytrip.com", "goibibo.com",
+  "cleartrip.com", "hrs.com", "hotelplanner.com", "hotelscombined.com", "roomdi.com", "destinia.com", "zenhotels.com",
+  "ostrovok.ru", "galahotels.com", "best-dubai-hotels.com", "luxuryhotel.world", "splendia.com", "tablethotels.com",
+  "mrporter.com", "lhw.com", "slh.com", "preferhotel.com", "preferredhotels.com", "kiwicollection.com", "jetsetter.com",
+  // Vacation rentals, tours, attractions & ticket resellers
+  "airbnb.com", "airbnb.co.uk", "airbnb.ae", "vrbo.com", "homeaway.com", "vacasa.com",
+  "getyourguide.com", "getyourguide.co.uk", "viator.com", "klook.com", "tiqets.com", "musement.com", "headout.com",
+  "civitatis.com", "kkday.com", "peek.com", "fareharbor.com", "rezdy.com", "isango.com", "rayna.tours", "raynatours.com",
+  "ticketmaster.com", "stubhub.com", "vividseats.com", "seatgeek.com", "eventbrite.com", "ticketsmarter.com",
+  // Restaurants, reservations & food delivery marketplaces
+  "opentable.com", "opentable.co.uk", "resy.com", "tock.com", "exploretock.com", "thefork.com", "thefork.fr",
+  "lafourchette.com", "quandoo.com", "sevenrooms.com", "zomato.com", "swiggy.com", "talabat.com", "careem.com",
+  "deliveroo.com", "deliveroo.co.uk", "deliveroo.ae", "doordash.com", "ubereats.com", "grubhub.com", "postmates.com",
+  "seamless.com", "just-eat.com", "just-eat.co.uk", "thuisbezorgd.nl", "takeaway.com", "lieferando.de", "wolt.com",
+  "10bis.co.il", "mishloha.co.il", "ontopo.co.il", "ontopo.com", "tabit.cloud", "rest.co.il", "t.co.il",
+  "happycow.net", "eater.com", "infatuation.com", "timeout.com", "restaurantguru.com", "sluurpy.com", "menupix.com", "allmenus.com", "sirved.com",
+  // Reviews, directories, corporate registries & maps
+  "yelp.com", "yelp.co.uk", "tripadvisor.com", "tripadvisor.co.uk", "tripadvisor.ae", "tripadvisor.de", "tripadvisor.fr", "tripadvisor.it",
+  "trustpilot.com", "sitejabber.com", "provenexpert.com", "bbb.org", "foursquare.com", "swarmapp.com",
+  "yellowpages.com", "yellowpages.ae", "yellowpages.ca", "yell.com", "whitepages.com", "superpages.com", "mapquest.com", "waze.com",
+  "rome2rio.com", "moovitapp.com", "wanderlog.com", "mindtrip.ai", "inspirock.com", "wheree.com",
+  "crunchbase.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "zoominfo.com", "dnb.com", "apollo.io", "lusha.com",
+  "owler.com", "craft.co", "pitchbook.com", "opencorporates.com", "companieshouse.gov.uk", "bizapedia.com", "manta.com",
+  "hotfrog.com", "cylex.com", "cylex.us", "infobel.com", "yalwa.com", "2gis.com", "2gis.ae", "b144.co.il", "d.co.il",
+  "easy.co.il", "zap.co.il", "kompass.com", "europages.com", "localemirates.com", "dubaibizdirectory.com", "yoouz.com",
+  "bestprosintown.com", "findglocal.com", "birdeye.com", "chamberofcommerce.com", "nextdoor.com", "angi.com", "thumbtack.com", "houzz.com",
+  // Wikis, encyclopedias, trivia/facts blogs, travel magazines & news
+  "wikipedia.org", "wikimedia.org", "wikidata.org", "wiktionary.org", "wikivoyage.org", "britannica.com", "fandom.com", "wikia.com",
+  "funworldfacts.com", "facts.net", "worldatlas.com", "ducksters.com", "kiddle.co", "biography.com", "history.com",
+  "lonelyplanet.com", "cntraveler.com", "travelandleisure.com", "afar.com", "frommers.com", "fodors.com", "roughguides.com",
+  "culturetrip.com", "theculturetrip.com", "atlasobscura.com", "michelin.com", "guide.michelin.com",
+  "forbes.com", "forbestravelguide.com", "bloomberg.com", "reuters.com", "nytimes.com", "bbc.com", "bbc.co.uk",
+  "cnn.com", "theguardian.com", "washingtonpost.com", "usatoday.com", "businessinsider.com", "archdaily.com",
+  "dezeen.com", "architecturaldigest.com", "skyscrapercenter.com", "emporis.com",
+  "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il",
+  // Social, Q&A, blogging platforms, search & ad trackers
+  "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "youtu.be", "tiktok.com",
+  "pinterest.com", "reddit.com", "quora.com", "threads.net", "snapchat.com", "vimeo.com", "medium.com", "substack.com",
+  "wordpress.com", "blogspot.com", "tumblr.com", "wix.com", "squarespace.com", "hostinger.com", "shopify.com",
+  "google.com", "duckduckgo.com", "bing.com", "yahoo.com", "yandex.com", "baidu.com",
+  "googleadservices.com", "doubleclick.net", "adservice.google.com", "w3.org", "schema.org"
+]);
+
+const GENERIC_QUERY_STOPWORDS = new Set([
+  "the", "and", "for", "with", "from", "near", "city", "town", "hotel", "hotels", "resort", "resorts",
+  "restaurant", "restaurants", "restaurante", "restaurantes", "ristorante", "trattoria", "osteria",
+  "cafe", "bistro", "brasserie", "pizzeria", "bakery", "patisserie", "bar", "club", "shop", "store",
+  "boutique", "mall", "center", "centre", "official", "website", "site", "web", "home", "homepage",
+  "online", "page", "company", "group", "corp", "inc", "llc", "ltd", "co", "service", "services",
+  "office", "agency", "firm", "clinic", "hospital", "pharmacy", "salon", "spa", "museum", "airport",
+  "park", "tower", "building", "plaza", "international", "global",
+  "השכרת", "רכב", "בעמ", "משרד", "חברת", "מלון", "מלונות", "מסעדת", "מסעדה", "בית", "מרכז"
+]);
+
+function isQueryTargetingHost(query: string, host: string): boolean {
+  const qCompact = (query || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[^a-z0-9.]/g, "");
+  const cleanHost = (host || "").toLowerCase().replace(/^www\./, "");
+  const root = cleanHost.split(".")[0];
+  if (!qCompact || !cleanHost) return false;
+  if (qCompact === cleanHost || qCompact === root) return true;
+  const qWords = (query || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (qWords.length <= 2 && root.length >= 4 && qWords.includes(root)) {
+    return true;
+  }
+  return false;
+}
+
+function isDisallowedNonOfficialHost(host: string, query: string = ""): boolean {
+  const cleanHost = (host || "").toLowerCase().replace(/^www\./, "").split(":")[0].trim();
+  if (!cleanHost || !cleanHost.includes(".") || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(cleanHost) || cleanHost === "localhost") {
+    return true;
+  }
+  if (isQueryTargetingHost(query, cleanHost)) return false;
+
+  for (const blocked of NON_OFFICIAL_DISALLOWED_HOSTS) {
+    if (cleanHost === blocked || cleanHost.endsWith("." + blocked)) {
+      return true;
+    }
+  }
+
+  // Subdomain or exact-pattern checks for country-TLD mirrors of OTAs/reviews/directories/wikis
+  if (/(?:^|\.)(?:booking|trivago|expedia|agoda|tripadvisor|yelp|opentable|thefork|deliveroo|just-eat|yellowpages|wikipedia|pinterest)\./i.test(cleanHost)) {
+    return true;
+  }
+
+  // Tourism/aggregator/trivia blog hostname heuristics (unless user query asks for them)
+  const qLow = (query || "").toLowerCase();
+  if (!qLow.includes("facts") && !qLow.includes("trivia") && /(?:worldfacts|funfacts|facts\.|trivia)/i.test(cleanHost)) {
+    return true;
+  }
+  if (/(?:best-[a-z0-9-]+-hotels|hotels-in-|top-hotels|luxuryhotel\.world|visitdubai\.com|visitlondon\.com|parisinfo\.com)/i.test(cleanHost)) {
+    return true;
+  }
+  return false;
+}
+
+function isDdgAdResult($: any, el: any, rawHref: string): boolean {
+  const cls = ($(el).attr("class") || "").toLowerCase();
+  if (cls.includes("result--ad") || $(el).closest(".results--ads").length > 0) return true;
+  if ($(el).find(".badge--ad, .result__badge--ad, .result--ad__badge").length > 0) return true;
+  const badgeText = $(el).find(".result__badge, .badge").text().trim().toLowerCase();
+  if (badgeText === "ad" || badgeText === "ads" || badgeText === "sponsored") return true;
+  const hLow = (rawHref || "").toLowerCase();
+  if (
+    hLow.includes("/y.js") ||
+    hLow.includes("ad_domain=") ||
+    hLow.includes("ad_provider=") ||
+    hLow.includes("googleadservices.com") ||
+    hLow.includes("doubleclick.net") ||
+    hLow.includes("bing.com/aclick") ||
+    hLow.includes("/aclk")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function mergeOfficialBrandSpellingServer(rawTitle?: string | null, extractedBrand?: string | null, domain?: string | null): string {
+  const cleanRaw = (rawTitle || "").trim();
+  const cleanBrand = (extractedBrand || "").trim();
+  if (!cleanRaw) return cleanBrand;
+  if (!cleanBrand) return cleanRaw;
+
+  const firstSeg = cleanRaw
+    .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]
+    .trim();
+  const foldCompact = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const rawCompact = foldCompact(firstSeg || cleanRaw);
+  const brandCompact = foldCompact(cleanBrand);
+
+  // If the first segment is compactly identical to the brand (e.g. "Jet Blue" -> "JetBlue"), apply official spelling
+  if (rawCompact && brandCompact && rawCompact === brandCompact) {
+    return cleanBrand;
+  }
+
+  // If raw title is a specific property/sub-entity on a parent domain (e.g. "Jumeirah Burj Al Arab" on jumeirah.com),
+  // NEVER truncate away the property tokens ("Burj Al Arab")!
+  const words = (firstSeg || cleanRaw).split(/\s+/).filter(Boolean);
+  if (
+    firstSeg &&
+    rawCompact.length > brandCompact.length &&
+    words.length >= 2 &&
+    words.length <= 7 &&
+    !isGenericPlaceNameServer(firstSeg) &&
+    !isGenericSeoSlogan(firstSeg, domain || "")
+  ) {
+    return firstSeg;
+  }
+  return cleanBrand;
+}
+
+function isEntitySpecificSubpageUrl(rawUrl: string, query: string, title: string = ""): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    const cleanHost = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+    const domRoot = cleanHost.split(".")[0].replace(/[^a-z0-9]/g, "");
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return false;
+    // Locale-only roots (e.g. /en, /en-us, /fr/) count as home, not property subpages
+    if (parts.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(parts[0])) return false;
+
+    const pathLower = parsed.pathname.toLowerCase();
+    // Skip blog/news/careers/legal/room/menu subpages
+    if (/\/(?:blog|news|article|articles|press|careers|jobs|privacy|terms|legal|contact|about-us|menu|rooms|suites|offers|dining|gallery)\/?$/i.test(pathLower)) {
+      return false;
+    }
+
+    const slugAlpha = parts[parts.length - 1].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const qTokens = (query || "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 3 && !GENERIC_QUERY_STOPWORDS.has(w));
+    const qAlpha = qTokens.join("");
+
+    // If the host itself doesn't contain the entity's distinctive tokens (e.g. jumeirah.com for "burj al arab"),
+    // or the final path segment contains entity tokens from the query/title, keep the exact official entity URL!
+    const hostHasEntity = domRoot.length >= 4 && qTokens.some(t => domRoot.includes(t) || t.includes(domRoot));
+    const pathHasEntity = (slugAlpha.length >= 4 && qTokens.some(t => slugAlpha.includes(t))) || (qAlpha.length >= 5 && pathLower.replace(/[^a-z0-9]/g, "").includes(qAlpha));
+    if (!hostHasEntity && (pathHasEntity || title.length >= 3)) {
+      return true;
+    }
+    return pathHasEntity && parts.length <= 5;
+  } catch {
+    return false;
+  }
+}
+
+interface DiscoveredOfficialCandidate {
+  url: string;
+  domain: string;
+  title: string;
+  snippet: string;
+  score: number;
+  isSpecificEntityPage: boolean;
+  source: string;
+}
+
+async function lookupDuckDuckGoInstantOfficial(cleanQ: string, timeoutMs = 1800): Promise<{ url: string; heading: string; abstract: string } | null> {
+  try {
+    const resp = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(cleanQ)}&format=json&no_html=1&skip_disambig=1`, {
+      headers: { "User-Agent": "YoouzDiscovery/1.0", "Accept": "application/json" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+    });
+    if (!resp.ok) return null;
+    const data: any = await resp.json();
+    const heading = (data?.Heading || "").trim();
+    const abstract = (data?.AbstractText || "").trim();
+    const candidates: string[] = [];
+
+    if (Array.isArray(data?.Results)) {
+      for (const r of data.Results) {
+        if (r?.FirstURL && typeof r.FirstURL === "string" && r.FirstURL.startsWith("http")) {
+          candidates.push(r.FirstURL.trim());
+        }
+      }
+    }
+    const infoboxItems = data?.Infobox?.content;
+    if (Array.isArray(infoboxItems)) {
+      for (const item of infoboxItems) {
+        if ((item?.data_type === "official_website" || /official\s*website/i.test(String(item?.label || ""))) && typeof item?.value === "string" && item.value.startsWith("http")) {
+          candidates.push(item.value.trim());
+        }
+      }
+    }
+    for (const url of candidates) {
+      const host = cleanDomainName(url);
+      if (host && host.includes(".") && !isDisallowedNonOfficialHost(host, cleanQ)) {
+        return { url, heading, abstract };
+      }
+    }
+  } catch {}
+  return null;
+}
+
+async function lookupWikidataOfficialWebsite(cleanQ: string, timeoutMs = 1900): Promise<{ url: string; title: string } | null> {
+  try {
+    const isHebrew = /[\u0590-\u05FF]/.test(cleanQ);
+    const isArabic = /[\u0600-\u06FF]/.test(cleanQ);
+    const wikiLang = isHebrew ? "he" : (isArabic ? "ar" : "en");
+
+    const qTokens = cleanQ
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 2 && !GENERIC_QUERY_STOPWORDS.has(w));
+    if (qTokens.length === 0) return null;
+
+    const findBestWikiHit = (hitList: any[]) => hitList.find(h => {
+      const tLow = String(h?.title || "").toLowerCase();
+      const sLow = String(h?.snippet || "").replace(/<[^>]+>/g, " ").toLowerCase();
+      const titleMatches = qTokens.filter(t => tLow.includes(t)).length;
+      const combinedMatches = qTokens.filter(t => tLow.includes(t) || sLow.includes(t)).length;
+      // Require strong title alignment so e.g. "ritz carlton paris" does NOT accept "The Ritz-Carlton Hotel Company" when "paris" is missing from title & snippet
+      if (qTokens.length >= 2 && titleMatches < Math.ceil(qTokens.length * 0.6)) return false;
+      if (qTokens.length === 1 && titleMatches === 0) return false;
+      return combinedMatches >= qTokens.length || titleMatches >= Math.min(2, qTokens.length);
+    });
+
+    let wpRes: any = await fetch(`https://${wikiLang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ)}&format=json&srlimit=3`, {
+      headers: { "User-Agent": "YoouzDiscovery/1.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+    }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+    let hits: any[] = wpRes?.query?.search || [];
+    let bestHit = findBestWikiHit(hits);
+
+    // Retry Wikipedia with category stopwords stripped (e.g. "restaurante el celler de can roca" -> "el celler de can roca")
+    const strippedSearch = qTokens.join(" ").trim();
+    if (!bestHit && strippedSearch && strippedSearch.toLowerCase() !== cleanQ.toLowerCase()) {
+      wpRes = await fetch(`https://${wikiLang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(strippedSearch)}&format=json&srlimit=3`, {
+        headers: { "User-Agent": "YoouzDiscovery/1.0" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+      }).then(r => r.ok ? r.json() : null).catch(() => null);
+      hits = wpRes?.query?.search || [];
+      bestHit = findBestWikiHit(hits);
+    }
+    if (!bestHit?.title) return null;
+
+    const ppRes: any = await fetch(`https://${wikiLang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(bestHit.title)}&prop=pageprops&format=json`, {
+      headers: { "User-Agent": "YoouzDiscovery/1.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+    }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+    const pages = Object.values(ppRes?.query?.pages || {}) as any[];
+    const qid = pages[0]?.pageprops?.wikibase_item;
+    if (!qid) return null;
+
+    const wdRes: any = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${encodeURIComponent(qid)}&property=P856&format=json`, {
+      headers: { "User-Agent": "YoouzDiscovery/1.0" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+    }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+    const claims: any[] = wdRes?.claims?.P856 || [];
+    const urls = claims
+      .map(c => c?.mainsnak?.datavalue?.value)
+      .filter((u): u is string => typeof u === "string" && u.startsWith("http"));
+
+    // Prefer English (/en) or root official URL if Wikidata lists multiple language variants
+    const sortedUrls = [...urls].sort((a, b) => {
+      const aEn = /\/en(?:\/|$)/i.test(a) ? 2 : (!/\/(?:it|fr|de|es|ru|ar|zh|ja)\b/i.test(a) ? 1 : 0);
+      const bEn = /\/en(?:\/|$)/i.test(b) ? 2 : (!/\/(?:it|fr|de|es|ru|ar|zh|ja)\b/i.test(b) ? 1 : 0);
+      return bEn - aEn;
+    });
+
+    for (const url of sortedUrls) {
+      const host = cleanDomainName(url);
+      if (host && host.includes(".") && !isDisallowedNonOfficialHost(host, cleanQ)) {
+        return { url, title: String(bestHit.title) };
+      }
+    }
+  } catch {}
+  return null;
+}
+
+async function discoverOfficialBusinessWebsite(cleanQ: string, options: { fast?: boolean } = {}): Promise<DiscoveredOfficialCandidate | null> {
+  const fast = Boolean(options.fast);
+  const timeoutMs = fast ? 1800 : 3200;
+  const isHebrewOrIsraelQuery = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat|herzliya|ramat\s*gan|netanya|ashdod|beersheba|rishon|petah\s*tikva)\b/i.test(cleanQ);
+  const isNonAscii = /[^\x00-\x7F]/.test(cleanQ);
+  const qLow = cleanQ.toLowerCase();
+  const qTokens = qLow
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(w => w.length >= 2 && !GENERIC_QUERY_STOPWORDS.has(w));
+  const cleanQueryAlpha = qLow.replace(/[^\p{L}\p{N}]/gu, "");
+
+  const fetchDdgOrganic = async (searchTerm: string, sourceTag: string) => {
+    const out: { url: string; host: string; title: string; snippet: string; rank: number; isOfficialBadge: boolean; sourceTag: string }[] = [];
+    try {
+      const klParam = isHebrewOrIsraelQuery ? "" : (isNonAscii ? "" : "&kl=us-en");
+      const ddgUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(searchTerm)}${klParam}`;
+      const resp = await fetch(ddgUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": isHebrewOrIsraelQuery ? "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7" : "en-US,en;q=0.9"
+        },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+      });
+      if (!resp.ok) return out;
+      const html = await resp.text();
+      if (!html || html.length < 400) return out;
+
+      const $ = cheerio.load(html);
+      let organicRank = 0;
+      $(".result").slice(0, 15).each((_: any, el: any) => {
+        const $a = $(el).find(".result__a").first();
+        const rawHref = $a.attr("href") || "";
+        if (isDdgAdResult($, el, rawHref)) return;
+
+        let targetUrl = rawHref;
+        const uddgM = rawHref.match(/uddg=([^&]+)/i);
+        if (uddgM) {
+          try { targetUrl = decodeURIComponent(uddgM[1]); } catch {}
+        } else if (!targetUrl.startsWith("http")) {
+          const urlText = $(el).find(".result__url").text().trim();
+          if (urlText) targetUrl = urlText.startsWith("http") ? urlText : `https://${urlText.split(/\s+/)[0]}`;
+        }
+        if (!targetUrl.startsWith("http")) return;
+
+        let host = "";
+        try { host = cleanDomainName(new URL(targetUrl).hostname); } catch {}
+        if (!host || !host.includes(".") || isDisallowedNonOfficialHost(host, cleanQ)) return;
+
+        const rTitle = $a.text().replace(/\s+/g, " ").trim();
+        const rSnippet = $(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
+        const isOfficialBadge = /^official\s*(?:site|website)$/i.test(rTitle);
+
+        out.push({
+          url: targetUrl,
+          host,
+          title: rTitle,
+          snippet: rSnippet,
+          rank: organicRank++,
+          isOfficialBadge,
+          sourceTag
+        });
+      });
+    } catch {}
+    return out;
+  };
+
+  // Run authoritative Knowledge Graph lookups + ad-free DDG organic searches in parallel
+  const [ddgIaResult, wikidataResult, ddgRawResults, ddgOfficialResults] = await Promise.all([
+    lookupDuckDuckGoInstantOfficial(cleanQ, fast ? 1400 : 2000),
+    lookupWikidataOfficialWebsite(cleanQ, fast ? 1500 : 2200),
+    fetchDdgOrganic(cleanQ, "ddg_raw"),
+    fetchDdgOrganic(isNonAscii ? cleanQ : `${cleanQ} official website`, "ddg_official")
+  ]);
+
+  const pool = new Map<string, {
+    url: string;
+    domain: string;
+    title: string;
+    snippet: string;
+    score: number;
+    sources: Set<string>;
+    isSpecific: boolean;
+  }>();
+
+  const registerCandidate = (
+    rawUrl: string,
+    title: string,
+    snippet: string,
+    baseScore: number,
+    sourceName: string,
+    fromKnowledgeGraph = false
+  ) => {
+    try {
+      const parsed = new URL(rawUrl);
+      const host = cleanDomainName(parsed.hostname);
+      if (!host || !host.includes(".") || isDisallowedNonOfficialHost(host, cleanQ)) return;
+
+      const isOfficialAnchor = /^official\s*(?:site|website)$/i.test(title.trim());
+      const cleanTitle = isOfficialAnchor ? "" : title.trim();
+      const specificEntity = fromKnowledgeGraph
+        ? parsed.pathname.split("/").filter(Boolean).length > 0 && !/^\/[a-z]{2}(?:-[a-z]{2})?\/?$/i.test(parsed.pathname)
+        : isEntitySpecificSubpageUrl(rawUrl, cleanQ, cleanTitle);
+
+      // Keep canonical specific entity URL when needed; otherwise normalize noisy root subpages to domain root
+      const pathParts = parsed.pathname.split("/").filter(Boolean);
+      const isLocaleHome = pathParts.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(pathParts[0]);
+      const normalizedUrl = specificEntity || isLocaleHome || pathParts.length === 0
+        ? rawUrl
+        : `https://${parsed.hostname}/`;
+
+      const key = specificEntity ? `${host}:${parsed.pathname.toLowerCase().replace(/\/+$/, "")}` : host;
+
+      let score = baseScore;
+      const domRoot = host.split(".")[0].replace(/[^a-z0-9]/g, "");
+      const titleLow = cleanTitle.toLowerCase();
+      const snippetLow = snippet.toLowerCase();
+      const pathLow = parsed.pathname.toLowerCase();
+
+      // Penalize unofficial tour resellers, ticket brokers, fun-facts/listicles, and price-comparison pages
+      if (!fromKnowledgeGraph) {
+        if (!qLow.includes("tour") && !qLow.includes("ticket") && /\b(?:guided\s+tours?|inside\s+guided|buy\s+tickets|book\s+tickets|skip\s+the\s+line|tickets?\s*[&\-]|day\s+tours?)\b/i.test(`${cleanTitle} ${snippet}`)) {
+          score -= 550;
+        }
+        if (!qLow.includes("fact") && /\b(?:\d+\s+fun\s+facts|fun\s+facts|interesting\s+facts|trivia|top\s+\d+|best\s+hotels|updated\s+prices|compare\s+prices|price\s+per\s+night|reviews?\s+and\s+photos)\b/i.test(`${cleanTitle} ${snippet}`)) {
+          score -= 650;
+        }
+        if (/\/(?:blog|news|article|articles|facts|fun-facts|review|reviews|places-to-visit|things-to-do)\b/i.test(pathLow)) {
+          score -= 500;
+        }
+      }
+
+      // Boost query-token matches in domain and title/path
+      let domTokenHits = 0;
+      let pageTokenHits = 0;
+      for (const tok of qTokens) {
+        if (host.includes(tok) || domRoot.includes(tok)) domTokenHits++;
+        if (titleLow.includes(tok) || pathLow.includes(tok) || snippetLow.includes(tok)) pageTokenHits++;
+      }
+      score += domTokenHits * 130;
+      score += pageTokenHits * 65;
+
+      if (cleanQueryAlpha && domRoot === cleanQueryAlpha) {
+        score += 360;
+      } else if (qTokens.length >= 2 && domRoot.includes(qTokens.join(""))) {
+        score += 240;
+      }
+
+      if (isOfficialAnchor) {
+        score += 380;
+      } else if (/\bofficial\b/i.test(`${cleanTitle} ${snippet}`)) {
+        score += 140;
+      }
+
+      if (specificEntity) {
+        score += 90;
+      } else if (pathParts.length === 0 || isLocaleHome) {
+        score += 110;
+      } else if (pathParts.length > 2) {
+        score -= 80;
+      }
+
+      if (!isHebrewOrIsraelQuery) {
+        if (host.endsWith(".co.il") || host.endsWith(".org.il") || host.endsWith(".il")) {
+          score -= 300;
+        } else if (/\.(com|org|net|ae|paris|fr|uk|de|es|it|nl|au|io|co|ai|vc)$/i.test(host)) {
+          score += 40;
+        }
+      }
+
+      const existing = pool.get(key) || pool.get(host);
+      if (existing) {
+        existing.score = Math.max(existing.score, score) + (existing.sources.has(sourceName) ? 0 : 180);
+        existing.sources.add(sourceName);
+        if (!existing.title && cleanTitle) existing.title = cleanTitle;
+        if (!existing.snippet && snippet) existing.snippet = snippet;
+        if (specificEntity && !existing.isSpecific) {
+          existing.url = normalizedUrl;
+          existing.isSpecific = true;
+        }
+      } else {
+        pool.set(key, {
+          url: normalizedUrl,
+          domain: host,
+          title: cleanTitle,
+          snippet,
+          score,
+          sources: new Set([sourceName]),
+          isSpecific: specificEntity
+        });
+      }
+    } catch {}
+  };
+
+  if (ddgIaResult?.url) {
+    const hLow = (ddgIaResult.heading || "").toLowerCase();
+    const headingHits = qTokens.filter(t => hLow.includes(t) || ddgIaResult.abstract.toLowerCase().includes(t)).length;
+    const iaScore = qTokens.length === 0 || headingHits >= Math.min(2, qTokens.length) ? 1200 : 750;
+    registerCandidate(ddgIaResult.url, ddgIaResult.heading, ddgIaResult.abstract, iaScore, "ddg_ia", true);
+  }
+
+  if (wikidataResult?.url) {
+    registerCandidate(wikidataResult.url, wikidataResult.title, "", 1050, "wikidata_p856", true);
+  }
+
+  for (const r of ddgRawResults) {
+    const rankScore = r.rank === 0 ? 460 : (r.rank === 1 ? 350 : (r.rank === 2 ? 260 : Math.max(40, 200 - r.rank * 25)));
+    registerCandidate(r.url, r.title, r.snippet, rankScore, r.sourceTag, false);
+  }
+
+  for (const r of ddgOfficialResults) {
+    const rankScore = r.rank === 0 ? 430 : (r.rank === 1 ? 330 : (r.rank === 2 ? 240 : Math.max(30, 180 - r.rank * 25)));
+    registerCandidate(r.url, r.title, r.snippet, rankScore, r.sourceTag, false);
+  }
+
+  if (pool.size === 0) return null;
+
+  const ranked = Array.from(pool.values()).sort((a, b) => b.score - a.score);
+  const best = ranked[0];
+  if (!best || best.score < 0) return null;
+
+  // Prefer same-domain candidate with the highest detail title if KG entry had an abstract/heading
+  if (!best.title) {
+    const siblingWithTitle = ranked.find(c => c.domain === best.domain && c.title);
+    if (siblingWithTitle) best.title = siblingWithTitle.title;
+  }
+
+  return {
+    url: best.url,
+    domain: best.domain,
+    title: best.title,
+    snippet: best.snippet,
+    score: best.score,
+    isSpecificEntityPage: best.isSpecific,
+    source: Array.from(best.sources).join("+")
+  };
+}
+
 async function resolveOfficialSiteMetaFromSearch(cleanDom: string): Promise<{ title: string; description: string } | null> {
   if (!cleanDom || !cleanDom.includes('.')) return null;
   const known = KNOWN_OFFICIAL_NAMES[cleanDom.toLowerCase()];
   if (known) return { title: known, description: "" };
 
-  const genericNavRegex = /^(?:official\s+site|home|homepage|welcome|log\s*in|login|sign\s*in|signin|sign\s*up|contact|contact\s+us|about|about\s+us|help|support|faq|careers|blog|pricing|manage(?:\s+trips?)?|book\s+now|search)$/i;
+  const genericNavRegex = /^(?:official\s+(?:site|website)|home|homepage|welcome|log\s*in|login|sign\s*in|signin|sign\s*up|contact|contact\s+us|about|about\s+us|help|support|faq|careers|blog|pricing|manage(?:\s+trips?)?|book\s+now|search)$/i;
   const domParts = cleanDom.toLowerCase().split('.');
   const domRoot = domParts[0].replace(/[^a-z0-9]/g, '');
 
   const extractTitleFromDdg = (rawTitle: string, snippet: string): string => {
+    if (!rawTitle || genericNavRegex.test(rawTitle.trim())) return "";
     const combined = `${rawTitle} | ${snippet}`;
     const officialSpelling = extractOfficialBrandSpellingFromText(combined, cleanDom);
-    if (officialSpelling && !genericNavRegex.test(officialSpelling) && !isFalseSplitOfDomain(officialSpelling, cleanDom)) {
-      return officialSpelling;
-    }
     const parts = rawTitle
       .split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)
       .map(p => stripLegalEntityAndNoiseSuffixes(p.trim()))
@@ -29032,9 +29591,14 @@ async function resolveOfficialSiteMetaFromSearch(cleanDom: string): Promise<{ ti
       const pFold = p.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
       return pFold === domRoot || (domRoot.length >= 4 && (pFold.includes(domRoot) || domRoot.includes(pFold)));
     });
-    const chosen = matchPart || parts[0] || "";
-    if (!chosen || genericNavRegex.test(chosen) || isGenericSeoSlogan(chosen, cleanDom)) return "";
-    const formatted = formatBusinessName(chosen, cleanDom, undefined, { fromWebsite: true, fallbackText: snippet }) || chosen;
+    const chosen = parts[0] && parts[0].toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').includes(domRoot) && parts[0].split(/\s+/).length >= 2 && !isGenericSeoSlogan(parts[0], cleanDom)
+      ? parts[0]
+      : (matchPart || parts[0] || "");
+    if (!chosen || genericNavRegex.test(chosen) || isGenericSeoSlogan(chosen, cleanDom)) {
+      return (officialSpelling && !genericNavRegex.test(officialSpelling) && !isFalseSplitOfDomain(officialSpelling, cleanDom)) ? officialSpelling : "";
+    }
+    const merged = mergeOfficialBrandSpellingServer(chosen, officialSpelling, cleanDom);
+    const formatted = formatBusinessName(merged || chosen, cleanDom, undefined, { fromWebsite: true, fallbackText: snippet }) || merged || chosen;
     if (!formatted || genericNavRegex.test(formatted) || isDomainStemName(formatted, cleanDom) || isFalseSplitOfDomain(formatted, cleanDom)) {
       return officialSpelling || "";
     }
@@ -29059,6 +29623,7 @@ async function resolveOfficialSiteMetaFromSearch(cleanDom: string): Promise<{ ti
       $(".result").each((_: any, el: any) => {
         const $a = $(el).find(".result__a").first();
         const rawHref = $a.attr("href") || "";
+        if (isDdgAdResult($, el, rawHref)) return;
         let targetUrl = rawHref;
         const uddgM = rawHref.match(/uddg=([^&]+)/i);
         if (uddgM) {
@@ -29539,187 +30104,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
 
 
-    // 3. Official Discovery Engine (Google Search)
+    // 3. Multi-Signal Official Website Discovery Engine (Knowledge Graph + Wikidata P856 + Ad-Free Scored Search)
     let discoveredUrl: string = "";
     let discoveredDdgTitle: string = "";
     let discoveredDdgSnippet: string = "";
+    let discoveredIsSpecificEntityPage = false;
     try {
-      const broadenLocal = (q: string, att: number): string => {
-        let cl = q.trim().replace(/^(the|a|an|office|firm|company|group|agency|חברת|משרד|חברת)\s+/i, "");
-        const wrds = cl.split(/\s+/);
-        if (wrds.length <= 1) return cl;
-        if (att >= 2 && wrds.length > 2) return wrds.slice(0, -1).join(" ");
-        if (att >= 4 && wrds.length > 1) return wrds.slice(0, 1).join(" ");
-        return cl;
-      };
-
-      const userAgents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0"
-      ];
-
-      // Extreme DuckDuckGo-Only Discovery Engine (4 high-speed attempts with realistic headers)
-      const isHebrewOrIsraelQuery = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat|herzliya|ramat\s*gan|netanya|ashdod|beersheba|rishon|petah\s*tikva)\b/i.test(cleanQ);
-      const variations = [
-        `${cleanQ}`,
-        `${cleanQ} website`,
-        `${cleanQ} official`,
-        `${cleanQ} business`
-      ];
-
-      for (let attempt = 0; attempt < 4; attempt++) {
-        if (discoveredUrl) break;
-        try {
-          const varIdx = attempt % variations.length;
-          const broadenAtt = Math.floor(attempt / variations.length);
-          const baseQ = variations[varIdx];
-          const currentQ = broadenAtt === 0 ? baseQ : broadenLocal(baseQ, broadenAtt);
-          
-          const qEnc = encodeURIComponent(currentQ);
-          const ddgUrl = `https://html.duckduckgo.com/html/?q=${qEnc}${isHebrewOrIsraelQuery ? '' : '&kl=us-en'}`;
-          
-          console.log(`[DuckDuckGo Discovery] Fetching search results for: "${currentQ}" (Attempt ${attempt + 1}/4)`);
-          
-          const resp = await fetch(ddgUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Language': isHebrewOrIsraelQuery ? 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7,*;q=0.5' : 'en-US,en;q=0.9'
-            },
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3500) : undefined
-          });
-
-          if (!resp.ok) {
-            console.warn(`[DuckDuckGo Discovery] HTTP Error ${resp.status}: ${resp.statusText}`);
-            continue;
-          }
-
-          const html = await resp.text();
-          if (!html || html.length < 500) continue;
-          
-          // Extract and score candidates to prioritize official business sites over portals/directories
-          const candidates: { url: string; score: number; ddgTitle: string; ddgSnippet: string }[] = [];
-          const portalDomains = [
-            "google.", "wikipedia.org", "wikimedia.org", "wiktionary.org", "facebook.com", "instagram.com", "linkedin.com", "twitter.com", "x.com", "youtube.com", "tiktok.com", "pinterest.com",
-            "fiverr.com", "upwork.com", "freelancer.com", "glassdoor.com", "indeed.com", "ziprecruiter.com", "crunchbase.com", "zoominfo.com", "clutch.co", "yelp.com", "tripadvisor.com", "foursquare.com", "yellowpages.com", 
-            "zocdoc.com", "mapquest.com", "waze.com", "b144.co.il", "d.co.il", "zap.co.il", "t.co.il", "booking.com", "expedia.com", "hotels.com", "hostinger.com", "wordpress.com", "wix.com", "squarespace.com", "shopify.com",
-            "apartments.com", "zillow.com", "apartmentratings.com", "forrent.com", "rent.com", "w3.org", "schema.org", "googleadservices.com", "doubleclick.net",
-            "mako.co.il", "ynet.co.il", "haaretz.co.il", "maariv.co.il", "walla.co.il", "israelhayom.co.il", "globes.co.il", "themarker.com", "calcalist.co.il", "n12.co.il", "kan.org.il",
-            "easy.co.il", "rest.co.il", "hafakot.co.il", "shironet.co.il", "tab4u.com", "lovesongs.co.il", "rsrv.rest", "mika.co.il",
-            "cylex", "autoyas", "reviewbritain", "endole", "dnb.com", "checkcompany", "companieshouse", "gov.uk", "wheree.com", "wheree.", "directory", "portal", "yellowpages", "yelp"
-          ];
-
-          const scoreUrlCandidate = (u: string, ddgTitle: string, ddgSnippet: string) => {
-            try {
-              if (!u.startsWith('http')) return;
-              const uLower = u.toLowerCase();
-              let host = "";
-              try {
-                host = new URL(u).hostname.toLowerCase();
-              } catch {
-                return;
-              }
-              if (!host || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) || host === "localhost") return;
-              if (uLower.includes("javascript:") || uLower.includes("mailto:") || uLower.includes("tel:")) return;
-
-              const cleanHost = host.replace(/^www\./, "");
-              const hostParts = cleanHost.split('.');
-              const domainNameOnly = hostParts[0];
-
-              const embeddedMatch = u.match(/(?:websites\.milonic\.com\/|trustpilot\.com\/review\/|sur\.ly\/i\/)([a-z0-9\.\-]+\.[a-z]{2,})/i);
-              if (embeddedMatch && embeddedMatch[1] && !portalDomains.some(pd => embeddedMatch[1].includes(pd))) {
-                const embeddedDom = embeddedMatch[1].toLowerCase().replace(/^www\./, '');
-                candidates.push({ url: `https://${embeddedDom}/`, score: 180, ddgTitle, ddgSnippet });
-              }
-
-              const isPortal = portalDomains.some(d => host.includes(d));
-              if (isPortal) return;
-
-              let score = 100 - (candidates.length * 5);
-              const queryWords = cleanQ.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length >= 2 && !['car', 'auto', 'the', 'and', 'inc', 'llc', 'ltd', 'service', 'services', 'leasing', 'lease', 'השכרת', 'רכב', 'בעמ'].includes(w));
-              for (const word of queryWords) {
-                if (cleanHost.includes(word) || domainNameOnly.includes(word)) {
-                  score += 80;
-                }
-              }
-              const qLowerLocal = cleanQ.toLowerCase();
-              if ((qLowerLocal.includes('בלו סקאי') || qLowerLocal.includes('בלוסקאי')) && cleanHost.includes('blue-sky')) score += 150;
-              if ((qLowerLocal.includes('בסט קאר') || qLowerLocal.includes('באסט קאר')) && cleanHost.includes('best-car')) score += 150;
-              if (qLowerLocal.includes('אופרן') && cleanHost.includes('ofran')) score += 150;
-              if (qLowerLocal.includes('אלפא') && cleanHost.includes('alfaleasing')) score += 150;
-              if (qLowerLocal.includes('איטריידר') && cleanHost.includes('etrader')) score += 150;
-
-              const cleanQueryAlpha = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
-              if (cleanQueryAlpha && domainNameOnly === cleanQueryAlpha) {
-                score += 120;
-              }
-              if (!isHebrewOrIsraelQuery) {
-                if (cleanHost.endsWith('.co.il') || cleanHost.endsWith('.org.il') || cleanHost.endsWith('.il')) {
-                  score -= 150;
-                } else if (/\.(com|vc|io|co|ai|org|net)$/i.test(cleanHost)) {
-                  score += 45;
-                }
-              }
-
-              const pathParts = new URL(u).pathname.split('/').filter(Boolean);
-              if (pathParts.length > 2) {
-                score -= (pathParts.length * 10);
-              } else if (pathParts.length === 0) {
-                score += 20;
-              }
-
-              const rootCandidateUrl = `https://${cleanHost}/`;
-              candidates.push({ url: (pathParts.length > 1 && !isPortal) ? rootCandidateUrl : u, score, ddgTitle, ddgSnippet });
-            } catch {}
-          };
-
-          const $ddg = cheerio.load(html);
-          $ddg(".result").each((_: any, el: any) => {
-            const $a = $ddg(el).find(".result__a").first();
-            const href = $a.attr("href") || "";
-            const uddgM = href.match(/uddg=([^&]+)/i);
-            let decodedUrl = href;
-            if (uddgM) {
-              try { decodedUrl = decodeURIComponent(uddgM[1]); } catch {}
-            } else if (!decodedUrl.startsWith("http")) {
-              const rawUrlText = $ddg(el).find(".result__url").text().trim();
-              if (rawUrlText) decodedUrl = rawUrlText.startsWith("http") ? rawUrlText : `https://${rawUrlText.split(/\s+/)[0]}`;
-            }
-            const rTitle = $a.text().replace(/\s+/g, " ").trim();
-            const rSnippet = $ddg(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
-            if (decodedUrl) scoreUrlCandidate(decodedUrl, rTitle, rSnippet);
-          });
-
-          if (candidates.length === 0) {
-            const regex = /uddg=([^&"'>\s]+)/gi;
-            let match;
-            while ((match = regex.exec(html)) !== null) {
-              try {
-                scoreUrlCandidate(decodeURIComponent(match[1]), "", "");
-              } catch {}
-            }
-          }
-
-          if (candidates.length > 0) {
-            // Sort by score descending
-            candidates.sort((a, b) => b.score - a.score);
-            discoveredUrl = candidates[0].url;
-            discoveredDdgTitle = candidates[0].ddgTitle || "";
-            discoveredDdgSnippet = candidates[0].ddgSnippet || "";
-            console.log(`[DuckDuckGo Discovery] Best Candidate (Score ${candidates[0].score}): ${discoveredUrl}`);
-            break; 
-          }
-          await new Promise(r => setTimeout(r, 100));
-        } catch (e) {
-          await new Promise(r => setTimeout(r, 50));
-        }
+      const discovered = await discoverOfficialBusinessWebsite(cleanQ, { fast: resolveOnly });
+      if (discovered && discovered.url) {
+        discoveredUrl = discovered.url;
+        discoveredDdgTitle = discovered.title || "";
+        discoveredDdgSnippet = discovered.snippet || "";
+        discoveredIsSpecificEntityPage = discovered.isSpecificEntityPage;
+        console.log(`[Official Discovery Engine] "${cleanQ}" -> ${discoveredUrl} (source: ${discovered.source}, score: ${discovered.score})`);
       }
-    } catch (e) {
-      console.error("[Google Discovery Critical Error]:", e.message);
+    } catch (e: any) {
+      console.error("[Official Discovery Critical Error]:", e?.message || e);
     }
 
     // Live Official Domain Verification Probe when search engine is rate-limited or returns empty for plain brand queries
@@ -29772,18 +30172,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     if (discoveredUrl) {
-      logSearchIntel(cleanQ, cleanDomainName(discoveredUrl), "resolved_by_discovery", { source: "google_discovery_loop" });
+      logSearchIntel(cleanQ, cleanDomainName(discoveredUrl), "resolved_by_discovery", { source: "official_discovery_engine" });
       let discoveredDom = cleanDomainName(discoveredUrl);
       if (discoveredDom && discoveredDom.includes('.')) {
         const ddgOfficialSpelling = extractOfficialBrandSpellingFromText(`${discoveredDdgTitle} | ${discoveredDdgSnippet}`, discoveredDom);
         const ddgTitleParts = discoveredDdgTitle
           ? discoveredDdgTitle.split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/).map(p => stripLegalEntityAndNoiseSuffixes(p.trim())).filter(Boolean)
           : [];
-        const ddgFormattedFromSearch = ddgTitleParts[0] && !isGenericSeoSlogan(ddgTitleParts[0], discoveredDom)
-          ? formatBusinessName(ddgTitleParts[0], discoveredDom, undefined, { fromWebsite: true, fallbackText: discoveredDdgSnippet })
+        const rawDdgFirst = ddgTitleParts[0] && !isGenericSeoSlogan(ddgTitleParts[0], discoveredDom) ? ddgTitleParts[0] : "";
+        const mergedDdgName = mergeOfficialBrandSpellingServer(rawDdgFirst, ddgOfficialSpelling, discoveredDom);
+        const ddgFormattedFromSearch = mergedDdgName
+          ? formatBusinessName(mergedDdgName, discoveredDom, undefined, { fromWebsite: true, fallbackText: discoveredDdgSnippet })
           : "";
-        let hasVerifiedScTitle = Boolean(KNOWN_OFFICIAL_NAMES[discoveredDom] || ddgOfficialSpelling || (ddgFormattedFromSearch && !isDomainStemName(ddgFormattedFromSearch, discoveredDom) && !isFalseSplitOfDomain(ddgFormattedFromSearch, discoveredDom)));
-        let scTitle = KNOWN_OFFICIAL_NAMES[discoveredDom] || ddgOfficialSpelling || ddgFormattedFromSearch || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet });
+        const knownForDom = !discoveredIsSpecificEntityPage ? KNOWN_OFFICIAL_NAMES[discoveredDom] : undefined;
+        let hasVerifiedScTitle = Boolean(knownForDom || ddgOfficialSpelling || (ddgFormattedFromSearch && !isDomainStemName(ddgFormattedFromSearch, discoveredDom) && !isFalseSplitOfDomain(ddgFormattedFromSearch, discoveredDom)));
+        let scTitle = knownForDom || ddgFormattedFromSearch || ddgOfficialSpelling || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet });
         let scDesc = discoveredDdgSnippet || `${scTitle} is a verified business on Yoouz.`;
         let scImage = "";
         let scAddress = "";
@@ -29913,8 +30316,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               [pubName, htmlTagT, metaT, scDesc, discoveredDdgSnippet].filter(Boolean).join(' | '),
               discoveredDom
             );
-            if (officialScBrand && !KNOWN_OFFICIAL_NAMES[discoveredDom]) {
-              scTitle = officialScBrand;
+            const rawPrimaryPageTitle = (htmlTagT || metaT || '').split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || '';
+            const mergedPageTitle = mergeOfficialBrandSpellingServer(rawPrimaryPageTitle, officialScBrand, discoveredDom);
+            if (discoveredIsSpecificEntityPage && mergedPageTitle && !isGenericPlaceNameServer(mergedPageTitle) && !isGenericSeoSlogan(mergedPageTitle, discoveredDom)) {
+              scTitle = formatBusinessName(mergedPageTitle, discoveredDom, undefined, { fromWebsite: true, fallbackText: scDesc }) || mergedPageTitle;
+              hasVerifiedScTitle = true;
+            } else if (officialScBrand && !KNOWN_OFFICIAL_NAMES[discoveredDom]) {
+              scTitle = mergeOfficialBrandSpellingServer(rawPrimaryPageTitle, officialScBrand, discoveredDom) || officialScBrand;
               hasVerifiedScTitle = true;
             } else if (pubName && pubName.trim().length > 1 && !isGenericPlaceNameServer(pubName.trim())) {
               const formattedPub = formatBusinessName(pubName.trim(), discoveredDom, undefined, { fromWebsite: true, fallbackText: scDesc });
@@ -30016,9 +30424,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         const postDescBrand = extractOfficialBrandSpellingFromText(scDesc, discoveredDom);
         const resolvedScName =
-          (discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom]) ||
+          (!discoveredIsSpecificEntityPage && discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom]) ||
           (hasVerifiedScTitle ? scTitle : "") ||
-          postDescBrand ||
+          mergeOfficialBrandSpellingServer(scTitle, postDescBrand, discoveredDom) ||
           scTitle ||
           formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: scDesc });
 
@@ -30125,6 +30533,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         rawQuery = rawQuery.split('/place/')[1].split('/')[0].split('?')[0];
       }
       if (!rawQuery || rawQuery.length < 2) return res.json({ domain: null });
+
+      let specificTargetUrl = "";
+      if (rawQuery.startsWith('http://') || rawQuery.startsWith('https://')) {
+        try {
+          const parsedIn = new URL(rawQuery);
+          if (parsedIn.pathname && parsedIn.pathname !== '/' && parsedIn.pathname.length > 1) {
+            specificTargetUrl = rawQuery;
+          }
+        } catch {}
+      }
 
       // If the query is an explicit URL or domain with a dot, strictly normalize to canonical clean domain
       if (rawQuery.includes('.') && (!rawQuery.includes(' ') || rawQuery.startsWith('http'))) {
@@ -30281,7 +30699,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
           // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
           if (!rawEntityLogo && !resolveOnly) {
-            for (const trySiteUrl of [`https://${realDomain}`, `https://www.${realDomain}`]) {
+            const siteUrlsToTry = Array.from(new Set([
+              ...(resolvedEntity.websiteUrl && resolvedEntity.websiteUrl.startsWith('http') ? [resolvedEntity.websiteUrl] : []),
+              `https://www.${realDomain}`,
+              `https://${realDomain}`
+            ]));
+            for (const trySiteUrl of siteUrlsToTry) {
               try {
                 const siteResp = await fetch(trySiteUrl, {
                   redirect: "follow",
@@ -30310,7 +30733,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     const sTitle = ($site('meta[property="og:site_name"]').attr('content') || $site('title').first().text() || '').trim();
                     const sDesc = ($site('meta[property="og:description"]').attr('content') || $site('meta[name="description"]').attr('content') || '').trim();
                     const sOfficial = extractOfficialBrandSpellingFromText(`${sTitle} | ${sDesc}`, realDomain);
-                    if (sOfficial) resolvedEntity.name = sOfficial;
+                    const sMerged = mergeOfficialBrandSpellingServer(sTitle, sOfficial, realDomain);
+                    if (sMerged && !isDomainStemName(sMerged, realDomain)) resolvedEntity.name = sMerged;
+                    else if (sOfficial) resolvedEntity.name = sOfficial;
                     else if (sTitle) {
                       const fmtSite = formatBusinessName(sTitle, realDomain, undefined, { fromWebsite: true, fallbackText: sDesc });
                       if (fmtSite && !isDomainStemName(fmtSite, realDomain)) resolvedEntity.name = fmtSite;
@@ -30333,7 +30758,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const entityLogo = rawEntityLogo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityOfficial = extractOfficialBrandSpellingFromText(resolvedEntity.description, realDomain);
-          const entityTitle = (realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || entityOfficial || formatBusinessName(resolvedEntity.name, realDomain, undefined, { fromWebsite: true, fallbackText: resolvedEntity.description }) || resolvedEntity.name;
+          const hasSpecificUrlPath = (() => {
+            try {
+              const p = new URL(resolvedEntity.websiteUrl || "").pathname.split("/").filter(Boolean);
+              return p.length > 0 && !(p.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(p[0]));
+            } catch { return false; }
+          })();
+          const mergedEntityTitle = mergeOfficialBrandSpellingServer(resolvedEntity.name, entityOfficial, realDomain);
+          const entityTitle = (!hasSpecificUrlPath && realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || mergedEntityTitle || formatBusinessName(resolvedEntity.name, realDomain, undefined, { fromWebsite: true, fallbackText: resolvedEntity.description }) || resolvedEntity.name;
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain, "logo:", entityLogo, "banner:", entityBanner);
           return res.json({
             title: entityTitle,
@@ -30422,10 +30854,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         return res.status(400).json({ error: "No official business domain found" });
       }
 
-      let url = parsedUrl.origin;
+      let url = specificTargetUrl || parsedUrl.origin;
       const domain = parsedUrl.hostname;
       const cleanDomain = cleanDomainName(domain) || domain;
-      const canonicalBaseUrl = `https://${cleanDomain}`;
+      const canonicalBaseUrl = specificTargetUrl || `https://${cleanDomain}`;
       url = canonicalBaseUrl;
       
       let title = '';
@@ -30448,7 +30880,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       
       try {
         let fetchResponse: any = null;
-        const candidateFetchUrls = [canonicalBaseUrl, `https://www.${cleanDomain}`, url];
+        const candidateFetchUrls = Array.from(new Set([
+          ...(specificTargetUrl ? [specificTargetUrl] : []),
+          `https://${cleanDomain}`,
+          `https://www.${cleanDomain}`,
+          url
+        ]));
         for (const cUrl of candidateFetchUrls) {
           try {
             const resp = await fetch(cUrl, {
@@ -30848,6 +31285,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 if (parts.length > 1) {
                   const domRoot = domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
                   const foldAlphaNum = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                  // 0. If the first segment is a specific property/entity name (e.g. "Jumeirah Burj Al Arab | Dubai's Most Iconic Hotel | Jumeirah")
+                  // that already contains the parent brand root AND extra entity words, keep the full entity name instead of trailing parent-only suffix!
+                  const p0Alpha = foldAlphaNum(parts[0]);
+                  if (
+                    parts[0] &&
+                    !isGenericOrPlaceholderTitle(parts[0]) &&
+                    !isGenericSeoPart(parts[0]) &&
+                    domRoot.length >= 4 &&
+                    p0Alpha.includes(domRoot) &&
+                    p0Alpha.length > domRoot.length &&
+                    parts[0].split(/\s+/).length >= 2 &&
+                    parts[0].split(/\s+/).length <= 7
+                  ) {
+                    return stripLegalEntityAndNoiseSuffixes(parts[0]);
+                  }
                   // 1. Exact match with domain root (e.g. "Proximus", "Sütaş", "JetBlue")
                   const exactPart = parts.find(p => foldAlphaNum(p) === domRoot && !isGenericOrPlaceholderTitle(p));
                   if (exactPart) return stripLegalEntityAndNoiseSuffixes(exactPart);
@@ -31577,7 +32029,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 logo = extractAuthenticWebsiteLogo($, html, finalUrl, domain);
               }
 
-              const lowerTitle = title.toLowerCase();
+              const lowerTitle = title.toLowerCase().trim();
               if (
                 lowerTitle.includes('consent') || 
                 lowerTitle.includes('cookie') || 
@@ -31587,8 +32039,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 lowerTitle.includes('redirect') ||
                 lowerTitle.includes('cloudflare') ||
                 lowerTitle.includes('just a moment') ||
-                lowerTitle.trim() === '' ||
-                lowerTitle.includes('attention required')
+                lowerTitle === '' ||
+                lowerTitle.includes('attention required') ||
+                /^(?:contact(?:\s+us)?|about(?:\s+us)?|home(?:\s+page)?|welcome|menu|login|sign\s*in|index|untitled|404\b.*)$/i.test(lowerTitle)
               ) {
                 title = '';
                 hasRealExtractedTitle = false;
@@ -32230,7 +32683,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
   // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache
   const searchSuggestCache = new Map<string, { timestamp: number; data: any }>();
-  const suggestBrandResolutionCache = new Map<string, { timestamp: number; title: string; domain: string; category?: string } | null>();
+  const suggestBrandResolutionCache = new Map<string, { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null>();
   const SPAM_AUTOCOMPLETE_REGEX = /\b(?:list|lists|school|schools|review|reviews|phone|phones|number|numbers|salary|salaries|jobs|job|career|careers|wiki|wikipedia|pdf|app|login|signup|reddit|forum|quora|contact|email|hours|rating|ratings|fake|scam|glassdoor|indeed|linkedin|facebook|instagram|youtube|twitter|tiktok|meaning|definition|valuation|portfolio|net\s*worth|stock\s*price|share\s*price)\b/i;
 
   app.get('/api/search-suggest', async (req, res) => {
@@ -32249,6 +32702,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         id?: string;
         title: string;
         domain: string;
+        websiteUrl?: string;
         logoUrl: string;
         category?: string;
         address?: string;
@@ -32261,6 +32715,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         id?: string;
         title: string;
         domain?: string;
+        websiteUrl?: string;
         logoUrl?: string;
         category?: string;
         address?: string;
@@ -32302,6 +32757,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           id: item.id || (hasValidDomain ? dom : undefined),
           title: cleanTitle,
           domain: hasValidDomain ? dom : "",
+          websiteUrl: item.websiteUrl || (hasValidDomain ? `https://${dom}` : undefined),
           logoUrl: logo,
           category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
           address: "",
@@ -32338,6 +32794,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 id: row.id,
                 title,
                 domain: hasDot ? bDom : "",
+                websiteUrl: row.website || pData.website || (hasDot ? `https://${bDom}` : undefined),
                 logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
                 category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
                 address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
@@ -32371,7 +32828,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
       }
 
-      // 2.5 Fast Live Official Website Resolution for unseen queries not yet in DB or KNOWN_OFFICIAL_NAMES
+      // 2.5 Fast Live Official Website Resolution for unseen queries (Knowledge Graph + Wikidata P856 + ad-free search)
       if (!q.includes('.') && q.length >= 3 && !suggestions.some(s => s.domain && s.title.toLowerCase().replace(/\s+/g, '').includes(qNoSpaces))) {
         try {
           const suggestCacheKey = qNoSpaces;
@@ -32381,60 +32838,36 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               addSuggestion({
                 title: cachedBrand.title,
                 domain: cachedBrand.domain,
+                websiteUrl: cachedBrand.websiteUrl,
                 logoUrl: KNOWN_BRAND_LOGOS[cachedBrand.domain] || "",
                 category: cachedBrand.category || "",
                 source: "brand_index"
               });
             }
           } else {
-            const ddgCtrl = new AbortController();
-            const ddgTid = setTimeout(() => ddgCtrl.abort(), 1400);
-            const ddgResp = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
-              signal: ddgCtrl.signal,
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-                "Accept": "text/html,application/xhtml+xml",
-                "Accept-Language": "en-US,en;q=0.9"
+            const discovered = await discoverOfficialBusinessWebsite(q, { fast: true }).catch(() => null);
+            let resolvedTop: { title: string; domain: string; websiteUrl?: string } | null = null;
+            if (discovered && discovered.domain) {
+              const host = discovered.domain;
+              const spelled = extractOfficialBrandSpellingFromText(`${discovered.title} | ${discovered.snippet}`, host);
+              const firstPart = (discovered.title || "").split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "";
+              const merged = mergeOfficialBrandSpellingServer(firstPart || discovered.title, spelled, host);
+              const cand = merged || spelled || formatBusinessName(firstPart || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
+              if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
+                resolvedTop = { title: cand, domain: host, websiteUrl: discovered.url };
               }
-            });
-            clearTimeout(ddgTid);
-            if (ddgResp.ok) {
-              const ddgHtml = await ddgResp.text();
-              const $ddg = cheerio.load(ddgHtml);
-              const skipHosts = new Set(["en.wikipedia.org", "wikipedia.org", "www.wikipedia.org", "linkedin.com", "www.linkedin.com", "facebook.com", "www.facebook.com", "instagram.com", "www.instagram.com", "youtube.com", "www.youtube.com", "twitter.com", "x.com", "reddit.com", "yelp.com", "tripadvisor.com", "glassdoor.com", "crunchbase.com", "bloomberg.com", "forbes.com"]);
-              let resolvedTop: { title: string; domain: string } | null = null;
-              $ddg(".result").slice(0, 6).each((_: any, el: any) => {
-                if (resolvedTop) return;
-                const $a = $ddg(el).find(".result__a").first();
-                const rawHref = $a.attr("href") || "";
-                let targetUrl = rawHref;
-                const uddgM = rawHref.match(/uddg=([^&]+)/i);
-                if (uddgM) {
-                  try { targetUrl = decodeURIComponent(uddgM[1]); } catch {}
-                }
-                const host = cleanDomainName(targetUrl || $ddg(el).find(".result__url").text().trim());
-                if (!host || !host.includes('.') || skipHosts.has(host)) return;
-                const rawTitle = $a.text().replace(/\s+/g, " ").trim();
-                const snippet = $ddg(el).find(".result__snippet").text().replace(/\s+/g, " ").trim();
-                if (!rawTitle) return;
-                const spelled = extractOfficialBrandSpellingFromText(`${rawTitle} | ${snippet}`, host);
-                const firstPart = rawTitle.split(/\s*(?:\||│|｜|—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "";
-                const cand = spelled || formatBusinessName(firstPart || rawTitle, host, undefined, { fromWebsite: true, fallbackText: snippet });
-                if (cand && cand.length >= 2 && cand.length <= 50 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
-                  resolvedTop = { title: cand, domain: host };
-                }
+            }
+            if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
+            suggestBrandResolutionCache.set(suggestCacheKey, resolvedTop);
+            if (resolvedTop) {
+              addSuggestion({
+                title: resolvedTop.title,
+                domain: resolvedTop.domain,
+                websiteUrl: resolvedTop.websiteUrl,
+                logoUrl: KNOWN_BRAND_LOGOS[resolvedTop.domain] || "",
+                category: "",
+                source: "brand_index"
               });
-              if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
-              suggestBrandResolutionCache.set(suggestCacheKey, resolvedTop);
-              if (resolvedTop) {
-                addSuggestion({
-                  title: (resolvedTop as any).title,
-                  domain: (resolvedTop as any).domain,
-                  logoUrl: KNOWN_BRAND_LOGOS[(resolvedTop as any).domain] || "",
-                  category: "",
-                  source: "brand_index"
-                });
-              }
             }
           }
         } catch {}
@@ -32463,7 +32896,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         } catch(e) {}
 
-        const JUNK_KEYWORDS = ['menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook', 'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in', 'checkin', 'portfolio', 'valuation', 'net worth', 'logo', 'founder', 'founders', 'ceo', 'stock', 'share price', 'flight', 'flights'];
+        const JUNK_KEYWORDS = [
+          'menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook',
+          'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in',
+          'checkin', 'portfolio', 'valuation', 'net worth', 'logo', 'founder', 'founders', 'ceo', 'stock',
+          'share price', 'flight', 'flights', 'booking', 'booking.com', 'boeken', 'expedia', 'trivago',
+          'agoda', 'hotels.com', 'trip.com', 'airbnb', 'price', 'prices', 'per night', 'cost', 'room',
+          'rooms', 'suite', 'suites', 'closed', 'facts', 'fun facts', 'tickets', 'ticket', 'dress code',
+          'height', 'inside', 'owner', 'owners', 'maps', 'directions', 'images', 'pictures'
+        ];
 
         for (const phrase of combinedPhrases) {
           if (suggestions.length >= 8) break;
@@ -32471,7 +32912,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const phraseLower = phraseClean.toLowerCase();
           const phraseNoSpaces = phraseLower.replace(/\s+/g, '');
 
-          // Skip junk phrases (e.g., "smith's tavern menu", "jet blue flight 292", "door dashing meaning")
+          // Skip junk phrases (e.g., "smith's tavern menu", "jet blue flight 292", "burj al arab hotel booking.com")
           if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
             continue;
           }
@@ -32488,6 +32929,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const vLower = v.toLowerCase();
               const vNoSpaces = vLower.replace(/\s+/g, '');
               
+              // Never match an OTA/aggregator/directory domain from a multi-word search query (e.g. "burj al arab booking")
+              if (kLower.includes('.') && isDisallowedNonOfficialHost(kLower, q)) {
+                return false;
+              }
+
               // Prevent tiny brand keywords (like "ing" or "at") from matching substrings of longer words (like "cleaning" or "creative")
               if (kLower.length <= 3 || vLower.length <= 3) {
                 const kWordRegex = new RegExp(`\\b${kLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
@@ -32504,16 +32950,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               );
             });
             if (matchedEntry) {
-              targetDom = matchedEntry[0].includes('.') ? matchedEntry[0] : (matchedEntry[1].includes('.') ? matchedEntry[1] : (KNOWN_OFFICIAL_NAMES[matchedEntry[0] + '.com'] ? matchedEntry[0] + '.com' : ''));
+              const candDom = matchedEntry[0].includes('.') ? matchedEntry[0] : (matchedEntry[1].includes('.') ? matchedEntry[1] : (KNOWN_OFFICIAL_NAMES[matchedEntry[0] + '.com'] ? matchedEntry[0] + '.com' : ''));
+              if (candDom && !isDisallowedNonOfficialHost(candDom, q)) {
+                targetDom = candDom;
+              }
             }
           }
 
-          // Skip redundant/typo-spaced raw Google autocomplete sub-queries when an official/DB business with the same compact brand prefix is already resolved
-          // e.g. skip "Jet Blue Airlines", "Jetblue Airways", "Door Dashing", "Cloud Flare Login" when "JetBlue", "DoorDash", "Cloudflare" is already present!
+          // Skip redundant/unverified Google autocomplete sub-queries when an official/DB business covering the same entity tokens is already resolved
+          const phraseDistinctiveTokens = phraseLower.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length >= 3 && !GENERIC_QUERY_STOPWORDS.has(w));
           if (!targetDom && suggestions.some(s => {
             if (!s.domain) return false;
             const sNoSpace = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-            return sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace));
+            const sTitleLow = s.title.toLowerCase();
+            if (sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace))) return true;
+            if (phraseDistinctiveTokens.length >= 2 && phraseDistinctiveTokens.every(tok => sTitleLow.includes(tok))) return true;
+            return false;
           })) {
             continue;
           }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -34,6 +34,7 @@ export interface SuggestionItem {
   id?: string;
   title: string;
   domain: string;
+  websiteUrl?: string;
   logoUrl?: string;
   category?: string;
   address?: string;
@@ -342,7 +343,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const seedAndOpenDomainPlace = (domain: string, preferredTitle?: string, logoUrl?: string) => {
+  const seedAndOpenDomainPlace = (domain: string, preferredTitle?: string, logoUrl?: string, websiteUrl?: string) => {
     const cleanDom = extractCleanDomain(domain);
     if (!cleanDom) return;
     const existing = places.find((p) => {
@@ -351,10 +352,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     });
     const existingValidName = existing?.name && !isDomainStemName(existing.name, cleanDom) && !isFalseSplitOfDomain(existing.name, cleanDom) && !isFalseSplitAgainstText(existing.name, existing.description, cleanDom) && !isGenericSeoSlogan(existing.name, cleanDom) ? existing.name : "";
     const validPreferred = preferredTitle && !isDomainStemName(preferredTitle, cleanDom) && !isFalseSplitOfDomain(preferredTitle, cleanDom) && !isGenericSeoSlogan(preferredTitle, cleanDom) ? preferredTitle : "";
+    const hasSpecificUrlPath = (() => {
+      try {
+        const u = new URL(websiteUrl || "");
+        const segs = u.pathname.split("/").filter(Boolean);
+        return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
+      } catch { return false; }
+    })();
     const officialName =
-      KNOWN_OFFICIAL_NAMES[cleanDom] ||
+      (!hasSpecificUrlPath ? KNOWN_OFFICIAL_NAMES[cleanDom] : undefined) ||
       validPreferred ||
       existingValidName ||
+      KNOWN_OFFICIAL_NAMES[cleanDom] ||
       formatBusinessName(cleanDom, cleanDom) ||
       cleanDom;
 
@@ -363,7 +372,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           ...existing,
           name: officialName || existing.name,
           brandDomain: cleanDom,
-          website: existing.website || `https://${cleanDom}`
+          website: websiteUrl || existing.website || `https://${cleanDom}`
         }
       : {
           id: cleanDom,
@@ -388,7 +397,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           isOpen: true,
           phone: "",
           email: "",
-          website: `https://${cleanDom}`,
+          website: websiteUrl || `https://${cleanDom}`,
           priceRange: "N/A",
           plusCode: "",
           description: "",
@@ -489,7 +498,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           s.domain.toLowerCase().includes(qNoSpace))
     );
     if (topBusinessSuggestion) {
-      seedAndOpenDomainPlace(topBusinessSuggestion.domain, topBusinessSuggestion.title, topBusinessSuggestion.logoUrl);
+      seedAndOpenDomainPlace(topBusinessSuggestion.domain, topBusinessSuggestion.title, topBusinessSuggestion.logoUrl, topBusinessSuggestion.websiteUrl);
       return;
     }
 
@@ -509,8 +518,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           const rawMetaName = (meta.siteName && !isDomainDerivedGuess(meta.siteName, resolvedDomain) && !isFalseSplitOfDomain(meta.siteName, resolvedDomain))
             ? meta.siteName
             : (meta.title || meta.siteName || descBrand || trimmed);
-          const officialName = KNOWN_OFFICIAL_NAMES[resolvedDomain]
-            || officialBrand
+          const hasSpecificUrlPath = (() => {
+            try {
+              const segs = new URL(meta.url || "").pathname.split("/").filter(Boolean);
+              return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
+            } catch { return false; }
+          })();
+          const mergedMetaName = mergeOfficialBrandSpelling(rawMetaName, officialBrand, resolvedDomain);
+          const officialName = (!hasSpecificUrlPath ? KNOWN_OFFICIAL_NAMES[resolvedDomain] : undefined)
+            || (mergedMetaName ? formatBusinessName(mergedMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description }) || mergedMetaName : "")
             || formatBusinessName(rawMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description })
             || descBrand
             || trimmed;
@@ -608,9 +624,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     const candidateDom = extractCleanDomain(item.domain || "");
     const candidateId = extractCleanDomain(item.id || "");
     if (candidateDom && isValidDomainUrl(candidateDom)) {
-      seedAndOpenDomainPlace(candidateDom, item.title, item.logoUrl);
+      seedAndOpenDomainPlace(candidateDom, item.title, item.logoUrl, item.websiteUrl);
     } else if (candidateId && isValidDomainUrl(candidateId)) {
-      seedAndOpenDomainPlace(candidateId, item.title, item.logoUrl);
+      seedAndOpenDomainPlace(candidateId, item.title, item.logoUrl, item.websiteUrl);
     } else {
       resolveAndOpenBusiness(item.title || item.domain || item.id || "");
     }
