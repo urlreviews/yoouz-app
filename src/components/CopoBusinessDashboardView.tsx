@@ -2077,7 +2077,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       placeBannerUrl: finalBannerUrl,
       photos: finalBannerUrl 
         ? [finalBannerUrl, ...(currentPlace.photos || []).filter(p => p && p !== finalBannerUrl && !p.includes('yoouz.com/og-banner.png') && !p.includes('placeholder'))] 
-        : (currentPlace.photos || []).filter(p => p && !p.includes('yoouz.com/og-banner.png') && !p.includes('placeholder'))
+        : (currentPlace.photos || []).filter(p => p && !p.includes('yoouz.com/og-banner.png') && !p.includes('placeholder')),
+      customEdited: true,
+      customized: true
     };
 
     // Persist to server database (BunnyDB NoSQL)

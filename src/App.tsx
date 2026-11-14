@@ -4244,7 +4244,7 @@ export function App() {
           totalReviews: 8,
           ratingDistribution: { stars5: 7, stars4: 1, stars3: 0, stars2: 0, stars1: 0 },
           photos: [
-            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80"
+            "/api/brand-banner/colonyclothing.net"
           ],
           openingHours: "Mon-Sat: 11:00 AM - 8:00 PM, Sun: Closed",
           isOpen: true,
@@ -4252,7 +4252,7 @@ export function App() {
           website: "https://colonyclothing.net",
           priceRange: "$$$$",
           description: "Colony Clothing is a premier luxury menswear destination combining bespoke British tailoring with contemporary Japanese minimalism. Verified sample profile showcasing streamlined layout, unified contact card, and uncluttered action buttons.",
-          bannerUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+          bannerUrl: "/api/brand-banner/colonyclothing.net",
           logoUrl: "https://colonyclothing.net/favicon.ico",
           lat: 1.2862,
           lng: 103.8492,
@@ -4441,8 +4441,8 @@ export function App() {
                   ...p,
                   ...fetchedPlace,
                   name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
-                  bannerUrl: knownBrandBanner || ((fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || "")),
-                  logoUrl: isFetchedLogoDistinct ? fetchedPlace.logoUrl : (isExistingLogoDistinct ? p.logoUrl : (fetchedPlace.logoUrl || p.logoUrl || fetchedPlace.bannerUrl || p.bannerUrl || ""))
+                  bannerUrl: knownBrandBanner || ((fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || (cleanDomKey && cleanDomKey.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomKey)}` : ""))),
+                  logoUrl: isFetchedLogoDistinct ? fetchedPlace.logoUrl : (isExistingLogoDistinct ? p.logoUrl : ((fetchedPlace.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl) ? fetchedPlace.logoUrl : ((p.logoUrl && p.logoUrl !== p.bannerUrl) ? p.logoUrl : (getCleanLogoUrl(null, cleanDomKey) || ""))))
                 };
               });
             }
@@ -4530,16 +4530,18 @@ export function App() {
                 };
                 const isGoodPhoto = (u?: string | null) => Boolean(u && !isBadBanner(u) && !u.includes("/api/brand-banner"));
                 const cleanDomainLookup = (resolvedDom || cleanId || "").toLowerCase().replace(/^www\./, "").trim();
+                const knownBrandBanner = (cleanDomainLookup && (KNOWN_BRAND_BANNERS[cleanDomainLookup] || KNOWN_BRAND_BANNERS[`www.${cleanDomainLookup}`])) || "";
+                const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
                 const existingGoodBanner = isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : "";
-                const effectiveBannerCandidate = knownBrandBanner 
+                const effectiveBannerCandidate = knownBrandBanner
                   || existingGoodBanner
-                  || (isGoodPhoto(metaData.image) ? metaData.image : "");
+                  || (isGoodPhoto(metaData.image) ? metaData.image : "")
+                  || (canonicalId.includes(".") ? `/api/brand-banner/${encodeURIComponent(canonicalId)}` : "");
                 const effectiveLogoCandidate = (existingValidLogo && !isWhiteOrInvertedLogo(existingValidLogo))
                   ? existingValidLogo
-                  : ((isValidLogo(metaData.logo) && metaData.logo !== effectiveBannerCandidate) 
-                    ? metaData.logo 
-                    : (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || '') : '') || effectiveBannerCandidate);
-                const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
+                  : ((isValidLogo(metaData.logo) && metaData.logo !== effectiveBannerCandidate)
+                    ? metaData.logo
+                    : (resolvedDom ? (getCleanLogoUrl(null, resolvedDom, effectiveBannerCandidate) || `/api/favicon?domain=${encodeURIComponent(resolvedDom)}`) : ""));
                 const isCanonicalValidDomain = isValidDomainUrl(canonicalId);
                 const enriched: Place = {
                   id: canonicalId,
@@ -7043,7 +7045,7 @@ export function App() {
     if (!canonicalSaveId || !isValidDomainUrl(canonicalSaveId)) return;
 
     try {
-      const payload = { data: { ...updatedPlace, id: canonicalSaveId, brandDomain: canonicalSaveId, customEdited: true }, merge: true };
+      const payload = { data: { ...updatedPlace, id: canonicalSaveId, brandDomain: canonicalSaveId }, merge: true };
       fetch(`/api/nosql/places/${encodeURIComponent(canonicalSaveId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

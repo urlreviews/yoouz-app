@@ -224,7 +224,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
       reader.onload = async (ev) => {
         try {
           const base64 = ev.target?.result as string;
-          const targetId = place.id || place.brandDomain || 'yoouz.com';
+          const targetId = place?.id || place?.brandDomain || 'yoouz.com';
           const uploadRes = await fetch("/api/business/upload-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -254,7 +254,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
       reader.onload = async (ev) => {
         try {
           const base64 = ev.target?.result as string;
-          const targetId = place.id || place.brandDomain || 'yoouz.com';
+          const targetId = place?.id || place?.brandDomain || 'yoouz.com';
           const uploadRes = await fetch("/api/business/upload-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1051,19 +1051,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const cleanDomainKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().replace(/^www\./, "").trim();
     const domainDirectBanner = cleanDomainKey ? (KNOWN_BRAND_BANNERS[cleanDomainKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomainKey}`] || "") : "";
-
-    // 1. Authoritative verified domain banner takes absolute precedence and locks to ONE image
-    if (domainDirectBanner && isAuthentic(domainDirectBanner)) {
-      return [domainDirectBanner];
-    }
-
-    // 2. Authoritative place.bannerUrl from verified database record
     const authenticPlaceBanner = isAuthentic(place.bannerUrl) ? place.bannerUrl : "";
-    if (authenticPlaceBanner) {
-      return [authenticPlaceBanner, ...(place.photos || []).filter(isAuthentic)].filter((v, i, a) => a.indexOf(v) === i);
-    }
 
     const photoCandidates = [
+      domainDirectBanner,
+      authenticPlaceBanner,
       knownDomainBanner,
       cleanBannerUrl,
       validCachedBanner,
@@ -1078,6 +1070,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     return Array.from(new Set(photoCandidates));
   }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl, place.bannerUrl]);
+
+  const fallbackBrandBannerUrl = React.useMemo(() => {
+    const key = (drawerDomain || place.brandDomain || place.id || displayedPlaceName || "").trim();
+    if (!key) return "";
+    return `/api/brand-banner/${encodeURIComponent(key)}`;
+  }, [drawerDomain, place.brandDomain, place.id, displayedPlaceName]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;
   const currentBannerCandidate = React.useMemo(
@@ -1576,20 +1574,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Full-Frame Banner Canvas */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center z-10">
-          {(!hasAuthenticPhoto || bannerError) && primaryLogoUrl ? (
-            <div className="flex flex-col items-center justify-center p-6 opacity-35 select-none pointer-events-none">
-              <img
-                src={getProxiedImageUrl(primaryLogoUrl)}
-                alt=""
-                className="max-w-[140px] max-h-[70px] object-contain drop-shadow"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+        {/* Full-Frame Banner Canvas — always edge-to-edge full frame, never a small logo */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
+          {fallbackBrandBannerUrl ? (
+            <img
+              src={fallbackBrandBannerUrl}
+              alt={displayedPlaceName}
+              className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+            />
           ) : (
-            <div className="absolute inset-0 w-full h-full bg-zinc-950" />
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/15 to-black/25 pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
@@ -1936,7 +1932,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     }
 
                     if (onStartChat) {
-                      onStartChat(place.id, place.name, getPlaceLogoUrl(place));
+                      onStartChat(place.id, place.name, getPlaceLogoUrl(place) || "");
                     }
                   }}
                   className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"

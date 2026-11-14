@@ -1047,37 +1047,46 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           <div className="w-full bg-zinc-900 rounded-3xl border border-zinc-800 shadow-xl overflow-hidden mb-8">
-            {/* Top Hero Banner Canvas - Render ONLY authentic website cover image or clean neutral header */}
+            {/* Top Hero Banner Canvas - Always render full-frame edge-to-edge banner */}
             {(() => {
               const rawBanner = searchedPlace.bannerUrl || searchedPlace.ogImage || (searchedPlace.photos && searchedPlace.photos[0]);
-              const hasRealBanner = rawBanner && typeof rawBanner === "string" && rawBanner.trim().length > 0 && !rawBanner.includes("placeholder") && !rawBanner.startsWith("data:image/svg");
+              const domKey = extractCleanDomain(searchedPlace.brandDomain || searchedPlace.website || searchedPlace.id || "") || searchedPlace.id || searchedPlace.name;
+              const fallbackBrandBanner = domKey ? `/api/brand-banner/${encodeURIComponent(domKey)}` : "";
+              const knownOverride = domKey ? (KNOWN_BRAND_BANNERS[domKey] || KNOWN_BRAND_BANNERS[`www.${domKey}`] || "") : "";
+              const hasRealBanner = Boolean(
+                rawBanner &&
+                typeof rawBanner === "string" &&
+                rawBanner.trim().length > 0 &&
+                !isBadBanner(rawBanner) &&
+                !rawBanner.startsWith("data:image/svg")
+              );
+              const targetBannerSrc = knownOverride || (hasRealBanner ? getProxiedImageUrl(rawBanner!) : "") || fallbackBrandBanner;
 
-              if (hasRealBanner) {
-                return (
-                  <div className="w-full h-52 sm:h-72 relative overflow-hidden bg-zinc-950 flex items-center justify-center">
-                    <img 
-                      src={getProxiedImageUrl(rawBanner)} 
-                      alt={searchedPlace.name} 
-                      className="w-full h-full object-cover" 
+              return (
+                <div className="w-full h-52 sm:h-72 relative overflow-hidden bg-zinc-950 flex items-center justify-center">
+                  {targetBannerSrc ? (
+                    <img
+                      src={targetBannerSrc}
+                      alt={searchedPlace.name}
+                      className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                       onLoad={(e) => {
-                        if (e.currentTarget.naturalWidth <= 1) {
-                          e.currentTarget.style.display = 'none';
+                        const img = e.currentTarget;
+                        if (img.naturalWidth < 160 || img.naturalHeight < 70) {
+                          if (fallbackBrandBanner && !img.src.includes("/api/brand-banner")) {
+                            img.src = fallbackBrandBanner;
+                          }
                         }
                       }}
                       onError={(e) => {
-                        e.currentTarget.style.display = 'none';
+                        const img = e.currentTarget;
+                        if (fallbackBrandBanner && !img.src.includes("/api/brand-banner")) {
+                          img.src = fallbackBrandBanner;
+                        }
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60" />
-                  </div>
-                );
-              }
-
-              return (
-                <div className="w-full h-24 sm:h-32 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-zinc-800/80 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(63,63,70,0.15),transparent_50%)]" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 to-transparent" />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60 pointer-events-none" />
                 </div>
               );
             })()}

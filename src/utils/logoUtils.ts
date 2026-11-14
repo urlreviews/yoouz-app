@@ -68,6 +68,16 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("e38a618dc3d7f77ef4d2") ||
     clean.includes("32d4ea2b0431a78ba799") ||
     clean.includes("8340a3798fa52257a148") ||
+    clean.includes("s0.wp.com/i/blank") ||
+    clean.includes("/i/blank.jpg") ||
+    clean.includes("blank.jpg") ||
+    clean.includes("shutterstock.com") ||
+    clean.includes("logoheader") ||
+    clean.includes("1024x170") ||
+    clean.includes("navigation-tile") ||
+    clean.includes("/catalog/product/") ||
+    clean.includes("/lookbook/") ||
+    clean.includes("/pdp/") ||
     /\/flags?\//i.test(clean) ||
     /[-_/](?:flag|flags|flagicon|flag[-_]?icon|locale[-_]?icon|lang[-_]?icon|country[-_]?flag|language[-_]?flag)[-_/.]/i.test(clean) ||
     /\/(?:wpml-ls|gtranslate|polylang|weglot|trp-language)\//i.test(clean) ||
@@ -199,6 +209,14 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('sprite') ||
     u.includes('hamburger') ||
     u.includes('frame-2147207294656') ||
+    u.includes('s0.wp.com/i/blank') ||
+    u.includes('/i/blank.jpg') ||
+    u.includes('blank.jpg') ||
+    u.includes('shutterstock.com') ||
+    u.includes('logoheader') ||
+    u.includes('1024x170') ||
+    u.includes('navigation-tile') ||
+    u.includes('/catalog/product/') ||
     u.includes('data:image/svg')
   );
 }
@@ -1130,7 +1148,23 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
   "www.outlander.vc": "https://outlander.vc/wp-content/themes/outlander/assets/imgs/logo.png",
   "threshold.vc": "/api/favicon?domain=threshold.vc",
-  "www.threshold.vc": "/api/favicon?domain=threshold.vc"
+  "www.threshold.vc": "/api/favicon?domain=threshold.vc",
+  "mcdonalds.com": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+  "www.mcdonalds.com": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+  "mcdonalds": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+  "uniqlo.com": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
+  "www.uniqlo.com": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
+  "uniqlo": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
+  "wolt.com": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+  "www.wolt.com": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+  "wolt": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+  "calvinklein.com": "https://www.google.com/s2/favicons?domain=calvinklein.com&sz=256",
+  "www.calvinklein.com": "https://www.google.com/s2/favicons?domain=calvinklein.com&sz=256",
+  "calvinklein": "https://www.google.com/s2/favicons?domain=calvinklein.com&sz=256",
+  "webflow.com": "https://www.google.com/s2/favicons?domain=webflow.com&sz=256",
+  "www.webflow.com": "https://www.google.com/s2/favicons?domain=webflow.com&sz=256",
+  "researchgate.net": "https://www.google.com/s2/favicons?domain=researchgate.net&sz=256",
+  "www.researchgate.net": "https://www.google.com/s2/favicons?domain=researchgate.net&sz=256"
 };
 
 // High-fidelity fallback hero banner images for verified businesses (Only authentic domain assets, NO mock or stock photos)
@@ -1142,21 +1176,17 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "www.aleph.vc": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
   "aleph": "https://cdn.prod.website-files.com/670ca83cf63fc368062b2d3a/6757fd66b08c7c2009504b8e_Meta%20image%20Aleph.jpg",
-  "intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
-  "www.intuition.vc": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
-  "intuition": "https://cdn.prod.website-files.com/652f1e1f185db21d8b671a5c/6538d58c8dbcc6fb3b2e5926_opengraph.jpg",
-  "allincapital.vc": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
-  "www.allincapital.vc": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
-  "allincapital": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
-  "all in capital": "https://cdn.prod.website-files.com/62c4a96b3a0e19a4e21d6df3/62c8230bbd743a137efddfbb_Og%20Image.png",
+  "intuition.vc": "https://storage.googleapis.com/gpt-engineer-file-uploads/8BI6ImMSmxbtwLRLKuwp9FUxnBb2/social-images/social-1778338619259-Screenshot_2026-05-09_at_10.56.38.webp",
+  "www.intuition.vc": "https://storage.googleapis.com/gpt-engineer-file-uploads/8BI6ImMSmxbtwLRLKuwp9FUxnBb2/social-images/social-1778338619259-Screenshot_2026-05-09_at_10.56.38.webp",
+  "intuition": "https://storage.googleapis.com/gpt-engineer-file-uploads/8BI6ImMSmxbtwLRLKuwp9FUxnBb2/social-images/social-1778338619259-Screenshot_2026-05-09_at_10.56.38.webp",
   "pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "www.pico.partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico venture partners": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
   "pico": "https://images.squarespace-cdn.com/content/v1/5c50ba20f93fd4fd6af8a558/1636758165182-WWIUZMEQ29VPMZ99D3S7/ALK_8054.jpg?format=1500w",
-  "gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
-  "www.gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
-  "gefencapital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
-  "gefen capital": "https://gefencapital.com/wp-content/uploads/2019/06/cropped-Untitled-design-45-2.png",
+  "gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/architecture-1914309_1920.jpg",
+  "www.gefencapital.com": "https://gefencapital.com/wp-content/uploads/2019/06/architecture-1914309_1920.jpg",
+  "gefencapital": "https://gefencapital.com/wp-content/uploads/2019/06/architecture-1914309_1920.jpg",
+  "gefen capital": "https://gefencapital.com/wp-content/uploads/2019/06/architecture-1914309_1920.jpg",
   "nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "www.nfx.com": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
   "nfx": "https://www.nfx.com/images/ogimages/_nfx-graphic-generic._001.jpg",
@@ -1178,9 +1208,9 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "zara.com": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
   "www.zara.com": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
   "zara": "https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/f33c0d154328061.633ff20e30c20.jpg",
-  "anthropic.com": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
-  "www.anthropic.com": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
-  "anthropic": "https://cdn.sanity.io/images/4zrzovbb/website/c07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg",
+  "anthropic.com": "https://assets.claude.com/6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
+  "www.anthropic.com": "https://assets.claude.com/6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
+  "anthropic": "https://assets.claude.com/6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
   "refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
   "www.refalo.legal": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
   "refalo": "https://refalo.legal/wp-content/uploads/2023/11/Commercial-Law-scaled.jpg",
@@ -1196,9 +1226,6 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "jollibee.com.au": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "jollibee": "https://cdn.manilastandard.net/wp-content/uploads/2023/10/jollibee.jpg",
   "healis.be": "https://www.healis.be/sites/default/files/styles/article_teaser/public/media/image/2026-06/healis-apotheeksintjacob-apotheek1.jpg",
-  "chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
-  "www.chaimkevip.com": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
-  "chaimkevip": "https://chaimkevip.com/wp-content/uploads/2023/05/bus-coastal.jpg",
   "proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
   "www.proximus.be": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
   "proximus": "https://www.proximus.be/dam/jcr:2107f91a-116b-445d-bb92-1e8d36819341/cdn/sites/iportal/images/social_network/proximus-social-default~2018-02-20-10-48-53~cache.jpg",
@@ -1221,10 +1248,10 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
   "www.hertz.com": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
   "hertz": "https://images.hertz.com/content/dam/irac/Overlay/enUS/Heroes/Homepage_Valley_Hero_Desktop.jpg",
-  "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2020/09/LogoHeader-1024x170.png",
-  "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2020/09/LogoHeader-1024x170.png",
-  "lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/07/injury-lawyer.jpg",
-  "www.lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/07/injury-lawyer.jpg",
+  "nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/01/weathered-hands-of-african-woman-1024x819-1.jpg",
+  "www.nevadalegalservices.org": "https://nevadalegalservices.org/wp-content/uploads/2021/01/weathered-hands-of-african-woman-1024x819-1.jpg",
+  "lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/06/LERNER_ROWE_2560x1440-1.jpg",
+  "www.lernerandrowe.com": "https://lernerandrowe.com/wp-content/uploads/2022/06/LERNER_ROWE_2560x1440-1.jpg",
   "mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
   "www.mcveaghfleming.co.nz": "https://cdn.prod.website-files.com/64efab8a0be0daa6d5f3a0bb%2F6a0e5821afe1e53006b02834_Homepage%20video_poster.0000000.jpg",
   "vanlawfirm.com": "https://vanlawfirm.com/wp-content/uploads/2021/02/Sandy-Van.png",
@@ -1234,14 +1261,31 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "starbucks.com": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
   "www.starbucks.com": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
   "starbucks": "https://content-prod-live.cert.starbucks.com/binary/v2/asset/137-112587.jpg",
-  "nike.com": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
-  "www.nike.com": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
-  "nike": "https://static.nike.com/a/images/f_auto/dpr_1.0,cs_srgb/w_1824,c_limit/0285beeb-9d10-4034-8da0-e3eb6c33e8c8/nike-just-do-it.jpg",
-  "mcdonalds.com": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
-  "www.mcdonalds.com": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
-  "mcdonalds": "https://www.mcdonalds.com/content/dam/sites/usa/nfl/publication/1PUB_Desktop_HomeHero_1168x520.jpg",
-  "apple.com": "https://www.apple.com/v/home/ch/images/heroes/apple-vision-pro/hero_apple_vision_pro__b6cug2v88f2u_large.jpg",
-  "www.apple.com": "https://www.apple.com/v/home/ch/images/heroes/apple-vision-pro/hero_apple_vision_pro__b6cug2v88f2u_large.jpg",
+  "nike.com": "https://c.static-nike.com/a/images/w_1920,c_limit/mdbgldn6yg1gg88jomci/image.jpg",
+  "www.nike.com": "https://c.static-nike.com/a/images/w_1920,c_limit/mdbgldn6yg1gg88jomci/image.jpg",
+  "nike": "https://c.static-nike.com/a/images/w_1920,c_limit/mdbgldn6yg1gg88jomci/image.jpg",
+  "mcdonalds.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg/1280px-McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg",
+  "www.mcdonalds.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg/1280px-McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg",
+  "mcdonalds": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg/1280px-McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg",
+  "apple.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/1280px-Aerial_view_of_Apple_Park_dllu.jpg",
+  "www.apple.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/1280px-Aerial_view_of_Apple_Park_dllu.jpg",
+  "uniqlo.com": "https://upload.wikimedia.org/wikipedia/commons/0/09/Uniqlo_Ginza_2018.jpg",
+  "www.uniqlo.com": "https://upload.wikimedia.org/wikipedia/commons/0/09/Uniqlo_Ginza_2018.jpg",
+  "uniqlo": "https://upload.wikimedia.org/wikipedia/commons/0/09/Uniqlo_Ginza_2018.jpg",
+  "wolt.com": "https://images.ctfassets.net/23u853certza/6tLKZH6rIYc2iGygoTmbvQ/6db1aeb9a7386c127560281931764b0d/og_image_mall_web__1_.jpeg",
+  "www.wolt.com": "https://images.ctfassets.net/23u853certza/6tLKZH6rIYc2iGygoTmbvQ/6db1aeb9a7386c127560281931764b0d/og_image_mall_web__1_.jpeg",
+  "wolt": "https://images.ctfassets.net/23u853certza/6tLKZH6rIYc2iGygoTmbvQ/6db1aeb9a7386c127560281931764b0d/og_image_mall_web__1_.jpeg",
+  "calvinklein.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
+  "www.calvinklein.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
+  "calvinklein": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
+  "amazon.com": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Amazon_Tower_I_topped_out%2C_June_2015.jpg",
+  "www.amazon.com": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Amazon_Tower_I_topped_out%2C_June_2015.jpg",
+  "whatsapp.com": "https://static.whatsapp.net/rsrc.php/v4/yO/r/rukeqTVNJDY.png",
+  "www.whatsapp.com": "https://static.whatsapp.net/rsrc.php/v4/yO/r/rukeqTVNJDY.png",
+  "webflow.com": "https://cdn.prod.website-files.com/6009ec8cda7f305645c9d91b/651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
+  "www.webflow.com": "https://cdn.prod.website-files.com/6009ec8cda7f305645c9d91b/651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
+  "researchgate.net": "https://help.researchgate.net/~gitbook/ogimage/3q12zViWfUdoji7mB0vm",
+  "www.researchgate.net": "https://help.researchgate.net/~gitbook/ogimage/3q12zViWfUdoji7mB0vm",
   "isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
   "www.isrotel.co.il": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
   "isrotel": "https://cdn.speedsize.com/61a206a8-07c4-46c9-b2ac-07edd20dd59d/https://media.isrotel.co.il/umb/29735/desktop.jpg/f_auto",
@@ -1250,30 +1294,25 @@ const RAW_KNOWN_BRAND_BANNERS: Record<string, string> = {
   "azrieli.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
   "www.azrieli.com": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
   "azrieli": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Azrieli_Center_From_ToHa_2019-12.jpg/3840px-Azrieli_Center_From_ToHa_2019-12.jpg",
-  "danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
-  "www.danhotels.co.il": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
-  "danhotels.com": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
-  "danhotels": "https://www.danhotels.com/sites/default/files/styles/hero_image_desktop/public/2023-01/Dan_Eilat_Hero_Desktop.jpg",
-  "clubhotels-israel.com": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "www.clubhotels-israel.com": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "clubhotels.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "clubhotel.co.il": "https://www.clubhotel.co.il/images/header-eilat.jpg",
-  "clubhotel": "https://www.clubhotel.co.il/images/header-eilat.jpg",
+  "danhotels.co.il": "https://www.danhotels.com/sites/default/files/2024-11/SLIDER%20DESKTOP%20B%201920X600-1.png",
+  "www.danhotels.co.il": "https://www.danhotels.com/sites/default/files/2024-11/SLIDER%20DESKTOP%20B%201920X600-1.png",
+  "danhotels.com": "https://www.danhotels.com/sites/default/files/2024-11/SLIDER%20DESKTOP%20B%201920X600-1.png",
+  "danhotels": "https://www.danhotels.com/sites/default/files/2024-11/SLIDER%20DESKTOP%20B%201920X600-1.png",
   "switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "www.switch.com.mt": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "switch": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
   "switchmalta": "https://switch.com.mt/wp-content/uploads/2025/10/FurnitubesHeroSlides-Switch25-1.webp",
-  "2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
-  "www.2b.vc": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
-  "2b": "https://web.archive.org/web/20220712184442im_/https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "2b.vc": "https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "www.2b.vc": "https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
+  "2b": "https://www.2b.vc/wp-content/uploads/2022/05/TBS_2951-1-1-1.png",
   "havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
   "www.havenhomecleaning.com": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
   "havenhomecleaning": "https://havenhomecleaning.com/wp-content/uploads/2025/11/banner_bg.png",
   "dominos.com": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
   "www.dominos.com": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
   "dominos": "https://www.dominos.com.au/ManagedAssets/AU/product/M006D/AU_M006D_en_hero_12070.jpg?v-157310378",
-  "toureiffel.paris": "https://www.toureiffel.paris/themes/custom/tour_eiffel/img/decouvrir-la-tour-eiffel-landing.jpg",
-  "www.toureiffel.paris": "https://www.toureiffel.paris/themes/custom/tour_eiffel/img/decouvrir-la-tour-eiffel-landing.jpg",
+  "toureiffel.paris": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/960px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg",
+  "www.toureiffel.paris": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/960px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg",
   "villaggiohotels.ae": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1a/59/2b/40/villaggio-hotel-abu-dhabi.jpg?w=1200&h=-1&s=1",
   "www.villaggiohotels.ae": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1a/59/2b/40/villaggio-hotel-abu-dhabi.jpg?w=1200&h=-1&s=1",
   "ritzcarlton.com": "https://cdn.travelpeacockmagazine.com/wp-content/uploads/2023/03/Ritz-Carlton_4.jpg",
@@ -1789,7 +1828,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 export function getLiveWebsiteBannerUrl(domain?: string | null): string {
   const cleanDomain = extractDomain(domain || "");
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `/api/favicon?domain=${encodeURIComponent(cleanDomain)}`;
+    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
   }
   return "";
 }
