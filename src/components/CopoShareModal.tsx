@@ -345,13 +345,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   // Pre-generate dynamic social preview image url (server generated composite)
   const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
-  const previewImageUrl = `${appOrigin}/api/og-image.png?${
-    isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=33`
-      : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=33`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=33`
-  }`;
+  const previewImageUrl = isVideoMode && video
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=26`
+    : (isBusiness || propIsBusinessProfile)
+    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=34`
+    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=39`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");

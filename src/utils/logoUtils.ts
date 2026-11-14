@@ -445,6 +445,12 @@ export const JOLLIBEE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBo
 </svg>`;
 export const JOLLIBEE_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(JOLLIBEE_LOGO_SVG)}`;
 
+export const ANTHROPIC_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="22" fill="#FAF9F5"/>
+  <path d="M58.4 26H68.8L86 74H75.2L63.6 40.2L52 74H41.2L58.4 26ZM33.2 26H44L61.2 74H50.4L46.8 63.4H29.6L26 74H15.2L33.2 26ZM32.8 54H43.6L38.2 37.8L32.8 54Z" fill="#141413"/>
+</svg>`;
+export const ANTHROPIC_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ANTHROPIC_LOGO_SVG)}`;
+
 export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <rect width="100" height="100" rx="22" fill="#ffffff"/>
   <text x="50" y="62" font-family="'Times New Roman', Georgia, serif" font-weight="900" font-size="26" fill="#000000" text-anchor="middle" letter-spacing="-1">ZARA</text>
@@ -542,9 +548,9 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "dominos": "https://cache.dominos.com/intl/assets/img-logo-home.png",
   "domino's pizza": "https://cache.dominos.com/intl/assets/img-logo-home.png",
   "domino's": "https://cache.dominos.com/intl/assets/img-logo-home.png",
-  "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-  "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
-  "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "anthropic.com": ANTHROPIC_LOGO_DATA_URI,
+  "www.anthropic.com": ANTHROPIC_LOGO_DATA_URI,
+  "anthropic": ANTHROPIC_LOGO_DATA_URI,
   "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
   "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
   "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",

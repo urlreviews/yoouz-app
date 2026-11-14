@@ -37491,25 +37491,37 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return await sharp(Buffer.from(svg)).png().toBuffer();
     }
 
-    // High-fidelity video share card buffer generator
+    // High-fidelity video share card buffer generator with instant in-memory cache
+    const ogVideoCardCache = new Map<string, { buf: Buffer; ts: number }>();
+
     async function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
+      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '26'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
+      const cachedEntry = ogVideoCardCache.get(cacheKey);
+      if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
+        return cachedEntry.buf;
+      }
+
       let thumbBuf: Buffer | null = null;
       let foundVideo: any = null;
+      const hasCompleteQueryMetadata = Boolean(queryParams.thumbUrl && queryParams.placeName && queryParams.author && queryParams.placeReviewsCount && queryParams.placeRating);
 
       if (videoId) {
-        if (typeof readReviewsIndex === 'function') {
+        if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0) {
+          foundVideo = feedCache.videos.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
+        }
+        if (!foundVideo && typeof readReviewsIndex === 'function') {
           try {
             const localList = readReviewsIndex();
             foundVideo = localList.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
           } catch (e) {}
         }
-        if (!foundVideo && typeof getDb !== 'undefined' && getDb()) {
+        if (!foundVideo && !hasCompleteQueryMetadata && typeof getDb !== 'undefined' && getDb()) {
           try {
             const [rec] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, videoId));
             if (rec) foundVideo = { id: rec.id, ...rec.data };
           } catch (e) {}
         }
-        if (!foundVideo) {
+        if (!foundVideo && !hasCompleteQueryMetadata) {
           const bunnyDb = getBunnyDb();
           if (bunnyDb) {
             try {
@@ -37556,26 +37568,27 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // Comprehensive priority-ordered candidate list of thumbnail URLs
+      // Comprehensive priority-ordered candidate list of thumbnail URLs (prioritize fast Bunny Stream CDN first)
       const candidateThumbUrls: string[] = [];
-      if (foundVideo) {
-        if (foundVideo.thumbnailUrl && typeof foundVideo.thumbnailUrl === 'string' && !foundVideo.thumbnailUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.thumbnailUrl);
-        if (foundVideo.videoThumbnail && typeof foundVideo.videoThumbnail === 'string' && !foundVideo.videoThumbnail.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoThumbnail);
-        if (foundVideo.videoPreviewUrl && typeof foundVideo.videoPreviewUrl === 'string' && !foundVideo.videoPreviewUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoPreviewUrl);
-        if (foundVideo.coverUrl && typeof foundVideo.coverUrl === 'string' && !foundVideo.coverUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.coverUrl);
-        if (foundVideo.posterUrl && typeof foundVideo.posterUrl === 'string' && !foundVideo.posterUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.posterUrl);
-        const bGuid = foundVideo.bunnyVideoId || foundVideo.bunnyGuid;
-        if (bGuid) {
-          candidateThumbUrls.push(`https://vz-dcd9e101-437.b-cdn.net/${bGuid}/thumbnail.jpg`);
-          candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${bGuid}.jpg`);
-        }
-      }
-
       if (queryParams.thumbUrl && typeof queryParams.thumbUrl === 'string' && !queryParams.thumbUrl.startsWith('data:')) {
         candidateThumbUrls.push(queryParams.thumbUrl);
       }
       if (queryParams.thumbnailUrl && typeof queryParams.thumbnailUrl === 'string' && !queryParams.thumbnailUrl.startsWith('data:')) {
         candidateThumbUrls.push(queryParams.thumbnailUrl);
+      }
+      if (foundVideo) {
+        const bGuid = foundVideo.bunnyVideoId || foundVideo.bunnyGuid;
+        if (bGuid) {
+          candidateThumbUrls.push(`https://vz-dcd9e101-437.b-cdn.net/${bGuid}/thumbnail.jpg`);
+        }
+        if (foundVideo.thumbnailUrl && typeof foundVideo.thumbnailUrl === 'string' && !foundVideo.thumbnailUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.thumbnailUrl);
+        if (foundVideo.videoThumbnail && typeof foundVideo.videoThumbnail === 'string' && !foundVideo.videoThumbnail.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoThumbnail);
+        if (foundVideo.videoPreviewUrl && typeof foundVideo.videoPreviewUrl === 'string' && !foundVideo.videoPreviewUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoPreviewUrl);
+        if (foundVideo.coverUrl && typeof foundVideo.coverUrl === 'string' && !foundVideo.coverUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.coverUrl);
+        if (foundVideo.posterUrl && typeof foundVideo.posterUrl === 'string' && !foundVideo.posterUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.posterUrl);
+        if (bGuid) {
+          candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${bGuid}.jpg`);
+        }
       }
       if (videoId) {
         if (videoId.startsWith('rev-') || videoId.length > 20) {
@@ -37583,6 +37596,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
           candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${videoId}.jpg`);
         }
       }
+
+      // Sort candidateThumbUrls so fast vz-dcd9e101-437.b-cdn.net URLs always run before rev1.b-cdn.net fallbacks
+      candidateThumbUrls.sort((a, b) => {
+        const aFast = a.includes('vz-dcd9e101-437.b-cdn.net') ? 0 : 1;
+        const bFast = b.includes('vz-dcd9e101-437.b-cdn.net') ? 0 : 1;
+        return aFast - bFast;
+      });
 
       if (!thumbBuf) {
         const seenCandidateUrls = new Set<string>();
@@ -37595,7 +37615,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           try {
             const fetchUrl = rawUrl.startsWith('http') ? rawUrl : `${baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4500);
+            const timeout = setTimeout(() => controller.abort(), 1800);
             const tr = await fetch(fetchUrl, {
               signal: controller.signal,
               headers: bunnyFetchHeaders
@@ -37690,13 +37710,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const cleanTargetDomain = cleanDomainName(rawTargetDomain).replace(/^https?:\/\//i, '').replace(/^www\./i, '');
       const targetDomain = cleanTargetDomain.length > 26 ? cleanTargetDomain.substring(0, 24) + "..." : cleanTargetDomain;
 
-      // 1. Live Query BunnyDB to get all live reviews and accurate place metrics
+      // 1. Live Query BunnyDB to get all live reviews and accurate place metrics (skip if already provided in queryParams)
       let placeReviewsCount = Number(queryParams.placeReviewsCount || 0);
       let placeAvgRating = Number(queryParams.placeRating || 0);
 
-      try {
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
+      if (!placeReviewsCount || !placeAvgRating) {
+        try {
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb) {
           const bRes = await bunnyDb.execute({
             sql: "SELECT id, rating, placeId, placeName, authorName, authorAvatar, data FROM videoReviews",
             args: []
@@ -37719,8 +37740,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
               placeAvgRating = Number((sum / matching.length).toFixed(1));
             }
           }
-        }
-      } catch (e) {}
+          }
+        } catch (e) {}
+      }
 
       if (!placeReviewsCount) {
         try {
@@ -37839,8 +37861,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const maxTopWidth = Math.max(placeWidth + 28, ratingLineWidth);
       const placePillWidth = Math.min(520, Math.max(280, 92 + maxTopWidth + 28));
 
-      const topPillX = Math.round((1200 - placePillWidth) / 2);
-      const bottomPillX = Math.round((1200 - authorPillWidth) / 2);
+      const topPillX = 48;
+      const bottomPillX = 48;
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 30, true);
       const initialX = 46 - (initialWidth / 2);
@@ -37941,48 +37963,28 @@ app.get('/api/og-preview-v2', async (req, res) => {
           </svg>
         `;
 
-        const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+        const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .png()
           .toBuffer();
 
         let baseImageBuffer: Buffer;
         try {
-          const meta = await sharp(thumbBuf).metadata();
-          const isPortrait = Boolean(meta.width && meta.height && meta.width < meta.height);
-          if (isPortrait) {
-            // Ambient soft-blurred backdrop + crisp centered portrait video frame
-            const bg = await sharp(thumbBuf)
-              .resize(1200, 630, { fit: 'cover', position: 'center' })
-              .blur(32)
-              .modulate({ brightness: 0.5, saturation: 1.15 })
-              .toBuffer();
-
-            const fg = await sharp(thumbBuf)
-              .resize(null, 630, { fit: 'inside' })
-              .toBuffer();
-
-            const fgMeta = await sharp(fg).metadata();
-            const left = Math.round((1200 - (fgMeta.width || 473)) / 2);
-
-            baseImageBuffer = await sharp(bg)
-              .composite([{ input: fg, top: 0, left: left }])
-              .toBuffer();
-          } else {
-            baseImageBuffer = await sharp(thumbBuf)
-              .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
-              .toBuffer();
-          }
+          baseImageBuffer = await sharp(thumbBuf)
+            .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
+            .toBuffer();
         } catch (composeErr) {
           baseImageBuffer = await sharp(thumbBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center' })
             .toBuffer();
         }
 
-        return await sharp(baseImageBuffer)
+        const finalVideoCardBuf = await sharp(baseImageBuffer)
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
+        ogVideoCardCache.set(cacheKey, { buf: finalVideoCardBuf, ts: Date.now() });
+        return finalVideoCardBuf;
       }
 
       // Clean cinema fallback card if no video thumbnail is available
@@ -38084,14 +38086,16 @@ app.get('/api/og-preview-v2', async (req, res) => {
         </svg>
       `;
 
-      return await sharp(Buffer.from(fallbackCinemaSvg), { density: 300 })
+      const fallbackBuf = await sharp(Buffer.from(fallbackCinemaSvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-        .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+        .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
         .toBuffer();
+      ogVideoCardCache.set(cacheKey, { buf: fallbackBuf, ts: Date.now() });
+      return fallbackBuf;
     }
 
     // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v9/:id.png', '/api/og-card/v9/:id', '/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/og-card/v10/:id.png', '/api/og-card/v10/:id', '/api/og-card/v9/:id.png', '/api/og-card/v9/:id', '/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -38103,9 +38107,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", imgBuf.length);
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
-        res.setHeader("Pragma", "no-cache");
-        res.setHeader("Expires", "0");
+        res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
         return res.end(imgBuf);
       } catch (e: any) {
         console.error("Direct Video OG Image Error:", e);
@@ -38475,7 +38477,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         </svg>
       `;
 
-      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
         .png()
         .toBuffer();
@@ -38486,7 +38488,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           const fallbackBaseSvg = `
@@ -38511,10 +38513,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
             </svg>
           `;
-          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
@@ -38540,19 +38542,17 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
           </svg>
         `;
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
+      res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
       return res.end(finalImage);
     }
 
@@ -38715,7 +38715,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const subWidth = getTextAdvanceWidth(subtitleText, 17, true);
       const maxTextWidth = Math.max(authorWidth + 28, subWidth);
       const authorPillWidth = Math.min(540, Math.max(280, 102 + maxTextWidth + 36));
-      const authorPillX = Math.round((1200 - authorPillWidth) / 2);
+      const authorPillX = 48;
 
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
@@ -38768,7 +38768,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         </svg>
       `;
 
-      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 300 })
+      const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
         .png()
         .toBuffer();
@@ -38804,7 +38804,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
             </svg>
           `;
-          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
             .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
@@ -38833,7 +38833,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
           </svg>
         `;
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 300 })
+        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
           .png({ quality: 100, compressionLevel: 6, adaptiveFiltering: true })
@@ -38843,9 +38843,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
-      res.setHeader("Pragma", "no-cache");
-      res.setHeader("Expires", "0");
+      res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
       return res.end(finalImage);
     }
 
@@ -38883,9 +38881,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           res.setHeader("Content-Type", "image/png");
           res.setHeader("Content-Length", imgBuf.length);
           res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
-          res.setHeader("Pragma", "no-cache");
-          res.setHeader("Expires", "0");
+          res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
           return res.end(imgBuf);
         }
 
@@ -40496,6 +40492,9 @@ function injectOpenGraphTags(html: string, meta: any) {
         }
         let foundVideo: any = null;
 
+        if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0) {
+            foundVideo = feedCache.videos.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
+        }
         if (!foundVideo && typeof readReviewsIndex === 'function') {
             try {
                 const localList = readReviewsIndex();
@@ -40529,37 +40528,55 @@ function injectOpenGraphTags(html: string, meta: any) {
         const rating = Number(foundVideo?.rating || 5.0);
         const caption = foundVideo?.caption || "";
 
-        // Compute place reviews count & average rating across all reviews for this business (BunnyDB live first)
+        // Compute place reviews count & average rating across all reviews for this business (in-memory feedCache first for 0ms latency, then BunnyDB)
         let placeReviewsCount = 1;
         let placeAvgRating = rating;
+        let resolvedStatsFromCache = false;
 
-        try {
-          const bunnyDb = getBunnyDb();
-          if (bunnyDb) {
-            const bRes = await bunnyDb.execute({
-              sql: "SELECT id, rating, placeId, placeName, authorName, authorAvatar, data FROM videoReviews",
-              args: []
-            });
-            if (bRes.rows && bRes.rows.length > 0) {
-              const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
-              const matching = bRes.rows.filter((row: any) => {
-                const raw = row.data;
-                const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || row.placeId || row.placeName || '').toLowerCase();
-                return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+        if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0) {
+          const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
+          const matching = feedCache.videos.filter((v: any) => {
+            if (!v) return false;
+            const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
+            return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+          });
+          if (matching.length > 0) {
+            placeReviewsCount = matching.length;
+            const sum = matching.reduce((acc: number, v: any) => acc + (Number(v.rating) || 5), 0);
+            placeAvgRating = Number((sum / matching.length).toFixed(1));
+            resolvedStatsFromCache = true;
+          }
+        }
+
+        if (!resolvedStatsFromCache) {
+          try {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+              const bRes = await bunnyDb.execute({
+                sql: "SELECT id, rating, placeId, placeName, authorName, authorAvatar, data FROM videoReviews",
+                args: []
               });
-              if (matching.length > 0) {
-                placeReviewsCount = matching.length;
-                const sum = matching.reduce((acc: number, row: any) => {
+              if (bRes.rows && bRes.rows.length > 0) {
+                const cleanT = cleanDomainName(rawDomain || domainSlug).toLowerCase();
+                const matching = bRes.rows.filter((row: any) => {
                   const raw = row.data;
                   const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
-                  return acc + (Number(v.rating) || Number(row.rating) || 5);
-                }, 0);
-                placeAvgRating = Number((sum / matching.length).toFixed(1));
+                  const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || row.placeId || row.placeName || '').toLowerCase();
+                  return cleanT && (vDom.includes(cleanT) || cleanT.includes(vDom));
+                });
+                if (matching.length > 0) {
+                  placeReviewsCount = matching.length;
+                  const sum = matching.reduce((acc: number, row: any) => {
+                    const raw = row.data;
+                    const v = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+                    return acc + (Number(v.rating) || Number(row.rating) || 5);
+                  }, 0);
+                  placeAvgRating = Number((sum / matching.length).toFixed(1));
+                }
               }
             }
-          }
-        } catch (e) {}
+          } catch (e) {}
+        }
 
         if (placeReviewsCount <= 1) {
           try {
@@ -40633,8 +40650,21 @@ function injectOpenGraphTags(html: string, meta: any) {
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
         const placeDomainParam = cleanPlaceDomForOg ? `&placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}` : '';
         const thumbUrlParam = thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=25`;
+        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=26`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
+        // Pre-warm the OG card in memory so Facebook/social comment attachment crawlers get a 0ms cache hit
+        generateVideoShareCardBuffer(videoId, {
+          placeName,
+          author: authorName,
+          rating: String(rating),
+          placeRating: placeAvgRating.toFixed(1),
+          placeReviewsCount: String(placeReviewsCount),
+          placeDomain: cleanPlaceDomForOg,
+          logoUrl: (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? rawPlaceLogo : undefined,
+          authorAvatar: (rawAuthorAvatar && rawAuthorAvatar.startsWith("http") && !rawAuthorAvatar.includes("proxy-image")) ? rawAuthorAvatar : undefined,
+          thumbUrl: thumbArg || undefined,
+          v: "26"
+        }, baseUrl).catch(() => {});
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
         type = "website";
@@ -40804,7 +40834,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=33`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=34`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 
@@ -40974,7 +41004,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=38`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=39`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 
@@ -41650,7 +41680,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         try {
           meta = await Promise.race([
             resolveMetadataForRequest(req),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 400))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 2500))
           ]);
         } catch (_mErr) {
           meta = null;
@@ -41715,7 +41745,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         try {
           meta = await Promise.race([
             resolveMetadataForRequest(req),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 400))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("SSR meta timeout")), 2500))
           ]);
         } catch (_mErr) {
           meta = null;

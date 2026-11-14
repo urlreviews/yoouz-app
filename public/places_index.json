@@ -18,8 +18,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "photos": [
@@ -610,8 +610,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F74%2FDominos_pizza_logo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F74%2FDominos_pizza_logo.svg",
+    "avatarUrl": "/api/favicon?domain=dominos.com",
+    "logoUrl": "/api/favicon?domain=dominos.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -8594,8 +8594,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23000000%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "photos": [
@@ -8907,8 +8907,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23FAF9F5%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M58.4%2026H68.8L86%2074H75.2L63.6%2040.2L52%2074H41.2L58.4%2026ZM33.2%2026H44L61.2%2074H50.4L46.8%2063.4H29.6L26%2074H15.2L33.2%2026ZM32.8%2054H43.6L38.2%2037.8L32.8%2054Z%22%20fill%3D%22%23141413%22%2F%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23FAF9F5%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M58.4%2026H68.8L86%2074H75.2L63.6%2040.2L52%2074H41.2L58.4%2026ZM33.2%2026H44L61.2%2074H50.4L46.8%2063.4H29.6L26%2074H15.2L33.2%2026ZM32.8%2054H43.6L38.2%2037.8L32.8%2054Z%22%20fill%3D%22%23141413%22%2F%3E%0A%3C%2Fsvg%3E",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "photos": [
