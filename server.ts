@@ -37278,9 +37278,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorPrefix = `By ${authorDisplay}`;
       const authorPrefixWidth = getTextAdvanceWidth(authorPrefix, 24, true);
 
-      const domainDisplay = targetDomain;
-      const domainDisplayWidth = getTextAdvanceWidth(domainDisplay, 21, true);
-
       // High-Definition Vector 5-Star row helper (Compact & sharp)
       const renderFiveStarsRowSvg = (startX: number, startY: number, filledCount: number) => {
         let stars = '';
@@ -37295,9 +37292,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
         return stars;
       };
 
-      const starsWidth = 5 * 19;
-      const maxBottomWidth = Math.max(authorPrefixWidth + 28, starsWidth + 12 + domainDisplayWidth);
-      const authorPillWidth = Math.min(540, Math.max(280, 92 + maxBottomWidth + 28));
+      const maxBottomWidth = authorPrefixWidth + 28;
+      const authorPillWidth = Math.min(540, Math.max(260, 92 + maxBottomWidth + 28));
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -37424,9 +37420,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
-              <!-- Line 2: 5 Stars Row + Stark White Clean Domain Name -->
+              <!-- Line 2: 5 Stars Row -->
               ${renderFiveStarsRowSvg(92, 52, ratingNum)}
-              ${renderTextPath(domainDisplay, 92 + starsWidth + 12, 70, 21, true, '#ffffff')}
             </g>
           </svg>
         `;
@@ -37568,9 +37563,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
-            <!-- Line 2: 5 Stars Row + Clean Stark White Domain -->
+            <!-- Line 2: 5 Stars Row -->
             ${renderFiveStarsRowSvg(92, 52, ratingNum)}
-            ${renderTextPath(domainDisplay, 92 + starsWidth + 12, 70, 21, true, '#ffffff')}
           </g>
         </svg>
       `;
