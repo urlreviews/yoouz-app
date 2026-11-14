@@ -37815,7 +37815,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       let placeLogoBuf: Buffer | null = null;
       const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
       try {
-        placeLogoBuf = await fetchPlaceLogoBuffer(rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
+        placeLogoBuf = await fetchPlaceLogoBuffer(cleanTargetDomain || rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
       } catch (e) {}
 
       let logoPngBase64 = "";
@@ -37829,7 +37829,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch (e) {}
       }
 
-      const isYoouzPlace = rawTargetDomain === 'yoouz.com' || rawTargetDomain === 'www.yoouz.com' || rawTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
+      const isYoouzPlace = cleanTargetDomain === 'yoouz.com' || cleanTargetDomain === 'www.yoouz.com' || cleanTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
       // Top Business Pill calculations (Compact 2-row layout)
       const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 24, true);
@@ -37886,7 +37886,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                   </g>
                 ` : `
                   <g transform="translate(12, 12)">
-                    <rect x="0" y="0" width="66" height="66" rx="20" fill="#18181b"/>
+                    <rect x="0" y="0" width="66" height="66" rx="20" fill="#2563eb"/>
                     ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 33 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30, true) / 2), 43, 30, true, '#ffffff')}
                   </g>
                 `}
@@ -38029,7 +38029,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 </g>
               ` : `
                 <g transform="translate(12, 12)">
-                  <rect x="0" y="0" width="66" height="66" rx="20" fill="#18181b"/>
+                  <rect x="0" y="0" width="66" height="66" rx="20" fill="#2563eb"/>
                   ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 33 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30, true) / 2), 43, 30, true, '#ffffff')}
                 </g>
               `}
@@ -38454,7 +38454,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 </g>
               ` : `
                 <g transform="translate(14, 14)">
-                  <rect x="0" y="0" width="68" height="68" rx="20" fill="#18181b"/>
+                  <rect x="0" y="0" width="68" height="68" rx="20" fill="#2563eb"/>
                   ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 34 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 30, true) / 2), 44, 30, true, '#ffffff')}
                 </g>
               `}
@@ -39167,14 +39167,17 @@ function generateBrandMonogramSvg(nameOrDomain?: string | null, size = 360): str
     </svg>`;
   }
 
-  const initial = clean.charAt(0).toUpperCase() || "B";
+  const initial = (clean.replace(/^https?:\/\//i, "").replace(/^www\./i, "").charAt(0) || "B").toUpperCase();
   const fontSize = Math.round(size * 0.52);
   const textY = Math.round(size * 0.68);
+  const colorObj = getAvatarColor(clean || "Business", clean || "Business");
+  const bgColor = (colorObj && colorObj.bg && colorObj.bg !== "#09090b" && colorObj.bg !== "#000000" && colorObj.bg !== "#18181b") ? colorObj.bg : "#2563eb";
+  const advWidth = getTextAdvanceWidth(initial, fontSize, true);
+  const textX = Math.round((size - advWidth) / 2);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.28)}" fill="#09090b"/>
-    <rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="${Math.round(size * 0.28) - 1}" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="${Math.max(2, size * 0.03)}"/>
-    <text x="50%" y="${textY}" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="${fontSize}" fill="#ffffff" text-anchor="middle" dominant-baseline="auto">${initial}</text>
+    <rect width="${size}" height="${size}" rx="${Math.round(size * 0.28)}" fill="${bgColor}"/>
+    ${renderTextPath(initial, textX, textY, fontSize, true, "#ffffff")}
   </svg>`;
 }
 
@@ -39419,7 +39422,27 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
 const placeLogoBufferCache = new Map<string, { buf: Buffer; timestamp: number }>();
 
 async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUrl?: string, placeObj?: any): Promise<Buffer | null> {
-  const cacheKey = `${domain || ''}_${name || ''}_${explicitLogoUrl || ''}`;
+  let cleanDom = cleanDomainName(domain || placeObj?.placeWebsite || placeObj?.placeId || "")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .split("/")[0]
+    .toLowerCase()
+    .trim();
+
+  let directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.placeLogoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
+
+  // Extract domain if directUrl is /api/favicon?domain=...
+  if (directUrl && directUrl.includes("/api/favicon")) {
+    try {
+      const m = directUrl.match(/domain=([^&]+)/i);
+      if (m && m[1] && !cleanDom) {
+        cleanDom = cleanDomainName(decodeURIComponent(m[1])).replace(/^www\./i, "").toLowerCase().trim();
+      }
+    } catch {}
+    directUrl = "";
+  }
+
+  const cacheKey = `${cleanDom || domain || ''}_${name || ''}_${directUrl || ''}`;
   if (placeLogoBufferCache.has(cacheKey)) {
     const cached = placeLogoBufferCache.get(cacheKey)!;
     if (Date.now() - cached.timestamp < 3600000) {
@@ -39428,10 +39451,9 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   }
 
   let logoBuf: Buffer | null = null;
-  let directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.placeLogoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
 
   // Unwrap proxy-image?url=
-  if (directUrl && directUrl.includes("proxy-image?url=")) {
+  if (directUrl && directUrl.includes("proxy-image")) {
     try {
       const match = directUrl.match(/url=([^&]+)/);
       if (match && match[1]) {
@@ -39440,24 +39462,8 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
-  // If no direct URL, attempt to lookup place in database / memory
-  if (!directUrl && (domain || name || placeObj?.placeId)) {
-    try {
-      const resolved = await resolvePlaceFromAnySource(domain || name || placeObj?.placeId);
-      if (resolved && resolved.logoUrl) {
-        directUrl = resolved.logoUrl;
-        if (directUrl.includes("proxy-image?url=")) {
-          const match = directUrl.match(/url=([^&]+)/);
-          if (match && match[1]) {
-            directUrl = decodeURIComponent(match[1]);
-          }
-        }
-      }
-    } catch (e) {}
-  }
-
   // Check if this is Yoouz itself
-  if (domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
+  if (cleanDom === 'yoouz.com' || cleanDom.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
     try {
       const localFaviconPath = path.join(process.cwd(), 'public', 'favicon.svg');
       if (fs.existsSync(localFaviconPath)) {
@@ -39471,27 +39477,10 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
-  // Direct Local File
-  if (directUrl && directUrl.startsWith("/") && !directUrl.startsWith("//")) {
-    try {
-      const localP = path.join(process.cwd(), directUrl.startsWith("/public") ? directUrl : `public${directUrl}`);
-      if (fs.existsSync(localP)) {
-        const fileData = fs.readFileSync(localP);
-        logoBuf = await sharp(fileData, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
-      }
-    } catch(e) {}
-  }
-
-  // 1. Direct Data URL
-  if (directUrl && directUrl.startsWith("data:")) {
-    logoBuf = decodeDataUrl(directUrl);
-  }
-
-  // 2. Direct SVG or Data URL for known brands
-  if (!logoBuf && domain) {
-    const dClean = domain.replace(/^www\./, "").toLowerCase().trim();
-    const rawKnown = KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[dClean];
-    if (rawKnown) {
+  // 1. TOP PRIORITY: Known Brand Logos (SVG / Data URI) so verified brands never use stale dark-mode <text> SVGs
+  if (!logoBuf && (cleanDom || name)) {
+    const rawKnown = KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "");
+    if (rawKnown && !rawKnown.includes("/api/favicon")) {
       try {
         if (rawKnown.startsWith('<svg')) {
           logoBuf = await sharp(Buffer.from(rawKnown), { density: 300 }).resize(512, 512).png().toBuffer();
@@ -39505,19 +39494,64 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     }
   }
 
-  // 3. Parallel Network Fetch from authentic brand asset sources or direct URL
+  // If no direct URL yet, attempt to lookup place in database / memory
+  if (!logoBuf && !directUrl && (cleanDom || name || placeObj?.placeId)) {
+    try {
+      const resolved = await resolvePlaceFromAnySource(cleanDom || name || placeObj?.placeId);
+      if (resolved && resolved.logoUrl && !resolved.logoUrl.includes("/api/favicon")) {
+        directUrl = resolved.logoUrl;
+        if (directUrl.includes("proxy-image")) {
+          const match = directUrl.match(/url=([^&]+)/);
+          if (match && match[1]) {
+            directUrl = decodeURIComponent(match[1]);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Direct Local File (ignore /api/* routes)
+  if (!logoBuf && directUrl && directUrl.startsWith("/") && !directUrl.startsWith("//") && !directUrl.startsWith("/api/")) {
+    try {
+      const localP = path.join(process.cwd(), directUrl.startsWith("/public") ? directUrl : `public${directUrl}`);
+      if (fs.existsSync(localP)) {
+        const fileData = fs.readFileSync(localP);
+        logoBuf = await sharp(fileData, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+      }
+    } catch(e) {}
+  }
+
+  // 2. Direct Data URL (skip if it is an unrendered <text> monogram so we render vector paths cleanly)
+  if (!logoBuf && directUrl && directUrl.startsWith("data:")) {
+    const decoded = decodeDataUrl(directUrl);
+    if (decoded) {
+      const asStr = decoded.toString("utf8");
+      const isRawTextMonogram = asStr.includes("<svg") && asStr.includes("<text") && !asStr.includes("<path");
+      if (!isRawTextMonogram) {
+        logoBuf = await sharp(decoded, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => decoded);
+      }
+    }
+  }
+
+  // 3. Ordered Network Fetch from Known Brand HTTP URLs, Direct URL, and High-Res Favicon Services
   if (!logoBuf) {
     const candidateUrls: string[] = [];
-    if (directUrl && (directUrl.startsWith("http://") || directUrl.startsWith("https://"))) {
-      candidateUrls.push(directUrl);
-    }
-    if (domain && domain.includes(".")) {
-      const dClean = domain.replace(/^www\./, "").toLowerCase().trim();
-      if (KNOWN_BRAND_LOGOS[domain] && KNOWN_BRAND_LOGOS[domain].startsWith("http")) {
-        candidateUrls.push(KNOWN_BRAND_LOGOS[domain]);
-      } else if (KNOWN_BRAND_LOGOS[dClean] && KNOWN_BRAND_LOGOS[dClean].startsWith("http")) {
-        candidateUrls.push(KNOWN_BRAND_LOGOS[dClean]);
+    if (cleanDom) {
+      const knownHttp = KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "");
+      if (knownHttp && (knownHttp.startsWith("http://") || knownHttp.startsWith("https://"))) {
+        candidateUrls.push(knownHttp);
       }
+    }
+    if (directUrl && (directUrl.startsWith("http://") || directUrl.startsWith("https://"))) {
+      if (!candidateUrls.includes(directUrl)) candidateUrls.push(directUrl);
+    }
+    if (cleanDom && cleanDom.includes(".")) {
+      candidateUrls.push(
+        `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDom)}&size=256`,
+        `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDom)}&sz=256`,
+        `https://${cleanDom}/apple-touch-icon.png`,
+        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDom)}.ico`
+      );
     }
 
     const fetchPromises = candidateUrls.map(async (u) => {
@@ -39527,7 +39561,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
         const resp = await fetch(u, {
           signal: controller.signal,
           headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Accept": "image/png,image/jpeg,image/webp,image/svg+xml,image/*;q=0.9"
           }
         });
@@ -39535,8 +39569,8 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
         if (resp.ok) {
           const ab = await resp.arrayBuffer();
           const buf = Buffer.from(ab);
-          if (buf.length > 50) {
-            const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+          if (buf.length > 80) {
+            const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => null);
             if (pngBuf) return pngBuf;
           }
         }
@@ -39555,32 +39589,31 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     }
   }
 
-  // 4. Live Scrape fallback for HTML website high-res brand icons & og:image
-  if (!logoBuf && domain && domain.includes(".")) {
+  // 4. Live Scrape fallback for HTML website high-res brand icons
+  if (!logoBuf && cleanDom && cleanDom.includes(".")) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3000);
-      const siteResp = await fetch(`https://${domain}`, {
+      const siteResp = await fetch(`https://${cleanDom}`, {
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           "Accept": "text/html,application/xhtml+xml"
         }
       });
       clearTimeout(timeout);
       if (siteResp.ok) {
         const html = await siteResp.text();
-        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed)["'][^>]+href=["']([^"']+)["']/i);
-        const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
-        const iconHref = appleIconMatch ? appleIconMatch[1] : (ogImageMatch ? ogImageMatch[1] : null);
+        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|icon)["'][^>]+href=["']([^"']+)["']/i);
+        const iconHref = appleIconMatch ? appleIconMatch[1] : null;
         if (iconHref) {
           let fullIconUrl = iconHref;
           if (iconHref.startsWith("//")) {
             fullIconUrl = `https:${iconHref}`;
           } else if (iconHref.startsWith("/")) {
-            fullIconUrl = `https://${domain}${iconHref}`;
+            fullIconUrl = `https://${cleanDom}${iconHref}`;
           } else if (!iconHref.startsWith("http")) {
-            fullIconUrl = `https://${domain}/${iconHref}`;
+            fullIconUrl = `https://${cleanDom}/${iconHref}`;
           }
           const iconResp = await fetch(fullIconUrl, {
             headers: { "User-Agent": "Mozilla/5.0" }
@@ -39588,8 +39621,8 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
           if (iconResp.ok) {
             const ab = await iconResp.arrayBuffer();
             const buf = Buffer.from(ab);
-            if (buf.length > 50) {
-              const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer().catch(() => null);
+            if (buf.length > 80) {
+              const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => null);
               if (pngBuf) logoBuf = pngBuf;
             }
           }
@@ -39598,10 +39631,10 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
-  // 5. If STILL not found: Render a Brand Monogram specifically for THIS business (Never the Yoouz logo!)
+  // 5. If STILL not found: Render a colorful vector Brand Monogram specifically for THIS business (Never dark-mode black!)
   if (!logoBuf) {
     try {
-      const monoSvg = generateBrandMonogramSvg(name || domain, 512);
+      const monoSvg = generateBrandMonogramSvg(name || cleanDom || domain, 512);
       logoBuf = await sharp(Buffer.from(monoSvg), { density: 300 }).resize(512, 512).png().toBuffer();
     } catch (e) {}
   }
@@ -40597,9 +40630,10 @@ function injectOpenGraphTags(html: string, meta: any) {
         const authorAvatarParam = (rawAuthorAvatar && rawAuthorAvatar.startsWith("http") && !rawAuthorAvatar.includes("proxy-image")) ? `&authorAvatar=${encodeURIComponent(rawAuthorAvatar)}` : '';
         const rawPlaceLogo = foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
         const placeLogoParam = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
-        const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
+        const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+        const placeDomainParam = cleanPlaceDomForOg ? `&placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}` : '';
         const thumbUrlParam = thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=22`;
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=25`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame

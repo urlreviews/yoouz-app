@@ -446,8 +446,8 @@ export const JOLLIBEE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBo
 export const JOLLIBEE_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(JOLLIBEE_LOGO_SVG)}`;
 
 export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <rect width="100" height="100" rx="22" fill="#000000"/>
-  <text x="50" y="62" font-family="'Times New Roman', Georgia, serif" font-weight="900" font-size="26" fill="#ffffff" text-anchor="middle" letter-spacing="-1">ZARA</text>
+  <rect width="100" height="100" rx="22" fill="#ffffff"/>
+  <text x="50" y="62" font-family="'Times New Roman', Georgia, serif" font-weight="900" font-size="26" fill="#000000" text-anchor="middle" letter-spacing="-1">ZARA</text>
 </svg>`;
 export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
 
@@ -545,6 +545,12 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
   "anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "www.anthropic.com": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
   "anthropic": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
+  "cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "www.cetaphil.com": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "cetaphil": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+  "flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+  "www.flipper.net": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+  "flipper": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
   "offline.vc": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
   "www.offline.vc": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
   "offline ventures": "https://offline.vc/lovable-uploads/2650cf8e-16d0-4051-bf71-0c3e420ea478.png",
