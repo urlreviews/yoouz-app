@@ -3,7 +3,8 @@ import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Buildi
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
-import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "../utils/logoUtils";
+import { CopoBrandLogo } from "./CopoBrandLogo";
+import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -241,9 +242,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         title: officialTitle,
         domain: directDomain,
         logoUrl:
-          (existingPlace?.logoUrl && !existingPlace.logoUrl.includes("favicon") ? existingPlace.logoUrl : "") ||
+          (existingPlace?.logoUrl && !isGenericOrPlaceholderLogo(existingPlace.logoUrl) ? existingPlace.logoUrl : "") ||
           KNOWN_BRAND_LOGOS[directDomain] ||
-          "",
+          (directDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(directDomain)}` : ""),
         category: existingPlace?.category || "Website",
         address: existingPlace?.city || existingPlace?.address || ""
       });
@@ -269,7 +270,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           id: p.id,
           title: resolvedPlaceTitle,
           domain: pDom.includes(".") ? pDom : "",
-          logoUrl: (p.logoUrl && !p.logoUrl.includes("favicon") ? p.logoUrl : "") || (pDomLow && KNOWN_BRAND_LOGOS[pDomLow] ? KNOWN_BRAND_LOGOS[pDomLow] : ""),
+          logoUrl:
+            (p.logoUrl && !isGenericOrPlaceholderLogo(p.logoUrl) ? p.logoUrl : "") ||
+            (pDomLow && KNOWN_BRAND_LOGOS[pDomLow] ? KNOWN_BRAND_LOGOS[pDomLow] : "") ||
+            (pDomLow.includes(".") ? `/api/favicon?domain=${encodeURIComponent(pDomLow)}` : ""),
           category: p.category || "Business",
           address: p.city || p.address || ""
         });
@@ -289,7 +293,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           id: vDom || v.placeId || vName,
           title: (vDomLow && KNOWN_OFFICIAL_NAMES[vDomLow]) || vName || vDom,
           domain: vDom.includes(".") ? vDom : "",
-          logoUrl: v.placeLogoUrl || (vDomLow && KNOWN_BRAND_LOGOS[vDomLow]) || "",
+          logoUrl:
+            (v.placeLogoUrl && !isGenericOrPlaceholderLogo(v.placeLogoUrl) ? v.placeLogoUrl : "") ||
+            (vDomLow && KNOWN_BRAND_LOGOS[vDomLow] ? KNOWN_BRAND_LOGOS[vDomLow] : "") ||
+            (vDomLow.includes(".") ? `/api/favicon?domain=${encodeURIComponent(vDomLow)}` : ""),
           category: "Business"
         });
       }
@@ -310,14 +317,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         if (resp.ok) {
           const data = await resp.json();
           const serverList: SuggestionItem[] = data.suggestions || [];
-          const seen = new Set<string>();
+          const seen = new Map<string, SuggestionItem>();
           const merged: SuggestionItem[] = [];
 
           for (const item of [...localMatches, ...serverList]) {
             const key = `${item.isCreator ? "creator:" : ""}${(item.id || item.domain || item.title).toLowerCase().trim()}`;
-            if (!seen.has(key)) {
-              seen.add(key);
+            const existing = seen.get(key);
+            if (!existing) {
+              seen.set(key, item);
               merged.push(item);
+            } else {
+              if (!existing.logoUrl && item.logoUrl) existing.logoUrl = item.logoUrl;
+              if (!existing.domain && item.domain) existing.domain = item.domain;
             }
           }
           setSuggestions(merged.slice(0, 8));
@@ -858,15 +869,27 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     selectedIndex === idx ? "bg-zinc-800/90 text-white" : "hover:bg-zinc-800/60"
                   }`}
                 >
-                  <div className={`w-9 h-9 ${item.isCreator ? "rounded-full" : "rounded-xl"} bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs`}>
-                    {item.logoUrl ? (
-                      <img src={item.logoUrl} alt={item.title} className={`w-full h-full ${item.isCreator ? "object-cover" : "object-contain p-1"}`} referrerPolicy="no-referrer" />
-                    ) : item.isCreator ? (
-                      <User className="w-4 h-4 text-zinc-400" />
-                    ) : (
+                  {item.isCreator ? (
+                    <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
+                      {item.logoUrl ? (
+                        <img src={item.logoUrl} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <User className="w-4 h-4 text-zinc-400" />
+                      )}
+                    </div>
+                  ) : item.domain || item.logoUrl ? (
+                    <CopoBrandLogo
+                      domain={item.domain || item.id}
+                      name={item.title}
+                      logoUrl={item.logoUrl}
+                      className="w-9 h-9 rounded-xl bg-white border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
+                      imageClassName="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
                       <Building2 className="w-4 h-4 text-zinc-400" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                       <span>{item.title}</span>

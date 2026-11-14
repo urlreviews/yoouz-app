@@ -292,7 +292,7 @@ export function getProxiedImageUrl(url: string | null | undefined): string {
       return clean;
     }
     if (clean.toLowerCase().includes(".svg")) {
-      return `/api/proxy-image?v=2&url=${encodeURIComponent(clean)}`;
+      return `/api/proxy-image?v=3&url=${encodeURIComponent(clean)}`;
     }
     return `/api/proxy-image?url=${encodeURIComponent(clean)}`;
   }
@@ -327,6 +327,7 @@ export function checkImageNeedsDarkContrast(img: HTMLImageElement, srcKey?: stri
     let visibleCount = 0;
     let lumSum = 0;
     let darkCount = 0;
+    let colorfulCount = 0;
     const totalPixels = w * h;
 
     for (let i = 0; i < data.length; i += 4) {
@@ -339,9 +340,13 @@ export function checkImageNeedsDarkContrast(img: HTMLImageElement, srcKey?: stri
         const g = data[i + 1];
         const b = data[i + 2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const chroma = Math.max(r, g, b) - Math.min(r, g, b);
         lumSum += lum;
         if (lum < 145) {
           darkCount++;
+        }
+        if (chroma > 35) {
+          colorfulCount++;
         }
       }
     }
@@ -350,7 +355,8 @@ export function checkImageNeedsDarkContrast(img: HTMLImageElement, srcKey?: stri
     const hasTransparency = transparentCount > totalPixels * 0.1;
     const avgLum = lumSum / visibleCount;
     const darkRatio = darkCount / visibleCount;
-    const needsDark = hasTransparency && avgLum >= 190 && darkRatio < 0.08;
+    const colorfulRatio = colorfulCount / visibleCount;
+    const needsDark = hasTransparency && avgLum >= 220 && darkRatio < 0.08 && colorfulRatio < 0.15;
     if (key) DARK_CONTRAST_CACHE.set(key, needsDark);
     return needsDark;
   } catch (e) {

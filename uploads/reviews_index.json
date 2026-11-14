@@ -1313,7 +1313,7 @@
     "isReady": true,
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-    "placeLogoUrl": "/api/proxy-image?v=2&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
+    "placeLogoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F78%2FAnthropic_logo.svg",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg",
     "placeName": "Anthropic",
     "placeCity": "Gent",

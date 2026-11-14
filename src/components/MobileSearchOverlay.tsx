@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Search, X, Loader2, Building2, User, CheckCircle } from "lucide-react";
 import { SuggestionItem } from "./CopoHomePage";
+import { CopoBrandLogo } from "./CopoBrandLogo";
 
 interface MobileSearchOverlayProps {
   query: string;
@@ -98,15 +99,27 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
             onClick={() => onSelectSuggestion(item)}
             className="w-full px-3 py-3 flex items-center gap-3.5 hover:bg-zinc-900/60 active:bg-zinc-900 rounded-xl text-left transition-colors group cursor-pointer"
           >
-            <div className={`w-10 h-10 ${item.isCreator ? "rounded-full" : "rounded-xl"} bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden shadow-xs`}>
-              {item.logoUrl ? (
-                <img src={item.logoUrl} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              ) : item.isCreator ? (
-                <User className="w-4 h-4 text-zinc-400" />
-              ) : (
+            {item.isCreator ? (
+              <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+                {item.logoUrl ? (
+                  <img src={item.logoUrl} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <User className="w-4 h-4 text-zinc-400" />
+                )}
+              </div>
+            ) : item.domain || item.logoUrl ? (
+              <CopoBrandLogo
+                domain={item.domain || item.id}
+                name={item.title}
+                logoUrl={item.logoUrl}
+                className="w-10 h-10 rounded-xl bg-white border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
+                imageClassName="w-full h-full object-contain"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                 <Building2 className="w-4 h-4 text-zinc-400" />
-              )}
-            </div>
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 font-bold text-sm text-white truncate">
                 <span>{item.title}</span>

@@ -17188,7 +17188,9 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
           isFaviconUrl(curL) ||
           (cleanDom && isCrossBrandPortfolioLogoServer(curL, cleanDom));
 
-        if (knownLogo && knownLogo !== bRef && curL !== knownLogo) {
+        const upgradedCurL = curL.includes("/api/proxy-image?v=2&") ? curL.replace("/api/proxy-image?v=2&", "/api/proxy-image?v=3&") : curL;
+
+        if (knownLogo && knownLogo !== bRef && upgradedCurL !== knownLogo) {
           doc.logoUrl = knownLogo;
           doc.avatarUrl = knownLogo;
           changed = true;
@@ -17199,6 +17201,10 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
             doc.avatarUrl = fallbackL;
             changed = true;
           }
+        } else if (upgradedCurL !== curL) {
+          doc.logoUrl = upgradedCurL;
+          doc.avatarUrl = upgradedCurL;
+          changed = true;
         }
       }
 
@@ -29575,9 +29581,9 @@ const sanitizeProxy = (u?: string | null): string => {
   if (c.startsWith('//')) {
     c = 'https:' + c;
   }
-  while (c.includes('/api/proxy-image?url=')) {
-    const parts = c.split('/api/proxy-image?url=');
-    c = decodeURIComponent(parts[parts.length - 1]);
+  while (/\/api\/proxy-image\?(?:v=\d+&)?url=/.test(c)) {
+    const parts = c.split(/\/api\/proxy-image\?(?:v=\d+&)?url=/);
+    try { c = decodeURIComponent(parts[parts.length - 1]); } catch { c = parts[parts.length - 1]; }
   }
   c = c.trim();
   if (!c || c === 'data:;' || c.startsWith('data:;')) return '';
@@ -29592,7 +29598,7 @@ const sanitizeProxy = (u?: string | null): string => {
       return c;
     }
     if (c.toLowerCase().includes('.svg')) {
-      return `/api/proxy-image?v=2&url=${encodeURIComponent(c)}`;
+      return `/api/proxy-image?v=3&url=${encodeURIComponent(c)}`;
     }
     return `/api/proxy-image?url=${encodeURIComponent(c)}`;
   }
@@ -34330,10 +34336,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (hasValidDomain) seenDomains.add(dom);
         if (key !== normTitle) seenKeys.add(key);
         
-        // Only assign logo if item has official logo or is a known verified brand
+        // Only assign logo if item has official logo or is a known verified brand (or domain favicon)
         let logo = item.logoUrl || "";
         if (!logo && hasValidDomain) {
-          logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || "";
+          logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || `/api/favicon?domain=${encodeURIComponent(dom)}`;
+        }
+        if (logo && logo.includes("/api/proxy-image?v=2&")) {
+          logo = logo.replace("/api/proxy-image?v=2&", "/api/proxy-image?v=3&");
         }
 
         const cleanTitle = formatBusinessName(item.title, dom, undefined, { fromWebsite: item.source !== 'domain_guess' }) || item.title;
@@ -35671,7 +35680,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (!rgb) return false;
               const [r, g, b] = rgb;
               const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-              return lum >= 190;
+              const maxC = Math.max(r, g, b);
+              const minC = Math.min(r, g, b);
+              // Only treat near-achromatic white/off-white colors as white-like (NEVER saturated yellows like #fc0, gold, cyan, etc.)
+              return lum >= 220 && (maxC - minC) <= 30;
             };
 
             const isDarkColor = (c: string) => {
