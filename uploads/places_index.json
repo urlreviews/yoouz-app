@@ -1,5 +1,252 @@
 [
   {
+    "id": "zara.comtakes",
+    "name": "Zara",
+    "address": "",
+    "category": "Website",
+    "categoryType": "all",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 3,
+    "ratingCount": 3,
+    "videoReviewCount": 3,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 3
+    },
+    "ratingDistribution": {
+      "stars5": 3,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "1800 800 080",
+    "email": "",
+    "website": "https://zara.comtakes",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "BEST SELLERS JACKETS | TRENCHES COATS PUFFERS | TECHNICAL BLAZERS KNITWEAR DRESSES PANTS JEANS SKIRTS T-SHIRTS SHIRTS | BLOUSES TOPS | BODYSUITS SWEATSHIRTS | SWEATPANTS SWEATERS | CARDIGANS CO-ORD SETS SHOES | BAGS SUEDE | LEATHER ACCESSORIES | JEWELRY PERFUMES | BEAUTY LINGERIE SPECIAL PRICES",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "zara.comtakes",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
+    ],
+    "isSavedToProfile": true
+  },
+  {
+    "id": "zara.com",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "name": "Zara",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 3,
+    "ratingDistribution": {
+      "stars5": 3,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "brandDomain": "zara.comtakes",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "1800 800 080",
+    "email": "",
+    "website": "https://zara.comtakes",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "BEST SELLERS JACKETS | TRENCHES COATS PUFFERS | TECHNICAL BLAZERS KNITWEAR DRESSES PANTS JEANS SKIRTS T-SHIRTS SHIRTS | BLOUSES TOPS | BODYSUITS SWEATSHIRTS | SWEATPANTS SWEATERS | CARDIGANS CO-ORD SETS SHOES | BAGS SUEDE | LEATHER ACCESSORIES | JEWELRY PERFUMES | BEAUTY LINGERIE SPECIAL PRICES",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 3,
+    "ratingCount": 3,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 3
+    },
+    "locations": []
+  },
+  {
+    "id": "guard-slip-cafe-by-lgip.bayombong",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "bannerUrl": "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong",
+    "name": "Guard Slip Cafe By Lgip",
+    "category": "Cafe",
+    "categoryType": "all",
+    "address": "Bayombong, Nueva Vizcaya, Philippines",
+    "city": "Bayombong",
+    "country": "Philippines",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "brandDomain": "guard-slip-cafe-by-lgip.bayombong",
+    "ogImage": "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong",
+    "photos": [
+      "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://guard-slip-cafe-by-lgip.bayombong",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Guard Slip Cafe By Lgip is a popular dining destination in Bayombong, Philippines, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "propercoffee.app",
+    "logoUrl": "/api/favicon?domain=propercoffee.app",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png",
+    "name": "Art Coffee Gallery Aberdeen",
+    "category": "Restaurant & Cafe",
+    "categoryType": "all",
+    "address": "Online",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=propercoffee.app",
+    "brandDomain": "propercoffee.app",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://propercoffee.app/",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Art Coffee Gallery Aberdeen is a popular dining destination in London, United Kingdom, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "jollibee.com.ph",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "name": "Jollibee",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 2,
+    "ratingCount": 2,
+    "videoReviewCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 2
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://jollibee.com.ph",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Jollibee is a Filipino fast-food restaurant chain and the flagship brand of Jollibee Foods Corporation (JFC). Established in 1978 by Tony Tan Caktiong, it is the Philippines' top fast-food restaurant and is among the world's fastest-growing restaurant chains, having expanded its international presence almost sixfold from 2014 to 2024.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "jollibee.com.ph",
+    "isSavedToProfile": true
+  },
+  {
     "id": "dunkindonuts.com",
     "name": "Dunkin' Donuts",
     "category": "Verified Business",
@@ -255,8 +502,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=webflow.com",
+    "logoUrl": "/api/favicon?domain=webflow.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -560,8 +807,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=calvinklein.com",
+    "logoUrl": "/api/favicon?domain=calvinklein.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "photos": [
@@ -610,8 +857,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=dominos.com",
-    "logoUrl": "/api/favicon?domain=dominos.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -3633,12 +3880,12 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
     ],
-    "logoUrl": "/api/favicon?domain=flipper.net",
-    "avatarUrl": "/api/favicon?domain=flipper.net",
+    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "avatarUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
     "category": "Verified Business",
     "categoryType": "all",
-    "lat": 40.7128,
-    "lng": -74.006,
+    "lat": 0,
+    "lng": 0,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -3862,7 +4109,15 @@
       }
     ],
     "isSavedToProfile": true,
-    "placeLogoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500"
+    "placeLogoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
   },
   {
     "id": "wowcleannyc.com",
@@ -6250,8 +6505,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "avatarUrl": "/api/favicon?domain=nfx.com",
+    "logoUrl": "/api/favicon?domain=nfx.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -6308,8 +6563,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "avatarUrl": "/api/favicon?domain=2b.vc",
+    "logoUrl": "/api/favicon?domain=2b.vc",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -6642,8 +6897,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
+    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -7310,8 +7565,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
+    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -7835,8 +8090,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=researchgate.net",
+    "logoUrl": "/api/favicon?domain=researchgate.net",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [
@@ -7929,13 +8184,13 @@
   {
     "id": "cetaphil.com",
     "name": "Cetaphil",
-    "category": "Real Estate",
+    "category": "Skincare & Beauty",
     "categoryType": "all",
     "address": "5 Signs of Sensitive Skin",
     "city": "Gent",
     "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
+    "lat": 0,
+    "lng": 0,
     "rating": 5,
     "totalReviews": 1,
     "ratingDistribution": {
@@ -7945,24 +8200,28 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=cetaphil.com",
-    "logoUrl": "/api/favicon?domain=cetaphil.com",
+    "avatarUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+    "logoUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
-      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D500"
+      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://www.cetaphil.com/us/homepage/",
+    "website": "https://cetaphil.com",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Cetaphil is a dermatologist-recommended brand offering sensitive skincare products that improve skin resilience and protect against various skin concerns.",
-    "popularKeywords": [],
+    "description": "Cetaphil is a dependable automotive and transportation service provider in Gent, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "cetaphil.com",
@@ -8118,7 +8377,7 @@
   {
     "id": "burgerking.com",
     "name": "Burger King",
-    "category": "Fast Food Restaurant",
+    "category": "Marketing & Creative Agency",
     "categoryType": "all",
     "address": "",
     "city": "Online",
@@ -8143,13 +8402,13 @@
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
+    "phone": "1-305-378-3000",
     "email": "",
-    "website": "https://burgerking.com",
+    "website": "https://burgerking.comtakes",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Burger King is a global quick-service restaurant brand famous for its flame-grilled Whopper sandwiches, burgers, fries, and shakes.",
+    "description": "Burger King · marketing & creative agency · burgerking.com",
     "popularKeywords": [],
     "amenities": [],
     "topDishes": [],
@@ -8298,13 +8557,13 @@
   {
     "id": "bk.com",
     "name": "Burger King",
-    "category": "Restaurant & Cafe",
+    "category": "Fast Food Restaurant",
     "categoryType": "all",
     "address": "",
     "city": "Online",
     "country": "",
-    "lat": 40.7128,
-    "lng": -74.006,
+    "lat": 0,
+    "lng": 0,
     "rating": 5,
     "totalReviews": 1,
     "ratingDistribution": {
@@ -8321,16 +8580,21 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg"
     ],
-    "openingHours": "",
+    "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
+    "phone": "1-305-378-3000",
     "email": "",
-    "website": "https://www.bk.com/",
+    "website": "https://bk.com",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Explore the Burger King menu, find a location near you, and order your favorite flame-grilled burgers for pickup or delivery.",
-    "popularKeywords": [],
+    "description": "Burger King is a popular dining destination online at bk.com, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "bk.com",
@@ -8578,17 +8842,17 @@
   {
     "id": "zara.com",
     "name": "Zara",
-    "category": "Real Estate",
+    "category": "Website",
     "categoryType": "all",
     "address": "",
     "city": "Online",
-    "country": "",
-    "lat": 0,
-    "lng": 0,
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
     "rating": 5,
-    "totalReviews": 2,
+    "totalReviews": 3,
     "ratingDistribution": {
-      "stars5": 2,
+      "stars5": 3,
       "stars4": 0,
       "stars3": 0,
       "stars2": 0,
@@ -8603,26 +8867,26 @@
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
+    "phone": "1800 800 080",
     "email": "",
-    "website": "https://www.zara.com/",
+    "website": "https://zara.comtakes",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Zara is a verified business on Yoouz.",
+    "description": "BEST SELLERS JACKETS | TRENCHES COATS PUFFERS | TECHNICAL BLAZERS KNITWEAR DRESSES PANTS JEANS SKIRTS T-SHIRTS SHIRTS | BLOUSES TOPS | BODYSUITS SWEATSHIRTS | SWEATPANTS SWEATERS | CARDIGANS CO-ORD SETS SHOES | BAGS SUEDE | LEATHER ACCESSORIES | JEWELRY PERFUMES | BEAUTY LINGERIE SPECIAL PRICES",
     "popularKeywords": [],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "zara.com",
+    "brandDomain": "zara.comtakes",
     "isSavedToProfile": true,
-    "videoReviewCount": 2,
-    "ratingCount": 2,
+    "videoReviewCount": 3,
+    "ratingCount": 3,
     "starCounts": {
       "1": 0,
       "2": 0,
       "3": 0,
       "4": 0,
-      "5": 2
+      "5": 3
     },
     "selectedName": "Zara",
     "hours": "Available 24/7",
@@ -8891,11 +9155,11 @@
   {
     "id": "anthropic.com",
     "name": "Anthropic",
-    "category": "Technology & AI",
+    "category": "Verified Business",
     "categoryType": "all",
-    "address": "",
-    "city": "San Francisco",
-    "country": "United States",
+    "address": "2026 Public Benefit Report",
+    "city": "Gent",
+    "country": "Belgium",
     "lat": 0,
     "lng": 0,
     "rating": 5,
@@ -8912,19 +9176,23 @@
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F4zrzovbb%2Fwebsite%2Fc07f638082c569e8ce1e89ae95ee6f332a98ec08-2400x1260.jpg"
+      "/api/proxy-image?url=https%3A%2F%2Fassets.claude.com%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://www.anthropic.com/",
+    "website": "https://anthropic.com",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Anthropic is an AI safety and research company that's working to build reliable, interpretable, and steerable AI systems.",
-    "popularKeywords": [],
+    "description": "Anthropic · verified business · Gent, Belgium",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "anthropic.com",
@@ -9143,7 +9411,10 @@
       "3": 0,
       "4": 0,
       "5": 1
-    }
+    },
+    "postalCode": "2026",
+    "zipCode": "2026",
+    "zip": "2026"
   },
   {
     "id": "anythingvirtual.net",

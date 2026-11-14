@@ -40312,14 +40312,26 @@ function injectOpenGraphTags(html: string, meta: any) {
     return updatedHtml;
   }
 
-  function injectLiveInitialState(html: string, isCrawler = false): string {
+  function injectLiveInitialState(html: string, isCrawler = false, targetUrlOrVideoId?: string): string {
     if (isCrawler) return html;
     try {
       const deletedSet = new Set(readDeletedReviewsIndex());
       const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
-      const liveVideos = (sourceVideos || [])
-        .filter((v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl))
-        .slice(0, 30);
+      const validSource = (sourceVideos || []).filter(
+        (v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl)
+      );
+      const liveVideos = validSource.slice(0, 30);
+
+      if (targetUrlOrVideoId) {
+        const revMatch = String(targetUrlOrVideoId).match(/(rev-[a-zA-Z0-9_\-]+)/i);
+        const targetId = revMatch ? revMatch[1] : (String(targetUrlOrVideoId).startsWith("rev-") ? String(targetUrlOrVideoId) : "");
+        if (targetId && !liveVideos.some((v: any) => String(v.id) === targetId)) {
+          const targetVid = validSource.find((v: any) => String(v.id) === targetId);
+          if (targetVid) {
+            liveVideos.push(targetVid);
+          }
+        }
+      }
       
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};</script>`;
@@ -41707,8 +41719,17 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     // Handle bot/crawler requests and direct HTML requests for Open Graph tags in dev mode
     app.get('*', async (req: any, res: any, next: any) => {
-      const STATIC_EXTENSIONS = /\.(js|jsx|ts|tsx|css|png|jpg|jpeg|gif|svg|ico|json|map|woff|woff2|ttf|eot|webp|avif|mp4|webm|mov|ogg|mp3|wav|txt|xml|pdf|webmanifest)$/i;
-      if (req.path.startsWith('/api') || STATIC_EXTENSIONS.test(req.path) || req.path.startsWith('/@vite') || req.path.startsWith('/src')) {
+      const STATIC_EXTENSIONS = /\.(js|mjs|cjs|jsx|ts|tsx|css|png|jpg|jpeg|gif|svg|ico|json|map|woff|woff2|ttf|eot|webp|avif|mp4|webm|mov|ogg|mp3|wav|txt|xml|pdf|webmanifest)$/i;
+      if (
+        req.path.startsWith('/api') ||
+        STATIC_EXTENSIONS.test(req.path) ||
+        req.path.startsWith('/@vite') ||
+        req.path.startsWith('/@id') ||
+        req.path.startsWith('/@fs') ||
+        req.path.startsWith('/@react-refresh') ||
+        req.path.startsWith('/node_modules') ||
+        req.path.startsWith('/src')
+      ) {
         return next();
       }
       try {
@@ -41731,7 +41752,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (!isCrawler) {
           indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
         }
-        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler) : indexTemplate;
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler, req.originalUrl || req.url) : indexTemplate;
         return res.status(meta?.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': isCrawler
@@ -41795,7 +41816,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           meta = null;
         }
 
-        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler) : indexTemplate;
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler, req.originalUrl || req.url) : indexTemplate;
         
         // Allow social crawlers (Facebook composer + post-publish validator) to cache the Open Graph object
         // so the preview card never disappears when clicking "Post"

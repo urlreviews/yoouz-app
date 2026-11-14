@@ -1,6 +1,6 @@
 // Deployment Trigger: 2026-10-19 19:44 (Fix net::ERR_INSUFFICIENT_RESOURCES)
 import { forceMute } from "./hooks/useGlobalMute";
-import { useFeedPagination } from "./hooks/useFeedPagination";
+import { useFeedPagination, normalizeReview } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
@@ -620,17 +620,31 @@ export function App() {
     return "home";
   });
   const [activeSubTab, setActiveSubTab] = useState<FeedSubTab>("discover");
-  const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(() => {
+  const getInitialVideoIdFromLocation = () => {
     try {
       const { pathWithoutLocale: pathname } = parseLocaleFromPath(window.location.pathname);
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash || "";
+      const explicitParam = params.get("video") || params.get("v") || (hash.startsWith("#/video/") ? hash.replace("#/video/", "") : null);
+      if (explicitParam) return decodeURIComponent(explicitParam);
       const revMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
-      const videoId = revMatch ? revMatch[1] : null;
-      if (videoId && typeof window !== "undefined" && (window as any).__INITIAL_FEED_VIDEOS__) {
-        const initVideos = (window as any).__INITIAL_FEED_VIDEOS__;
-        if (Array.isArray(initVideos)) {
-          const idx = initVideos.findIndex((v: any) => v && v.id === videoId);
-          if (idx >= 0) return idx;
-        }
+      if (revMatch) return revMatch[1];
+      const userVideoMatch = pathname.match(/^\/@[^\/]+\/video\/([^\/]+)/) || pathname.match(/^\/creator\/[^\/]+\/video\/([^\/]+)/);
+      if (userVideoMatch?.[1]) return decodeURIComponent(userVideoMatch[1]);
+      const vMatch = pathname.match(/^\/(?:v|video|review)\/([^\/]+)(?:\/([^\/]+))?/);
+      if (vMatch) return decodeURIComponent(vMatch[2] || vMatch[1]);
+    } catch (e) {}
+    return null;
+  };
+  const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(() => {
+    try {
+      const videoId = getInitialVideoIdFromLocation();
+      if (videoId && Array.isArray(videos) && videos.length > 0) {
+        const sortedVisible = [...videos]
+          .filter((v) => v && !isUserDeactivated(v.author || v.userId || v.authorName))
+          .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+        const idx = sortedVisible.findIndex((v: any) => v && v.id === videoId);
+        if (idx >= 0) return idx;
       }
     } catch (e) {}
     return 0;
@@ -714,7 +728,7 @@ export function App() {
     return null;
   });
   const [selectedAuthorForDrawer, setSelectedAuthorForDrawer] = useState<VideoAuthor | null>(null);
-  const [pendingVideoId, setPendingVideoId] = useState<string | null>(null);
+  const [pendingVideoId, setPendingVideoId] = useState<string | null>(() => getInitialVideoIdFromLocation());
   const [placeReviewSort, setPlaceReviewSort] = useState<"latest" | "oldest" | "highest" | "lowest" | "popular">("latest");
   const [placeStarFilter, setPlaceStarFilter] = useState<number | "all">("all");
   const [profileVideoSort, setProfileVideoSort] = useState<"latest" | "highest" | "lowest" | "oldest" | "popular">("latest");
@@ -767,6 +781,10 @@ export function App() {
       return [];
     }
   });
+  const hiddenVideoIdsRef = useRef(hiddenVideoIds);
+  useEffect(() => {
+    hiddenVideoIdsRef.current = hiddenVideoIds;
+  }, [hiddenVideoIds]);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem("yoouz_blocked_users") || "[]");
@@ -1041,17 +1059,14 @@ export function App() {
             }
           }
         }
-        if (!creatorParam) {
+        if (!creatorParam && !videoParam) {
           const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/) || pathname.match(/^\/user\/([^\/]+)/);
           if (cMatch) {
             creatorParam = cMatch[1];
           }
         }
-        if (!placeParam && !pathname.startsWith("/business/")) {
-          const revDomainMatch = pathname.match(/^\/review\/([^\/]+)\/([^\/]+)/);
-          if (revDomainMatch && !revDomainMatch[1].startsWith("rev-")) {
-            placeParam = revDomainMatch[1];
-          } else if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
+        if (!placeParam && !videoParam && !pathname.startsWith("/business/")) {
+          if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
             placeParam = "sample";
           } else {
             const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
@@ -1315,25 +1330,42 @@ export function App() {
 
         if (videoParam) {
           const targetVidId = decodeURIComponent(videoParam);
-          const idx = videosRef.current.findIndex((v) => v.id === targetVidId);
+          setFullscreenFeedContext(null);
+          setSelectedPlaceIdForDrawer(null);
+          setSelectedAuthorForDrawer(null);
+          setActiveSection("home");
+          setPendingVideoId(targetVidId);
+          setIsWatchingVideo(true);
+
+          const sortedVisible = [...videosRef.current]
+            .filter((v) => !hiddenVideoIdsRef.current.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
+            .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+          const idx = sortedVisible.findIndex((v) => v.id === targetVidId);
           if (idx !== -1) {
             setCurrentVideoIndex(idx);
-            setIsWatchingVideo(true);
           } else {
-            // Fetch from server API to ensure seed JSON data is merged with BunnyDB
-            fetch(`/api/nosql/videoReviews/${targetVidId}`)
-              .then(res => res.json())
-              .then(vidData => {
+            // Fetch from server API to ensure BunnyDB + seed JSON review resolves
+            fetch(`/api/nosql/videoReviews/${encodeURIComponent(targetVidId)}`)
+              .then((res) => (res.ok ? res.json() : null))
+              .then((vidData) => {
                 if (vidData && vidData.id) {
+                  const normalized = normalizeReview(vidData);
                   setVideos((prev) => {
-                    if (prev.some((v) => v.id === vidData.id)) return prev;
-                    return [vidData as VideoReview, ...prev];
+                    if (prev.some((v) => v.id === normalized.id)) return prev;
+                    return [normalized, ...prev];
                   });
-                  setCurrentVideoIndex(0);
+                  setPendingVideoId(normalized.id);
                   setIsWatchingVideo(true);
+                } else {
+                  setPendingVideoId(null);
                 }
-              }).catch(() => {});
+              })
+              .catch(() => {
+                setPendingVideoId(null);
+              });
           }
+        } else {
+          setPendingVideoId(null);
         }
       } catch (err) {
         console.warn("URL sync warning:", err);
@@ -4830,6 +4862,9 @@ export function App() {
 
       // Current active video being watched in the feed (never fall back to global videos[0] when activeFeedVideos is empty!)
       const currentVid = activeFeedVideos[currentVideoIndex] || null;
+      if (pendingVideoId && (!currentVid || currentVid.id !== pendingVideoId)) {
+        return;
+      }
 
       // Hierarchy of URL synchronization:
       if (isWatchingVideo && !isPlaceView && !isCreatorView && currentVid) {
@@ -4954,7 +4989,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -5198,6 +5233,7 @@ export function App() {
 
   // Go to main Home Feed (resetting all filters, drawers, and context)
   const handleGoHome = () => {
+    setPendingVideoId(null);
     setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setSelectedPlaceIdForDrawer(null);
@@ -5305,6 +5341,7 @@ export function App() {
       previousSectionRef.current = activeSection;
     }
 
+    setPendingVideoId(null);
     setIsWatchingVideo(false);
     setFullscreenFeedContext(null);
     setSelectedAuthorForDrawer(null);

@@ -1149,7 +1149,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const mainRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const isProgrammaticScrollRef = useRef<boolean>(false);
+  const isProgrammaticScrollRef = useRef<boolean>(currentIndex > 0);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastObserverIndexRef = useRef<number>(currentIndex);
 
@@ -1409,7 +1409,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [displayItems.length, videos, onSelectVideoIndex]);
 
-  // Keep top-of-feed locked to index 0 when feed updates or new video is published
+  // Keep top-of-feed locked to index 0 only on newly recorded local videos or initial mount at 0;
+  // preserve active deep-linked / currently playing video when background feed pages hydrate.
   const prevFirstVideoIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentFirstId = videos[0]?.id || null;
@@ -1425,8 +1426,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         setLocalBlobUrls((prev) => ({ ...prev, [currentFirstId]: localBlob }));
       }
 
-      // If active card was at top, or whenever a newly recorded video is added, snap to index 0
-      if (!isInitialMount || activeCardIndexRef.current === 0) {
+      if (localBlob || (isInitialMount && currentIndex === 0 && activeCardIndexRef.current === 0)) {
         lastObserverIndexRef.current = 0;
         activeCardIndexRef.current = 0;
         setActiveCardIndex(0);
@@ -1434,18 +1434,40 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (containerRef.current) {
           containerRef.current.scrollTo({ top: 0, behavior: "instant" });
         }
+      } else {
+        const playingId = activeVideoRef.current?.id || lastLoadedVideoIdRef.current;
+        if (playingId) {
+          const newIdx = videos.findIndex((v) => v && v.id === playingId);
+          if (newIdx >= 0 && newIdx !== activeCardIndexRef.current) {
+            scrollToCard(newIdx, "instant");
+          }
+        }
       }
     }
-  }, [videos, onSelectVideoIndex]);
+  }, [videos, onSelectVideoIndex, currentIndex, scrollToCard]);
 
   // Initial mount scroll to currentIndex
   useEffect(() => {
     if (containerRef.current) {
       if (currentIndex === 0) {
+        isProgrammaticScrollRef.current = false;
         containerRef.current.scrollTo({ top: 0, behavior: "instant" });
       } else if (currentIndex > 0 && currentIndex < displayItems.length) {
         scrollToCard(currentIndex, "instant");
+        // Fallback after paint in case refs/heights settled asynchronously
+        requestAnimationFrame(() => {
+          if (cardRefs.current[currentIndex] && containerRef.current) {
+            const targetTop = cardRefs.current[currentIndex]!.offsetTop - containerRef.current.offsetTop;
+            if (Math.abs(containerRef.current.scrollTop - targetTop) > 10) {
+              containerRef.current.scrollTo({ top: targetTop, behavior: "auto" });
+            }
+          }
+        });
+      } else {
+        isProgrammaticScrollRef.current = false;
       }
+    } else {
+      isProgrammaticScrollRef.current = false;
     }
   }, []);
 
