@@ -37809,7 +37809,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       };
 
       const maxBottomWidth = authorPrefixWidth + 28;
-      const authorPillWidth = Math.min(540, Math.max(260, 92 + maxBottomWidth + 28));
+      const authorPillWidth = Math.min(520, Math.max(260, 92 + maxBottomWidth + 28));
 
       // Fetch official business logo / favicon buffer
       let placeLogoBuf: Buffer | null = null;
@@ -37839,9 +37839,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const maxTopWidth = Math.max(placeWidth + 28, ratingLineWidth);
       const placePillWidth = Math.min(520, Math.max(280, 92 + maxTopWidth + 28));
 
-      // Centered Safe Zone Alignment: Guaranteed 100% visible across 1:1 square crops (comments, WhatsApp) and 1.91:1 wide layouts
-      const topPillX = Math.round((1200 - placePillWidth) / 2);
-      const bottomPillX = Math.round((1200 - authorPillWidth) / 2);
+      // Option A Dual-Safe Left-of-Center Zone (x = 300):
+      // Starts inside the 1:1 center-square crop (x = 285..915) so 100% of Logo, Name & Stars are visible in small comment thumbnails,
+      // while staying on the left side of the 1200x630 wide canvas for Main Posts.
+      const topPillX = 300;
+      const bottomPillX = 300;
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 30, true);
       const initialX = 46 - (initialWidth / 2);
@@ -38389,6 +38391,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const line2TotalTextWidth = ratingNumWidth + 8 + starsRowWidth + 10 + reviewsLabelWidth;
       const maxTextWidth = Math.max(placeWidth + 28, line2TotalTextWidth);
       const businessPillWidth = Math.min(520, Math.max(300, 96 + maxTextWidth + 36));
+      // Option A Dual-Safe Left-of-Center Zone (x = 300):
+      // Sits on the left side of the 1200x630 wide banner in Main Posts AND starts 15px inside the 630x630 center-square crop (x = 285..915) for Comments
+      const businessPillX = 300;
 
       // Build 5-Star Vector Row with Fractional Rating Support
       const starsStartX = 96 + ratingNumWidth + 8;
@@ -38432,8 +38437,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM LEFT: Prominent Business Profile Pill (Sleek Compact 2-Row) -->
-          <g transform="translate(48, 484)" filter="url(#placeCardShadow)">
+          <!-- BOTTOM LEFT-OF-CENTER SAFE ZONE: Prominent Business Profile Pill (100% visible in 1.91:1 Main Posts & 1:1 Comment Crops) -->
+          <g transform="translate(${businessPillX}, 484)" filter="url(#placeCardShadow)">
             <rect width="${businessPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Logo Container (White background container matching profile drawer) -->
@@ -38715,8 +38720,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 26, true);
       const subWidth = getTextAdvanceWidth(subtitleText, 17, true);
       const maxTextWidth = Math.max(authorWidth + 28, subWidth);
-      const authorPillWidth = Math.min(540, Math.max(280, 102 + maxTextWidth + 36));
-      const authorPillX = Math.round((1200 - authorPillWidth) / 2);
+      const authorPillWidth = Math.min(520, Math.max(280, 102 + maxTextWidth + 36));
+      // Option A Dual-Safe Left-of-Center Zone (x = 300):
+      // Sits on the left side of the 1200x630 wide banner in Main Posts AND starts 15px inside the 630x630 center-square crop (x = 285..915) for Comments
+      const authorPillX = 300;
 
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
@@ -38735,8 +38742,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
-          <g transform="translate(48, 484)" filter="url(#profileCardShadow)">
+          <!-- BOTTOM LEFT-OF-CENTER SAFE ZONE: Single Author Profile Pill (100% visible in 1.91:1 Main Posts & 1:1 Comment Crops) -->
+          <g transform="translate(${authorPillX}, 484)" filter="url(#profileCardShadow)">
             <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
             
             <!-- Left Squircle Avatar Container -->
@@ -40600,7 +40607,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const placeLogoParam = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
         const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
         const thumbUrlParam = thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=19`;
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=21`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
@@ -40771,7 +40778,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=29`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=32`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 
@@ -40941,7 +40948,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=35`;
+        imageUrl = `${baseUrl}/api/og-image.png?type=creator&name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${authorAvatar ? `&avatarUrl=${encodeURIComponent(authorAvatar)}` : ''}${authorBanner ? `&bannerUrl=${encodeURIComponent(authorBanner)}` : ''}&v=37`;
         twitterCard = "summary_large_image";
     } else if (
         pathname.includes('/vs/') || 
