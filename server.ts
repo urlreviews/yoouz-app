@@ -38368,7 +38368,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
           res.setHeader("Content-Type", "image/png");
           res.setHeader("Content-Length", imgBuf.length);
           res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
           return res.end(imgBuf);
         }
 
@@ -40081,7 +40083,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         const placeLogoParam = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image")) ? `&logoUrl=${encodeURIComponent(rawPlaceLogo)}` : '';
         const placeDomainParam = rawDomain ? `&placeDomain=${encodeURIComponent(rawDomain)}` : '';
         const thumbUrlParam = thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=18`;
+        imageUrl = `${baseUrl}/api/og-card/v9/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=19`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=9`;
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
         videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
@@ -40252,7 +40254,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=28`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(domain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(domain)}&rating=${placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0'}&reviewsCount=${placeVideos.length}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}${foundBanner ? `&bannerUrl=${encodeURIComponent(foundBanner)}` : ''}&v=29`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(domain)}.png?placeName=${encodeURIComponent(placeName)}${foundLogo ? `&logoUrl=${encodeURIComponent(foundLogo)}` : ''}&v=22`;
         twitterCard = "summary_large_image";
 
@@ -41178,7 +41180,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         res.status(meta?.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': isCrawler 
-            ? 'public, max-age=300' 
+            ? 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0' 
             : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400',
           'Vary': 'User-Agent, Accept-Encoding'
         }).end(finalHtml);

@@ -347,10 +347,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
   const previewImageUrl = `${appOrigin}/api/og-image.png?${
     isVideoMode && video
-      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=29`
+      ? `type=video&id=${encodeURIComponent(video.id)}&placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=30`
       : (isBusiness || propIsBusinessProfile)
-      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=28`
-      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=28`
+      ? `type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=29`
+      : `type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=29`
   }`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
@@ -966,7 +966,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
-                        {/* Line 2: Rating Score Number + 5-Star Row + Total Reviews + Domain */}
+                        {/* Line 2: Rating Score Number + 5-Star Row + Total Reviews */}
                         <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5">
                           <span className="text-white font-bold text-xs">{placeStats.scoreStr}</span>
                           <div className="flex items-center gap-0.5 shrink-0">
@@ -990,8 +990,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                             })}
                           </div>
                           <span className="text-white font-medium">({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})</span>
-                          <span className="text-zinc-400">•</span>
-                          <span className="text-zinc-300 font-medium">{resolvedDomain || title}</span>
                         </div>
                       </div>
                     </div>
@@ -1074,7 +1072,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                             <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
                             <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                           </div>
-                          {/* Line 2: 5 Stars + Stark White Clean Domain */}
+                          {/* Line 2: 5 Stars */}
                           <div className="flex items-center gap-1.5 leading-none mt-0.5">
                             <div className="flex items-center gap-0.5">
                               {[1, 2, 3, 4, 5].map((starIdx) => (
@@ -1086,9 +1084,6 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                                 </span>
                               ))}
                             </div>
-                            <span className="text-white text-xs font-bold leading-tight whitespace-nowrap drop-shadow-sm tracking-tight">
-                              {resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase()}
-                            </span>
                           </div>
                         </div>
                       </div>
