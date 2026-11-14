@@ -39516,18 +39516,36 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
     } catch (e) {}
   }
 
-  // 1. TOP PRIORITY: Known Brand Logos (SVG / Data URI) so verified brands never use stale dark-mode <text> SVGs
+  // 1. TOP PRIORITY: Known Brand Logos (SVG / Data URI / HTTP URL) so verified brands never use stale dark-mode <text> SVGs or blurry favicons
   if (!logoBuf && (cleanDom || name)) {
     const rawKnown = KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "");
     if (rawKnown && !rawKnown.includes("/api/favicon")) {
       try {
         if (rawKnown.startsWith('<svg')) {
-          logoBuf = await sharp(Buffer.from(rawKnown), { density: 300 }).resize(512, 512).png().toBuffer();
+          logoBuf = await sharp(Buffer.from(rawKnown), { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
         } else if (rawKnown.startsWith('data:image/svg')) {
           const svgStr = decodeURIComponent(rawKnown.split(',')[1]);
-          logoBuf = await sharp(Buffer.from(svgStr), { density: 300 }).resize(512, 512).png().toBuffer();
+          logoBuf = await sharp(Buffer.from(svgStr), { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
         } else if (rawKnown.startsWith('data:image')) {
-          logoBuf = decodeDataUrl(rawKnown);
+          const decoded = decodeDataUrl(rawKnown);
+          if (decoded) {
+            logoBuf = await sharp(decoded, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => decoded);
+          }
+        } else if (rawKnown.startsWith('http://') || rawKnown.startsWith('https://')) {
+          const rResp = await fetch(rawKnown, {
+            headers: {
+              "User-Agent": "Yoouz-Bot/1.0",
+              "Accept": "image/png,image/jpeg,image/webp,image/svg+xml,image/*"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+          });
+          if (rResp.ok) {
+            const ab = await rResp.arrayBuffer();
+            const b = Buffer.from(ab);
+            if (b.length > 50) {
+              logoBuf = await sharp(b, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
+            }
+          }
         }
       } catch (e) {}
     }
@@ -40717,7 +40735,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           v: "26"
         }, baseUrl).catch(() => {});
         const rawVideoUrl = foundVideo?.videoUrl || `https://rev1.b-cdn.net/videos/${videoId}.mp4`;
-        videoUrl = ""; // Social scrapers (FB, WhatsApp, LinkedIn) will strictly use og:image instead of extracting an un-overlayed raw mp4 frame
+        videoUrl = foundVideo?.bunnyVideoId ? `https://vz-dcd9e101-437.b-cdn.net/${foundVideo.bunnyVideoId}/play.mp4` : rawVideoUrl;
         type = "website";
         twitterCard = "summary_large_image";
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(videoId)}`;
