@@ -1,5 +1,114 @@
 [
   {
+    "id": "example.org",
+    "name": "Example Domain",
+    "category": "Website",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=example.org",
+    "logoUrl": "/api/favicon?domain=example.org",
+    "bannerUrl": "/api/brand-banner/example.org",
+    "ogImage": "/api/brand-banner/example.org",
+    "photos": [
+      "/api/brand-banner/example.org"
+    ],
+    "openingHours": "",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://example.org/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "example.org",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
+    "id": "bannerlocktest-xyz.com",
+    "name": "Banner Lock Test",
+    "brandDomain": "bannerlocktest-xyz.com",
+    "bannerUrl": "https://example.com/owner-new.jpg",
+    "ogImage": "https://example.com/first-photo.jpg",
+    "photos": [
+      "https://example.com/first-photo.jpg"
+    ],
+    "customized": true
+  },
+  {
+    "id": "dunkindonuts.com",
+    "name": "Dunkin' Donuts",
+    "category": "Verified Business",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Dunkin1.JPG",
+    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Dunkin1.JPG",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://dunkindonuts.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Sip into Dunkin' and enjoy America's favorite coffee and baked goods chain. View menu items, join Dunkin' Rewards, locate stores, and discover career opportunities.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "dunkindonuts.com",
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "lernerandrowe.com",
     "name": "Lerner and Rowe Injury Attorneys",
     "category": "Legal Services",

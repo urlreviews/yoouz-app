@@ -492,6 +492,26 @@ function isBadBanner(url?: string | null): boolean {
   }
 }
 
+function isImmutablePersistedBanner(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("/api/brand-banner") ||
+    lower.startsWith("blob:") ||
+    lower === "data:;" ||
+    lower.startsWith("data:;") ||
+    lower.startsWith("data:image/svg") ||
+    lower.includes("paint0_linear") ||
+    lower.includes("credit-card") ||
+    (!lower.startsWith("data:") && trimmed.includes("#"))
+  ) {
+    return false;
+  }
+  return !isBadBanner(trimmed);
+}
+
 function parseImageDimensionsFromBuffer(buf: Buffer): { width: number; height: number } | null {
   try {
     if (!buf || buf.length < 12) return null;
@@ -1040,121 +1060,7 @@ async function calculatePlaceRatingFromDb(placeId: string, placeName?: string): 
   };
 }
 
-// Helper function to persist resolved result to Database so that subsequent lookups are instant & free
-async function persistToDb(data: ResolvedBusinessData) {
-  const bunnyDb = getBunnyDb();
-  if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
-  try {
-    const autoPlaceId = data.domain.toLowerCase().replace(/^www\./, "").trim();
-    const officialDescBrand = extractOfficialBrandSpellingFromText(data.description, autoPlaceId);
-    const rawPersistName = (officialDescBrand && isFalseSplitAgainstText(data.name, data.description, autoPlaceId))
-      ? officialDescBrand
-      : (data.name || autoPlaceId);
-    const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || formatBusinessName(rawPersistName, autoPlaceId, undefined, { fromWebsite: Boolean(data.name), fallbackText: data.description }) || autoPlaceId;
-    // Fetch existing place row if present to preserve custom rating / reviews if not calculated
-    let existingDoc: any = {};
-    let existingRowData: any = null;
-    try {
-      const exRes = await bunnyDb.execute({
-        sql: `SELECT id, name, "logoUrl", "bannerUrl", "brandDomain", website, data FROM places WHERE LOWER(id) = LOWER(?) LIMIT 1`,
-        args: [autoPlaceId]
-      });
-      if (exRes && exRes.rows && exRes.rows[0]) {
-        existingRowData = exRes.rows[0] as any;
-        existingDoc = typeof existingRowData.data === 'string' ? JSON.parse(existingRowData.data) : (existingRowData.data || {});
-      }
-    } catch(e) {}
-
-    // Resilient logo & banner preservation: NEVER overwrite a valid banner or logo with an empty string
-    const rawCandidateLogo = KNOWN_BRAND_LOGOS[autoPlaceId]
-      || (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) && !isCrossBrandPortfolioLogoServer(data.logo, autoPlaceId) ? data.logo : "")
-      || (existingRowData?.logoUrl && !isGenericOrPlaceholderLogo(existingRowData.logoUrl) && !isFaviconUrl(existingRowData.logoUrl) && !isCrossBrandPortfolioLogoServer(existingRowData.logoUrl, autoPlaceId) ? existingRowData.logoUrl : "")
-      || (existingDoc?.logoUrl && !isGenericOrPlaceholderLogo(existingDoc.logoUrl) && !isFaviconUrl(existingDoc.logoUrl) && !isCrossBrandPortfolioLogoServer(existingDoc.logoUrl, autoPlaceId) ? existingDoc.logoUrl : "");
-
-    const bannerUrl = (KNOWN_BRAND_BANNERS[autoPlaceId] && !isBadBanner(KNOWN_BRAND_BANNERS[autoPlaceId]) ? KNOWN_BRAND_BANNERS[autoPlaceId] : "")
-      || (data.photo && !isBadBanner(data.photo) ? data.photo : "")
-      || (existingRowData?.bannerUrl && !isBadBanner(existingRowData.bannerUrl) ? existingRowData.bannerUrl : "")
-      || (existingDoc?.bannerUrl && !isBadBanner(existingDoc.bannerUrl) ? existingDoc.bannerUrl : "")
-      || `/api/brand-banner/${encodeURIComponent(autoPlaceId)}`;
-
-    const logoUrl = (rawCandidateLogo && rawCandidateLogo !== bannerUrl)
-      ? rawCandidateLogo
-      : `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
-
-    // Calculate ground-truth rating from videoReviews
-    const computedRating = await calculatePlaceRatingFromDb(autoPlaceId, resolvedName);
-
-    const autoPlaceDoc = {
-      id: autoPlaceId,
-      name: resolvedName,
-      category: data.category,
-      categoryType: "all",
-      address: data.address || existingDoc.address || existingRowData?.address || "",
-      city: data.city || existingDoc.city || existingRowData?.city || "Online",
-      country: data.country || existingDoc.country || existingRowData?.country || "",
-      lat: data.lat || existingDoc.lat || 0,
-      lng: data.lng || existingDoc.lng || 0,
-      rating: computedRating ? computedRating.rating : (existingDoc.rating !== undefined ? existingDoc.rating : 5),
-      totalReviews: computedRating ? computedRating.totalReviews : (existingDoc.totalReviews !== undefined ? existingDoc.totalReviews : 1),
-      ratingCount: computedRating ? computedRating.ratingCount : (existingDoc.ratingCount !== undefined ? existingDoc.ratingCount : 1),
-      videoReviewCount: computedRating ? computedRating.videoReviewCount : (existingDoc.videoReviewCount !== undefined ? existingDoc.videoReviewCount : 1),
-      starCounts: computedRating ? computedRating.starCounts : (existingDoc.starCounts || { 5: 1, 4: 0, 3: 0, 2: 0, 1: 0 }),
-      ratingDistribution: computedRating ? computedRating.ratingDistribution : (existingDoc.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 }),
-      avatarUrl: logoUrl,
-      logoUrl: logoUrl,
-      bannerUrl: bannerUrl,
-      ogImage: bannerUrl,
-      photos: bannerUrl ? [bannerUrl] : (existingDoc.photos || []),
-      openingHours: data.openingHours || existingDoc.openingHours || "",
-      isOpen: true,
-      phone: data.phone || existingDoc.phone || "",
-      email: data.email || existingDoc.email || "",
-      website: data.websiteUrl || existingDoc.website || `https://${autoPlaceId}`,
-      priceRange: "N/A",
-      plusCode: "",
-      locations: [],
-      description: data.description || existingDoc.description || "",
-      popularKeywords: [],
-      amenities: [],
-      topDishes: [],
-      brandDomain: autoPlaceId
-    };
-    
-    await bunnyDb.execute({
-      sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT (id) DO UPDATE SET 
-              name = EXCLUDED.name,
-              address = EXCLUDED.address,
-              category = EXCLUDED.category,
-              city = EXCLUDED.city,
-              country = EXCLUDED.country,
-              latitude = EXCLUDED.latitude,
-              longitude = EXCLUDED.longitude,
-              logoUrl = CASE WHEN EXCLUDED.logoUrl != '' THEN EXCLUDED.logoUrl ELSE places.logoUrl END,
-              bannerUrl = CASE WHEN EXCLUDED.bannerUrl != '' THEN EXCLUDED.bannerUrl ELSE places.bannerUrl END,
-              brandDomain = COALESCE(NULLIF(EXCLUDED.brandDomain, ''), places.brandDomain),
-              website = COALESCE(NULLIF(EXCLUDED.website, ''), places.website),
-              data = EXCLUDED.data,
-              updatedAt = CURRENT_TIMESTAMP
-            WHERE LOWER(places.id) = LOWER(EXCLUDED.id)`,
-      args: [autoPlaceId, resolvedName, autoPlaceDoc.address, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, autoPlaceDoc.lat, autoPlaceDoc.lng, logoUrl, bannerUrl, autoPlaceId, autoPlaceDoc.website, JSON.stringify(autoPlaceDoc)]
-    });
-
-    try {
-      const currentPlaces = readPlacesIndex();
-      const idx = currentPlaces.findIndex((p: any) => p && (p.id === autoPlaceId || p.brandDomain === autoPlaceId));
-      if (idx >= 0) {
-        currentPlaces[idx] = { ...currentPlaces[idx], ...autoPlaceDoc, id: autoPlaceId };
-      } else {
-        currentPlaces.unshift({ id: autoPlaceId, ...autoPlaceDoc });
-      }
-      writePlacesIndex(currentPlaces);
-    } catch (pErr) {}
-  } catch(e) {
-    console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
-  }
-}
+// persistToDb & getLockedSavedPlaceRecord are defined inside startServer() where domain helpers are in scope.
 
 function isCorruptedBusinessNameServer(name?: string | null): boolean {
   if (!name) return false;
@@ -8771,7 +8677,7 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Special handler for places collection: check places index and multi-layer resolver
+    // Special handler for places collection: query BunnyDB FIRST (strictly authoritative), then places index, then multi-layer resolver
     if (colName === 'places') {
       const normalizePlaceRecord = (rec: any) => {
         if (!rec) return rec;
@@ -8815,7 +8721,18 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           String(rec.bannerUrl || "").includes("b-cdn.net")
         );
         const knownBrandBanner = (domKey && (KNOWN_BRAND_BANNERS[domKey] || KNOWN_BRAND_BANNERS[`www.${domKey}`])) || "";
-        if (!isOwnerCustomRec && knownBrandBanner) {
+        const persistedImmBanner = [
+          rec.bannerUrl,
+          rec.ogImage,
+          ...(Array.isArray(rec.photos) ? rec.photos : [])
+        ].find(isImmutablePersistedBanner) || "";
+        if (persistedImmBanner && (!knownBrandBanner || isOwnerCustomRec)) {
+          rec.bannerUrl = persistedImmBanner;
+          rec.ogImage = persistedImmBanner;
+          rec.photos = Array.isArray(rec.photos)
+            ? [persistedImmBanner, ...rec.photos.filter((p: string) => p !== persistedImmBanner && !isBadBanner(p))]
+            : [persistedImmBanner];
+        } else if (!isOwnerCustomRec && knownBrandBanner) {
           rec.bannerUrl = knownBrandBanner;
           rec.ogImage = knownBrandBanner;
           if (Array.isArray(rec.photos)) {
@@ -8850,10 +8767,58 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
         }
         return rec;
       };
+
+      const cleanLookupId = String(id || "").trim();
+      const cleanLookupDom = cleanDomainName(cleanLookupId) || cleanLookupId.toLowerCase().replace(/^www\./, "").trim();
       const placesList = readPlacesIndex();
-      const existingInList = placesList.find((p: any) => p && (p.id === id || p.brandDomain === id || cleanDomainName(p.website || p.id) === cleanDomainName(id) || String(p.id).toLowerCase() === String(id).toLowerCase()));
+      const existingInList = placesList.find((p: any) => p && (
+        p.id === id ||
+        p.brandDomain === id ||
+        (cleanLookupDom && cleanDomainName(p.website || p.id) === cleanLookupDom) ||
+        String(p.id).toLowerCase() === cleanLookupId.toLowerCase() ||
+        (cleanLookupDom && String(p.id).toLowerCase() === cleanLookupDom)
+      ));
+
+      // 1. Check BunnyDB FIRST as authoritative source of truth so all browsers get identical locked banners
+      const bunnyDbFirst = getBunnyDb();
+      if (bunnyDbFirst) {
+        try {
+          const dbRs = await bunnyDbFirst.execute({
+            sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(brandDomain) = LOWER(?) LIMIT 1`,
+            args: [cleanLookupId, cleanLookupDom || cleanLookupId, cleanLookupDom ? `www.${cleanLookupDom}` : cleanLookupId, cleanLookupDom || cleanLookupId]
+          });
+          if (dbRs.rows && dbRs.rows.length > 0) {
+            const row: any = dbRs.rows[0];
+            let parsedData: any = {};
+            try { parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch(e) {}
+            if (isDeletedPlaceServer(row.id) || isDeletedPlaceServer(parsedData)) {
+              return res.status(404).json({ error: "Place not found (deleted)" });
+            }
+            const dbImmBanner = [row.bannerUrl, parsedData.bannerUrl, parsedData.ogImage, ...(Array.isArray(parsedData.photos) ? parsedData.photos : [])].find(isImmutablePersistedBanner) || "";
+            const idxImmBanner = existingInList ? [existingInList.bannerUrl, existingInList.ogImage, ...(Array.isArray(existingInList.photos) ? existingInList.photos : [])].find(isImmutablePersistedBanner) || "" : "";
+            const mergedBanner = dbImmBanner || idxImmBanner || "";
+            const mergedRec = {
+              ...(existingInList && !isDeletedPlaceServer(existingInList) ? existingInList : {}),
+              ...parsedData,
+              id: String(row.id),
+              name: parsedData.name || row.name || existingInList?.name,
+              address: parsedData.address || row.address || existingInList?.address || "",
+              category: parsedData.category || row.category || existingInList?.category || "Website",
+              city: parsedData.city || row.city || existingInList?.city || "Online",
+              country: parsedData.country || row.country || existingInList?.country || "",
+              brandDomain: parsedData.brandDomain || row.brandDomain || cleanLookupDom || String(row.id),
+              website: parsedData.website || row.website || existingInList?.website,
+              logoUrl: parsedData.logoUrl || row.logoUrl || existingInList?.logoUrl || "",
+              avatarUrl: parsedData.avatarUrl || parsedData.logoUrl || row.logoUrl || existingInList?.logoUrl || "",
+              ...(mergedBanner ? { bannerUrl: mergedBanner, ogImage: mergedBanner, photos: Array.from(new Set([mergedBanner, ...(Array.isArray(parsedData.photos) ? parsedData.photos : [])])).filter(p => !isBadBanner(p)) } : {})
+            };
+            return res.json(normalizePlaceRecord(mergedRec));
+          }
+        } catch (dbFirstErr) {}
+      }
+
       if (existingInList && !isDeletedPlaceServer(existingInList)) {
-        return res.json(normalizePlaceRecord(existingInList));
+        return res.json(normalizePlaceRecord({ ...existingInList }));
       }
       const resolved = await resolvePlaceFromAnySource(id);
       if (resolved && !isDeletedPlaceServer(resolved)) {
@@ -9102,7 +9067,7 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           logoUrl: logo,
           bannerUrl: banner,
           ogImage: banner,
-          photos: [banner],
+          photos: banner ? [banner] : [],
           website: `https://${cleanDomain}`,
           description: `Official profile and customer video reviews for ${capitalizedTitle}.`,
           brandDomain: cleanDomain
@@ -9174,38 +9139,88 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             }
           } catch (e) {}
         }
-        if (merge !== false) {
+        const isPlaceCollection = colName === 'places' || colName === 'business_profiles';
+        const rawIdStr = String(id || '').trim();
+        const cleanIdDom = isPlaceCollection ? (cleanDomainName(finalDataObj.brandDomain || finalDataObj.website || rawIdStr) || rawIdStr.toLowerCase().replace(/^www\./, '').trim()) : rawIdStr;
+        let canonicalExistingPlaceId = rawIdStr;
+        let existingImmPlaceBanner = "";
+        let existingPlacesIndexRec: any = null;
+        if (isPlaceCollection) {
           try {
-            const existingRow = await bunnyDb.execute({
-              sql: `SELECT data FROM ${colName} WHERE id = ? LIMIT 1`,
-              args: [id]
-            });
+            const pList = readPlacesIndex();
+            existingPlacesIndexRec = pList.find((p: any) => p && !isDeletedPlaceServer(p) && (
+              String(p.id || '').toLowerCase() === rawIdStr.toLowerCase() ||
+              (cleanIdDom && (String(p.id || '').toLowerCase() === cleanIdDom || String(p.brandDomain || '').toLowerCase() === cleanIdDom))
+            )) || null;
+          } catch (e) {}
+        }
+
+        const allowExplicitBannerChange = Boolean(
+          req.body?.explicitBannerUpdate === true ||
+          finalDataObj?.explicitBannerUpdate === true ||
+          (finalDataObj?.customized === true && isImmutablePersistedBanner(finalDataObj?.bannerUrl)) ||
+          (typeof finalDataObj?.bannerUrl === 'string' && finalDataObj.bannerUrl.includes('b-cdn.net'))
+        );
+
+        if (isPlaceCollection || merge !== false) {
+          try {
+            const lookupTable = isPlaceCollection ? 'places' : colName;
+            const existingRow = isPlaceCollection
+              ? await bunnyDb.execute({
+                  sql: `SELECT id, "bannerUrl", "logoUrl", data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) LIMIT 1`,
+                  args: [rawIdStr, cleanIdDom || rawIdStr, cleanIdDom ? `www.${cleanIdDom}` : rawIdStr]
+                })
+              : await bunnyDb.execute({
+                  sql: `SELECT data FROM ${lookupTable} WHERE id = ? LIMIT 1`,
+                  args: [id]
+                });
             if (existingRow && existingRow.rows && existingRow.rows.length > 0) {
-              const curDataRaw = (existingRow.rows[0] as any).data;
+              const rowObj = existingRow.rows[0] as any;
+              if (rowObj.id) canonicalExistingPlaceId = String(rowObj.id);
+              const curDataRaw = rowObj.data;
               let curData = typeof curDataRaw === 'string' ? JSON.parse(curDataRaw) : (curDataRaw || {});
-              // Never allow an empty or tracking-pixel banner or generic favicon logo to overwrite an existing authentic banner/logo on places
-              if (colName === 'places' || colName === 'business_profiles') {
-                const domKey = String(curData.brandDomain || finalDataObj.brandDomain || id || '').toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+              if (isPlaceCollection) {
+                const domKey = String(curData.brandDomain || finalDataObj.brandDomain || cleanIdDom || id || '').toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+                existingImmPlaceBanner = [
+                  rowObj.bannerUrl,
+                  curData.bannerUrl,
+                  curData.ogImage,
+                  ...(Array.isArray(curData.photos) ? curData.photos : []),
+                  existingPlacesIndexRec?.bannerUrl,
+                  existingPlacesIndexRec?.ogImage
+                ].find(isImmutablePersistedBanner) || "";
+
                 if (curData.name && !isDomainDerivedGuess(curData.name, domKey) && !isDomainStemName(curData.name, domKey) && finalDataObj.name && (isDomainDerivedGuess(finalDataObj.name, domKey) || isDomainStemName(finalDataObj.name, domKey))) {
                   delete finalDataObj.name;
                 }
-                if (curData.bannerUrl && !isBadBanner(curData.bannerUrl) && (!finalDataObj.bannerUrl || isBadBanner(finalDataObj.bannerUrl))) {
+                if (existingImmPlaceBanner && !allowExplicitBannerChange) {
                   delete finalDataObj.bannerUrl;
-                }
-                if (curData.ogImage && !isBadBanner(curData.ogImage) && (!finalDataObj.ogImage || isBadBanner(finalDataObj.ogImage))) {
                   delete finalDataObj.ogImage;
+                  delete finalDataObj.photos;
+                } else {
+                  if (curData.bannerUrl && !isBadBanner(curData.bannerUrl) && (!finalDataObj.bannerUrl || isBadBanner(finalDataObj.bannerUrl))) {
+                    delete finalDataObj.bannerUrl;
+                  }
+                  if (curData.ogImage && !isBadBanner(curData.ogImage) && (!finalDataObj.ogImage || isBadBanner(finalDataObj.ogImage))) {
+                    delete finalDataObj.ogImage;
+                  }
+                  if (Array.isArray(curData.photos) && curData.photos.length > 0 && (!Array.isArray(finalDataObj.photos) || finalDataObj.photos.length === 0)) {
+                    delete finalDataObj.photos;
+                  }
                 }
-                if (curData.logoUrl && !curData.logoUrl.includes('/api/favicon') && (!finalDataObj.logoUrl || finalDataObj.logoUrl.includes('/api/favicon'))) {
+                if (curData.logoUrl && !curData.logoUrl.includes('/api/favicon') && !isFaviconUrl(curData.logoUrl) && !isGenericOrPlaceholderLogo(curData.logoUrl) && (!finalDataObj.logoUrl || finalDataObj.logoUrl.includes('/api/favicon') || isFaviconUrl(finalDataObj.logoUrl) || isGenericOrPlaceholderLogo(finalDataObj.logoUrl))) {
                   delete finalDataObj.logoUrl;
                 }
-                if (curData.avatarUrl && !curData.avatarUrl.includes('/api/favicon') && (!finalDataObj.avatarUrl || finalDataObj.avatarUrl.includes('/api/favicon'))) {
+                if (curData.avatarUrl && !curData.avatarUrl.includes('/api/favicon') && !isFaviconUrl(curData.avatarUrl) && !isGenericOrPlaceholderLogo(curData.avatarUrl) && (!finalDataObj.avatarUrl || finalDataObj.avatarUrl.includes('/api/favicon') || isFaviconUrl(finalDataObj.avatarUrl) || isGenericOrPlaceholderLogo(finalDataObj.avatarUrl))) {
                   delete finalDataObj.avatarUrl;
                 }
-                if (Array.isArray(curData.photos) && curData.photos.length > 0 && (!Array.isArray(finalDataObj.photos) || finalDataObj.photos.length === 0)) {
-                  delete finalDataObj.photos;
-                }
               }
-              finalDataObj = mergeDeep(curData, finalDataObj);
+              if (merge !== false) {
+                finalDataObj = mergeDeep(curData, finalDataObj);
+              } else if (isPlaceCollection && existingImmPlaceBanner && !allowExplicitBannerChange) {
+                finalDataObj.bannerUrl = existingImmPlaceBanner;
+                finalDataObj.ogImage = existingImmPlaceBanner;
+              }
               if (colName === 'chats' || (data?.history && Array.isArray(data.history))) {
                 const existingHist = Array.isArray(curData.history) ? curData.history : [];
                 const incomingHist = Array.isArray(data?.history) ? data.history : [];
@@ -9244,11 +9259,20 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                   return tA - tB;
                 });
               }
+            } else if (isPlaceCollection && existingPlacesIndexRec) {
+              existingImmPlaceBanner = [existingPlacesIndexRec.bannerUrl, existingPlacesIndexRec.ogImage, ...(Array.isArray(existingPlacesIndexRec.photos) ? existingPlacesIndexRec.photos : [])].find(isImmutablePersistedBanner) || "";
+              if (existingImmPlaceBanner && !allowExplicitBannerChange) {
+                finalDataObj.bannerUrl = existingImmPlaceBanner;
+                finalDataObj.ogImage = existingImmPlaceBanner;
+              }
             }
           } catch (mErr) {}
         }
         if (finalDataObj && finalDataObj.videoData) {
           delete finalDataObj.videoData;
+        }
+        if (finalDataObj && 'explicitBannerUpdate' in finalDataObj) {
+          delete finalDataObj.explicitBannerUpdate;
         }
         const jsonStr = JSON.stringify(finalDataObj);
         if (colName === 'notifications') {
@@ -9336,16 +9360,26 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             const flagPath = path.join(serverUploadsDir, 'all_places_purged.flag');
             if (fs.existsSync(flagPath)) fs.unlinkSync(flagPath);
           } catch(e) {}
-          const officialTextForSave = extractOfficialBrandSpellingFromText(finalDataObj.description, id);
-          const descBrandForSave = extractBrandFromDescription(finalDataObj.description, id);
-          const rawCandidateName = (officialTextForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id) || isFalseSplitOfDomain(finalDataObj.name, id) || isFalseSplitAgainstText(finalDataObj.name, finalDataObj.description, id)))
+          const targetSaveId = (canonicalExistingPlaceId && canonicalExistingPlaceId.includes('.'))
+            ? canonicalExistingPlaceId
+            : (cleanIdDom && cleanIdDom.includes('.') ? cleanIdDom : id);
+          const officialTextForSave = extractOfficialBrandSpellingFromText(finalDataObj.description, targetSaveId);
+          const descBrandForSave = extractBrandFromDescription(finalDataObj.description, targetSaveId);
+          const rawCandidateName = (officialTextForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, targetSaveId) || isDomainStemName(finalDataObj.name, targetSaveId) || isFalseSplitOfDomain(finalDataObj.name, targetSaveId) || isFalseSplitAgainstText(finalDataObj.name, finalDataObj.description, targetSaveId)))
             ? officialTextForSave
-            : ((descBrandForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, id) || isDomainStemName(finalDataObj.name, id) || isFalseSplitOfDomain(finalDataObj.name, id)))
+            : ((descBrandForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, targetSaveId) || isDomainStemName(finalDataObj.name, targetSaveId) || isFalseSplitOfDomain(finalDataObj.name, targetSaveId)))
               ? descBrandForSave
-              : (finalDataObj.name || id));
-          const placeName = formatBusinessName(rawCandidateName, id, undefined, { fromWebsite: Boolean(finalDataObj.name), fallbackText: finalDataObj.description });
+              : (finalDataObj.name || targetSaveId));
+          const placeName = formatBusinessName(rawCandidateName, targetSaveId, undefined, { fromWebsite: Boolean(finalDataObj.name), fallbackText: finalDataObj.description });
           finalDataObj.name = placeName;
-          const cleanDomForSave = cleanDomainName(finalDataObj.brandDomain || finalDataObj.website || id || "");
+          const cleanDomForSave = cleanDomainName(finalDataObj.brandDomain || finalDataObj.website || targetSaveId || "");
+          if (existingImmPlaceBanner && !allowExplicitBannerChange) {
+            finalDataObj.bannerUrl = existingImmPlaceBanner;
+            finalDataObj.ogImage = existingImmPlaceBanner;
+            finalDataObj.photos = Array.isArray(finalDataObj.photos)
+              ? Array.from(new Set([existingImmPlaceBanner, ...finalDataObj.photos.filter((p: string) => isImmutablePersistedBanner(p))]))
+              : [existingImmPlaceBanner];
+          }
           if (finalDataObj.bannerUrl && !String(finalDataObj.bannerUrl).includes("/api/brand-banner") && !String(finalDataObj.bannerUrl).includes("b-cdn.net") && isBadBanner(finalDataObj.bannerUrl)) {
             finalDataObj.bannerUrl = (cleanDomForSave && cleanDomForSave.includes(".")) ? `/api/brand-banner/${encodeURIComponent(cleanDomForSave)}` : "";
             finalDataObj.ogImage = finalDataObj.bannerUrl;
@@ -9377,8 +9411,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           const longitude = Number(finalDataObj.lng) || 0;
           const logoUrl = finalDataObj.logoUrl || finalDataObj.avatarUrl || '';
           const bannerUrl = finalDataObj.bannerUrl || finalDataObj.ogImage || '';
-          const brandDomain = finalDataObj.brandDomain || (String(id).includes('.') ? id : '');
+          const brandDomain = finalDataObj.brandDomain || (cleanDomForSave && cleanDomForSave.includes('.') ? cleanDomForSave : (String(targetSaveId).includes('.') ? targetSaveId : ''));
           const website = finalDataObj.website || (brandDomain ? `https://${brandDomain}` : '');
+          finalDataObj.id = targetSaveId;
+          finalDataObj.brandDomain = brandDomain || finalDataObj.brandDomain;
           const placeJsonStr = JSON.stringify(finalDataObj);
           await bunnyDb.execute({
             sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
@@ -9397,9 +9433,22 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                     website = COALESCE(NULLIF(?, ''), places.website), 
                     data = ?, 
                     updatedAt = CURRENT_TIMESTAMP`,
-            args: [id, placeName, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, placeJsonStr,
+            args: [targetSaveId, placeName, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, placeJsonStr,
                    placeName, address, category, city, country, latitude, longitude, logoUrl, logoUrl, bannerUrl, bannerUrl, brandDomain, website, placeJsonStr]
           });
+          try {
+            const curIndex = readPlacesIndex();
+            const idxMatch = curIndex.findIndex((p: any) => p && (
+              String(p.id || '').toLowerCase() === String(targetSaveId).toLowerCase() ||
+              (cleanDomForSave && String(p.brandDomain || '').toLowerCase() === cleanDomForSave)
+            ));
+            if (idxMatch >= 0) {
+              curIndex[idxMatch] = { ...curIndex[idxMatch], ...finalDataObj, id: targetSaveId };
+            } else {
+              curIndex.unshift({ id: targetSaveId, ...finalDataObj });
+            }
+            writePlacesIndex(curIndex);
+          } catch (idxErr) {}
 
           // Also propagate place banner, logo, name, address, phone, email changes into existing video reviews
           try {
@@ -31095,20 +31144,294 @@ async function resolveOfficialSiteMetaFromSearch(cleanDom: string): Promise<{ ti
   return null;
 }
 
+async function getLockedSavedPlaceRecord(domainOrId: string): Promise<{
+  canonicalId: string;
+  name?: string;
+  bannerUrl: string;
+  logoUrl: string;
+  photos: string[];
+  category?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+  openingHours?: string;
+  website?: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+  customized?: boolean;
+  isClaimed?: boolean;
+} | null> {
+  if (!domainOrId) return null;
+  const rawId = String(domainOrId).trim();
+  const cleanDom = cleanDomainName(rawId) || rawId.toLowerCase().replace(/^www\./, "").trim();
+  if (!cleanDom) return null;
+
+  let dbRow: any = null;
+  let dbDoc: any = {};
+  const bunnyDb = getBunnyDb();
+  if (bunnyDb) {
+    try {
+      const rs = await bunnyDb.execute({
+        sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(brandDomain) = LOWER(?) LIMIT 1`,
+        args: [rawId, cleanDom, `www.${cleanDom}`, cleanDom]
+      });
+      if (rs?.rows && rs.rows.length > 0) {
+        dbRow = rs.rows[0] as any;
+        try {
+          dbDoc = typeof dbRow.data === 'string' ? JSON.parse(dbRow.data) : (dbRow.data || {});
+        } catch {}
+      }
+    } catch {}
+  }
+
+  let idxDoc: any = null;
+  try {
+    const placesList = readPlacesIndex();
+    idxDoc = placesList.find((p: any) => p && !isDeletedPlaceServer(p) && (
+      String(p.id || "").toLowerCase() === rawId.toLowerCase() ||
+      String(p.id || "").toLowerCase() === cleanDom ||
+      String(p.brandDomain || "").toLowerCase() === cleanDom ||
+      cleanDomainName(p.website || p.id || "") === cleanDom
+    )) || null;
+  } catch {}
+
+  if (!dbRow && !idxDoc) return null;
+  if ((dbRow && (isDeletedPlaceServer(dbRow.id) || isDeletedPlaceServer(dbDoc))) || (idxDoc && isDeletedPlaceServer(idxDoc))) {
+    return null;
+  }
+
+  const bannerCandidates = [
+    dbRow?.bannerUrl,
+    dbDoc?.bannerUrl,
+    dbDoc?.ogImage,
+    dbDoc?.image,
+    dbDoc?.photo,
+    ...(Array.isArray(dbDoc?.photos) ? dbDoc.photos : []),
+    idxDoc?.bannerUrl,
+    idxDoc?.ogImage,
+    ...(Array.isArray(idxDoc?.photos) ? idxDoc.photos : [])
+  ];
+  const lockedBanner = bannerCandidates.find(isImmutablePersistedBanner) || "";
+
+  const isValidLockedLogo = (u?: string | null): boolean => {
+    if (!u || typeof u !== "string") return false;
+    const tr = u.trim();
+    if (!tr || tr === lockedBanner) return false;
+    if (tr.includes("/api/favicon") || tr.includes("/api/brand-banner") || isFaviconUrl(tr) || isGenericOrPlaceholderLogo(tr)) return false;
+    if (cleanDom && isCrossBrandPortfolioLogoServer(tr, cleanDom)) return false;
+    return true;
+  };
+  const logoCandidates = [dbDoc?.logoUrl, dbRow?.logoUrl, dbDoc?.avatarUrl, idxDoc?.logoUrl, idxDoc?.avatarUrl];
+  const lockedLogo = logoCandidates.find(isValidLockedLogo) || "";
+
+  const photos = Array.from(new Set([
+    ...(lockedBanner ? [lockedBanner] : []),
+    ...(Array.isArray(dbDoc?.photos) ? dbDoc.photos : []).filter(isImmutablePersistedBanner),
+    ...(Array.isArray(idxDoc?.photos) ? idxDoc.photos : []).filter(isImmutablePersistedBanner)
+  ]));
+
+  return {
+    canonicalId: String(dbRow?.id || idxDoc?.id || cleanDom),
+    name: dbDoc?.name || dbRow?.name || idxDoc?.name,
+    bannerUrl: lockedBanner,
+    logoUrl: lockedLogo,
+    photos,
+    category: dbDoc?.category || dbRow?.category || idxDoc?.category,
+    address: dbDoc?.address || dbRow?.address || idxDoc?.address,
+    city: dbDoc?.city || dbRow?.city || idxDoc?.city,
+    country: dbDoc?.country || dbRow?.country || idxDoc?.country,
+    phone: dbDoc?.phone || idxDoc?.phone,
+    email: dbDoc?.email || idxDoc?.email,
+    openingHours: dbDoc?.openingHours || idxDoc?.openingHours,
+    website: dbDoc?.website || dbRow?.website || idxDoc?.website,
+    description: dbDoc?.description || idxDoc?.description,
+    lat: Number(dbRow?.latitude || dbDoc?.lat || idxDoc?.lat || 0),
+    lng: Number(dbRow?.longitude || dbDoc?.lng || idxDoc?.lng || 0),
+    customized: Boolean(dbDoc?.customized || idxDoc?.customized),
+    isClaimed: Boolean(dbDoc?.isClaimed || idxDoc?.isClaimed)
+  };
+}
+
+// Helper function to persist resolved result to Database so that subsequent lookups are instant & free
+async function persistToDb(data: ResolvedBusinessData, options?: { forceBannerUpdate?: boolean }) {
+  const bunnyDb = getBunnyDb();
+  if (!bunnyDb || !data.domain || !data.domain.includes('.')) return;
+  try {
+    const autoPlaceId = cleanDomainName(data.domain) || data.domain.toLowerCase().replace(/^www\./, "").trim();
+    if (!autoPlaceId || !autoPlaceId.includes('.')) return;
+    const officialDescBrand = extractOfficialBrandSpellingFromText(data.description, autoPlaceId);
+    const rawPersistName = (officialDescBrand && isFalseSplitAgainstText(data.name, data.description, autoPlaceId))
+      ? officialDescBrand
+      : (data.name || autoPlaceId);
+    const resolvedName = KNOWN_OFFICIAL_NAMES[autoPlaceId] || formatBusinessName(rawPersistName, autoPlaceId, undefined, { fromWebsite: Boolean(data.name), fallbackText: data.description }) || autoPlaceId;
+
+    // Fetch existing place row across exact id, www. variant, and brandDomain
+    let existingDoc: any = {};
+    let existingRowData: any = null;
+    try {
+      const exRes = await bunnyDb.execute({
+        sql: `SELECT id, name, address, category, city, country, latitude, longitude, "logoUrl", "bannerUrl", "brandDomain", website, data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(brandDomain) = LOWER(?) LIMIT 1`,
+        args: [autoPlaceId, `www.${autoPlaceId}`, autoPlaceId]
+      });
+      if (exRes && exRes.rows && exRes.rows.length > 0) {
+        existingRowData = exRes.rows[0] as any;
+        existingDoc = typeof existingRowData.data === 'string' ? JSON.parse(existingRowData.data) : (existingRowData.data || {});
+      }
+    } catch(e) {}
+
+    let idxExisting: any = null;
+    try {
+      const pIdx = readPlacesIndex();
+      idxExisting = pIdx.find((p: any) => p && !isDeletedPlaceServer(p) && (
+        String(p.id || "").toLowerCase() === autoPlaceId ||
+        String(p.brandDomain || "").toLowerCase() === autoPlaceId
+      )) || null;
+    } catch {}
+
+    const targetPlaceId = String(existingRowData?.id || autoPlaceId);
+
+    const existingImmBanner = [
+      existingRowData?.bannerUrl,
+      existingDoc?.bannerUrl,
+      existingDoc?.ogImage,
+      ...(Array.isArray(existingDoc?.photos) ? existingDoc.photos : []),
+      idxExisting?.bannerUrl,
+      idxExisting?.ogImage
+    ].find(isImmutablePersistedBanner) || "";
+
+    const isOwnerOrCdnLocked = Boolean(
+      existingDoc?.customized ||
+      (existingImmBanner && existingImmBanner.includes("b-cdn.net"))
+    );
+
+    const existingValidLogo = [
+      existingRowData?.logoUrl,
+      existingDoc?.logoUrl,
+      existingDoc?.avatarUrl,
+      idxExisting?.logoUrl
+    ].find((u) => Boolean(u && typeof u === 'string' && !isGenericOrPlaceholderLogo(u) && !isFaviconUrl(u) && !u.includes('/api/favicon') && !u.includes('/api/brand-banner') && !isCrossBrandPortfolioLogoServer(u, autoPlaceId))) || "";
+
+    const incomingValidLogo = (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) && !data.logo.includes('/api/favicon') && !isCrossBrandPortfolioLogoServer(data.logo, autoPlaceId))
+      ? data.logo
+      : "";
+
+    const rawCandidateLogo = KNOWN_BRAND_LOGOS[autoPlaceId]
+      || existingValidLogo
+      || incomingValidLogo;
+
+    const knownBrandBanner = (KNOWN_BRAND_BANNERS[autoPlaceId] && isImmutablePersistedBanner(KNOWN_BRAND_BANNERS[autoPlaceId]))
+      ? KNOWN_BRAND_BANNERS[autoPlaceId]
+      : "";
+
+    const bannerUrl = (!options?.forceBannerUpdate && existingImmBanner)
+      ? existingImmBanner
+      : (
+          (!isOwnerOrCdnLocked && knownBrandBanner ? knownBrandBanner : "")
+          || (isImmutablePersistedBanner(data.photo) ? data.photo : "")
+          || existingImmBanner
+          || `/api/brand-banner/${encodeURIComponent(autoPlaceId)}`
+        );
+
+    const logoUrl = (rawCandidateLogo && rawCandidateLogo !== bannerUrl)
+      ? rawCandidateLogo
+      : `/api/favicon?domain=${encodeURIComponent(autoPlaceId)}`;
+
+    // Calculate ground-truth rating from videoReviews
+    const computedRating = await calculatePlaceRatingFromDb(autoPlaceId, resolvedName);
+
+    const autoPlaceDoc = {
+      ...existingDoc,
+      id: targetPlaceId,
+      name: resolvedName,
+      category: data.category || existingDoc.category || "Website",
+      categoryType: "all",
+      address: existingDoc.address || existingRowData?.address || data.address || "",
+      city: (existingDoc.city && existingDoc.city !== "Online") ? existingDoc.city : (data.city || existingDoc.city || existingRowData?.city || "Online"),
+      country: existingDoc.country || existingRowData?.country || data.country || "",
+      lat: existingDoc.lat || existingRowData?.latitude || data.lat || 0,
+      lng: existingDoc.lng || existingRowData?.longitude || data.lng || 0,
+      rating: computedRating ? computedRating.rating : (existingDoc.rating !== undefined ? existingDoc.rating : 5),
+      totalReviews: computedRating ? computedRating.totalReviews : (existingDoc.totalReviews !== undefined ? existingDoc.totalReviews : 1),
+      ratingCount: computedRating ? computedRating.ratingCount : (existingDoc.ratingCount !== undefined ? existingDoc.ratingCount : 1),
+      videoReviewCount: computedRating ? computedRating.videoReviewCount : (existingDoc.videoReviewCount !== undefined ? existingDoc.videoReviewCount : 1),
+      starCounts: computedRating ? computedRating.starCounts : (existingDoc.starCounts || { 5: 1, 4: 0, 3: 0, 2: 0, 1: 0 }),
+      ratingDistribution: computedRating ? computedRating.ratingDistribution : (existingDoc.ratingDistribution || { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 }),
+      avatarUrl: logoUrl,
+      logoUrl: logoUrl,
+      bannerUrl: bannerUrl,
+      ogImage: bannerUrl,
+      photos: bannerUrl ? Array.from(new Set([bannerUrl, ...(Array.isArray(existingDoc.photos) ? existingDoc.photos.filter(isImmutablePersistedBanner) : [])])) : (existingDoc.photos || []),
+      openingHours: existingDoc.openingHours || data.openingHours || "",
+      isOpen: true,
+      phone: existingDoc.phone || data.phone || "",
+      email: existingDoc.email || data.email || "",
+      website: existingDoc.website || data.websiteUrl || `https://${autoPlaceId}`,
+      priceRange: existingDoc.priceRange || "N/A",
+      plusCode: existingDoc.plusCode || "",
+      locations: (Array.isArray(existingDoc.locations) && existingDoc.locations.length > 0) ? existingDoc.locations : [],
+      description: existingDoc.description || data.description || "",
+      popularKeywords: existingDoc.popularKeywords || [],
+      amenities: existingDoc.amenities || [],
+      topDishes: existingDoc.topDishes || [],
+      brandDomain: autoPlaceId
+    };
+
+    await bunnyDb.execute({
+      sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT (id) DO UPDATE SET 
+              name = EXCLUDED.name,
+              address = EXCLUDED.address,
+              category = EXCLUDED.category,
+              city = EXCLUDED.city,
+              country = EXCLUDED.country,
+              latitude = EXCLUDED.latitude,
+              longitude = EXCLUDED.longitude,
+              logoUrl = CASE WHEN EXCLUDED.logoUrl != '' THEN EXCLUDED.logoUrl ELSE places.logoUrl END,
+              bannerUrl = CASE WHEN EXCLUDED.bannerUrl != '' THEN EXCLUDED.bannerUrl ELSE places.bannerUrl END,
+              brandDomain = COALESCE(NULLIF(EXCLUDED.brandDomain, ''), places.brandDomain),
+              website = COALESCE(NULLIF(EXCLUDED.website, ''), places.website),
+              data = EXCLUDED.data,
+              updatedAt = CURRENT_TIMESTAMP
+            WHERE LOWER(places.id) = LOWER(EXCLUDED.id)`,
+      args: [targetPlaceId, resolvedName, autoPlaceDoc.address, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, autoPlaceDoc.lat, autoPlaceDoc.lng, logoUrl, bannerUrl, autoPlaceId, autoPlaceDoc.website, JSON.stringify(autoPlaceDoc)]
+    });
+
+    try {
+      const currentPlaces = readPlacesIndex();
+      const idx = currentPlaces.findIndex((p: any) => p && (
+        String(p.id || "").toLowerCase() === targetPlaceId.toLowerCase() ||
+        String(p.brandDomain || "").toLowerCase() === autoPlaceId
+      ));
+      if (idx >= 0) {
+        currentPlaces[idx] = { ...currentPlaces[idx], ...autoPlaceDoc, id: targetPlaceId };
+      } else {
+        currentPlaces.unshift({ id: targetPlaceId, ...autoPlaceDoc });
+      }
+      writePlacesIndex(currentPlaces);
+    } catch (pErr) {}
+  } catch(e) {
+    console.warn("[Database Cache Save Error in resolveBusinessQuery]:", e);
+  }
+}
+
 const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; timestamp: number }>();
 
-  async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false, forceRefresh = false): Promise<ResolvedBusinessData | null> {
+  async function resolveBusinessQuery(query: string, skipGemini = false, resolveOnly = false, forceRefresh = false, forceBanner = false): Promise<ResolvedBusinessData | null> {
     const cleanQ = query.trim();
     if (!cleanQ || cleanQ.length < 2) return null;
     
     console.log(`[API] Resolving business query: "${cleanQ}" (Engine: Extreme Google-Only Discovery Engine)`);
 
     const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (forceRefresh) {
+    if (forceRefresh || forceBanner) {
       BUSINESS_QUERY_CACHE.delete(cacheKey);
     }
     const cachedEntry = BUSINESS_QUERY_CACHE.get(cacheKey);
-    if (!forceRefresh && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
+    if (!forceRefresh && !forceBanner && cachedEntry && Date.now() - cachedEntry.timestamp < 60 * 60 * 1000) {
       const p = cachedEntry.data.photo || "";
       const l = cachedEntry.data.logo || "";
       const isBadPhoto = !p || isBadBanner(p) || p.includes("#") || p.includes("paint0_linear") || p.includes("/api/brand-banner");
@@ -31126,17 +31449,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     const bunnyDb = getBunnyDb();
+    const cleanQDom = cleanDomainName(cleanQ);
+    const lockedSavedInResolve = (!forceBanner && cleanQDom && cleanQDom.includes('.'))
+      ? await getLockedSavedPlaceRecord(cleanQDom).catch(() => null)
+      : null;
 
     // 0. Persistent Database Cache Lookup (Global Brain)
-    if (bunnyDb && !forceRefresh) {
+    if (bunnyDb && !forceRefresh && !forceBanner) {
       try {
-        const cleanQDom = cleanDomainName(cleanQ);
         // ONLY allow database lookup by exact domain/ID. 
         // Name-based lookup in the "Global Brain" is dangerous as it leads to cross-contamination 
         // if a business name is generic or if a record was previously corrupted with a wrong name.
         if (cleanQDom.includes('.') && !cleanQ.includes(' ')) {
           const dbResult = await bunnyDb.execute({
-            sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, data FROM places 
+            sql: `SELECT id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, data FROM places 
                   WHERE LOWER(id) = ? OR LOWER(id) = ? 
                   LIMIT 1`,
             args: [cleanQDom, `www.${cleanQDom}`]
@@ -31167,10 +31493,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               isFalseSplitOfDomain(rowName, rowId) ||
               isFalseSplitAgainstText(rowName, parsedData.description, rowId)
             );
-            const cachedBanner = parsedData.bannerUrl || parsedData.ogImage || parsedData.image || parsedData.photo || "";
+            const cachedBanner = [
+              (row as any).bannerUrl,
+              parsedData.bannerUrl,
+              parsedData.ogImage,
+              parsedData.image,
+              parsedData.photo
+            ].find(isImmutablePersistedBanner) || "";
             const isBadCachedBanner = !cachedBanner ||
-              cachedBanner.toLowerCase().includes('logo') ||
-              cachedBanner.toLowerCase().includes('icon') ||
               cachedBanner.toLowerCase().includes('placeholder') ||
               cachedBanner.toLowerCase().includes('loader') ||
               cachedBanner.toLowerCase().includes('tap/0.png') ||
@@ -31189,8 +31519,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
                 const officialDescBrand = extractOfficialBrandSpellingFromText(parsedData.description, rowId);
                 const formattedName = (rowId && KNOWN_OFFICIAL_NAMES[rowId]) || officialDescBrand || formatBusinessName(rowName, rowId, undefined, { fromWebsite: true, fallbackText: parsedData.description }) || rowName;
-                const isBadUrl = (u?: string) => !u || typeof u !== 'string' || isBadBanner(u) || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner');
-                const cleanPhoto = !isBadUrl(parsedData.bannerUrl) ? parsedData.bannerUrl : (!isBadUrl(parsedData.ogImage) ? parsedData.ogImage : (!isBadUrl(parsedData.image) ? parsedData.image : ""));
+                const cleanPhoto = [
+                  (row as any).bannerUrl,
+                  parsedData.bannerUrl,
+                  parsedData.ogImage,
+                  parsedData.image,
+                  parsedData.photo
+                ].find(isImmutablePersistedBanner) || "";
                 const isBadLogo = (u?: string) => !u || typeof u !== 'string' || isFaviconUrl(u) || u.includes('/api/favicon') || u === cleanPhoto || u === parsedData.bannerUrl || u === parsedData.ogImage || u.includes('#') || u.includes('paint0_linear') || u.includes('/api/brand-banner') || u.includes('/api/monogram');
                 const cleanLogo = !isBadLogo(row.logoUrl as string) ? (row.logoUrl as string) : (!isBadLogo(parsedData.logoUrl) ? parsedData.logoUrl : (!isBadLogo(parsedData.logo) ? parsedData.logo : ""));
 
@@ -31459,6 +31794,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         domTitle ||
         cleanQ;
 
+      const lockedDomRec = !forceBanner
+        ? (lockedSavedInResolve || await getLockedSavedPlaceRecord(cleanDom).catch(() => null))
+        : null;
+      const scrapedPhotoCandidate = (!isLogoOrIconUrl(domPhoto) ? sanitizeProxy(domPhoto) : "");
+      const lockedOrScrapedPhoto = lockedDomRec?.bannerUrl || scrapedPhotoCandidate;
+      const sanitizedDomLogo = sanitizeProxy(domLogo);
+      const lockedOrScrapedLogo = (sanitizedDomLogo && !isFaviconUrl(sanitizedDomLogo) && !sanitizedDomLogo.includes('/api/favicon') && !isGenericOrPlaceholderLogo(sanitizedDomLogo))
+        ? sanitizedDomLogo
+        : (lockedDomRec?.logoUrl || sanitizedDomLogo);
+
       const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
         websiteUrl: `https://${cleanDom}`,
@@ -31470,14 +31815,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         phone: domPhone,
         email: domEmail,
         openingHours: domOpeningHours,
-        photo: (!isLogoOrIconUrl(domPhoto) ? sanitizeProxy(domPhoto) : ""),
-        logo: sanitizeProxy(domLogo),
+        photo: lockedOrScrapedPhoto,
+        logo: lockedOrScrapedLogo,
         description: domDesc,
         lat: domLat,
         lng: domLng
       };
       BUSINESS_QUERY_CACHE.set(cacheKey, { data: resolvedDomData, timestamp: Date.now() });
-      await persistToDb(resolvedDomData);
+      await persistToDb(resolvedDomData, { forceBannerUpdate: forceBanner });
       return resolvedDomData;
     }
 
@@ -31501,6 +31846,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (entryWithDot) validDom = entryWithDot[0];
         }
         if (validDom) {
+          const lockedKnownRec = !forceBanner ? await getLockedSavedPlaceRecord(validDom).catch(() => null) : null;
           const loc = KNOWN_ENTITY_LOCATIONS[validDom] || KNOWN_ENTITY_LOCATIONS[validDom.split('.')[0]];
           const brandLogo = (loc as any)?.logoUrl || KNOWN_BRAND_LOGOS[validDom] || KNOWN_BRAND_LOGOS[validDom.split('.')[0]] || "";
           const brandBanner = (loc as any)?.bannerUrl || (loc as any)?.photo || KNOWN_BRAND_BANNERS[validDom] || KNOWN_BRAND_BANNERS[validDom.split('.')[0]] || "";
@@ -31515,8 +31861,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             phone: loc?.phone || "",
             email: loc?.email || "",
             openingHours: loc?.openingHours || "",
-            photo: (!isLogoOrIconUrl(brandBanner) && !isBadBanner(brandBanner)) ? brandBanner : "",
-            logo: (brandLogo && !isGenericOrPlaceholderLogo(brandLogo) && !isFaviconUrl(brandLogo)) ? brandLogo : "",
+            photo: lockedKnownRec?.bannerUrl || ((!isLogoOrIconUrl(brandBanner) && !isBadBanner(brandBanner)) ? brandBanner : ""),
+            logo: (brandLogo && !isGenericOrPlaceholderLogo(brandLogo) && !isFaviconUrl(brandLogo)) ? brandLogo : (lockedKnownRec?.logoUrl || ""),
             description: loc?.description || `${officialName} is a verified business on Yoouz.`,
             lat: loc?.lat || 0,
             lng: loc?.lng || 0
@@ -31918,6 +32264,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           scTitle ||
           formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: scDesc });
 
+        const lockedScRec = !forceBanner ? await getLockedSavedPlaceRecord(discoveredDom).catch(() => null) : null;
+        const finalLockedScImage = lockedScRec?.bannerUrl || scImage;
+        const finalLockedScLogo = (finalLogo && !isFaviconUrl(finalLogo) && !finalLogo.includes('/api/favicon') && !isGenericOrPlaceholderLogo(finalLogo))
+          ? finalLogo
+          : (lockedScRec?.logoUrl || finalLogo);
+
         const finalResult = {
           domain: discoveredDom,
           websiteUrl: discoveredUrl,
@@ -31929,14 +32281,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           phone: scPhone,
           email: scEmail,
           openingHours: scOpeningHours,
-          photo: scImage,
-          logo: finalLogo,
+          photo: finalLockedScImage,
+          logo: finalLockedScLogo,
           description: scDesc,
           lat: scLat,
           lng: scLng
         };
         BUSINESS_QUERY_CACHE.set(cacheKey, { data: finalResult, timestamp: Date.now() });
-        await persistToDb(finalResult);
+        await persistToDb(finalResult, { forceBannerUpdate: forceBanner });
         return finalResult;
       }
     }
@@ -32002,6 +32354,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.json(results);
   });
 
+  const IN_FLIGHT_URL_METADATA = new Map<string, Promise<{ status: number; body: any }>>();
+
   app.get('/api/url-metadata', async (req, res) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");
@@ -32036,11 +32390,24 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       const resolveOnly = req.query.resolveOnly === 'true';
       const forceRefresh = req.query.refresh === 'true' || req.query.nocache === 'true';
+      const forceBanner = req.query.forceBanner === 'true';
 
-      const activeDb = (global as any).bunnyDb || getBunnyDb() || db;
+      const canonicalDedupeQuery = (rawQuery.includes('.') && !rawQuery.includes(' '))
+        ? (cleanDomainName(rawQuery) || rawQuery.toLowerCase())
+        : rawQuery.toLowerCase().replace(/\s+/g, ' ').trim();
+      const dedupeKey = `${canonicalDedupeQuery}::ro=${resolveOnly}::fb=${forceBanner}::url=${specificTargetUrl}`;
+
+      const existingInFlight = IN_FLIGHT_URL_METADATA.get(dedupeKey);
+      if (existingInFlight) {
+        const sharedOut = await existingInFlight;
+        return res.status(sharedOut.status).json(sharedOut.body);
+      }
+
+      const workPromise = (async (): Promise<{ status: number; body: any }> => {
+        const activeDb = (global as any).bunnyDb || getBunnyDb() || db;
 
       // Fast-path: If user wants resolve-only and passed a direct domain, check DB cache or KNOWN_OFFICIAL_NAMES first
-      if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ') && !forceRefresh) {
+      if (resolveOnly && rawQuery.includes('.') && !rawQuery.includes(' ') && !forceRefresh && !forceBanner) {
         const cleanDom = cleanDomainName(rawQuery);
         let dbFastName = "";
         if (activeDb) {
@@ -32057,17 +32424,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
         const fastTitle = KNOWN_OFFICIAL_NAMES[cleanDom] || dbFastName || formatBusinessName(cleanDom, cleanDom) || cleanDom;
         console.log(`[Fast Resolve Only] Bypassing scrape for domain: ${cleanDom}`);
-        return res.json({
-          title: fastTitle,
-          siteName: fastTitle,
-          domain: cleanDom,
-          url: `https://${cleanDom}`,
-          city: "Online"
-        });
+        return {
+          status: 200,
+          body: {
+            title: fastTitle,
+            siteName: fastTitle,
+            domain: cleanDom,
+            url: `https://${cleanDom}`,
+            city: "Online"
+          }
+        };
       }
       
       // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path)
-      if (activeDb && rawQuery && !forceRefresh) {
+      if (activeDb && rawQuery && !forceRefresh && !forceBanner) {
         try {
           const cleanQDom = cleanDomainName(rawQuery);
           const isDomainQuery = cleanQDom.includes('.');
@@ -32089,10 +32459,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             if (matchedDom && (isDisallowedNonOfficialHost(matchedDom, rawQuery) || /^domain\s+details\s+page$/i.test(String(row.name || '').trim()))) {
               activeDb.execute({ sql: `DELETE FROM places WHERE LOWER(id) = LOWER(?)`, args: [row.id] }).catch(() => {});
             } else {
-            const cachedBanner = (!isBadBanner(row.bannerUrl) ? row.bannerUrl : "") || pData.bannerUrl || pData.ogImage || pData.image || "";
+            const cachedBanner = [
+              row.bannerUrl,
+              pData.bannerUrl,
+              pData.ogImage,
+              pData.image,
+              pData.photo
+            ].find(isImmutablePersistedBanner) || "";
             const isBadCachedBanner = !cachedBanner || 
-              cachedBanner.toLowerCase().includes('logo') || 
-              cachedBanner.toLowerCase().includes('icon') || 
               cachedBanner.toLowerCase().includes('placeholder') || 
               cachedBanner.toLowerCase().includes('tap/0.png') || 
               cachedBanner.toLowerCase().includes('1789810172562') ||
@@ -32101,16 +32475,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
 
             const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
-            const verifiedBrandBanner = (cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`]))
+            const isCustomCached = Boolean(pData.customized || (cachedBanner && cachedBanner.includes('b-cdn.net')));
+            const verifiedBrandBanner = (!isCustomCached && cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`]))
               ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`])
               : "";
             const isMismatchedBanner = (b?: string | null) => Boolean(b && b.toLowerCase().includes('chipotle') && !cleanDomKey.includes('chipotle'));
             const isBrokenSvgLogo = (u?: string | null) => Boolean(!u || u.includes("lg%3Ahidden") || u.includes("lg:hidden") || u.startsWith("/api/favicon") || isGenericOrPlaceholderLogo(u));
             const rawCachedImage = verifiedBrandBanner
-              || (!isLogoOrIconUrl(row.bannerUrl) && !isBadBanner(row.bannerUrl) && !isMismatchedBanner(row.bannerUrl) ? row.bannerUrl : "") 
-              || (!isLogoOrIconUrl(pData.bannerUrl) && !isBadBanner(pData.bannerUrl) && !isMismatchedBanner(pData.bannerUrl) ? pData.bannerUrl : "") 
-              || (!isLogoOrIconUrl(pData.ogImage) && !isBadBanner(pData.ogImage) && !isMismatchedBanner(pData.ogImage) ? pData.ogImage : "") 
-              || (!isLogoOrIconUrl(pData.image) && !isBadBanner(pData.image) && !isMismatchedBanner(pData.image) ? pData.image : "") 
+              || ([row.bannerUrl, pData.bannerUrl, pData.ogImage, pData.image, pData.photo].find(u => isImmutablePersistedBanner(u) && !isMismatchedBanner(u)) || "")
               || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
             const isDistinctLogo = (u?: string | null) => Boolean(u && !isFaviconUrl(u) && !isBrokenSvgLogo(u) && u !== rawCachedImage && u !== row.bannerUrl && u !== pData.bannerUrl);
             const rawCachedLogo = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey] && !KNOWN_BRAND_LOGOS[cleanDomKey].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomKey] : null) 
@@ -32147,24 +32519,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 || cachedDescBrand
                 || row.name
                 || rawQuery;
-              return res.json({
-                title: resolvedEntity,
-                description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
-                image: cachedImageCandidate,
-                logo: cachedLogoCandidate,
-                siteName: resolvedEntity,
-                domain: matchedDom,
-                url: pData.website || `https://${matchedDom}`,
-                address: row.address || pData.address || "",
-                city: row.city || pData.city || "",
-                country: row.country || pData.country || "",
-                phone: pData.phone || "",
-                email: pData.email || "",
-                category: row.category || pData.category || "Verified Business",
-                openingHours: pData.openingHours || "",
-                locations: pData.locations || [],
-                photos: cachedImageCandidate ? [cachedImageCandidate] : []
-              });
+              return {
+                status: 200,
+                body: {
+                  title: resolvedEntity,
+                  description: pData.description || `${resolvedEntity} is a verified business on Yoouz.`,
+                  image: cachedImageCandidate,
+                  logo: cachedLogoCandidate,
+                  siteName: resolvedEntity,
+                  domain: matchedDom,
+                  url: pData.website || `https://${matchedDom}`,
+                  address: row.address || pData.address || "",
+                  city: row.city || pData.city || "",
+                  country: row.country || pData.country || "",
+                  phone: pData.phone || "",
+                  email: pData.email || "",
+                  category: row.category || pData.category || "Verified Business",
+                  openingHours: pData.openingHours || "",
+                  locations: pData.locations || [],
+                  photos: cachedImageCandidate ? [cachedImageCandidate] : []
+                }
+              };
             }
             }
           }
@@ -32180,13 +32555,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // 1. If user passed a business phrase/name without a domain dot, resolve directly via Fast Discovery Engine
       if (!targetUrl.includes('.') || targetUrl.includes(' ')) {
-        resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh).catch(() => null);
+        resolvedEntity = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh, forceBanner).catch(() => null);
         if (resolvedEntity && resolvedEntity.domain && resolvedEntity.domain.includes('.') && !isDisallowedNonOfficialHost(resolvedEntity.domain, rawQuery)) {
           const realDomain = cleanDomainName(resolvedEntity.domain) || resolvedEntity.domain;
-          let rawEntityBanner = (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
+          const lockedFastRec = !forceBanner ? await getLockedSavedPlaceRecord(realDomain).catch(() => null) : null;
+          let rawEntityBanner = lockedFastRec?.bannerUrl || (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
           let rawEntityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !resolvedEntity.logo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(resolvedEntity.logo))
             ? resolvedEntity.logo
-            : ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "");
+            : (lockedFastRec?.logoUrl || ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : ""));
 
           // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
           if (!rawEntityLogo && !resolveOnly) {
@@ -32222,7 +32598,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
                     rawEntityLogo = sanitizeProxy(extractedSiteLogo);
                   }
-                  if (!rawEntityBanner) {
+                  if (!rawEntityBanner && !lockedFastRec?.bannerUrl) {
                     const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
                     if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
                       try {
@@ -32254,9 +32630,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (rawEntityBanner) rawEntityBanner = sanitizeProxy(rawEntityBanner) || rawEntityBanner;
           if (rawEntityLogo) rawEntityLogo = sanitizeProxy(rawEntityLogo) || rawEntityLogo;
 
-          const entityBanner = rawEntityBanner || (realDomain && realDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(realDomain)}` : "");
+          const entityBanner = lockedFastRec?.bannerUrl || rawEntityBanner || (realDomain && realDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(realDomain)}` : "");
           // One-way fallback ONLY: logo falls back to /api/favicon, never to entityBanner!
-          const entityLogo = rawEntityLogo || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
+          const entityLogo = rawEntityLogo || lockedFastRec?.logoUrl || `/api/favicon?domain=${encodeURIComponent(realDomain)}`;
           logSearchIntel(rawQuery, realDomain, "resolved_by_fast_discovery");
           const entityOfficial = extractOfficialBrandSpellingFromText(resolvedEntity.description, realDomain);
           const hasSpecificUrlPath = (() => {
@@ -32267,43 +32643,58 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           })();
           const mergedEntityTitle = mergeOfficialBrandSpellingServer(resolvedEntity.name, entityOfficial, realDomain);
           const entityTitle = (!hasSpecificUrlPath && realDomain && KNOWN_OFFICIAL_NAMES[realDomain]) || mergedEntityTitle || formatBusinessName(resolvedEntity.name, realDomain, undefined, { fromWebsite: true, fallbackText: resolvedEntity.description }) || resolvedEntity.name;
+          if (!resolveOnly && realDomain) {
+            await persistToDb({
+              ...resolvedEntity,
+              domain: realDomain,
+              name: entityTitle,
+              photo: entityBanner,
+              logo: entityLogo
+            }, { forceBannerUpdate: forceBanner }).catch(() => {});
+          }
           console.log("[RETURN PATH 1 - FAST DISCOVERY]:", realDomain, "logo:", entityLogo, "banner:", entityBanner);
-          return res.json({
-            title: entityTitle,
-            description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
-            image: entityBanner,
-            logo: entityLogo,
-            siteName: entityTitle,
-            domain: realDomain,
-            url: resolvedEntity.websiteUrl || `https://${realDomain}`,
-            address: resolvedEntity.address || "",
-            city: resolvedEntity.city || "Online",
-            country: resolvedEntity.country || "",
-            phone: resolvedEntity.phone || "",
-            email: resolvedEntity.email || "",
-            category: resolvedEntity.category || "Verified Business",
-            openingHours: resolvedEntity.openingHours || "Available 24/7",
-            locations: [],
-            photos: entityBanner ? [entityBanner] : []
-          });
+          return {
+            status: 200,
+            body: {
+              title: entityTitle,
+              description: resolvedEntity.description || `${entityTitle} is a verified business on Yoouz.`,
+              image: entityBanner,
+              logo: entityLogo,
+              siteName: entityTitle,
+              domain: realDomain,
+              url: resolvedEntity.websiteUrl || `https://${realDomain}`,
+              address: resolvedEntity.address || "",
+              city: resolvedEntity.city || "Online",
+              country: resolvedEntity.country || "",
+              phone: resolvedEntity.phone || "",
+              email: resolvedEntity.email || "",
+              category: resolvedEntity.category || "Verified Business",
+              openingHours: resolvedEntity.openingHours || "Available 24/7",
+              locations: [],
+              photos: entityBanner ? [entityBanner] : []
+            }
+          };
         } else if (resolvedEntity) {
-          return res.json({
-            title: resolvedEntity.name,
-            description: `${resolvedEntity.name} is a verified business on Yoouz.`,
-            image: "",
-            logo: "",
-            siteName: resolvedEntity.name,
-            domain: "",
-            url: "",
-            address: "",
-            city: "Online",
-            country: "",
-            phone: "",
-            email: "",
-            category: resolvedEntity.category || "Verified Business",
-            openingHours: "Available 24/7",
-            locations: []
-          });
+          return {
+            status: 200,
+            body: {
+              title: resolvedEntity.name,
+              description: `${resolvedEntity.name} is a verified business on Yoouz.`,
+              image: "",
+              logo: "",
+              siteName: resolvedEntity.name,
+              domain: "",
+              url: "",
+              address: "",
+              city: "Online",
+              country: "",
+              phone: "",
+              email: "",
+              category: resolvedEntity.category || "Verified Business",
+              openingHours: "Available 24/7",
+              locations: []
+            }
+          };
         }
       } else {
         const cleanTgtDom = cleanDomainName(targetUrl);
@@ -32325,34 +32716,47 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       if (!parsedUrl) {
         // Fallback to name search rather than throwing 400 or 500
-        const ent = await resolveBusinessQuery(rawQuery, false, resolveOnly).catch(() => null);
+        const ent = await resolveBusinessQuery(rawQuery, false, resolveOnly, forceRefresh, forceBanner).catch(() => null);
         if (ent) {
           const hasRealDomain = !!(ent.domain && ent.domain.includes('.'));
           const realDomain = hasRealDomain ? cleanDomainName(ent.domain) : "";
+          const lockedFbRec = (!forceBanner && realDomain) ? await getLockedSavedPlaceRecord(realDomain).catch(() => null) : null;
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
-          const rawEntityBanner = (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "");
-          const rawEntityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : "";
+          const rawEntityBanner = lockedFbRec?.bannerUrl || (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "");
+          const rawEntityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : (lockedFbRec?.logoUrl || "");
           const entityBanner = rawEntityBanner || (realDomain && realDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(realDomain)}` : "");
           const entityLogo = rawEntityLogo || (realDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
-          return res.json({
-            title: ent.name,
-            description: ent.description || `${ent.name} is a verified business on Yoouz.`,
-            image: entityBanner,
-            logo: entityLogo,
-            siteName: ent.name,
-            domain: realDomain,
-            url: ent.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
-            address: ent.address || "",
-            city: ent.city || "",
-            country: ent.country || "",
-            phone: ent.phone || "",
-            email: ent.email || "",
-            category: ent.category || "Verified Business",
-            openingHours: ent.openingHours || "",
-            locations: []
-          });
+          if (!resolveOnly && realDomain) {
+            await persistToDb({
+              ...ent,
+              domain: realDomain,
+              photo: entityBanner,
+              logo: entityLogo
+            }, { forceBannerUpdate: forceBanner }).catch(() => {});
+          }
+          return {
+            status: 200,
+            body: {
+              title: ent.name,
+              description: ent.description || `${ent.name} is a verified business on Yoouz.`,
+              image: entityBanner,
+              logo: entityLogo,
+              siteName: ent.name,
+              domain: realDomain,
+              url: ent.websiteUrl || (hasRealDomain ? `https://${realDomain}` : ""),
+              address: ent.address || "",
+              city: ent.city || "",
+              country: ent.country || "",
+              phone: ent.phone || "",
+              email: ent.email || "",
+              category: ent.category || "Verified Business",
+              openingHours: ent.openingHours || "",
+              locations: [],
+              photos: entityBanner ? [entityBanner] : []
+            }
+          };
         }
-        return res.status(400).json({ error: "No official business domain found" });
+        return { status: 400, body: { error: "No official business domain found" } };
       }
 
       let url = specificTargetUrl || parsedUrl.origin;
@@ -32360,15 +32764,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let cleanDomain = cleanDomainName(domain) || domain;
       const initialCleanDomain = cleanDomain;
       if (isDisallowedNonOfficialHost(cleanDomain, rawQuery) && !isQueryTargetingHost(rawQuery, cleanDomain)) {
-        return res.json({
-          title: rawQuery,
-          domain: "",
-          url: "",
-          image: "",
-          logo: "",
-          siteName: "",
-          error: "Unofficial or broker domain rejected"
-        });
+        return {
+          status: 200,
+          body: {
+            title: rawQuery,
+            domain: "",
+            url: "",
+            image: "",
+            logo: "",
+            siteName: "",
+            error: "Unofficial or broker domain rejected"
+          }
+        };
       }
       let canonicalBaseUrl = specificTargetUrl || `https://${cleanDomain}`;
       url = canonicalBaseUrl;
@@ -32426,22 +32833,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
 
         if (rejectedAsParkedBroker) {
-          return res.json({
-            title: rawQuery,
-            domain: "",
-            url: "",
-            image: "",
-            logo: "",
-            siteName: "",
-            error: "Parked or unofficial broker domain rejected"
-          });
-        }
-        
-        if (fetchResponse && fetchResponse.ok) {
-          finalUrl = fetchResponse.url;
-          html = await fetchResponse.text();
-          if (isParkedOrBrokerPage(finalUrl, html, "", rawQuery)) {
-            return res.json({
+          return {
+            status: 200,
+            body: {
               title: rawQuery,
               domain: "",
               url: "",
@@ -32449,7 +32843,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               logo: "",
               siteName: "",
               error: "Parked or unofficial broker domain rejected"
-            });
+            }
+          };
+        }
+        
+        if (fetchResponse && fetchResponse.ok) {
+          finalUrl = fetchResponse.url;
+          html = await fetchResponse.text();
+          if (isParkedOrBrokerPage(finalUrl, html, "", rawQuery)) {
+            return {
+              status: 200,
+              body: {
+                title: rawQuery,
+                domain: "",
+                url: "",
+                image: "",
+                logo: "",
+                siteName: "",
+                error: "Parked or unofficial broker domain rejected"
+              }
+            };
           }
           // If the requested domain HTTP-redirected to a new canonical official domain (e.g. stratospherehotel.com -> thestrat.com), adopt the canonical domain!
           const redirectedCleanDom = cleanDomainName(finalUrl);
@@ -33598,15 +34011,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
               const lowerTitle = title.toLowerCase().trim();
               if (isParkedOrBrokerPage(finalUrl, html, title, rawQuery)) {
-                return res.json({
-                  title: rawQuery,
-                  domain: "",
-                  url: "",
-                  image: "",
-                  logo: "",
-                  siteName: "",
-                  error: "Parked or unofficial broker domain rejected"
-                });
+                return {
+                  status: 200,
+                  body: {
+                    title: rawQuery,
+                    domain: "",
+                    url: "",
+                    image: "",
+                    logo: "",
+                    siteName: "",
+                    error: "Parked or unofficial broker domain rejected"
+                  }
+                };
               }
               if (
                 lowerTitle.includes('consent') || 
@@ -34013,12 +34429,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             brandDomain: cleanDomain,
             ...(isYoouz ? { isClaimed: true, claimedByEmail: "info@yoouz.com", ownerId: "info@yoouz.com", isVerified: true } : {})
           };
+          const lockedSaved = !forceBanner ? await getLockedSavedPlaceRecord(autoPlaceId).catch(() => null) : null;
           const existingPlaceRs = await bunnyDb.execute({
-            sql: `SELECT id, name, address, city, country, logoUrl, data FROM places WHERE id = ?`,
-            args: [autoPlaceId]
+            sql: `SELECT id, name, address, city, country, "logoUrl", "bannerUrl", data FROM places WHERE LOWER(id) = LOWER(?) OR LOWER(id) = LOWER(?) LIMIT 1`,
+            args: [autoPlaceId, `www.${autoPlaceId}`]
           }).catch(() => null);
 
           if (existingPlaceRs && existingPlaceRs.rows && existingPlaceRs.rows.length > 0) {
+            const matchedRowId = String((existingPlaceRs.rows[0] as any).id || autoPlaceId);
             let existingDoc: any = {};
             try {
               const rawD = (existingPlaceRs.rows[0] as any).data;
@@ -34093,21 +34511,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const redirectedCleanDom = cleanDomainName(finalUrl || "");
             const isRedirectedDomain = Boolean(redirectedCleanDom && redirectedCleanDom.includes(".") && redirectedCleanDom !== cleanDomain);
             const isStaleRedirectedLogo = (u?: string) => Boolean(isRedirectedDomain && u && typeof u === 'string' && u.toLowerCase().includes(cleanDomain));
-            const isBadBannerInternal = (b?: string) => isBadBanner(b) || (typeof b === 'string' && (b.includes('/api/brand-banner') || b.includes('#') || b.includes('paint0_linear') || b.includes('credit-card')));
+            const isBadBannerInternal = (b?: string) => !isImmutablePersistedBanner(b);
             const knownBrandBanner = (cleanDomain && (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]))
               ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`])
               : "";
-            const isCustomUploadedBanner = typeof existingDoc.bannerUrl === 'string' && existingDoc.bannerUrl.includes("b-cdn.net");
-            const hasExistingGoodBanner = Boolean(existingDoc.bannerUrl && !isBadBannerInternal(existingDoc.bannerUrl));
-            const rawMergedBanner = knownBrandBanner
-              || (isCustomUploadedBanner ? existingDoc.bannerUrl : "")
-              || (hasExistingGoodBanner && !forceRefresh
-                ? existingDoc.bannerUrl
-                : (!isBadBannerInternal(image)
-                    ? image
-                    : (hasExistingGoodBanner
-                        ? existingDoc.bannerUrl
-                        : (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : ""))));
+            const existingImmBanner = [
+              (existingPlaceRs.rows[0] as any).bannerUrl,
+              existingDoc.bannerUrl,
+              existingDoc.ogImage,
+              ...(Array.isArray(existingDoc.photos) ? existingDoc.photos : []),
+              lockedSaved?.bannerUrl
+            ].find(isImmutablePersistedBanner) || "";
+            const isCustomUploadedBanner = Boolean(existingDoc.customized || (existingImmBanner && existingImmBanner.includes("b-cdn.net")));
+            const hasExistingGoodBanner = Boolean(existingImmBanner);
+            // Strictly lock any persisted non-synthetic photo banner even across &refresh=true; only ?forceBanner=true replaces an existing photo banner.
+            const rawMergedBanner = (!forceBanner && hasExistingGoodBanner)
+              ? ((!isCustomUploadedBanner && knownBrandBanner) ? knownBrandBanner : existingImmBanner)
+              : (
+                  (!isCustomUploadedBanner && knownBrandBanner ? knownBrandBanner : "")
+                  || (!isBadBannerInternal(image) ? image : "")
+                  || existingImmBanner
+                  || (domainBanners[cleanDomain] ? sanitizeProxy(domainBanners[cleanDomain]) : "")
+                );
 
             const isDuplicateBannerLogo = (u?: string) => Boolean(u && u !== standaloneScrapedLogo && (u === existingDoc.bannerUrl || u === existingDoc.ogImage || u === rawMergedBanner || (rawScrapedBanner && u === rawScrapedBanner)));
             const isPlaceholderLogo = (u?: string) => !u || typeof u !== 'string' || isDuplicateBannerLogo(u) || isCrossBrandPortfolioLogoServer(u, cleanDomain) || isGenericOrPlaceholderLogo(u) || isFaviconUrl(u) || u.startsWith("/api/favicon") || isStaleRedirectedLogo(u) || u.includes("tap/0.png") || u.includes("icons/tap") || u.startsWith("data:;") || u.includes("/api/brand-banner") || (!u.startsWith("data:") && u.includes("#")) || u.includes("paint0_linear") || u.includes("credit-card");
@@ -34116,11 +34541,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const effectiveLogoDomain = isRedirectedDomain ? redirectedCleanDom : cleanDomain;
             const domainLogoFallback = effectiveLogoDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(effectiveLogoDomain)}` : "";
             const isCustomUploadedLogo = typeof existingDoc.logoUrl === 'string' && existingDoc.logoUrl.includes("b-cdn.net");
-            const existingSavedLogo = (!isPlaceholderLogo(existingDoc.logoUrl) ? existingDoc.logoUrl : "") || (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : "");
+            const existingSavedLogo = (!isPlaceholderLogo(existingDoc.logoUrl) ? existingDoc.logoUrl : "") || (!isPlaceholderLogo((existingPlaceRs.rows[0] as any).logoUrl) ? (existingPlaceRs.rows[0] as any).logoUrl : "") || (!isPlaceholderLogo(lockedSaved?.logoUrl) ? (lockedSaved?.logoUrl || "") : "");
             const hasExistingGoodLogo = Boolean(existingSavedLogo);
             const mergedLogo = isCustomUploadedLogo
               ? existingDoc.logoUrl
-              : (hasExistingGoodLogo && !forceRefresh
+              : (hasExistingGoodLogo && !forceBanner
                   ? existingSavedLogo
                   : (hasBetterLogo
                       ? standaloneScrapedLogo
@@ -34145,13 +34570,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const mergedDoc = {
               ...autoPlaceDoc,
               ...existingDoc,
+              id: matchedRowId,
               name: formattedExistingName,
               category: (effectiveCategory && effectiveCategory !== "Website") ? effectiveCategory : (existingDoc.category || autoPlaceDoc.category),
               logoUrl: mergedLogo,
               avatarUrl: mergedLogo,
               bannerUrl: mergedBanner,
               ogImage: mergedBanner,
-              photos: mergedBanner ? Array.from(new Set([mergedBanner, ...(existingDoc.photos || [])])) : (existingDoc.photos || []),
+              photos: mergedBanner ? Array.from(new Set([mergedBanner, ...(existingDoc.photos || [])].filter(p => isImmutablePersistedBanner(p) || p === mergedBanner))) : (existingDoc.photos || []),
               address: mergedAddress,
               city: mergedCity,
               country: mergedCountry,
@@ -34178,16 +34604,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                       data = ?,
                       updatedAt = CURRENT_TIMESTAMP
                     WHERE LOWER(id) = LOWER(?)`,
-              args: [formattedExistingName, mergedLogo, mergedBanner, cleanDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), autoPlaceId]
+              args: [formattedExistingName, mergedLogo, mergedBanner, cleanDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), matchedRowId]
             }).catch(e => console.error("[Scraper DB Update Error]:", e));
 
             try {
               const currentPlaces = readPlacesIndex();
-              const idx = currentPlaces.findIndex(p => p.id === autoPlaceId);
+              const idx = currentPlaces.findIndex(p => p && (String(p.id).toLowerCase() === matchedRowId.toLowerCase() || String(p.id).toLowerCase() === autoPlaceId.toLowerCase()));
               if (idx >= 0) {
-                currentPlaces[idx] = { ...currentPlaces[idx], ...mergedDoc, id: autoPlaceId };
+                currentPlaces[idx] = { ...currentPlaces[idx], ...mergedDoc, id: matchedRowId };
               } else {
-                currentPlaces.unshift({ id: autoPlaceId, ...mergedDoc });
+                currentPlaces.unshift({ id: matchedRowId, ...mergedDoc });
               }
               writePlacesIndex(currentPlaces);
             } catch (pErr) {}
@@ -34203,19 +34629,30 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             title = formattedExistingName;
             siteName = formattedExistingName;
           } else {
+            const insertBanner = (!forceBanner && lockedSaved?.bannerUrl) ? lockedSaved.bannerUrl : resolvedAutoBanner;
+            const insertLogo = (!standaloneScrapedLogo && lockedSaved?.logoUrl) ? lockedSaved.logoUrl : resolvedAutoLogo;
+            autoPlaceDoc.bannerUrl = insertBanner;
+            autoPlaceDoc.ogImage = insertBanner;
+            autoPlaceDoc.photos = insertBanner ? [insertBanner] : [];
+            autoPlaceDoc.logoUrl = insertLogo;
+            autoPlaceDoc.avatarUrl = insertLogo;
+
             const jsonStr = JSON.stringify(autoPlaceDoc);
             const autoPlaceName = autoPlaceDoc.name;
             title = autoPlaceName;
             if (siteName) siteName = formatBusinessName(siteName, cleanDomain, undefined, { fromWebsite: hasRealExtractedTitle, fallbackText: description }) || autoPlaceName;
+            image = insertBanner;
+            logo = insertLogo;
             await bunnyDb.execute({
               sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-              args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, logo, image, cleanDomain, finalUrl, jsonStr]
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT (id) DO NOTHING`,
+              args: [autoPlaceId, autoPlaceName, effectiveAddress, autoPlaceDoc.category, autoPlaceDoc.city, autoPlaceDoc.country, 0, 0, insertLogo, insertBanner, cleanDomain, finalUrl, jsonStr]
             }).catch(e => console.error("[Scraper DB Insert Error]:", e));
 
             try {
               const currentPlaces = readPlacesIndex();
-              const idx = currentPlaces.findIndex(p => p.id === autoPlaceId);
+              const idx = currentPlaces.findIndex(p => p && String(p.id).toLowerCase() === autoPlaceId.toLowerCase());
               if (idx >= 0) {
                 currentPlaces[idx] = { ...currentPlaces[idx], ...autoPlaceDoc, id: autoPlaceId };
               } else {
@@ -34256,12 +34693,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         photos: Array.from(new Set([image, ...(typeof scrapedPhotosList !== 'undefined' ? scrapedPhotosList : [])])).map(p => sanitizeProxy(p)).filter(p => p && !isBadBanner(p))
       };
 
-      // Background persist to DB cache
-      persistToDb(resultPayload as any).catch(e => console.error("[Background Persist Error]:", e));
+      // Await DB persist so concurrent or cross-browser requests immediately observe the locked banner
+      await persistToDb(resultPayload as any, { forceBannerUpdate: forceBanner }).catch(e => console.error("[Background Persist Error]:", e));
 
       console.log("[TRACE METADATA 2] resultPayload image:", resultPayload.image, "logo:", resultPayload.logo);
-      res.json(resultPayload);
-    } catch (e) {
+      return { status: 200, body: resultPayload };
+      })().finally(() => {
+        IN_FLIGHT_URL_METADATA.delete(dedupeKey);
+      });
+
+      IN_FLIGHT_URL_METADATA.set(dedupeKey, workPromise);
+      const out = await workPromise;
+      return res.status(out.status).json(out.body);
+    } catch (e: any) {
       logSearchIntel(String(req.query.url || ""), "", "critical_error", { error: String(e.message) });
       console.error('SERVER ERROR:', e);
       res.status(500).json({ error: e.message });

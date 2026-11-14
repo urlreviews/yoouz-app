@@ -825,7 +825,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = (bannerError || isGenericName || needsLogo || isLogoSameAsPlaceBanner || isCrossBrandPortfolioLogo(place.logoUrl, drawerDomain)) ? "&refresh=true" : "";
+        const refreshParam = bannerError ? "&refresh=true" : "";
         const endpoint = targetUrl
           ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
           : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
@@ -856,16 +856,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   : (isDataLogoValid
                     ? data.logo
                     : (resolvedDomainForLogo ? `/api/favicon?domain=${encodeURIComponent(resolvedDomainForLogo)}` : (place.logoUrl || "")));
-                
-                try {
-                  const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
-                  if (cacheKey) {
-                    localStorage.setItem(`yoouz_place_media_v5_${cacheKey}`, JSON.stringify({
-                      bannerUrl: resolvedBanner,
-                      logoUrl: (resolvedLogo && resolvedLogo !== resolvedBanner && !resolvedLogo.includes("/api/favicon")) ? resolvedLogo : ""
-                    }));
-                  }
-                } catch(e) {}
 
                 if (isRealPhoto(resolvedBanner)) {
                   setFetchedBannerUrl(resolvedBanner);
@@ -989,19 +979,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const isYoouzPlace = drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place?.name && place.name.toLowerCase() === "yoouz");
   const YOOUZ_CDN_BANNER = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
 
-  const cachedMedia = React.useMemo(() => {
-    try {
-      const cacheKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().trim();
-      if (!cacheKey) return null;
-      const raw = localStorage.getItem(`yoouz_place_media_v5_${cacheKey}`);
-      if (raw) return JSON.parse(raw);
-    } catch(e) {}
-    return null;
-  }, [drawerDomain, place.brandDomain, place.id]);
-
-  const validCachedBanner = (cachedMedia?.bannerUrl && !isBadBanner(cachedMedia.bannerUrl)) ? cachedMedia.bannerUrl : "";
-  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (validCachedBanner || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
-  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (validCachedBanner || (isYoouzPlace ? YOOUZ_CDN_BANNER : ""));
+  const cleanBannerUrl = !isBadBanner(place.bannerUrl) ? place.bannerUrl : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
+  const cleanOgImage = !isBadBanner(place.ogImage) ? place.ogImage : (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
   const cleanReviewBanner = !isBadBanner(reviewBannerUrl) ? reviewBannerUrl : "";
   const cleanFetchedBanner = !isBadBanner(fetchedBannerUrl) ? fetchedBannerUrl : "";
 
@@ -1010,19 +989,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
     getPlaceBannerUrl(place);
 
-  const domainFallbackBanner = (drawerDomain && drawerDomain.includes("."))
-    ? (KNOWN_BRAND_BANNERS[drawerDomain] || getLiveWebsiteBannerUrl(drawerDomain) || `/api/brand-banner/${encodeURIComponent(drawerDomain)}`)
-    : "";
-
   const effectiveBanner =
     knownDomainBanner ||
     cleanBannerUrl ||
     cleanOgImage ||
-    validCachedBanner ||
     cleanFetchedBanner ||
     activeBanner ||
     cleanReviewBanner ||
-    domainFallbackBanner ||
     (isYoouzPlace ? YOOUZ_CDN_BANNER : "");
 
   // Check if photos are authentic place photos
@@ -1058,18 +1031,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       authenticPlaceBanner,
       knownDomainBanner,
       cleanBannerUrl,
-      validCachedBanner,
       cleanOgImage,
       cleanFetchedBanner,
       activeBanner,
       cleanReviewBanner,
-      domainFallbackBanner,
       ...(place.photos || []).filter(isAuthentic),
       (isYoouzPlace ? YOOUZ_CDN_BANNER : "")
     ].filter(isAuthentic);
 
     return Array.from(new Set(photoCandidates));
-  }, [cleanFetchedBanner, cleanBannerUrl, validCachedBanner, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, domainFallbackBanner, place.logoUrl, place.avatarUrl, place.bannerUrl]);
+  }, [cleanFetchedBanner, cleanBannerUrl, cleanOgImage, activeBanner, knownDomainBanner, cleanReviewBanner, place.photos, isYoouzPlace, drawerDomain, place.brandDomain, place.id, place.logoUrl, place.avatarUrl, place.bannerUrl]);
 
   const fallbackBrandBannerUrl = React.useMemo(() => {
     const key = (drawerDomain || place.brandDomain || place.id || displayedPlaceName || "").trim();
@@ -1128,7 +1099,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         effectiveBanner,
         place.bannerUrl,
         place.ogImage,
-        cachedMedia?.bannerUrl,
         fetchedBannerUrl,
         allPhotos[0]
       ].filter(Boolean) as string[];
@@ -1148,15 +1118,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       !isFaviconOrProxy(fetchedLogoUrl)
     ) {
       return fetchedLogoUrl;
-    }
-
-    if (
-      cachedMedia?.logoUrl &&
-      !isSameAsBannerUrl(cachedMedia.logoUrl) &&
-      !isBrokenSvg(cachedMedia.logoUrl) &&
-      !isFaviconOrProxy(cachedMedia.logoUrl)
-    ) {
-      return cachedMedia.logoUrl;
     }
 
     // Priority 1: Canonical place record standalone logo (excluding banner copies)
@@ -1200,7 +1161,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (fetchedLogoUrl && !isSameAsBannerUrl(fetchedLogoUrl) && !isBrokenSvg(fetchedLogoUrl)) return fetchedLogoUrl;
 
     return null;
-  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, fetchedBannerUrl, cachedMedia, effectiveBanner, allPhotos]);
+  }, [place, drawerDomain, rawPlaceVideos, fetchedLogoUrl, fetchedBannerUrl, effectiveBanner, allPhotos]);
 
 
 
@@ -1406,6 +1367,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     e.preventDefault();
     if (onUpdatePlace) {
       const cleanWebsite = editWebsite.trim();
+      const didBannerChange = Boolean(editBannerUrl && editBannerUrl !== place.bannerUrl);
       const updated: Place = {
         ...place,
         phone: editPhone.trim(),
@@ -1417,6 +1379,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         email: editEmail.trim(),
         logoUrl: editLogoUrl,
         bannerUrl: editBannerUrl,
+        ogImage: didBannerChange ? editBannerUrl : place.ogImage,
+        ...(didBannerChange ? { customized: true, explicitBannerUpdate: true } as any : {}),
         isClaimed: place.isClaimed || (claimAsOwner && !!currentUser),
         claimedByEmail: place.claimedByEmail || (claimAsOwner && currentUser ? currentUser.email : undefined),
         isSavedToProfile: true
@@ -1576,7 +1540,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
         {/* Full-Frame Banner Canvas — always edge-to-edge full frame, never a small logo */}
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
-          {fallbackBrandBannerUrl ? (
+          {!isEnriching && (!hasAuthenticPhoto || bannerError) && fallbackBrandBannerUrl ? (
             <img
               src={fallbackBrandBannerUrl}
               alt={displayedPlaceName}

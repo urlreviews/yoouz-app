@@ -18,7 +18,7 @@ interface CopoSearchViewProps {
   onSelectVideo: (videoId: string) => void;
   onOpenPlace: (placeId: string) => void;
   onRecordForPlace?: (place: Place) => void;
-  onAddPlace?: (place: Place) => void;
+  onAddPlace?: (place: Place, skipServerSync?: boolean) => void;
   onToggleGrabPlace?: (place: Place) => void;
   isMobileModal?: boolean;
   initialQuery?: string;
@@ -625,11 +625,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         )
       );
 
-      // Instant place object - strictly scoped to current query domain to prevent cross-search leakage
+      // Instant place object - strictly scoped to current query domain; never pre-seed synthetic banners before DB/metadata resolves
       const instantBanner: string = (isRealDomain && KNOWN_BRAND_BANNERS[cleanUrl] ? KNOWN_BRAND_BANNERS[cleanUrl] : "") 
-        || (isMetaMatchingCurrent && preloadedMeta?.image && !isBadBanner(preloadedMeta.image) ? preloadedMeta.image : "") 
-        || (isRealDomain ? getLiveWebsiteBannerUrl(cleanUrl) : "")
-        || getCategoryThematicBanner(preloadedMeta?.category || (isRealDomain ? "Website" : "General"), baseName || cleanUrl);
+        || (isMetaMatchingCurrent && preloadedMeta?.image && !isBadBanner(preloadedMeta.image) && !preloadedMeta.image.includes("/api/brand-banner") ? preloadedMeta.image : "");
       const instantLogo: string = (isMetaMatchingCurrent && preloadedMeta?.logo && preloadedMeta.logo !== preloadedMeta?.image && !isFaviconUrl(preloadedMeta.logo) && !preloadedMeta.logo.includes('/api/favicon') && !isWhiteOrInvertedLogo(preloadedMeta.logo) && !preloadedMeta.logo.includes('brandfetch') && !preloadedMeta.logo.startsWith('data:;') ? preloadedMeta.logo : "")
         || (cleanUrl && KNOWN_BRAND_LOGOS[cleanUrl] ? KNOWN_BRAND_LOGOS[cleanUrl] : "")
         || (isRealDomain ? (getCleanLogoUrl(null, cleanUrl, instantBanner) || "") : "");
@@ -702,7 +700,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       let currentPlace: Place = instantPlace;
       setSearchedPlace(currentPlace);
       if (onAddPlace) {
-        onAddPlace(currentPlace);
+        onAddPlace(currentPlace, true);
       }
       if (onOpenPlace) {
         onOpenPlace(currentPlace.id);
@@ -730,9 +728,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              };
 
              const discoveredDom = (data.domain && isValidDomainUrl(data.domain) && !data.domain.includes('wikipedia.org')) ? data.domain : (isRealDomain ? cleanUrl : "");
-             const fetchedBanner = (data.image && !isBadBanner(data.image))
-               ? data.image 
-               : (instantBanner || (discoveredDom ? getLiveWebsiteBannerUrl(discoveredDom) : ""));
+             const isNonSyntheticBanner = (b?: string | null) => Boolean(b && !isBadBanner(b) && !b.includes("/api/brand-banner"));
+             const fetchedBanner = isNonSyntheticBanner(data.image)
+               ? data.image
+               : (isNonSyntheticBanner(instantBanner)
+                   ? instantBanner
+                   : (data.image && !isBadBanner(data.image) ? data.image : (instantBanner || (discoveredDom ? `/api/brand-banner/${encodeURIComponent(discoveredDom)}` : ""))));
              const domainCleanLogo = discoveredDom ? getCleanLogoUrl(null, discoveredDom, fetchedBanner) : null;
              const isInstantStandaloneLogo = Boolean(
                instantLogo &&
@@ -802,7 +803,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
              currentPlace = updatedPlace; if (currentRequestId !== searchRequestIdRef.current) return;
              setSearchedPlace(updatedPlace);
              if (onAddPlace) {
-               onAddPlace(updatedPlace);
+               onAddPlace(updatedPlace, false);
              }
              if (discoveredDom && onOpenPlace) {
                onOpenPlace(discoveredDom);

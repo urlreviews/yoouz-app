@@ -124,7 +124,7 @@ export function App() {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && (k.startsWith("yoouz_place_media_v1_") || k.startsWith("yoouz_place_media_v2_") || k.startsWith("yoouz_place_media_v3_") || k.startsWith("yoouz_place_media_v4_"))) {
+        if (k && (k.startsWith("yoouz_place_media_v1_") || k.startsWith("yoouz_place_media_v2_") || k.startsWith("yoouz_place_media_v3_") || k.startsWith("yoouz_place_media_v4_") || k.startsWith("yoouz_place_media_v5_"))) {
           keysToRemove.push(k);
         }
       }
@@ -4441,7 +4441,7 @@ export function App() {
                   ...p,
                   ...fetchedPlace,
                   name: keepExistingName ? p.name : (fetchedPlace.name || p.name),
-                  bannerUrl: knownBrandBanner || ((fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl)) ? fetchedPlace.bannerUrl : (p.bannerUrl || (cleanDomKey && cleanDomKey.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomKey)}` : ""))),
+                  bannerUrl: ((fetchedPlace.bannerUrl && !isBadBanner(fetchedPlace.bannerUrl) && !fetchedPlace.bannerUrl.includes('/api/brand-banner')) ? fetchedPlace.bannerUrl : (knownBrandBanner || ((p.bannerUrl && !isBadBanner(p.bannerUrl) && !p.bannerUrl.includes('/api/brand-banner')) ? p.bannerUrl : (fetchedPlace.bannerUrl || p.bannerUrl || (cleanDomKey && cleanDomKey.includes('.') ? `/api/brand-banner/${encodeURIComponent(cleanDomKey)}` : ""))))),
                   logoUrl: isFetchedLogoDistinct ? fetchedPlace.logoUrl : (isExistingLogoDistinct ? p.logoUrl : ((fetchedPlace.logoUrl && fetchedPlace.logoUrl !== fetchedPlace.bannerUrl) ? fetchedPlace.logoUrl : ((p.logoUrl && p.logoUrl !== p.bannerUrl) ? p.logoUrl : (getCleanLogoUrl(null, cleanDomKey) || ""))))
                 };
               });
@@ -4461,10 +4461,9 @@ export function App() {
           const validFetchedWeb = fetchedPlace?.website && isValidDomainUrl(fetchedPlace.website) ? fetchedPlace.website : "";
           const validFetchedDom = fetchedPlace?.brandDomain && isValidDomainUrl(fetchedPlace.brandDomain) ? fetchedPlace.brandDomain : "";
           const targetDomainOrUrl = validFetchedWeb || validFetchedDom || (isValidDomainUrl(cleanId) ? cleanId : "");
-          const refreshParam = hasStemName ? "&refresh=true" : "";
           const metadataEndpoint = targetDomainOrUrl
-            ? `/api/url-metadata?url=${encodeURIComponent(targetDomainOrUrl)}${refreshParam}`
-            : `/api/url-metadata?q=${encodeURIComponent((fetchedPlace && fetchedPlace.name) || cleanId)}${refreshParam}`;
+            ? `/api/url-metadata?url=${encodeURIComponent(targetDomainOrUrl)}`
+            : `/api/url-metadata?q=${encodeURIComponent((fetchedPlace && fetchedPlace.name) || cleanId)}`;
 
           fetch(metadataEndpoint)
             .then(r => r.ok ? r.json() : null)
@@ -4532,9 +4531,11 @@ export function App() {
                 const cleanDomainLookup = (resolvedDom || cleanId || "").toLowerCase().replace(/^www\./, "").trim();
                 const knownBrandBanner = (cleanDomainLookup && (KNOWN_BRAND_BANNERS[cleanDomainLookup] || KNOWN_BRAND_BANNERS[`www.${cleanDomainLookup}`])) || "";
                 const canonicalId = (resolvedDom || cleanId).toLowerCase().trim();
-                const existingGoodBanner = isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl)) ? cleanBanner(fetchedPlace?.bannerUrl) : "";
-                const effectiveBannerCandidate = knownBrandBanner
-                  || existingGoodBanner
+                const existingGoodBanner = isGoodPhoto(cleanBanner(fetchedPlace?.bannerUrl))
+                  ? cleanBanner(fetchedPlace?.bannerUrl)
+                  : (isGoodPhoto(cleanBanner(fetchedPlace?.ogImage)) ? cleanBanner(fetchedPlace?.ogImage) : "");
+                const effectiveBannerCandidate = existingGoodBanner
+                  || knownBrandBanner
                   || (isGoodPhoto(metaData.image) ? metaData.image : "")
                   || (canonicalId.includes(".") ? `/api/brand-banner/${encodeURIComponent(canonicalId)}` : "");
                 const effectiveLogoCandidate = (existingValidLogo && !isWhiteOrInvertedLogo(existingValidLogo))
@@ -7045,7 +7046,12 @@ export function App() {
     if (!canonicalSaveId || !isValidDomainUrl(canonicalSaveId)) return;
 
     try {
-      const payload = { data: { ...updatedPlace, id: canonicalSaveId, brandDomain: canonicalSaveId }, merge: true };
+      const { explicitBannerUpdate, ...cleanPlaceData } = updatedPlace as any;
+      const payload = {
+        data: { ...cleanPlaceData, id: canonicalSaveId, brandDomain: canonicalSaveId },
+        merge: true,
+        ...(explicitBannerUpdate ? { explicitBannerUpdate: true } : {})
+      };
       fetch(`/api/nosql/places/${encodeURIComponent(canonicalSaveId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -9027,17 +9033,19 @@ export function App() {
               setIsCreateModalOpen(true);
             }
           }}
-          onAddPlace={(newPlace) => {
+          onAddPlace={(newPlace, skipServerSync = false) => {
             if (!newPlace) return;
             const [safeLat, safeLng] = sanitizeLatLng(newPlace.lat, newPlace.lng);
             const cleanPlace = { ...newPlace, lat: safeLat, lng: safeLng };
 
-            // Mirror to BunnyDB database immediately
-            fetch(`/api/nosql/places/${cleanPlace.id}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ data: cleanPlace, merge: true })
-            }).catch(() => {});
+            if (!skipServerSync) {
+              // Mirror to BunnyDB database after enrichment resolves
+              fetch(`/api/nosql/places/${cleanPlace.id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: cleanPlace, merge: true })
+              }).catch(() => {});
+            }
 
             // Persist to BunnyDB immediately so it's "already saved" as per user request
 
