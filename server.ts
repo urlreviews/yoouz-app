@@ -40196,6 +40196,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="keywords" content="${safeKeywords}" />
     ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
     <meta property="og:site_name" content="Yoouz" />
+    <meta property="fb:app_id" content="966242223397117" />
     <meta property="og:locale" content="${escapeHtml(htmlLang.replace('-', '_'))}" />
     <meta property="og:type" content="${safeType}" />
     <meta property="og:url" content="${safeUrl}" />

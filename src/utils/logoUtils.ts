@@ -453,15 +453,15 @@ export const ANTHROPIC_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encod
 
 export const ZARA_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
   <rect width="100" height="100" rx="22" fill="#ffffff"/>
-  <text x="50" y="62" font-family="'Times New Roman', Georgia, serif" font-weight="900" font-size="26" fill="#000000" text-anchor="middle" letter-spacing="-1">ZARA</text>
+  <text x="50" y="62" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="26" fill="#000000" text-anchor="middle" letter-spacing="-1">ZARA</text>
 </svg>`;
 export const ZARA_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(ZARA_LOGO_SVG)}`;
 
 export const BURGER_KING_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
   <rect width="120" height="120" rx="26" fill="#FAF2E7"/>
   <path d="M 18 42 C 22 16, 98 16, 102 42 Z" fill="#F47F24"/>
-  <text x="60" y="58" font-family="'Impact', 'Arial Black', -apple-system, sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">BURGER</text>
-  <text x="60" y="76" font-family="'Impact', 'Arial Black', -apple-system, sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">KING</text>
+  <text x="60" y="58" font-family="Impact, 'Arial Black', sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">BURGER</text>
+  <text x="60" y="76" font-family="Impact, 'Arial Black', sans-serif" font-weight="900" font-size="17" fill="#D62300" text-anchor="middle" letter-spacing="-0.3">KING</text>
   <path d="M 22 84 C 32 102, 88 102, 98 84 Z" fill="#F47F24"/>
 </svg>`;
 export const BURGER_KING_LOGO_DATA_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(BURGER_KING_LOGO_SVG)}`;
