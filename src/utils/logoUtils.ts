@@ -13,6 +13,12 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     if (!/<(?:path|text|circle|rect|polygon|polyline|image|ellipse|line)\b/i.test(clean)) {
       return true;
     }
+    if (/(?:xlink:)?href=["']\/[^/]/i.test(clean)) {
+      return true;
+    }
+  }
+  if (clean.includes("commons.wikimedia.org/wiki/special:filepath/") && /\.(?:jpg|jpeg)(?:$|\?|#)/i.test(clean)) {
+    return true;
   }
 
   return (
@@ -54,6 +60,11 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("dcassetcdn.com") ||
     clean.includes("designcrowd") ||
     clean.includes("99designs") ||
+    clean.includes("99static.com") ||
+    clean.includes("ebayimg.com") ||
+    clean.includes("pinimg.com") ||
+    clean.includes("adv-map.com") ||
+    clean.includes("6762f8faf95e79cd75610013_earl") ||
     clean.includes("brandcrowd") ||
     clean.includes("logopond") ||
     clean.includes("seeklogo.com") ||
@@ -806,6 +817,27 @@ export const KNOWN_BRAND_LOGOS: Record<string, string> = {
       <rect width="100" height="100" fill="#cc0000"/>
       <text x="50" y="60" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="-1">CNN</text>
     </svg>`),
+  "dunkindonuts.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "www.dunkindonuts.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "dunkin.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "www.dunkin.com": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "dunkin": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "dunkin donuts": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+  "target.com": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Target_logo.svg",
+  "www.target.com": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Target_logo.svg",
+  "target": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Target_logo.svg",
+  "starbucks.com": "https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg",
+  "www.starbucks.com": "https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg",
+  "starbucks": "https://upload.wikimedia.org/wikipedia/en/d/d3/Starbucks_Corporation_Logo_2011.svg",
+  "afore.vc": "https://cdn.prod.website-files.com/62715edd66fdd76d96199f00/62715edd66fdd7362c199f69_Frame%20278.png",
+  "www.afore.vc": "https://cdn.prod.website-files.com/62715edd66fdd76d96199f00/62715edd66fdd7362c199f69_Frame%20278.png",
+  "aforecapital.com": "https://cdn.prod.website-files.com/62715edd66fdd76d96199f00/62715edd66fdd7362c199f69_Frame%20278.png",
+  "www.aforecapital.com": "https://cdn.prod.website-files.com/62715edd66fdd76d96199f00/62715edd66fdd7362c199f69_Frame%20278.png",
+  "afore-capital-san-francisco.co.il": "https://cdn.prod.website-files.com/62715edd66fdd76d96199f00/62715edd66fdd7362c199f69_Frame%20278.png",
+  "cavalry.vc": "https://assets.super.so/b18aaac5-183d-485f-a14f-08f7666a1c94/images/9208b970-9e34-46fb-9dac-d0bc4a3eb170/cv_notion_logo_1.png?width=1600",
+  "www.cavalry.vc": "https://assets.super.so/b18aaac5-183d-485f-a14f-08f7666a1c94/images/9208b970-9e34-46fb-9dac-d0bc4a3eb170/cv_notion_logo_1.png?width=1600",
+  "foundersfuture.com": "https://cdn.prod.website-files.com/675b0f49e8a9aae0e5259468/688720478caca7dbcfd5af4b_webclip.png",
+  "www.foundersfuture.com": "https://cdn.prod.website-files.com/675b0f49e8a9aae0e5259468/688720478caca7dbcfd5af4b_webclip.png",
   "legal500.com": "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
       <rect width="100" height="100" fill="#1e1b4b"/>

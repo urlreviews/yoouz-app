@@ -146,8 +146,9 @@ export function extractCleanDomain(input?: string | null): string {
   if (clean.endsWith("-es")) clean = clean.replace(/-es$/, ".es");
   if (clean.endsWith("-it")) clean = clean.replace(/-it$/, ".it");
 
-  // 5. Ending Clean: Strip trailing language extensions / appended route slugs (e.g. .com.en -> .com, .org.fr -> .org, .net.es -> .net, .com.about -> .com)
+  // 5. Ending Clean: Strip trailing language extensions / appended route slugs / glued snippet words (e.g. .com.en -> .com, .comtakes -> .com, .comit -> .com)
   clean = clean.replace(/\.(com|org|net|biz|info|io|ai|app|co|dev|me|tech|site|online)\.(en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko|about|contact|home)$/i, '.$1');
+  clean = clean.replace(/\.(com|org|net)(?:takes|it|is|in|on|to|for|with|and|from|the|has|was|can|will|at|by|or|as|of)$/i, '.$1');
 
   // 6. Beginning Clean: Strip www and known utility/subdomain prefixes repeatedly (e.g. web.whatsapp.com -> whatsapp.com, m.facebook.com -> facebook.com)
   const junkPrefixRegex = /^(?:www\d*|web\d*|m|mobile|app\d*|apps|my|login|signin|auth|accounts?|portal|admin|connect|secure|help|support|docs|faq|api|cdn|static|assets|media|mail|email|shop|store|news|blog|beta|dev|en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko)[\.\-]/i;
@@ -604,6 +605,21 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "pizzahut": "Pizza Hut",
   "dominos.com": "Domino's Pizza",
   "dominos": "Domino's Pizza",
+  "dunkindonuts.com": "Dunkin' Donuts",
+  "www.dunkindonuts.com": "Dunkin' Donuts",
+  "dunkin.com": "Dunkin' Donuts",
+  "www.dunkin.com": "Dunkin' Donuts",
+  "dunkindonuts": "Dunkin' Donuts",
+  "dunkin donuts": "Dunkin' Donuts",
+  "dunkin": "Dunkin' Donuts",
+  "www.target.com": "Target",
+  "aforecapital.com": "Afore Capital",
+  "www.aforecapital.com": "Afore Capital",
+  "afore-capital-san-francisco.co.il": "Afore Capital",
+  "firstmark.com": "FirstMark",
+  "www.firstmark.com": "FirstMark",
+  "cavalry.vc": "Cavalry Ventures",
+  "www.cavalry.vc": "Cavalry Ventures",
   "kfc.com": "KFC",
   "kfc": "KFC",
   "subway.com": "Subway",

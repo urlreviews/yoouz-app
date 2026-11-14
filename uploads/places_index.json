@@ -1,65 +1,5 @@
 [
   {
-    "id": "example.org",
-    "name": "Example Domain",
-    "category": "Website",
-    "categoryType": "all",
-    "address": "",
-    "city": "Online",
-    "country": "",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/api/favicon?domain=example.org",
-    "logoUrl": "/api/favicon?domain=example.org",
-    "bannerUrl": "/api/brand-banner/example.org",
-    "ogImage": "/api/brand-banner/example.org",
-    "photos": [
-      "/api/brand-banner/example.org"
-    ],
-    "openingHours": "",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://example.org/",
-    "priceRange": "N/A",
-    "plusCode": "",
-    "locations": [],
-    "description": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
-    "popularKeywords": [],
-    "amenities": [],
-    "topDishes": [],
-    "brandDomain": "example.org",
-    "ratingCount": 1,
-    "videoReviewCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    }
-  },
-  {
-    "id": "bannerlocktest-xyz.com",
-    "name": "Banner Lock Test",
-    "brandDomain": "bannerlocktest-xyz.com",
-    "bannerUrl": "https://example.com/owner-new.jpg",
-    "ogImage": "https://example.com/first-photo.jpg",
-    "photos": [
-      "https://example.com/first-photo.jpg"
-    ],
-    "customized": true
-  },
-  {
     "id": "dunkindonuts.com",
     "name": "Dunkin' Donuts",
     "category": "Verified Business",
@@ -78,8 +18,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Dunkin1.JPG",
-    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Dunkin1.JPG",
+    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "photos": [
@@ -670,8 +610,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=dominos.com",
-    "logoUrl": "/api/favicon?domain=dominos.com",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F74%2FDominos_pizza_logo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F7%2F74%2FDominos_pizza_logo.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -3348,8 +3288,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F6762f8faf95e79cd75610013_Early%2520Stage.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F6762f8faf95e79cd75610013_Early%2520Stage.jpg",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F688720478caca7dbcfd5af4b_webclip.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F688720478caca7dbcfd5af4b_webclip.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F67a09fb494d5e1aad2ee495e_open-graph-en.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F675b0f49e8a9aae0e5259468%2F67a09fb494d5e1aad2ee495e_open-graph-en.jpg",
     "photos": [
@@ -7748,8 +7688,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages-platform.99static.com%2FAD96FhxkRyuop2NmO3Olkw_aZf0%3D%2F0x0%3A1333x1333%2Ffit-in%2Fprojects-files%2F35%2F3579%2F357907%2F77b1139f-bbd3-4860-85b5-2243c6aa3619.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages-platform.99static.com%2FAD96FhxkRyuop2NmO3Olkw_aZf0%3D%2F0x0%3A1333x1333%2Ffit-in%2Fprojects-files%2F35%2F3579%2F357907%2F77b1139f-bbd3-4860-85b5-2243c6aa3619.jpg",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F62715edd66fdd76d96199f00%2F62715edd66fdd7362c199f69_Frame%2520278.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F62715edd66fdd76d96199f00%2F62715edd66fdd7362c199f69_Frame%2520278.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmedia.licdn.com%2Fdms%2Fimage%2Fv2%2FC561BAQFZUR4tOc5-PQ%2Fcompany-background_10000%2Fcompany-background_10000%2F0%2F1584368465970%2Faforecapital_cover%3Fe%3D2147483647%26v%3Dbeta%26t%3Dr7i7IcFIm6GTcON4Rlm3SG_VzrO7R7sRv6rL8dhX5Eo",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmedia.licdn.com%2Fdms%2Fimage%2Fv2%2FC561BAQFZUR4tOc5-PQ%2Fcompany-background_10000%2Fcompany-background_10000%2F0%2F1584368465970%2Faforecapital_cover%3Fe%3D2147483647%26v%3Dbeta%26t%3Dr7i7IcFIm6GTcON4Rlm3SG_VzrO7R7sRv6rL8dhX5Eo",
     "photos": [

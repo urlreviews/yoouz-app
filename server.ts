@@ -157,6 +157,7 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
       clean.includes('aria-label="openai"') ||
       clean.includes('preserveaspectratio="none"') ||
       (clean.includes("<use") && clean.includes("#") && !clean.includes("<symbol")) ||
+      /(?:xlink:)?href=["']\/[^/]/i.test(clean) ||
       !/<svg[^>]*\bwidth=/i.test(clean) ||
       !/<(?:path|text|circle|rect|polygon|polyline|image|ellipse|line)\b/i.test(clean)
     ) {
@@ -227,6 +228,12 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("dcassetcdn.com") ||
     clean.includes("designcrowd") ||
     clean.includes("99designs") ||
+    clean.includes("99static.com") ||
+    clean.includes("ebayimg.com") ||
+    clean.includes("pinimg.com") ||
+    clean.includes("adv-map.com") ||
+    clean.includes("6762f8faf95e79cd75610013_earl") ||
+    (clean.includes("commons.wikimedia.org/wiki/special:filepath/") && /\.(?:jpg|jpeg)(?:$|\?|#)/i.test(clean)) ||
     clean.includes("brandcrowd") ||
     clean.includes("logopond") ||
     clean.includes("seeklogo.com") ||
@@ -510,6 +517,106 @@ function isImmutablePersistedBanner(url?: string | null): boolean {
     return false;
   }
   return !isBadBanner(trimmed);
+}
+
+function isImmutablePersistedLogo(url?: string | null, domain?: string, bannerUrl?: string): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (bannerUrl && trimmed === bannerUrl.trim()) return false;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("/api/favicon") ||
+    lower.includes("/api/brand-banner") ||
+    lower.includes("/api/monogram") ||
+    lower.startsWith("blob:") ||
+    lower === "data:;" ||
+    lower.startsWith("data:;") ||
+    lower.includes("paint0_linear") ||
+    lower.includes("credit-card") ||
+    (!lower.startsWith("data:") && trimmed.includes("#"))
+  ) {
+    return false;
+  }
+  if (isFaviconUrl(trimmed) || isGenericOrPlaceholderLogo(trimmed)) return false;
+  return true;
+}
+
+async function lookupWikidataOfficialLogo(domain: string, businessName?: string): Promise<string> {
+  if (!domain || !domain.includes(".")) return "";
+  const cleanDom = domain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+  const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!domRoot || domRoot.length < 2) return "";
+
+  const searchTerms = Array.from(
+    new Set(
+      [
+        businessName ? businessName.trim() : "",
+        KNOWN_OFFICIAL_NAMES[cleanDom] || "",
+        cleanDom.split(".")[0]
+      ].filter(t => t && t.length >= 2)
+    )
+  );
+
+  for (const term of searchTerms.slice(0, 2)) {
+    try {
+      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=en&limit=5&format=json`;
+      const sResp = await fetch(searchUrl, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
+      });
+      if (!sResp.ok) continue;
+      const sData: any = await sResp.json();
+      const ids: string[] = (sData?.search || []).map((x: any) => x?.id).filter(Boolean);
+      if (ids.length === 0) continue;
+
+      const entUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|labels|descriptions&languages=en&format=json`;
+      const eResp = await fetch(entUrl, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+      });
+      if (!eResp.ok) continue;
+      const eData: any = await eResp.json();
+
+      for (const id of ids) {
+        const ent = eData?.entities?.[id];
+        if (!ent) continue;
+        const p154Claims: string[] = (ent.claims?.P154 || [])
+          .map((c: any) => String(c?.mainsnak?.datavalue?.value || "").trim())
+          .filter((v: string) => v.length > 0 && !/\.(?:jpg|jpeg|gif|tif|tiff|pdf|webm|ogv)$/i.test(v) && !/\b(?:flag|coat_of_arms|store|building|front|photo|headquarters|location)\b/i.test(v));
+        if (p154Claims.length === 0) continue;
+
+        const p856Claims = (ent.claims?.P856 || [])
+          .map((c: any) => c?.mainsnak?.datavalue?.value)
+          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
+
+        const websiteMatches = p856Claims.some((w: string) => {
+          try {
+            const h = new URL(w).hostname.replace(/^www\./i, "").toLowerCase();
+            return h === cleanDom || h.split(".")[0].replace(/[^a-z0-9]/g, "") === domRoot;
+          } catch {
+            return false;
+          }
+        });
+
+        const labelNorm = String(ent.labels?.en?.value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const descLow = String(ent.descriptions?.en?.value || "").toLowerCase();
+        const isBusinessEntity = /\b(hotel|airline|company|chain|brand|corporation|business|restaurant|bank|retailer|group|service|enterprise|resort|casino|firm|platform|store|carrier)\b/i.test(descLow);
+
+        if (websiteMatches || (labelNorm === domRoot && isBusinessEntity && p856Claims.length === 0)) {
+          const preferredClaim =
+            p154Claims.find(f => /\.svg$/i.test(f) && /logo/i.test(f)) ||
+            p154Claims.find(f => /\.svg$/i.test(f)) ||
+            p154Claims.find(f => /\.png$/i.test(f) && /logo/i.test(f)) ||
+            p154Claims[0];
+          if (preferredClaim) {
+            return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(preferredClaim)}`;
+          }
+        }
+      }
+    } catch {}
+  }
+  return "";
 }
 
 function parseImageDimensionsFromBuffer(buf: Buffer): { width: number; height: number } | null {
@@ -9144,6 +9251,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
         const cleanIdDom = isPlaceCollection ? (cleanDomainName(finalDataObj.brandDomain || finalDataObj.website || rawIdStr) || rawIdStr.toLowerCase().replace(/^www\./, '').trim()) : rawIdStr;
         let canonicalExistingPlaceId = rawIdStr;
         let existingImmPlaceBanner = "";
+        let existingImmPlaceLogo = "";
         let existingPlacesIndexRec: any = null;
         if (isPlaceCollection) {
           try {
@@ -9160,6 +9268,11 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           finalDataObj?.explicitBannerUpdate === true ||
           (finalDataObj?.customized === true && isImmutablePersistedBanner(finalDataObj?.bannerUrl)) ||
           (typeof finalDataObj?.bannerUrl === 'string' && finalDataObj.bannerUrl.includes('b-cdn.net'))
+        );
+        const allowExplicitLogoChange = Boolean(
+          req.body?.explicitLogoUpdate === true ||
+          finalDataObj?.explicitLogoUpdate === true ||
+          (typeof finalDataObj?.logoUrl === 'string' && finalDataObj.logoUrl.includes('b-cdn.net'))
         );
 
         if (isPlaceCollection || merge !== false) {
@@ -9190,6 +9303,15 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                   existingPlacesIndexRec?.ogImage
                 ].find(isImmutablePersistedBanner) || "";
 
+                existingImmPlaceLogo = [
+                  KNOWN_BRAND_LOGOS[domKey],
+                  rowObj.logoUrl,
+                  curData.logoUrl,
+                  curData.avatarUrl,
+                  existingPlacesIndexRec?.logoUrl,
+                  existingPlacesIndexRec?.avatarUrl
+                ].find(u => isImmutablePersistedLogo(u, domKey, existingImmPlaceBanner) && (!domKey || !isCrossBrandPortfolioLogoServer(String(u), domKey))) || "";
+
                 if (curData.name && !isDomainDerivedGuess(curData.name, domKey) && !isDomainStemName(curData.name, domKey) && finalDataObj.name && (isDomainDerivedGuess(finalDataObj.name, domKey) || isDomainStemName(finalDataObj.name, domKey))) {
                   delete finalDataObj.name;
                 }
@@ -9208,18 +9330,22 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                     delete finalDataObj.photos;
                   }
                 }
-                if (curData.logoUrl && !curData.logoUrl.includes('/api/favicon') && !isFaviconUrl(curData.logoUrl) && !isGenericOrPlaceholderLogo(curData.logoUrl) && (!finalDataObj.logoUrl || finalDataObj.logoUrl.includes('/api/favicon') || isFaviconUrl(finalDataObj.logoUrl) || isGenericOrPlaceholderLogo(finalDataObj.logoUrl))) {
+                if (existingImmPlaceLogo && !allowExplicitLogoChange) {
                   delete finalDataObj.logoUrl;
-                }
-                if (curData.avatarUrl && !curData.avatarUrl.includes('/api/favicon') && !isFaviconUrl(curData.avatarUrl) && !isGenericOrPlaceholderLogo(curData.avatarUrl) && (!finalDataObj.avatarUrl || finalDataObj.avatarUrl.includes('/api/favicon') || isFaviconUrl(finalDataObj.avatarUrl) || isGenericOrPlaceholderLogo(finalDataObj.avatarUrl))) {
                   delete finalDataObj.avatarUrl;
                 }
               }
               if (merge !== false) {
                 finalDataObj = mergeDeep(curData, finalDataObj);
-              } else if (isPlaceCollection && existingImmPlaceBanner && !allowExplicitBannerChange) {
-                finalDataObj.bannerUrl = existingImmPlaceBanner;
-                finalDataObj.ogImage = existingImmPlaceBanner;
+              } else if (isPlaceCollection) {
+                if (existingImmPlaceBanner && !allowExplicitBannerChange) {
+                  finalDataObj.bannerUrl = existingImmPlaceBanner;
+                  finalDataObj.ogImage = existingImmPlaceBanner;
+                }
+                if (existingImmPlaceLogo && !allowExplicitLogoChange) {
+                  finalDataObj.logoUrl = existingImmPlaceLogo;
+                  finalDataObj.avatarUrl = existingImmPlaceLogo;
+                }
               }
               if (colName === 'chats' || (data?.history && Array.isArray(data.history))) {
                 const existingHist = Array.isArray(curData.history) ? curData.history : [];
@@ -9265,6 +9391,11 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                 finalDataObj.bannerUrl = existingImmPlaceBanner;
                 finalDataObj.ogImage = existingImmPlaceBanner;
               }
+              existingImmPlaceLogo = [existingPlacesIndexRec.logoUrl, existingPlacesIndexRec.avatarUrl].find(u => isImmutablePersistedLogo(u, cleanIdDom, existingImmPlaceBanner)) || "";
+              if (existingImmPlaceLogo && !allowExplicitLogoChange) {
+                finalDataObj.logoUrl = existingImmPlaceLogo;
+                finalDataObj.avatarUrl = existingImmPlaceLogo;
+              }
             }
           } catch (mErr) {}
         }
@@ -9273,6 +9404,9 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
         }
         if (finalDataObj && 'explicitBannerUpdate' in finalDataObj) {
           delete finalDataObj.explicitBannerUpdate;
+        }
+        if (finalDataObj && 'explicitLogoUpdate' in finalDataObj) {
+          delete finalDataObj.explicitLogoUpdate;
         }
         const jsonStr = JSON.stringify(finalDataObj);
         if (colName === 'notifications') {
@@ -9380,6 +9514,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               ? Array.from(new Set([existingImmPlaceBanner, ...finalDataObj.photos.filter((p: string) => isImmutablePersistedBanner(p))]))
               : [existingImmPlaceBanner];
           }
+          if (existingImmPlaceLogo && !allowExplicitLogoChange) {
+            finalDataObj.logoUrl = existingImmPlaceLogo;
+            finalDataObj.avatarUrl = existingImmPlaceLogo;
+          }
           if (finalDataObj.bannerUrl && !String(finalDataObj.bannerUrl).includes("/api/brand-banner") && !String(finalDataObj.bannerUrl).includes("b-cdn.net") && isBadBanner(finalDataObj.bannerUrl)) {
             finalDataObj.bannerUrl = (cleanDomForSave && cleanDomForSave.includes(".")) ? `/api/brand-banner/${encodeURIComponent(cleanDomForSave)}` : "";
             finalDataObj.ogImage = finalDataObj.bannerUrl;
@@ -9397,7 +9535,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
               (cleanDomForSave && isCrossBrandPortfolioLogoServer(finalDataObj.logoUrl, cleanDomForSave))
             )
           ) {
-            finalDataObj.logoUrl = (cleanDomForSave && cleanDomForSave.includes(".")) ? `/api/favicon?domain=${encodeURIComponent(cleanDomForSave)}` : "";
+            finalDataObj.logoUrl = existingImmPlaceLogo || ((cleanDomForSave && cleanDomForSave.includes(".")) ? (KNOWN_BRAND_LOGOS[cleanDomForSave] || `/api/favicon?domain=${encodeURIComponent(cleanDomForSave)}`) : "");
             finalDataObj.avatarUrl = finalDataObj.logoUrl;
           }
           if (finalDataObj.claimedByEmail) {
@@ -29834,79 +29972,6 @@ async function fetchArchiveMetadata(domain: string): Promise<{ banner: string; l
   }
 }
 
-async function lookupWikidataOfficialLogo(domain: string, businessName?: string): Promise<string> {
-  if (!domain || !domain.includes(".")) return "";
-  const cleanDom = domain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-  const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (!domRoot || domRoot.length < 2) return "";
-
-  const searchTerms = Array.from(
-    new Set(
-      [
-        businessName ? businessName.trim() : "",
-        KNOWN_OFFICIAL_NAMES[cleanDom] || "",
-        cleanDom.split(".")[0]
-      ].filter(t => t && t.length >= 2)
-    )
-  );
-
-  for (const term of searchTerms.slice(0, 2)) {
-    try {
-      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=en&limit=5&format=json`;
-      const sResp = await fetch(searchUrl, {
-        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
-      });
-      if (!sResp.ok) continue;
-      const sData: any = await sResp.json();
-      const ids: string[] = (sData?.search || []).map((x: any) => x?.id).filter(Boolean);
-      if (ids.length === 0) continue;
-
-      const entUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|labels|descriptions&languages=en&format=json`;
-      const eResp = await fetch(entUrl, {
-        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
-      });
-      if (!eResp.ok) continue;
-      const eData: any = await eResp.json();
-
-      for (const id of ids) {
-        const ent = eData?.entities?.[id];
-        if (!ent) continue;
-        const p154Claims = (ent.claims?.P154 || [])
-          .map((c: any) => c?.mainsnak?.datavalue?.value)
-          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
-        if (p154Claims.length === 0) continue;
-
-        const p856Claims = (ent.claims?.P856 || [])
-          .map((c: any) => c?.mainsnak?.datavalue?.value)
-          .filter((v: any) => typeof v === "string" && v.trim().length > 0);
-
-        const websiteMatches = p856Claims.some((w: string) => {
-          try {
-            const h = new URL(w).hostname.replace(/^www\./i, "").toLowerCase();
-            return h === cleanDom || h.split(".")[0].replace(/[^a-z0-9]/g, "") === domRoot;
-          } catch {
-            return false;
-          }
-        });
-
-        const labelNorm = String(ent.labels?.en?.value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const descLow = String(ent.descriptions?.en?.value || "").toLowerCase();
-        const isBusinessEntity = /\b(hotel|airline|company|chain|brand|corporation|business|restaurant|bank|retailer|group|service|enterprise|resort|casino|firm|platform|store|carrier)\b/i.test(descLow);
-
-        if (websiteMatches || (labelNorm === domRoot && isBusinessEntity && p856Claims.length === 0)) {
-          const fileName = p154Claims[0].trim();
-          if (!/\b(?:flag|coat_of_arms)\b/i.test(fileName)) {
-            return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
-          }
-        }
-      }
-    } catch {}
-  }
-  return "";
-}
-
 async function verifyLogoUrlReachable(logoUrl: string): Promise<boolean> {
   if (!logoUrl || typeof logoUrl !== "string") return false;
   let target = logoUrl.trim();
@@ -31217,14 +31282,11 @@ async function getLockedSavedPlaceRecord(domainOrId: string): Promise<{
   const lockedBanner = bannerCandidates.find(isImmutablePersistedBanner) || "";
 
   const isValidLockedLogo = (u?: string | null): boolean => {
-    if (!u || typeof u !== "string") return false;
-    const tr = u.trim();
-    if (!tr || tr === lockedBanner) return false;
-    if (tr.includes("/api/favicon") || tr.includes("/api/brand-banner") || isFaviconUrl(tr) || isGenericOrPlaceholderLogo(tr)) return false;
-    if (cleanDom && isCrossBrandPortfolioLogoServer(tr, cleanDom)) return false;
+    if (!isImmutablePersistedLogo(u, cleanDom, lockedBanner)) return false;
+    if (cleanDom && isCrossBrandPortfolioLogoServer(String(u).trim(), cleanDom)) return false;
     return true;
   };
-  const logoCandidates = [dbDoc?.logoUrl, dbRow?.logoUrl, dbDoc?.avatarUrl, idxDoc?.logoUrl, idxDoc?.avatarUrl];
+  const logoCandidates = [KNOWN_BRAND_LOGOS[cleanDom], dbDoc?.logoUrl, dbRow?.logoUrl, dbDoc?.avatarUrl, idxDoc?.logoUrl, idxDoc?.avatarUrl];
   const lockedLogo = logoCandidates.find(isValidLockedLogo) || "";
 
   const photos = Array.from(new Set([
@@ -31312,9 +31374,9 @@ async function persistToDb(data: ResolvedBusinessData, options?: { forceBannerUp
       existingDoc?.logoUrl,
       existingDoc?.avatarUrl,
       idxExisting?.logoUrl
-    ].find((u) => Boolean(u && typeof u === 'string' && !isGenericOrPlaceholderLogo(u) && !isFaviconUrl(u) && !u.includes('/api/favicon') && !u.includes('/api/brand-banner') && !isCrossBrandPortfolioLogoServer(u, autoPlaceId))) || "";
+    ].find((u) => isImmutablePersistedLogo(u, autoPlaceId, existingImmBanner) && !isCrossBrandPortfolioLogoServer(String(u), autoPlaceId)) || "";
 
-    const incomingValidLogo = (data.logo && !isGenericOrPlaceholderLogo(data.logo) && !isFaviconUrl(data.logo) && !data.logo.includes('/api/favicon') && !isCrossBrandPortfolioLogoServer(data.logo, autoPlaceId))
+    const incomingValidLogo = (data.logo && isImmutablePersistedLogo(data.logo, autoPlaceId, existingImmBanner) && !isCrossBrandPortfolioLogoServer(data.logo, autoPlaceId))
       ? data.logo
       : "";
 
@@ -31800,9 +31862,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const scrapedPhotoCandidate = (!isLogoOrIconUrl(domPhoto) ? sanitizeProxy(domPhoto) : "");
       const lockedOrScrapedPhoto = lockedDomRec?.bannerUrl || scrapedPhotoCandidate;
       const sanitizedDomLogo = sanitizeProxy(domLogo);
-      const lockedOrScrapedLogo = (sanitizedDomLogo && !isFaviconUrl(sanitizedDomLogo) && !sanitizedDomLogo.includes('/api/favicon') && !isGenericOrPlaceholderLogo(sanitizedDomLogo))
-        ? sanitizedDomLogo
-        : (lockedDomRec?.logoUrl || sanitizedDomLogo);
+      const lockedOrScrapedLogo = lockedDomRec?.logoUrl || (
+        (sanitizedDomLogo && isImmutablePersistedLogo(sanitizedDomLogo, cleanDom, lockedOrScrapedPhoto))
+          ? sanitizedDomLogo
+          : sanitizedDomLogo
+      );
 
       const resolvedDomData: ResolvedBusinessData = {
         domain: cleanDom,
@@ -31862,7 +31926,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             email: loc?.email || "",
             openingHours: loc?.openingHours || "",
             photo: lockedKnownRec?.bannerUrl || ((!isLogoOrIconUrl(brandBanner) && !isBadBanner(brandBanner)) ? brandBanner : ""),
-            logo: (brandLogo && !isGenericOrPlaceholderLogo(brandLogo) && !isFaviconUrl(brandLogo)) ? brandLogo : (lockedKnownRec?.logoUrl || ""),
+            logo: lockedKnownRec?.logoUrl || ((brandLogo && isImmutablePersistedLogo(brandLogo, validDom)) ? brandLogo : ""),
             description: loc?.description || `${officialName} is a verified business on Yoouz.`,
             lat: loc?.lat || 0,
             lng: loc?.lng || 0
@@ -32266,9 +32330,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
         const lockedScRec = !forceBanner ? await getLockedSavedPlaceRecord(discoveredDom).catch(() => null) : null;
         const finalLockedScImage = lockedScRec?.bannerUrl || scImage;
-        const finalLockedScLogo = (finalLogo && !isFaviconUrl(finalLogo) && !finalLogo.includes('/api/favicon') && !isGenericOrPlaceholderLogo(finalLogo))
-          ? finalLogo
-          : (lockedScRec?.logoUrl || finalLogo);
+        const finalLockedScLogo = lockedScRec?.logoUrl || (
+          (finalLogo && isImmutablePersistedLogo(finalLogo, discoveredDom, finalLockedScImage))
+            ? finalLogo
+            : finalLogo
+        );
 
         const finalResult = {
           domain: discoveredDom,
@@ -32436,20 +32502,21 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         };
       }
       
-      // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path)
-      if (activeDb && rawQuery && !forceRefresh && !forceBanner) {
+      // 0. Ultra-Fast Database Cache Check (Instant Zero-Latency Path - strictly locked even when refresh=true unless forceBanner=true)
+      if (activeDb && rawQuery && !forceBanner) {
         try {
           const cleanQDom = cleanDomainName(rawQuery);
           const isDomainQuery = cleanQDom.includes('.');
+          const compactRawStem = rawQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
           const cachedPlace = await activeDb.execute({
             sql: isDomainQuery 
               ? `SELECT id, name, category, address, city, country, logoUrl, bannerUrl, data FROM places 
                  WHERE LOWER(id) = ? OR LOWER(id) = ? 
                  LIMIT 1`
               : `SELECT id, name, category, address, city, country, logoUrl, bannerUrl, data FROM places 
-                 WHERE LOWER(name) = ? OR REPLACE(LOWER(name), ' ', '') = ?
+                 WHERE LOWER(name) = ? OR REPLACE(LOWER(name), ' ', '') = ? OR REPLACE(REPLACE(LOWER(id), 'www.', ''), '.com', '') = ?
                  LIMIT 1`,
-            args: isDomainQuery ? [cleanQDom, `www.${cleanQDom}`] : [rawQuery.toLowerCase(), rawQuery.toLowerCase().replace(/\s+/g, '')]
+            args: isDomainQuery ? [cleanQDom, `www.${cleanQDom}`] : [rawQuery.toLowerCase(), rawQuery.toLowerCase().replace(/\s+/g, ''), compactRawStem]
           });
           if (cachedPlace && cachedPlace.rows && cachedPlace.rows.length > 0) {
             const row: any = cachedPlace.rows[0];
@@ -32472,19 +32539,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               cachedBanner.toLowerCase().includes('1789810172562') ||
               (cachedBanner.toLowerCase().includes('chipotle') && !matchedDom.toLowerCase().includes('chipotle'));
 
-            console.log("[DEBUG DB CACHE CHECK] cachedBanner:", cachedBanner, "isBadCachedBanner:", isBadCachedBanner);
-
             const cleanDomKey = matchedDom ? matchedDom.toLowerCase().replace(/^www\./, "").trim() : "";
             const isCustomCached = Boolean(pData.customized || (cachedBanner && cachedBanner.includes('b-cdn.net')));
             const verifiedBrandBanner = (!isCustomCached && cleanDomKey && (KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`]))
               ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomKey}`])
               : "";
             const isMismatchedBanner = (b?: string | null) => Boolean(b && b.toLowerCase().includes('chipotle') && !cleanDomKey.includes('chipotle'));
-            const isBrokenSvgLogo = (u?: string | null) => Boolean(!u || u.includes("lg%3Ahidden") || u.includes("lg:hidden") || u.startsWith("/api/favicon") || isGenericOrPlaceholderLogo(u));
             const rawCachedImage = verifiedBrandBanner
               || ([row.bannerUrl, pData.bannerUrl, pData.ogImage, pData.image, pData.photo].find(u => isImmutablePersistedBanner(u) && !isMismatchedBanner(u)) || "")
               || (matchedDom && domainBanners[matchedDom] ? sanitizeProxy(domainBanners[matchedDom]) : "");
-            const isDistinctLogo = (u?: string | null) => Boolean(u && !isFaviconUrl(u) && !isBrokenSvgLogo(u) && u !== rawCachedImage && u !== row.bannerUrl && u !== pData.bannerUrl);
+            const isDistinctLogo = (u?: string | null) => isImmutablePersistedLogo(u, cleanDomKey, rawCachedImage) && u !== row.bannerUrl && u !== pData.bannerUrl;
             const rawCachedLogo = (cleanDomKey && KNOWN_BRAND_LOGOS[cleanDomKey] && !KNOWN_BRAND_LOGOS[cleanDomKey].includes("/api/favicon") ? KNOWN_BRAND_LOGOS[cleanDomKey] : null) 
               || (isDistinctLogo(row.logoUrl) ? row.logoUrl : null) 
               || (isDistinctLogo(pData.logoUrl) ? pData.logoUrl : null) 
@@ -32495,7 +32559,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
             const isExactMatch = isDomainQuery 
               ? (matchedDom.toLowerCase() === cleanQDom || matchedDom.toLowerCase() === `www.${cleanQDom}`) 
-              : (row.name && (row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim() || row.name.toLowerCase().replace(/\s+/g, '') === rawQuery.toLowerCase().replace(/\s+/g, '')));
+              : Boolean(
+                  (row.name && (row.name.toLowerCase().trim() === rawQuery.toLowerCase().trim() || row.name.toLowerCase().replace(/\s+/g, '') === rawQuery.toLowerCase().replace(/\s+/g, ''))) ||
+                  (cleanDomKey && cleanDomKey.replace(/^www\./, '').replace(/\.com$/, '') === compactRawStem)
+                );
             const cachedOfficialBrand = extractOfficialBrandSpellingFromText(pData.description, matchedDom);
             const cachedDescBrand = extractBrandFromDescription(pData.description, matchedDom);
             const isCachedFalseSplit = Boolean(
@@ -32509,7 +32576,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               isCachedFalseSplit ||
               (cachedDescBrand && row.name && !row.name.includes(" ") && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
             ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
-            if (matchedDom && isExactMatch && !isCachedNameStem && !isBadCachedBanner && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && cachedLogoCandidate) {
+            if (matchedDom && isExactMatch && !isCachedNameStem && !isBadCachedBanner && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && rawCachedLogo) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey])
@@ -32560,9 +32627,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const realDomain = cleanDomainName(resolvedEntity.domain) || resolvedEntity.domain;
           const lockedFastRec = !forceBanner ? await getLockedSavedPlaceRecord(realDomain).catch(() => null) : null;
           let rawEntityBanner = lockedFastRec?.bannerUrl || (!isLogoOrIconUrl(resolvedEntity.photo) && !isBadBanner(resolvedEntity.photo) ? resolvedEntity.photo : "") || (domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "") || (KNOWN_BRAND_BANNERS[realDomain] ? sanitizeProxy(KNOWN_BRAND_BANNERS[realDomain]) : "");
-          let rawEntityLogo = (resolvedEntity.logo && !isFaviconUrl(resolvedEntity.logo) && !resolvedEntity.logo.includes("/api/favicon") && !isGenericOrPlaceholderLogo(resolvedEntity.logo))
-            ? resolvedEntity.logo
-            : (lockedFastRec?.logoUrl || ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : ""));
+          let rawEntityLogo = lockedFastRec?.logoUrl
+            || ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "")
+            || ((resolvedEntity.logo && isImmutablePersistedLogo(resolvedEntity.logo, realDomain, rawEntityBanner)) ? resolvedEntity.logo : "");
 
           // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
           if (!rawEntityLogo && !resolveOnly) {
@@ -32723,7 +32790,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const lockedFbRec = (!forceBanner && realDomain) ? await getLockedSavedPlaceRecord(realDomain).catch(() => null) : null;
           logSearchIntel(rawQuery, realDomain, "resolved_by_search_fallback", { source: "resolveBusinessQuery" });
           const rawEntityBanner = lockedFbRec?.bannerUrl || (!isLogoOrIconUrl(ent.photo) ? ent.photo : "") || (realDomain && domainBanners[realDomain] ? sanitizeProxy(domainBanners[realDomain]) : "");
-          const rawEntityLogo = (ent.logo && !isFaviconUrl(ent.logo)) ? ent.logo : (lockedFbRec?.logoUrl || "");
+          const rawEntityLogo = lockedFbRec?.logoUrl || ((ent.logo && isImmutablePersistedLogo(ent.logo, realDomain, rawEntityBanner)) ? ent.logo : "");
           const entityBanner = rawEntityBanner || (realDomain && realDomain.includes(".") ? `/api/brand-banner/${encodeURIComponent(realDomain)}` : "");
           const entityLogo = rawEntityLogo || (realDomain ? `/api/favicon?domain=${encodeURIComponent(realDomain)}` : "");
           if (!resolveOnly && realDomain) {
@@ -35718,8 +35785,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
     }
 
-    // Check saved places index for an already-verified standalone logo (NEVER use bannerUrl as logo!)
+    // Check BunnyDB & saved places index for an already-verified locked standalone logo (NEVER use bannerUrl as logo!)
     try {
+      const lockedDbRec = await getLockedSavedPlaceRecord(cleanDomain).catch(() => null);
+      if (lockedDbRec?.logoUrl && isImmutablePersistedLogo(lockedDbRec.logoUrl, cleanDomain, lockedDbRec.bannerUrl)) {
+        const targetDbLogo = lockedDbRec.logoUrl.startsWith("/api/") ? lockedDbRec.logoUrl : `/api/proxy-image?url=${encodeURIComponent(lockedDbRec.logoUrl)}`;
+        return res.redirect(302, targetDbLogo);
+      }
       const savedPlaces = readPlacesIndex();
       const matchedPlace = savedPlaces.find((p: any) => {
         const pId = String(p.id || "").toLowerCase().replace(/^www\./, "");
@@ -39948,8 +40020,9 @@ function cleanDomainName(urlStr: any) {
      if (lower.endsWith("-store")) lower = lower.replace(/-store$/, ".store");
      if (lower.endsWith("-be")) lower = lower.replace(/-be$/, ".be");
 
-     // Strip trailing language extensions / appended route slugs (e.g. .com.en -> .com, .com.about -> .com)
+     // Strip trailing language extensions / appended route slugs / glued snippet words (e.g. .com.en -> .com, .comtakes -> .com, .comit -> .com)
      lower = lower.replace(/\.(com|org|net|biz|info|io|ai|app|co|dev|me|tech|site|online)\.(en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko|about|contact|home)$/i, '.$1');
+     lower = lower.replace(/\.(com|org|net)(?:takes|it|is|in|on|to|for|with|and|from|the|has|was|can|will|at|by|or|as|of)$/i, '.$1');
 
      // Strip www and known utility/subdomain prefixes repeatedly (e.g. web.whatsapp.com -> whatsapp.com)
      const junkPrefixRegex = /^(?:www\d*|web\d*|m|mobile|app\d*|apps|my|login|signin|auth|accounts?|portal|admin|connect|secure|help|support|docs|faq|api|cdn|static|assets|media|mail|email|shop|store|news|blog|beta|dev|en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko)[\.\-]/i;

@@ -1368,6 +1368,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     if (onUpdatePlace) {
       const cleanWebsite = editWebsite.trim();
       const didBannerChange = Boolean(editBannerUrl && editBannerUrl !== place.bannerUrl);
+      const didLogoChange = Boolean(editLogoUrl && editLogoUrl !== place.logoUrl);
       const updated: Place = {
         ...place,
         phone: editPhone.trim(),
@@ -1381,6 +1382,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         bannerUrl: editBannerUrl,
         ogImage: didBannerChange ? editBannerUrl : place.ogImage,
         ...(didBannerChange ? { customized: true, explicitBannerUpdate: true } as any : {}),
+        ...(didLogoChange ? { customized: true, explicitLogoUpdate: true } as any : {}),
         isClaimed: place.isClaimed || (claimAsOwner && !!currentUser),
         claimedByEmail: place.claimedByEmail || (claimAsOwner && currentUser ? currentUser.email : undefined),
         isSavedToProfile: true

@@ -7046,11 +7046,12 @@ export function App() {
     if (!canonicalSaveId || !isValidDomainUrl(canonicalSaveId)) return;
 
     try {
-      const { explicitBannerUpdate, ...cleanPlaceData } = updatedPlace as any;
+      const { explicitBannerUpdate, explicitLogoUpdate, ...cleanPlaceData } = updatedPlace as any;
       const payload = {
         data: { ...cleanPlaceData, id: canonicalSaveId, brandDomain: canonicalSaveId },
         merge: true,
-        ...(explicitBannerUpdate ? { explicitBannerUpdate: true } : {})
+        ...(explicitBannerUpdate ? { explicitBannerUpdate: true } : {}),
+        ...(explicitLogoUpdate ? { explicitLogoUpdate: true } : {})
       };
       fetch(`/api/nosql/places/${encodeURIComponent(canonicalSaveId)}`, {
         method: "POST",
