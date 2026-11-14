@@ -5115,7 +5115,9 @@ async function startServer() {
     const host = rawHost.split(':')[0];
     if (host === 'yoouz.com') {
       const cleanPath = (req.path || '').toLowerCase();
-      if (cleanPath === '/health' || cleanPath === '/healthz' || cleanPath === '/ping' || cleanPath === '/api/health' || cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/sitemap-video.xml' || cleanPath === '/sitemap-index.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
+      const ua = String(req.headers['user-agent'] || '');
+      const isBotReq = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Applebot|Embedly|curl/i.test(ua);
+      if (isBotReq || cleanPath.startsWith('/api/og') || cleanPath.startsWith('/api/touch-icon') || cleanPath === '/health' || cleanPath === '/healthz' || cleanPath === '/ping' || cleanPath === '/api/health' || cleanPath === '/robots.txt' || cleanPath === '/sitemap.xml' || cleanPath === '/video-sitemap.xml' || cleanPath === '/sitemap-video.xml' || cleanPath === '/sitemap-index.xml' || cleanPath === '/favicon.ico' || cleanPath.startsWith('/favicon-')) {
         return next();
       }
       return res.redirect(301, `https://www.yoouz.com${req.originalUrl || req.url}`);
@@ -5131,8 +5133,8 @@ async function startServer() {
       console.log("🔥 [Server] Incoming request:", req.method, req.url);
     }
     
-    // Prevent aggressive mobile browser caching for all API responses
-    if (req.path.startsWith('/api/')) {
+    // Prevent aggressive mobile browser caching for mutable API responses, but never set no-store/Expires:0 on OG image or touch-icon endpoints
+    if (req.path.startsWith('/api/') && !req.path.startsWith('/api/og') && !req.path.startsWith('/api/touch-icon') && !req.path.startsWith('/api/oembed')) {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
@@ -5149,46 +5151,74 @@ async function startServer() {
         return res.status(400).json({ error: "Missing url parameter" });
       }
 
-      let host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
+      let host = req.headers['x-forwarded-host'] || req.headers.host || 'www.yoouz.com';
       let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      if (!host.includes('localhost') && !host.includes('127.0.0.1')) protocol = 'https';
+      if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+        protocol = 'https';
+        if (String(host).includes('yoouz.com')) host = 'www.yoouz.com';
+      }
       const baseUrl = `${protocol}://${host}`;
 
       const targetUrl = new URL(urlQuery.toString(), baseUrl);
       const pathname = targetUrl.pathname;
       const searchParams = targetUrl.searchParams;
 
-      const videoIdMatch = pathname.match(/\/video\/(rev-[a-zA-Z0-9-]+)/);
-      const videoId = videoIdMatch ? videoIdMatch[1] : (searchParams.get('video') || searchParams.get('v') || searchParams.get('id'));
+      const videoIdMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
+      const videoId = videoIdMatch ? videoIdMatch[1] : (searchParams.get('reviewId') || searchParams.get('video') || searchParams.get('v') || searchParams.get('id'));
 
       let foundVideo: any = null;
       if (videoId) {
-
+        if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0) {
+          foundVideo = feedCache.videos.find((v: any) => v && (v.id === videoId || v.bunnyVideoId === videoId || v.bunnyGuid === videoId));
+        }
         if (!foundVideo && typeof readReviewsIndex === 'function') {
           try {
             const localList = readReviewsIndex();
             foundVideo = localList.find((v: any) => v.id === videoId);
           } catch (e) {}
         }
+        if (!foundVideo) {
+          try {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+              const bRes = await bunnyDb.execute({
+                sql: "SELECT id, data FROM videoReviews WHERE id = ? LIMIT 1",
+                args: [videoId]
+              });
+              if (bRes.rows && bRes.rows.length > 0) {
+                const row: any = bRes.rows[0];
+                const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                foundVideo = { id: row.id, ...parsed };
+              }
+            }
+          } catch (e) {}
+        }
       }
 
-      const placeName = foundVideo?.placeName || "Business";
+      const rawPlace = foundVideo?.placeName || "";
+      const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
+      const placeName = formatBusinessName(rawPlace || cleanDomainName(rawDomain)) || "Business";
       const authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Steven Akan");
-      const title = foundVideo ? `${authorName}'s 60-Second Video Review of ${placeName}` : "Yoouz - Authentic 60-Second Video Reviews";
+      const rating = Number(foundVideo?.rating || 5.0);
+      const cleanPlaceDom = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+      const thumbArg = foundVideo?.thumbnailUrl || foundVideo?.videoThumbnail || (foundVideo?.bunnyVideoId ? `https://vz-dcd9e101-437.b-cdn.net/${foundVideo.bunnyVideoId}/thumbnail.jpg` : "");
+      const title = foundVideo ? `${authorName}'s 60s Video Review of ${placeName} | Yoouz` : "Yoouz - Authentic 60-Second Video Reviews";
       const embedUrl = foundVideo ? `${baseUrl}/embed/video/${encodeURIComponent(foundVideo.id)}` : `${baseUrl}/embed`;
-      const thumbnailUrl = foundVideo?.videoThumbnail || foundVideo?.thumbnailUrl || `${baseUrl}/og-banner.png`;
+      const thumbnailUrl = foundVideo
+        ? `${baseUrl}/api/og-card/v10/${encodeURIComponent(foundVideo.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${rating.toFixed(1)}&placeReviewsCount=1${cleanPlaceDom ? `&placeDomain=${encodeURIComponent(cleanPlaceDom)}` : ''}${thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : ''}&v=26`
+        : `${baseUrl}/og-banner.png`;
 
       const oembedResponse = {
         version: "1.0",
-        type: "video",
+        type: "link",
         provider_name: "Yoouz",
-        provider_url: "https://yoouz.com",
+        provider_url: "https://www.yoouz.com",
         title: title,
         author_name: authorName,
-        author_url: `${baseUrl}/@${encodeURIComponent(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, ""))}`,
+        author_url: `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`,
         html: `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`,
-        width: 360,
-        height: 640,
+        width: 1200,
+        height: 630,
         thumbnail_url: thumbnailUrl,
         thumbnail_width: 1200,
         thumbnail_height: 630
@@ -37491,15 +37521,22 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return await sharp(Buffer.from(svg)).png().toBuffer();
     }
 
-    // High-fidelity video share card buffer generator with instant in-memory cache
+    // High-fidelity video share card buffer generator with instant in-memory cache + in-flight deduplication
     const ogVideoCardCache = new Map<string, { buf: Buffer; ts: number }>();
+    const ogVideoCardInFlight = new Map<string, Promise<Buffer>>();
 
-    async function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
+    function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
       const cacheKey = `${videoId || 'vid'}_${queryParams.v || '26'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
-        return cachedEntry.buf;
+        return Promise.resolve(cachedEntry.buf);
       }
+      const existingInFlight = ogVideoCardInFlight.get(cacheKey);
+      if (existingInFlight) {
+        return existingInFlight;
+      }
+
+      const workPromise = (async (): Promise<Buffer> => {
 
       let thumbBuf: Buffer | null = null;
       let foundVideo: any = null;
@@ -38092,6 +38129,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
         .toBuffer();
       ogVideoCardCache.set(cacheKey, { buf: fallbackBuf, ts: Date.now() });
       return fallbackBuf;
+      })().finally(() => {
+        ogVideoCardInFlight.delete(cacheKey);
+      });
+
+      ogVideoCardInFlight.set(cacheKey, workPromise);
+      return workPromise;
     }
 
     // Dedicated clean routes for direct social scraper access
@@ -39552,7 +39595,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
 
     const fetchPromises = candidateUrls.map(async (u) => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3500);
+      const timeout = setTimeout(() => controller.abort(), 1600);
       try {
         const resp = await fetch(u, {
           signal: controller.signal,
@@ -39566,22 +39609,20 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
           const ab = await resp.arrayBuffer();
           const buf = Buffer.from(ab);
           if (buf.length > 80) {
-            const pngBuf = await sharp(buf, { density: 300 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => null);
+            const pngBuf = await sharp(buf, { density: 144 }).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer().catch(() => null);
             if (pngBuf) return pngBuf;
           }
         }
       } catch (e) {
         clearTimeout(timeout);
       }
-      return null;
+      throw new Error("no valid logo");
     });
 
-    const results = await Promise.allSettled(fetchPromises);
-    for (const res of results) {
-      if (res.status === "fulfilled" && res.value) {
-        logoBuf = res.value;
-        break;
-      }
+    if (fetchPromises.length > 0) {
+      try {
+        logoBuf = await Promise.any(fetchPromises);
+      } catch {}
     }
   }
 
@@ -39589,7 +39630,7 @@ async function fetchPlaceLogoBuffer(domain: string, name: string, explicitLogoUr
   if (!logoBuf && cleanDom && cleanDom.includes(".")) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
+      const timeout = setTimeout(() => controller.abort(), 1500);
       const siteResp = await fetch(`https://${cleanDom}`, {
         signal: controller.signal,
         headers: {
@@ -40120,23 +40161,22 @@ function injectOpenGraphTags(html: string, meta: any) {
 
     const isNoIndexPage = Boolean(meta.robots && meta.robots.toLowerCase().includes("noindex"));
 
-    let headInject = isNoIndexPage
+    // CRITICAL FOR FACEBOOK / META / WHATSAPP / LINKEDIN POST PUBLISHING:
+    // Inject <title>, <meta property="og:*">, <meta name="twitter:*">, and <link rel="canonical">
+    // at the VERY TOP of <head> (within the first 1.5 KB of the HTML document) so that
+    // Facebook's post-publish Range/partial-head scraper (meta-externalagent / facebookexternalhit)
+    // ALWAYS reads the full Open Graph tags before any large scripts, hreflang lists, or JSON-LD!
+    let topHeadInject = isNoIndexPage
       ? `
     <title>${safeTitle}</title>
     <meta name="robots" content="${escapeHtml(meta.robots)}" />
     <meta name="googlebot" content="${escapeHtml(meta.robots)}" />
-    <meta name="bingbot" content="${escapeHtml(meta.robots)}" />
-    `
+    <meta name="bingbot" content="${escapeHtml(meta.robots)}" />`
       : `
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDesc}" />
     <meta name="keywords" content="${safeKeywords}" />
     ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
-    
-    <!-- Multilingual Alternate Links for Googlebot, Bingbot & AI Crawlers -->
-    ${hreflangTags}
-
-    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
     <meta property="og:site_name" content="Yoouz" />
     <meta property="og:locale" content="${escapeHtml(htmlLang.replace('-', '_'))}" />
     <meta property="og:type" content="${safeType}" />
@@ -40149,8 +40189,6 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="${safeTitle}" />
-
-    <!-- Twitter / X -->
     <meta name="twitter:card" content="${safeTwitterCard}" />
     <meta name="twitter:site" content="@yoouz" />
     <meta name="twitter:creator" content="@yoouz" />
@@ -40164,8 +40202,22 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta itemprop="description" content="${safeDesc}" />
     <meta itemprop="image" content="${safeImage}" />
     <link rel="image_src" href="${safeImage}" />
-    
-    <link rel="canonical" href="${safeUrl}" />
+    <link rel="canonical" href="${safeUrl}" />`;
+
+    if (!isNoIndexPage && meta.videoUrl) {
+      topHeadInject += `
+    <meta property="og:video" content="${escapeHtml(meta.videoUrl)}" />
+    <meta property="og:video:secure_url" content="${escapeHtml(meta.videoUrl)}" />
+    <meta property="og:video:type" content="video/mp4" />
+    <meta property="og:video:width" content="720" />
+    <meta property="og:video:height" content="1280" />`;
+    }
+
+    let bottomHeadInject = isNoIndexPage
+      ? ""
+      : `
+    <!-- Multilingual Alternate Links for Googlebot, Bingbot & AI Crawlers -->
+    ${hreflangTags}
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
     <link rel="apple-touch-icon" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
     <link rel="icon" type="image/png" sizes="48x48" href="${baseUrl}/favicon-48x48.png" />
@@ -40175,47 +40227,20 @@ function injectOpenGraphTags(html: string, meta: any) {
     <link rel="icon" type="image/png" sizes="512x512" href="${baseUrl}/icon-512.png" />
     <link rel="icon" type="image/svg+xml" href="${baseUrl}/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="${baseUrl}/favicon.ico" />
-    <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
-    `;
-
-    if (!isNoIndexPage && meta.videoUrl) {
-      headInject += `
-      <meta property="og:video" content="${escapeHtml(meta.videoUrl)}" />
-      <meta property="og:video:secure_url" content="${escapeHtml(meta.videoUrl)}" />
-      <meta property="og:video:type" content="video/mp4" />
-      <meta property="og:video:width" content="720" />
-      <meta property="og:video:height" content="1280" />
-      `;
-    }
-
-    if (!isNoIndexPage) {
-      if (meta.embedUrl) {
-        headInject += `
-        <meta name="twitter:card" content="player" />
-        <meta name="twitter:player" content="${escapeHtml(meta.embedUrl)}" />
-        <meta name="twitter:player:width" content="360" />
-        <meta name="twitter:player:height" content="640" />
-        <link rel="alternate" type="application/json+oembed" href="${safeUrl.includes('?') ? safeUrl + '&format=oembed' : baseUrl + '/api/oembed?url=' + encodeURIComponent(safeUrl)}" title="${safeTitle} oEmbed" />
-        `;
-      } else {
-        headInject += `
-        <link rel="alternate" type="application/json+oembed" href="${baseUrl}/api/oembed?url=${encodeURIComponent(safeUrl)}" title="Yoouz oEmbed Provider" />
-        `;
-      }
-    }
+    <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />`;
 
     if (!isNoIndexPage && meta.structuredData) {
-      headInject += `
+      bottomHeadInject += `
       <script type="application/ld+json">
         ${JSON.stringify(meta.structuredData)}
       </script>
       `;
     }
 
-    // Strip out all existing title, og/twitter meta tags and static link icons so they don't conflict
+    // Strip out all existing title, og/twitter/fb meta tags, http-equiv cache tags, and static link icons so they don't conflict
     let updatedHtml = html
       .replace(/<title>[\s\S]*?<\/title>/gi, '')
-      .replace(/<meta\s+(?:name|property)=["'](?:description|keywords|robots|googlebot|bingbot|disambiguation|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
+      .replace(/<meta\s+(?:name|property|http-equiv)=["'](?:description|keywords|robots|googlebot|bingbot|disambiguation|Cache-Control|Pragma|Expires|fb:[^"']+|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '');
 
@@ -40225,7 +40250,14 @@ function injectOpenGraphTags(html: string, meta: any) {
         .replace(/<section id="yoouz-knowledge-grounding"[\s\S]*?<\/section>/i, '');
     }
 
-    updatedHtml = updatedHtml.replace('</head>', `${headInject}</head>`);
+    // Inject Open Graph & Title at the VERY TOP of <head> (immediately after <meta charset="UTF-8" /> or <head>)
+    if (/<meta\s+charset=["'][^"']+["']\s*\/?>/i.test(updatedHtml)) {
+      updatedHtml = updatedHtml.replace(/(<meta\s+charset=["'][^"']+["']\s*\/?>)/i, `$1${topHeadInject}`);
+    } else {
+      updatedHtml = updatedHtml.replace(/<head>/i, `<head>${topHeadInject}`);
+    }
+
+    updatedHtml = updatedHtml.replace('</head>', `${bottomHeadInject}</head>`);
 
     // Dynamically update the html lang attribute to match the requested language
     if (htmlLang) {
@@ -40280,7 +40312,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     return updatedHtml;
   }
 
-  function injectLiveInitialState(html: string): string {
+  function injectLiveInitialState(html: string, isCrawler = false): string {
+    if (isCrawler) return html;
     try {
       const deletedSet = new Set(readDeletedReviewsIndex());
       const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
@@ -40290,6 +40323,9 @@ function injectOpenGraphTags(html: string, meta: any) {
       
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};</script>`;
+      if (/<\/body>/i.test(html)) {
+        return html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+      }
       return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);
     } catch (e) {
       return html;
@@ -40298,7 +40334,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   async function resolveMetadataForRequest(req: any) {
     const userAgent = req.headers['user-agent'] || '';
-    const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+    const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
     
     let rawHost = (req.headers['x-forwarded-host'] || req.headers.host || 'www.yoouz.com').toString().toLowerCase().trim();
     let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -40614,7 +40650,10 @@ function injectOpenGraphTags(html: string, meta: any) {
           } catch(e) {}
         }
 
-        canonicalVideoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
+        // Preserve the exact requested /review/... path as og:url so Facebook never performs a secondary og:url redirect scrape on post publish
+        canonicalVideoUrl = (cleanPathname.startsWith('/review/') && cleanPathname.includes(videoId))
+          ? `${baseUrl}${cleanPathname}`
+          : `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
 
         const smartDesc = foundVideo?.bunnyDescription || foundVideo?.description;
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
@@ -41676,6 +41715,9 @@ function injectOpenGraphTags(html: string, meta: any) {
         const indexPath = path.resolve(process.cwd(), 'index.html');
         let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
         
+        const userAgent = req.headers['user-agent'] || '';
+        const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+
         let meta: any = null;
         try {
           meta = await Promise.race([
@@ -41686,13 +41728,15 @@ function injectOpenGraphTags(html: string, meta: any) {
           meta = null;
         }
 
-        indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
-        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta)) : indexTemplate;
+        if (!isCrawler) {
+          indexTemplate = await vite.transformIndexHtml(req.originalUrl || req.url, indexTemplate);
+        }
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler) : indexTemplate;
         return res.status(meta?.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': isCrawler
+            ? 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400'
+            : 'no-store, no-cache, must-revalidate, max-age=0'
         }).send(finalHtml);
       } catch (e: any) {
         console.error("Vite Transform Error:", e);
@@ -41739,7 +41783,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let indexTemplate = cachedDistIndexTemplate;
 
         const userAgent = req.headers['user-agent'] || '';
-        const isCrawler = /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+        const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
 
         let meta: any = null;
         try {
@@ -41751,16 +41795,14 @@ function injectOpenGraphTags(html: string, meta: any) {
           meta = null;
         }
 
-        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta)) : indexTemplate;
+        const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta), isCrawler) : indexTemplate;
         
-        // Bunny Edge Caching & Stale-While-Revalidate:
-        // - Edge caches the response for 60s
-        // - Serves stale cache in < 10ms for 24h while revalidating asynchronously
-        // - Eliminates 504 Gateway Timeout completely across global Bunny network
+        // Allow social crawlers (Facebook composer + post-publish validator) to cache the Open Graph object
+        // so the preview card never disappears when clicking "Post"
         res.status(meta?.statusCode || 200).set({ 
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': isCrawler 
-            ? 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0' 
+            ? 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400' 
             : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400',
           'Vary': 'User-Agent, Accept-Encoding'
         }).end(finalHtml);
