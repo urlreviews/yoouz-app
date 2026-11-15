@@ -348,16 +348,16 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const cleanShareDom = (resolvedDomain || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
   const cleanShareHandle = (resolvedDomain || title || "").replace(/^@+/, "").trim();
   const canonicalPrewarmUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png${cleanShareDom ? `?placeDomain=${encodeURIComponent(cleanShareDom)}&v=28` : '?v=28'}`
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png${cleanShareDom ? `?placeDomain=${encodeURIComponent(cleanShareDom)}&v=29` : '?v=29'}`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/reviews/${encodeURIComponent(cleanShareDom || resolvedDomain || title)}.png?v=37`
-    : `${appOrigin}/api/og-image/creator/${encodeURIComponent(cleanShareHandle)}.png?v=41`;
+    ? `${appOrigin}/api/og-image/reviews/${encodeURIComponent(cleanShareDom || resolvedDomain || title)}.png?v=38`
+    : `${appOrigin}/api/og-image/creator/${encodeURIComponent(cleanShareHandle)}.png?v=42`;
 
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=28`
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=29`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=37`
-    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=41`;
+    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=38`
+    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=42`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");

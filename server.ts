@@ -5213,21 +5213,21 @@ async function startServer() {
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
         authorUrl = `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`;
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(vidKey)}`;
-        thumbnailUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(vidKey)}.png${cleanPlaceDom ? `?placeDomain=${encodeURIComponent(cleanPlaceDom)}&v=28` : '?v=28'}`;
+        thumbnailUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(vidKey)}.png${cleanPlaceDom ? `?placeDomain=${encodeURIComponent(cleanPlaceDom)}&v=29` : '?v=29'}`;
       } else if (placeMatch && placeMatch[1]) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
         const pName = formatBusinessName(dom) || "Business";
         title = `Authentic Video Reviews for ${pName} | Yoouz`;
         authorName = pName;
         authorUrl = `${baseUrl}/reviews/${encodeURIComponent(dom)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=37`;
+        thumbnailUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=38`;
       } else if (creatorMatch && creatorMatch[1]) {
         const cleanH = creatorMatch[1].replace(/^@+/, "");
         const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         authorName = aName;
         authorUrl = `${baseUrl}/@${encodeURIComponent(cleanH)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`;
+        thumbnailUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`;
       }
 
       const oembedResponse = {
@@ -37717,7 +37717,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const ogVideoCardInFlight = new Map<string, Promise<Buffer>>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '28'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
+      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '29'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -38086,8 +38086,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const maxTopWidth = Math.max(placeWidth + 30, ratingLineWidth);
       const placePillWidth = Math.min(580, Math.max(320, 110 + maxTopWidth + 32));
 
-      const topPillX = 196;
-      const bottomPillX = 196;
+      const topPillX = 48;
+      const bottomPillX = 48;
 
       const initialWidth = getTextAdvanceWidth(authorInitial, 34, true);
       const initialX = 50 - (initialWidth / 2);
@@ -38212,7 +38212,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         const finalVideoCardBuf = await sharp(baseImageBuffer)
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
           .toBuffer();
         ogVideoCardCache.set(cacheKey, { buf: finalVideoCardBuf, ts: Date.now() });
         return finalVideoCardBuf;
@@ -38322,7 +38322,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const fallbackBuf = await sharp(Buffer.from(fallbackCinemaSvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-        .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+        .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
         .toBuffer();
       ogVideoCardCache.set(cacheKey, { buf: fallbackBuf, ts: Date.now() });
       return fallbackBuf;
@@ -38525,7 +38525,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawQueryDomain = (query.domain as string) || (query.website as string) || (query.id as string) || "";
       const explicitLogoUrl = (query.logoUrl as string) || "";
       const explicitBannerUrl = (query.bannerUrl as string) || "";
-      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '37'}`;
+      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '38'}`;
 
       const cachedEntry = ogPlaceCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -38714,8 +38714,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM SAFE-ZONE: Prominent Business Profile Pill (4:3 crop-safe x=196) -->
-          <g transform="translate(196, 474)" filter="url(#placeCardShadow)">
+          <!-- BOTTOM SAFE-ZONE: Prominent Business Profile Pill (Left-aligned x=48) -->
+          <g transform="translate(48, 474)" filter="url(#placeCardShadow)">
             <rect width="${businessPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             
             <!-- Left Squircle Logo Container (86x86) -->
@@ -38772,7 +38772,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           const fallbackBaseSvg = `
@@ -38800,7 +38800,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
@@ -38829,7 +38829,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
           .toBuffer();
       }
 
@@ -38886,7 +38886,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = ((query.handle as string) || rawName).replace(/^@+/, "");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '41'}`;
+      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '42'}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -39071,8 +39071,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM SAFE-ZONE: Single Author Profile Pill (4:3 crop-safe x=196) -->
-          <g transform="translate(196, 474)" filter="url(#profileCardShadow)">
+          <!-- BOTTOM SAFE-ZONE: Single Author Profile Pill (Left-aligned x=48) -->
+          <g transform="translate(48, 474)" filter="url(#profileCardShadow)">
             <rect width="${authorPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             
             <!-- Left Squircle Avatar Container (86x86) -->
@@ -39139,20 +39139,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
         finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 9, adaptiveFiltering: true })
           .toBuffer();
       }
 
@@ -40639,7 +40639,6 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="keywords" content="${safeKeywords}" />
     ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
     <meta property="og:site_name" content="Yoouz" />
-    <meta property="fb:app_id" content="966242223397117" />
     <meta property="og:locale" content="${escapeHtml(ogLocaleValue)}" />
     <meta property="og:type" content="${safeType}" />
     <meta property="og:url" content="${safeUrl}" />
@@ -40807,7 +40806,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   }
 
-  const SOCIAL_CRAWLER_REGEX = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|redditbot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Slack-ImgProxy|Discordbot|Pinterest|Iframely|Snapchat|Bluesky|Threads|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i;
+  const SOCIAL_CRAWLER_REGEX = /facebookexternalhit|facebookplatform|meta-externalagent|meta-externalfetcher|meta-webindexer|Facebot|FacebookBot|facebookcatalog|redditbot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Slack-ImgProxy|Discordbot|Pinterest|Iframely|Snapchat|Bluesky|Threads|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i;
 
   async function resolveMetadataForRequest(req: any) {
     const userAgent = req.headers['user-agent'] || '';
@@ -41176,12 +41175,12 @@ function injectOpenGraphTags(html: string, meta: any) {
         keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png${cleanPlaceDomForOg ? `?placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}&v=28` : '?v=28'}`;
+        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png${cleanPlaceDomForOg ? `?placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}&v=29` : '?v=29'}`;
         touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?v=11`;
         // Pre-warm the exact canonical OG card key in RAM so composer & post-publish crawlers hit a ready truecolor PNG
         generateVideoShareCardBuffer(videoId, {
           placeDomain: cleanPlaceDomForOg,
-          v: "28"
+          v: "29"
         }, baseUrl).catch(() => {});
         videoUrl = "";
         type = "website";
@@ -41353,14 +41352,14 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(effectiveDomain)}.png?v=37`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(effectiveDomain)}.png?v=38`;
         touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(effectiveDomain)}.png?v=24`;
         twitterCard = "summary_large_image";
 
         // Pre-warm the exact canonical place OG card key in RAM immediately
         generatePlaceShareCardBuffer({
           domain: effectiveDomain,
-          v: "37"
+          v: "38"
         }, baseUrl).catch(() => {});
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing
@@ -41534,12 +41533,12 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`;
+        imageUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`;
         twitterCard = "summary_large_image";
 
         generateCreatorShareCardBuffer({
           handle: cleanH,
-          v: "41"
+          v: "42"
         }, baseUrl).catch(() => {});
     } else if (
         pathname.includes('/vs/') || 
@@ -41756,7 +41755,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `60s Video Review of ${pName} | Yoouz`,
           description: `Watch the authentic 60-second video review for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-card/v10/${encodeURIComponent(vid)}.png${cleanDomOg ? `?placeDomain=${encodeURIComponent(cleanDomOg)}&v=28` : '?v=28'}`,
+          imageUrl: `${baseUrl}/api/og-card/v10/${encodeURIComponent(vid)}.png${cleanDomOg ? `?placeDomain=${encodeURIComponent(cleanDomOg)}&v=29` : '?v=29'}`,
           touchIcon: `${baseUrl}/api/touch-icon/video/${encodeURIComponent(vid)}.png?v=11`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
@@ -41775,7 +41774,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `Authentic Video Reviews for ${pName} | Yoouz`,
           description: `Discover genuine 60-second video testimonials for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=37`,
+          imageUrl: `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=38`,
           touchIcon: `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(dom)}.png?v=24`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
@@ -41794,7 +41793,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `@${cleanH}'s Authentic Video Reviews | Yoouz`,
           description: `Watch genuine 60-second video testimonials by ${aName} on Yoouz. Real People. Real Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`,
+          imageUrl: `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
