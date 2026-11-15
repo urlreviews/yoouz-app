@@ -5213,26 +5213,26 @@ async function startServer() {
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
         authorUrl = `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`;
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(vidKey)}`;
-        thumbnailUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(vidKey)}.png${cleanPlaceDom ? `?placeDomain=${encodeURIComponent(cleanPlaceDom)}&v=29` : '?v=29'}`;
+        thumbnailUrl = `${baseUrl}/api/og-card/v15/${encodeURIComponent(cleanPlaceDom || 'place')}/${encodeURIComponent(vidKey)}.png`;
       } else if (placeMatch && placeMatch[1]) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
         const pName = formatBusinessName(dom) || "Business";
         title = `Authentic Video Reviews for ${pName} | Yoouz`;
         authorName = pName;
         authorUrl = `${baseUrl}/reviews/${encodeURIComponent(dom)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=38`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v15/reviews/${encodeURIComponent(dom)}.png`;
       } else if (creatorMatch && creatorMatch[1]) {
         const cleanH = creatorMatch[1].replace(/^@+/, "");
         const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         authorName = aName;
         authorUrl = `${baseUrl}/@${encodeURIComponent(cleanH)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v15/creator/${encodeURIComponent(cleanH)}.png`;
       }
 
       const oembedResponse = {
         version: "1.0",
-        type: "link",
+        type: (foundVideo || videoId) ? "video" : "rich",
         provider_name: "Yoouz",
         provider_url: "https://www.yoouz.com",
         title,
@@ -37717,7 +37717,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const ogVideoCardInFlight = new Map<string, Promise<Buffer>>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '29'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
+      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '30'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -38334,21 +38334,57 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return workPromise;
     }
 
-    // Dedicated clean routes for direct social scraper access
-    app.get(['/api/og-card/v10/:id.png', '/api/og-card/v10/:id', '/api/og-card/v9/:id.png', '/api/og-card/v9/:id', '/api/og-card/v8/:id.png', '/api/og-card/v8/:id', '/api/og-card/v7/:id.png', '/api/og-card/v7/:id', '/api/og-card/v6/:id.png', '/api/og-card/v6/:id', '/api/og-card/v5/:id.png', '/api/og-card/v5/:id', '/api/og-card/v4/:id.png', '/api/og-card/v4/:id', '/api/og-card/v3/:id.png', '/api/og-card/v3/:id', '/api/og-card/v2/:id.png', '/api/og-card/v2/:id', '/api/og-image/video/:id.png', '/api/og-image/video/:id'], async (req: any, res: any) => {
+    // Dedicated clean routes for direct social scraper access (path-versioned /v15/ so BunnyCDN PullZone never serves stale cached PNGs)
+    app.get([
+      '/api/og-card/v15/:domain/:id.png',
+      '/api/og-card/v15/:domain/:id',
+      '/api/og-card/v15/:id.png',
+      '/api/og-card/v15/:id',
+      '/api/og-card/v14/:id.png',
+      '/api/og-card/v14/:id',
+      '/api/og-card/v13/:id.png',
+      '/api/og-card/v13/:id',
+      '/api/og-card/v12/:id.png',
+      '/api/og-card/v12/:id',
+      '/api/og-card/v11/:id.png',
+      '/api/og-card/v11/:id',
+      '/api/og-card/v10/:id.png',
+      '/api/og-card/v10/:id',
+      '/api/og-card/v9/:id.png',
+      '/api/og-card/v9/:id',
+      '/api/og-card/v8/:id.png',
+      '/api/og-card/v8/:id',
+      '/api/og-card/v7/:id.png',
+      '/api/og-card/v7/:id',
+      '/api/og-card/v6/:id.png',
+      '/api/og-card/v6/:id',
+      '/api/og-card/v5/:id.png',
+      '/api/og-card/v5/:id',
+      '/api/og-card/v4/:id.png',
+      '/api/og-card/v4/:id',
+      '/api/og-card/v3/:id.png',
+      '/api/og-card/v3/:id',
+      '/api/og-card/v2/:id.png',
+      '/api/og-card/v2/:id',
+      '/api/og-image/video/:id.png',
+      '/api/og-image/video/:id'
+    ], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
         const baseUrl = `${protocol}://${host}`;
         const queryParams = sanitizeQueryParams(req.query);
+        if (req.params.domain && req.params.domain !== 'place' && !queryParams.placeDomain) {
+          queryParams.placeDomain = String(req.params.domain).trim();
+        }
         const imgBuf = await generateVideoShareCardBuffer(videoId, queryParams, baseUrl);
 
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", imgBuf.length);
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
         return res.send(imgBuf);
       } catch (e: any) {
         console.error("Direct Video OG Image Error:", e);
@@ -38421,7 +38457,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated high-resolution touch icon endpoint for iOS Safari native share sheet & AirDrop
-    app.get(['/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v15/video/:id.png', '/api/touch-icon/v15/video/:id', '/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38461,7 +38497,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", iconBuf.length);
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
         return res.send(iconBuf);
       } catch (e) {
         const fallbackPath = path.join(process.cwd(), 'public', 'icon-192.png');
@@ -38470,7 +38506,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v15/reviews/:domain.png', '/api/touch-icon/v15/reviews/:domain', '/api/touch-icon/v15/place/:domain.png', '/api/touch-icon/v15/place/:domain', '/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38488,7 +38524,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", iconBuf.length);
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
         return res.send(iconBuf);
       } catch (e) {
         const fallbackPath = path.join(process.cwd(), 'public', 'icon-192.png');
@@ -38497,7 +38533,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v15/reviews/:domain.png', '/api/og-image/v15/reviews/:domain', '/api/og-image/v15/place/:domain.png', '/api/og-image/v15/place/:domain', '/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -38525,7 +38561,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawQueryDomain = (query.domain as string) || (query.website as string) || (query.id as string) || "";
       const explicitLogoUrl = (query.logoUrl as string) || "";
       const explicitBannerUrl = (query.bannerUrl as string) || "";
-      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '38'}`;
+      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '39'}`;
 
       const cachedEntry = ogPlaceCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -38855,11 +38891,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
       return res.send(finalImage);
     }
 
-    app.get(['/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v15/creator/:handle.png', '/api/og-image/v15/creator/:handle', '/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
       try {
         const rawHandle = (req.params.handle || "").replace(/\.png$/i, "").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -38886,7 +38922,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = ((query.handle as string) || rawName).replace(/^@+/, "");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '42'}`;
+      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '43'}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -39173,11 +39209,11 @@ app.get('/api/og-preview-v2', async (req, res) => {
       res.setHeader("Content-Length", finalImage.length);
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+      res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
       return res.send(finalImage);
     }
 
-    app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png', '/api/og-banner/brand.png', '/api/og-banner/page.png', '/api/og-banner/brand'], async (req: any, res: any) => {
+    app.all(['/api/og', '/api/og.png', '/api/og-image', '/api/og-image.png', '/og-banner.png', '/og-image.png', '/api/og-banner/v15/brand.png', '/api/og-banner/v15/page.png', '/api/og-banner/brand.png', '/api/og-banner/page.png', '/api/og-banner/brand'], async (req: any, res: any) => {
       try {
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
@@ -39218,7 +39254,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           res.setHeader("Content-Length", imgBuf.length);
           res.setHeader("X-Content-Type-Options", "nosniff");
           res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+          res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
           return res.send(imgBuf);
         }
 
@@ -39242,7 +39278,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         res.setHeader("Content-Length", brandBuf.length);
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=3600");
         return res.send(brandBuf);
       } catch (e: any) {
         console.error("OG Image Error:", e);
@@ -40639,6 +40675,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     <meta name="keywords" content="${safeKeywords}" />
     ${meta.robots ? `<meta name="robots" content="${meta.robots}" />` : ""}
     <meta property="og:site_name" content="Yoouz" />
+    <meta property="fb:app_id" content="966242223397117" />
     <meta property="og:locale" content="${escapeHtml(ogLocaleValue)}" />
     <meta property="og:type" content="${safeType}" />
     <meta property="og:url" content="${safeUrl}" />
@@ -40677,8 +40714,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     let bottomHeadInject = isNoIndexPage
       ? ""
       : `
-    <!-- oEmbed & Multilingual Alternate Links -->
-    <link rel="alternate" type="application/json+oembed" href="${escapeHtml(baseUrl + '/api/oembed?url=' + encodeURIComponent(safeUrl || baseUrl + '/'))}" title="${safeTitle}" />
+    <!-- Multilingual Alternate Links -->
     ${hreflangTags}
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
     <link rel="apple-touch-icon" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
@@ -41175,12 +41211,12 @@ function injectOpenGraphTags(html: string, meta: any) {
         keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png${cleanPlaceDomForOg ? `?placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}&v=29` : '?v=29'}`;
-        touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?v=11`;
+        imageUrl = `${baseUrl}/api/og-card/v15/${encodeURIComponent(cleanPlaceDomForOg || 'place')}/${encodeURIComponent(videoId)}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v15/video/${encodeURIComponent(videoId)}.png`;
         // Pre-warm the exact canonical OG card key in RAM so composer & post-publish crawlers hit a ready truecolor PNG
         generateVideoShareCardBuffer(videoId, {
           placeDomain: cleanPlaceDomForOg,
-          v: "29"
+          v: "30"
         }, baseUrl).catch(() => {});
         videoUrl = "";
         type = "website";
@@ -41352,14 +41388,14 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(effectiveDomain)}.png?v=38`;
-        touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(effectiveDomain)}.png?v=24`;
+        imageUrl = `${baseUrl}/api/og-image/v15/reviews/${encodeURIComponent(effectiveDomain)}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v15/reviews/${encodeURIComponent(effectiveDomain)}.png`;
         twitterCard = "summary_large_image";
 
         // Pre-warm the exact canonical place OG card key in RAM immediately
         generatePlaceShareCardBuffer({
           domain: effectiveDomain,
-          v: "38"
+          v: "39"
         }, baseUrl).catch(() => {});
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing
@@ -41533,12 +41569,12 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`;
+        imageUrl = `${baseUrl}/api/og-image/v15/creator/${encodeURIComponent(cleanH)}.png`;
         twitterCard = "summary_large_image";
 
         generateCreatorShareCardBuffer({
           handle: cleanH,
-          v: "42"
+          v: "43"
         }, baseUrl).catch(() => {});
     } else if (
         pathname.includes('/vs/') || 
@@ -41755,8 +41791,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `60s Video Review of ${pName} | Yoouz`,
           description: `Watch the authentic 60-second video review for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-card/v10/${encodeURIComponent(vid)}.png${cleanDomOg ? `?placeDomain=${encodeURIComponent(cleanDomOg)}&v=29` : '?v=29'}`,
-          touchIcon: `${baseUrl}/api/touch-icon/video/${encodeURIComponent(vid)}.png?v=11`,
+          imageUrl: `${baseUrl}/api/og-card/v15/${encodeURIComponent(cleanDomOg || 'place')}/${encodeURIComponent(vid)}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v15/video/${encodeURIComponent(vid)}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: `${baseUrl}/embed/video/${encodeURIComponent(vid)}`,
@@ -41774,8 +41810,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `Authentic Video Reviews for ${pName} | Yoouz`,
           description: `Discover genuine 60-second video testimonials for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=38`,
-          touchIcon: `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(dom)}.png?v=24`,
+          imageUrl: `${baseUrl}/api/og-image/v15/reviews/${encodeURIComponent(dom)}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v15/reviews/${encodeURIComponent(dom)}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: "",
@@ -41793,7 +41829,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `@${cleanH}'s Authentic Video Reviews | Yoouz`,
           description: `Watch genuine 60-second video testimonials by ${aName} on Yoouz. Real People. Real Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=42`,
+          imageUrl: `${baseUrl}/api/og-image/v15/creator/${encodeURIComponent(cleanH)}.png`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",

@@ -18,7 +18,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://cetaphil.com",
-    "placeLogoUrl": "/api/favicon?domain=cetaphil.com",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "placeDescription": "Cetaphil · verified business · cetaphil.com",
     "author": {
@@ -263,7 +263,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "repostsCount": 0,
     "views": 44,
     "viewsCount": 44,
-    "sharesCount": 36,
+    "sharesCount": 44,
     "tags": [
       "Verified Business"
     ],
@@ -285,7 +285,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-23T17:02:39.651Z",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 36,
+    "shares": 44,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
@@ -495,7 +495,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "repostsCount": 0,
     "views": 46,
     "viewsCount": 46,
-    "sharesCount": 8,
+    "sharesCount": 16,
     "tags": [
       "Restaurant & Cafe"
     ],
@@ -516,7 +516,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-23T09:14:55.032Z",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 8,
+    "shares": 16,
     "logoUrl": "/api/favicon?domain=propercoffee.app",
     "reviewsCount": 1,
     "reviewCount": 1,
@@ -544,7 +544,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "placeEmail": "business@flipper.net",
     "placeRating": 5,
     "placeWebsite": "https://flipper.net",
-    "placeLogoUrl": "/api/favicon?domain=flipper.net",
+    "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_favicon.png%3Fv%3D1765368570%26width%3D500",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
     "placeDescription": "Flipper Zero · verified business · flipper.net",
     "author": {
@@ -707,7 +707,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "repostsCount": 0,
     "views": 32,
     "viewsCount": 32,
-    "sharesCount": 0,
+    "sharesCount": 4,
     "tags": [
       "Verified Business"
     ],
@@ -730,7 +730,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-23T07:23:18.021Z",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 0,
+    "shares": 4,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
