@@ -16,7 +16,7 @@
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://cetaphil.com",
-    "placeLogoUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+    "placeLogoUrl": "/api/favicon?domain=cetaphil.com",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "placeDescription": "Cetaphil · verified business · cetaphil.com",
     "author": {
@@ -141,7 +141,7 @@
     "likesCount": 0,
     "bookmarks": 0,
     "shares": 12,
-    "logoUrl": "https://www.cetaphil.com/on/demandware.static/Sites-Galderma-US-Site/-/default/dw93baec63/images/logo_small.png",
+    "logoUrl": "/api/favicon?domain=cetaphil.com",
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,
@@ -168,7 +168,7 @@
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://bk.com",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2042%20C%2022%2016%2C%2098%2016%2C%20102%2042%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2258%22%20font-family%3D%22'Impact'%2C%20'Arial%20Black'%2C%20-apple-system%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EBURGER%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2276%22%20font-family%3D%22'Impact'%2C%20'Arial%20Black'%2C%20-apple-system%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EKING%3C%2Ftext%3E%0A%20%20%3Cpath%20d%3D%22M%2022%2084%20C%2032%20102%2C%2088%20102%2C%2098%2084%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2042%20C%2022%2016%2C%2098%2016%2C%20102%2042%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2258%22%20font-family%3D%22Impact%2C%20'Arial%20Black'%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EBURGER%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2276%22%20font-family%3D%22Impact%2C%20'Arial%20Black'%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EKING%3C%2Ftext%3E%0A%20%20%3Cpath%20d%3D%22M%2022%2084%20C%2032%20102%2C%2088%20102%2C%2098%2084%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
     "placeDescription": "Bk · verified business · bk.com",
     "author": {
@@ -259,8 +259,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 41,
-    "viewsCount": 41,
+    "views": 44,
+    "viewsCount": 44,
     "sharesCount": 20,
     "tags": [
       "Verified Business"
@@ -276,7 +276,7 @@
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
     "isReady": true,
     "isProcessing": false,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2042%20C%2022%2016%2C%2098%2016%2C%20102%2042%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2258%22%20font-family%3D%22'Impact'%2C%20'Arial%20Black'%2C%20-apple-system%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EBURGER%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2276%22%20font-family%3D%22'Impact'%2C%20'Arial%20Black'%2C%20-apple-system%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EKING%3C%2Ftext%3E%0A%20%20%3Cpath%20d%3D%22M%2022%2084%20C%2032%20102%2C%2088%20102%2C%2098%2084%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2042%20C%2022%2016%2C%2098%2016%2C%20102%2042%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2258%22%20font-family%3D%22Impact%2C%20'Arial%20Black'%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EBURGER%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2260%22%20y%3D%2276%22%20font-family%3D%22Impact%2C%20'Arial%20Black'%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2217%22%20fill%3D%22%23D62300%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-0.3%22%3EKING%3C%2Ftext%3E%0A%20%20%3Cpath%20d%3D%22M%2022%2084%20C%2032%20102%2C%2088%20102%2C%2098%2084%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
     "authorName": "Sophie Cielo",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%235E35B1%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 18,
@@ -491,8 +491,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 45,
-    "viewsCount": 45,
+    "views": 46,
+    "viewsCount": 46,
     "sharesCount": 8,
     "tags": [
       "Restaurant & Cafe"
@@ -542,7 +542,7 @@
     "placeEmail": "business@flipper.net",
     "placeRating": 5,
     "placeWebsite": "https://flipper.net",
-    "placeLogoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "placeLogoUrl": "/api/favicon?domain=flipper.net",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
     "placeDescription": "Flipper Zero · verified business · flipper.net",
     "author": {
@@ -703,8 +703,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 30,
-    "viewsCount": 30,
+    "views": 32,
+    "viewsCount": 32,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -722,7 +722,7 @@
     "isProcessing": false,
     "hasHardwareSilenceSync": true,
     "authorName": "Josh Montgomery",
-    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "logoUrl": "/api/favicon?domain=flipper.net",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 47,
     "createdAt": "2026-10-23T07:23:18.021Z",
@@ -754,7 +754,7 @@
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "placeDescription": "Zara · real estate · Online",
     "author": {
@@ -872,8 +872,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 45,
-    "viewsCount": 45,
+    "views": 56,
+    "viewsCount": 56,
     "sharesCount": 0,
     "tags": [
       "Real Estate"
@@ -901,7 +901,7 @@
     "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/a6b4d277-7a46-40b8-8c82-baac5e522f8f/captions/es-auto.vtt",
     "aiTitle": "Productos excelentes y a la moda para todos",
     "hasBunnySmartCaptions": true,
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "hasHardwareSilenceSync": true,
     "bunnyDescription": "En este video review, se elogian las tiendas SAVA por ofrecer excelentes productos siempre a la moda y a la vanguardia. Se destaca que la marca se adapta a diferentes precios sin comprometer la calidad. Se recomienda a todas las personas interesadas en moda utilizar esta marca.",
     "hasOfficialBunnyTitle": true,
@@ -1018,8 +1018,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 47,
-    "viewsCount": 47,
+    "views": 48,
+    "viewsCount": 48,
     "sharesCount": 0,
     "tags": [
       "Verified Business"
@@ -1192,8 +1192,8 @@
     "bookmarks": 0,
     "sharesCount": 4,
     "shares": 4,
-    "viewsCount": 102,
-    "views": 102,
+    "viewsCount": 103,
+    "views": 103,
     "author": {
       "name": "redha bm",
       "handle": "@redhabm",
@@ -1265,7 +1265,7 @@
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "placeDescription": "Zara · real estate · Online",
     "author": {
@@ -1352,9 +1352,9 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 83,
-    "viewsCount": 83,
-    "sharesCount": 12,
+    "views": 90,
+    "viewsCount": 90,
+    "sharesCount": 20,
     "tags": [
       "Real Estate"
     ],
@@ -1368,14 +1368,14 @@
     "hasBunnySmartCaptions": true,
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "authorName": "Kert P",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20%27Google%20Sans%27%2C%20%27Segoe%20UI%27%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 23,
     "createdAt": "2026-10-20T14:09:14.615Z",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 12,
+    "shares": 20,
     "reviewsCount": 3,
     "reviewCount": 3,
     "totalReviews": 3,
@@ -1406,7 +1406,7 @@
     "placeEmail": "",
     "placeRating": 5,
     "placeWebsite": "https://www.zara.com/",
-    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "placeDescription": "Zara · real estate · Online",
     "author": {
@@ -1487,8 +1487,8 @@
     "bookmarksCount": 0,
     "isBookmarked": false,
     "repostsCount": 0,
-    "views": 66,
-    "viewsCount": 66,
+    "views": 67,
+    "viewsCount": 67,
     "sharesCount": 8,
     "tags": [
       "Real Estate"
@@ -1504,7 +1504,7 @@
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
     "authorName": "Kert P",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Times%20New%20Roman'%2C%20Georgia%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22Georgia%2C%20'Times%20New%20Roman'%2C%20serif%22%20font-weight%3D%22900%22%20font-size%3D%2226%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EZARA%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "duration": 14,
     "createdAt": "2026-10-20T14:04:07.138Z",
