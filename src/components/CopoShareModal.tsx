@@ -346,18 +346,18 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   // Pre-generate dynamic social preview image url (server generated composite)
   const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=26`
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=27`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=34`
-    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=39`;
+    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=36`
+    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=40`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");
 
   const resolvedTouchIcon = isVideoMode && video
-    ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=9`
+    ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=10`
     : isBusiness
-    ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=20`
+    ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=23`
     : "";
 
   useEffect(() => {
@@ -946,7 +946,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
                     <div className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
                       {/* Business Squircle Logo Container Matching Profile Header */}
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-white shadow-xs flex items-center justify-center p-1 shrink-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-white shadow-xs flex items-center justify-center p-[2px] shrink-0">
                         <CopoBrandLogo
                           domain={resolvedDomain || title}
                           name={title}
@@ -1010,7 +1010,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   <div className="absolute top-2.5 left-2.5 z-10 flex items-center max-w-[96%] pointer-events-none">
                     <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-lg min-w-0">
                       {/* Business Squircle Logo Container with crisp white framing */}
-                      <div className="w-8.5 h-8.5 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-xs">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-xs">
                         <CopoBrandLogo
                           domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
                           name={title}
