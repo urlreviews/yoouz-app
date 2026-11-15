@@ -263,7 +263,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "repostsCount": 0,
     "views": 44,
     "viewsCount": 44,
-    "sharesCount": 44,
+    "sharesCount": 48,
     "tags": [
       "Verified Business"
     ],
@@ -285,7 +285,7 @@ export const INITIAL_SEED_VIDEOS: VideoReview[] = [
     "createdAt": "2026-10-23T17:02:39.651Z",
     "likesCount": 0,
     "bookmarks": 0,
-    "shares": 44,
+    "shares": 48,
     "reviewsCount": 1,
     "reviewCount": 1,
     "totalReviews": 1,

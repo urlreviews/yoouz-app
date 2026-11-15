@@ -348,24 +348,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const cleanShareDom = (resolvedDomain || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
   const cleanShareHandle = (resolvedDomain || title || "").replace(/^@+/, "").trim();
   const canonicalPrewarmUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v15/${encodeURIComponent(cleanShareDom || 'place')}/${encodeURIComponent(video.id)}.png`
+    ? `${appOrigin}/api/og-card/v16/${encodeURIComponent(video.id)}.png`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v15/reviews/${encodeURIComponent(cleanShareDom || resolvedDomain || title)}.png`
-    : `${appOrigin}/api/og-image/v15/creator/${encodeURIComponent(cleanShareHandle)}.png`;
+    ? `${appOrigin}/api/og-image/v16/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png`
+    : `${appOrigin}/api/og-image/v16/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png`;
 
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v15/${encodeURIComponent(cleanShareDom || 'place')}/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=30`
+    ? `${appOrigin}/api/og-card/v16/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=31`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v15/reviews/${encodeURIComponent(cleanShareDom || resolvedDomain || title)}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=39`
-    : `${appOrigin}/api/og-image/v15/creator/${encodeURIComponent(cleanShareHandle)}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=43`;
+    ? `${appOrigin}/api/og-image/v16/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=40`
+    : `${appOrigin}/api/og-image/v16/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=44`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");
 
   const resolvedTouchIcon = isVideoMode && video
-    ? `${appOrigin}/api/touch-icon/v15/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=12`
+    ? `${appOrigin}/api/touch-icon/v16/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=13`
     : isBusiness
-    ? `${appOrigin}/api/touch-icon/v15/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=25`
+    ? `${appOrigin}/api/touch-icon/v16/reviews/${encodeURIComponent((resolvedDomain || title).replace(/\./g, '-dot-'))}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=26`
     : "";
 
   useEffect(() => {
