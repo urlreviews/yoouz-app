@@ -602,7 +602,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
 
                 if (navigator.share) {
                   const domainSlug = getPlaceSlug(currentReview.placeWebsite || currentReview.placeId || currentReview.placeName || currentReview);
-                  const shareUrl = `${window.location.origin}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(currentReview.id)}`;
+                  const shareUrl = `${window.location.origin}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(currentReview.id)}`;
                   navigator.share({ title: currentReview.placeName, url: shareUrl }).catch(() => {});
                 }
               }}

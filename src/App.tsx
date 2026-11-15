@@ -631,8 +631,8 @@ export function App() {
       if (revMatch) return revMatch[1];
       const userVideoMatch = pathname.match(/^\/@[^\/]+\/video\/([^\/]+)/) || pathname.match(/^\/creator\/[^\/]+\/video\/([^\/]+)/);
       if (userVideoMatch?.[1]) return decodeURIComponent(userVideoMatch[1]);
-      const vMatch = pathname.match(/^\/(?:v|video|review)\/([^\/]+)(?:\/([^\/]+))?/);
-      if (vMatch) return decodeURIComponent(vMatch[2] || vMatch[1]);
+      const vMatch = pathname.match(/^\/(?:v|video|review|reviews)\/([^\/]+)(?:\/([^\/]+))?/);
+      if (vMatch && (vMatch[2] || !pathname.startsWith("/reviews/"))) return decodeURIComponent(vMatch[2] || vMatch[1]);
     } catch (e) {}
     return null;
   };
@@ -704,7 +704,10 @@ export function App() {
       if (pathname === "/sample" || pathname === "/sample/" || pathname === "/reviews/sample" || pathname === "/reviews/sample/" || pathname === "/place/sample" || pathname === "/place/sample/") {
         return "sample";
       }
-      const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)/);
+      if (/(rev-[a-zA-Z0-9_\-]+)/i.test(pathname)) {
+        return null;
+      }
+      const pMatch = pathname.match(/^\/(reviews|place)\/([^\/]+)$/);
       if (pMatch && pMatch[2]) {
         return decodeURIComponent(pMatch[2]);
       }
@@ -1052,8 +1055,8 @@ export function App() {
               creatorParam = userVideoMatch[1];
               videoParam = userVideoMatch[2];
             } else {
-              const vMatch = pathname.match(/^\/(v|video|review)\/([^\/]+)(?:\/([^\/]+))?/);
-              if (vMatch) {
+              const vMatch = pathname.match(/^\/(v|video|review|reviews)\/([^\/]+)(?:\/([^\/]+))?/);
+              if (vMatch && (vMatch[3] || vMatch[1] !== "reviews")) {
                 videoParam = vMatch[3] || vMatch[2];
               }
             }
@@ -4869,7 +4872,7 @@ export function App() {
       // Hierarchy of URL synchronization:
       if (isWatchingVideo && !isPlaceView && !isCreatorView && currentVid) {
         const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
-        path = `/review/${domainSlug}/${currentVid.id}`;
+        path = `/reviews/${domainSlug}/${currentVid.id}`;
         const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
         const placeName = formatBusinessName(currentVid.placeName || domainSlug, domainSlug, undefined, { fromWebsite: Boolean(currentVid.placeName) });
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;

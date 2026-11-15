@@ -5213,38 +5213,41 @@ async function startServer() {
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
         authorUrl = `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`;
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(vidKey)}`;
-        thumbnailUrl = `${baseUrl}/api/og-card/v16/${encodeURIComponent(vidKey)}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-card/v17/${encodeURIComponent(vidKey)}.png`;
       } else if (placeMatch && placeMatch[1]) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
         const pName = formatBusinessName(dom) || "Business";
         title = `Authentic Video Reviews for ${pName} | Yoouz`;
         authorName = pName;
         authorUrl = `${baseUrl}/reviews/${encodeURIComponent(dom)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/v16/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`;
       } else if (creatorMatch && creatorMatch[1]) {
         const cleanH = creatorMatch[1].replace(/^@+/, "");
         const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         authorName = aName;
         authorUrl = `${baseUrl}/@${encodeURIComponent(cleanH)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/v16/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
       }
 
-      const oembedResponse = {
+      const wantEmbedHtml = req.query.embed === "1" || req.query.embed === "true";
+      const oembedResponse: Record<string, any> = {
         version: "1.0",
-        type: (foundVideo || videoId) ? "video" : "rich",
+        type: wantEmbedHtml ? ((foundVideo || videoId) ? "video" : "rich") : "link",
         provider_name: "Yoouz",
         provider_url: "https://www.yoouz.com",
         title,
         author_name: authorName,
         author_url: authorUrl,
-        html: `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`,
         width: 1200,
         height: 630,
         thumbnail_url: thumbnailUrl,
         thumbnail_width: 1200,
         thumbnail_height: 630
       };
+      if (wantEmbedHtml) {
+        oembedResponse.html = `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+      }
 
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.setHeader("Access-Control-Allow-Origin", "*");
@@ -37718,7 +37721,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const videoThumbBufferCache = new Map<string, Buffer>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `v16_video_${videoId || 'vid'}`;
+      const cacheKey = `v17_video_${videoId || 'vid'}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -38217,17 +38220,27 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         let finalVideoCardBuf: Buffer;
         try {
-          finalVideoCardBuf = await sharp(thumbBuf)
+          const compositedBuf = await sharp(thumbBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalVideoCardBuf = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         } catch (composeErr) {
           const baseImageBuffer = await sharp(thumbBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center' })
             .toBuffer();
-          finalVideoCardBuf = await sharp(baseImageBuffer)
+          const compositedBuf = await sharp(baseImageBuffer)
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalVideoCardBuf = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         }
@@ -38339,6 +38352,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const fallbackBuf = await sharp(Buffer.from(fallbackCinemaSvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
+        .flatten({ background: '#09090b' })
+        .removeAlpha()
         .png({ palette: false, compressionLevel: 6 })
         .toBuffer();
       ogVideoCardCache.set(cacheKey, { buf: fallbackBuf, ts: Date.now() });
@@ -38351,8 +38366,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return workPromise;
     }
 
-    // Dedicated clean routes for direct social scraper access (path-versioned /v16/ with single-dot .png filenames so Reddit & BunnyCDN never fail or serve stale PNGs)
+    // Dedicated clean routes for direct social scraper access (path-versioned /v17/ with single-dot .png filenames so Reddit & BunnyCDN never fail or serve stale PNGs)
     app.get([
+      '/api/og-card/v17/:id.png',
+      '/api/og-card/v17/:id.jpg',
+      '/api/og-card/v17/:id',
+      '/api/og-card/v17/:domain/:id.png',
+      '/api/og-card/v17/:domain/:id.jpg',
+      '/api/og-card/v17/:domain/:id',
       '/api/og-card/v16/:id.png',
       '/api/og-card/v16/:id',
       '/api/og-card/v16/:domain/:id.png',
@@ -38391,7 +38412,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       '/api/og-image/video/:id'
     ], async (req: any, res: any) => {
       try {
-        const videoId = (req.params.id || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
+        const videoId = (req.params.id || "").replace(/\.(?:png|jpe?g)$/i, "").replace(/-dot-/gi, ".").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
         const baseUrl = `${protocol}://${host}`;
@@ -38478,7 +38499,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated high-resolution touch icon endpoint for iOS Safari native share sheet & AirDrop
-    app.get(['/api/touch-icon/v16/video/:id.png', '/api/touch-icon/v16/video/:id', '/api/touch-icon/v15/video/:id.png', '/api/touch-icon/v15/video/:id', '/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v17/video/:id.png', '/api/touch-icon/v17/video/:id', '/api/touch-icon/v16/video/:id.png', '/api/touch-icon/v16/video/:id', '/api/touch-icon/v15/video/:id.png', '/api/touch-icon/v15/video/:id', '/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38527,7 +38548,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/touch-icon/v16/reviews/:domain.png', '/api/touch-icon/v16/reviews/:domain', '/api/touch-icon/v16/place/:domain.png', '/api/touch-icon/v16/place/:domain', '/api/touch-icon/v15/reviews/:domain.png', '/api/touch-icon/v15/reviews/:domain', '/api/touch-icon/v15/place/:domain.png', '/api/touch-icon/v15/place/:domain', '/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v17/reviews/:domain.png', '/api/touch-icon/v17/reviews/:domain', '/api/touch-icon/v17/place/:domain.png', '/api/touch-icon/v17/place/:domain', '/api/touch-icon/v16/reviews/:domain.png', '/api/touch-icon/v16/reviews/:domain', '/api/touch-icon/v16/place/:domain.png', '/api/touch-icon/v16/place/:domain', '/api/touch-icon/v15/reviews/:domain.png', '/api/touch-icon/v15/reviews/:domain', '/api/touch-icon/v15/place/:domain.png', '/api/touch-icon/v15/place/:domain', '/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38554,9 +38575,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/og-image/v16/reviews/:domain.png', '/api/og-image/v16/reviews/:domain', '/api/og-image/v16/place/:domain.png', '/api/og-image/v16/place/:domain', '/api/og-image/v15/reviews/:domain.png', '/api/og-image/v15/reviews/:domain', '/api/og-image/v15/place/:domain.png', '/api/og-image/v15/place/:domain', '/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v17/reviews/:domain.png', '/api/og-image/v17/reviews/:domain.jpg', '/api/og-image/v17/reviews/:domain', '/api/og-image/v17/place/:domain.png', '/api/og-image/v17/place/:domain.jpg', '/api/og-image/v17/place/:domain', '/api/og-image/v16/reviews/:domain.png', '/api/og-image/v16/reviews/:domain', '/api/og-image/v16/place/:domain.png', '/api/og-image/v16/place/:domain', '/api/og-image/v15/reviews/:domain.png', '/api/og-image/v15/reviews/:domain', '/api/og-image/v15/place/:domain.png', '/api/og-image/v15/place/:domain', '/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
       try {
-        const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
+        const rawDomain = (req.params.domain || "").replace(/\.(?:png|jpe?g)$/i, "").replace(/-dot-/gi, ".").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
         const baseUrl = `${protocol}://${host}`;
@@ -38582,7 +38603,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawQueryDomain = String((query.domain as string) || (query.website as string) || (query.id as string) || "").replace(/-dot-/gi, ".");
       const explicitLogoUrl = (query.logoUrl as string) || "";
       const explicitBannerUrl = (query.bannerUrl as string) || "";
-      const cacheKey = `v16_place_${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}`;
+      const cacheKey = `v17_place_${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}`;
 
       const cachedEntry = ogPlaceCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -38826,9 +38847,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
       let finalImage: Buffer;
       if (bannerBuf) {
         try {
-          finalImage = await sharp(bannerBuf)
+          const compositedBuf = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalImage = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         } catch(bErr) {
@@ -38854,9 +38880,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
               <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
             </svg>
           `;
-          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
+          const compositedBuf = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalImage = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         }
@@ -38883,9 +38914,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <rect width="1200" height="630" fill="url(#centerBlueGlow)"/>
           </svg>
         `;
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
+        const compositedBuf = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
+          .png()
+          .toBuffer();
+        finalImage = await sharp(compositedBuf)
+          .flatten({ background: '#09090b' })
+          .removeAlpha()
           .png({ palette: false, compressionLevel: 6 })
           .toBuffer();
       }
@@ -38916,9 +38952,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return res.send(finalImage);
     }
 
-    app.get(['/api/og-image/v16/creator/:handle.png', '/api/og-image/v16/creator/:handle', '/api/og-image/v15/creator/:handle.png', '/api/og-image/v15/creator/:handle', '/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v17/creator/:handle.png', '/api/og-image/v17/creator/:handle.jpg', '/api/og-image/v17/creator/:handle', '/api/og-image/v16/creator/:handle.png', '/api/og-image/v16/creator/:handle', '/api/og-image/v15/creator/:handle.png', '/api/og-image/v15/creator/:handle', '/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
       try {
-        const rawHandle = (req.params.handle || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
+        const rawHandle = (req.params.handle || "").replace(/\.(?:png|jpe?g)$/i, "").replace(/-dot-/gi, ".").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
         const protocol = (!host.includes('localhost') && !host.includes('127.0.0.1')) ? 'https' : (req.protocol || 'http');
         const baseUrl = `${protocol}://${host}`;
@@ -38943,7 +38979,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = String((query.handle as string) || rawName).replace(/^@+/, "").replace(/-dot-/gi, ".");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `v16_creator_${cleanLower}`;
+      const cacheKey = `v17_creator_${cleanLower}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -39193,22 +39229,37 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       if (bannerBuf) {
         try {
-          finalImage = await sharp(bannerBuf)
+          const compositedBuf = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalImage = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         } catch(bErr) {
-          finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
+          const compositedBuf = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
+            .png()
+            .toBuffer();
+          finalImage = await sharp(compositedBuf)
+            .flatten({ background: '#09090b' })
+            .removeAlpha()
             .png({ palette: false, compressionLevel: 6 })
             .toBuffer();
         }
       } else {
-        finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
+        const compositedBuf = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
+          .png()
+          .toBuffer();
+        finalImage = await sharp(compositedBuf)
+          .flatten({ background: '#09090b' })
+          .removeAlpha()
           .png({ palette: false, compressionLevel: 6 })
           .toBuffer();
       }
@@ -40763,9 +40814,12 @@ function injectOpenGraphTags(html: string, meta: any) {
       .replace(/<link\s+rel=["'](?:canonical|image_src)["'][^>]*>/gi, '')
       .replace(/<link\s+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|shortcut icon|icon)["'][^>]*>/gi, '');
 
+    if (isNoIndexPage || meta.structuredData) {
+      updatedHtml = updatedHtml
+        .replace(/<script\s+type=["']application\/ld\+json["']>[\s\S]*?<\/script>/gi, '');
+    }
     if (isNoIndexPage) {
       updatedHtml = updatedHtml
-        .replace(/<script\s+type=["']application\/ld\+json["']>[\s\S]*?<\/script>/gi, '')
         .replace(/<section id="yoouz-knowledge-grounding"[\s\S]*?<\/section>/i, '');
     }
 
@@ -40970,7 +41024,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     let placeDomainFromReviewPath: string | null = null;
     if (revInPath) {
       detectedVideoId = revInPath[1];
-    } else if (cleanPathname.startsWith('/review/')) {
+    } else if (cleanPathname.startsWith('/review/') || (cleanPathname.startsWith('/reviews/') && cleanPathname.split('/').filter(Boolean).length >= 3)) {
       const parts = cleanPathname.split('/').filter(Boolean);
       if (parts.length >= 3) {
         detectedVideoId = parts[2];
@@ -41217,10 +41271,10 @@ function injectOpenGraphTags(html: string, meta: any) {
           } catch(e) {}
         }
 
-        // Preserve the exact requested /review/... path as og:url so Facebook never performs a secondary og:url redirect scrape on post publish
-        canonicalVideoUrl = (cleanPathname.startsWith('/review/') && cleanPathname.includes(videoId))
+        // Preserve the exact requested /reviews/... or /review/... path as og:url so Facebook & Reddit never perform a secondary og:url redirect scrape on post publish
+        canonicalVideoUrl = ((cleanPathname.startsWith('/reviews/') || cleanPathname.startsWith('/review/')) && cleanPathname.includes(videoId))
           ? `${baseUrl}${cleanPathname}`
-          : `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
+          : `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
 
         const smartDesc = foundVideo?.bunnyDescription || foundVideo?.description;
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
@@ -41232,15 +41286,15 @@ function injectOpenGraphTags(html: string, meta: any) {
         keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-        imageUrl = `${baseUrl}/api/og-card/v16/${encodeURIComponent(videoId)}.png`;
-        touchIcon = `${baseUrl}/api/touch-icon/v16/video/${encodeURIComponent(videoId)}.png`;
-        // Await OG card generation so the 1200x630 PNG is 100% ready in RAM before social crawlers (Reddit/Facebook) receive the HTML
+        imageUrl = `${baseUrl}/api/og-card/v17/${encodeURIComponent(videoId)}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(videoId)}.png`;
+        // Trigger OG card generation with a non-blocking 120ms race so HTML is delivered in <150ms (never timing out Reddit's Post-Submission scraper)
         await Promise.race([
           generateVideoShareCardBuffer(videoId, {
             placeDomain: cleanPlaceDomForOg,
-            v: "31"
+            v: "32"
           }, baseUrl),
-          new Promise((resolve) => setTimeout(resolve, 2500))
+          new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
         videoUrl = "";
         type = "website";
@@ -41260,8 +41314,8 @@ function injectOpenGraphTags(html: string, meta: any) {
               "name": title,
               "description": smartDesc || description,
               "thumbnailUrl": [
-                streamThumbUrl,
                 imageUrl,
+                streamThumbUrl,
                 foundVideo?.videoThumbnail,
                 foundVideo?.thumbnailUrl,
                 `https://rev1.b-cdn.net/videos/${videoId}.jpg`
@@ -41412,17 +41466,17 @@ function injectOpenGraphTags(html: string, meta: any) {
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/v16/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
-        touchIcon = `${baseUrl}/api/touch-icon/v16/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
+        imageUrl = `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
-        // Await place OG card generation so the 1200x630 PNG is 100% ready in RAM before social crawlers receive the HTML
+        // Trigger place OG card generation with a non-blocking 120ms race so HTML is delivered in <150ms
         await Promise.race([
           generatePlaceShareCardBuffer({
             domain: effectiveDomain,
-            v: "40"
+            v: "41"
           }, baseUrl),
-          new Promise((resolve) => setTimeout(resolve, 2500))
+          new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing
@@ -41596,15 +41650,15 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/v16/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
+        imageUrl = `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
         await Promise.race([
           generateCreatorShareCardBuffer({
             handle: cleanH,
-            v: "44"
+            v: "45"
           }, baseUrl),
-          new Promise((resolve) => setTimeout(resolve, 2500))
+          new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
     } else if (
         pathname.includes('/vs/') || 
@@ -41815,14 +41869,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       if (revMatch && revMatch[1]) {
         const vid = revMatch[1];
         const parts = cleanPathname.split('/').filter(Boolean);
-        const domSlug = (parts[0] === 'review' && parts.length >= 2) ? cleanDomainName(parts[1]) || parts[1] : 'yoouz.com';
-        const cleanDomOg = cleanDomainName(domSlug).replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+        const domSlug = ((parts[0] === 'review' || parts[0] === 'reviews') && parts.length >= 2) ? cleanDomainName(parts[1]) || parts[1] : 'yoouz.com';
         const pName = formatBusinessName(domSlug) || 'Yoouz';
         return {
           title: `60s Video Review of ${pName} | Yoouz`,
           description: `Watch the authentic 60-second video review for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-card/v16/${encodeURIComponent(vid)}.png`,
-          touchIcon: `${baseUrl}/api/touch-icon/v16/video/${encodeURIComponent(vid)}.png`,
+          imageUrl: `${baseUrl}/api/og-card/v17/${encodeURIComponent(vid)}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(vid)}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: `${baseUrl}/embed/video/${encodeURIComponent(vid)}`,
@@ -41840,8 +41893,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `Authentic Video Reviews for ${pName} | Yoouz`,
           description: `Discover genuine 60-second video testimonials for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/v16/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
-          touchIcon: `${baseUrl}/api/touch-icon/v16/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
+          imageUrl: `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: "",
@@ -41859,7 +41912,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `@${cleanH}'s Authentic Video Reviews | Yoouz`,
           description: `Watch genuine 60-second video testimonials by ${aName} on Yoouz. Real People. Real Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/v16/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`,
+          imageUrl: `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
@@ -42795,6 +42848,23 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
+    // Immediately pre-warm priority OG video & place cards into RAM so cold crawlers after deploy get 0ms responses
+    setTimeout(async () => {
+      try {
+        const priorityIds = ["rev-1792774959649-hot8m", "rev-1792740198020-gknyb"];
+        for (const pid of priorityIds) {
+          await generateVideoShareCardBuffer(pid, {}, "https://www.yoouz.com").catch(() => {});
+        }
+        await generatePlaceShareCardBuffer({ domain: "bk.com" }, "https://www.yoouz.com").catch(() => {});
+        await generatePlaceShareCardBuffer({ domain: "flipper.net" }, "https://www.yoouz.com").catch(() => {});
+        const seedVideos = typeof readReviewsIndex === "function" ? readReviewsIndex() : [];
+        for (const sv of seedVideos.slice(0, 25)) {
+          if (sv && sv.id && !priorityIds.includes(sv.id)) {
+            await generateVideoShareCardBuffer(sv.id, {}, "https://www.yoouz.com").catch(() => {});
+          }
+        }
+      } catch (e) {}
+    }, 300);
   });
 
   // Deferred non-blocking background initialization tasks after server is listening and pre-warmed
