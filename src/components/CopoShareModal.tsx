@@ -345,19 +345,27 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   // Pre-generate dynamic social preview image url (server generated composite)
   const effectiveShareBanner = resolvedBannerUrl || localPreviewBg || "";
-  const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=27`
+  const cleanShareDom = (resolvedDomain || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+  const cleanShareHandle = (resolvedDomain || title || "").replace(/^@+/, "").trim();
+  const canonicalPrewarmUrl = isVideoMode && video
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png${cleanShareDom ? `?placeDomain=${encodeURIComponent(cleanShareDom)}&v=28` : '?v=28'}`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=36`
-    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(resolvedDomain || title)}&v=40`;
+    ? `${appOrigin}/api/og-image/reviews/${encodeURIComponent(cleanShareDom || resolvedDomain || title)}.png?v=37`
+    : `${appOrigin}/api/og-image/creator/${encodeURIComponent(cleanShareHandle)}.png?v=41`;
+
+  const previewImageUrl = isVideoMode && video
+    ? `${appOrigin}/api/og-card/v10/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=28`
+    : (isBusiness || propIsBusinessProfile)
+    ? `${appOrigin}/api/og-image.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=37`
+    : `${appOrigin}/api/og-image.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=41`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");
 
   const resolvedTouchIcon = isVideoMode && video
-    ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=10`
+    ? `${appOrigin}/api/touch-icon/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=11`
     : isBusiness
-    ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=23`
+    ? `${appOrigin}/api/touch-icon/reviews/${encodeURIComponent(resolvedDomain || title)}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=24`
     : "";
 
   useEffect(() => {
@@ -366,6 +374,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       try {
         const prewarmImg = new Image();
         prewarmImg.src = previewImageUrl;
+      } catch (e) {}
+    }
+    if (canonicalPrewarmUrl && canonicalPrewarmUrl !== previewImageUrl) {
+      try {
+        const prewarmCanonical = new Image();
+        prewarmCanonical.src = canonicalPrewarmUrl;
       } catch (e) {}
     }
     if (!resolvedTouchIcon) return;

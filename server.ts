@@ -5163,8 +5163,10 @@ async function startServer() {
       const pathname = targetUrl.pathname;
       const searchParams = targetUrl.searchParams;
 
-      const videoIdMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i);
-      const videoId = videoIdMatch ? videoIdMatch[1] : (searchParams.get('reviewId') || searchParams.get('video') || searchParams.get('v') || searchParams.get('id'));
+      const videoIdMatch = pathname.match(/(rev-[a-zA-Z0-9_\-]+)/i) || (pathname.startsWith('/video/') ? [null, pathname.split('/').filter(Boolean).pop()] : null);
+      const videoId = (videoIdMatch && videoIdMatch[1]) ? videoIdMatch[1] : (searchParams.get('reviewId') || searchParams.get('video') || searchParams.get('v') || searchParams.get('id'));
+      const placeMatch = pathname.match(/\/reviews\/([a-zA-Z0-9_\-\.]+)/) || pathname.match(/\/place\/([a-zA-Z0-9_\-\.]+)/);
+      const creatorMatch = pathname.match(/^\/@([a-zA-Z0-9_.-]+)$/) || pathname.match(/^\/profile\/([a-zA-Z0-9_.-]+)$/) || pathname.match(/^\/creator\/([a-zA-Z0-9_.-]+)$/) || pathname.match(/^\/user\/([a-zA-Z0-9_.-]+)$/);
 
       let foundVideo: any = null;
       if (videoId) {
@@ -5195,27 +5197,47 @@ async function startServer() {
         }
       }
 
-      const rawPlace = foundVideo?.placeName || "";
-      const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
-      const placeName = formatBusinessName(rawPlace || cleanDomainName(rawDomain)) || "Business";
-      const authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Steven Akan");
-      const rating = Number(foundVideo?.rating || 5.0);
-      const cleanPlaceDom = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-      const thumbArg = foundVideo?.thumbnailUrl || foundVideo?.videoThumbnail || (foundVideo?.bunnyVideoId ? `https://vz-dcd9e101-437.b-cdn.net/${foundVideo.bunnyVideoId}/thumbnail.jpg` : "");
-      const title = foundVideo ? `${authorName}'s 60s Video Review of ${placeName} | Yoouz` : "Yoouz - Authentic 60-Second Video Reviews";
-      const embedUrl = foundVideo ? `${baseUrl}/embed/video/${encodeURIComponent(foundVideo.id)}` : `${baseUrl}/embed`;
-      const thumbnailUrl = foundVideo
-        ? `${baseUrl}/api/og-card/v10/${encodeURIComponent(foundVideo.id)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${rating.toFixed(1)}&placeReviewsCount=1${cleanPlaceDom ? `&placeDomain=${encodeURIComponent(cleanPlaceDom)}` : ''}${thumbArg ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : ''}&v=26`
-        : `${baseUrl}/og-banner.png`;
+      let title = "Yoouz - Authentic 60-Second Video Reviews";
+      let authorName = "Yoouz";
+      let authorUrl = "https://www.yoouz.com";
+      let embedUrl = `${baseUrl}/embed`;
+      let thumbnailUrl = `${baseUrl}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=25`;
+
+      if (foundVideo || videoId) {
+        const vidKey = foundVideo?.id || videoId;
+        const rawPlace = foundVideo?.placeName || "";
+        const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
+        const placeName = formatBusinessName(rawPlace || cleanDomainName(rawDomain)) || "Business";
+        authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Verified Reviewer");
+        const cleanPlaceDom = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+        authorUrl = `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`;
+        embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(vidKey)}`;
+        thumbnailUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(vidKey)}.png${cleanPlaceDom ? `?placeDomain=${encodeURIComponent(cleanPlaceDom)}&v=28` : '?v=28'}`;
+      } else if (placeMatch && placeMatch[1]) {
+        const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
+        const pName = formatBusinessName(dom) || "Business";
+        title = `Authentic Video Reviews for ${pName} | Yoouz`;
+        authorName = pName;
+        authorUrl = `${baseUrl}/reviews/${encodeURIComponent(dom)}`;
+        thumbnailUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=37`;
+      } else if (creatorMatch && creatorMatch[1]) {
+        const cleanH = creatorMatch[1].replace(/^@+/, "");
+        const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
+        title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
+        authorName = aName;
+        authorUrl = `${baseUrl}/@${encodeURIComponent(cleanH)}`;
+        thumbnailUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`;
+      }
 
       const oembedResponse = {
         version: "1.0",
         type: "link",
         provider_name: "Yoouz",
         provider_url: "https://www.yoouz.com",
-        title: title,
+        title,
         author_name: authorName,
-        author_url: `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`,
+        author_url: authorUrl,
         html: `<iframe src="${embedUrl}" width="360" height="640" style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>`,
         width: 1200,
         height: 630,
@@ -37687,7 +37709,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
   ${renderTextPath(footText, 600 - footW / 2, 540, 15, true, "#71717a")}
 </svg>`;
 
-      return await sharp(Buffer.from(svg)).png().toBuffer();
+      return await sharp(Buffer.from(svg), { density: 144 }).resize(1200, 630, { kernel: sharp.kernel.lanczos3 }).png({ palette: false, compressionLevel: 6, adaptiveFiltering: true }).toBuffer();
     }
 
     // High-fidelity video share card buffer generator with instant in-memory cache + in-flight deduplication
@@ -37695,7 +37717,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const ogVideoCardInFlight = new Map<string, Promise<Buffer>>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '27'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
+      const cacheKey = `${videoId || 'vid'}_${queryParams.v || '28'}_${queryParams.placeDomain || ''}_${queryParams.placeName || ''}_${queryParams.author || ''}_${queryParams.rating || ''}_${queryParams.placeRating || ''}_${queryParams.placeReviewsCount || ''}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -38020,7 +38042,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const authorDisplay = safeAuthorDisplay;
       const authorPrefix = `By ${authorDisplay}`;
-      const authorPrefixWidth = getTextAdvanceWidth(authorPrefix, 24, true);
 
       // High-Definition Vector 5-Star row helper (Compact & sharp)
       const renderFiveStarsRowSvg = (startX: number, startY: number, filledCount: number) => {
@@ -38035,9 +38056,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
         }
         return stars;
       };
-
-      const maxBottomWidth = authorPrefixWidth + 28;
-      const authorPillWidth = Math.min(540, Math.max(260, 92 + maxBottomWidth + 28));
 
       // Fetch official business logo / favicon asset (HD normalized + full-bleed detection)
       let placeLogoBuf: Buffer | null = null;
@@ -38060,19 +38078,22 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const isYoouzPlace = cleanTargetDomain === 'yoouz.com' || cleanTargetDomain === 'www.yoouz.com' || cleanTargetDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
-      // Top Business Pill calculations (Compact 2-row layout, matching bottom reviewer pill height)
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 24, true);
+      // Top Business Pill calculations (Scaled + 4:3 crop-safe x=196 so logos never clip on Reddit/comment thumbnails)
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 26, true);
       const ratingLineText = `${placeRatingStr}  ${reviewsLabel}`;
-      const ratingLineWidth = 22 + getTextAdvanceWidth(ratingLineText, 20, true);
+      const ratingLineWidth = 24 + getTextAdvanceWidth(ratingLineText, 21, true);
       
-      const maxTopWidth = Math.max(placeWidth + 28, ratingLineWidth);
-      const placePillWidth = Math.min(540, Math.max(290, 98 + maxTopWidth + 28));
+      const maxTopWidth = Math.max(placeWidth + 30, ratingLineWidth);
+      const placePillWidth = Math.min(580, Math.max(320, 110 + maxTopWidth + 32));
 
-      const topPillX = 48;
-      const bottomPillX = 48;
+      const topPillX = 196;
+      const bottomPillX = 196;
 
-      const initialWidth = getTextAdvanceWidth(authorInitial, 30, true);
-      const initialX = 46 - (initialWidth / 2);
+      const initialWidth = getTextAdvanceWidth(authorInitial, 34, true);
+      const initialX = 50 - (initialWidth / 2);
+
+      const videoAuthorWidth = getTextAdvanceWidth(authorPrefix, 26, true);
+      const videoAuthorPillWidth = Math.min(580, Math.max(290, 102 + videoAuthorWidth + 38));
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -38092,90 +38113,90 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <!-- Vignette backdrop -->
             <rect width="1200" height="630" fill="url(#vignette)"/>
 
-            <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
-            <g transform="translate(${topPillX}, 34)" filter="url(#cardShadow)">
-              <rect width="${placePillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+            <!-- TOP SAFE-ZONE: Business Squircle Logo & Rating Pill -->
+            <g transform="translate(${topPillX}, 30)" filter="url(#cardShadow)">
+              <rect width="${placePillWidth}" height="108" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
               
-              <!-- Left Squircle Logo Container (72x72, zero double padding on full-bleed artwork) -->
+              <!-- Left Squircle Logo Container (82x82, zero double padding on full-bleed artwork) -->
               ${isYoouzPlace ? `
-                <rect x="12" y="12" width="72" height="72" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-                <g transform="translate(20, 20)">
-                  <svg width="56" height="56" viewBox="0 0 24 24">
+                <rect x="13" y="13" width="82" height="82" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+                <g transform="translate(23, 23)">
+                  <svg width="62" height="62" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                   </svg>
                 </g>
               ` : `
-                <rect x="12" y="12" width="72" height="72" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+                <rect x="13" y="13" width="82" height="82" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
                 ${logoPngBase64 ? `
-                  <g transform="translate(12, 12)">
+                  <g transform="translate(13, 13)">
                     <clipPath id="squircleLogoClip1">
-                      <rect x="0" y="0" width="72" height="72" rx="20"/>
+                      <rect x="0" y="0" width="82" height="82" rx="22"/>
                     </clipPath>
                     ${placeLogoIsFullBleed
-                      ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip1)"/>`
-                      : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="5" y="5" width="62" height="62" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>`
+                      ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="82" height="82" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip1)"/>`
+                      : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>`
                     }
                   </g>
                 ` : `
-                  <g transform="translate(12, 12)">
-                    <rect x="0" y="0" width="72" height="72" rx="20" fill="#2563eb"/>
-                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 32, true) / 2), 47, 32, true, '#ffffff')}
+                  <g transform="translate(13, 13)">
+                    <rect x="0" y="0" width="82" height="82" rx="22" fill="#2563eb"/>
+                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 41 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36, true) / 2), 54, 36, true, '#ffffff')}
                   </g>
                 `}
               `}
 
               <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-              ${renderTextPath(safePlaceDisplay, 98, 40, 24, true, '#ffffff')}
-              <g transform="translate(${98 + placeWidth + 8}, 22)">
-                <circle cx="9" cy="9" r="9" fill="#ffffff"/>
-                <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(safePlaceDisplay, 110, 46, 26, true, '#ffffff')}
+              <g transform="translate(${110 + placeWidth + 10}, 26)">
+                <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+                <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: Gold Star + Rating Value + (X reviews) -->
-              <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(98, 53) scale(0.95)"/>
-              ${renderTextPath(placeRatingStr, 122, 70, 20, true, '#fbbf24')}
-              ${renderTextPath(reviewsLabel, 122 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8, 70, 18, true, '#ffffff')}
+              <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(110, 61) scale(1.05)"/>
+              ${renderTextPath(placeRatingStr, 136, 80, 22, true, '#fbbf24')}
+              ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
             </g>
 
             <!-- CENTER: Frosted Glass Play Button -->
-            <g transform="translate(535, 245)">
-              <circle cx="65" cy="65" r="63" fill="#000000" fill-opacity="0.55"/>
-              <circle cx="65" cy="65" r="62" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2.5"/>
+            <g transform="translate(535, 250)">
+              <circle cx="65" cy="65" r="63" fill="#000000" fill-opacity="0.58"/>
+              <circle cx="65" cy="65" r="62" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"/>
               <path d="M54 44 L88 65 L54 86 Z" fill="#ffffff"/>
             </g>
 
-            <!-- BOTTOM CENTERED: Reviewer Profile Pill (Safe across all crops) -->
-            <g transform="translate(${bottomPillX}, 502)" filter="url(#cardShadow)">
-              <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+            <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
+            <g transform="translate(${bottomPillX}, 494)" filter="url(#cardShadow)">
+              <rect width="${videoAuthorPillWidth}" height="104" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
               ${authorAvatarPngBase64 ? `
                 <g transform="translate(16, 18)">
                   <clipPath id="reviewerAvatarClip1">
-                    <circle cx="30" cy="30" r="30"/>
+                    <circle cx="34" cy="34" r="34"/>
                   </clipPath>
-                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
+                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
                 </g>
               ` : `
                 <!-- Avatar Circle -->
-                <circle cx="46" cy="48" r="30" fill="${avatarBgColor}"/>
-                ${renderTextPath(authorInitial, initialX, 58, 30, true, avatarTextColor)}
+                <circle cx="50" cy="52" r="34" fill="${avatarBgColor}"/>
+                ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
               `}
               
               <!-- Line 1: By Reviewer Name + Verified Badge -->
-              ${renderTextPath(authorPrefix, 92, 38, 24, true, '#ffffff')}
-              <g transform="translate(${92 + authorPrefixWidth + 8}, 20)">
-                <circle cx="9" cy="9" r="9" fill="#ffffff"/>
-                <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
+              <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
+                <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+                <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </g>
 
               <!-- Line 2: 5 Stars Row -->
-              ${renderFiveStarsRowSvg(92, 52, ratingNum)}
+              ${renderFiveStarsRowSvg(100, 58, ratingNum)}
             </g>
           </svg>
         `;
 
         const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-          .png()
+          .png({ palette: false })
           .toBuffer();
 
         let baseImageBuffer: Buffer;
@@ -38191,7 +38212,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         const finalVideoCardBuf = await sharp(baseImageBuffer)
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
         ogVideoCardCache.set(cacheKey, { buf: finalVideoCardBuf, ts: Date.now() });
         return finalVideoCardBuf;
@@ -38219,48 +38240,48 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <circle cx="600" cy="315" r="320" fill="url(#centerWhiteGlow)"/>
           <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
 
-          <!-- TOP LEFT: Business Squircle Logo & Rating Pill -->
-          <g transform="translate(${topPillX}, 34)" filter="url(#fallbackCardShadow)">
-            <rect width="${placePillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+          <!-- TOP SAFE-ZONE: Business Squircle Logo & Rating Pill -->
+          <g transform="translate(${topPillX}, 30)" filter="url(#fallbackCardShadow)">
+            <rect width="${placePillWidth}" height="108" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             
             ${isYoouzPlace ? `
-              <rect x="12" y="12" width="72" height="72" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <g transform="translate(20, 20)">
-                <svg width="56" height="56" viewBox="0 0 24 24">
+              <rect x="13" y="13" width="82" height="82" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+              <g transform="translate(23, 23)">
+                <svg width="62" height="62" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="12" y="12" width="72" height="72" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+              <rect x="13" y="13" width="82" height="82" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(12, 12)">
+                <g transform="translate(13, 13)">
                   <clipPath id="squircleLogoClip2">
-                    <rect x="0" y="0" width="72" height="72" rx="20"/>
+                    <rect x="0" y="0" width="82" height="82" rx="22"/>
                   </clipPath>
                   ${placeLogoIsFullBleed
-                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip2)"/>`
-                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="5" y="5" width="62" height="62" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>`
+                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="82" height="82" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip2)"/>`
+                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>`
                   }
                 </g>
               ` : `
-                <g transform="translate(12, 12)">
-                  <rect x="0" y="0" width="72" height="72" rx="20" fill="#2563eb"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 32, true) / 2), 47, 32, true, '#ffffff')}
+                <g transform="translate(13, 13)">
+                  <rect x="0" y="0" width="82" height="82" rx="22" fill="#2563eb"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 41 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36, true) / 2), 54, 36, true, '#ffffff')}
                 </g>
               `}
             `}
 
             <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 98, 40, 24, true, '#ffffff')}
-            <g transform="translate(${98 + placeWidth + 8}, 22)">
-              <circle cx="9" cy="9" r="9" fill="#ffffff"/>
-              <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            ${renderTextPath(safePlaceDisplay, 110, 46, 26, true, '#ffffff')}
+            <g transform="translate(${110 + placeWidth + 10}, 26)">
+              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
             <!-- Line 2: Gold Star + Rating Value + (X reviews) -->
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(98, 53) scale(0.95)"/>
-            ${renderTextPath(placeRatingStr, 122, 70, 20, true, '#fbbf24')}
-            ${renderTextPath(reviewsLabel, 122 + getTextAdvanceWidth(placeRatingStr, 20, true) + 8, 70, 18, true, '#ffffff')}
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(110, 61) scale(1.05)"/>
+            ${renderTextPath(placeRatingStr, 136, 80, 22, true, '#fbbf24')}
+            ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
           </g>
 
           <!-- Centered Dark Squircle Logo Emblem -->
@@ -38270,38 +38291,38 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
           </g>
 
-          <!-- BOTTOM CENTERED: Reviewer Profile Pill -->
-          <g transform="translate(${bottomPillX}, 502)" filter="url(#fallbackCardShadow)">
-            <rect width="${authorPillWidth}" height="96" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+          <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
+          <g transform="translate(${bottomPillX}, 494)" filter="url(#fallbackCardShadow)">
+            <rect width="${videoAuthorPillWidth}" height="104" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             ${authorAvatarPngBase64 ? `
               <g transform="translate(16, 18)">
                 <clipPath id="reviewerAvatarClip2">
-                  <circle cx="30" cy="30" r="30"/>
+                  <circle cx="34" cy="34" r="34"/>
                 </clipPath>
-                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="60" height="60" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
+                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
               </g>
             ` : `
               <!-- Avatar Circle -->
-              <circle cx="46" cy="48" r="30" fill="${avatarBgColor}"/>
-              ${renderTextPath(authorInitial, initialX, 58, 30, true, avatarTextColor)}
+              <circle cx="50" cy="52" r="34" fill="${avatarBgColor}"/>
+              ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
             `}
             
             <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge -->
-            ${renderTextPath(authorPrefix, 92, 38, 24, true, '#ffffff')}
-            <g transform="translate(${92 + authorPrefixWidth + 8}, 20)">
-              <circle cx="9" cy="9" r="9" fill="#ffffff"/>
-              <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
+            <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
+              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
             <!-- Line 2: 5 Stars Row -->
-            ${renderFiveStarsRowSvg(92, 52, ratingNum)}
+            ${renderFiveStarsRowSvg(100, 58, ratingNum)}
           </g>
         </svg>
       `;
 
       const fallbackBuf = await sharp(Buffer.from(fallbackCinemaSvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-        .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+        .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
         .toBuffer();
       ogVideoCardCache.set(cacheKey, { buf: fallbackBuf, ts: Date.now() });
       return fallbackBuf;
@@ -38325,8 +38346,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", imgBuf.length);
+        res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
         return res.send(imgBuf);
       } catch (e: any) {
         console.error("Direct Video OG Image Error:", e);
@@ -38347,7 +38369,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             <path d="M256 50l66 133.7 147.5 21.4-106.7 104 25.2 146.9-132-69.4-132 69.4 25.2-146.9-106.7-104L190 183.7z" fill="#ffffff"/>
           </svg>
         `;
-        return await sharp(Buffer.from(yoouzSvg), { density: 300 }).resize(180, 180).png({ quality: 95 }).toBuffer();
+        return await sharp(Buffer.from(yoouzSvg), { density: 300 }).resize(180, 180).png({ palette: false, compressionLevel: 6, adaptiveFiltering: true }).toBuffer();
       }
 
       const logoAsset = await fetchPlaceLogoAsset(domain, name, explicitLogoUrl, placeObj);
@@ -38360,7 +38382,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
             kernel: sharp.kernel.lanczos3,
             background: { r: 255, g: 255, b: 255, alpha: 0 }
           })
-          .png({ quality: 100 })
+          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
         const logoBase64 = `data:image/png;base64,${resizedLogo.toString('base64')}`;
 
@@ -38390,12 +38412,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         return await sharp(Buffer.from(touchIconSvg), { density: 300 })
           .resize(180, 180, { kernel: sharp.kernel.lanczos3 })
-          .png({ quality: 95 })
+          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
       const fallbackSvg = generateBrandMonogramSvg(name || domain, 512);
-      return await sharp(Buffer.from(fallbackSvg), { density: 300 }).resize(180, 180).png({ quality: 95 }).toBuffer();
+      return await sharp(Buffer.from(fallbackSvg), { density: 300 }).resize(180, 180).png({ palette: false, compressionLevel: 6, adaptiveFiltering: true }).toBuffer();
     }
 
     // Dedicated high-resolution touch icon endpoint for iOS Safari native share sheet & AirDrop
@@ -38503,7 +38525,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawQueryDomain = (query.domain as string) || (query.website as string) || (query.id as string) || "";
       const explicitLogoUrl = (query.logoUrl as string) || "";
       const explicitBannerUrl = (query.bannerUrl as string) || "";
-      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '36'}`;
+      const cacheKey = `${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}_${query.name || ''}_${query.rating ?? ''}_${query.reviewsCount ?? ''}_${query.v || '37'}`;
 
       const cachedEntry = ogPlaceCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -38638,37 +38660,37 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // 4. Layout Dimensions & Calculations (2-Row Compact: Logo + Business Name + Rating Number + 5-Star Row + Reviews)
+      // 4. Layout Dimensions & Calculations (Scaled + 4:3/1.5:1 crop-safe x=152)
       const safePlaceDisplay = placeName.length > 24 ? `${placeName.substring(0, 22)}...` : placeName;
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 24, true);
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 27, true);
       
-      const ratingNumWidth = getTextAdvanceWidth(placeRatingStr, 20, true);
-      const starsRowWidth = 5 * 20; // 5 stars (18px each + 2px gap)
-      const reviewsLabelWidth = getTextAdvanceWidth(reviewsLabel, 18, true);
+      const ratingNumWidth = getTextAdvanceWidth(placeRatingStr, 22, true);
+      const starsRowWidth = 5 * 22;
+      const reviewsLabelWidth = getTextAdvanceWidth(reviewsLabel, 19, true);
       
-      const line2TotalTextWidth = ratingNumWidth + 8 + starsRowWidth + 10 + reviewsLabelWidth;
-      const maxTextWidth = Math.max(placeWidth + 28, line2TotalTextWidth);
-      const businessPillWidth = Math.min(540, Math.max(300, 99 + maxTextWidth + 34));
+      const line2TotalTextWidth = ratingNumWidth + 9 + starsRowWidth + 10 + reviewsLabelWidth;
+      const maxTextWidth = Math.max(placeWidth + 32, line2TotalTextWidth);
+      const businessPillWidth = Math.min(600, Math.max(330, 114 + maxTextWidth + 36));
 
       // Build 5-Star Vector Row with Fractional Rating Support
-      const starsStartX = 99 + ratingNumWidth + 8;
+      const starsStartX = 114 + ratingNumWidth + 9;
       const starIconsSvg = [1, 2, 3, 4, 5].map((starIdx, idx) => {
-        const starX = starsStartX + (idx * 20);
+        const starX = starsStartX + (idx * 22);
         const fillAmount = Math.max(0, Math.min(1, placeAvgRating - (starIdx - 1)));
         if (fillAmount >= 0.75) {
-          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 55) scale(0.88)"/>`;
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 63) scale(0.96)"/>`;
         } else if (fillAmount >= 0.25) {
           const clipId = `halfStarClip_${idx}`;
-          const clipWidth = 18 * fillAmount;
+          const clipWidth = 20 * fillAmount;
           return `
             <clipPath id="${clipId}">
-              <rect x="${starX}" y="55" width="${clipWidth}" height="18"/>
+              <rect x="${starX}" y="63" width="${clipWidth}" height="20"/>
             </clipPath>
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 55) scale(0.88)"/>
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 55) scale(0.88)" clip-path="url(#${clipId})"/>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 63) scale(0.96)"/>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 63) scale(0.96)" clip-path="url(#${clipId})"/>
           `;
         } else {
-          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 55) scale(0.88)"/>`;
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 63) scale(0.96)"/>`;
         }
       }).join("\n");
 
@@ -38692,56 +38714,56 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM LEFT: Prominent Business Profile Pill (Sleek Compact 2-Row) -->
-          <g transform="translate(48, 482)" filter="url(#placeCardShadow)">
-            <rect width="${businessPillWidth}" height="98" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+          <!-- BOTTOM SAFE-ZONE: Prominent Business Profile Pill (4:3 crop-safe x=196) -->
+          <g transform="translate(196, 474)" filter="url(#placeCardShadow)">
+            <rect width="${businessPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             
-            <!-- Left Squircle Logo Container (72x72, full-bleed edge-to-edge or clean cutout framing) -->
+            <!-- Left Squircle Logo Container (86x86) -->
             ${isYoouzPlace ? `
-              <rect x="13" y="13" width="72" height="72" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-              <g transform="translate(21, 21)">
-                <svg width="56" height="56" viewBox="0 0 24 24">
+              <rect x="14" y="14" width="86" height="86" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+              <g transform="translate(25, 25)">
+                <svg width="64" height="64" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="13" y="13" width="72" height="72" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+              <rect x="14" y="14" width="86" height="86" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(13, 13)">
+                <g transform="translate(14, 14)">
                   <clipPath id="squircleLogoClipBiz">
-                    <rect x="0" y="0" width="72" height="72" rx="20"/>
+                    <rect x="0" y="0" width="86" height="86" rx="22"/>
                   </clipPath>
                   ${logoIsFullBleed
-                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClipBiz)"/>`
-                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="5" y="5" width="62" height="62" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>`
+                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="86" height="86" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClipBiz)"/>`
+                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="74" height="74" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>`
                   }
                 </g>
               ` : `
-                <g transform="translate(13, 13)">
-                  <rect x="0" y="0" width="72" height="72" rx="20" fill="#2563eb"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 32, true) / 2), 47, 32, true, '#ffffff')}
+                <g transform="translate(14, 14)">
+                  <rect x="0" y="0" width="86" height="86" rx="22" fill="#2563eb"/>
+                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 43 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 38, true) / 2), 57, 38, true, '#ffffff')}
                 </g>
               `}
             `}
 
             <!-- Line 1: Place Name + Dark Mode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 99, 40, 24, true, '#ffffff')}
-            <g transform="translate(${99 + placeWidth + 8}, 22)">
-              <circle cx="9" cy="9" r="9" fill="#ffffff"/>
-              <path d="M5.2 9l2.4 2.4 5.2-5.2" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            ${renderTextPath(safePlaceDisplay, 114, 48, 27, true, '#ffffff')}
+            <g transform="translate(${114 + placeWidth + 10}, 27)">
+              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
             <!-- Line 2: Rating Score Number + Full 5-Star Row + (X reviews) -->
-            ${renderTextPath(placeRatingStr, 99, 70, 20, true, '#ffffff')}
+            ${renderTextPath(placeRatingStr, 114, 81, 22, true, '#ffffff')}
             ${starIconsSvg}
-            ${renderTextPath(reviewsLabel, reviewsTextStartX, 70, 18, true, '#ffffff')}
+            ${renderTextPath(reviewsLabel, reviewsTextStartX, 81, 19, true, '#ffffff')}
           </g>
         </svg>
       `;
 
       const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-        .png()
+        .png({ palette: false })
         .toBuffer();
 
       let finalImage: Buffer;
@@ -38750,7 +38772,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           const fallbackBaseSvg = `
@@ -38778,7 +38800,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
@@ -38807,7 +38829,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
@@ -38831,8 +38853,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const finalImage = await generatePlaceShareCardBuffer(query, baseUrl);
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
+      res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
       return res.send(finalImage);
     }
 
@@ -38863,7 +38886,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = ((query.handle as string) || rawName).replace(/^@+/, "");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '40'}`;
+      const cacheKey = `${cleanLower}_${rawName}_${query.avatarUrl ? String(query.avatarUrl).slice(-32) : ''}_${query.v || '41'}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -39024,12 +39047,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // Calculations for Bottom Author Pill (Shifted left, clean layout matching in-app modal preview)
+      // Calculations for Bottom Author Pill (Scaled + crop-safe x=152)
       const safeAuthorDisplay = displayName.length > 24 ? `${displayName.substring(0, 22)}...` : displayName;
-      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 26, true);
-      const subWidth = getTextAdvanceWidth(subtitleText, 17, true);
-      const maxTextWidth = Math.max(authorWidth + 28, subWidth);
-      const authorPillWidth = Math.min(540, Math.max(280, 104 + maxTextWidth + 36));
+      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 28, true);
+      const subWidth = getTextAdvanceWidth(subtitleText, 19, true);
+      const maxTextWidth = Math.max(authorWidth + 32, subWidth);
+      const authorPillWidth = Math.min(580, Math.max(310, 114 + maxTextWidth + 36));
 
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
@@ -39048,43 +39071,43 @@ app.get('/api/og-preview-v2', async (req, res) => {
           <!-- Ambient dark gradient vignette -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM LEFT: Single Author Profile Pill (Matching Yoouz App Modal Preview) -->
-          <g transform="translate(48, 482)" filter="url(#profileCardShadow)">
-            <rect width="${authorPillWidth}" height="98" rx="28" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.32)" stroke-width="1.8"/>
+          <!-- BOTTOM SAFE-ZONE: Single Author Profile Pill (4:3 crop-safe x=196) -->
+          <g transform="translate(196, 474)" filter="url(#profileCardShadow)">
+            <rect width="${authorPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
             
-            <!-- Left Squircle Avatar Container (72x72) -->
+            <!-- Left Squircle Avatar Container (86x86) -->
             ${avatarPngBase64 ? `
-              <rect x="13" y="13" width="72" height="72" rx="20" fill="#18181b" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-              <g transform="translate(13, 13)">
+              <rect x="14" y="14" width="86" height="86" rx="22" fill="#18181b" stroke="rgba(255,255,255,0.32)" stroke-width="1.5"/>
+              <g transform="translate(14, 14)">
                 <clipPath id="squircleUserClip">
-                  <rect x="0" y="0" width="72" height="72" rx="20"/>
+                  <rect x="0" y="0" width="86" height="86" rx="22"/>
                 </clipPath>
-                <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="72" height="72" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
+                <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="86" height="86" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
               </g>
             ` : `
               <!-- Dynamic signature avatar matching user profile (e.g. Blue for Ben Blue, Light Green for Steven Akan) -->
-              <rect x="13" y="13" width="72" height="72" rx="20" fill="${avatarBgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-              <g transform="translate(13, 13)">
-                ${renderTextPath(initial, 36 - (getTextAdvanceWidth(initial, 34, true) / 2), 48, 34, true, avatarTextColor)}
+              <rect x="14" y="14" width="86" height="86" rx="22" fill="${avatarBgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+              <g transform="translate(14, 14)">
+                ${renderTextPath(initial, 43 - (getTextAdvanceWidth(initial, 38, true) / 2), 57, 38, true, avatarTextColor)}
               </g>
             `}
 
             <!-- Line 1: User Display Name + Dark Mode White Verified Checkmark Badge -->
-            ${renderTextPath(safeAuthorDisplay, 100, 45, 26, true, '#ffffff')}
-            <g transform="translate(${100 + authorWidth + 10}, 25)">
+            ${renderTextPath(safeAuthorDisplay, 114, 51, 28, true, '#ffffff')}
+            <g transform="translate(${114 + authorWidth + 10}, 30)">
               <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.5 10l3 3 6-6" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </g>
 
             <!-- Line 2: Subtitle (Reviewer Profile) -->
-            ${renderTextPath(subtitleText, 100, 73, 17, true, '#cbd5e1')}
+            ${renderTextPath(subtitleText, 114, 82, 19, true, '#cbd5e1')}
           </g>
         </svg>
       `;
 
       const overlayBuf = await sharp(Buffer.from(overlaySvg), { density: 144 })
         .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
-        .png()
+        .png({ palette: false })
         .toBuffer();
 
       let finalImage: Buffer;
@@ -39116,20 +39139,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
           finalImage = await sharp(bannerBuf)
             .resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         } catch(bErr) {
           finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
             .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
             .composite([{ input: overlayBuf, top: 0, left: 0 }])
-            .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+            .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
             .toBuffer();
         }
       } else {
         finalImage = await sharp(Buffer.from(fallbackBaseSvg), { density: 144 })
           .resize(1200, 630, { kernel: sharp.kernel.lanczos3 })
           .composite([{ input: overlayBuf, top: 0, left: 0 }])
-          .png({ quality: 92, compressionLevel: 6, adaptiveFiltering: true })
+          .png({ palette: false, compressionLevel: 6, adaptiveFiltering: true })
           .toBuffer();
       }
 
@@ -39148,8 +39171,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const finalImage = await generateCreatorShareCardBuffer(query, baseUrl);
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Length", finalImage.length);
+      res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
       return res.send(finalImage);
     }
 
@@ -39192,8 +39216,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
           res.setHeader("Content-Type", "image/png");
           res.setHeader("Content-Length", imgBuf.length);
+          res.setHeader("X-Content-Type-Options", "nosniff");
           res.setHeader("Access-Control-Allow-Origin", "*");
-          res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400");
+          res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
           return res.send(imgBuf);
         }
 
@@ -39215,8 +39240,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
         res.setHeader("Content-Type", "image/png");
         res.setHeader("Content-Length", brandBuf.length);
+        res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
         return res.send(brandBuf);
       } catch (e: any) {
         console.error("OG Image Error:", e);
@@ -40652,7 +40678,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     let bottomHeadInject = isNoIndexPage
       ? ""
       : `
-    <!-- Multilingual Alternate Links for Googlebot, Bingbot & AI Crawlers -->
+    <!-- oEmbed & Multilingual Alternate Links -->
+    <link rel="alternate" type="application/json+oembed" href="${escapeHtml(baseUrl + '/api/oembed?url=' + encodeURIComponent(safeUrl || baseUrl + '/'))}" title="${safeTitle}" />
     ${hreflangTags}
     <link rel="apple-touch-icon" sizes="180x180" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
     <link rel="apple-touch-icon" href="${meta.touchIcon || baseUrl + '/apple-touch-icon.png'}" />
@@ -40780,9 +40807,11 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   }
 
+  const SOCIAL_CRAWLER_REGEX = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|redditbot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Slack-ImgProxy|Discordbot|Pinterest|Iframely|Snapchat|Bluesky|Threads|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i;
+
   async function resolveMetadataForRequest(req: any) {
     const userAgent = req.headers['user-agent'] || '';
-    const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+    const isCrawler = SOCIAL_CRAWLER_REGEX.test(userAgent);
     
     let rawHost = (req.headers['x-forwarded-host'] || req.headers.host || 'www.yoouz.com').toString().toLowerCase().trim();
     let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -41146,47 +41175,13 @@ function injectOpenGraphTags(html: string, meta: any) {
               : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`);
         keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
         
-        let thumbArg = foundVideo?.thumbnailUrl || foundVideo?.videoThumbnail || foundVideo?.videoPreviewUrl || foundVideo?.coverUrl || "";
-        if (thumbArg.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')) {
-           thumbArg = "";
-        }
-        if (thumbArg.startsWith('data:image')) {
-           thumbArg = ""; // Prevent massive URLs
-        }
-        if (!thumbArg && (foundVideo?.bunnyVideoId || foundVideo?.bunnyGuid)) {
-           thumbArg = `https://vz-dcd9e101-437.b-cdn.net/${foundVideo.bunnyVideoId || foundVideo.bunnyGuid}/thumbnail.jpg`;
-        }
-        if (!thumbArg && videoId.startsWith('rev-')) {
-           thumbArg = `https://rev1.b-cdn.net/videos/${videoId}.jpg`;
-        }
-
-        let queryParams = `type=video&id=${encodeURIComponent(videoId)}&placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&v=3`;
-        if (caption) queryParams += `&caption=${encodeURIComponent(caption)}`;
-        if (thumbArg) queryParams += `&thumbUrl=${encodeURIComponent(thumbArg)}`;
-
-        const rawAuthorAvatar = foundVideo?.authorAvatar || foundVideo?.author?.avatar || foundVideo?.userAvatar || "";
-        const validAuthorAvatar = (rawAuthorAvatar && rawAuthorAvatar.startsWith("http") && !rawAuthorAvatar.includes("proxy-image") && rawAuthorAvatar.length <= 300) ? rawAuthorAvatar : "";
-        const authorAvatarParam = validAuthorAvatar ? `&authorAvatar=${encodeURIComponent(validAuthorAvatar)}` : '';
-        const rawPlaceLogo = foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
-        const validPlaceLogo = (rawPlaceLogo && rawPlaceLogo.startsWith("http") && !rawPlaceLogo.includes("proxy-image") && !rawPlaceLogo.includes("/api/favicon") && rawPlaceLogo.length <= 300) ? rawPlaceLogo : "";
-        const placeLogoParam = validPlaceLogo ? `&logoUrl=${encodeURIComponent(validPlaceLogo)}` : '';
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-        const placeDomainParam = cleanPlaceDomForOg ? `&placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}` : '';
-        const thumbUrlParam = (thumbArg && thumbArg.length <= 300) ? `&thumbUrl=${encodeURIComponent(thumbArg)}` : '';
-        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}&author=${encodeURIComponent(authorName)}&rating=${rating}&placeRating=${placeAvgRating.toFixed(1)}&placeReviewsCount=${placeReviewsCount}${placeDomainParam}${placeLogoParam}${authorAvatarParam}${thumbUrlParam}&v=27`;
-        touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?placeName=${encodeURIComponent(placeName)}${placeDomainParam}${placeLogoParam}&v=10`;
-        // Pre-warm the OG card in memory so Facebook/social crawlers get a 0ms cache hit
+        imageUrl = `${baseUrl}/api/og-card/v10/${encodeURIComponent(videoId)}.png${cleanPlaceDomForOg ? `?placeDomain=${encodeURIComponent(cleanPlaceDomForOg)}&v=28` : '?v=28'}`;
+        touchIcon = `${baseUrl}/api/touch-icon/video/${encodeURIComponent(videoId)}.png?v=11`;
+        // Pre-warm the exact canonical OG card key in RAM so composer & post-publish crawlers hit a ready truecolor PNG
         generateVideoShareCardBuffer(videoId, {
-          placeName,
-          author: authorName,
-          rating: String(rating),
-          placeRating: placeAvgRating.toFixed(1),
-          placeReviewsCount: String(placeReviewsCount),
           placeDomain: cleanPlaceDomForOg,
-          logoUrl: validPlaceLogo || undefined,
-          authorAvatar: validAuthorAvatar || undefined,
-          thumbUrl: thumbArg || undefined,
-          v: "27"
+          v: "28"
         }, baseUrl).catch(() => {});
         videoUrl = "";
         type = "website";
@@ -41353,29 +41348,19 @@ function injectOpenGraphTags(html: string, meta: any) {
           ? canonicalRequestUrl
           : `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}`;
 
-        // Keep og:image URL concise & crawler-safe (never embed 1KB+ data:image/svg+xml or proxy loops in query params;
-        // generatePlaceShareCardBuffer resolves KNOWN_BRAND_LOGOS and external banners directly + caches in RAM)
-        const cleanLogoQueryVal = (foundLogo && foundLogo.startsWith("http") && !foundLogo.includes("proxy-image") && !foundLogo.includes("/api/favicon") && foundLogo.length <= 300) ? foundLogo : "";
-        const cleanBannerQueryVal = (foundBanner && foundBanner.startsWith("http") && !foundBanner.includes("proxy-image") && !isNonPhotographicBannerUrl(foundBanner) && foundBanner.length <= 300) ? foundBanner : "";
-        const placeRatingStr = placeVideos.length > 0 ? avgRating.toFixed(1) : '0.0';
-
+        // Keep og:image URL strictly short, fixed-length & canonical (zero dynamic query bloat so social scrapers never reject or mismatch post-publish)
         title = `Authentic Video Reviews for ${placeName} | Yoouz`;
         description = placeVideos.length > 0
           ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
           : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(effectiveDomain)}.png?type=place&name=${encodeURIComponent(placeName)}&domain=${encodeURIComponent(effectiveDomain)}&rating=${placeRatingStr}&reviewsCount=${placeVideos.length}${cleanLogoQueryVal ? `&logoUrl=${encodeURIComponent(cleanLogoQueryVal)}` : ''}${cleanBannerQueryVal ? `&bannerUrl=${encodeURIComponent(cleanBannerQueryVal)}` : ''}&v=36`;
-        touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(effectiveDomain)}.png?placeName=${encodeURIComponent(placeName)}${cleanLogoQueryVal ? `&logoUrl=${encodeURIComponent(cleanLogoQueryVal)}` : ''}&v=23`;
+        imageUrl = `${baseUrl}/api/og-image/reviews/${encodeURIComponent(effectiveDomain)}.png?v=37`;
+        touchIcon = `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(effectiveDomain)}.png?v=24`;
         twitterCard = "summary_large_image";
 
-        // Pre-warm the place OG card in memory immediately so composer & post-publish crawlers hit a ready PNG
+        // Pre-warm the exact canonical place OG card key in RAM immediately
         generatePlaceShareCardBuffer({
-          name: placeName,
           domain: effectiveDomain,
-          rating: placeRatingStr,
-          reviewsCount: String(placeVideos.length),
-          logoUrl: cleanLogoQueryVal || undefined,
-          bannerUrl: cleanBannerQueryVal || undefined,
-          v: "36"
+          v: "37"
         }, baseUrl).catch(() => {});
 
         // Generate top-level VideoObjects for each video review to maximize Google Video indexing
@@ -41547,20 +41532,14 @@ function injectOpenGraphTags(html: string, meta: any) {
           } catch(e) {}
         }
 
-        const cleanCreatorAvatarParam = (authorAvatar && authorAvatar.startsWith("http") && !authorAvatar.includes("proxy-image") && authorAvatar.length <= 300) ? authorAvatar : "";
-        const cleanCreatorBannerParam = (authorBanner && authorBanner.startsWith("http") && !authorBanner.includes("proxy-image") && authorBanner.length <= 300) ? authorBanner : "";
-
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?name=${encodeURIComponent(authorName)}&handle=${encodeURIComponent(cleanH)}${cleanCreatorAvatarParam ? `&avatarUrl=${encodeURIComponent(cleanCreatorAvatarParam)}` : ''}${cleanCreatorBannerParam ? `&bannerUrl=${encodeURIComponent(cleanCreatorBannerParam)}` : ''}&v=40`;
+        imageUrl = `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`;
         twitterCard = "summary_large_image";
 
         generateCreatorShareCardBuffer({
-          name: authorName,
           handle: cleanH,
-          avatarUrl: cleanCreatorAvatarParam || (authorAvatar && authorAvatar.startsWith("data:") ? authorAvatar : undefined),
-          bannerUrl: cleanCreatorBannerParam || (authorBanner && authorBanner.startsWith("data:") ? authorBanner : undefined),
-          v: "40"
+          v: "41"
         }, baseUrl).catch(() => {});
     } else if (
         pathname.includes('/vs/') || 
@@ -41744,7 +41723,7 @@ function injectOpenGraphTags(html: string, meta: any) {
   function buildFallbackMetaFromRequest(req: any) {
     try {
       const userAgent = req.headers['user-agent'] || '';
-      const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+      const isCrawler = SOCIAL_CRAWLER_REGEX.test(userAgent);
       let rawHost = (req.headers['x-forwarded-host'] || req.headers.host || 'www.yoouz.com').toString().toLowerCase().trim();
       let protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       if (rawHost.includes('localhost') || rawHost.includes('127.0.0.1')) {
@@ -41772,12 +41751,13 @@ function injectOpenGraphTags(html: string, meta: any) {
         const vid = revMatch[1];
         const parts = cleanPathname.split('/').filter(Boolean);
         const domSlug = (parts[0] === 'review' && parts.length >= 2) ? cleanDomainName(parts[1]) || parts[1] : 'yoouz.com';
+        const cleanDomOg = cleanDomainName(domSlug).replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
         const pName = formatBusinessName(domSlug) || 'Yoouz';
         return {
           title: `60s Video Review of ${pName} | Yoouz`,
           description: `Watch the authentic 60-second video review for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-card/v10/${encodeURIComponent(vid)}.png?placeDomain=${encodeURIComponent(domSlug)}&placeName=${encodeURIComponent(pName)}&v=27`,
-          touchIcon: `${baseUrl}/apple-touch-icon.png`,
+          imageUrl: `${baseUrl}/api/og-card/v10/${encodeURIComponent(vid)}.png${cleanDomOg ? `?placeDomain=${encodeURIComponent(cleanDomOg)}&v=28` : '?v=28'}`,
+          touchIcon: `${baseUrl}/api/touch-icon/video/${encodeURIComponent(vid)}.png?v=11`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: `${baseUrl}/embed/video/${encodeURIComponent(vid)}`,
@@ -41795,8 +41775,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `Authentic Video Reviews for ${pName} | Yoouz`,
           description: `Discover genuine 60-second video testimonials for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?type=place&name=${encodeURIComponent(pName)}&domain=${encodeURIComponent(dom)}&v=36`,
-          touchIcon: `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(dom)}.png?placeName=${encodeURIComponent(pName)}&v=23`,
+          imageUrl: `${baseUrl}/api/og-image/reviews/${encodeURIComponent(dom)}.png?v=37`,
+          touchIcon: `${baseUrl}/api/touch-icon/reviews/${encodeURIComponent(dom)}.png?v=24`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: "",
@@ -41814,7 +41794,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `@${cleanH}'s Authentic Video Reviews | Yoouz`,
           description: `Watch genuine 60-second video testimonials by ${aName} on Yoouz. Real People. Real Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?name=${encodeURIComponent(aName)}&handle=${encodeURIComponent(cleanH)}&v=40`,
+          imageUrl: `${baseUrl}/api/og-image/creator/${encodeURIComponent(cleanH)}.png?v=41`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
@@ -42348,7 +42328,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let indexTemplate = fs.readFileSync(indexPath, 'utf-8');
         
         const userAgent = req.headers['user-agent'] || '';
-        const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+        const isCrawler = SOCIAL_CRAWLER_REGEX.test(userAgent);
 
         let meta: any = null;
         try {
@@ -42416,7 +42396,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         let indexTemplate = cachedDistIndexTemplate;
 
         const userAgent = req.headers['user-agent'] || '';
-        const isCrawler = /facebookexternalhit|meta-externalagent|meta-externalfetcher|Facebot|FacebookBot|facebookcatalog|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|SkypeUriPreview|Googlebot|bingbot|DuckDuckBot|Baiduspider|YandexBot|Applebot|Embedly|quora link preview|outbrain|vkShare|W3C_Validator|curl/i.test(userAgent);
+        const isCrawler = SOCIAL_CRAWLER_REGEX.test(userAgent);
 
         let meta: any = null;
         try {
