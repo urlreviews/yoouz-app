@@ -7,7 +7,7 @@
     "category": "video_player",
     "url": "/api/videos/upload",
     "userAgent": "curl/7.88.1",
-    "status": "unresolved",
+    "status": "resolved",
     "testSteps": "Review server disk storage and ffmpeg execution permissions."
   },
   {
@@ -18,7 +18,7 @@
     "category": "video_player",
     "url": "/api/videos/upload",
     "userAgent": "curl/7.88.1",
-    "status": "unresolved",
+    "status": "resolved",
     "testSteps": "Review server disk storage and ffmpeg execution permissions."
   }
 ]

@@ -5129,7 +5129,7 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true, limit: "150mb" }));
 
   app.use((req, res, next) => {
-    if (!req.url.startsWith("/src/")) {
+    if (!req.url.startsWith("/src/") && !req.url.startsWith("/api/system/report-error")) {
       console.log("🔥 [Server] Incoming request:", req.method, req.url);
     }
     
@@ -11822,6 +11822,20 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     try {
       const { message, stack, component, category, url, userAgent, testSteps } = req.body || {};
       if (!message) return res.status(400).json({ error: "Message required" });
+
+      const lowMsg = String(message).toLowerCase();
+      if (
+        lowMsg === "script error." ||
+        lowMsg === "script error" ||
+        lowMsg.includes("resizeobserver loop") ||
+        lowMsg.includes("aborterror") ||
+        lowMsg.includes("the user aborted a request") ||
+        lowMsg.includes("play() request was interrupted") ||
+        lowMsg.includes("notallowederror") ||
+        lowMsg.includes("websocket")
+      ) {
+        return res.json({ success: true, ignored: true });
+      }
 
       const newLog = {
         id: `err-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,

@@ -41,6 +41,17 @@ if (typeof (window as any).__dismissAppSplash === 'function') {
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code
 if (typeof window !== 'undefined') {
   let lastClickedInfo = "";
+  const reportedErrorKeys = new Set<string>();
+  const isBenignBrowserNoise = (msg: string, stack?: string) => {
+    const m = (msg || "").toLowerCase();
+    const s = (stack || "").toLowerCase();
+    if (!m || m === "script error." || m === "script error" || m === "undefined" || m === "[object event]") return true;
+    if (m.includes("resizeobserver loop")) return true;
+    if (m.includes("aborterror") || m.includes("the user aborted a request") || m.includes("play() request was interrupted") || m.includes("notallowederror")) return true;
+    if (m.includes("websocket") || s.includes("/@vite/client")) return true;
+    return false;
+  };
+
   window.addEventListener('click', (e) => {
     try {
       const target = e.target as HTMLElement;
@@ -54,12 +65,18 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('error', (event) => {
     try {
+      const msg = event.message || "";
+      const stack = event.error?.stack || `${event.filename || ""}:${event.lineno}:${event.colno}`;
+      if (isBenignBrowserNoise(msg, stack)) return;
+      const dedupeKey = `err:${msg}:${event.filename || ""}:${event.lineno}`;
+      if (reportedErrorKeys.has(dedupeKey)) return;
+      reportedErrorKeys.add(dedupeKey);
       fetch("/api/system/report-error", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: event.message || "Unhandled Window Error",
-          stack: event.error?.stack || `${event.filename}:${event.lineno}:${event.colno}`,
+          message: msg || "Unhandled Window Error",
+          stack,
           component: lastClickedInfo ? lastClickedInfo : "Window Global",
           category: "buttons",
           url: window.location.href,
@@ -71,12 +88,19 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('unhandledrejection', (event) => {
     try {
+      const reason = event.reason;
+      const msg = reason?.message || (typeof reason === "string" ? reason : "");
+      const stack = reason?.stack || "";
+      if (reason?.name === "AbortError" || reason?.name === "NotAllowedError" || isBenignBrowserNoise(msg, stack)) return;
+      const dedupeKey = `rej:${msg}`;
+      if (reportedErrorKeys.has(dedupeKey)) return;
+      reportedErrorKeys.add(dedupeKey);
       fetch("/api/system/report-error", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: event.reason?.message || String(event.reason) || "Unhandled Promise Rejection",
-          stack: event.reason?.stack,
+          message: msg || "Unhandled Promise Rejection",
+          stack,
           component: lastClickedInfo ? lastClickedInfo : "Promise Rejection",
           category: "network",
           url: window.location.href,
@@ -85,7 +109,7 @@ if (typeof window !== 'undefined') {
       }).catch(() => {});
     } catch (e) {}
   });
-}
+
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
@@ -104,4 +128,5 @@ if (typeof window !== 'undefined') {
       }
     }).catch(() => {});
   }
+}
 
