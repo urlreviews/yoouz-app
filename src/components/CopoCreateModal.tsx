@@ -736,7 +736,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               }}
               className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
-              {qrCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+              {qrCopied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-zinc-400" />}
               <span>{qrCopied ? "Mobile Camera Link Copied" : "Copy Mobile Camera Link"}</span>
             </button>
           </div>
@@ -803,7 +803,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         {postSubmitOnboarding && publishedReview ? (
           <div className="flex flex-col h-full w-full bg-zinc-950 p-6 justify-between overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-black uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 text-white text-[11px] font-black uppercase tracking-wider">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Photo Review Live</span>
               </div>
@@ -829,7 +829,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </div>
                 <h2 className="text-xl font-black text-white tracking-tight">Claim Your Reviewer Handle</h2>
                 <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your anonymous ID"}</span>. Choose a custom handle or link an account—or tap Done to keep browsing.
+                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your anonymous ID"}</span>. Choose a custom handle or save Face ID—or tap Done to keep browsing.
                 </p>
               </div>
 
@@ -862,7 +862,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 {usernameMessage && (
                   <p
                     className={`text-[11px] font-semibold ${
-                      usernameStatus === "available" || usernameStatus === "saved" ? "text-emerald-400" : "text-rose-400"
+                      usernameStatus === "available" || usernameStatus === "saved" ? "text-zinc-200" : "text-rose-400"
                     }`}
                   >
                     {usernameMessage}
@@ -873,7 +873,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               {/* 1-Tap Biometric Face ID / Passkey Account Lock */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
                   <span>Remember My Face Across Phones (Passkey)</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
@@ -883,19 +883,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   type="button"
                   disabled={isLinkingAccount || Boolean((currentUser as any)?.passkeyProtected)}
                   onClick={handleRegisterPasskey}
-                  className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-emerald-500/15 disabled:text-emerald-400 disabled:border-emerald-500/30 border border-white text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-300 disabled:border-zinc-700 border border-white text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <ScanFace className="w-4 h-4" />
                   <span>
                     {(currentUser as any)?.passkeyProtected
-                      ? "Face ID / Passkey Active"
+                      ? "Face ID / Passkey Saved"
                       : isLinkingAccount
                       ? "Verifying Face / Biometrics..."
                       : "Save Account with Face ID / Passkey"}
                   </span>
                 </button>
                 {linkStatusMsg && (
-                  <p className={`text-[11px] font-semibold ${linkStatusMsg.includes("saved") ? "text-emerald-400" : "text-rose-400"}`}>
+                  <p className="text-[11px] font-semibold text-zinc-200">
                     {linkStatusMsg}
                   </p>
                 )}

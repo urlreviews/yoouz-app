@@ -1036,8 +1036,20 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       }
     }
 
+    let activeUid = currentUser?.uid || currentUser?.id;
+    let activeName = currentUser?.name;
+    if (!activeUid) {
+      const provisioned = await ensureOwnerAccountProvisioned();
+      if (provisioned) {
+        activeUid = provisioned.id;
+        activeName = provisioned.name;
+      }
+    }
+
+    const finalCleanName = editName.trim() || activeName || "Reviewer";
     const updatedProfile = {
-      name: cleanName,
+      name: finalCleanName,
+      handle: finalCleanName,
       bio: editBio.trim(),
       avatar: finalAvatar,
       banner: finalBanner,
@@ -1054,7 +1066,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
     // Instantly save to BunnyDB live for all users across the platform
     const canonicalEmail = currentUser?.email && currentUser.email.includes("@") ? currentUser.email.trim().toLowerCase() : "";
-    const userDocId = canonicalEmail || currentUser?.uid || currentUser?.id || "user_me";
+    const userDocId = canonicalEmail || activeUid || "user_me";
     const savePayload = {
       ...currentUser,
       ...updatedProfile,
@@ -1069,6 +1081,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(savePayload)
     }).catch((e) => console.warn("BunnyDB /api/users/update-profile notice:", e));
+
+    fetch('/api/user/update-bio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bio: editBio.trim() })
+    }).catch((e) => console.warn("BunnyDB /api/user/update-bio notice:", e));
 
     fetch(`/api/nosql/users/${encodeURIComponent(userDocId)}`, {
       method: 'POST',
@@ -1345,10 +1363,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={handleRegisterPasskeyInline}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
                     title="Tap once to remember your account with Face ID if you switch phones"
                   >
-                    <ScanFace className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <ScanFace className="w-3.5 h-3.5 text-white shrink-0" />
                     <span>Save Face ID (1-Time)</span>
                   </button>
                 )}
@@ -1559,167 +1577,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </button>
                 )}
               </div>
-              {/* Reviewer Handle & Zero-Friction Account Backup (Owner Only) */}
-              {/* Reviewer Handle, Inline Mobile Bio & Biometric Passkey (Owner Only) */}
-              {isOwner && (
-                <div className="p-5 space-y-4 bg-zinc-900/40">
-                  {/* 1. Reviewer Handle */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                        Reviewer Handle
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200 flex items-center gap-1">
-                        {(currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected ? (
-                          <>
-                            <ScanFace className="w-3 h-3 text-emerald-400" />
-                            <span className="text-emerald-400">Face ID / Passkey Locked</span>
-                          </>
-                        ) : (
-                          <span>Auto-Locked Session</span>
-                        )}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <AtSign className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={usernameInput}
-                          onChange={(e) => setUsernameInput(e.target.value)}
-                          placeholder={displayName || "Choose custom username"}
-                          maxLength={24}
-                          className="w-full pl-8 pr-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs font-semibold text-white outline-none"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        disabled={usernameStatus !== "available"}
-                        onClick={handleSaveUsernameInline}
-                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
-                      >
-                        {usernameStatus === "checking" ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : usernameStatus === "saved" ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Saved</span>
-                          </>
-                        ) : (
-                          <span>Update</span>
-                        )}
-                      </button>
-                    </div>
-                    {usernameMessage && (
-                      <p className={`text-[11px] font-semibold ${usernameStatus === "available" || usernameStatus === "saved" ? "text-emerald-400" : "text-rose-400"}`}>
-                        {usernameMessage}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 2. Mobile-First Inline Bio Editor */}
-                  <div className="pt-3 border-t border-zinc-800/80 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                        <Edit3 className="w-3 h-3 text-zinc-400" />
-                        <span>Your Bio</span>
-                      </label>
-                      <span className="text-[10px] text-zinc-500 font-medium">
-                        {inlineBioInput.length}/240
-                      </span>
-                    </div>
-                    <textarea
-                      rows={2}
-                      maxLength={240}
-                      value={inlineBioInput}
-                      onChange={(e) => {
-                        setInlineBioInput(e.target.value);
-                        if (inlineBioStatus !== "idle") setInlineBioStatus("idle");
-                      }}
-                      placeholder="Write a short bio for your profile..."
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs text-white placeholder:text-zinc-500 outline-none resize-none leading-relaxed"
-                    />
-                    <div className="flex items-center justify-between gap-2">
-                      {inlineBioMessage ? (
-                        <span className={`text-[11px] font-semibold ${inlineBioStatus === "error" ? "text-rose-400" : "text-emerald-400"}`}>
-                          {inlineBioMessage}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-zinc-500">Visible on your profile</span>
-                      )}
-                      <button
-                        type="button"
-                        disabled={inlineBioStatus === "saving" || inlineBioInput.trim() === (displayBio || "").trim()}
-                        onClick={handleSaveBioInline}
-                        className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
-                      >
-                        {inlineBioStatus === "saving" ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : inlineBioStatus === "saved" ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Bio Saved</span>
-                          </>
-                        ) : (
-                          <span>Save Bio</span>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 3. Biometric Face ID / Passkey (No Email, No Links, No Passwords) */}
-                  <div className="pt-3 border-t border-zinc-800/80 space-y-2.5">
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                      <ScanFace className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Face ID & Biometric Passkey</span>
-                    </div>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">
-                      Your phone remembers your face automatically via iOS Face ID or Android Biometrics—no email, links, or passwords needed, even if you switch phones.
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled={isLinkingAccount}
-                        onClick={handleRegisterPasskeyInline}
-                        className={`w-full py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border ${
-                          (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
-                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25"
-                            : "bg-white hover:bg-zinc-200 border-white text-zinc-950"
-                        }`}
-                      >
-                        <ScanFace className="w-4 h-4 shrink-0" />
-                        <span>
-                          {isLinkingAccount
-                            ? "Verifying Face / Biometrics..."
-                            : (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
-                            ? "Face ID / Passkey Active (Tap to Update)"
-                            : "Remember My Face (Save Passkey)"}
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={isRestoringPasskey}
-                        onClick={handleRestorePasskeyInline}
-                        className="w-full py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <RefreshCw className={`w-3 h-3 shrink-0 ${isRestoringPasskey ? "animate-spin" : ""}`} />
-                        <span>
-                          {isRestoringPasskey
-                            ? "Checking Synced Passkey..."
-                            : "Switched Phones? Restore Account with Face ID"}
-                        </span>
-                      </button>
-                    </div>
-                    {linkStatusMsg && (
-                      <p className={`text-[11px] font-semibold ${linkStatusMsg.includes("active") || linkStatusMsg.includes("Restored") ? "text-emerald-400" : "text-rose-400"}`}>
-                        {linkStatusMsg}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Badges & Status Section */}
               <div className="p-5 space-y-3">
@@ -2049,7 +1906,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       {/* Confirmation Toast */}
       {deletionSuccessToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
           <p className="text-xs font-semibold leading-snug text-zinc-200">
             {t("profile.deletionRequestSuccess", "Your account deletion request has been submitted. Our team will process it within 24–48 hours.")}
           </p>
@@ -2270,11 +2127,66 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">{t("common.save", "Save Changes")}</button>
               </div>
 
-              {/* Account Settings: Request Deletion */}
+              {/* Account Settings: Face ID Passkey & Request Deletion */}
               <div className="pt-3 border-t border-zinc-800 space-y-2.5">
                 <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
                   {t("profile.accountSettings", "Account Settings")}
                 </span>
+
+                {/* Face ID & Biometric Passkey inside Edit Profile */}
+                <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ScanFace className="w-4 h-4 text-zinc-200 shrink-0" />
+                      <p className="text-xs font-bold text-zinc-200">Face ID & Biometric Passkey</p>
+                    </div>
+                    {isPasskeyProtected && (
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200">
+                        Saved
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-snug">
+                    Save once so your phone remembers your account automatically via Face ID or Android Biometrics if you switch phones.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      disabled={isLinkingAccount}
+                      onClick={handleRegisterPasskeyInline}
+                      className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border ${
+                        isPasskeyProtected
+                          ? "bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-200"
+                          : "bg-white hover:bg-zinc-200 border-white text-zinc-950"
+                      }`}
+                    >
+                      <ScanFace className="w-3.5 h-3.5 shrink-0" />
+                      <span>
+                        {isLinkingAccount
+                          ? "Verifying..."
+                          : isPasskeyProtected
+                          ? "Update Face ID Passkey"
+                          : "Save Face ID (1-Time)"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isRestoringPasskey}
+                      onClick={handleRestorePasskeyInline}
+                      className="flex-1 py-2 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isRestoringPasskey ? "animate-spin" : ""}`} />
+                      <span>
+                        {isRestoringPasskey ? "Checking..." : "Restore with Face ID"}
+                      </span>
+                    </button>
+                  </div>
+                  {linkStatusMsg && (
+                    <p className="text-[11px] font-semibold text-zinc-200">
+                      {linkStatusMsg}
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 transition-colors">
                   <div className="space-y-0.5 pr-2">
