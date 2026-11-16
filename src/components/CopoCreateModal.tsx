@@ -418,6 +418,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     );
 
     let uploadedPhotoUrl = "";
+    let uploadedPhotoDataUrl = "";
     try {
       const imageBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -449,6 +450,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       }
       const uploadJson = await uploadResp.json();
       uploadedPhotoUrl = uploadJson.photoUrl || "";
+      uploadedPhotoDataUrl = uploadJson.photoDataUrl || imageBase64;
       if (!uploadedPhotoUrl) {
         throw new Error("Server did not return a valid photo URL");
       }
@@ -471,6 +473,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       mediaType: "photo",
       photoUrl: uploadedPhotoUrl,
       thumbnailUrl: uploadedPhotoUrl,
+      photoDataUrl: uploadedPhotoDataUrl,
       videoUrl: "",
       userId: activeAuthUser?.id || activeAuthUser?.email || "guest",
       userEmail: activeAuthUser?.email || "",

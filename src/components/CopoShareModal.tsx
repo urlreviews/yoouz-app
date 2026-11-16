@@ -249,8 +249,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   }
 
   // Fallback background image (instant, zero-latency thumbnail)
+  const isPhotoReview = isVideoMode && video && (video.mediaType === "photo" || Boolean(video.photoUrl));
   const localPreviewBg = isVideoMode && video
-    ? (video.thumbnailUrl || (video as any).videoThumbnail || (video as any).videoPreviewUrl || resolvedBannerUrl || "")
+    ? (video.photoUrl || (video as any).photoDataUrl || video.thumbnailUrl || (video as any).videoThumbnail || (isPhotoReview ? "" : (resolvedBannerUrl || "")))
     : (resolvedBannerUrl || (isBusiness && resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) || "");
 
   const resolvedAuthorName = isVideoMode && video

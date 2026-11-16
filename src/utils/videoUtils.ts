@@ -260,6 +260,14 @@ export function resolveVideoPosterUrl(video?: VideoReview | null): string {
     return video.photoUrl.trim();
   }
 
+  if (video.photoDataUrl && typeof video.photoDataUrl === "string" && video.photoDataUrl.trim()) {
+    return video.photoDataUrl.trim();
+  }
+
+  if (video.photoBase64 && typeof video.photoBase64 === "string" && video.photoBase64.trim()) {
+    return video.photoBase64.trim();
+  }
+
   const bunnyId = extractBunnyIdFromVideo(video);
 
   const rawThumb = video.thumbnailUrl;
@@ -327,6 +335,8 @@ export function resolveVideoPosterCascade(video?: VideoReview | null): string[] 
 
   // 1. Direct photoUrl first (Live Photo Review pivot)
   if (video.photoUrl) addCandidate(video.photoUrl);
+  if (video.photoDataUrl) addCandidate(video.photoDataUrl);
+  if (video.photoBase64) addCandidate(video.photoBase64);
 
   // 2. Primary resolved poster URL
   addCandidate(resolveVideoPosterUrl(video));

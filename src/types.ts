@@ -182,6 +182,8 @@ export interface VideoReview {
   rating: number; // Strict whole integer 1-5 stars
   mediaType?: 'photo' | 'video';
   photoUrl?: string;
+  photoDataUrl?: string;
+  photoBase64?: string;
   durationSeconds?: number;
   videoUrl?: string;
   hlsUrl?: string;

@@ -9898,7 +9898,7 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
         const existingIdx = list.findIndex((item: any) => item.id === id);
         if (existingIdx !== -1) {
           list[existingIdx] = { ...list[existingIdx], ...data };
-        } else if (data && data.videoUrl) {
+        } else if (data && (data.videoUrl || data.photoUrl || data.mediaType === 'photo' || data.thumbnailUrl)) {
           list.unshift({ id, ...data });
         }
         writeReviewsIndex(list);
@@ -15183,6 +15183,85 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       return streamVideoHandler(req, res, matched);
     }
     next();
+  });
+
+  // Guaranteed Indestructible Live Camera Photo Serving with SQLite / BunnyDB Self-Healing
+  app.get("/uploads/photos/:filename", async (req, res) => {
+    try {
+      const rawFilename = path.basename(req.params.filename);
+      // 1. Check local server uploads dir
+      const localPath = path.join(serverUploadsDir, "photos", rawFilename);
+      if (fs.existsSync(localPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.sendFile(localPath);
+      }
+      // 2. Check public uploads dir
+      const publicPath = path.join(process.cwd(), "public", "uploads", "photos", rawFilename);
+      if (fs.existsSync(publicPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.sendFile(publicPath);
+      }
+      // 3. Check SQLite / BunnyDB review_photos table
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        try {
+          const revIdPrefix = rawFilename.split("_")[0];
+          const photoRow = await bunnyDb.execute({
+            sql: "SELECT dataUrl, mimeType FROM review_photos WHERE filename = ? OR reviewId = ? LIMIT 1",
+            args: [rawFilename, revIdPrefix]
+          });
+          if (photoRow.rows && photoRow.rows.length > 0 && photoRow.rows[0].dataUrl) {
+            const dUrl = String(photoRow.rows[0].dataUrl);
+            const base64Data = dUrl.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+            const imgBuffer = Buffer.from(base64Data, "base64");
+            try {
+              fs.mkdirSync(path.dirname(localPath), { recursive: true });
+              fs.writeFileSync(localPath, imgBuffer);
+              fs.mkdirSync(path.dirname(publicPath), { recursive: true });
+              fs.writeFileSync(publicPath, imgBuffer);
+            } catch {}
+            res.setHeader("Content-Type", (photoRow.rows[0].mimeType as string) || "image/jpeg");
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            return res.send(imgBuffer);
+          }
+
+          // 4. Also check videoReviews JSON data
+          const revRow = await bunnyDb.execute({
+            sql: "SELECT data FROM videoReviews WHERE data LIKE ? OR id = ? LIMIT 1",
+            args: [`%${rawFilename}%`, revIdPrefix]
+          });
+          if (revRow.rows && revRow.rows.length > 0 && revRow.rows[0].data) {
+            const parsed = typeof revRow.rows[0].data === "string" ? JSON.parse(revRow.rows[0].data) : revRow.rows[0].data;
+            const b64 = parsed.photoDataUrl || parsed.photoBase64;
+            if (b64) {
+              const cleanB64 = String(b64).replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+              const imgBuffer = Buffer.from(cleanB64, "base64");
+              try {
+                fs.mkdirSync(path.dirname(localPath), { recursive: true });
+                fs.writeFileSync(localPath, imgBuffer);
+                fs.mkdirSync(path.dirname(publicPath), { recursive: true });
+                fs.writeFileSync(publicPath, imgBuffer);
+              } catch {}
+              res.setHeader("Content-Type", "image/jpeg");
+              res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              return res.send(imgBuffer);
+            }
+          }
+        } catch (dbErr) {
+          console.warn("DB photo lookup error:", dbErr);
+        }
+      }
+      // Never fall through to the SPA wildcard handler returning index.html
+      return res.status(404).type("text/plain").send("Photo not found");
+    } catch (err: any) {
+      return res.status(500).type("text/plain").send("Internal photo error");
+    }
   });
 
   // Serve persistent user uploaded static files with CORS headers
@@ -24273,6 +24352,38 @@ app.post("/api/videos/save-review", async (req, res) => {
       const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net";
       const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
 
+      const photoDataUrl = `data:image/jpeg;base64,${cleanJpegBuffer.toString("base64")}`;
+
+      const localDir = path.join(serverUploadsDir, "photos");
+      const publicDir = path.join(process.cwd(), "public", "uploads", "photos");
+      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+      if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+      fs.writeFileSync(path.join(localDir, filename), cleanJpegBuffer);
+      fs.writeFileSync(path.join(publicDir, filename), cleanJpegBuffer);
+
+      // Persist to SQLite / BunnyDB review_photos table for indestructible storage
+      try {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          await bunnyDb.execute(`CREATE TABLE IF NOT EXISTS review_photos (
+            filename TEXT PRIMARY KEY,
+            reviewId TEXT,
+            dataUrl TEXT,
+            mimeType TEXT DEFAULT 'image/jpeg',
+            createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+            updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+          )`);
+          await bunnyDb.execute({
+            sql: `INSERT INTO review_photos (filename, reviewId, dataUrl, mimeType)
+                  VALUES (?, ?, ?, 'image/jpeg')
+                  ON CONFLICT(filename) DO UPDATE SET dataUrl = excluded.dataUrl, updatedAt = CURRENT_TIMESTAMP`,
+            args: [filename, safeRev, photoDataUrl]
+          });
+        }
+      } catch (dbErr) {
+        console.warn("Notice persisting photo to review_photos table:", dbErr);
+      }
+
       if (bunnyAccessKey && bunnyStorageZone) {
         try {
           const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
@@ -24289,18 +24400,29 @@ app.post("/api/videos/save-review", async (req, res) => {
           if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
             const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, "");
             const cdnUrl = `${cdnBase}/photos/${filename}`;
-            return res.json({ success: true, photoUrl: cdnUrl, thumbnailUrl: cdnUrl, url: cdnUrl, filename });
+            return res.json({
+              success: true,
+              photoUrl: cdnUrl,
+              thumbnailUrl: cdnUrl,
+              url: cdnUrl,
+              photoDataUrl,
+              filename
+            });
           }
         } catch (bunnyErr) {
           console.warn("Bunny photo upload notice, falling back to local disk:", bunnyErr);
         }
       }
 
-      const localDir = path.join(serverUploadsDir, "photos");
-      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
-      fs.writeFileSync(path.join(localDir, filename), cleanJpegBuffer);
       const localUrl = `/uploads/photos/${filename}`;
-      return res.json({ success: true, photoUrl: localUrl, thumbnailUrl: localUrl, url: localUrl, filename });
+      return res.json({
+        success: true,
+        photoUrl: localUrl,
+        thumbnailUrl: localUrl,
+        url: localUrl,
+        photoDataUrl,
+        filename
+      });
     } catch (err: any) {
       console.error("photo upload error:", err);
       return res.status(500).json({ error: err.message || "Failed to process and upload photo" });
