@@ -3,7 +3,6 @@ import {
   X,
   CheckCircle,
   Star,
-  Video,
   Share2,
   UserPlus,
   UserCheck,
@@ -12,9 +11,11 @@ import {
   Camera,
   Edit3,
   Trash2,
-  LogOut,
   MoreVertical,
   Play,
+  AtSign,
+  Check,
+  Loader2,
   ThumbsUp,
   MapPin,
   ArrowLeft,
@@ -43,6 +44,7 @@ import { getProxiedImageUrl } from "../utils/logoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
+import { getRoundedRating } from "./CopoStarRating";
 import { CountrySelector } from "./CountrySelector";
 import { SearchableComboSelector } from "./SearchableComboSelector";
 import { countries } from "../utils/countries";
@@ -120,6 +122,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [copiedNotification, setCopiedNotification] = useState("");
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Inline handle claim / edit & account linking state (zero-friction for U/XXXXXX accounts)
+  const [usernameInput, setUsernameInput] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "saved" | "error">("idle");
+  const [usernameMessage, setUsernameMessage] = useState("");
+  const [pendingLinkProvider, setPendingLinkProvider] = useState<"google" | "apple" | null>(null);
+  const [linkEmailInput, setLinkEmailInput] = useState("");
+  const [isLinkingAccount, setIsLinkingAccount] = useState(false);
+  const [linkStatusMsg, setLinkStatusMsg] = useState<string | null>(null);
 
   // Auto-redirect if this author is a official business to maintain a single canonical Place page
   useEffect(() => {
@@ -247,6 +258,120 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       }
     }
   }, [isOwner, currentUser]);
+
+  // Live username availability check for owner's inline identity card
+  useEffect(() => {
+    if (!isOwner) return;
+    const clean = usernameInput.trim().replace(/^@/, "");
+    const currentClean = (currentUser?.name || "").trim().replace(/^@/, "");
+    if (!clean || clean.toLowerCase() === currentClean.toLowerCase()) {
+      setUsernameStatus("idle");
+      setUsernameMessage("");
+      return;
+    }
+    if (clean.length < 3) {
+      setUsernameStatus("error");
+      setUsernameMessage("At least 3 characters");
+      return;
+    }
+    let cancelled = false;
+    setUsernameStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/user/check-username?username=${encodeURIComponent(clean)}&currentUserId=${encodeURIComponent(currentUser?.id || currentUser?.uid || "")}`
+        );
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.available) {
+          setUsernameStatus("available");
+          setUsernameMessage(`@${data.normalized} is available`);
+        } else {
+          setUsernameStatus("taken");
+          setUsernameMessage(data.error || "That username is already taken.");
+        }
+      } catch {
+        if (!cancelled) {
+          setUsernameStatus("error");
+          setUsernameMessage("Could not check availability");
+        }
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [usernameInput, isOwner, currentUser?.id, currentUser?.uid, currentUser?.name]);
+
+  const handleSaveUsernameInline = async () => {
+    const uid = currentUser?.id || currentUser?.uid;
+    if (!uid || !usernameInput.trim() || usernameStatus !== "available") return;
+    setUsernameStatus("checking");
+    try {
+      const res = await fetch("/api/user/update-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: uid, username: usernameInput.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUsernameStatus("taken");
+        setUsernameMessage(data.error || "Could not update username");
+        return;
+      }
+      if (data.user) {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...data.user }));
+        localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
+        window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
+        onUpdateProfile?.({ name: data.user.name, handle: data.user.handle } as any);
+      }
+      setUsernameStatus("saved");
+      setUsernameMessage(`Handle updated to ${data.user?.name || usernameInput.trim()}`);
+      triggerHaptic("success");
+    } catch {
+      setUsernameStatus("error");
+      setUsernameMessage("Failed to save username");
+    }
+  };
+
+  const handleConfirmLinkAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const uid = currentUser?.id || currentUser?.uid;
+    const cleanEmail = linkEmailInput.trim().toLowerCase();
+    if (!uid || !pendingLinkProvider || !cleanEmail.includes("@") || isLinkingAccount) return;
+    setIsLinkingAccount(true);
+    setLinkStatusMsg(null);
+    try {
+      const res = await fetch("/api/auth/link-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          anonymousUserId: uid,
+          provider: pendingLinkProvider,
+          email: cleanEmail,
+          name: currentUser?.name,
+          avatar: currentUser?.avatar
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...data.user }));
+        localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
+        window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
+        onUpdateProfile?.({ name: data.user.name, avatar: data.user.avatar } as any);
+        setLinkStatusMsg(`Account saved with ${pendingLinkProvider === "google" ? "Google" : "Apple"}!`);
+        setPendingLinkProvider(null);
+        setLinkEmailInput("");
+        triggerHaptic("success");
+      } else {
+        setLinkStatusMsg(data.error || "Could not link account right now.");
+      }
+    } catch {
+      setLinkStatusMsg("Network error while linking account.");
+    } finally {
+      setIsLinkingAccount(false);
+    }
+  };
 
   // Close settings dropdown on click outside
   useEffect(() => {
@@ -1008,18 +1133,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         </button>
                       )}
 
-                      {onSignOut && (
-                        <button
-                          onClick={() => {
-                            setIsSettingsMenuOpen(false);
-                            onSignOut();
-                          }}
-                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
-                        >
-                          <LogOut className="w-4 h-4 text-zinc-200" />
-                          <span>{t("profile.signOut", "Sign Out")}</span>
-                        </button>
-                      )}
                     </>
                   ) : (
                     <>
@@ -1159,7 +1272,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-white text-base">{authorVideos.length}</span>
                 <span className="text-zinc-400 text-xs font-medium">
-                  {authorVideos.length === 1 ? t("common.videoReview", "Video Review") : t("common.videoReviews", "Video Reviews")}
+                  {authorVideos.length === 1 ? t("common.photoReview", "Photo Review") : t("common.photoReviews", "Photo Reviews")}
                 </span>
               </div>
               <button
@@ -1225,7 +1338,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
-            <span>{t("common.videoReviews", "Reviews")}</span>
+            <span>{t("common.photoReviews", "Reviews")}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
               {authorVideos.length}
             </span>
@@ -1285,12 +1398,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     handleTabClick("reviews");
                   }}
                   className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
-                  title={t("profile.viewVideoReviews", "View Video Reviews")}
+                  title={t("profile.viewPhotoReviews", "View Photo Reviews")}
                 >
                   <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                    <Video className="w-5 h-5 text-zinc-200" />
+                    <Camera className="w-5 h-5 text-zinc-200" />
                   </div>
-                  <span className="font-semibold text-[11px] text-zinc-200">{t("place.reviews", "Video Reviews")}</span>
+                  <span className="font-semibold text-[11px] text-zinc-200">{t("place.reviews", "Photo Reviews")}</span>
                 </button>
 
                 <button
@@ -1325,6 +1438,113 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </button>
                 )}
               </div>
+              {/* Reviewer Handle & Zero-Friction Account Backup (Owner Only) */}
+              {isOwner && (
+                <div className="p-5 space-y-3 bg-zinc-900/40">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                      Reviewer Handle
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200">
+                      {currentUser?.isAnonymous ? "Anonymous ID" : "Protected Account"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <AtSign className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        placeholder={displayName || "Choose custom username"}
+                        maxLength={24}
+                        className="w-full pl-8 pr-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs font-semibold text-white outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={usernameStatus !== "available"}
+                      onClick={handleSaveUsernameInline}
+                      className="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                    >
+                      {usernameStatus === "checking" ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : usernameStatus === "saved" ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Saved</span>
+                        </>
+                      ) : (
+                        <span>Update</span>
+                      )}
+                    </button>
+                  </div>
+                  {usernameMessage && (
+                    <p className={`text-[11px] font-semibold ${usernameStatus === "available" || usernameStatus === "saved" ? "text-emerald-400" : "text-rose-400"}`}>
+                      {usernameMessage}
+                    </p>
+                  )}
+
+                  {currentUser?.isAnonymous && (
+                    <div className="pt-2 border-t border-zinc-800/80 space-y-2">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
+                        <span>Save Reviews Across Devices</span>
+                      </div>
+                      {!pendingLinkProvider ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => { setPendingLinkProvider("google"); setLinkStatusMsg(null); }}
+                            className="py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            Link Google
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setPendingLinkProvider("apple"); setLinkStatusMsg(null); }}
+                            className="py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                          >
+                            Link Apple
+                          </button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleConfirmLinkAccount} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="email"
+                              required
+                              value={linkEmailInput}
+                              onChange={(e) => setLinkEmailInput(e.target.value)}
+                              placeholder={`Enter your ${pendingLinkProvider === "google" ? "Google" : "Apple"} email`}
+                              className="flex-1 px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-700 text-xs text-white outline-none"
+                            />
+                            <button
+                              type="submit"
+                              disabled={isLinkingAccount}
+                              className="px-3 py-2 rounded-xl bg-white text-zinc-950 font-bold text-xs cursor-pointer disabled:opacity-50"
+                            >
+                              {isLinkingAccount ? "..." : "Save"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPendingLinkProvider(null)}
+                              className="p-2 rounded-xl bg-zinc-800 text-zinc-300 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                      {linkStatusMsg && (
+                        <p className="text-[11px] font-semibold text-emerald-400">{linkStatusMsg}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Badges & Status Section */}
               <div className="p-5 space-y-3">
                 <div className="grid grid-cols-2 gap-2.5">
@@ -1345,19 +1565,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
                     <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.totalReviews", "Total Reviews")}</span>
                     <span className="text-sm font-black text-white flex items-center gap-1">
-                      <Video className="w-4 h-4 text-zinc-400" />
-                      <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.video", "Video") : t("feed.videos", "Videos")}</span>
+                      <Camera className="w-4 h-4 text-zinc-400" />
+                      <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.photo", "Photo") : t("feed.photos", "Photos")}</span>
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Video Reviews Preview Section */}
+              {/* Photo Reviews Preview Section */}
               <div className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-zinc-200" />
-                    <span>{t("place.reviews", "Video Reviews")} ({authorVideos.length})</span>
+                    <Camera className="w-4 h-4 text-zinc-200" />
+                    <span>{t("place.reviews", "Photo Reviews")} ({authorVideos.length})</span>
                   </h3>
                   {authorVideos.length > 0 && (
                     <button
@@ -1371,7 +1591,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
                 {authorVideos.length === 0 ? (
                   <div className="bg-zinc-900/60 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-200 text-xs">
-                    {t("profile.noVideosYet", "No video reviews published yet.")}
+                    {t("profile.noPhotosYet", "No photo reviews published yet.")}
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -1398,7 +1618,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
                           <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
                             <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                            <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
+                            <span>{getRoundedRating(v.rating || 5)}</span>
                           </div>
                           {/* Bottom Meta Info - Business Name & Views */}
                           <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
@@ -1424,13 +1644,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
-                  {t("profile.allVideoReviews", "All Video Reviews")} ({authorVideos.length})
+                  {t("profile.allPhotoReviews", "All Photo Reviews")} ({authorVideos.length})
                 </h3>
               </div>
 
               {authorVideos.length === 0 ? (
                 <div className="bg-zinc-900/60 rounded-2xl p-8 text-center border border-zinc-800 text-zinc-200 text-xs">
-                  {t("profile.noVideosYet", "No video reviews published yet.")}
+                  {t("profile.noPhotosYet", "No photo reviews published yet.")}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
@@ -1457,7 +1677,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
                         <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                          <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
+                          <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
                         {onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(v, currentUser))) && (
                           <button
@@ -1467,7 +1687,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                               setVideoToDeleteInDrawer(v);
                             }}
                             className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-600/90 text-zinc-200 hover:text-white backdrop-blur-xs transition-colors z-10 cursor-pointer shadow-xs"
-                            title={t("feed.deleteVideo", "Delete video review")}
+                            title={t("feed.deleteReview", "Delete photo review")}
                           >
                             <Trash2 className="w-2.5 h-2.5" />
                           </button>
@@ -1531,7 +1751,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span className="text-base font-black text-white">{totalLikes}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalVideos", "Total Videos")}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
                     <span className="text-base font-black text-white">{authorVideos.length}</span>
                   </div>
                   <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
@@ -1924,7 +2144,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">{t("feed.deleteVideoTitle", "Delete Video Review?")}</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">{t("feed.deleteReviewTitle", "Delete Photo Review?")}</h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
                 {t("feed.deleteVideoConfirm", "This will permanently delete your review for")} <span className="text-zinc-200 font-semibold">{videoToDeleteInDrawer.placeName || "this place"}</span> {t("feed.deleteVideoGlobal", "globally from all feeds, databases, and storage.")}
               </p>
@@ -2245,16 +2465,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>
                                     <span className="shrink-0">
-                                      {videoCount} {videoCount === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}
+                                      {videoCount} {videoCount === 1 ? t("common.photoReview", "photo review") : t("common.photoReviews", "photo reviews")}
                                     </span>
                                   </>
                                 ) : (
-                                  <span className="text-zinc-400 text-xs shrink-0">0 video reviews</span>
+                                  <span className="text-zinc-400 text-xs shrink-0">0 photo reviews</span>
                                 )}
                               </div>
                             ) : (
                               <span className="shrink-0 text-zinc-300 text-xs font-medium">
-                                {`${videoCount} ${videoCount === 1 ? "video review" : "video reviews"}`}
+                                {`${videoCount} ${videoCount === 1 ? "photo review" : "photo reviews"}`}
                               </span>
                             )}
 

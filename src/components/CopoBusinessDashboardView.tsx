@@ -2238,14 +2238,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     placeVideos.forEach((v) => {
       if (!v || !v.id) return;
       const vAuthor = v.author?.name || 'Verified Customer';
-      const vCaption = v.caption || `Verified Video Review for ${placeTitle}`;
+      const vCaption = v.caption || `Verified Photo Review for ${placeTitle}`;
       const vDate = v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString();
-      const vThumb = v.thumbnailUrl || 'https://yoouz.com/og-banner.png';
-      const vUrl = v.videoUrl || `https://www.yoouz.com/api/videos/stream/${v.id}`;
+      const vThumb = v.photoUrl || v.thumbnailUrl || 'https://yoouz.com/og-banner.png';
+      const vUrl = v.photoUrl || v.videoUrl || `https://www.yoouz.com/video/${v.id}`;
       graphItems.push({
-        "@type": "VideoObject",
-        "@id": `https://www.yoouz.com/video/${v.id}#video`,
-        "name": `Verified Video Review of ${placeTitle} by ${vAuthor}`,
+        "@type": "ImageObject",
+        "@id": `https://www.yoouz.com/video/${v.id}#photo`,
+        "name": `Verified Photo Review of ${placeTitle} by ${vAuthor}`,
         "description": vCaption,
         "thumbnailUrl": [vThumb],
         "uploadDate": vDate,
@@ -2255,8 +2255,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           "@type": "InteractionCounter",
           "interactionType": { "@type": "http://schema.org/LikeAction" },
           "userInteractionCount": v.likes || 0
-        },
-        "transcript": v.transcript || ""
+        }
       } as any);
     });
 
@@ -2267,20 +2266,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
     const crawlableFallback = `<!-- Semantic Crawlable Fallback for Search Crawlers -->
   <div class="yoouz-seo-crawlers" style="display:none !important; visibility:hidden; opacity:0; font-size:0; width:0; height:0; overflow:hidden;">
-    <h3>Verified Customer Reviews for ${placeTitle}</h3>
+    <h3>Verified Customer Photo Reviews for ${placeTitle}</h3>
     ${placeVideos.map(v => `
-      <div itemscope itemtype="https://schema.org/VideoObject">
-        <span itemprop="name">Review by ${v.author?.name || 'Verified Customer'}</span>
+      <div itemscope itemtype="https://schema.org/ImageObject">
+        <span itemprop="name">Photo Review by ${v.author?.name || 'Verified Customer'}</span>
         <p itemprop="description">${v.caption || ''}</p>
         <span itemprop="uploadDate">${v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString()}</span>
-        <span itemprop="transcript">${v.transcript || ''}</span>
       </div>
     `).join('')}
   </div>`;
 
-    return `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) SEO Package -->
+    return `<!-- Yoouz Authentic Photo Reviews + Google Rich Snippet (Schema.org) SEO Package -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
-  <iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
+  <iframe src="https://www.yoouz.com/embed/${embedSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Photo Reviews for ${placeTitle} on Yoouz"></iframe>
   
   <script type="application/ld+json">
 ${jsonLd}
@@ -2882,7 +2880,7 @@ ${jsonLd}
                       </div>
                     </div>
                     <p className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      {t("business.overviewSubtitle", "Real-time performance metrics driven by customer video reviews across the Yoouz network.")}
+                      {t("business.overviewSubtitle", "Real-time performance metrics driven by customer photo reviews across the Yoouz network.")}
                     </p>
                   </div>
                   {/* Date Filter Pills */}
@@ -2905,8 +2903,8 @@ ${jsonLd}
                 {/* 3 Premium Glass KPI Cards with Real Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4">
                   {[
-                    { key: 'views' as const, label: t('business.kpiImpressions', 'Video Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Video Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Video, color: 'text-white', bg: 'bg-zinc-800' },
+                    { key: 'views' as const, label: t('business.kpiImpressions', 'Photo Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
+                    { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Photo Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Camera, color: 'text-white', bg: 'bg-zinc-800' },
                     { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-white', bg: 'bg-zinc-800' },
                   ].map((stat, i) => {
                     const isSelected = selectedChartMetric === stat.key;
@@ -2964,8 +2962,8 @@ ${jsonLd}
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-xs sm:text-sm md:text-base font-bold text-white">
-                            {selectedChartMetric === 'views' && 'Customer Video Reviews Impressions'}
-                            {selectedChartMetric === 'reviews' && 'Verified Video Reviews'}
+                            {selectedChartMetric === 'views' && 'Customer Photo Reviews Impressions'}
+                            {selectedChartMetric === 'reviews' && 'Verified Photo Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px] font-extrabold border border-zinc-800 shadow-2xs">
@@ -3154,9 +3152,9 @@ ${jsonLd}
 
                 <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full max-w-full overflow-hidden">
                   <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Customer Video Reviews</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Customer Photo Reviews</h2>
                     <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-300">
-                      <span>Manage and curate authentic customer video reviews displayed on your profile and website widget.</span>
+                      <span>Manage and curate authentic live camera photo reviews displayed on your profile and website widget.</span>
                     </div>
                   </div>
 
@@ -3268,7 +3266,8 @@ ${jsonLd}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-zinc-300 flex-wrap">
                               <CopoStarRating
-                                rating={video.rating || 5}
+                                rating={Math.max(1, Math.min(5, Math.round(video.rating || 5)))}
+                                roundToWhole={true}
                                 starClassName="w-3 h-3 sm:w-3.5 sm:h-3.5"
                                 filledColorClass="fill-amber-400 text-amber-400"
                                 emptyColorClass="fill-zinc-900/90 text-zinc-400"
@@ -3288,6 +3287,8 @@ ${jsonLd}
                         </button>
                       );
 
+                      const isPhoto = Boolean(video.photoUrl || (video as any).mediaType === 'photo' || !video.videoUrl);
+
                       return (
                         <div 
                           key={video.id}
@@ -3304,18 +3305,18 @@ ${jsonLd}
                               {authorInfoJSX}
                             </div>
 
-                            {/* Middle Row: Compact Video Viewport & AI Transcribed Audio Caption */}
+                            {/* Middle Row: Photo / Review Viewport */}
                             <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-5 items-start w-full">
                               
-                              {/* Video Thumbnail Player Viewport */}
+                              {/* Photo Review Viewport */}
                               <div 
                                 onClick={() => handleOpenBusinessVideo(video)}
                                 className="w-full sm:w-32 md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-md cursor-pointer group"
-                                title="Click to play review"
+                                title="Click to view photo review"
                               >
                                 <img
-                                  src={video.thumbnailUrl || getSafeAvatarUrl(video.author?.avatar, video.author?.name, video.author?.handle)}
-                                  alt={video.dishOrItem || 'Video Review'}
+                                  src={video.photoUrl || video.thumbnailUrl || getSafeAvatarUrl(video.author?.avatar, video.author?.name, video.author?.handle)}
+                                  alt={video.dishOrItem || 'Photo Review'}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => {
@@ -3323,34 +3324,36 @@ ${jsonLd}
                                     target.src = getSafeAvatarUrl(null, video.author?.name, video.author?.handle);
                                   }} 
                                 /> 
-                                {/* Video Badges & Play Overlay */}
+                                {/* Photo / Review Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
-                                      <Video className="w-2.5 h-2.5 text-zinc-200" /> 0:{video.durationSeconds || 15}
+                                      <Camera className="w-2.5 h-2.5 text-zinc-200" /> {isPhoto ? 'Live Photo' : `0:${video.durationSeconds || 15}`}
                                     </span>
                                   </div>
 
-                                  <div className="self-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
-                                    <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                                  </div>
+                                  {!isPhoto && (
+                                    <div className="self-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
+                                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
+                                    </div>
+                                  )}
 
                                   <div>
                                     <span className="text-xs font-bold text-white block line-clamp-1">
-                                      {video.dishOrItem || 'Verified Review'}
+                                      {video.dishOrItem || 'Verified Photo Review'}
                                     </span>
                                   </div>
                                 </div>
                               </div>
 
-                              {/* AI Transcribed Audio Caption Block */}
+                              {/* Review Details / Note Block */}
                               <div className="flex-1 min-w-0 bg-zinc-900/90 rounded-2xl p-3.5 sm:p-4 border border-zinc-800 space-y-1.5 w-full">
                                 <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
-                                  <MessageSquare className="w-3 h-3 text-zinc-400" />
-                                  <span>Transcript</span>
+                                  <Camera className="w-3 h-3 text-zinc-400" />
+                                  <span>{isPhoto ? 'Photo Review' : 'Review Note'}</span>
                                 </div>
                                 <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-medium">
-                                  "{video.caption}"
+                                  {video.caption ? `"${video.caption}"` : `Live camera proof rated ${Math.max(1, Math.min(5, Math.round(video.rating || 5)))}/5 stars.`}
                                 </p>
                               </div>
 
@@ -3362,7 +3365,7 @@ ${jsonLd}
                                 type="button"
                                 onClick={() => handleDownloadVideoForAds(video)}
                                 className="flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
-                                title="Export Ultra-HD branded video review for Facebook, social media & web"
+                                title="Export branded photo review card for social media & web"
                               >
                                 <Download className="w-3.5 h-3.5 text-white" />
                                 <span>Export</span>
@@ -3708,7 +3711,7 @@ ${jsonLd}
                                   </div>
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-400 font-medium mt-0.5 min-w-0">
                                     <span className="shrink-0 text-zinc-300 text-xs">
-                                      {author.videoReviewCount || 0} {(author.videoReviewCount === 1) ? 'video review' : 'video reviews'}
+                                      {author.videoReviewCount || 0} {(author.videoReviewCount === 1) ? 'photo review' : 'photo reviews'}
                                     </span>
                                     <span className="hidden sm:inline text-zinc-600 shrink-0">•</span>
                                     <span className="text-[11px] sm:text-xs text-zinc-400 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
@@ -3789,7 +3792,7 @@ ${jsonLd}
                         <p className="text-xs text-zinc-400 leading-relaxed">
                           {followerSearchQuery
                             ? `No customer follower matches "${followerSearchQuery}". Try a different name.`
-                            : "When customers and video reviewers follow your business on Yoouz, they will appear here."}
+                            : "When customers and photo reviewers follow your business on Yoouz, they will appear here."}
                         </p>
                       </div>
                     </div>
@@ -3848,7 +3851,7 @@ ${jsonLd}
                                   </span>
                                   <span>•</span>
                                   <span className="shrink-0 text-zinc-300">
-                                    {follower.reviewCount} {follower.reviewCount === 1 ? 'video review' : 'video reviews'}
+                                    {follower.reviewCount} {follower.reviewCount === 1 ? 'photo review' : 'photo reviews'}
                                   </span>
                                 </div>
                               </div>
@@ -3953,7 +3956,7 @@ ${jsonLd}
                     {/* Top Status Pill */}
                     <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 shadow-sm">
                       <Lock className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>Unlocks After 1st Video Review</span>
+                      <span>Unlocks After 1st Photo Review</span>
                     </div>
 
                     {/* Center Visual & Messaging */}
@@ -3961,15 +3964,15 @@ ${jsonLd}
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto shadow-2xl relative">
                         <QrCode className="w-8 h-8 sm:w-10 sm:h-10 text-zinc-300" />
                         <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-white shadow-md">
-                          <Video className="w-3.5 h-3.5 fill-white text-white" />
+                          <Camera className="w-3.5 h-3.5 text-white" />
                         </div>
                       </div>
 
                       <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                        Collect Your First Video Review to Unlock Website Embed
+                        Collect Your First Photo Review to Unlock Website Embed
                       </h2>
                       <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                        To guarantee high conversion and visitor trust on your website, your responsive video carousel and embed iframe code unlock automatically as soon as your venue receives its first verified 60-second video review.
+                        To guarantee high conversion and visitor trust on your website, your responsive photo review carousel and embed iframe code unlock automatically as soon as your venue receives its first verified live camera photo review.
                       </p>
                     </div>
 
@@ -4040,7 +4043,7 @@ ${jsonLd}
                           </div>
                         </div>
                         <p className="text-xs text-zinc-400 mt-1">
-                          Display verified video reviews on your website, reservation widget, or booking page.
+                          Display verified photo reviews on your website, reservation widget, or booking page.
                         </p>
                       </div>
 
@@ -4225,14 +4228,14 @@ ${jsonLd}
                         emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                       />
                       <span className="text-zinc-400 text-[11px] font-normal">
-                        ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'})
+                        ({placeVideos.length} {placeVideos.length === 1 ? 'Photo Review' : 'Photo Reviews'})
                       </span>
                     </div>
 
                     {/* Callout Prompt with Edit Trigger */}
                     <div className="mb-4 sm:mb-5 px-2 flex items-center justify-center gap-1.5">
                       <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-[85%] truncate">
-                        {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
+                        {qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW'}
                       </span>
                       <button
                         type="button"
@@ -4255,7 +4258,7 @@ ${jsonLd}
                             type="text"
                             value={qrCustomHeading}
                             onChange={(e) => setQrCustomHeading(e.target.value)}
-                            placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
+                            placeholder="e.g. LEAVE A LIVE PHOTO REVIEW"
                             className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
                           />
                         </div>
@@ -5113,27 +5116,27 @@ ${jsonLd}
               {[
                 {
                   id: 'qa-what-is-yoouz',
-                  icon: Video,
+                  icon: Camera,
                   question: 'What is Yoouz for Businesses?',
-                  answer: 'Yoouz connects your venue directly with authentic, real-world guests. Customers record genuine 60-second selfie video reviews using their front camera inside your location. There are no bot accounts, fake AI-written reviews, or anonymous trolls—just real people sharing authentic customer experiences that build trust and drive foot traffic.'
+                  answer: 'Yoouz connects your venue directly with authentic, real-world guests. Customers snap genuine live photo reviews using their rear or front camera right inside your location—zero gallery uploads, plus whole 1–5 star ratings. There are no bot accounts or fake AI-written reviews, just real people sharing visual proof that builds trust and drives foot traffic.'
                 },
                 {
                   id: 'qa-premium-included',
                   icon: Zap,
                   question: 'What is included in the Yoouz Premium Business Suite ($149/mo)?',
-                  answer: 'The Premium Suite ($149/mo) unlocks the complete enterprise growth stack: Verified Business Badge, Priority Search Placement in local results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, HD Branded Video Ad Exporter with logo watermarks, Pinned Owner Video Replies, Direct Messaging Lead Capture, Table & Window QR Code Standees, and Real-Time ROI Analytics.'
+                  answer: 'The Premium Suite ($149/mo) unlocks the complete enterprise growth stack: Verified Business Badge, Priority Search Placement in local results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, HD Branded Review Card Exporter with logo watermarks, Pinned Owner Replies, Direct Messaging Lead Capture, Table & Window QR Code Standees, and Real-Time ROI Analytics.'
                 },
                 {
                   id: 'qa-premium-seo',
                   icon: Sparkles,
                   question: 'How does the Premium Plan boost Google Search SEO & Rich Snippets?',
-                  answer: 'When you embed your Yoouz video review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render star ratings and video thumbnails directly in organic search results, increasing click-through rates (CTR) by up to 35%.'
+                  answer: 'When you embed your Yoouz photo review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render star ratings and customer photo thumbnails directly in organic search results, increasing click-through rates (CTR) by up to 35%.'
                 },
                 {
                   id: 'qa-premium-ads',
                   icon: Award,
-                  question: 'Can I export customer video reviews as social media video ads?',
-                  answer: 'Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts.'
+                  question: 'Can I export customer photo reviews as social media assets?',
+                  answer: 'Yes! Premium Suite subscribers can export customer live photo reviews as high-definition branded social proof cards with your official venue logo overlay and watermark—ready to share on Instagram, TikTok, Facebook, or your website.'
                 },
                 {
                   id: 'qa-premium-contracts',
@@ -5150,20 +5153,20 @@ ${jsonLd}
                 {
                   id: 'qa-reply-reviews',
                   icon: MessageSquare,
-                  question: 'How do I reply to customer video reviews?',
-                  answer: 'Go to the Video Reviews tab in your dashboard. Beneath any customer review, click "Reply" to publish an official response. Your message is pinned with a distinguished "Verified Business Owner" badge directly below the customer\'s video so potential guests see your dedication to hospitality.'
+                  question: 'How do I reply to customer photo reviews?',
+                  answer: 'Go to the Photo Reviews tab in your dashboard. Beneath any customer review, click "Reply" to publish an official response. Your message is pinned with a distinguished "Verified Business Owner" badge directly below the customer\'s photo so potential guests see your dedication to hospitality.'
                 },
                 {
                   id: 'qa-qr-codes',
                   icon: QrCode,
                   question: 'How do Table & Window QR Codes help my venue get more reviews?',
-                  answer: 'In the QR Code tab, you can instantly download or print high-resolution table standees and window stickers. When guests scan the QR code with their mobile phone, it launches the Yoouz camera directly for your venue, making it effortless for guests to record authentic 60-second video reviews.'
+                  answer: 'In the QR Code tab, you can instantly download or print high-resolution table standees and window stickers. When guests scan the QR code with their mobile phone, it launches the Yoouz live camera directly for your venue, making it effortless for guests to snap a quick photo review and tap 1–5 stars.'
                 },
                 {
                   id: 'qa-website-embed',
                   icon: Code,
-                  question: 'Can I showcase customer video reviews on our website?',
-                  answer: 'Yes! Navigate to the Embed tab to copy your venue\'s embed code. You can paste the responsive iframe snippet into WordPress, Squarespace, Shopify, Wix, or any custom website to display an interactive video review carousel that boosts visitor trust and conversions.'
+                  question: 'Can I showcase customer photo reviews on our website?',
+                  answer: 'Yes! Navigate to the Embed tab to copy your venue\'s embed code. You can paste the responsive iframe snippet into WordPress, Squarespace, Shopify, Wix, or any custom website to display an interactive photo review carousel that boosts visitor trust and conversions.'
                 },
                 {
                   id: 'qa-direct-messages',
@@ -5181,7 +5184,7 @@ ${jsonLd}
                   id: 'qa-moderation-rules',
                   icon: AlertCircle,
                   question: 'What should I do if a review violates guidelines or contains spam?',
-                  answer: 'Every review on Yoouz must comply with our community trust policies. All videos must be recorded live at the venue without abusive language, harassment, or copyright infringement. If a review violates our policies, you can report it directly from the video player for prompt investigation.'
+                  answer: 'Every review on Yoouz must comply with our community trust policies. All photos must be captured live with the camera at the venue (zero gallery uploads) without harassment or inappropriate content. If a review violates our policies, you can report it directly from the review view for prompt investigation.'
                 }
               ]
                 .filter(item => {
@@ -5271,11 +5274,11 @@ ${jsonLd}
                 <div className="space-y-0.5 mt-1">
                   {[
                     { id: 'overview', label: 'Overview', icon: LayoutDashboard, desc: 'Analytics, impression trends & booking stats' },
-                    { id: 'reviews', label: 'Video Reviews', icon: Video, desc: 'View customer video reviews & owner replies' },
+                    { id: 'reviews', label: 'Photo Reviews', icon: Camera, desc: 'View customer photo reviews & owner replies' },
                     { id: 'inbox', label: 'Messages', icon: MessageSquare, desc: 'View and respond to direct messages' },
                     { id: 'followers', label: 'Followers', icon: Users, desc: 'View your business followers' },
                     { id: 'notifications', label: 'Notifications', icon: Bell, desc: 'View business alerts and mentions' },
-                    { id: 'embed', label: 'Embed', icon: Code, desc: 'Embed video review carousel on website' },
+                    { id: 'embed', label: 'Embed', icon: Code, desc: 'Embed photo review carousel on website' },
                     { id: 'qr_invites', label: 'Invites', icon: QrCode, desc: 'Download table standees & send email invites' },
                     { id: 'profile', label: 'Profile', icon: Building2, desc: 'Manage operating hours, address & phone' },
                   ]
@@ -5343,7 +5346,7 @@ ${jsonLd}
                             <div className="text-[10px] text-zinc-200 truncate">{v.caption}</div>
                           </div>
                           <div className="flex text-amber-400 text-[10px] shrink-0 font-bold items-center gap-0.5">
-                            <Star className="w-3 h-3 fill-current" /> {v.rating || 5}
+                            <Star className="w-3 h-3 fill-current" /> {Math.max(1, Math.min(5, Math.round(v.rating || 5)))}
                           </div>
                         </button>
                       ))}
@@ -5463,14 +5466,14 @@ ${jsonLd}
                     emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                   />
                   <span className="text-zinc-300 font-medium print:text-zinc-700">
-                    ({placeVideos.length} {placeVideos.length === 1 ? 'Video Review' : 'Video Reviews'} on Yoouz)
+                    ({placeVideos.length} {placeVideos.length === 1 ? 'Photo Review' : 'Photo Reviews'} on Yoouz)
                   </span>
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-2xl shadow-xl inline-block border border-zinc-200 print:shadow-none print:border-zinc-300">
                 <QRCodeCanvas
-                  value={`https://yoouz.com/#/record_review?placeId=${selectedPlaceId}`}
+                  value={`https://yoouz.com/?addReview=1&placeId=${selectedPlaceId}`}
                   size={180}
                   level="H"
                   includeMargin={true}
@@ -5479,10 +5482,10 @@ ${jsonLd}
 
               <div className="space-y-1.5">
                 <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20 print:bg-zinc-100 print:text-black print:border-zinc-300">
-                  {qrCustomHeading || 'LEAVE A 60-SECOND VIDEO REVIEW'}
+                  {qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW'}
                 </span>
                 <p className="text-xs text-zinc-300 font-medium print:text-zinc-600">
-                  Scan with your phone camera app to share your video review!
+                  Scan with your phone camera app to snap your photo review!
                 </p>
               </div>
             </div>

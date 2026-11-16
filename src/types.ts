@@ -124,6 +124,11 @@ export interface UserProfile {
   isDeactivated?: boolean;
   deactivatedAt?: string;
   isAdmin?: boolean;
+  username?: string;
+  isAnonymous?: boolean;
+  linkedProviders?: string[];
+  authProvider?: string;
+  yoouzPhotoUser?: boolean;
 }
 
 export interface VideoReview {
@@ -172,9 +177,11 @@ export interface VideoReview {
     isFollowed?: boolean;
     followersCount?: number;
   };
-  rating: number; // 1-5 stars
+  rating: number; // Strict whole integer 1-5 stars
+  mediaType?: 'photo' | 'video';
+  photoUrl?: string;
   durationSeconds?: number;
-  videoUrl: string;
+  videoUrl?: string;
   hlsUrl?: string;
   bunnyVideoId?: string;
   bunnyGuid?: string;

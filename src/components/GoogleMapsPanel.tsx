@@ -3,7 +3,6 @@ import {
   Star,
   Search,
   ArrowUpDown,
-  Video,
   Info,
   Navigation,
   Bookmark,
@@ -183,7 +182,7 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
             className="flex flex-col items-center gap-1.5 text-center group cursor-pointer"
           >
             <div className="w-10 h-10 rounded-full bg-zinc-800 text-white flex items-center justify-center hover:bg-zinc-700 shadow-sm transition-colors">
-              <Video className="w-5 h-5" />
+              <Camera className="w-5 h-5" />
             </div>
             <span className="text-[11px] font-medium text-zinc-200">Add Review</span>
           </button>
@@ -294,18 +293,18 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
 
             {/* Notice: Reviews aren't verified */}
             <div className="flex items-center gap-1.5 text-[12px] text-zinc-200 pt-1">
-              <span>Video reviews aren't verified</span>
+              <span>Photo reviews are captured live in-camera</span>
               <Info className="w-3.5 h-3.5 text-zinc-200" />
             </div>
 
-            {/* Prominent Google Blue Button: Record a video review */}
+            {/* Prominent Button: Add Photo Review */}
             <button
               id="btn-write-review-pill"
               onClick={onOpenRecord}
               className="w-full h-10 px-4 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-[14px] flex items-center justify-center gap-2 transition-colors border border-zinc-700"
             >
-              <Video className="w-4 h-4 text-zinc-200" />
-              <span>Record a video review</span>
+              <Camera className="w-4 h-4 text-zinc-200" />
+              <span>Add Photo Review</span>
             </button>
 
             {/* Reviews Search Bar & Sort Button */}
@@ -489,11 +488,11 @@ export const GoogleMapsPanel: React.FC<GoogleMapsPanelProps> = ({
               )}
             </div>
 
-            {/* Popular video reviewed items */}
+            {/* Popular reviewed items */}
             {place.topDishes && place.topDishes.length > 0 && (
               <div className="pt-3">
                 <h3 className="font-medium text-[15px] mb-2 font-['Google_Sans',Roboto,sans-serif]">
-                  Top Video-Reviewed Items
+                  Top Photo-Reviewed Items
                 </h3>
                 <div className="flex flex-wrap gap-1.5">
                   {(place.topDishes || []).map((dish) => (

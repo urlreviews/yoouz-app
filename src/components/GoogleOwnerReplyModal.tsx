@@ -239,7 +239,7 @@ export const GoogleOwnerReplyModal: React.FC<GoogleOwnerReplyModalProps> = ({
           {showDeleteConfirm && (
             <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-900/50 space-y-2 text-xs">
               <p className="text-red-200 font-medium">
-                Are you sure you want to remove your public response from this video review?
+                Are you sure you want to remove your public response from this photo review?
               </p>
               <div className="flex items-center gap-2 justify-end">
                 <button

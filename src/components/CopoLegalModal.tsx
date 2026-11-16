@@ -154,7 +154,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   {t("legal.sec1Title", "Description of Service")}
                 </h3>
                 <p className="text-zinc-200">
-                  {t("legal.sec1Body", "Yoouz is a video review and discovery platform. Users can record authentic reviews directly via their device camera, and businesses can display or stream these reviews within their profiles or via platform-provided tools.")}
+                  {t("legal.sec1Body", "Yoouz is a live photo review and discovery platform. Users can capture authentic photo reviews directly via their device camera with 1–5 whole-star ratings, and businesses can display these reviews within their profiles or via platform-provided tools.")}
                 </p>
               </section>
 
@@ -162,11 +162,11 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
               <section className="space-y-2">
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">2</span>
-                  {t("legal.sec2Title", "Account Registration")}
+                  {t("legal.sec2Title", "Anonymous & Linked Accounts")}
                 </h3>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
-                  <li>{t("legal.sec2Item1", "You must authenticate using your verified email address to create an account.")}</li>
-                  <li>{t("legal.sec2Item2", "You are responsible for maintaining the security of your account and restricting unauthorized access to your device.")}</li>
+                  <li>{t("legal.sec2Item1", "Visitors receive an instant anonymous handle (U/XXXXXX) with optional Google or Apple account linking.")}</li>
+                  <li>{t("legal.sec2Item2", "You are responsible for maintaining the security of your linked account and restricting unauthorized access to your device.")}</li>
                 </ul>
               </section>
 
@@ -174,25 +174,25 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
               <section className="space-y-2">
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">3</span>
-                  {t("legal.sec3Title", "Live Video Recording & Content Rules")}
+                  {t("legal.sec3Title", "Live Photo Capture & Content Rules")}
                 </h3>
                 <div className="space-y-2.5 pl-1">
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
-                    <p className="font-bold text-white mb-0.5">{t("legal.noUploadsTitle", "No File Uploads")}</p>
+                    <p className="font-bold text-white mb-0.5">{t("legal.noUploadsTitle", "No Gallery Uploads")}</p>
                     <p className="text-zinc-200">
-                      {t("legal.noUploadsBody", "All reviews must be recorded live through the Yoouz web application camera interface. Uploading pre-recorded video files from device storage or external libraries is strictly prohibited.")}
+                      {t("legal.noUploadsBody", "All reviews must be captured live through the Yoouz web application camera interface. Uploading saved photos from device galleries or external libraries is strictly prohibited.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
                     <p className="font-bold text-white mb-0.5">{t("legal.standardsTitle", "User Content Standards")}</p>
                     <p className="text-zinc-200">
-                      {t("legal.standardsBody", "You retain personal accountability for the reviews you record. You agree not to record or publish content that is unlawful, defamatory, abusive, harassing, misleading, or infringing on third-party intellectual property rights.")}
+                      {t("legal.standardsBody", "You retain personal accountability for the photo reviews you publish. You agree not to capture or publish content that is unlawful, defamatory, abusive, harassing, misleading, or infringing on third-party intellectual property rights.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800">
                     <p className="font-bold text-white mb-0.5">{t("legal.licenseTitle", "Content License")}</p>
                     <p className="text-zinc-200">
-                      {t("legal.licenseBody", "By recording a review on Yoouz, you grant Yoouz a worldwide, non-exclusive, royalty-free license to host, display, and stream your video content on the platform.")}
+                      {t("legal.licenseBody", "By publishing a photo review on Yoouz, you grant Yoouz a worldwide, non-exclusive, royalty-free license to host and display your review imagery on the platform.")}
                     </p>
                   </div>
                 </div>
@@ -206,13 +206,13 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </h3>
                 <div className="space-y-2 text-zinc-200">
                   <p>
-                    <strong className="text-white">{t("legal.noOwnership", "No Ownership Transfer:")}</strong> {t("legal.noOwnershipBody", "Businesses utilizing Yoouz do not own the video files recorded by users.")}
+                    <strong className="text-white">{t("legal.noOwnership", "No Ownership Transfer:")}</strong> {t("legal.noOwnershipBody", "Businesses utilizing Yoouz do not own the photo reviews captured by users.")}
                   </p>
                   <p>
-                    <strong className="text-white">{t("legal.streamingAccess", "Streaming-Only Access:")}</strong> {t("legal.streamingAccessBody", "Businesses are granted a limited, revocable, non-transferable right to display consumer reviews exclusively through Yoouz's authorized platform interface or official embedding tools.")}
+                    <strong className="text-white">{t("legal.streamingAccess", "Platform-Only Display:")}</strong> {t("legal.streamingAccessBody", "Businesses are granted a limited, revocable, non-transferable right to display consumer photo reviews exclusively through Yoouz's authorized platform interface or official embedding tools.")}
                   </p>
                   <p>
-                    <strong className="text-white">{t("legal.antiPiracy", "Anti-Piracy & Anti-Scraping:")}</strong> {t("legal.antiPiracyBody", "Businesses and users are strictly prohibited from screen-recording, ripping, downloading, harvesting, or stealing video files from Yoouz to re-host them on external websites or third-party servers.")}
+                    <strong className="text-white">{t("legal.antiPiracy", "Anti-Piracy & Anti-Scraping:")}</strong> {t("legal.antiPiracyBody", "Businesses and users are strictly prohibited from scraping, ripping, harvesting, or re-hosting review assets from Yoouz onto unauthorized external websites or third-party servers.")}
                   </p>
                   <p>
                     <strong className="text-white">{t("legal.futureFeatures", "Future Features and Monetization:")}</strong> {t("legal.futureFeaturesBody", "Advanced business tools, analytics, custom widgets, or higher-tier embedding features may be subject to future paid subscription tiers. Yoouz reserves the right to modify, restrict, or gate business features at any time.")}
@@ -309,10 +309,10 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
                     <p className="font-bold text-white flex items-center gap-1.5">
                       <Camera className="w-3.5 h-3.5 text-zinc-200" />
-                      {t("legal.cameraMicTitle", "Camera and Microphone Data")}
+                      {t("legal.cameraMicTitle", "Live Camera Data")}
                     </p>
                     <p className="text-zinc-200">
-                      {t("legal.cameraMicBody", "Yoouz allows you to record video reviews directly through your device's camera interface. We do not access or accept pre-recorded files or photo library uploads. Camera and microphone data are accessed strictly in real-time during your active recording session to capture and generate your live video review.")}
+                      {t("legal.cameraMicBody", "Yoouz allows you to capture photo reviews directly through your device's live camera interface. We do not access or accept saved photo library uploads. Camera frames are accessed strictly in real-time during your active capture session.")}
                     </p>
                   </div>
                 </div>
@@ -326,9 +326,9 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </h3>
                 <p className="text-zinc-200">{t("legal.privSec2Subtitle", "We use the information we collect to:")}</p>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
-                  <li>{t("legal.privSec2Item1", "Create and manage your Yoouz user account.")}</li>
-                  <li>{t("legal.privSec2Item2", "Authenticate your identity securely via passwordless email verification.")}</li>
-                  <li>{t("legal.privSec2Item3", "Process, host, and display your live-recorded video reviews on the platform.")}</li>
+                  <li>{t("legal.privSec2Item1", "Provision and manage your Yoouz anonymous or linked user account.")}</li>
+                  <li>{t("legal.privSec2Item2", "Authenticate linked Google or Apple accounts securely.")}</li>
+                  <li>{t("legal.privSec2Item3", "Process, host, and display your live-captured photo reviews on the platform.")}</li>
                   <li>{t("legal.privSec2Item4", "Maintain platform security and prevent fraudulent activity.")}</li>
                 </ul>
               </section>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Play, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Video, User } from "lucide-react";
+import { Search, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
@@ -7,6 +7,7 @@ import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
+import { getRoundedRating } from "./CopoStarRating";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -707,7 +708,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {searchMode === "review" ? (
           <div className="flex items-center gap-2">
             <div className="relative flex items-center justify-center w-[32px] h-[32px] rounded-[11px] bg-zinc-900 border border-zinc-800 text-white shadow-md shrink-0">
-              <Video className="w-4 h-4 stroke-[2.2] text-white" />
+              <Camera className="w-4 h-4 stroke-[2.2] text-white" />
             </div>
             <span className="text-white text-[17px] font-bold tracking-tight">
               {headerTitle || "Search Business"}
@@ -770,8 +771,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </h1>
           <p className="text-zinc-300/90 text-[16px] xs:text-[17.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-3.5 leading-snug max-w-[340px] xs:max-w-[390px] sm:max-w-xl mx-auto font-medium text-balance tracking-tight">
             {searchMode === "review"
-              ? (headerSubtitle || "Search any business, product, or place to record your authentic 60-second video review.")
-              : "Watch authentic video reviews of any place, product, or service, or record your own."
+              ? (headerSubtitle || "Search any business, product, or place to snap a live photo review.")
+              : "Browse real live photo reviews of any place, product, or service, or snap your own."
             }
           </p>
         </div>
@@ -912,7 +913,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           <section className="w-full relative mt-0 md:mt-2 animate-in fade-in duration-200">
             <div className="flex items-center justify-between w-full mb-2.5 sm:mb-3 px-1">
               <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-                Trending Video Reviews
+                Trending Photo Reviews
               </h2>
             <button
               type="button"
@@ -994,19 +995,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
                     )}
 
-                    {/* Top-Left Star Badge: ⭐ 5.0 */}
+                    {/* Top-Left Star Badge: ⭐ 5 (Whole Number) */}
                     <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
-                        {rating.toFixed(1)}
+                        {getRoundedRating(rating)}
                       </span>
-                    </div>
-
-                    {/* Centered Play Button */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
-                        <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                      </div>
                     </div>
 
                     {/* Clean Bottom Scrim: Business Name & Creator Full Name */}

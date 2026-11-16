@@ -4,9 +4,10 @@ import { getPlaceSlug, formatBusinessName, extractCleanDomain, resolveSafeAuthor
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock, Video, Sparkles, Lock } from "lucide-react";
+import { isPhotoReview } from "../utils/videoUtils";
+import { Star, Play, Pause, CheckCircle, ChevronLeft, ChevronRight, Volume2, VolumeX, Globe, Clock, Camera, Sparkles, Lock } from "lucide-react";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { CopoStarRating } from "./CopoStarRating";
+import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 
 export interface CopoEmbedViewProps {
   embedId?: string | null;
@@ -325,20 +326,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
     (currentVideo as any)?.authorAvatar ||
     getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
 
-  const captionText = useMemo(() => {
-    let trimmed = (currentVideo?.caption || "").trim();
-    trimmed = trimmed
-      .replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com")
-      .replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
-    if (/^video review (for|of)\b/i.test(trimmed)) {
-      const cleanDomain = getDisplayUrlAsDomain(currentVideo) || displayDomain || "yoouz.com";
-      return `Video review for ${cleanDomain}`;
-    }
-    if (!trimmed) {
-      return `Video review for ${displayDomain || "yoouz.com"}`;
-    }
-    return trimmed;
-  }, [currentVideo, displayDomain]);
+  const isCurrentPhoto = isPhotoReview(currentVideo);
+  const captionText = `Live photo review for ${getDisplayUrlAsDomain(currentVideo) || displayDomain || "yoouz.com"}`;
 
   // Synchronize video element play/pause state when isVideoPaused or playingVideoId changes
   useEffect(() => {
@@ -603,14 +592,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
           </div>
 
           <div className="space-y-2 max-w-[280px]">
-            <h3 className="text-base font-black text-white leading-tight tracking-tight uppercase">Video Review Widget Inactive</h3>
+            <h3 className="text-base font-black text-white leading-tight tracking-tight uppercase">Photo Review Widget Inactive</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              This venue is currently operating on the <strong className="text-zinc-200">Free Package</strong>. Upgrading to the <strong className="text-white">Premium Partner Suite ($199/mo)</strong> unlocks 60s video streams, widget embeds & 1st-Page Google SEO packages.
+              This venue is currently operating on the <strong className="text-zinc-200">Free Package</strong>. Upgrading to the <strong className="text-white">Premium Partner Suite ($199/mo)</strong> unlocks live photo review streams, widget embeds & 1st-Page Google SEO packages.
             </p>
           </div>
 
           <div className="p-4 bg-zinc-900/80 border border-zinc-800 rounded-2xl text-[11px] text-zinc-300 max-w-[280px] leading-relaxed">
-            <p className="font-bold text-white mb-1">How to Re-activate Video Embeds?</p>
+            <p className="font-bold text-white mb-1">How to Re-activate Review Embeds?</p>
             Request a Premium Partner Upgrade inside your Yoouz Business Portal or contact your assigned regional partner agency to activate your $199/mo suite.
           </div>
 
@@ -694,10 +683,10 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     imageClassName="w-full h-full object-contain"
                     fallbackTextClassName="font-black text-sm text-white"
                   />
-                  {/* Subtle record badge */}
+                  {/* Subtle live badge */}
                   <div className="absolute -bottom-1 -right-1 bg-zinc-800 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full border-2 border-zinc-950 flex items-center gap-1 shadow-md">
                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    <span>60s</span>
+                    <span>LIVE</span>
                   </div>
                 </div>
               </div>
@@ -711,7 +700,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   </span>
                 </h3>
                 <p className="text-[11.5px] sm:text-xs text-zinc-400 font-medium leading-relaxed">
-                  Real customers record authentic 60-second video reviews. Your review will appear live on this website.
+                  Real customers snap live photo reviews. Your review will appear live on this website.
                 </p>
               </div>
 
@@ -721,13 +710,13 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 onClick={handleRecordClick}
                 className="w-full max-w-[260px] flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs sm:text-sm shadow-xl active:scale-95 transition-all cursor-pointer border border-white/40"
               >
-                <Video className="w-4 h-4 fill-zinc-950 text-zinc-950" />
-                <span>Record Video Review</span>
+                <Camera className="w-4 h-4 text-zinc-950" />
+                <span>Add Photo Review</span>
               </button>
 
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-400 font-semibold pt-0.5">
                 <Sparkles className="w-3 h-3 text-zinc-400" />
-                <span>100% Authentic • Live Video Only</span>
+                <span>100% Authentic • Live Camera Only</span>
               </div>
             </div>
 
@@ -751,12 +740,12 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
         ) : (
           /* Video Carousel when reviews exist */
           <>
-            {/* Background Full-Bleed Video / Poster */}
+            {/* Background Full-Bleed Photo / Video Poster */}
             <div 
               className="absolute inset-0 w-full h-full bg-black cursor-pointer"
-              onClick={() => currentVideo && handleTogglePlay(currentVideo)}
+              onClick={() => !isCurrentPhoto && currentVideo && handleTogglePlay(currentVideo)}
             >
-              {isPlaying ? (
+              {!isCurrentPhoto && isPlaying ? (
                 <video
                   ref={(el) => {
                     videoElementRef.current = el;
@@ -770,6 +759,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   }}
                   src={currentVideo.videoUrl}
                   poster={
+                    currentVideo.photoUrl ||
                     currentVideo.thumbnailUrl ||
                     currentVideo.bannerUrl ||
                     currentVideo.ogImage ||
@@ -785,13 +775,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 <img
                   src={
                     getProxiedImageUrl(
+                      currentVideo?.photoUrl ||
                       currentVideo?.thumbnailUrl ||
                       currentVideo?.bannerUrl ||
                       currentVideo?.ogImage ||
                       `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
                     )
                   }
-                  alt={currentVideo?.caption || currentVideo?.placeName || "Yoouz Review"}
+                  alt={currentVideo?.placeName || "Yoouz Review"}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
@@ -804,8 +795,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-none z-10" />
 
-              {/* Center Luxury Play / Pause Indicator */}
-              {(!isPlaying || isVideoPaused) ? (
+              {/* Center Play / Pause Indicator (legacy video items only) */}
+              {!isCurrentPhoto && ((!isPlaying || isVideoPaused) ? (
                 <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
                   <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
                     <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
@@ -817,7 +808,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     <Pause className="w-5 h-5 fill-white text-white" />
                   </div>
                 </div>
-              )}
+              ))}
             </div>
 
             {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
@@ -852,22 +843,24 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 </div>
               </div>
 
-              {/* Mute / Unmute Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMuted((prev) => !prev);
-                }}
-                className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? (
-                  <VolumeX className="w-3.5 h-3.5 text-white" />
-                ) : (
-                  <Volume2 className="w-3.5 h-3.5 text-white" />
-                )}
-              </button>
+              {/* Mute / Unmute Button (only for legacy video reviews) */}
+              {!isCurrentPhoto && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMuted((prev) => !prev);
+                  }}
+                  className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-3.5 h-3.5 text-white" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5 text-white" />
+                  )}
+                </button>
+              )}
             </div>
 
             {/* SIDE CHEVRONS (Desktop hover or tap navigation) */}
@@ -943,7 +936,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   {/* Line 2: Rating Stars & Recorded Time */}
                   <div className="flex items-center gap-2">
                     <CopoStarRating
-                      rating={currentVideo?.rating || 5}
+                      rating={getRoundedRating(currentVideo?.rating || 5)}
+                      roundToWhole={true}
                       starClassName="w-3.5 h-3.5"
                       filledColorClass="fill-amber-400 text-amber-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
                       emptyColorClass="fill-zinc-500/70 text-zinc-300/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
@@ -954,14 +948,14 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     </span>
                   </div>
 
-                  {/* Line 3: Caption (e.g. Video review for yoouz.com) */}
-                  <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
+                  {/* Line 3: Domain / Platform */}
+                  <p className="text-white text-[12px] sm:text-[12.5px] font-medium line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] mt-0.5 leading-snug">
                     {captionText}
                   </p>
                 </div>
               </div>
 
-              {/* Footer Bar: Live Sync on Left, Video Count (1 of 3) on Right */}
+              {/* Footer Bar: Live Sync on Left, Review Count on Right */}
               <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
                 <div className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
@@ -970,7 +964,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[11px] font-medium text-white/80 hover:text-white transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] no-underline outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                    title="Powered by Yoouz - Authentic Video Review Platform"
+                    title="Powered by Yoouz - Live Photo Review Platform"
                   >
                     Live Sync Powered by Yoouz
                   </a>

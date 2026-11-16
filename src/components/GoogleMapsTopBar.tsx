@@ -146,7 +146,7 @@ export const GoogleMapsTopBar: React.FC<GoogleMapsTopBarProps> = ({
           className="hidden sm:flex items-center gap-1.5 h-10 px-3.5 rounded-full bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 text-[13px] font-bold shadow-sm transition-all"
         >
           <Camera className="w-4 h-4 text-white" />
-          <span>Record Video Review</span>
+          <span>Add Review</span>
         </button>
 
         <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 shadow-sm cursor-pointer">

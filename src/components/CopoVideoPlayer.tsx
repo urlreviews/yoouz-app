@@ -1,20 +1,14 @@
-// Yoouz Platform Video Player & Feed Engine
-import React, { useRef, useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
+// Yoouz Platform Live Photo Review Feed Engine
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
-import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
-import { prefetchVideo, prefetchUpcomingVideos } from "../utils/videoPrefetcher";
-import { resolvePlayableVideoSource, resolveVideoPosterUrl, resolvePlayableVideoSourcesCascade, downloadVideoForAds } from "../utils/videoUtils";
 import { VideoFeedCard } from "./VideoFeedCard";
-import { SubtitleOverlay } from "./SubtitleOverlay";
-import { CopoBrandedAdExportModal } from "./CopoBrandedAdExportModal";
-import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
+import { SpecialStarSelector } from "./SpecialStarSelector";
 import {
   ChevronUp,
   ChevronDown,
-  Video,
+  Camera,
   Flag,
   MoreHorizontal,
-  EyeOff,
   Share2,
   Bookmark,
   BookmarkCheck,
@@ -26,18 +20,23 @@ import {
   Edit3,
   Check,
   Sparkles,
-  Loader2,
-  ArrowDown,
-  Plus,
-  Download,
-  Repeat
+  Loader2
 } from "lucide-react";
 import { VideoReview, FeedSubTab, VideoAuthor, Place } from "../types";
-import Hls from "hls.js";
 import { INITIAL_SEED_VIDEOS } from "../data/seedReviews";
 import { isPurgedItem, normalizeReview } from "../hooks/useFeedPagination";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS } from "../utils/logoUtils";
-import { isAuthorMatch, formatBusinessName, isGenericPlaceName, extractCleanDomain, KNOWN_OFFICIAL_NAMES, toTitleCase, getReviewTime } from "../utils/placeUtils";
+import {
+  isAuthorMatch,
+  formatBusinessName,
+  isGenericPlaceName,
+  extractCleanDomain,
+  KNOWN_OFFICIAL_NAMES,
+  toTitleCase,
+  getReviewTime
+} from "../utils/placeUtils";
+import { getRoundedRating } from "./CopoStarRating";
+import { resolveVideoPosterUrl } from "../utils/videoUtils";
 
 interface CopoVideoPlayerProps {
   videos: VideoReview[];
@@ -67,7 +66,21 @@ interface CopoVideoPlayerProps {
   allUsers?: any[];
   onDeleteVideo?: (videoId: string) => void;
   onPurgeAllVideos?: () => void;
-  onUpdateVideoReview?: (videoId: string, updates: { rating?: number; caption?: string; dishOrItem?: string; tags?: string[]; segments?: any[]; transcriptText?: string; hasBunnySmartCaptions?: boolean; hasHardwareSilenceSync?: boolean; title?: string; aiTitle?: string }) => void;
+  onUpdateVideoReview?: (
+    videoId: string,
+    updates: {
+      rating?: number;
+      caption?: string;
+      dishOrItem?: string;
+      tags?: string[];
+      segments?: any[];
+      transcriptText?: string;
+      hasBunnySmartCaptions?: boolean;
+      hasHardwareSilenceSync?: boolean;
+      title?: string;
+      aiTitle?: string;
+    }
+  ) => void;
   isPaused?: boolean;
   initialAutoplayPaused?: boolean;
   contextKey?: string;
@@ -81,15 +94,6 @@ interface CopoVideoPlayerProps {
   onCloseEmbed?: () => void;
   commentsOpen?: boolean;
 }
-
-const safeSetVolume = (v: HTMLVideoElement | null, vol: number = 1) => {
-  if (!v) return;
-  try {
-    v.volume = vol;
-  } catch (e) {
-    // Gracefully ignore on iOS Safari/WebKit where volume is strictly read-only and hardware-managed
-  }
-};
 
 export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   videos,
@@ -108,7 +112,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onToggleFollow,
   onToggleRepost,
   onOpenReport,
-  onHideVideo,
   onGoHome,
   onGoBack,
   feedContextTitle,
@@ -120,8 +123,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   onDeleteVideo,
   onPurgeAllVideos,
   onUpdateVideoReview,
-  isPaused = false,
-  initialAutoplayPaused = false,
   contextKey,
   onRecordView,
   unreadCount = 0,
@@ -134,1017 +135,63 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   commentsOpen = false
 }) => {
   const { t } = useLanguage();
-  // Fallback to static seed reviews ONLY if main home feed is hydrating without explicit videos prop or context
+
   const effectiveVideos = useMemo(() => {
     if (Array.isArray(videos)) {
-      return videos.filter(v => v && !isPurgedItem(v));
+      return videos.filter((v) => v && !isPurgedItem(v));
     }
     if (feedContextTitle) {
       return [];
     }
-    const fallbackList = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
-      ? (window as any).__INITIAL_FEED_VIDEOS__
-      : INITIAL_SEED_VIDEOS;
-    return fallbackList.filter((v: any) => v && !isPurgedItem(v)).map(normalizeReview).sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    const fallbackList =
+      typeof window !== "undefined" &&
+      Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) &&
+      (window as any).__INITIAL_FEED_VIDEOS__.length > 0
+        ? (window as any).__INITIAL_FEED_VIDEOS__
+        : INITIAL_SEED_VIDEOS;
+    return fallbackList
+      .filter((v: any) => v && !isPurgedItem(v))
+      .map(normalizeReview)
+      .sort((a: VideoReview, b: VideoReview) => getReviewTime(b) - getReviewTime(a));
   }, [videos, feedContextTitle]);
-  const currentVideo = effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] || effectiveVideos[0];
-  const [isMuted, setIsMuted, isSessionAudioUnlocked, unlockAudioSession] = useGlobalMute();
-  const [videoTime, setVideoTime] = useState(0);
+
+  const currentVideo =
+    effectiveVideos[Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1))] ||
+    effectiveVideos[0];
+
   const [moreMenuVideo, setMoreMenuVideo] = useState<VideoReview | null>(null);
   const [showConfirmPurgeAllModal, setShowConfirmPurgeAllModal] = useState<boolean>(false);
 
-  // Disable automatic feed looping so home page stops at the last video matching business and user profiles
-  const shouldLoop = false;
-  const [loopCount, setLoopCount] = useState<number>(shouldLoop ? 10 : 1);
-  useEffect(() => {
-    setLoopCount(shouldLoop ? 10 : 1);
-  }, [shouldLoop, effectiveVideos.length]);
-
   const displayItems = useMemo(() => {
     if (effectiveVideos.length === 0) return [];
-    if (!shouldLoop || loopCount === 1) {
-      return effectiveVideos.map((vid, i) => ({
-        video: vid,
-        cardIndex: i,
-        realIndex: i,
-        slotId: `video-slot-${i}`,
-        key: `vid-${vid.id}-${i}`
-      }));
-    }
-    const items: { video: VideoReview; cardIndex: number; realIndex: number; slotId: string; key: string }[] = [];
-    for (let loop = 0; loop < loopCount; loop++) {
-      for (let i = 0; i < effectiveVideos.length; i++) {
-        const cardIndex = loop * effectiveVideos.length + i;
-        items.push({
-          video: effectiveVideos[i],
-          cardIndex,
-          realIndex: i,
-          slotId: `video-slot-${cardIndex}`,
-          key: `vid-${effectiveVideos[i].id}-${cardIndex}`
-        });
-      }
-    }
-    return items;
-  }, [effectiveVideos, loopCount, shouldLoop]);
+    return effectiveVideos.map((vid, i) => ({
+      video: vid,
+      cardIndex: i,
+      realIndex: i,
+      slotId: `photo-slot-${i}`,
+      key: `photo-${vid.id}-${i}`
+    }));
+  }, [effectiveVideos]);
 
-  const [activeCardIndex, setActiveCardIndex] = useState<number>(() => {
-    return Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)));
-  });
-  const [hasScrolledAway, setHasScrolledAway] = useState<boolean>(false);
-  useEffect(() => {
-    if (activeCardIndex > 0) {
-      setHasScrolledAway(true);
-    }
-  }, [activeCardIndex]);
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(() =>
+    Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)))
+  );
   const activeCardIndexRef = useRef<number>(activeCardIndex);
   activeCardIndexRef.current = activeCardIndex;
 
-
-  // Persistent Hardware-Accelerated Video Player Pool (Active + Upcoming Preload + Previous Hold)
-  // Maintains strictly 3 hardware video elements across the feed to guarantee 0ms instant playback on swipe
-  // and eliminate any 2-second audio latency while strictly preventing decoder exhaustion on mobile.
-  const feedVideoRef = useRef<HTMLVideoElement | null>(null);
-  const videoPoolRef = useRef<HTMLVideoElement[]>([]);
-  const hlsPoolRef = useRef<Map<HTMLVideoElement, Hls>>(new Map());
-  const slotBindingRef = useRef<Map<string, HTMLVideoElement>>(new Map());
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isBuffering, setIsBuffering] = useState<boolean>(false);
-  const [firstFrameRenderedId, setFirstFrameRenderedId] = useState<string | null>(null);
-  const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [isActualMuted, setIsActualMuted] = useState<boolean>(true);
-  const [isManuallyPaused, setIsManuallyPaused] = useState<boolean>(false);
-  const isManuallyPausedRef = useRef<boolean>(false);
-  const playPromiseRef = useRef<Promise<void> | null>(null);
-  const lastAdvanceTimeRef = useRef<{ time: number; currentTime: number }>({ time: Date.now(), currentTime: 0 });
-  const lastLoadedVideoIdRef = useRef<string | null>(null);
-  const activeVideoRef = useRef<VideoReview | null>(null);
-
-  // Local blob URLs for instant 0ms playback of newly recorded reviews
-  const [localBlobUrls, setLocalBlobUrls] = useState<Record<string, string>>({});
-  const localBlobUrlsRef = useRef<Record<string, string>>({});
-  // Persistent record of broken video source URLs per video ID to prevent reverting back to bad URLs
-  const failedSourcesRef = useRef<Map<string, Set<string>>>(new Map());
-
-  // Grace period state: prevents brief 1-frame pop-up of "No Video Reviews Yet" during feed hydration
-  const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!currentVideo) {
-      const timer = setTimeout(() => {
-        setShowEmptyState(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    } else {
-      setShowEmptyState(false);
-    }
-  }, [currentVideo]);
-
-  // Initialize pool of 3 hardware-accelerated video elements once
-  useLayoutEffect(() => {
-    if (typeof document === "undefined") return;
-    
-    // Immediate pre-connect to critical Bunny CDN storage edge to reduce TTFB for video streams
-    const preconnect = document.createElement("link");
-    preconnect.rel = "preconnect";
-    preconnect.href = "https://rev1.b-cdn.net";
-    preconnect.crossOrigin = "anonymous";
-    document.head.appendChild(preconnect);
-
-    if (videoPoolRef.current.length === 0) {
-      const pool: HTMLVideoElement[] = [];
-      for (let i = 0; i < 3; i++) {
-        const vid = document.createElement("video");
-        vid.id = `copo-feed-video-${i}`;
-        vid.playsInline = true;
-        vid.setAttribute("webkit-playsinline", "true");
-        vid.setAttribute("x5-playsinline", "true");
-        vid.setAttribute("x5-video-player-type", "h5-page");
-        vid.setAttribute("x5-video-player-fullscreen", "true");
-        vid.loop = true;
-        vid.autoplay = false;
-        vid.preload = "auto";
-        vid.disablePictureInPicture = true;
-        vid.crossOrigin = "anonymous";
-        vid.className = "w-full h-full absolute inset-0 z-0 pointer-events-none object-cover copo-video-feed-element";
-        vid.style.objectFit = "cover";
-        vid.style.width = "100%";
-        vid.style.height = "100%";
-
-        vid.addEventListener("playing", () => {
-          if (feedVideoRef.current === vid) {
-            setIsBuffering(false);
-            setIsPlaying(true);
-            if (lastLoadedVideoIdRef.current && vid.readyState >= 2) {
-              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-            }
-          }
-        });
-        vid.addEventListener("play", () => {
-          if (feedVideoRef.current === vid) {
-            setIsBuffering(false);
-          }
-        });
-        vid.addEventListener("pause", () => {
-          if (feedVideoRef.current === vid) {
-            setIsPlaying(false);
-          }
-        });
-        vid.addEventListener("waiting", () => {
-          if (feedVideoRef.current === vid) {
-            setIsBuffering(true);
-          }
-        });
-        vid.addEventListener("canplay", () => {
-          if (feedVideoRef.current === vid) {
-            setIsBuffering(false);
-            if (!vid.paused && lastLoadedVideoIdRef.current && vid.readyState >= 2) {
-              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-            }
-          }
-        });
-        vid.addEventListener("loadeddata", () => {
-          if (feedVideoRef.current === vid) {
-            setIsBuffering(false);
-            if (lastLoadedVideoIdRef.current && vid.readyState >= 2) {
-              setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-            }
-          }
-        });
-        vid.addEventListener("loadedmetadata", () => {
-          if (feedVideoRef.current === vid && vid.duration && !isNaN(vid.duration)) {
-            setVideoDuration(vid.duration);
-          }
-        });
-        vid.addEventListener("timeupdate", () => {
-          if (feedVideoRef.current === vid) {
-            const curTime = typeof vid.currentTime === 'number' && !isNaN(vid.currentTime) ? vid.currentTime : 0;
-            setVideoTime(curTime);
-            if (!vid.paused && (curTime >= 0.01 || vid.readyState >= 2)) {
-              setIsPlaying(true);
-              setIsBuffering(false);
-              if (lastLoadedVideoIdRef.current) {
-                setFirstFrameRenderedId(lastLoadedVideoIdRef.current);
-              }
-            }
-            if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
-              setVideoDuration(vid.duration);
-              setProgressPercent((curTime / vid.duration) * 100);
-            }
-          }
-        });
-        vid.addEventListener("seeking", () => {
-          if (feedVideoRef.current === vid && typeof vid.currentTime === 'number' && !isNaN(vid.currentTime)) {
-            setVideoTime(vid.currentTime);
-          }
-        });
-        vid.addEventListener("seeked", () => {
-          if (feedVideoRef.current === vid && typeof vid.currentTime === 'number' && !isNaN(vid.currentTime)) {
-            setVideoTime(vid.currentTime);
-          }
-        });
-        vid.addEventListener("volumechange", () => {
-          if (feedVideoRef.current === vid) {
-            setIsActualMuted(vid.muted);
-          }
-        });
-
-        // Failover error listener: automatically cascade to fallback streams if primary CDN URL encounters any decode or network issue
-        vid.addEventListener("error", () => {
-          if (!vid.error || vid.error.code === 1) return; // Ignore user/browser aborted requests
-          if (feedVideoRef.current === vid) {
-            const active = activeVideoRef.current;
-            if (active) {
-              const currentSrc = vid.currentSrc || vid.src;
-              console.warn(`[Video Playback Error] Failed to play video ${active.id} (code: ${vid.error?.code}, src: ${currentSrc})`);
-
-              if (!failedSourcesRef.current.has(active.id)) {
-                failedSourcesRef.current.set(active.id, new Set());
-              }
-              const failedSet = failedSourcesRef.current.get(active.id)!;
-              if (currentSrc) failedSet.add(currentSrc);
-              if (vid.src) failedSet.add(vid.src);
-
-              const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
-              const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
-              const nextCandidate = cascade.find(
-                (s) => s && !failedSet.has(s) && s !== currentSrc && !currentSrc.endsWith(s)
-              ) || (!failedSet.has("/default-review.mp4") ? "/default-review.mp4" : "");
-              if (nextCandidate && nextCandidate !== currentSrc) {
-                console.warn(`[CopoVideoPlayer] Auto-recovering playback for ${active.id} with candidate: ${nextCandidate}`);
-                vid.src = nextCandidate;
-                vid.load();
-                if (!isManuallyPausedRef.current && !isPaused) {
-                  vid.play().then(() => {
-                    setIsPlaying(true);
-                    setIsBuffering(false);
-                    setFirstFrameRenderedId(active.id);
-                  }).catch(() => {});
-                } else {
-                  setIsPlaying(false);
-                  setIsBuffering(false);
-                }
-              }
-            }
-          }
-        });
-
-        pool.push(vid);
-      }
-      videoPoolRef.current = pool;
-    }
-
-    return () => {
-      videoPoolRef.current.forEach((v) => {
-        const hls = hlsPoolRef.current.get(v);
-        if (hls) {
-          hls.destroy();
-          hlsPoolRef.current.delete(v);
-        }
-        try {
-          v.pause();
-          v.removeAttribute("src");
-          v.load();
-        } catch (e) {}
-        v.remove();
-      });
-      videoPoolRef.current = [];
-      feedVideoRef.current = null;
-      slotBindingRef.current.clear();
-    };
-  }, []);
-
-  // High-Precision 60Hz Millisecond Subtitle Synchronization Loop (TikTok / CapCut sub-16ms precision standard)
-  useEffect(() => {
-    let frameId: number;
-
-    const tickPrecisionSync = () => {
-      const vid = feedVideoRef.current;
-      if (vid && !vid.paused && typeof vid.currentTime === 'number') {
-        const curTime = vid.currentTime;
-        setVideoTime(curTime);
-        if (vid.duration && !isNaN(vid.duration) && vid.duration > 0) {
-          setProgressPercent((curTime / vid.duration) * 100);
-        }
-      }
-      frameId = requestAnimationFrame(tickPrecisionSync);
-    };
-
-    frameId = requestAnimationFrame(tickPrecisionSync);
-
-    return () => {
-      if (frameId) cancelAnimationFrame(frameId);
-    };
-  }, []);
-
-  // Sync mute state changes to the active video without interrupting playback
-  useEffect(() => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    if (vid.muted !== effectiveMuted) {
-      try {
-        vid.muted = effectiveMuted;
-        if (!effectiveMuted) {
-          safeSetVolume(vid, 1);
-        }
-      } catch (e) {
-        // Only ignore if setting muted property was prohibited
-      }
-    }
-    setIsActualMuted(vid.muted);
-  }, [isMuted, isSessionAudioUnlocked]);
-
-  // Master Orchestration: Mount active video, pre-buffer upcoming video, and start immediate playback
-  useLayoutEffect(() => {
-    const pool = videoPoolRef.current;
-    if (!pool || pool.length === 0) return;
-
-    const currentCard = displayItems[activeCardIndex] || displayItems[0];
-    if (!currentCard || !currentCard.video) {
-      pool.forEach((v) => {
-        try {
-          v.pause();
-          v.remove();
-        } catch (e) {}
-      });
-      feedVideoRef.current = null;
-      lastLoadedVideoIdRef.current = null;
-      return;
-    }
-
-    const activeVideo = currentCard.video;
-    const nextCard = displayItems[activeCardIndex + 1] || (shouldLoop && videos.length > 1 ? displayItems[0] : null);
-    const nextVideo = nextCard?.video || null;
-    const prevCard = activeCardIndex > 0 ? displayItems[activeCardIndex - 1] : null;
-    const prevVideo = prevCard?.video || null;
-
-    const neededVideoIds = new Set<string>();
-    neededVideoIds.add(activeVideo.id);
-    if (nextVideo) neededVideoIds.add(nextVideo.id);
-    if (prevVideo) neededVideoIds.add(prevVideo.id);
-
-    const loadVideoSource = (vid: HTMLVideoElement, video: VideoReview, cachedLocalBlobUrl?: string) => {
-      if (!vid || !video) return;
-
-      const localBlob = cachedLocalBlobUrl || localBlobUrlsRef.current[video.id] || localBlobUrls[video.id] || (video as any)?.localBlobUrl || (video as any)?.blobUrl;
-      const cascade = resolvePlayableVideoSourcesCascade(video, localBlob);
-      const failedSet = failedSourcesRef.current.get(video.id) || new Set<string>();
-      
-      const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[cascade.length - 1];
-      if (!activeSrc) return;
-
-      vid.dataset.boundVideoId = video.id;
-      
-      // Cleanup existing HLS if any
-      const existingHls = hlsPoolRef.current.get(vid);
-      if (existingHls) {
-        existingHls.destroy();
-        hlsPoolRef.current.delete(vid);
-      }
-
-      const triggerFallback = (failedSrc: string) => {
-        console.warn(`🎬 [Video Player] Source failed: ${failedSrc}. Attempting fallback for ${video.id}`);
-        const currentFailed = failedSourcesRef.current.get(video.id) || new Set<string>();
-        currentFailed.add(failedSrc);
-        failedSourcesRef.current.set(video.id, currentFailed);
-        
-        // Safety: only retry if there are other sources left to try
-        const remaining = cascade.filter(s => !currentFailed.has(s));
-        if (remaining.length > 0) {
-          loadVideoSource(vid, video, cachedLocalBlobUrl);
-        }
-      };
-
-      if (activeSrc.includes(".m3u8")) {
-        if (Hls.isSupported()) {
-          const hls = new Hls({
-            capLevelToPlayerSize: true,
-            autoStartLoad: true,
-            startFragPrefetch: true,
-            maxMaxBufferLength: 15,
-            manifestLoadingMaxRetry: 1,
-            levelLoadingMaxRetry: 1
-          });
-          hls.loadSource(activeSrc);
-          hls.attachMedia(vid);
-          hlsPoolRef.current.set(vid, hls);
-          
-          hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) {
-              triggerFallback(activeSrc);
-            }
-          });
-        } else if (vid.canPlayType("application/vnd.apple.mpegurl")) {
-          // Native Safari HLS
-          vid.src = activeSrc;
-          vid.onerror = () => triggerFallback(activeSrc);
-          try { vid.load(); } catch (e) {}
-        } else {
-          triggerFallback(activeSrc);
-        }
-      } else {
-        vid.src = activeSrc;
-        vid.onerror = () => triggerFallback(activeSrc);
-        try { vid.load(); } catch (e) {}
-      }
-
-      // Clean up any native track elements and ensure textTracks are disabled to prevent duplicate bottom captions
-      const existingTracks = vid.querySelectorAll("track");
-      existingTracks.forEach((t) => t.remove());
-      try {
-        if (vid.textTracks) {
-          for (let i = 0; i < vid.textTracks.length; i++) {
-            vid.textTracks[i].mode = "disabled";
-          }
-        }
-      } catch (e) {}
-    };
-
-    // 1. Resolve which element hosts activeVideo
-    let activeVid = slotBindingRef.current.get(activeVideo.id);
-
-    // If not already bound to a pool element, claim one
-    if (!activeVid || !pool.includes(activeVid)) {
-      activeVid = pool.find((v) => {
-        const boundId = [...slotBindingRef.current.entries()].find(([, el]) => el === v)?.[0];
-        return !boundId || !neededVideoIds.has(boundId);
-      }) || pool[0];
-
-      // Unbind previous owner of this element
-      for (const [vId, el] of slotBindingRef.current.entries()) {
-        if (el === activeVid) slotBindingRef.current.delete(vId);
-      }
-      slotBindingRef.current.set(activeVideo.id, activeVid);
-    }
-
-    // Instantly mute and pause all other video elements in the pool synchronously to prevent audio bleedover
-    pool.forEach((v) => {
-      if (v !== activeVid) {
-        v.muted = true;
-        try {
-          v.pause();
-        } catch (e) {}
-      }
-    });
-
-    // Mount activeVid into its target card slot
-    const activeSlotId = currentCard.slotId || `video-slot-${activeCardIndex}`;
-    const mountActive = () => {
-      const activeSlot = document.getElementById(activeSlotId);
-      if (activeSlot && activeVid && activeVid.parentElement !== activeSlot) {
-        activeSlot.appendChild(activeVid);
-      }
-    };
-    mountActive();
-    const raf = requestAnimationFrame(mountActive);
-
-    // Point feedVideoRef to the active video element
-    feedVideoRef.current = activeVid;
-    activeVideoRef.current = activeVideo;
-    const isNewVideo = lastLoadedVideoIdRef.current !== activeVideo.id;
-
-    const isSameSrc = (elSrc: string, targetSrc: string) => {
-      if (!elSrc) return false;
-      try {
-        return new URL(elSrc, window.location.href).href === new URL(targetSrc, window.location.href).href;
-      } catch (e) {
-        return elSrc === targetSrc;
-      }
-    };
-
-    // Load active source if not matching (prioritizing local blob if available and respecting failedSources)
-    const localBlob = localBlobUrlsRef.current[activeVideo.id] || localBlobUrls[activeVideo.id];
-    const cascade = resolvePlayableVideoSourcesCascade(activeVideo, localBlob);
-    const failedSet = failedSourcesRef.current.get(activeVideo.id) || new Set();
-    const activeSrc = cascade.find(s => !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
-    activeVid.preload = "auto";
-    
-    // Enforce full vertical fill (object-cover) for seamless 9:16 phone layout
-    activeVid.style.objectFit = "cover";
-
-    const currentVidSrc = activeVid.currentSrc || activeVid.src;
-    // CRITICAL: Preserve pre-warmed HLS/MP4 buffer when swiping to nextVid/prevVid!
-    // Previously, isNewVideo triggered loadVideoSource() which destroyed the pre-warmed Hls instance.
-    const isAlreadyBoundToThisVideo =
-      activeVid.dataset.boundVideoId === activeVideo.id &&
-      (Boolean(currentVidSrc) || hlsPoolRef.current.has(activeVid));
-
-    if (!isAlreadyBoundToThisVideo) {
-      loadVideoSource(activeVid, activeVideo, localBlob);
-    }
-
-    // Strict Guard: If this video is already correctly loaded and playing (or paused at a specific time), DO NOT interrupt it
-    if (!isNewVideo) {
-      // Just ensure sync of minor properties
-      const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-      if (activeVid.muted !== effectiveMuted) {
-        activeVid.muted = effectiveMuted;
-        if (!effectiveMuted) safeSetVolume(activeVid, 1);
-      }
-      setIsActualMuted(activeVid.muted);
-      
-      // If the app wants it to play (not paused globally) and it is not manually paused, ensure it keeps playing
-      if (activeVid.paused && !isPaused && !isManuallyPausedRef.current) {
-        activeVid.play().catch(() => {});
-      }
-      return;
-    }
-    const activePoster = resolveVideoPosterUrl(activeVideo);
-    if (activeVid.poster !== activePoster) {
-      activeVid.poster = activePoster;
-    }
-
-    // Configure audio & mute on active element
-    const effectiveMuted = isMuted || !isSessionAudioUnlocked;
-    if (activeVid.muted !== effectiveMuted) {
-      try {
-        activeVid.muted = effectiveMuted;
-        if (!effectiveMuted) {
-          safeSetVolume(activeVid, 1);
-        }
-      } catch (e) {
-        // Only ignore if setting muted property was prohibited
-      }
-    }
-    setIsActualMuted(activeVid.muted);
-
-    // Robust Playback Starter with Autoplay Policy & Audio Fallback
-    const startPlayback = () => {
-      if (isPaused || isManuallyPausedRef.current) return;
-      const p = activeVid.play();
-      if (p !== undefined) {
-        playPromiseRef.current = p;
-        p.then(() => {
-          playPromiseRef.current = null;
-          setIsPlaying(true);
-          setIsBuffering(false);
-          if (activeVid.readyState >= 2) {
-            setFirstFrameRenderedId(activeVideo.id);
-          }
-        }).catch((err) => {
-          playPromiseRef.current = null;
-          if (err?.name === "NotAllowedError") {
-            // Autoplay policy: unmuted playback blocked without prior gesture
-            // Fall back instantly to muted playback which all browsers permit 100%
-            activeVid.muted = true;
-            setIsActualMuted(true);
-            if (!isPaused && !isManuallyPausedRef.current) {
-              const retryP = activeVid.play();
-              if (retryP !== undefined) {
-                retryP.then(() => {
-                  setIsPlaying(true);
-                  setIsBuffering(false);
-                  if (activeVid.readyState >= 2) {
-                    setFirstFrameRenderedId(activeVideo.id);
-                  }
-                }).catch(() => {});
-              }
-            }
-          } else if (err?.name !== "AbortError") {
-            setIsPlaying(false);
-          }
-        });
-      }
-    };
-
-    // If still on the same video, handle pause state
-    if (!isNewVideo) {
-      if (isPaused) {
-        try { activeVid.pause(); } catch (e) {}
-        setIsPlaying(false);
-      } else if (!isManuallyPausedRef.current && (activeVid.paused || !isPlaying)) {
-        // Resuming playback after an overlay (drawer/modal/tab) closed
-        startPlayback();
-      }
-    } else {
-      // New active video detected - rewind to start
-      lastLoadedVideoIdRef.current = activeVideo.id;
-      // If the video element was already pre-warmed in the pool and has decoded Frame #1 (readyState >= 2),
-      // mark firstFrameRenderedId immediately so there is zero delay on swipe!
-      const alreadyDecodedFirstFrame = isAlreadyBoundToThisVideo && activeVid.readyState >= 2;
-      setFirstFrameRenderedId(alreadyDecodedFirstFrame ? activeVideo.id : null);
-      setIsPlaying(false);
-      setProgressPercent(0);
-      if (activeVideo?.durationSeconds && activeVideo.durationSeconds > 0) {
-        setVideoDuration(activeVideo.durationSeconds);
-      }
-      if (!alreadyDecodedFirstFrame || activeVid.currentTime > 0.1) {
-        try {
-          activeVid.currentTime = 0;
-        } catch (e) {}
-      }
-
-      if (isPaused || initialAutoplayPaused) {
-        if (initialAutoplayPaused) {
-          isManuallyPausedRef.current = true;
-          setIsManuallyPaused(true);
-        } else {
-          isManuallyPausedRef.current = false;
-          setIsManuallyPaused(false);
-        }
-        setIsPlaying(false);
-        setIsBuffering(false);
-        try { activeVid.pause(); } catch (e) {}
-      } else {
-        isManuallyPausedRef.current = false;
-        setIsManuallyPaused(false);
-
-        // Hardware GPU presentation callback
-        if ("requestVideoFrameCallback" in activeVid) {
-          (activeVid as any).requestVideoFrameCallback(() => {
-            if (feedVideoRef.current === activeVid) {
-              setIsPlaying(true);
-              setIsBuffering(false);
-              setFirstFrameRenderedId(activeVideo.id);
-            }
-          });
-        }
-
-        startPlayback();
-      }
-    }
-
-    // 2 & 3. PRE-WARM NEXT & PREVIOUS VIDEOS IN POOL IMMEDIATELY ON NEXT FRAME
-    // Also pre-decode poster images into browser memory so mobile swipes never flash black
-    const prewarmTimer = setTimeout(() => {
-      // Pre-decode upcoming poster images into mobile GPU bitmap cache
-      [nextVideo, displayItems[activeCardIndex + 2]?.video, prevVideo].forEach((upcomingVid) => {
-        if (!upcomingVid) return;
-        const pUrl = resolveVideoPosterUrl(upcomingVid);
-        if (pUrl && typeof Image !== "undefined") {
-          const img = new Image();
-          img.decoding = "sync";
-          img.src = pUrl;
-        }
-      });
-
-      // Pre-warm next upcoming video
-      if (nextCard && nextVideo) {
-        let nextVid = slotBindingRef.current.get(nextVideo.id);
-        if (!nextVid || nextVid === activeVid || !pool.includes(nextVid)) {
-          nextVid = pool.find((v) => v !== activeVid && (!slotBindingRef.current.get(prevVideo?.id || "") || v !== slotBindingRef.current.get(prevVideo?.id || ""))) || pool.find((v) => v !== activeVid) || null;
-          if (nextVid) {
-            for (const [vId, el] of slotBindingRef.current.entries()) {
-              if (el === nextVid) slotBindingRef.current.delete(vId);
-            }
-            slotBindingRef.current.set(nextVideo.id, nextVid);
-          }
-        }
-
-        if (nextVid) {
-          // ALWAYS, UNCONDITIONALLY mute and pause immediately before anything else to prevent sound leaks
-          nextVid.muted = true;
-          try { nextVid.pause(); } catch (e) {}
-
-          const nextSlot = document.getElementById(nextCard.slotId);
-          if (nextSlot && nextVid.parentElement !== nextSlot) {
-            nextSlot.appendChild(nextVid);
-          }
-          nextVid.preload = "auto";
-          const isNextAlreadyBound =
-            nextVid.dataset.boundVideoId === nextVideo.id &&
-            (Boolean(nextVid.currentSrc || nextVid.src) || hlsPoolRef.current.has(nextVid));
-          if (!isNextAlreadyBound) {
-            loadVideoSource(nextVid, nextVideo);
-          }
-          const nextPoster = resolveVideoPosterUrl(nextVideo);
-          if (nextVid.poster !== nextPoster) {
-            nextVid.poster = nextPoster;
-          }
-        }
-      }
-
-      // Preserve / Pre-warm previous video
-      if (prevCard && prevVideo) {
-        let prevVid = slotBindingRef.current.get(prevVideo.id);
-        if (!prevVid || prevVid === activeVid || !pool.includes(prevVid)) {
-          prevVid = pool.find((v) => v !== activeVid && (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id))) || null;
-          if (prevVid) {
-            for (const [vId, el] of slotBindingRef.current.entries()) {
-              if (el === prevVid) slotBindingRef.current.delete(vId);
-            }
-            slotBindingRef.current.set(prevVideo.id, prevVid);
-          }
-        }
-
-        if (prevVid) {
-          // ALWAYS, UNCONDITIONALLY mute and pause immediately before anything else to prevent sound leaks
-          prevVid.muted = true;
-          try { prevVid.pause(); } catch (e) {}
-
-          const prevSlot = document.getElementById(prevCard.slotId);
-          if (prevSlot && prevVid.parentElement !== prevSlot) {
-            prevSlot.appendChild(prevVid);
-          }
-          prevVid.preload = "auto";
-          const isPrevAlreadyBound =
-            prevVid.dataset.boundVideoId === prevVideo.id &&
-            (Boolean(prevVid.currentSrc || prevVid.src) || hlsPoolRef.current.has(prevVid));
-          if (!isPrevAlreadyBound) {
-            loadVideoSource(prevVid, prevVideo);
-          }
-          const prevPoster = resolveVideoPosterUrl(prevVideo);
-          if (prevVid.poster !== prevPoster) {
-            prevVid.poster = prevPoster;
-          }
-        }
-      }
-    }, 16);
-
-    // 4. Pause and unmount any idle element outside active, next, and prev
-    pool.forEach((v) => {
-      if (
-        v !== activeVid &&
-        (!nextVideo || v !== slotBindingRef.current.get(nextVideo.id)) &&
-        (!prevVideo || v !== slotBindingRef.current.get(prevVideo?.id || ""))
-      ) {
-        const hls = hlsPoolRef.current.get(v);
-        if (hls) {
-          hls.destroy();
-          hlsPoolRef.current.delete(v);
-        }
-        delete v.dataset.boundVideoId;
-        v.muted = true;
-        try { v.pause(); } catch (e) {}
-        v.remove();
-      }
-    });
-
-    const viewTimer = setTimeout(() => {
-      if (activeVideo?.id) {
-        onRecordView?.(activeVideo.id);
-
-        // Auto-trigger official Bunny Stream Smart Captions + Hardware Silence Sync if not yet loaded
-        const hasLegacyWebSpeechSegments = Array.isArray(activeVideo.segments) && activeVideo.segments.some(s => s && s.words);
-        const needsBunnyCaptions = !activeVideo.hasBunnySmartCaptions || !activeVideo.hasHardwareSilenceSync || !activeVideo.segments || activeVideo.segments.length === 0 || hasLegacyWebSpeechSegments;
-        if (needsBunnyCaptions) {
-          const targetVidId = activeVideo.id;
-          let pollAttempts = 0;
-          const maxPollAttempts = 8;
-
-          const pollCaptions = () => {
-            if (activeVideoRef.current?.id !== targetVidId) return;
-            fetch(`/api/videos/${targetVidId}/ensure-transcript`, { method: "POST" })
-              .then(res => res.json())
-              .then(data => {
-                if (data.success && Array.isArray(data.segments) && data.segments.length > 0) {
-                  onUpdateVideoReview?.(targetVidId, {
-                    segments: data.segments,
-                    transcriptText: data.transcriptText,
-                    hasBunnySmartCaptions: true,
-                    hasHardwareSilenceSync: true,
-                    ...(data.aiTitle ? { aiTitle: data.aiTitle, title: data.aiTitle, caption: data.aiTitle } : {})
-                  });
-                  if (activeVideoRef.current?.id === targetVidId) {
-                    activeVideo.segments = data.segments;
-                    activeVideo.transcriptText = data.transcriptText;
-                    activeVideo.hasBunnySmartCaptions = true;
-                    activeVideo.hasHardwareSilenceSync = true;
-                    if (data.aiTitle) {
-                      activeVideo.aiTitle = data.aiTitle;
-                      activeVideo.title = data.aiTitle;
-                      activeVideo.caption = data.aiTitle;
-                    }
-                  }
-                } else if (pollAttempts < maxPollAttempts) {
-                  pollAttempts++;
-                  setTimeout(pollCaptions, 3500);
-                }
-              })
-              .catch(err => {
-                if (pollAttempts < maxPollAttempts) {
-                  pollAttempts++;
-                  setTimeout(pollCaptions, 3500);
-                }
-              });
-          };
-
-          pollCaptions();
-        }
-      }
-    }, 1000);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(prewarmTimer);
-      clearTimeout(viewTimer);
-    };
-  }, [activeCardIndex, displayItems, videos, onRecordView, isPaused, contextKey]);
-
-  // Scrubbing & High-Precision Seeking Handlers
-  const wasPlayingBeforeScrubRef = useRef<boolean>(true);
-
-  const handleScrubStart = useCallback(() => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-    wasPlayingBeforeScrubRef.current = !vid.paused;
-    // YouTube Shorts & TikTok standard: keep main video playing continuously while swiping
-  }, []);
-
-  const handleSeekToPercent = useCallback((pct: number) => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
-      ? vid.duration
-      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
-    const clampedPct = Math.max(0, Math.min(100, pct));
-    const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
-    try {
-      if (typeof (vid as any).fastSeek === "function") {
-        (vid as any).fastSeek(targetTime);
-      } else {
-        vid.currentTime = targetTime;
-      }
-      setProgressPercent(clampedPct);
-    } catch (e) {}
-  }, [currentIndex, videos, videoDuration]);
-
-  const handleSeekDelta = useCallback((deltaSeconds: number) => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
-      ? vid.duration
-      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
-    const newTime = Math.max(0, Math.min(dur, vid.currentTime + deltaSeconds));
-    try {
-      if (typeof (vid as any).fastSeek === "function") {
-        (vid as any).fastSeek(newTime);
-      } else {
-        vid.currentTime = newTime;
-      }
-      const newPct = dur > 0 ? (newTime / dur) * 100 : 0;
-      setProgressPercent(newPct);
-    } catch (e) {}
-  }, [currentIndex, videos, videoDuration]);
-
-  const handleScrubEnd = useCallback((finalPct: number) => {
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-    const dur = (vid.duration && !isNaN(vid.duration) && vid.duration > 0)
-      ? vid.duration
-      : (videoDuration > 0 ? videoDuration : (videos[currentIndex]?.durationSeconds || 60));
-    const clampedPct = Math.max(0, Math.min(100, finalPct));
-    const targetTime = Math.max(0, Math.min(dur, (clampedPct / 100) * dur));
-    try {
-      vid.currentTime = targetTime;
-      setProgressPercent(clampedPct);
-    } catch (e) {}
-
-    // When the user stops swiping, the video jumps to the selected point and plays
-    if (!isPaused && !isManuallyPausedRef.current) {
-      const p = vid.play();
-      if (p !== undefined) {
-        p.then(() => {
-          setIsPlaying(true);
-        }).catch(() => {});
-      }
-    }
-  }, [currentIndex, videos, videoDuration, isPaused]);
-
-  // Context switch watcher: Immediately pause any active playback and sound when switching contexts
-  const previousContextKeyRef = useRef<string | undefined>(contextKey);
-  useEffect(() => {
-    if (previousContextKeyRef.current !== contextKey) {
-      const vid = feedVideoRef.current;
-      if (vid) {
-        try {
-          vid.pause();
-        } catch (e) {}
-      }
-      setIsPlaying(false);
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      previousContextKeyRef.current = contextKey;
-
-      feedVideoRef.current = null;
-      lastLoadedVideoIdRef.current = null;
-
-      // Instantly reset player state and scroll container to top for the new context
-      activeCardIndexRef.current = 0;
-      lastObserverIndexRef.current = 0;
-      setActiveCardIndex(0);
-      setHasScrolledAway(false);
-      onSelectVideoIndex(0);
-      if (containerRef.current) {
-        containerRef.current.scrollTo({ top: 0, behavior: "instant" });
-      }
-    }
-  }, [contextKey, onSelectVideoIndex]);
-
-  // Direct isPaused watcher: Pause when overlay is active, resume automatically when overlay closes!
-  useEffect(() => {
-    const vid = feedVideoRef.current;
-    if (isPaused) {
-      if (vid) {
-        try {
-          vid.pause();
-        } catch (e) {}
-      }
-      setIsPlaying(false);
-    } else {
-      // Overlay/modal closed! If user did NOT manually pause with a tap, resume immediately
-      if (vid && !isManuallyPausedRef.current && (vid.paused || !isPlaying)) {
-        setIsBuffering(true);
-        const p = vid.play();
-        if (p !== undefined) {
-          p.then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-            if (activeVideoRef.current?.id) {
-              setFirstFrameRenderedId(activeVideoRef.current.id);
-            }
-          }).catch((err) => {
-            if (err?.name === "NotAllowedError") {
-              vid.muted = true;
-              setIsActualMuted(true);
-              vid.play().then(() => {
-                setIsPlaying(true);
-                setIsBuffering(false);
-                if (activeVideoRef.current?.id) {
-                  setFirstFrameRenderedId(activeVideoRef.current.id);
-                }
-              }).catch(() => {
-                setIsBuffering(false);
-              });
-            } else {
-              setIsBuffering(false);
-            }
-          });
-        }
-      }
-    }
-  }, [isPaused]);
-
-  // Active Watchdog: Auto-recovers video if frozen for > 3.0 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const vid = feedVideoRef.current;
-      // Skip watchdog if video is paused, manually paused, or in a loading/buffering state (readyState < 3)
-      if (!vid || vid.paused || isManuallyPausedRef.current || isPaused || vid.readyState < 3) {
-        lastAdvanceTimeRef.current = { time: Date.now(), currentTime: vid?.currentTime || 0 };
-        return;
-      }
-
-      const now = Date.now();
-      const current = vid.currentTime;
-      const { time: lastTime, currentTime: lastCur } = lastAdvanceTimeRef.current;
-
-      // Only recover if the stream is supposed to be fully playable but isn't advancing
-      if (Math.abs(current - lastCur) < 0.05 && now - lastTime > 3000) {
-        console.warn("[CopoVideoPlayer Watchdog] Stalled frame detected, recovering playback...");
-        try {
-          vid.currentTime += 0.01;
-          vid.play().catch(() => {});
-        } catch (e) {}
-        lastAdvanceTimeRef.current = { time: now, currentTime: current };
-      } else if (Math.abs(current - lastCur) >= 0.05) {
-        lastAdvanceTimeRef.current = { time: now, currentTime: current };
-      }
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Edit Rating State
+  // Edit Rating State (whole numbers 1–5 only)
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
   const [videoConfirmDelete, setVideoConfirmDelete] = useState<VideoReview | null>(null);
-  const [adExportVideo, setAdExportVideo] = useState<VideoReview | null>(null);
   const [editRating, setEditRating] = useState<number>(5);
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
-  // Safety clamp if a video deletion causes currentIndex to exceed new feed bounds
   useEffect(() => {
     const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
     if (currentIndex > maxIdx) {
       onSelectVideoIndex(maxIdx);
     }
   }, [videos.length, currentIndex, onSelectVideoIndex]);
-
-  // Asynchronously resolve IndexedDB blob URLs for all loaded videos to feed them synchronously to the children cards
-  useEffect(() => {
-    let active = true;
-    if (videos && videos.length > 0) {
-      videos.forEach((vid) => {
-        if (vid?.id && !localBlobUrlsRef.current[vid.id]) {
-          getVideoBlobFromIndexedDB(vid.id).then((url) => {
-            if (active && url) {
-              localBlobUrlsRef.current[vid.id] = url;
-              setLocalBlobUrls((prev) => ({
-                ...prev,
-                [vid.id]: url
-              }));
-            }
-          });
-        }
-      });
-    }
-    return () => {
-      active = false;
-    };
-  }, [videos]);
 
   const mainRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -1153,7 +200,36 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastObserverIndexRef = useRef<number>(currentIndex);
 
-  // Robust programmatic scroll function that guarantees instant synchronization
+  // Preconnect to CDN for crisp photo loading
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const preconnect = document.createElement("link");
+    preconnect.rel = "preconnect";
+    preconnect.href = "https://rev1.b-cdn.net";
+    preconnect.crossOrigin = "anonymous";
+    document.head.appendChild(preconnect);
+    return () => {
+      try {
+        preconnect.remove();
+      } catch {}
+    };
+  }, []);
+
+  // Context switch reset
+  const previousContextKeyRef = useRef<string | undefined>(contextKey);
+  useEffect(() => {
+    if (previousContextKeyRef.current !== contextKey) {
+      previousContextKeyRef.current = contextKey;
+      activeCardIndexRef.current = 0;
+      lastObserverIndexRef.current = 0;
+      setActiveCardIndex(0);
+      onSelectVideoIndex(0);
+      if (containerRef.current) {
+        containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+      }
+    }
+  }, [contextKey, onSelectVideoIndex]);
+
   const scrollToCard = useCallback(
     (targetCardIndex: number, behavior: ScrollBehavior = "smooth") => {
       const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
@@ -1183,7 +259,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     [displayItems.length, videos.length, onSelectVideoIndex]
   );
 
-  // Compute Place Logo Map for fast lookups
   const getLogoForVideo = useCallback(
     (vid: VideoReview | undefined): string | null => {
       if (!vid) return null;
@@ -1194,16 +269,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const vidDomain = vidCleanWeb || vidCleanId || (vidCleanName?.includes(".") ? vidCleanName : "");
       const strippedDomain = vidDomain ? vidDomain.replace(/^www\./, "") : "";
 
-      // 0. High-resolution verified vector brand logo match takes absolute precedence
-      if (vidDomain && KNOWN_BRAND_LOGOS[vidDomain]) {
-        return KNOWN_BRAND_LOGOS[vidDomain];
-      }
-      if (strippedDomain && KNOWN_BRAND_LOGOS[strippedDomain]) {
-        return KNOWN_BRAND_LOGOS[strippedDomain];
-      }
+      if (vidDomain && KNOWN_BRAND_LOGOS[vidDomain]) return KNOWN_BRAND_LOGOS[vidDomain];
+      if (strippedDomain && KNOWN_BRAND_LOGOS[strippedDomain]) return KNOWN_BRAND_LOGOS[strippedDomain];
 
       if (places && places.length > 0) {
-
         const p = places.find((place) => {
           if (!place) return false;
           if (vid.placeId && (place.id === vid.placeId || place.id === vidCleanId)) return true;
@@ -1215,11 +284,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         if (p) {
           const logo = getPlaceLogoUrl(p) || p.logoUrl || p.avatarUrl;
-          if (logo && logo.trim() !== "" && !logo.startsWith("data:;") && !logo.includes("tap/0.png") && !logo.includes("icons/tap")) return logo;
+          if (logo && logo.trim() !== "" && !logo.startsWith("data:;") && !logo.includes("tap/0.png") && !logo.includes("icons/tap")) {
+            return logo;
+          }
         }
       }
 
-      if (vid.placeLogoUrl && vid.placeLogoUrl.trim() !== "" && !vid.placeLogoUrl.startsWith("data:;") && !vid.placeLogoUrl.includes("tap/0.png") && !vid.placeLogoUrl.includes("icons/tap")) {
+      if (
+        vid.placeLogoUrl &&
+        vid.placeLogoUrl.trim() !== "" &&
+        !vid.placeLogoUrl.startsWith("data:;") &&
+        !vid.placeLogoUrl.includes("tap/0.png") &&
+        !vid.placeLogoUrl.includes("icons/tap")
+      ) {
         return getCleanLogoUrl(vid.placeLogoUrl, vid.placeWebsite);
       }
 
@@ -1245,17 +322,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (!vid) return "Business Place";
 
       const vidDomain = extractCleanDomain(vid.placeWebsite || vid.placeId || (vid.placeName?.includes(".") ? vid.placeName : ""));
-
-      // 1. Check Known Verified Brand Names first
-      if (vidDomain && KNOWN_OFFICIAL_NAMES[vidDomain]) {
-        return KNOWN_OFFICIAL_NAMES[vidDomain];
-      }
+      if (vidDomain && KNOWN_OFFICIAL_NAMES[vidDomain]) return KNOWN_OFFICIAL_NAMES[vidDomain];
       const vidCleanId = extractCleanDomain(vid.placeId || "");
-      if (vidCleanId && KNOWN_OFFICIAL_NAMES[vidCleanId]) {
-        return KNOWN_OFFICIAL_NAMES[vidCleanId];
-      }
+      if (vidCleanId && KNOWN_OFFICIAL_NAMES[vidCleanId]) return KNOWN_OFFICIAL_NAMES[vidCleanId];
 
-      // 2. Check if place record exists in places array
       if (places && places.length > 0) {
         const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
         const vidCleanName = extractCleanDomain(vid.placeName || "");
@@ -1271,9 +341,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         if (p) {
           const pDomain = extractCleanDomain(p.brandDomain || p.website || p.id || "");
-          if (pDomain && KNOWN_OFFICIAL_NAMES[pDomain]) {
-            return KNOWN_OFFICIAL_NAMES[pDomain];
-          }
+          if (pDomain && KNOWN_OFFICIAL_NAMES[pDomain]) return KNOWN_OFFICIAL_NAMES[pDomain];
           if (p.name && !isGenericPlaceName(p.name)) {
             const formatted = formatBusinessName(p.name, pDomain || vidDomain);
             if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
@@ -1281,19 +349,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
       }
 
-      // 3. Check explicit authentic businessName on video review
       if (vid.businessName && !isGenericPlaceName(vid.businessName)) {
         const formatted = formatBusinessName(vid.businessName, vidDomain);
         if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
       }
 
-      // 4. Check placeName on video review
       if (vid.placeName && !isGenericPlaceName(vid.placeName)) {
         const formatted = formatBusinessName(vid.placeName, vidDomain);
         if (formatted && formatted.trim() !== "" && formatted.toLowerCase() !== "vaibe") return formatted;
       }
 
-      // 5. Fallback to clean domain
       if (vidDomain && vidDomain.includes(".") && vidDomain !== "home.com") {
         const formatted = formatBusinessName(vidDomain, vidDomain);
         if (formatted && formatted.trim() !== "") return formatted;
@@ -1324,16 +389,31 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     onLoadMoreRef.current = onLoadMore;
   }, [onLoadMore]);
 
-  // Pre-fetch upcoming videos for fast transitions (TikTok/Shorts sliding window)
-  useEffect(() => {
-    prefetchUpcomingVideos(videos, currentIndex);
+  // Pre-decode upcoming photos for zero-flicker swipe
+  const prefetchUpcomingPhotos = useCallback(
+    (list: VideoReview[], idx: number) => {
+      if (typeof Image === "undefined") return;
+      [list[idx + 1], list[idx + 2], list[idx - 1]].forEach((upcoming) => {
+        if (!upcoming) return;
+        const pUrl = resolveVideoPosterUrl(upcoming);
+        if (pUrl) {
+          const img = new Image();
+          img.decoding = "sync";
+          img.src = pUrl;
+        }
+      });
+    },
+    []
+  );
 
+  useEffect(() => {
+    prefetchUpcomingPhotos(videos, currentIndex);
     if (videos.length >= 10 && currentIndex >= videos.length - 3 && !isLoading) {
       onLoadMoreRef.current?.();
     }
-  }, [currentIndex, videos.length, isLoading]);
+  }, [currentIndex, videos, isLoading, prefetchUpcomingPhotos]);
 
-  // Ultra-responsive IntersectionObserver index detection (matches app.copo.st active claim threshold)
+  // IntersectionObserver index detection
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -1342,7 +422,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
 
-        // If user is at the top of the scroll container, firmly lock to first video (index 0)
         if (container.scrollTop <= 20) {
           if (activeCardIndexRef.current !== 0) {
             activeCardIndexRef.current = 0;
@@ -1353,9 +432,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return;
         }
 
-        const visibleEntries = entries.filter(
-          (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.25
-        );
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.25);
         if (visibleEntries.length === 0) return;
 
         visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
@@ -1369,17 +446,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             activeCardIndexRef.current = cardIdx;
             lastObserverIndexRef.current = cardIdx;
             setActiveCardIndex(cardIdx);
-
             const realIdx = cardIdx % (videos.length || 1);
             onSelectVideoIndex(realIdx);
-
-            // Dynamically extend loop buffer when approaching the end of loaded loops
-            if (shouldLoop && videos.length > 0 && cardIdx >= displayItems.length - 4) {
-              setLoopCount((prev) => prev + 5);
-            }
-
             if (realIdx < videos.length) {
-              prefetchUpcomingVideos(videos, realIdx);
+              prefetchUpcomingPhotos(videos, realIdx);
             }
           }
         }
@@ -1396,37 +466,25 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
 
     attachObservers();
-
-    const mutationObserver = new MutationObserver(() => {
-      attachObservers();
-    });
-
+    const mutationObserver = new MutationObserver(() => attachObservers());
     mutationObserver.observe(container, { childList: true, subtree: true });
 
     return () => {
       mutationObserver.disconnect();
       observer.disconnect();
     };
-  }, [displayItems.length, videos, onSelectVideoIndex]);
+  }, [displayItems.length, videos, onSelectVideoIndex, prefetchUpcomingPhotos]);
 
-  // Keep top-of-feed locked to index 0 only on newly recorded local videos or initial mount at 0;
-  // preserve active deep-linked / currently playing video when background feed pages hydrate.
   const prevFirstVideoIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentFirstId = videos[0]?.id || null;
     if (currentFirstId && currentFirstId !== prevFirstVideoIdRef.current) {
       const isInitialMount = prevFirstVideoIdRef.current === null;
       prevFirstVideoIdRef.current = currentFirstId;
-
-      // Register local blob URL immediately if present on the new review from the active session
       const firstVid = videos[0];
-      const localBlob = (firstVid as any)?.isCurrentSessionBlob ? ((firstVid as any)?.localBlobUrl || (firstVid as any)?.blobUrl) : null;
-      if (localBlob) {
-        localBlobUrlsRef.current[currentFirstId] = localBlob;
-        setLocalBlobUrls((prev) => ({ ...prev, [currentFirstId]: localBlob }));
-      }
+      const isNewSessionPhoto = Boolean((firstVid as any)?.isCurrentSessionBlob || (firstVid as any)?.isLocalUpload);
 
-      if (localBlob || (isInitialMount && currentIndex === 0 && activeCardIndexRef.current === 0)) {
+      if (isNewSessionPhoto || (isInitialMount && currentIndex === 0 && activeCardIndexRef.current === 0)) {
         lastObserverIndexRef.current = 0;
         activeCardIndexRef.current = 0;
         setActiveCardIndex(0);
@@ -1434,19 +492,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         if (containerRef.current) {
           containerRef.current.scrollTo({ top: 0, behavior: "instant" });
         }
-      } else {
-        const playingId = activeVideoRef.current?.id || lastLoadedVideoIdRef.current;
-        if (playingId) {
-          const newIdx = videos.findIndex((v) => v && v.id === playingId);
-          if (newIdx >= 0 && newIdx !== activeCardIndexRef.current) {
-            scrollToCard(newIdx, "instant");
-          }
-        }
       }
     }
-  }, [videos, onSelectVideoIndex, currentIndex, scrollToCard]);
+  }, [videos, onSelectVideoIndex, currentIndex]);
 
-  // Initial mount scroll to currentIndex
   useEffect(() => {
     if (containerRef.current) {
       if (currentIndex === 0) {
@@ -1454,7 +503,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         containerRef.current.scrollTo({ top: 0, behavior: "instant" });
       } else if (currentIndex > 0 && currentIndex < displayItems.length) {
         scrollToCard(currentIndex, "instant");
-        // Fallback after paint in case refs/heights settled asynchronously
         requestAnimationFrame(() => {
           if (cardRefs.current[currentIndex] && containerRef.current) {
             const targetTop = cardRefs.current[currentIndex]!.offsetTop - containerRef.current.offsetTop;
@@ -1471,8 +519,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, []);
 
-  // Zero-Latency Continuous Scroll & Center Settle Engine
-  // Real-time scroll frame updates via requestAnimationFrame ensuring 100% reliable active card tracking
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -1485,7 +531,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const containerHeight = container.clientHeight;
       if (!containerHeight) return;
 
-      // When near the top, snap to card 0
       if (containerTop <= 20) {
         if (activeCardIndexRef.current !== 0) {
           activeCardIndexRef.current = 0;
@@ -1523,13 +568,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         setActiveCardIndex(closestIndex);
         const realIdx = closestIndex % (videos.length || 1);
         onSelectVideoIndex(realIdx);
-
-        if (shouldLoop && videos.length > 0 && closestIndex >= displayItems.length - 4) {
-          setLoopCount((prev) => prev + 5);
-        }
-
         if (realIdx < videos.length) {
-          prefetchUpcomingVideos(videos, realIdx);
+          prefetchUpcomingPhotos(videos, realIdx);
         }
       }
     };
@@ -1547,27 +587,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("scrollend", checkActiveCard);
     };
-  }, [displayItems.length, videos, onSelectVideoIndex, shouldLoop]);
+  }, [displayItems.length, videos, onSelectVideoIndex, prefetchUpcomingPhotos]);
 
-  // app.copo.st Touch Gesture Engine removed. Relying strictly on CSS scroll snapping for native smoothness.
-  // We retain a passive tap listener merely to authorize the AudioContext synchronously.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleTouch = () => {
-      if (isSessionAudioUnlocked && !isMuted) {
-        ensureSharedAudioContextUnlocked();
-      }
-    };
-
-    container.addEventListener("touchend", handleTouch, { passive: true });
-    return () => {
-      container.removeEventListener("touchend", handleTouch);
-    };
-  }, [isSessionAudioUnlocked, isMuted]);
-
-  // Scroll to currentIndex when changed from outside (e.g. initial load, drawer switches, subtabs)
   useEffect(() => {
     const currentRealIdx = activeCardIndexRef.current % (videos.length || 1);
     if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < videos.length) {
@@ -1576,184 +597,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   }, [currentIndex, videos.length, scrollToCard]);
 
   const handleNext = useCallback(() => {
-    if (isSessionAudioUnlocked && !isMuted) {
-      ensureSharedAudioContextUnlocked();
-    }
     const nextIdx = activeCardIndexRef.current + 1;
     if (nextIdx < displayItems.length) {
-      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
-        feedVideoRef.current.muted = false;
-        safeSetVolume(feedVideoRef.current, 1);
-        feedVideoRef.current.play().catch(() => {});
-      }
-      scrollToCard(nextIdx, "smooth");
-    } else if (shouldLoop && videos.length >= 1) {
-      setLoopCount((prev) => prev + 5);
       scrollToCard(nextIdx, "smooth");
     }
-  }, [displayItems.length, videos.length, scrollToCard, isSessionAudioUnlocked, isMuted, shouldLoop]);
+  }, [displayItems.length, scrollToCard]);
 
   const handlePrev = useCallback(() => {
-    if (isSessionAudioUnlocked && !isMuted) {
-      ensureSharedAudioContextUnlocked();
-    }
     if (activeCardIndexRef.current > 0) {
-      const prevIdx = activeCardIndexRef.current - 1;
-      if (feedVideoRef.current && isSessionAudioUnlocked && !isMuted) {
-        feedVideoRef.current.muted = false;
-        safeSetVolume(feedVideoRef.current, 1);
-        feedVideoRef.current.play().catch(() => {});
-      }
-      scrollToCard(prevIdx, "smooth");
+      scrollToCard(activeCardIndexRef.current - 1, "smooth");
     } else if (displayItems.length > 1) {
       scrollToCard(displayItems.length - 1, "smooth");
     } else {
       scrollToCard(0, "smooth");
     }
-  }, [displayItems.length, scrollToCard, isSessionAudioUnlocked, isMuted]);
+  }, [displayItems.length, scrollToCard]);
 
-  // Toggle Play / Pause (Stop / Resume) for the active video, or activate and play clicked card
-  const handleTogglePlayPause = useCallback((e?: React.SyntheticEvent | Event, targetCardIndex?: number) => {
-    e?.stopPropagation();
-
-    // If user clicked a card in the feed that is not currently active, immediately scroll to it, mount it, and start playing!
-    if (typeof targetCardIndex === "number" && targetCardIndex >= 0 && targetCardIndex !== activeCardIndexRef.current) {
-      scrollToCard(targetCardIndex, "smooth");
-      return;
-    }
-
-    const vid = feedVideoRef.current;
-    if (!vid) return;
-
-    const active = activeVideoRef.current;
-
-    // Check if element is currently in an error state or has no valid source
-    if (active && (vid.error || vid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE)) {
-      if (!failedSourcesRef.current.has(active.id)) {
-        failedSourcesRef.current.set(active.id, new Set());
-      }
-      const failedSet = failedSourcesRef.current.get(active.id)!;
-      const currentSrc = vid.currentSrc || vid.src;
-      if (currentSrc) failedSet.add(currentSrc);
-
-      const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
-      const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
-      const nextCandidate = cascade.find(s => s && !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
-
-      console.warn(`[CopoVideoPlayer] User tapped errored video ${active.id}; recovering with source: ${nextCandidate}`);
-      vid.src = nextCandidate;
-      vid.load();
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      if (isSessionAudioUnlocked && !isMuted) {
-        vid.muted = false;
-        safeSetVolume(vid, 1);
-        setIsActualMuted(false);
-      }
-      vid.play().then(() => {
-        setIsPlaying(true);
-        setIsBuffering(false);
-        setFirstFrameRenderedId(active.id);
-      }).catch(() => {});
-      return;
-    }
-
-    if (vid.paused || isManuallyPausedRef.current) {
-      // Resume / Play (only blocked if a modal is actively open)
-      if (isPaused) return;
-      isManuallyPausedRef.current = false;
-      setIsManuallyPaused(false);
-      if (isSessionAudioUnlocked && !isMuted) {
-        vid.muted = false;
-        safeSetVolume(vid, 1);
-        setIsActualMuted(false);
-      }
-      vid.play().then(() => {
-        setIsPlaying(true);
-        setIsBuffering(false);
-        if (active?.id) setFirstFrameRenderedId(active.id);
-      }).catch((playErr) => {
-        console.warn(`[CopoVideoPlayer] play() rejected on click:`, playErr);
-        // Fallback to muted playback
-        vid.muted = true;
-        setIsActualMuted(true);
-        vid.play().then(() => {
-          setIsPlaying(true);
-          setIsBuffering(false);
-          if (active?.id) setFirstFrameRenderedId(active.id);
-        }).catch(() => {
-          // Both play attempts failed: trigger source failover to ensure video plays
-          if (active) {
-            if (!failedSourcesRef.current.has(active.id)) {
-              failedSourcesRef.current.set(active.id, new Set());
-            }
-            const failedSet = failedSourcesRef.current.get(active.id)!;
-            const currentSrc = vid.currentSrc || vid.src;
-            if (currentSrc) failedSet.add(currentSrc);
-            const localBlob = localBlobUrlsRef.current[active.id] || (active as any)?.localBlobUrl || (active as any)?.blobUrl;
-            const cascade = resolvePlayableVideoSourcesCascade(active, localBlob);
-            const nextCandidate = cascade.find(s => s && !failedSet.has(s)) || cascade[0] || "/default-review.mp4";
-            console.warn(`[CopoVideoPlayer] Play rejected, cascading video ${active.id} to: ${nextCandidate}`);
-            vid.src = nextCandidate;
-            vid.load();
-            vid.play().then(() => {
-              setIsPlaying(true);
-              setIsBuffering(false);
-              setFirstFrameRenderedId(active.id);
-            }).catch(() => {});
-          }
-        });
-      });
-    } else {
-      // STOP / PAUSE immediately (always permitted!)
-      isManuallyPausedRef.current = true;
-      setIsManuallyPaused(true);
-      try {
-        vid.pause();
-      } catch (e) {}
-      setIsPlaying(false);
-    }
-  }, [isSessionAudioUnlocked, isMuted, isPaused, scrollToCard]);
-
-  const handlePauseVideo = useCallback(() => {
-    isManuallyPausedRef.current = true;
-    setIsManuallyPaused(true);
-    if (feedVideoRef.current) {
-      feedVideoRef.current.pause();
-    }
-    setIsPlaying(false);
-  }, []);
-
-  // Sound toggle with session audio unlocking
-  const toggleMute = useCallback((e?: React.SyntheticEvent | Event) => {
-    e?.stopPropagation();
-    const vid = feedVideoRef.current;
-    const isCurrentlyMuted = isMuted || !isSessionAudioUnlocked || isActualMuted || (vid ? vid.muted : true);
-    const nextMuted = !isCurrentlyMuted;
-
-    if (!nextMuted) {
-      unlockAudioSession();
-      if (vid) {
-        vid.muted = false;
-        safeSetVolume(vid, 1);
-        if (!isManuallyPausedRef.current && !isPaused) {
-          const playPromise = vid.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(() => {});
-          }
-        }
-      }
-      setIsActualMuted(false);
-    } else {
-      setIsMuted(true);
-      if (vid) {
-        vid.muted = true;
-      }
-      setIsActualMuted(true);
-    }
-  }, [isMuted, isSessionAudioUnlocked, isActualMuted, unlockAudioSession, setIsMuted]);
-
-  // Desktop Mouse Wheel & Trackpad Navigation: smoothly step strictly 1 video at a time without multi-skipping
+  // Desktop Mouse Wheel & Trackpad Navigation
   useEffect(() => {
     const mainEl = mainRef.current || containerRef.current;
     if (!mainEl) return;
@@ -1763,7 +623,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const handleWheel = (e: WheelEvent) => {
       const targetEl = e.target as HTMLElement | null;
-      // Do not intercept if cursor is inside interactive inputs, modals, or dropdowns
       if (
         moreMenuVideo !== null ||
         targetEl?.closest?.(
@@ -1783,7 +642,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           isWheeling = true;
           handlePrev();
         } else {
-          // Top boundary: At first video (index 0), keep top locked at 0
           if (containerRef.current && containerRef.current.scrollTop < 0) {
             containerRef.current.scrollTop = 0;
           }
@@ -1803,7 +661,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
   }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
 
-  // Strict Top Boundary Lock Listener for Scroll Containers (Zero Violations: 100% Passive)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -1815,41 +672,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
+    return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // MediaSession Next/Prev Skip and Play/Pause Action Handlers
-  useEffect(() => {
-    if (typeof window !== "undefined" && "mediaSession" in navigator) {
-      try {
-        navigator.mediaSession.setActionHandler("play", () => {
-          handleTogglePlayPause();
-        });
-        navigator.mediaSession.setActionHandler("pause", () => {
-          handleTogglePlayPause();
-        });
-        navigator.mediaSession.setActionHandler("stop", () => {
-          handleTogglePlayPause();
-        });
-        navigator.mediaSession.setActionHandler("nexttrack", () => {
-          handleNext();
-        });
-        navigator.mediaSession.setActionHandler("previoustrack", () => {
-          handlePrev();
-        });
-      } catch (e) {}
-    }
-  }, [handleNext, handlePrev, handleTogglePlayPause]);
-
-  // Desktop Keyboard navigation: ArrowDown / ArrowUp, PageDown / PageUp, Space, Mute, J / K
-  // Fully active across Homepage, Business Domain pages, and User Profile pages
+  // Desktop Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
-      // Never intercept when user is actively typing in any input, textarea, contenteditable, or search/comments
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -1864,13 +693,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       }
 
       if (
-        (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay")) ||
-        (activeEl instanceof HTMLElement && activeEl.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay"))
+        (e.target instanceof HTMLElement &&
+          e.target.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay")) ||
+        (activeEl instanceof HTMLElement &&
+          activeEl.closest("input, textarea, select, [contenteditable='true'], #copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay"))
       ) {
         return;
       }
 
-      // Ignore when full-screen modal overlays (like video recording modal or report modal) are active
       if (
         moreMenuVideo !== null ||
         document.querySelector("#copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay, #yoouz-share-modal-overlay") !== null
@@ -1881,26 +711,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
         handlePrev();
-      } else if (e.key === "ArrowDown" || e.key === "PageDown") {
+      } else if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j" || e.key === "J") {
         e.preventDefault();
         handleNext();
-      } else if (e.key === " " || e.key === "Spacebar") {
-        e.preventDefault();
-        handleTogglePlayPause();
-      } else if (e.key === "k" || e.key === "K") {
-        e.preventDefault();
-        handleTogglePlayPause();
-      } else if (e.key === "j" || e.key === "J") {
-        e.preventDefault();
-        handleNext();
-      } else if (e.key === "m" || e.key === "M") {
-        toggleMute();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev, handleTogglePlayPause, toggleMute, moreMenuVideo]);
+  }, [handleNext, handlePrev, moreMenuVideo]);
 
   if (!currentVideo) {
     if (isLoading) {
@@ -1919,26 +738,31 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       >
         <div className="relative w-full max-w-[360px] sm:max-w-[400px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-[40px] px-6 sm:px-10 py-10 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white overflow-hidden">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[28px] sm:rounded-[32px] bg-zinc-800/50 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6 sm:mb-8 shrink-0">
-            <Video className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+            <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
           </div>
           <h2 className="w-full max-w-full text-xl sm:text-2xl font-black text-white mb-3 tracking-tight leading-snug break-words">
             {feedContextTitle ? (
               <>
-                No Video Reviews for{" "}
-                <span className="inline font-black text-white break-words max-w-full">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>
+                No Photo Reviews for{" "}
+                <span className="inline font-black text-white break-words max-w-full">
+                  {toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}
+                </span>
               </>
             ) : (
-              "No Video Reviews Yet"
+              "No Photo Reviews Yet"
             )}
           </h2>
           <p className="w-full max-w-[320px] text-xs sm:text-sm text-zinc-400 mb-8 sm:mb-10 leading-relaxed font-medium break-words">
             {feedContextTitle ? (
               <>
-                Be the first creator to record an authentic 60-second video review for{" "}
-                <span className="inline text-zinc-300 font-semibold break-words max-w-full">{toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}</span>!
+                Be the first to snap a live photo review and star rating for{" "}
+                <span className="inline text-zinc-300 font-semibold break-words max-w-full">
+                  {toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}
+                </span>
+                !
               </>
             ) : (
-              "Record the first authentic 60-second video review for any business or place!"
+              "Snap a real-time photo review and select 1–5 stars for any business or place!"
             )}
           </p>
           {onOpenCreateModal && (
@@ -1947,8 +771,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               onClick={onOpenCreateModal}
               className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
             >
-              <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
-              Record Review
+              <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
+              Add Review
             </button>
           )}
         </div>
@@ -1963,14 +787,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
         commentsOpen ? "md:mr-[440px] md:pr-[56px]" : "md:mr-0"
-      } ${
-        isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"
-      }`}
+      } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div className={`w-full h-full flex items-center justify-center relative ${
-        isEmbed ? "p-0" : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 md:max-h-[95vh] md:p-3"
-      }`}>
+      <div
+        className={`w-full h-full flex items-center justify-center relative ${
+          isEmbed
+            ? "p-0"
+            : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 md:max-h-[95vh] md:p-3"
+        }`}
+      >
         {/* Scroll Snap Feed Container */}
         <div
           ref={containerRef}
@@ -1995,8 +821,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             const vid = item.video;
             const idx = item.cardIndex;
             const isCardActive = idx === activeCardIndex;
-            // Adaptive sliding window (±1 on mobile/touch, ±2 on desktop) protects mobile hardware decoders
-            // from crashing or freezing across Brave, Firefox & Safari (WebKit limit ~3-4 decoders)
             const isTouch = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
             const bufferRadius = isTouch ? 1 : 2;
             const isCardNear = Math.abs(idx - activeCardIndex) <= bufferRadius;
@@ -2008,36 +832,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 index={idx}
                 slotId={item.slotId}
                 isActive={isCardActive}
-                videoTime={isCardActive ? videoTime : 0}
                 isNear={isCardNear}
-                isMuted={isMuted}
-                isPlaying={isCardActive && !isPaused ? isPlaying : false}
-                isBuffering={isCardActive ? isBuffering : false}
-                progressPercent={isCardActive ? progressPercent : 0}
-                videoDuration={videoDuration}
-                onScrubStart={isCardActive ? handleScrubStart : undefined}
-                onSeekToPercent={isCardActive ? handleSeekToPercent : undefined}
-                onSeekDelta={isCardActive ? handleSeekDelta : undefined}
-                onScrubEnd={isCardActive ? handleScrubEnd : undefined}
-                isActualMuted={isActualMuted}
-                isManuallyPaused={isCardActive ? (isPaused || isManuallyPaused) : false}
-                hasRenderedFirstFrame={firstFrameRenderedId === vid.id}
-                onTogglePlayPause={(e, targetIdx) => handleTogglePlayPause(e, targetIdx ?? idx)}
                 onActivateCard={(targetIdx) => scrollToCard(targetIdx, "smooth")}
-                onPauseVideo={handlePauseVideo}
                 allUsers={allUsers}
                 currentUser={currentUser}
                 places={places}
                 allVideos={videos}
                 activeSubTab={activeSubTab}
                 onSelectSubTab={onSelectSubTab}
-                isSessionAudioUnlocked={isSessionAudioUnlocked}
-                onUnlockAudio={unlockAudioSession}
-                onToggleMute={toggleMute}
-                onForceMute={() => {
-                  setIsMuted(true);
-                  if (feedVideoRef.current) feedVideoRef.current.muted = true;
-                }}
                 onOpenComments={onOpenComments}
                 onOpenPlace={onOpenPlace}
                 onOpenCreator={onOpenCreator}
@@ -2069,10 +871,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           })}
         </div>
 
-        {/* Floating Up/Down Navigation Buttons (Desktop Only) - Positioned on far right edge ("super right") like TikTok */}
+        {/* Floating Up/Down Navigation Buttons (Desktop Only) */}
         {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
-          const isAtFirstVideo = activeCardIndex <= 0;
-          const isAtLastVideo = !shouldLoop && activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
+          const isAtLastPhoto = activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
 
           return (
             <div
@@ -2081,29 +882,27 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 commentsOpen ? "right-[452px]" : "right-4 lg:right-8"
               }`}
             >
-              {/* Up arrow to scroll to previous video */}
               <button
                 id="btn-scroll-prev-video"
                 onClick={handlePrev}
                 className="w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border border-zinc-700/80 bg-zinc-800/90 hover:bg-zinc-700/90 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl shadow-black/80 flex items-center justify-center transition-all"
-                title="Previous Video (Up Arrow)"
-                aria-label="Previous Video"
+                title="Previous Review (Up Arrow)"
+                aria-label="Previous Review"
               >
                 <ChevronUp className="w-6 h-6 stroke-[2.5]" />
               </button>
 
-              {/* Down arrow to scroll to next video */}
               <button
                 id="btn-scroll-next-video"
                 onClick={handleNext}
-                disabled={isAtLastVideo}
+                disabled={isAtLastPhoto}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtLastVideo
+                  isAtLastPhoto
                     ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
                     : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
                 }`}
-                title={isAtLastVideo ? "Last Video" : "Next Video (Down Arrow)"}
-                aria-label="Next Video"
+                title={isAtLastPhoto ? "Last Review" : "Next Review (Down Arrow)"}
+                aria-label="Next Review"
               >
                 <ChevronDown className="w-6 h-6 stroke-[2.5]" />
               </button>
@@ -2133,7 +932,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-sm text-zinc-100 line-clamp-1">
-                    {formatBusinessName(moreMenuVideo?.placeName || moreMenuVideo?.dishOrItem || moreMenuVideo?.placeId) || t("common.businessPlace", "Business Place")}
+                    {formatBusinessName(moreMenuVideo?.placeName || moreMenuVideo?.dishOrItem || moreMenuVideo?.placeId) ||
+                      t("common.businessPlace", "Business Place")}
                   </h3>
                   <p className="text-xs text-zinc-200 truncate">
                     {moreMenuVideo?.author?.name || t("common.verifiedReviewer", "Verified Reviewer")}
@@ -2155,64 +955,40 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               onWheel={(e) => e.stopPropagation()}
             >
               {(() => {
-                const isVerifiedOwnerOfThisPlace = Boolean(isBusinessOwnerView);
-                let localProfile = null;
+                let localProfile: any = null;
                 try {
                   localProfile = JSON.parse(localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user") || "null");
                 } catch {}
                 const activeUser = currentUser || localProfile;
 
-                const isMyVideo = Boolean(
-                  activeUser && moreMenuVideo &&
-                    (
-                      // 1. Explicit Email Match
-                      (activeUser.email && (
-                        moreMenuVideo?.userId === activeUser.email || 
+                const isMyReview = Boolean(
+                  activeUser &&
+                    moreMenuVideo &&
+                    ((activeUser.email &&
+                      (moreMenuVideo?.userId === activeUser.email ||
                         (moreMenuVideo as any)?.userEmail === activeUser.email ||
-                        moreMenuVideo.author?.email === activeUser.email
-                      )) ||
-                      // 2. Explicit User ID/UID Match
-                      ((activeUser.id || (activeUser as any).uid) && (
-                        moreMenuVideo?.userId === (activeUser.id || (activeUser as any).uid) || 
-                        (moreMenuVideo as any)?.uid === (activeUser.id || (activeUser as any).uid) ||
-                        moreMenuVideo.author?.id === (activeUser.id || (activeUser as any).uid)
-                      )) ||
-                      // 3. Strict handle/author match via isAuthorMatch (excluding generic branding/placeholder names)
-                      (
-                        isAuthorMatch(moreMenuVideo, activeUser) &&
-                        !["yoouz", "yoouz user", "guest", "reviewer", "anonymous", "verified reviewer"].includes((moreMenuVideo.author?.name || "").toLowerCase()) &&
-                        !["yoouz", "yoouz user", "guest", "reviewer", "anonymous", "verified reviewer"].includes((activeUser.name || "").toLowerCase())
-                      ) ||
-                      // 4. Recorded locally by this exact user in this browser
-                      (
-                        typeof localStorage !== "undefined" &&
+                        moreMenuVideo.author?.email === activeUser.email)) ||
+                      ((activeUser.id || (activeUser as any).uid) &&
+                        (moreMenuVideo?.userId === (activeUser.id || (activeUser as any).uid) ||
+                          (moreMenuVideo as any)?.uid === (activeUser.id || (activeUser as any).uid) ||
+                          moreMenuVideo.author?.id === (activeUser.id || (activeUser as any).uid))) ||
+                      isAuthorMatch(moreMenuVideo, activeUser) ||
+                      (typeof localStorage !== "undefined" &&
                         localStorage.getItem("yoouz_local_created_reviews") &&
                         JSON.parse(localStorage.getItem("yoouz_local_created_reviews") || "[]").some(
-                          (r: any) => r && r.id === moreMenuVideo.id && (
-                            !r.userId || r.userId === activeUser.id || r.userId === activeUser.email || isAuthorMatch(r, activeUser)
-                          )
-                        )
-                      )
-                    )
+                          (r: any) =>
+                            r &&
+                            r.id === moreMenuVideo.id &&
+                            (!r.userId || r.userId === activeUser.id || r.userId === activeUser.email || isAuthorMatch(r, activeUser))
+                        )))
                 );
-                
-                // Debug log
-                if (moreMenuVideo && !isMyVideo) {
-                    console.log("DEBUG: MoreMenuVideo isMyVideo=false", { 
-                        moreMenuVideoUserId: moreMenuVideo.userId, 
-                        moreMenuVideoEmail: moreMenuVideo.userEmail,
-                        currentUserId: currentUser?.userId,
-                        currentUserEmail: currentUser?.email
-                    });
-                }
 
-                return isMyVideo ? (
-                  /* OWNER ACTIONS: Edit Star Rating & Review, Share, View Place, Delete */
+                return isMyReview ? (
                   <>
                     <button
                       id="btn-more-option-edit-rating"
                       onClick={() => {
-                        setEditRating(Math.round(moreMenuVideo.rating) || 5);
+                        setEditRating(getRoundedRating(moreMenuVideo.rating) || 5);
                         setEditingReviewVideo(moreMenuVideo);
                         setMoreMenuVideo(null);
                       }}
@@ -2222,9 +998,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         <Edit3 className="w-5 h-5" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating & Review")}</div>
+                        <div className="font-bold text-white">{t("video.editRatingTitle", "Edit Star Rating")}</div>
                         <div className="text-xs text-zinc-200 font-normal">
-                          {t("video.updateYourScore", "Update your score")} ({typeof moreMenuVideo.rating === "number" && !isNaN(moreMenuVideo.rating) ? moreMenuVideo.rating.toFixed(1) : (Number(moreMenuVideo.rating) || 5.0).toFixed(1)} ★)
+                          {t("video.updateYourScore", "Update your score")} ({getRoundedRating(moreMenuVideo.rating) || 5} ★)
                         </div>
                       </div>
                     </button>
@@ -2260,34 +1036,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
                       <Share2 className="w-4 h-4 text-zinc-200" />
-                      <span>{t("video.shareReviewLink", "Share Video Review Link")}</span>
+                      <span>{t("video.shareReviewLink", "Share Photo Review Link")}</span>
                     </button>
-
-                    {/* Verified Business Owner Only: Download for Social & Ads */}
-                    {isVerifiedOwnerOfThisPlace && (
-                      <button
-                        id="btn-more-option-download-ad-owner"
-                        onClick={() => {
-                          const v = moreMenuVideo;
-                          setMoreMenuVideo(null);
-                          if (v) {
-                            setAdExportVideo(v);
-                          }
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 hover:border-zinc-500 transition-colors text-left font-medium text-sm cursor-pointer"
-                      >
-                        <Download className="w-4 h-4 text-white shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white flex items-center gap-2">
-                            <span>{t("video.downloadForAds", "Download Video (MP4)")}</span>
-                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">16:9</span>
-                          </div>
-                          <div className="text-[11px] text-zinc-400 font-normal truncate">
-                            {t("video.downloadForAdsDesc", "Full-width HD video for Facebook, social media & web")}
-                          </div>
-                        </div>
-                      </button>
-                    )}
 
                     <button
                       id="btn-more-option-view-place-owner"
@@ -2317,11 +1067,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors text-left font-medium text-sm cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4 text-red-400" />
-                      <span>{t("video.deleteVideoReview", "Delete Video Review")}</span>
+                      <span>{t("video.deleteReview", "Delete Photo Review")}</span>
                     </button>
                   </>
                 ) : (
-                  /* VIEWER ACTIONS: Save/Bookmark, Share, View Place, View Creator, Report (if not author) */
                   <>
                     <button
                       id="btn-more-option-bookmark-viewer"
@@ -2354,34 +1103,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
                       <Share2 className="w-4 h-4 text-zinc-200" />
-                      <span>{t("video.shareVideoReview", "Share Video Review")}</span>
+                      <span>{t("video.shareReview", "Share Photo Review")}</span>
                     </button>
-
-                    {/* Verified Business Owner Only: Download for Social & Ads */}
-                    {isVerifiedOwnerOfThisPlace && (
-                      <button
-                        id="btn-more-option-download-ad-viewer"
-                        onClick={() => {
-                          const v = moreMenuVideo;
-                          setMoreMenuVideo(null);
-                          if (v) {
-                            setAdExportVideo(v);
-                          }
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 hover:border-zinc-500 transition-colors text-left font-medium text-sm cursor-pointer"
-                      >
-                        <Download className="w-4 h-4 text-white shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white flex items-center gap-2">
-                            <span>{t("video.downloadForAds", "Download Video (MP4)")}</span>
-                            <span className="text-[10px] bg-white/15 text-white font-extrabold px-1.5 py-0.5 rounded-sm border border-white/20">16:9</span>
-                          </div>
-                          <div className="text-[11px] text-zinc-400 font-normal truncate">
-                            {t("video.downloadForAdsDesc", "Full-width HD video for Facebook, social media & web")}
-                          </div>
-                        </div>
-                      </button>
-                    )}
 
                     <button
                       id="btn-more-option-view-place"
@@ -2408,7 +1131,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                       >
                         <User className="w-4 h-4 text-zinc-200" />
-                        <span>{t("video.viewCreatorProfile", "View Creator Profile")} ({moreMenuVideo.author.name})</span>
+                        <span>
+                          {t("video.viewCreatorProfile", "View Reviewer Profile")} ({moreMenuVideo.author.name})
+                        </span>
                       </button>
                     )}
 
@@ -2423,7 +1148,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800/80 hover:text-red-400 text-zinc-200 transition-colors text-left font-medium text-sm cursor-pointer group"
                       >
                         <Flag className="w-4 h-4 text-zinc-400 group-hover:text-red-400" />
-                        <span>{t("video.reportReview", "Report Video Review")}</span>
+                        <span>{t("video.reportReview", "Report Photo Review")}</span>
                       </button>
                     )}
                   </>
@@ -2434,7 +1159,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
       )}
 
-      {/* Edit Star Rating & Review Modal */}
+      {/* Edit Star Rating Modal (Strict Whole Numbers 1–5) */}
       {editingReviewVideo && (
         <div
           id="copo-edit-rating-backdrop"
@@ -2448,19 +1173,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-zinc-100">
-                    {t("video.editReviewRating", "Edit Your Review Rating")}
-                  </h3>
-                  <p className="text-[11px] text-zinc-200">
-                    {t("video.liveRecalculation", "Instant live recalculation across all places")}
-                  </p>
+                  <h3 className="font-bold text-sm text-zinc-100">{t("video.editReviewRating", "Edit Your Star Rating")}</h3>
+                  <p className="text-[11px] text-zinc-200">{t("video.liveRecalculation", "Instant live recalculation across all places")}</p>
                 </div>
               </div>
               <button
@@ -2474,9 +1194,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto touch-pan-y">
-              {/* Target Place Information */}
+            <div className="p-6 space-y-5 flex-1 min-h-0 overflow-y-auto touch-pan-y">
               <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-800/60 border border-zinc-700/50">
                 <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shrink-0">
                   <Sparkles className="w-5 h-5" />
@@ -2489,93 +1207,28 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     {editingReviewVideo.placeCity || editingReviewVideo.placeAddress || t("common.verifiedBusinessReview", "Verified Business Review")}
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20 inline-flex items-center gap-1.5">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                    <span>{(() => {
-                      const val = hoverRating || editRating;
-                      switch (val) {
-                        case 5: return t("video.exceptional", "5.0 • Exceptional");
-                        case 4: return t("video.greatExperience", "4.0 • Great Experience");
-                        case 3: return t("video.goodAverage", "3.0 • Good / Average");
-                        case 2: return t("video.needsWork", "2.0 • Needs Work");
-                        case 1: return t("video.poorExperience", "1.0 • Poor Experience");
-                        default: return `${val.toFixed(1)} • ${t("video.selected", "Selected")}`;
-                      }
-                    })()}</span>
-                  </span>
-                </div>
               </div>
 
-              {/* Star Rating Interactive Selector */}
-              <div className="space-y-4 bg-zinc-950/50 p-5 rounded-2xl border border-zinc-800/90">
-                <div className="text-center space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                    {t("video.tapToSelectStars", "Tap to Select Stars (1 to 5)")}
-                  </span>
-                  <div className="text-base font-black text-amber-400">
-                    {(() => {
-                      const val = hoverRating || editRating;
-                      switch (val) {
-                        case 5: return t("video.exceptional", "5.0 • Exceptional");
-                        case 4: return t("video.greatExperience", "4.0 • Great Experience");
-                        case 3: return t("video.goodAverage", "3.0 • Good / Average");
-                        case 2: return t("video.needsImprovement", "2.0 • Needs Improvement");
-                        case 1: return t("video.poorExperience", "1.0 • Poor Experience");
-                        default: return `${val.toFixed(1)} ${t("video.stars", "Stars")}`;
-                      }
-                    })()}
-                  </div>
-                </div>
+              <SpecialStarSelector
+                value={editRating}
+                onChange={(next) => setEditRating(next)}
+                disabled={isSavingEdit}
+                label={t("video.tapToSelectStars", "Tap to Select Stars (1–5)")}
+              />
 
-                {/* 5 Interactive Clean Gold Stars */}
-                <div className="flex items-center justify-center gap-3 py-1">
-                  {[1, 2, 3, 4, 5].map((starNum) => {
-                    const activeVal = hoverRating || editRating;
-                    const isFilled = starNum <= activeVal;
-                    return (
-                      <button
-                        key={starNum}
-                        type="button"
-                        id={`btn-select-rating-star-${starNum}`}
-                        onClick={() => setEditRating(starNum)}
-                        onMouseEnter={() => setHoverRating(starNum)}
-                        onMouseLeave={() => setHoverRating(null)}
-                        className={`p-2 rounded-2xl transition-all cursor-pointer transform hover:scale-115 active:scale-95 ${
-                          isFilled
-                            ? "text-amber-400"
-                            : "text-zinc-600 hover:text-zinc-400"
-                        }`}
-                        title={`Rate ${starNum} Stars`}
-                      >
-                        <Star
-                          className={`w-10 h-10 transition-colors ${
-                            isFilled ? "fill-amber-400 text-amber-400" : "text-zinc-700 fill-zinc-900/60"
-                          }`}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex items-center justify-between px-2 text-[11px] font-bold text-zinc-200">
-                  <span>{t("video.oneStarPoor", "1 Star (Poor)")}</span>
-                  <span>{t("video.fiveStarsExceptional", "5 Stars (Exceptional)")}</span>
-                </div>
-              </div>
-
-              {/* Note on live recalculation */}
               <div className="p-3.5 rounded-xl bg-zinc-800/80 border border-zinc-700/60 flex items-start gap-2.5">
                 <div className="w-5 h-5 rounded-full bg-zinc-700 text-white flex items-center justify-center shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-white" />
                 </div>
                 <p className="text-xs text-zinc-200 leading-relaxed font-normal">
-                  {t("video.recalculationNote", "Changing your rating will automatically recalculate the overall average score for this business across all verified reviews.")}
+                  {t(
+                    "video.recalculationNote",
+                    "Changing your rating will automatically recalculate the overall average score for this business across all reviews."
+                  )}
                 </p>
               </div>
             </div>
 
-            {/* Sticky Footer Action Buttons */}
             <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-md shrink-0 flex items-center gap-3 pb-[max(16px,calc(env(safe-area-inset-bottom,0px)+16px))] z-20">
               <button
                 type="button"
@@ -2595,7 +1248,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                   setIsSavingEdit(true);
                   try {
                     await onUpdateVideoReview(editingReviewVideo.id, {
-                      rating: editRating
+                      rating: getRoundedRating(editRating)
                     });
                     setSaveSuccess(true);
                     setTimeout(() => {
@@ -2631,7 +1284,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
       )}
 
-      {/* Creator Review Permanent Deletion Confirmation Modal */}
+      {/* Permanent Deletion Confirmation Modal */}
       {videoConfirmDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
@@ -2639,9 +1292,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">{t("video.deleteReviewTitle", "Delete Video Review?")}</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">
+                {t("video.deleteReviewTitle", "Delete Photo Review?")}
+              </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
-                {t("video.deleteReviewDesc", "This will permanently delete your review globally from all feeds, databases, and storage.")}
+                {t("video.deleteReviewDesc", "This will permanently delete your photo review from all feeds, databases, and storage.")}
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
@@ -2673,7 +1328,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         </div>
       )}
 
-      {/* Purge All Videos Confirmation Modal */}
+      {/* Purge All Confirmation Modal */}
       {showConfirmPurgeAllModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
@@ -2681,9 +1336,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">Delete All Videos?</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">Delete All Reviews?</h3>
               <p className="text-xs text-zinc-300 leading-relaxed">
-                This will permanently delete all video reviews from all feeds, databases, and cloud storage immediately.
+                This will permanently delete all photo reviews from all feeds, databases, and cloud storage immediately.
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
@@ -2712,20 +1367,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           </div>
         </div>
       )}
-
-      {/* Branded Ad Video Export Modal (Baked-in overlays: Venue Logo, Rating, Creator badge & Powered by Yoouz.com) */}
-      <CopoBrandedAdExportModal
-        isOpen={Boolean(adExportVideo)}
-        onClose={() => setAdExportVideo(null)}
-        video={adExportVideo}
-        place={
-          places?.find(
-            (p) =>
-              p.id === adExportVideo?.placeId ||
-              (p.name && adExportVideo?.placeName && p.name.toLowerCase() === adExportVideo.placeName.toLowerCase())
-          ) || (adExportVideo ? { name: adExportVideo.placeName, logoUrl: adExportVideo.placeLogoUrl } : undefined)
-        }
-      />
     </main>
   );
 };

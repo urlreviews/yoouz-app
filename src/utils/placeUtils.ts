@@ -4,7 +4,7 @@ import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImag
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 
-export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v43_hw_sync_v2";
+export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v50_photo_pivot";
 
 /**
  * Universal, highly robust review timestamp extractor
@@ -2966,7 +2966,7 @@ export function generateSmartPlaceDescription(params: {
 
   const isYoouz = domain === "yoouz.com" || domain === "yoouz" || nameLower === "yoouz";
   if (isYoouz) {
-    return "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.";
+    return "The #1 authentic live photo review network. Discover local businesses, services, and online brands with real-time camera photos and whole 1–5 star ratings. Zero gallery uploads.";
   }
 
   // Location string construction
@@ -3080,7 +3080,7 @@ export function getEffectivePlaceDescription(place?: any, fallbackCategory?: str
   }
 
   if (isActuallyYoouz) {
-    return "Official verified business profile for Yoouz. 100% authentic 60-second video reviews by real customers. Zero fake text reviews.";
+    return "Official verified business profile for Yoouz. 100% authentic live camera photo reviews with whole 1–5 star ratings. Zero gallery uploads.";
   }
 
   return generateSmartPlaceDescription({
@@ -3719,7 +3719,9 @@ export function resolveSafeAuthor(
     nameCandidates[0] ||
     "Yoouz Reviewer";
 
+  const isAnonymousUidFormat = /^U\/[A-Z0-9]{4,}$/i.test(finalName);
   let finalHandle =
+    (isAnonymousUidFormat ? `@${finalName.replace(/^U\//i, "u_").toLowerCase()}` : "") ||
     (finalName.includes(" ") ? `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "") ||
     registryMatch?.handle ||
     knownMatch?.handle ||

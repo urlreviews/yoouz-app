@@ -1,6 +1,6 @@
 {
   "name": "Yoouz",
-  "description": "Premium video review platform for authentic local business discovery.",
+  "description": "Live photo review platform for authentic local business discovery.",
   "requestFramePermissions": [
     "camera",
     "microphone"

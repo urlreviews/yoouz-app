@@ -56,33 +56,27 @@ export function normalizeReview(v: any): VideoReview {
       commentsCountVal = typeof v.commentsCount === 'number' ? v.commentsCount : 0;
     }
 
-    const placeId = (v.placeId || "").toLowerCase();
-    const placeName = (v.placeName || "").toLowerCase();
-    let officialTitle = v.title || v.aiTitle || (v.caption && !v.caption.toLowerCase().startsWith("video review for") ? v.caption : "") || v.bunnyTitle || v.videoTitle || "";
-    if (!officialTitle || officialTitle.toLowerCase().startsWith("video review for") || officialTitle.startsWith("Test Video Review") || officialTitle.startsWith("Great Review for")) {
-      if (placeId.includes("topmenremovals") || placeName.includes("shirley") || placeName.includes("top men") || String(videoId).includes("3a641d6f")) {
-        officialTitle = "Great Removals Service in London by Sheelys - Highly Recommended!";
-      } else if (placeId.includes("zara") || placeName.includes("zara") || String(videoId).includes("f5452859") || String(videoId).includes("smiho")) {
-        officialTitle = "Long-lasting Zara perfume scent that matches your vibe perfectly!";
-      }
-    }
-
-    let healedThumbnailUrl = v.thumbnailUrl;
-    if (
-      String(videoId) === "rev-1792505047137-smiho" ||
-      v.bunnyVideoId === "f5452859-5b43-43f1-857f-7b13fcfa80d8" ||
-      (typeof healedThumbnailUrl === "string" && healedThumbnailUrl.includes("f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail.jpg"))
-    ) {
-      healedThumbnailUrl = "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg";
-    }
+    const isPhoto = v.mediaType === 'photo' || Boolean(v.photoUrl);
+    const resolvedPhotoUrl = v.photoUrl || (isPhoto ? v.thumbnailUrl : undefined);
+    const integerRating = Math.min(5, Math.max(1, Math.round(Number(v.rating) || 5)));
 
     return {
       ...v,
       id: videoId,
-      thumbnailUrl: healedThumbnailUrl,
-      title: officialTitle,
-      bunnyTitle: officialTitle,
-      videoTitle: officialTitle,
+      mediaType: isPhoto ? 'photo' : v.mediaType,
+      photoUrl: resolvedPhotoUrl,
+      thumbnailUrl: resolvedPhotoUrl || v.thumbnailUrl,
+      rating: integerRating,
+      placeRating: integerRating,
+      title: "",
+      aiTitle: "",
+      caption: "",
+      bunnyTitle: "",
+      videoTitle: "",
+      transcript: "",
+      transcriptText: "",
+      vttUrl: "",
+      segments: [],
       views: computedViews,
       viewsCount: computedViews,
       likes: likesCountVal,
@@ -208,8 +202,12 @@ export const isPurgedItem = (v: any, extraDeletedIds?: string[] | Set<string>) =
 
   const bunnyId = String(v.bunnyVideoId || v.bunnyGuid || "").trim();
   const vUrl = String(v.videoUrl || "").trim();
+  const photoUrl = String(v.photoUrl || "").trim();
+  const isPhoto = v.mediaType === 'photo' || Boolean(photoUrl);
 
-  if (!vUrl || vUrl.includes("placeholder") || vUrl.includes("blank") || vUrl.length < 5) return true;
+  // Reject legacy video-only items (only photo reviews are permitted)
+  if (!isPhoto) return true;
+  if (!photoUrl || photoUrl.includes("placeholder") || photoUrl.includes("blank") || photoUrl.length < 5) return true;
   if (id.includes("renevolt") || String(v.placeId || "").includes("renevolt") || String(v.placeName || "").includes("renevolt")) return true;
 
   if (extraDeletedIds) {
@@ -363,8 +361,8 @@ export function useFeedPagination() {
 
       // 4. Local in-flight published
       localPublished.forEach((v) => {
-        const hasVideo = Boolean(v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl);
-        if (v && v.id && !isPurgedItem(v, deletedIds) && hasVideo) {
+        const hasMedia = Boolean(v.photoUrl || v.thumbnailUrl || v.videoUrl);
+        if (v && v.id && !isPurgedItem(v, deletedIds) && hasMedia) {
           combinedMap.set(String(v.id), v);
         }
       });

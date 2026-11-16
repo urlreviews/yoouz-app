@@ -346,8 +346,8 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                   : "border-transparent text-zinc-200 hover:text-zinc-200"
               }`}
             >
-              <Video className="w-3.5 h-3.5 text-zinc-200" />
-              <span>Video Reviews ({placeVideos.length})</span>
+              <Camera className="w-3.5 h-3.5 text-zinc-200" />
+              <span>Photo Reviews ({placeVideos.length})</span>
             </button>
           </div>
 
@@ -384,9 +384,9 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                     className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center shadow-md">
-                      <Video className="w-4 h-4" />
+                      <Camera className="w-4 h-4" />
                     </div>
-                    <span className="font-semibold text-zinc-200">Videos</span>
+                    <span className="font-semibold text-zinc-200">Reviews</span>
                   </button>
                 </div>
 
@@ -437,7 +437,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
               <div className="p-4 space-y-4 bg-zinc-950">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-sm text-white">
-                    Video Reviews ({placeVideos.length})
+                    Photo Reviews ({placeVideos.length})
                   </h3>
                 </div>
 
@@ -449,34 +449,30 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                         onClick={() => onSelectVideo(vid.id)}
                         className="group relative aspect-[9/13] rounded-xl overflow-hidden bg-black border border-zinc-800 cursor-pointer hover:border-zinc-500 transition-all shadow-sm"
                       >
-                        {vid.thumbnailUrl ? (
+                        {vid.photoUrl || vid.thumbnailUrl ? (
                           <img
-                            src={vid.thumbnailUrl}
-                            alt={vid.caption}
+                            src={vid.photoUrl || vid.thumbnailUrl}
+                            alt={vid.placeName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
                         ) : (
                           <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white/30" />
+                            <Camera className="w-6 h-6 text-white/30" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-                        <div className="absolute inset-0 m-auto w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white">
-                          <Play className="w-3.5 h-3.5 fill-white translate-x-0.5" />
-                        </div>
                         <div className="absolute bottom-2 left-2 right-2 text-white">
                           <p className="text-[11px] font-bold truncate">{vid.author.name}</p>
-                          <p className="text-[9px] text-zinc-200 truncate">{vid.caption}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="p-6 text-center rounded-2xl bg-zinc-900/60 border border-dashed border-zinc-800">
-                    <Video className="w-8 h-8 text-zinc-200 mx-auto mb-2 opacity-60" />
-                    <p className="font-bold text-xs text-zinc-200">No video reviews yet</p>
+                    <Camera className="w-8 h-8 text-zinc-200 mx-auto mb-2 opacity-60" />
+                    <p className="font-bold text-xs text-zinc-200">No photo reviews yet</p>
                     <p className="text-[11px] text-zinc-200 mt-1">
-                      Be the first creator to share a review for this place!
+                      Be the first reviewer to snap a live photo for this place!
                     </p>
                   </div>
                 )}

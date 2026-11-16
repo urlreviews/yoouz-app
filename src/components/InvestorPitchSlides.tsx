@@ -1608,7 +1608,7 @@ const Slide16: React.FC = () => (
             <li>• Official Profile Claim & Address Verification</li>
             <li>• Update Business Hours & Category Info</li>
             <li>• Standard Acrylic QR Code Tabletop Generator</li>
-            <li>• Basic Video View & Follower Counter</li>
+            <li>• Basic Review View & Follower Counter</li>
             <li>• Public Text Replies to Customer Reviews</li>
             <li>• Direct In-App Customer Chat Messaging</li>
           </ul>
@@ -1625,9 +1625,9 @@ const Slide16: React.FC = () => (
           <ul className="text-[11px] text-slate-300 space-y-1">
             <li className="font-bold text-amber-400">• EVERYTHING IN FREE TIER, PLUS:</li>
             <li>• 1-Click HD Branded Ad Exporter (Meta/TikTok)</li>
-            <li>• Embeddable Video Reviews on Merchant Website</li>
+            <li>• Embeddable Photo Reviews on Merchant Website</li>
             <li>• Priority Placement in Local Search Results</li>
-            <li>• Automated Google SEO Video Schema Snippets</li>
+            <li>• Automated Google SEO Review Schema Snippets</li>
             <li>• Advanced Sentiment & Viewer Retention Analytics</li>
             <li>• Official Gold Verified Business Badge</li>
           </ul>
@@ -1690,9 +1690,9 @@ const Slide17: React.FC = () => (
           <thead>
             <tr className="border-b border-slate-200 text-slate-500 font-bold">
               <th className="py-1">Platform</th>
-              <th className="py-1 text-blue-700">100% Live Video</th>
+              <th className="py-1 text-blue-700">100% Live Photo</th>
               <th className="py-1">Anti-Upload Gate</th>
-              <th className="py-1">Subtitles / Captions</th>
+              <th className="py-1">Whole-Star Rating</th>
               <th className="py-1">B2B Ad Exporter</th>
               <th className="py-1">Consumer Trust</th>
             </tr>
@@ -1700,11 +1700,11 @@ const Slide17: React.FC = () => (
           <tbody className="divide-y divide-slate-100 text-slate-700">
             <tr className="bg-blue-50 font-bold">
               <td className="py-1 text-blue-800">Yoouz</td>
-              <td className="text-emerald-700">YES (Mandatory)</td>
+              <td className="text-emerald-700">YES (Live Camera)</td>
               <td className="text-emerald-700">YES (No Gallery)</td>
-              <td className="text-emerald-700">YES (Bunny Sync)</td>
+              <td className="text-emerald-700">YES (1–5 Solid Stars)</td>
               <td className="text-emerald-700">YES (1-Click)</td>
-              <td className="text-emerald-700">HIGHEST (Human Proof)</td>
+              <td className="text-emerald-700">HIGHEST (Visual Proof)</td>
             </tr>
             <tr>
               <td className="py-1 font-bold">Yelp</td>
@@ -1752,13 +1752,13 @@ const Slide17: React.FC = () => (
           <strong className="text-white">1. The Anti-Incentive Dilemma for Yelp & Google:</strong> Over 80% of Yelp and Google Maps review ad revenue is extracted through negative review defense. Eliminating fake text reviews removes their monetization leverage. They cannot pivot to authentic video without killing their core business.
         </div>
         <div>
-          <strong className="text-white">2. The "Proof-of-Humanity" Data Asset:</strong> Every video uploaded to Yoouz builds an immutable corpus of authenticated human consumer behavior. In an internet saturated with synthetic AI spam, verified human video carries the highest data premium in the world.
+          <strong className="text-white">2. The "Proof-of-Presence" Data Asset:</strong> Every live camera photo uploaded to Yoouz builds an immutable corpus of authenticated consumer proof. In an internet saturated with synthetic AI spam, verified live camera photos carry the highest trust premium in the world.
         </div>
         <div>
-          <strong className="text-white">3. Zero App Store Gatekeeping (Instant PWA Onboarding):</strong> By eliminating the 200MB app store friction, Yoouz achieves an 8x higher conversion rate when on-site diners scan table QR codes compared to legacy mobile applications.
+          <strong className="text-white">3. Zero App Store Gatekeeping (Instant PWA Onboarding):</strong> By eliminating the 200MB app store friction and login walls, Yoouz achieves an 8x higher conversion rate when on-site diners scan table QR codes compared to legacy mobile applications.
         </div>
         <div>
-          <strong className="text-white">4. Local Two-Sided Network Effects:</strong> Consumers open Yoouz because video reviews are honest and un-faked. Merchants claim their profiles because video reviews convert 3x higher than text. Once a local city achieves critical density, the network is unassailable.
+          <strong className="text-white">4. Local Two-Sided Network Effects:</strong> Consumers open Yoouz because live photo reviews are honest and un-faked. Merchants claim their profiles because visual reviews convert 3x higher than text. Once a local city achieves critical density, the network is unassailable.
         </div>
       </div>
     </div>
@@ -1795,8 +1795,8 @@ const Slide18: React.FC = () => (
           <div className="font-bold text-slate-900 text-[11px]">Core Protocol & Production Infrastructure</div>
           <ul className="text-slate-600 space-y-0.5">
             <li>• Full PWA mobile & desktop web application live</li>
-            <li>• Bunny Stream low-latency edge video pipeline</li>
-            <li>• Front-camera live 60s recording studio</li>
+            <li>• Bunny.net CDN low-latency edge media pipeline</li>
+            <li>• Live front &amp; rear camera photo capture studio</li>
             <li>• PostgreSQL Cloud SQL schema & persistence</li>
             <li>• Real-time search with iOS caret synchronization</li>
           </ul>
@@ -1810,8 +1810,8 @@ const Slide18: React.FC = () => (
           <ul className="text-slate-600 space-y-0.5">
             <li>• Business claiming & domain verification</li>
             <li>• Custom acrylic QR table stand generators</li>
-            <li>• Branded 9:16 video ad exporter for Meta/TikTok</li>
-            <li>• 1-Click embeddable website video widget</li>
+            <li>• Branded 9:16 photo ad exporter for Meta/TikTok</li>
+            <li>• 1-Click embeddable website photo review widget</li>
             <li>• $149/mo Premium Business subscription active</li>
           </ul>
         </div>
@@ -1825,7 +1825,7 @@ const Slide18: React.FC = () => (
             <li>• Toast, Square & Clover POS direct integrations</li>
             <li>• Automated post-checkout SMS review invitations</li>
             <li>• Verified Creator token rewards & perks</li>
-            <li>• Real-time multi-language AI auto-dubbing</li>
+            <li>• Real-time visual discovery & local heatmaps</li>
             <li>• Strategic national hospitality franchise rollouts</li>
           </ul>
         </div>
@@ -1844,15 +1844,15 @@ const Slide18: React.FC = () => (
           </div>
           <div>
             <strong className="text-white block">Irresistible Product-Market Fit:</strong>
-            Combines vertical video addiction with high-margin B2B SaaS revenue.
+            Combines vertical visual discovery with high-margin B2B SaaS revenue.
           </div>
           <div>
             <strong className="text-white block">Capital-Efficient Infrastructure:</strong>
             Bunny.net edge infrastructure delivers &gt;88% gross margins.
           </div>
           <div>
-            <strong className="text-white block">First-Mover Moat in Proof-of-Humanity:</strong>
-            Standardizing live 60s video positions Yoouz as global trust protocol.
+            <strong className="text-white block">First-Mover Moat in Visual Proof:</strong>
+            Standardizing live camera photo reviews positions Yoouz as global trust protocol.
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Bookmark,
   Star,
-  Play,
+  Camera,
   Trash2,
   Compass,
   MapPin,
@@ -15,7 +15,7 @@ import { VideoReview, UserProfile, Place } from "../types";
 import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
+import { getRoundedRating } from "./CopoStarRating";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoBookmarksViewProps {
@@ -57,21 +57,6 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
 }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>("videos");
-
-  // Unauthenticated Gating View
-  if (!currentUser) {
-    return (
-      <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 text-white md:text-white flex flex-col justify-between pb-32 md:pb-6" >
-        <CopoAuthPrompt
-          intent="bookmarks"
-          onOpenHelp={onOpenHelp}
-          onOpenLegal={onOpenLegal}
-          onSuccess={onSuccessAuth}
-          isFullPage={true}
-        />
-      </div>
-    );
-  }
 
   // Helper to clean up any raw URL addresses in list views
   const cleanDisplayAddress = (address: string) => {
@@ -149,8 +134,8 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             }`}
           >
             <span className="flex items-center gap-1.5">
-              <Play className="w-3.5 h-3.5 fill-current" />
-              {t("bookmarks.tabVideos", "Videos")} ({bookmarkedVideos.length})
+              <Camera className="w-3.5 h-3.5" />
+              {t("bookmarks.tabPhotos", "Photos")} ({bookmarkedVideos.length})
             </span>
             {activeTab === "videos" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-fade-in" />
@@ -224,7 +209,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       <div className="flex items-center gap-1.5 text-xs text-zinc-200 mt-1">
                         <div className="flex items-center text-amber-400 font-bold shrink-0">
                           <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                          <span>{typeof video.rating === "number" && !isNaN(video.rating) ? video.rating.toFixed(1) : (Number(video.rating) || 5.0).toFixed(1)}</span>
+                          <span>{getRoundedRating(video.rating || 5)}</span>
                         </div>
                         <span className="text-zinc-650">|</span>
                         <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
@@ -265,13 +250,13 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
-                <Play className="w-6 h-6 fill-current" />
+                <Camera className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-white text-sm mb-1">
-                {t("video.no_reviews", "No video reviews saved yet")}
+                {t("photo.no_reviews", "No photo reviews saved yet")}
               </h3>
               <p className="text-xs text-zinc-400 max-w-sm mb-6 font-medium">
-                {t("bookmarks.videosEmpty", "Tap the bookmark icon in any video's options menu to save it.")}
+                {t("bookmarks.photosEmpty", "Tap the bookmark icon on any photo review to save it.")}
               </p>
               {onNavigateHome && (
                 <button
@@ -401,7 +386,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-0.5 min-w-0">
                         <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                         <span className="truncate">
-                          {formatCityCountry(creator) || (creator.videoReviewCount ? `${creator.videoReviewCount} ${creator.videoReviewCount === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}` : t("profile.communityReviewer", "Community Reviewer"))}
+                          {formatCityCountry(creator) || (creator.videoReviewCount ? `${creator.videoReviewCount} ${creator.videoReviewCount === 1 ? t("common.photoReview", "photo review") : t("common.photoReviews", "photo reviews")}` : t("profile.communityReviewer", "Community Reviewer"))}
                         </span>
                       </div>
                     </div>

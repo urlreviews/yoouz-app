@@ -930,7 +930,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
       const authorName = isOwnerPosting
         ? `${placeName || video.placeName || "Business"}`
-        : (currentUser.name || (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
+        : (currentUser.name || (isTargetCreator ? "Photo Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
       const authorHandle = isOwnerPosting
         ? "owner"
         : (currentUser.email ? currentUser.email.split("@")[0] : (isTargetCreator ? "reviewer" : "user"));
@@ -1844,7 +1844,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         : postAsOwner
                         ? t("comments.addOwnerCommentPlaceholder", "Add comment as business owner...")
                         : isUserCreator
-                        ? t("comments.addReviewerCommentPlaceholder", "Add comment as the video reviewer...")
+                        ? t("comments.addReviewerCommentPlaceholder", "Add comment as the photo reviewer...")
                         : t("comments.addCommentPlaceholder", "Add a comment...")
                     }
                     className={`w-full bg-zinc-900 text-white placeholder-zinc-500 text-[16px] md:text-sm px-3.5 py-2 rounded-2xl border transition-all resize-none leading-relaxed overflow-y-auto block ${

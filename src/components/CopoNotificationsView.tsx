@@ -22,7 +22,6 @@ import {
   Trash2
 } from "lucide-react";
 import { CopoNotification, UserProfile, VideoReview, DEFAULT_NOTIFICATION_PREFERENCES } from "../types";
-import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface CopoNotificationsViewProps {
@@ -87,21 +86,6 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       return () => window.removeEventListener('resize', checkTouch);
     }
   }, []);
-
-  // Unauthenticated Gating View
-  if (!currentUser) {
-    return (
-      <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 text-white md:text-white flex flex-col justify-between pb-32 md:pb-6" >
-        <CopoAuthPrompt
-          intent="notifications"
-          onOpenHelp={onOpenHelp}
-          onOpenLegal={onOpenLegal}
-          onSuccess={onSuccessAuth}
-          isFullPage={true}
-        />
-      </div>
-    );
-  }
 
   // Helper to mark a single notification as read
   const handleMarkAsRead = (id: string, e?: React.MouseEvent) => {
@@ -220,12 +204,12 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         type: "recommendation" as const,
         action: "recommended",
         target: cleanTarget,
-        rating: rating ? parseFloat(rating).toFixed(1) : undefined
+        rating: rating ? String(Math.max(1, Math.min(5, Math.round(parseFloat(rating))))) : undefined
       };
     }
 
-    // Case B: Video review share message: "Check out my/this video review for domain.com ... "
-    const vidMatch = raw.match(/sent you a message:\s*"?Check out (?:my|this) video review for\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[^!⭐★\n]+?)(?:!|⭐|★|\/|\d|\"|$)/i);
+    // Case B: Review share message: "Check out my/this photo/video review for domain.com ... "
+    const vidMatch = raw.match(/sent you a message:\s*"?Check out (?:my|this) (?:photo |video )?review for\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[^!⭐★\n]+?)(?:!|⭐|★|\/|\d|\"|$)/i);
     if (vidMatch) {
       const rawTarget = vidMatch[1].trim().replace(/[!"]/g, "");
       const cleanTarget = extractCleanDomain(rawTarget) || rawTarget || "a place";
@@ -233,9 +217,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       const rating = starMatch ? starMatch[1] : null;
       return {
         type: "video_share" as const,
-        action: "shared a review for",
+        action: "shared a photo review for",
         target: cleanTarget,
-        rating: rating ? parseFloat(rating).toFixed(1) : undefined
+        rating: rating ? String(Math.max(1, Math.min(5, Math.round(parseFloat(rating))))) : undefined
       };
     }
 
@@ -252,23 +236,23 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       };
     }
 
-    // Case D: New Video Review for a business
-    if (notif.type === "review" || /^posted a (?:video )?review|^left a (?:video )?review/i.test(raw)) {
+    // Case D: New Photo Review for a business
+    if (notif.type === "review" || /^posted a (?:photo |video )?review|^left a (?:photo |video )?review/i.test(raw)) {
       const starMatch = raw.match(/(?:⭐|★|\b)(\d(?:\.\d)?)(?:\/5|\s*stars?|★)?/i);
       const forMatch = raw.match(/(?:for|of)\s+(.+)$/i);
       const cleanPlace = forMatch ? (extractCleanDomain(forMatch[1].trim()) || forMatch[1].trim()) : (notif.placeName || notif.placeId || "your business");
       return {
         type: "new_review" as const,
-        action: "posted a video review for",
+        action: "posted a photo review for",
         target: cleanPlace,
-        rating: starMatch ? parseFloat(starMatch[1]).toFixed(1) : undefined
+        rating: starMatch ? String(Math.max(1, Math.min(5, Math.round(parseFloat(starMatch[1]))))) : undefined
       };
     }
 
     // Case E: Likes / Shares / Comments / Saves on a review of a place/domain
-    const ofMatch = raw.match(/^(liked your video review of|shared your video review of|saved your video review of|saved your review of|bookmarked your review of|commented:\s*".*?"\s*on your review of)\s*(.+)$/i);
+    const ofMatch = raw.match(/^(liked your (?:photo |video )?review of|shared your (?:photo |video )?review of|saved your (?:photo |video )?review of|saved your review of|bookmarked your review of|commented:\s*".*?"\s*on your review of)\s*(.+)$/i);
     if (ofMatch) {
-      const actionPart = ofMatch[1];
+      const actionPart = ofMatch[1].replace(/\bvideo review\b/i, "photo review");
       const placePart = ofMatch[2].trim();
       const cleanPlace = extractCleanDomain(placePart) || placePart;
       return {
@@ -724,7 +708,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           </>
                         ) : details.type === "new_review" || notif.type === "review" ? (
                           <>
-                            <span className="text-zinc-300 font-medium">{details.action || "posted a video review for"}</span>{" "}
+                            <span className="text-zinc-300 font-medium">{details.action || "posted a photo review for"}</span>{" "}
                             <span className="font-bold text-white underline-offset-2 hover:underline">
                               {details.target || notif.placeName || "your business"}
                             </span>
@@ -772,11 +756,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                           }
                         }}
                         className="w-11 h-14 sm:w-12 sm:h-15 rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-zinc-800 shadow-md relative group-hover:scale-105 active:scale-95 transition-transform duration-200 cursor-pointer"
-                        title="Watch video review"
+                        title="View photo review"
                       >
                         <img
                           src={resolvedThumbnail}
-                          alt="Video review by creator"
+                          alt="Photo review by creator"
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
@@ -784,15 +768,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             if (notif.user?.avatar && target.src !== notif.user.avatar) {
                               target.src = notif.user.avatar;
                             } else {
-                              target.src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "Video")}&background=27272a&color=fff`;
+                              target.src = `/api/avatar?name=${encodeURIComponent(notif.user.name || "Photo")}&background=27272a&color=fff`;
                             }
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent flex items-center justify-center">
-                          <div className="w-4.5 h-4.5 rounded-full bg-black/50 backdrop-blur-xs text-white flex items-center justify-center shadow-sm">
-                            <Play className="w-2 h-2 fill-white text-white translate-x-0.5" />
-                          </div>
-                        </div>
                       </div>
                     ) : null}
 
@@ -826,7 +805,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               {userPrefs?.enabled === false
                 ? t("notifications.pausedNotice", "You have paused in-app notifications in your preferences. Turn them on to see new alerts.")
                 : activeFilter === "all"
-                ? t("notifications.allCaughtUpDesc", "You're all caught up! Community updates and video review activity will appear here.")
+                ? t("notifications.allCaughtUpDesc", "You're all caught up! Community updates and photo review activity will appear here.")
                 : t("notifications.noNotificationsUnder", `No notifications found under "${activeFilter}".`).replace("{filter}", activeFilter)}
             </p>
             {userPrefs?.enabled === false ? (

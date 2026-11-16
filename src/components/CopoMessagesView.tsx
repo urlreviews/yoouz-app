@@ -35,7 +35,6 @@ import { CopoMessage, Place, UserProfile, VideoAuthor, VideoReview } from "../ty
 import { motion, AnimatePresence } from "motion/react";
 import { formatRecordedDate, formatChatMessageTime, formatChatDateDivider, formatMessageTimeOnly, formatThreadPreviewTime, isSameCalendarDay, resolveMessageTimestampMs, parseTimestampToMs } from "../utils/dateUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
-import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, getThreadPartnerIdentifiers, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread } from "../lib/socialSync";
@@ -1752,21 +1751,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       onOpenCreator(author);
     }
   };
-
-  // Unauthenticated Gating View
-  if (!currentUser) {
-    return (
-      <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 flex flex-col justify-between pb-32 md:pb-6" >
-        <CopoAuthPrompt
-          intent="messages"
-          onOpenHelp={onOpenHelp}
-          onOpenLegal={onOpenLegal}
-          onSuccess={onSuccessAuth}
-          isFullPage={true}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-0 sm:p-4 md:p-8 flex flex-col select-none">

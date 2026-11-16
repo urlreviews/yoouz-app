@@ -12,7 +12,7 @@ import {
   Bookmark,
   User,
   Menu,
-  Video,
+  Camera,
   Shield,
   Download,
   Globe,
@@ -183,14 +183,14 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             })}
           </nav>
 
-          {/* Video Review Primary Hero CTA (Directly below menu items, Twitter/X Post style) */}
+          {/* Photo Review Primary Hero CTA */}
           <button
             id="sidebar-record-btn"
             onClick={() => onSelectSection("record_review")}
             className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer mt-1"
           >
-            <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
-            <span>{t("nav.record_review", "Video Review")}</span>
+            <Camera className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+            <span>{t("nav.add_review", "Add Review")}</span>
           </button>
         </div>
 
@@ -307,13 +307,13 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
             })}
           </nav>
 
-          {/* Tablet Video Review CTA button */}
+          {/* Tablet Add Review CTA button */}
           <button
             onClick={() => onSelectSection("record_review")}
             className="relative flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg mt-2 active:scale-95 transition-all cursor-pointer"
-            title={t("nav.record_review", "Video Review")}
+            title={t("nav.add_review", "Add Review")}
           >
-            <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+            <Camera className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
           </button>
         </div>
       </aside>

@@ -72,9 +72,9 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
   };
 
   const iframeSrc = `/embed/${encodeURIComponent(testSlug)}`;
-  const fullEmbedSnippet = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
+  const fullEmbedSnippet = `<!-- Yoouz Live Photo Reviews + Google Rich Snippet (Schema.org) -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
-  <iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${testSlug} on Yoouz"></iframe>
+  <iframe src="https://www.yoouz.com/embed/${testSlug}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone; popups; popups-to-escape-sandbox" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Photo Reviews for ${testSlug} on Yoouz"></iframe>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

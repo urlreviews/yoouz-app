@@ -623,7 +623,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                         )}
                         
                         <p className="text-[11px] font-semibold text-zinc-200">
-                          {reviewer.count} {reviewer.count === 1 ? t("common.videoReview", "video review") : t("common.videoReviews", "video reviews")}
+                          {reviewer.count} {reviewer.count === 1 ? t("common.photoReview", "photo review") : t("common.photoReviews", "photo reviews")}
                         </p>
                       </div>
                     </div>

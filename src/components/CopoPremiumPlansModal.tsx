@@ -377,28 +377,28 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   <div className="flex items-start gap-3">
                     <Code className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Embed Video Reviews on your official website
+                      Embed Photo Reviews on your official website
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Download className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Download High-Res Videos for social ads & marketing
+                      Download High-Res Branded Cards for social ads & marketing
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Search className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Google SEO Indexing with video rich snippets
+                      Google SEO Indexing with rich review snippets
                     </span>
                   </div>
 
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-4 h-4 text-white shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Smart Video Review Finder for web aggregation
+                      Smart Photo Review Finder for web aggregation
                     </span>
                   </div>
 
@@ -558,7 +558,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60 text-zinc-200 font-medium">
                   <tr>
-                    <td className="py-4 font-bold text-white">Real-time Video Impression Analytics & Watch Counts</td>
+                    <td className="py-4 font-bold text-white">Real-time Review Impression Analytics & View Counts</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
@@ -568,7 +568,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Reply to Customer Video Reviews, Comments & Direct Messages (User Chat)</td>
+                    <td className="py-4 font-bold text-white">Reply to Customer Photo Reviews, Comments & Direct Messages (User Chat)</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
@@ -593,22 +593,22 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Embed Customer Video Reviews on Website</td>
+                    <td className="py-4 font-bold text-white">Embed Customer Photo Reviews on Website</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Download High-Res Video Reviews for Social Ads</td>
+                    <td className="py-4 font-bold text-white">Download High-Res Photo Reviews for Social Ads</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Google SEO Indexing & Video Rich Snippets</td>
+                    <td className="py-4 font-bold text-white">Google SEO Indexing & Review Rich Snippets</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
                   <tr>
-                    <td className="py-4 font-bold text-white">Smart Web Video Review Finder</td>
+                    <td className="py-4 font-bold text-white">Smart Web Photo Review Finder</td>
                     <td className="py-4 text-center text-zinc-600">—</td>
                     <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
                   </tr>
@@ -653,8 +653,8 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                 <ul className="list-disc list-inside text-zinc-400 pl-6 space-y-1 font-medium">
                   <li><strong className="text-zinc-200">Verified Business Badge</strong> & Priority Search Placement</li>
                   <li><strong className="text-zinc-200">Live Website Review Widget</strong> with automated Google Rich Snippets SEO Schema</li>
-                  <li><strong className="text-zinc-200">HD Branded Video Ad Exporter</strong> with official logo watermark overlays</li>
-                  <li><strong className="text-zinc-200">Pinned Owner Video Replies</strong> & Direct Messaging Lead Capture</li>
+                  <li><strong className="text-zinc-200">HD Branded Ad Exporter</strong> with official logo watermark overlays</li>
+                  <li><strong className="text-zinc-200">Pinned Owner Replies</strong> & Direct Messaging Lead Capture</li>
                   <li><strong className="text-zinc-200">Print-Ready Table & Window QR Standees</strong> & Real-Time Analytics</li>
                 </ul>
               </div>
@@ -665,17 +665,17 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   How does the Premium Plan boost Google Search SEO & Rich Snippets?
                 </h4>
                 <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  When you embed your Yoouz review widget on your website, our system automatically generates Schema.org JSON-LD structured data. Search engines like Google index your customer star ratings and video thumbnails directly in organic search results, boosting click-through rates (CTR) by up to 35%.
+                  When you embed your Yoouz review widget on your website, our system automatically generates Schema.org JSON-LD structured data. Search engines like Google index your customer star ratings and live photo reviews directly in organic search results, boosting click-through rates (CTR) by up to 35%.
                 </p>
               </div>
 
               <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                 <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
                   <Award className="w-4 h-4 text-zinc-300" />
-                  Can I export customer video reviews as branded video ad campaigns?
+                  Can I export customer photo reviews as branded ad campaigns?
                 </h4>
                 <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts.
+                  Yes! Premium Suite subscribers can export customer live photo reviews as high-definition branded ad assets with your official venue logo overlay and watermark—ready to run on Instagram, TikTok, or Facebook Ads.
                 </p>
               </div>
 
@@ -692,7 +692,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
               <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
                 <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
                   <Code className="w-4 h-4 text-zinc-300" />
-                  Can I embed video reviews on any website?
+                  Can I embed photo reviews on any website?
                 </h4>
                 <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
                   Yes! Premium Suite provides an iframe embed code and direct script snippet compatible with WordPress, Wix, Shopify, Squarespace, Webflow, or custom React/HTML sites.

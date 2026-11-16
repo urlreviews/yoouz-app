@@ -87,7 +87,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     description: "Sexually explicit behavior, nudity, or adult solicitation",
     icon: <Flame className="w-5 h-5" />,
     subcategories: [
-      "Sexually suggestive or explicit video",
+      "Sexually suggestive or explicit photo",
       "Nudity or exposed adult content",
       "Promoting adult services or explicit external links",
       "Content involving minors inappropriately"
@@ -119,14 +119,14 @@ const REPORT_CATEGORIES: ReportCategory[] = [
   },
   {
     id: "copyright_stolen",
-    title: "Filming a screen or copyrighted audio",
-    description: "Recording a computer/TV screen, broadcast playback, or unauthorized music",
+    title: "Photographing a screen or copyrighted material",
+    description: "Capturing a computer/TV screen, broadcast playback, or stolen imagery",
     icon: <Flag className="w-5 h-5" />,
     subcategories: [
-      "Filming a TV, computer monitor, or secondary device screen",
-      "Playing unauthorized commercial copyrighted audio/music",
+      "Photographing a TV, computer monitor, or secondary device screen",
+      "Posting copyrighted or third-party promotional material",
       "Impersonating another creator, staff member, or business",
-      "Recording in unauthorized private or restricted areas"
+      "Taking photos in unauthorized private or restricted areas"
     ]
   },
   {
@@ -275,7 +275,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
         `• Target Type: ${target.type}\n` +
         `• Place / Business: ${target.placeName || target.video?.placeName || "N/A"}\n` +
         `• Creator / Holder: ${target.author?.name || target.video?.author?.name || "N/A"}\n` +
-        `• Video ID: ${target.video?.id || "N/A"}\n` +
+        `• Review ID: ${target.video?.id || "N/A"}\n` +
         `• Category: ${selectedCategory?.title || "N/A"}\n` +
         `• Scenario: ${selectedSubcategory || "N/A"}\n` +
         `• Additional Context: ${additionalDetails || "None provided"}\n` +
@@ -362,7 +362,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                 {target.video?.thumbnailUrl ? (
                   <img
                     src={target.video.thumbnailUrl}
-                    alt="Video preview"
+                    alt="Photo review preview"
                     className="w-10 h-10 rounded-lg object-cover shrink-0 border border-zinc-800"
                   />
                 ) : target.author?.avatar ? (
@@ -382,7 +382,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                 )}
                 <div className="truncate">
                   <p className="font-bold text-white truncate">
-                    {target.placeName || target.video?.placeName || target.author?.name || t("reportModal.videoReview", "Video Review")}
+                    {target.placeName || target.video?.placeName || target.author?.name || t("reportModal.videoReview", "Photo Review")}
                   </p>
                   <p className="text-zinc-200 text-[11px] truncate">
                     {target.author?.name || target.video?.author.name || t("reportModal.byVerifiedReviewer", "By Verified Reviewer")}
@@ -481,13 +481,13 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     {/* Additional Context TextArea */}
                     <div>
                       <label className="block text-xs font-bold text-zinc-200 mb-1.5">
-                        {t("reportModal.additionalDetailsLabel", "Additional Details & Timestamps (Optional)")}
+                        {t("reportModal.additionalDetailsLabel", "Additional Details (Optional)")}
                       </label>
                       <textarea
                         rows={4}
                         value={additionalDetails}
                         onChange={(e) => setAdditionalDetails(e.target.value)}
-                        placeholder={t("reportModal.additionalPlaceholder", "E.g., At 0:14 the video shows false pricing, or this business closed in 2024...")}
+                        placeholder={t("reportModal.additionalPlaceholder", "E.g., The photo shows a closed storefront or incorrect location...")}
                         className="w-full px-3.5 py-2.5 text-xs text-white bg-zinc-950/80 rounded-xl border border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-zinc-700 transition-all placeholder:text-zinc-400"
                       />
                     </div>
@@ -559,7 +559,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                 )}
                 {target.video?.id && (
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-200">{t("reportModal.videoId", "Video ID:")}</span>
+                    <span className="text-zinc-200">{t("reportModal.videoId", "Review ID:")}</span>
                     <span className="font-mono text-[11px] text-zinc-200">{target.video.id}</span>
                   </div>
                 )}
@@ -593,7 +593,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-zinc-800 hover:bg-zinc-800 text-xs font-semibold text-zinc-200 transition-colors cursor-pointer"
                   >
                     <EyeOff className="w-4 h-4 text-zinc-200" />
-                    <span>{t("reportModal.hideVideoFeed", "Hide this video from my feed")}</span>
+                    <span>{t("reportModal.hideVideoFeed", "Hide this review from my feed")}</span>
                   </button>
                 )}
 

@@ -112,7 +112,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [showQrPrintModal, setShowQrPrintModal] = useState(false);
-  const [qrCustomHeading, setQrCustomHeading] = useState("LEAVE A 60-SECOND VIDEO REVIEW");
+  const [qrCustomHeading, setQrCustomHeading] = useState("SNAP A LIVE PHOTO REVIEW");
   const [qrTableLabel, setQrTableLabel] = useState("");
   const [showQrCustomize, setShowQrCustomize] = useState(false);
   const [qrLinkCopied, setQrLinkCopied] = useState(false);
@@ -767,6 +767,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
 
     const isGenericDesc = !place.description ||
+      place.description.includes("Verified photo review destination") ||
       place.description.includes("Verified video review destination") ||
       place.description.includes("Verified Yoouz business listing") ||
       place.description.includes("Verified Google Maps") ||
@@ -1738,7 +1739,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             )}
           </div>
 
-          {/* Premium Record Video Review Call-to-Action - Thinner and more integrated */}
+          {/* Premium Add Live Photo Review Call-to-Action */}
           <button
             id="btn-record-video-review-main"
             type="button"
@@ -1748,8 +1749,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             }}
             className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-3.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
           >
-            <Video className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
-            <span className="uppercase tracking-widest">{t("place.recordReview", "Record Review")}</span>
+            <Camera className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
+            <span className="uppercase tracking-widest">{t("place.addReview", "Add Review")}</span>
           </button>
         </div>
       </div>
@@ -1930,16 +1931,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {rawPlaceVideos.length === 0 ? (
                   <div className="py-12 rounded-3xl bg-zinc-900/30 border border-dashed border-zinc-800 flex flex-col items-center justify-center gap-3 text-center px-6">
                     <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center">
-                      <Video className="w-6 h-6 text-zinc-700" />
+                      <Camera className="w-6 h-6 text-zinc-700" />
                     </div>
                     <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                      {t("place.noReviewsYetShort", `Be the first to share a video review for ${displayedPlaceName}.`)}
+                      {t("place.noReviewsYetShort", `Be the first to share a live photo review for ${displayedPlaceName}.`)}
                     </p>
                     <button
                       onClick={() => onRecordForPlace(place)}
-                      className="mt-2 px-6 py-2 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-colors"
+                      className="mt-2 px-6 py-2 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-colors cursor-pointer"
                     >
-                      {t("place.recordReview", "Record Review")}
+                      {t("place.addReview", "Add Review")}
                     </button>
                   </div>
                 ) : (
@@ -1956,15 +1957,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         >
                           <CopoVideoThumbnail
                             video={v}
-                            alt={v.caption || v.placeName}
+                            alt={v.placeName}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
 
-                          {/* Rating Badge */}
+                          {/* Whole-Number Rating Badge */}
                           <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[9px] font-black text-white flex items-center gap-1 border border-white/10">
                             <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                            <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
+                            <span>{getRoundedRating(v.rating || 5)}</span>
                           </div>
 
                           {/* Bottom Meta Info - Business Name & Views */}
@@ -2115,16 +2116,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               )}
 
-              {/* 3-Column Video Reviews Grid */}
+              {/* 3-Column Photo Reviews Grid */}
               {rawPlaceVideos.length === 0 ? (
                 <div className="flex flex-col items-center gap-6 py-12 px-6 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-center">
                   <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center mb-1">
-                    <Video className="w-7 h-7 text-zinc-400" />
+                    <Camera className="w-7 h-7 text-zinc-400" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYetFor", `No video reviews yet for ${displayedPlaceName}`)}</h3>
+                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYetFor", `No photo reviews yet for ${displayedPlaceName}`)}</h3>
                     <p className="text-xs text-zinc-400 max-w-[260px] mx-auto leading-relaxed">
-                      {t("place.beTheFirstForBusiness", `Be the first to share your experience with a 60-second video review for ${displayedPlaceName}.`)}
+                      {t("place.beTheFirstForBusiness", `Be the first to share your experience with a live photo review for ${displayedPlaceName}.`)}
                     </p>
                   </div>
                   <button
@@ -2134,8 +2135,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     }}
                     className="w-full max-w-[220px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Video className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
-                    <span className="uppercase tracking-wider">{t("place.recordReview", "Record Review")}</span>
+                    <Camera className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
+                    <span className="uppercase tracking-wider">{t("place.addReview", "Add Review")}</span>
                   </button>
                 </div>
               ) : placeVideos.length === 0 ? (
@@ -2186,10 +2187,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         {/* Gradient Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
 
-                        {/* Rating Badge */}
+                        {/* Whole-Number Rating Badge */}
                         <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
                           <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                          <span>{v.rating ? v.rating.toFixed(1) : "5.0"}</span>
+                          <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
 
                         {/* Bottom Meta Info - Business Name & Views */}
@@ -2386,7 +2387,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     <p className="text-xs text-zinc-400 leading-relaxed font-medium">
                       {isClaimed 
                         ? t("place.businessClaimedDesc", "This business profile is officially claimed and managed through the secure Yoouz business portal. All management rights are reserved.") 
-                        : t("place.claimBusinessDesc", "Claim this business profile to unlock full administrative access, manage customer video reviews, update business details, and connect directly with patrons.")}
+                        : t("place.claimBusinessDesc", "Claim this business profile to unlock full administrative access, manage customer photo reviews, update business details, and connect directly with patrons.")}
                     </p>
                   </div>
                 </div>
@@ -2903,14 +2904,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       emptyColorClass="text-zinc-600 fill-zinc-800"
                     />
                     <span className="text-zinc-400 text-[11px] font-normal">
-                      ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Video Review" : "Video Reviews"})
+                      ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Photo Review" : "Photo Reviews"})
                     </span>
                   </div>
 
                   {/* Callout Prompt with Edit Trigger */}
                   <div className="mb-4 sm:mb-5 px-2 flex items-center justify-center gap-1.5">
                     <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-[85%] truncate">
-                      {qrCustomHeading || "LEAVE A 60-SECOND VIDEO REVIEW"}
+                      {qrCustomHeading || "SNAP A LIVE PHOTO REVIEW"}
                     </span>
                     <button
                       type="button"
@@ -2933,7 +2934,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           type="text"
                           value={qrCustomHeading}
                           onChange={(e) => setQrCustomHeading(e.target.value)}
-                          placeholder="e.g. LEAVE A 60-SECOND VIDEO REVIEW"
+                          placeholder="e.g. SNAP A LIVE PHOTO REVIEW"
                           className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
                         />
                       </div>
@@ -2984,7 +2985,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   {/* Camera Guidance Prompt */}
                   <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mt-4 font-medium px-2">
                     <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    <span>Scan with phone camera to record live review</span>
+                    <span>Scan with phone camera to snap live photo review</span>
                   </div>
 
                   {/* Footnote: Direct URL + Copy Link */}
@@ -3112,7 +3113,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                       />
                       <span className="text-zinc-300 font-medium print:text-zinc-700">
-                        ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Video Review" : "Video Reviews"} on Yoouz)
+                        ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Photo Review" : "Photo Reviews"} on Yoouz)
                       </span>
                     </div>
                   </div>
@@ -3133,10 +3134,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   <div className="space-y-1.5">
                     <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20 print:bg-zinc-100 print:text-black print:border-zinc-300">
-                      {qrCustomHeading || "LEAVE A 60-SECOND VIDEO REVIEW"}
+                      {qrCustomHeading || "SNAP A LIVE PHOTO REVIEW"}
                     </span>
                     <p className="text-xs text-zinc-300 font-medium print:text-zinc-600">
-                      Scan with your phone camera app to share your video review!
+                      Scan with your phone camera app to share your photo review!
                     </p>
                   </div>
                 </div>
@@ -3196,7 +3197,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <span>{t("place.areYouOwner", "Are you the owner or manager?")}</span>
                 </div>
                 <p className="text-[11px] text-zinc-200 leading-relaxed font-medium">
-                  {t("place.claimListingPrompt", "Claim this listing with your official business email to activate 1-on-1 customer messaging, reply to video reviews, and showcase your profile.")}
+                  {t("place.claimListingPrompt", "Claim this listing with your official business email to activate 1-on-1 customer messaging, reply to photo reviews, and showcase your profile.")}
                 </p>
               </div>
 

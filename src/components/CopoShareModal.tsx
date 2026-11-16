@@ -237,7 +237,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   } else {
     shareUrl = propShareUrl || appOrigin;
     title = propTitle || "Yoouz - Real People. Real Reviews.";
-    subtitle = propSubtitle || "Authentic 60-Second Video Reviews";
+    subtitle = propSubtitle || "Authentic Live Photo Reviews";
     isBusiness = Boolean(propIsBusinessProfile || propDomain || propWebsite || propLogoUrl);
     resolvedDomain = propDomain || (propWebsite ? extractCleanDomain(propWebsite) : "");
     resolvedWebsite = propWebsite || "";
@@ -360,7 +360,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=45`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
-  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Authentic 60s Video Review");
+  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Live Photo Review");
 
   const resolvedTouchIcon = isVideoMode && video
     ? `${appOrigin}/api/touch-icon/v17/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=14`
@@ -407,7 +407,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   }, [isModalOpen, resolvedTouchIcon, previewImageUrl]);
 
   const shareText = isVideoMode && video
-    ? `Watch authentic 60s video review of ${title} by ${video.author?.name || "a local guide"} on Yoouz! ${video.rating ? `★ ${video.rating}/5` : ""}`
+    ? `See ${video.author?.name || "a reviewer"}'s live photo review of ${title} on Yoouz! ${video.rating ? `★ ${Math.min(5, Math.max(1, Math.round(Number(video.rating))))}/5` : ""}`
     : `Check out ${title} on Yoouz - Real People. Real Reviews.`;
 
   // Pre-generate embed codes
@@ -420,9 +420,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const placeRating = placeStats.scoreStr;
   const reviewCount = placeStats.count;
 
-  const iframeEmbedCode = `<!-- Yoouz Authentic Video Reviews + Google Rich Snippet (Schema.org) -->
+  const iframeEmbedCode = `<!-- Yoouz Live Photo Reviews + Google Rich Snippet (Schema.org) -->
 <div class="yoouz-video-embed" style="max-width:390px;margin:0 auto;">
-  <iframe src="${embedUrl}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Video Reviews for ${placeTitle} on Yoouz"></iframe>
+  <iframe src="${embedUrl}" width="100%" height="520" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; camera; microphone" style="width:100%; max-width:390px; height:520px; border-radius:24px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.5); overflow:hidden;" title="Verified Photo Reviews for ${placeTitle} on Yoouz"></iframe>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -662,7 +662,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       bgClass: "bg-[#007AFF] text-white",
       icon: <Mail className="w-6 h-6 stroke-[2.2] text-white" />,
       onClick: () => {
-        window.location.href = `mailto:?subject=${encodeURIComponent(title || "Yoouz Video Review")}&body=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(title || "Yoouz Photo Review")}&body=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
       }
     },
     {

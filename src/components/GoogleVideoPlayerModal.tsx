@@ -20,11 +20,11 @@ import {
 import { VideoReview, VideoAuthor } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
-import { resolvePlayableVideoSource, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl, normalizeVideoUrl, releaseVideoHardwareDecoder, isPhotoReview } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getSafeAvatarUrl, getDisplayUrlAsDomain, getPlaceSlug } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { CopoStarRating } from "./CopoStarRating";
+import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 
 
 interface GoogleVideoPlayerModalProps {
@@ -62,7 +62,7 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
   const [activeVideoSrc, setActiveVideoSrc] = useState<string>("");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(currentReview?.durationSeconds || 15);
-  const [showSubtitles, setShowSubtitles] = useState(true);
+  const isCurrentPhoto = isPhotoReview(currentReview);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const currentIndex = reviews.findIndex((r) => r.id === currentReview.id);
@@ -326,84 +326,90 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
       <div className="flex items-center gap-4 max-h-[92vh]">
         {/* Vertical Video Viewport */}
         <div className="relative w-[340px] sm:w-[380px] h-[86vh] max-h-[820px] bg-black rounded-3xl overflow-hidden border border-white/20 shadow-2xl flex flex-col justify-between group">
-          <video
-            ref={videoRef}
-            src={activeVideoSrc || normalizeVideoUrl(currentReview.videoUrl) || undefined}
-            poster={currentReview.thumbnailUrl}
-            playsInline
-            loop
-            preload="auto"
-            muted={isMuted}
-            onClick={togglePlay}
-            onCanPlay={() => {
-              if (!hasStarted && videoRef.current) {
-                videoRef.current.pause();
-                setIsPlaying(false);
-              }
-            }}
-            onPlaying={() => {
-              if (!hasStarted && videoRef.current) {
-                videoRef.current.pause();
-                setIsPlaying(false);
-              } else {
-                setIsPlaying(true);
-              }
-            }}
-            onTimeUpdate={(e) => {
-              const t = e.currentTarget;
-              setCurrentTime(t.currentTime);
-              if (t.duration && !isNaN(t.duration)) {
-                setDuration(t.duration);
-              }
-              if ((!hasStarted || !isPlaying) && !t.paused) {
-                t.pause();
-              }
-            }}
-            onLoadedMetadata={(e) => {
-              const t = e.currentTarget;
-              if (t.duration && !isNaN(t.duration)) {
-                setDuration(t.duration);
-              }
-            }}
-            onPause={() => setIsPlaying(false)}
-            onError={(e) => {
-              const el = e.currentTarget;
-              const errCode = el.error?.code;
-              console.warn(`Video playback error (${errCode}) for ${currentReview.id}`);
-              
-              const targetGuid = currentReview.bunnyVideoId || currentReview.bunnyGuid || currentReview.id;
-              const sameVideoFallbacks = (currentReview.fallbackVideoUrls || [])
-                .concat(currentReview.videoUrl ? [currentReview.videoUrl] : [])
-                .map(u => normalizeVideoUrl(u))
-                .filter(
-                  u =>
-                    u &&
-                    !u.includes("default-review") &&
-                    u !== activeVideoSrc &&
-                    u !== el.src &&
-                    (targetGuid ? u.includes(targetGuid) : false)
-                );
+          {isCurrentPhoto ? (
+            <img
+              src={currentReview.photoUrl || resolveVideoPosterUrl(currentReview)}
+              alt={`${currentReview.placeName} photo review`}
+              className="absolute inset-0 w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={activeVideoSrc || normalizeVideoUrl(currentReview.videoUrl) || undefined}
+              poster={currentReview.thumbnailUrl}
+              playsInline
+              loop
+              preload="auto"
+              muted={isMuted}
+              onClick={togglePlay}
+              onCanPlay={() => {
+                if (!hasStarted && videoRef.current) {
+                  videoRef.current.pause();
+                  setIsPlaying(false);
+                }
+              }}
+              onPlaying={() => {
+                if (!hasStarted && videoRef.current) {
+                  videoRef.current.pause();
+                  setIsPlaying(false);
+                } else {
+                  setIsPlaying(true);
+                }
+              }}
+              onTimeUpdate={(e) => {
+                const t = e.currentTarget;
+                setCurrentTime(t.currentTime);
+                if (t.duration && !isNaN(t.duration)) {
+                  setDuration(t.duration);
+                }
+                if ((!hasStarted || !isPlaying) && !t.paused) {
+                  t.pause();
+                }
+              }}
+              onLoadedMetadata={(e) => {
+                const t = e.currentTarget;
+                if (t.duration && !isNaN(t.duration)) {
+                  setDuration(t.duration);
+                }
+              }}
+              onPause={() => setIsPlaying(false)}
+              onError={(e) => {
+                const el = e.currentTarget;
+                const errCode = el.error?.code;
+                console.warn(`Video playback error (${errCode}) for ${currentReview.id}`);
+                
+                const targetGuid = currentReview.bunnyVideoId || currentReview.bunnyGuid || currentReview.id;
+                const sameVideoFallbacks = (currentReview.fallbackVideoUrls || [])
+                  .concat(currentReview.videoUrl ? [currentReview.videoUrl] : [])
+                  .map(u => normalizeVideoUrl(u))
+                  .filter(
+                    u =>
+                      u &&
+                      !u.includes("default-review") &&
+                      u !== activeVideoSrc &&
+                      u !== el.src &&
+                      (targetGuid ? u.includes(targetGuid) : false)
+                  );
 
-              if (sameVideoFallbacks.length > 0 && videoRef.current) {
-                const nextSrc = sameVideoFallbacks[0];
-                if (videoRef.current.src !== nextSrc) {
-                  videoRef.current.src = nextSrc;
-                  videoRef.current.load();
-                  if (isPlaying) {
-                    videoRef.current.muted = isMuted;
-                    videoRef.current.play().catch(() => {});
+                if (sameVideoFallbacks.length > 0 && videoRef.current) {
+                  const nextSrc = sameVideoFallbacks[0];
+                  if (videoRef.current.src !== nextSrc) {
+                    videoRef.current.src = nextSrc;
+                    videoRef.current.load();
+                    if (isPlaying) {
+                      videoRef.current.muted = isMuted;
+                      videoRef.current.play().catch(() => {});
+                    }
                   }
                 }
-              }
-            }}
-            className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-          />
+              }}
+              className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+            />
+          )}
 
           {/* Vignette Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/85 pointer-events-none" />
-
-          {/* Subtitle Overlay (YouTube-grade sentence captions) */}
-          {/* Subtitle overlay removed for clean video playback */}
 
           {/* Top Bar Header */}
           <div className="relative z-10 p-4 flex items-center justify-between">
@@ -414,45 +420,33 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* YouTube-style CC Subtitles Toggle Button */}
-              <button
-                type="button"
-                onClick={() => setShowSubtitles(prev => !prev)}
-                className={`px-2.5 h-9 rounded-full backdrop-blur-2xl border flex items-center justify-center text-xs font-bold transition-all cursor-pointer shadow-xl ${
-                  showSubtitles
-                    ? "bg-amber-500/20 border-amber-400 text-amber-300"
-                    : "bg-black/60 border-white/20 text-white/70 hover:text-white"
-                }`}
-                title={showSubtitles ? "Disable Subtitles" : "Enable Subtitles"}
-              >
-                CC
-              </button>
-
-              <button
-                type="button"
-                onClick={handleToggleMute}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                className={`w-10 h-10 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
-                  isMuted || !isSessionAudioUnlocked || isActualMuted
-                    ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
-                    : "border-white/35"
-                }`}
-                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
-                aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
-              >
-                {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                  <VolumeX className="w-4 h-4 text-amber-300 stroke-[2.2] shrink-0" />
-                ) : (
-                  <Volume2 className="w-4 h-4 text-white stroke-[2.2]" />
-                )}
-              </button>
-            </div>
+            {!isCurrentPhoto && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  className={`w-10 h-10 rounded-full bg-black/85 hover:bg-black active:scale-90 backdrop-blur-2xl border flex items-center justify-center text-white transition-all cursor-pointer shadow-2xl ${
+                    isMuted || !isSessionAudioUnlocked || isActualMuted
+                      ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
+                      : "border-white/35"
+                  }`}
+                  title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
+                  aria-label={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
+                >
+                  {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                    <VolumeX className="w-4 h-4 text-amber-300 stroke-[2.2] shrink-0" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white stroke-[2.2]" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Center Play Button Overlay */}
-          {!isPlaying && (
+          {!isCurrentPhoto && !isPlaying && (
             <div
               onClick={togglePlay}
               onTouchEnd={(e) => {
@@ -507,7 +501,8 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
                 </h4>
                 <div className="flex items-center gap-1.5 text-[11px] text-zinc-200">
                   <CopoStarRating
-                    rating={currentReview.rating || 5}
+                    rating={getRoundedRating(currentReview.rating || 5)}
+                    roundToWhole={true}
                     starClassName="w-3 h-3"
                     filledColorClass="fill-amber-400 text-amber-400"
                     emptyColorClass="text-zinc-200 fill-zinc-500"
@@ -529,18 +524,9 @@ export const GoogleVideoPlayerModal: React.FC<GoogleVideoPlayerModalProps> = ({
               </div>
             )}
 
-            {/* Caption */}
+            {/* Domain Label */}
             <p className="text-xs text-white/95 leading-relaxed font-normal drop-shadow">
-              {(() => {
-                let trimmed = (currentReview.caption || "").trim();
-                // Strip raw review ID leaks (e.g. rev17895770756273488d.com)
-                trimmed = trimmed.replace(/rev\d+[a-z0-9]*(\.com)?/gi, "yoouz.com").replace(/rev[0-9a-f]{8,}(\.com)?/gi, "yoouz.com");
-                if (/^video review (for|of)\b/i.test(trimmed)) {
-                  const cleanDomain = getDisplayUrlAsDomain(currentReview) || "yoouz.com";
-                  return `Video review for ${cleanDomain}`;
-                }
-                return trimmed;
-              })()}
+              Photo review for {getDisplayUrlAsDomain(currentReview) || "yoouz.com"}
             </p>
           </div>
 

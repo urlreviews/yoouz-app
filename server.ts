@@ -1490,10 +1490,13 @@ const usersIndexPath = path.join(globalUploadsDir, "users_index.json");
 
 function getCanonicalAdminUserKey(u: any): string {
   if (!u) return "";
+  const id = String(u.id || u.uid || "").toLowerCase().trim();
+  if (u.isAnonymous || u.yoouzPhotoUser || id.startsWith("anon_")) {
+    return id || String(u.username || u.name || "").toLowerCase().trim();
+  }
   const email = String(u.email || "").toLowerCase().trim();
   const name = String(u.name || "").toLowerCase().trim();
   const handle = String(u.handle || "").replace(/^@+/, "").toLowerCase().trim();
-  const id = String(u.id || u.uid || "").toLowerCase().trim();
 
   if (
     email === "admin@users.yoouz.com" ||
@@ -1508,27 +1511,6 @@ function getCanonicalAdminUserKey(u: any): string {
     return "__skip_system_user__";
   }
 
-  if (
-    email === "avr6566gd@gmail.com" ||
-    email === "stevenakan@users.yoouz.com" ||
-    name === "steven akan" ||
-    handle === "stevenakan" ||
-    id === "usr_steven_akan"
-  ) {
-    return "avr6566gd@gmail.com";
-  }
-
-  if (
-    email === "aouisesmee@gmail.com" ||
-    email === "benblue@users.yoouz.com" ||
-    name === "ben blue" ||
-    handle === "benblue" ||
-    id === "usr_ben_blue" ||
-    id === "usr_aouisesmee_gmail_com"
-  ) {
-    return "aouisesmee@gmail.com";
-  }
-
   if (email && email.includes("@")) return email;
   if (name && name !== "user" && name !== "registered user" && name !== "verified reviewer") {
     return `name_${name.replace(/[^a-z0-9]/g, "_")}`;
@@ -1539,9 +1521,6 @@ function getCanonicalAdminUserKey(u: any): string {
 function readUsersIndex(): any[] {
   const mergedMap = new Map<string, any>();
   const candidatePaths = [
-    path.join(process.cwd(), "users.json"),
-    path.join(process.cwd(), "public", "seeds", "users_index.json"),
-    path.join(process.cwd(), "public", "users_index.json"),
     usersIndexPath
   ];
 
@@ -1556,23 +1535,7 @@ function readUsersIndex(): any[] {
             const key = getCanonicalAdminUserKey(u);
             if (!key || key === "__skip_system_user__") continue;
             const existing = mergedMap.get(key) || {};
-            const normalized = { ...existing, ...u };
-            if (key === "avr6566gd@gmail.com") {
-              normalized.id = "avr6566gd@gmail.com";
-              normalized.uid = "avr6566gd@gmail.com";
-              normalized.email = "avr6566gd@gmail.com";
-              normalized.name = "Steven Akan";
-              normalized.handle = "@stevenakan";
-              normalized.role = "Creator";
-            } else if (key === "aouisesmee@gmail.com") {
-              normalized.id = "aouisesmee@gmail.com";
-              normalized.uid = "aouisesmee@gmail.com";
-              normalized.email = "aouisesmee@gmail.com";
-              normalized.name = "Ben Blue";
-              normalized.handle = "@benblue";
-              normalized.role = "Creator";
-            }
-            mergedMap.set(key, normalized);
+            mergedMap.set(key, { ...existing, ...u });
           }
         }
       }
@@ -1590,23 +1553,7 @@ function writeUsersIndex(list: any[]): void {
       const key = getCanonicalAdminUserKey(u);
       if (!key || key === "__skip_system_user__") continue;
       const existing = dedupMap.get(key) || {};
-      const normalized = { ...existing, ...u };
-      if (key === "avr6566gd@gmail.com") {
-        normalized.id = "avr6566gd@gmail.com";
-        normalized.uid = "avr6566gd@gmail.com";
-        normalized.email = "avr6566gd@gmail.com";
-        normalized.name = "Steven Akan";
-        normalized.handle = "@stevenakan";
-        normalized.role = "Creator";
-      } else if (key === "aouisesmee@gmail.com") {
-        normalized.id = "aouisesmee@gmail.com";
-        normalized.uid = "aouisesmee@gmail.com";
-        normalized.email = "aouisesmee@gmail.com";
-        normalized.name = "Ben Blue";
-        normalized.handle = "@benblue";
-        normalized.role = "Creator";
-      }
-      dedupMap.set(key, normalized);
+      dedupMap.set(key, { ...existing, ...u });
     }
     const cleanList = Array.from(dedupMap.values());
     const jsonStr = JSON.stringify(cleanList, null, 2);
@@ -1615,18 +1562,6 @@ function writeUsersIndex(list: any[]): void {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
     fs.writeFileSync(usersIndexPath, jsonStr, "utf8");
-    const targets = [
-      path.join(process.cwd(), "public", "users_index.json"),
-      path.join(process.cwd(), "public", "seeds", "users_index.json"),
-      path.join(process.cwd(), "users.json")
-    ];
-    for (const t of targets) {
-      try {
-        const dir = path.dirname(t);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(t, jsonStr, "utf8");
-      } catch (e) {}
-    }
   } catch (e) {}
 }
 
@@ -2338,10 +2273,15 @@ function readReviewsIndex(): any[] {
               const ts = parseInt(r.id.split("-")[1], 10);
               if (!isNaN(ts) && ts > 0) r.createdAtMs = ts;
             }
-            if (!r.videoUrl || typeof r.videoUrl !== "string" || !r.videoUrl.trim()) {
+            const isPhoto = r.mediaType === 'photo' || Boolean(r.photoUrl);
+            if (!isPhoto && (!r.videoUrl || typeof r.videoUrl !== "string" || !r.videoUrl.trim())) {
               const fallbackUrl = r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : null) || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
               r.videoUrl = fallbackUrl;
               dirty = true;
+            }
+            if (isPhoto) {
+              r.mediaType = 'photo';
+              r.rating = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5)));
             }
 
 
@@ -2412,23 +2352,6 @@ function readReviewsIndex(): any[] {
             }
 
             if (r.author) {
-              // Ensure Steven Akan always has canonical location
-              if ((r.authorName === "Steven Akan" || r.author.name === "Steven Akan" || r.userId === "avr6566gd@gmail.com") && (!r.author.location || !r.author.country)) {
-                r.author.location = "Miami Beach, Florida, United States";
-                r.author.city = "Miami Beach";
-                r.author.state = "Florida";
-                r.author.country = "United States";
-                dirty = true;
-              }
-              // Ensure Ben Blue always has canonical location
-              if ((r.authorName === "Ben Blue" || r.author.name === "Ben Blue" || r.userId === "aouisesmee@gmail.com") && (!r.author.location || !r.author.country)) {
-                r.author.location = "London, City of London, United Kingdom";
-                r.author.city = "London";
-                r.author.state = "City of London";
-                r.author.country = "United Kingdom";
-                dirty = true;
-              }
-
               // Canonical normalization
               const norm = normalizeUserLocationServer(r.author.location, r.author.city, r.author.state, r.author.country);
               if (norm.location && norm.location !== r.author.location) {
@@ -2723,40 +2646,7 @@ const defaultCommunityUsers: Array<{
   followersCount: number;
 }> = [];
 
-const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; email?: string; avatar: string; bio?: string; location?: string }> = {
-  "stevenakan": {
-    name: "Steven Akan",
-    handle: "@stevenakan",
-    email: "avr6566gd@gmail.com",
-    avatar: "/api/avatar?name=Steven+Akan&background=689f38&color=fff&bold=true&size=128",
-    bio: "Verified video reviewer on Yoouz.",
-    location: "Miami Beach, Florida, United States"
-  },
-  "steven-akan": {
-    name: "Steven Akan",
-    handle: "@stevenakan",
-    email: "avr6566gd@gmail.com",
-    avatar: "/api/avatar?name=Steven+Akan&background=689f38&color=fff&bold=true&size=128",
-    bio: "Verified video reviewer on Yoouz.",
-    location: "Miami Beach, Florida, United States"
-  },
-  "benblue": {
-    name: "Ben Blue",
-    handle: "@benblue",
-    email: "aouisesmee@gmail.com",
-    avatar: "/api/avatar?name=Ben+Blue&background=1976d2&color=fff&bold=true&size=128",
-    bio: "Verified community reviewer on Yoouz.",
-    location: "London, City of London, United Kingdom"
-  },
-  "ben-blue": {
-    name: "Ben Blue",
-    handle: "@benblue",
-    email: "aouisesmee@gmail.com",
-    avatar: "/api/avatar?name=Ben+Blue&background=1976d2&color=fff&bold=true&size=128",
-    bio: "Verified community reviewer on Yoouz.",
-    location: "London, City of London, United Kingdom"
-  }
-};
+const KNOWN_COMMUNITY_USERS_SERVER: Record<string, { name: string; handle: string; email?: string; avatar: string; bio?: string; location?: string }> = {};
 
 // Global Multi-Layer User Profile Resolver (Checks memory, BunnyDB, SQL, BunnyDB, and Review Indexes)
 async function resolveUserProfileFromAnySource(emailOrId: string, includeDeleted: boolean = false): Promise<any | null> {
@@ -9789,15 +9679,21 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           let canonicalUserId = id;
           const parsed = typeof finalDataObj === 'object' ? finalDataObj : {};
           const uEmail = (parsed.email || (String(id).includes('@') ? id : '')).trim().toLowerCase();
+          const uEmailOrNull = uEmail ? uEmail : null;
           const uName = ((parsed.firstName && parsed.lastName) ? `${parsed.firstName} ${parsed.lastName}`.trim() : (parsed.name || '')).trim();
           if (uName) finalDataObj.name = uName;
           if (uEmail) finalDataObj.email = uEmail;
           try {
             const usrPrefixId = uEmail ? `usr_${uEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
-            const existingRes = await bunnyDb.execute({
-              sql: `SELECT id, email, name FROM users WHERE id = ? OR id = ? OR (email != '' AND LOWER(email) = ?) OR (name != '' AND name = ?)`,
-              args: [id, usrPrefixId || id, uEmail, uName]
-            });
+            const existingRes = uEmailOrNull
+              ? await bunnyDb.execute({
+                  sql: `SELECT id, email, name FROM users WHERE id = ? OR id = ? OR (email IS NOT NULL AND email != '' AND LOWER(email) = ?)`,
+                  args: [id, usrPrefixId || id, uEmailOrNull]
+                })
+              : await bunnyDb.execute({
+                  sql: `SELECT id, email, name FROM users WHERE id = ?`,
+                  args: [id]
+                });
             const matching = existingRes.rows || [];
             if (matching.length > 0) {
               const primary = matching.find((r: any) => String(r.id).includes("@")) || matching[0];
@@ -9813,15 +9709,15 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           const updatedJsonStr = JSON.stringify(finalDataObj);
           await bunnyDb.execute({
             sql: `INSERT INTO users (id, email, name, avatar, bio, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                  ON CONFLICT(id) DO UPDATE SET email = ?, name = ?, avatar = ?, bio = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                  ON CONFLICT(id) DO UPDATE SET email = COALESCE(?, users.email), name = ?, avatar = ?, bio = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
             args: [
               canonicalUserId,
-              uEmail,
+              uEmailOrNull,
               uName,
               finalDataObj.avatar || '',
               finalDataObj.bio || '',
               updatedJsonStr,
-              uEmail,
+              uEmailOrNull,
               uName,
               finalDataObj.avatar || '',
               finalDataObj.bio || '',
@@ -10299,8 +10195,14 @@ app.post('/api/users/notification-preferences', express.json(), async (req, res)
       await bunnyDb.execute({
         sql: `INSERT INTO users (id, email, data, updatedAt)
               VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-              ON CONFLICT(id) DO UPDATE SET data = ?, updatedAt = CURRENT_TIMESTAMP`,
-        args: [targetId, cleanEmail || userData.email || '', jsonStr, jsonStr]
+              ON CONFLICT(id) DO UPDATE SET email = COALESCE(?, users.email), data = ?, updatedAt = CURRENT_TIMESTAMP`,
+        args: [
+          targetId,
+          (cleanEmail || userData.email || '').trim().toLowerCase() || null,
+          jsonStr,
+          (cleanEmail || userData.email || '').trim().toLowerCase() || null,
+          jsonStr
+        ]
       });
 
       // Broadcast preference change via SSE to all active client tabs
@@ -11915,11 +11817,12 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         const uEmail = String(r.email || parsed.email || "").toLowerCase().trim();
         const uName = String(r.name || parsed.name || "").toLowerCase().trim();
 
-        // Check for anonymous ghost UUID or placeholder profile
+        // Check for anonymous ghost UUID or placeholder profile (NEVER delete active Yoouz anonymous U/XXXXXX users)
+        const isYoouzAnon = Boolean(parsed.isAnonymous || parsed.yoouzPhotoUser || uId.startsWith("anon_") || /^u\/[a-z0-9]{4,}$/i.test(uName));
         const isPlaceholder = !uName || uName === "reviewer" || uName === "user" || uName === "registered user" || uName === "verified reviewer" || uName === "community creator";
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uId);
 
-        if ((!uEmail || !uEmail.includes("@")) && (isPlaceholder || isUuid)) {
+        if (!isYoouzAnon && (!uEmail || !uEmail.includes("@")) && (isPlaceholder || isUuid)) {
           // If this ID has no video reviews and no real identity, purge it from users table
           if (!videoAuthorIds.has(uId) && !videoAuthorIds.has(uName)) {
             await bunnyDb.execute({
@@ -12030,7 +11933,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
                     updatedAt = CURRENT_TIMESTAMP`,
             args: [
               canonical.id,
-              canonical.email || "",
+              (canonical.email || "").trim().toLowerCase() || null,
               canonical.name || "",
               canonical.avatar || "",
               canonical.bio || "",
@@ -17756,16 +17659,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 country: (parsedAuthor && parsedAuthor.country) || (existingAuthor && existingAuthor.country) || ''
               };
 
-              if ((mergedAuthor.name === "Steven Akan" || r.userId === "avr6566gd@gmail.com") && !mergedAuthor.location) {
-                mergedAuthor.location = "Miami Beach, Florida, United States";
-                mergedAuthor.city = "Miami Beach";
-                mergedAuthor.country = "United States";
-              }
-              if ((mergedAuthor.name === "Ben Blue" || r.userId === "aouisesmee@gmail.com") && !mergedAuthor.location) {
-                mergedAuthor.location = "London, City of London, United Kingdom";
-                mergedAuthor.city = "London";
-                mergedAuthor.country = "United Kingdom";
-              }
               const likesCountVal = typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : (parsedData.likes || 0));
               const bookmarksCountVal = typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : (parsedData.bookmarks || 0));
               const sharesCountVal = typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : (parsedData.shares || 0));
@@ -17780,23 +17673,29 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
 
               const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? Number(r.rating) : (Number(r.rating) || 0);
               const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? Number(parsedData.rating) : (Number(parsedData.rating) || 0);
-              const effRating = rawDbRating > 0 ? rawDbRating : (rawParsedRating > 0 ? rawParsedRating : (Number(existing?.rating) || 5));
+              const rawEffRating = rawDbRating > 0 ? rawDbRating : (rawParsedRating > 0 ? rawParsedRating : (Number(existing?.rating) || 5));
+              const effRating = Math.min(5, Math.max(1, Math.round(rawEffRating)));
               parsedData.rating = effRating;
               parsedData.placeRating = effRating;
+
+              const isPhotoItem = parsedData.mediaType === 'photo' || Boolean(parsedData.photoUrl);
+              const resolvedPhotoUrl = parsedData.photoUrl || (isPhotoItem ? (r.thumbnailUrl || parsedData.thumbnailUrl) : undefined);
 
               map.set(r.id, {
                 ...existing,
                 ...parsedData,
                 id: r.id,
+                mediaType: isPhotoItem ? 'photo' : parsedData.mediaType,
+                photoUrl: resolvedPhotoUrl,
                 placeId: r.placeId || parsedData.placeId,
                 placeName: r.placeName || parsedData.placeName,
                 authorName: bestAuthorName || r.authorName || parsedData.authorName,
                 authorAvatar: r.authorAvatar || parsedData.authorAvatar,
                 rating: effRating,
                 placeRating: effRating,
-                videoUrl: r.videoUrl || parsedData.videoUrl,
-                thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
-                duration: r.duration || parsedData.duration || 60,
+                videoUrl: isPhotoItem ? '' : (r.videoUrl || parsedData.videoUrl),
+                thumbnailUrl: resolvedPhotoUrl || r.thumbnailUrl || parsedData.thumbnailUrl,
+                duration: r.duration || parsedData.duration || 0,
                 createdAt: r.createdAt || parsedData.createdAt,
                 createdAtMs: effCreatedAtMs,
                 likesCount: likesCountVal,
@@ -17941,7 +17840,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       }
 
       const merged = Array.from(map.values())
-        .filter((r: any) => r && (r.videoUrl || r.hlsUrl || r.bunnyVideoId || r.localBlobUrl || r.playbackUrl))
+        .filter((r: any) => r && (r.mediaType === 'photo' || Boolean(r.photoUrl)))
         .map((r: any) => {
         // Overlay live place metadata onto the video review to prevent banner popping on the client
         if (r.placeId && placesDataMap.has(String(r.placeId))) {
@@ -21656,86 +21555,94 @@ app.post("/api/videos/save-review", async (req, res) => {
         return res.json({ success: false, error: "Review was deleted", deleted: true });
       }
       const review = enrichReviewPlaceAssets(rawReview);
+      const isPhotoReview = review.mediaType === "photo" || Boolean(review.photoUrl);
 
-      // 👤 Ensure the author's full First and Last Name from their profile is ALWAYS resolved and applied immediately upon publishing
+      // Strict whole-number star rating (1..5 integer only)
+      review.rating = Math.min(5, Math.max(1, Math.round(Number(review.rating) || 5)));
+      review.placeRating = review.rating;
+
+      if (isPhotoReview) {
+        review.mediaType = "photo";
+        review.videoUrl = "";
+        review.hlsUrl = "";
+        review.bunnyVideoId = "";
+        review.bunnyGuid = "";
+        review.durationSeconds = 0;
+        review.duration = 0;
+        if (review.photoUrl && typeof review.photoUrl === "string") {
+          review.thumbnailUrl = review.photoUrl;
+        }
+        // Remove legacy spoken titles, subtitles, transcripts, and captions
+        review.title = "";
+        review.aiTitle = "";
+        review.caption = "";
+        review.bunnyTitle = "";
+        review.videoTitle = "";
+        review.transcript = "";
+        review.transcriptText = "";
+        review.vttUrl = "";
+        review.segments = [];
+        review.hasBunnySmartCaptions = false;
+      }
+
+      // Ensure the author's display name or U/XXXXXX anonymous handle is cleanly preserved
       try {
         const rawAuthor = (review.author && typeof review.author === "object") ? review.author : {};
-        const lookupUserKey = String(review.userEmail || review.userId || rawAuthor.email || rawAuthor.userId || rawAuthor.name || "").trim();
-        const emailPrefix = lookupUserKey.includes("@") ? lookupUserKey.split("@")[0].toLowerCase() : "";
-        let currentAuthorName = String(
-          (rawAuthor.firstName && rawAuthor.lastName)
-            ? `${rawAuthor.firstName} ${rawAuthor.lastName}`.trim()
-            : (rawAuthor.name || review.authorName || "")
-        ).trim();
+        const lookupUserKey = String(review.userEmail || review.userId || rawAuthor.email || rawAuthor.userId || rawAuthor.id || rawAuthor.name || "").trim();
+        let currentAuthorName = String(rawAuthor.name || review.authorName || "").trim();
 
-        const needsProfileEnrichment =
-          !currentAuthorName ||
-          !currentAuthorName.includes(" ") ||
-          currentAuthorName.toLowerCase() === "verified reviewer" ||
-          currentAuthorName.toLowerCase() === "yoouz reviewer" ||
-          currentAuthorName.toLowerCase() === "reviewer" ||
-          (emailPrefix && currentAuthorName.toLowerCase() === emailPrefix) ||
-          !rawAuthor.location;
-
-        if (lookupUserKey && needsProfileEnrichment) {
+        const isAnonymousHandle = /^U\/[A-Z0-9]{4,}$/i.test(currentAuthorName) || String(review.userId || "").startsWith("anon_");
+        if (lookupUserKey && (!currentAuthorName || (!isAnonymousHandle && currentAuthorName.toLowerCase() === "verified reviewer"))) {
           const resolvedProfile = await resolveUserProfileFromAnySource(lookupUserKey);
           if (resolvedProfile) {
-            const profileFullName = (resolvedProfile.firstName && resolvedProfile.lastName)
-              ? `${resolvedProfile.firstName} ${resolvedProfile.lastName}`.trim()
-              : (resolvedProfile.name || currentAuthorName);
-            const bestFullName = (profileFullName && profileFullName.includes(" "))
-              ? profileFullName
-              : ((currentAuthorName && currentAuthorName.includes(" ")) ? currentAuthorName : (profileFullName || currentAuthorName));
-
+            const bestName = resolvedProfile.username || resolvedProfile.name || currentAuthorName || "U/YOOUZ1";
             review.author = {
               ...rawAuthor,
-              name: bestFullName,
-              firstName: resolvedProfile.firstName || rawAuthor.firstName || (bestFullName.includes(" ") ? bestFullName.split(" ")[0] : bestFullName),
-              lastName: resolvedProfile.lastName || rawAuthor.lastName || (bestFullName.includes(" ") ? bestFullName.split(" ").slice(1).join(" ") : ""),
-              handle: resolvedProfile.handle || rawAuthor.handle || `@${bestFullName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+              name: bestName,
+              handle: resolvedProfile.handle || rawAuthor.handle || `@${bestName.replace(/^@+/, "").toLowerCase()}`,
               avatar: rawAuthor.avatar || resolvedProfile.avatar || review.authorAvatar || "",
               bio: rawAuthor.bio || resolvedProfile.bio || "",
               location: rawAuthor.location || resolvedProfile.location || "",
               city: rawAuthor.city || resolvedProfile.city || "",
               country: rawAuthor.country || resolvedProfile.country || "",
               isLocalGuide: true,
-              isVerified: true
+              isVerified: Boolean(resolvedProfile.isVerified)
             };
-            review.authorName = bestFullName;
-            if (review.author.avatar) {
-              review.authorAvatar = review.author.avatar;
-            }
+            review.authorName = bestName;
+            if (review.author.avatar) review.authorAvatar = review.author.avatar;
           }
         } else if (currentAuthorName) {
           review.author = {
             ...rawAuthor,
-            name: currentAuthorName
+            name: currentAuthorName,
+            handle: rawAuthor.handle || `@${currentAuthorName.replace(/^@+/, "")}`
           };
           review.authorName = currentAuthorName;
         }
       } catch (authorEnrichErr) {}
-      
-      // Ensure clean thumbnail URL: prevent bloated base64 data URIs or dead blob URLs from polluting database
-      const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, '');
-      const assignedBunnyId = review.bunnyVideoId || review.bunnyGuid;
-      if (assignedBunnyId) {
-        review.bunnyVideoId = assignedBunnyId;
-        review.bunnyGuid = assignedBunnyId;
-        if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:") || review.thumbnailUrl.includes("default-review")) {
-          review.thumbnailUrl = `${streamPullZone}/${assignedBunnyId}/thumbnail.jpg`;
+
+      // Thumbnail handling: Photo reviews use photoUrl directly; video reviews use BunnyCDN thumbnail
+      if (!isPhotoReview) {
+        const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, '');
+        const assignedBunnyId = review.bunnyVideoId || review.bunnyGuid;
+        if (assignedBunnyId) {
+          review.bunnyVideoId = assignedBunnyId;
+          review.bunnyGuid = assignedBunnyId;
+          if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:") || review.thumbnailUrl.includes("default-review")) {
+            review.thumbnailUrl = `${streamPullZone}/${assignedBunnyId}/thumbnail.jpg`;
+          }
+        } else if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:")) {
+          const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
+          review.thumbnailUrl = `${pullZoneDomain}/videos/${review.id}.jpg`;
         }
-      } else if (!review.thumbnailUrl || review.thumbnailUrl.startsWith("data:image") || review.thumbnailUrl.startsWith("blob:")) {
-        const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-        review.thumbnailUrl = `${pullZoneDomain}/videos/${review.id}.jpg`;
       }
-      
+
       const list = readReviewsIndex();
 
-      // 🛡️ Global Video Asset Collision & Duplicate Prevention Guard:
-      // A video asset (bunnyVideoId, bunnyGuid, or authentic videoUrl) can NEVER be reused across different reviews or businesses!
+      // Collision Guard
       const targetBunnyId = review.bunnyVideoId || review.bunnyGuid;
       const targetVideoUrl = review.videoUrl;
-      const conflictingReview = list.find((existing: any) => {
+      const conflictingReview = !isPhotoReview ? list.find((existing: any) => {
         if (!existing || existing.id === review.id) return false;
         if (targetBunnyId && (existing.bunnyVideoId === targetBunnyId || existing.bunnyGuid === targetBunnyId)) {
           return true;
@@ -21744,34 +21651,17 @@ app.post("/api/videos/save-review", async (req, res) => {
           return true;
         }
         return false;
-      });
+      }) : null;
 
       if (conflictingReview) {
-        console.warn(`🛡️ [Collision Guard] BLOCKED attempt to clone/reuse video asset ${targetBunnyId || targetVideoUrl} for review ${review.id} (${review.placeName}). Asset already belongs to review ${conflictingReview.id} (${conflictingReview.placeName} by ${conflictingReview.author?.name}).`);
         return res.status(409).json({
-          error: "Video asset collision: this video recording already belongs to an authentic review and cannot be duplicated or transferred to another business.",
+          error: "Asset collision: this asset already belongs to an existing review.",
           existingReviewId: conflictingReview.id
         });
       }
 
-      // Subtitles and captions strictly rely exclusively on Bunny Stream Smart Captions.
-      // Never fabricate artificial pseudo-subtitles or slice comments into segments.
-      const hasLegacyWebSpeechSegments = Array.isArray(review.segments) && review.segments.some((s: any) => s && s.words);
-      if (!review.hasBunnySmartCaptions || hasLegacyWebSpeechSegments) {
-        review.segments = [];
-        review.transcriptText = "";
-        review.hasBunnySmartCaptions = false;
-      }
-
-      // Every video review with a video recording is 100% READY & LIVE immediately!
       review.isReady = true;
       review.isProcessing = false;
-      if (!review.title || review.title.toLowerCase().startsWith("video review for")) {
-        review.title = review.placeName || review.businessName || "Verified Review";
-      }
-      if (!review.caption || review.caption.toLowerCase().startsWith("video review for")) {
-        review.caption = review.title || review.placeName || "Verified Review";
-      }
 
       // 1. Save to local server JSON index
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
@@ -21830,54 +21720,24 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Run BunnyDB, PostgreSQL mirroring, and search engine indexing asynchronously in the background
       (async () => {
         try {
-          // 1. Upload video to Bunny Stream Library (733814 / rev) so dashboard shows videos and auto-transcribes
-          try {
-            let vBuffer: Buffer | null = null;
-            if (review.videoData && typeof review.videoData === 'string') {
-              const b64 = review.videoData.includes("base64,") ? review.videoData.split("base64,")[1] : review.videoData;
-              vBuffer = Buffer.from(b64, 'base64');
-            }
-            if (!vBuffer) {
-              const candidateNames = [
-                review.id,
-                review.videoUrl ? path.basename(review.videoUrl) : null,
-                review.id ? `${review.id}.mp4` : null,
-                review.id ? `${review.id}.webm` : null
-              ].filter(Boolean) as string[];
-
-              const searchDirs = [serverUploadsDir, uploadsDir, path.join(uploadsDir, "videos")];
-              for (const dir of searchDirs) {
-                for (const name of candidateNames) {
-                  const p = path.join(dir, name);
-                  if (fs.existsSync(p) && fs.statSync(p).size > 1000) {
-                    vBuffer = fs.readFileSync(p);
-                    break;
-                  }
-                }
-                if (vBuffer) break;
+          if (!isPhotoReview) {
+            try {
+              let vBuffer: Buffer | null = null;
+              if (review.videoData && typeof review.videoData === 'string') {
+                const b64 = review.videoData.includes("base64,") ? review.videoData.split("base64,")[1] : review.videoData;
+                vBuffer = Buffer.from(b64, 'base64');
               }
-            }
-
-            if (!vBuffer && review.videoUrl && review.videoUrl.startsWith("http")) {
-              try {
-                const fetchRes = await fetch(review.videoUrl, { signal: AbortSignal.timeout(20000) });
-                if (fetchRes.ok) {
-                  vBuffer = Buffer.from(await fetchRes.arrayBuffer());
-                }
-              } catch (e) {}
-            }
-
-            // Only upload if video is not already in Bunny Stream Library
-            if (!review.bunnyVideoId && !review.bunnyGuid) {
-              await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
-            }
-          } catch (bunnyErr) {
-            console.warn("Bunny Stream upload background notice:", bunnyErr);
+              if (!vBuffer && review.videoUrl && review.videoUrl.startsWith("http")) {
+                try {
+                  const fetchRes = await fetch(review.videoUrl, { signal: AbortSignal.timeout(20000) });
+                  if (fetchRes.ok) vBuffer = Buffer.from(await fetchRes.arrayBuffer());
+                } catch (e) {}
+              }
+              if (!review.bunnyVideoId && !review.bunnyGuid && review.videoUrl) {
+                await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
+              }
+            } catch (bunnyErr) {}
           }
-
-          // 2. Transcription Engine: Auto-generate captions in background if missing
-          console.log(`[Transcription] Triggering Bunny Stream Smart Captions for review: ${review.id}`);
-          ensureTranscriptionForVideo(review.id).catch(e => console.warn("Background transcription error:", e));
 
           // 3. Sync to Bunny Database (libSQL cloud)
           const bunnyDb = getBunnyDb();
@@ -21891,15 +21751,13 @@ app.post("/api/videos/save-review", async (req, res) => {
           const reviewPlaceName = review.placeName || (review.place && review.place.name) || '';
           const rawAuthorName = review.authorName || (review.author && review.author.name) || '';
           const authorEmailVal = review.userEmail || review.authorEmail || (review.author && review.author.email) || '';
-          const emailPrefix = authorEmailVal ? authorEmailVal.split('@')[0] : '';
-          const reviewAuthorName = rawAuthorName || (emailPrefix ? (emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)) : 'Yoouz Reviewer');
+          const reviewAuthorName = rawAuthorName || 'U/YOOUZ1';
           const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
-          const reviewUserId = review.userId || authorEmailVal || `usr_${(reviewAuthorName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-          const reviewRating = typeof review.rating === 'number' ? review.rating : 5;
-          const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
-          const reviewVideoUrl = review.videoUrl || review.url || review.src || review.video_url || review.mediaUrl || review.playbackUrl || review.hlsUrl || review.streamUrl || (review.id ? `/api/videos/stream/${review.id}` : `${pullZoneDomain}/sample-review.mp4`);
-          const reviewThumbUrl = review.thumbnailUrl || '';
-          const reviewDuration = review.durationSeconds || review.duration || 60;
+          const reviewUserId = review.userId || authorEmailVal || `anon_${Date.now()}`;
+          const reviewRating = Math.min(5, Math.max(1, Math.round(Number(review.rating) || 5)));
+          const reviewVideoUrl = isPhotoReview ? '' : (review.videoUrl || '');
+          const reviewThumbUrl = review.photoUrl || review.thumbnailUrl || '';
+          const reviewDuration = isPhotoReview ? 0 : (review.durationSeconds || review.duration || 0);
           const reviewLikes = review.likesCount || review.likes || 0;
           const reviewViews = review.viewsCount || review.views || 0;
 
@@ -22135,13 +21993,6 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Trigger Automated Search Engine Indexing Notification (Google & Bing/IndexNow)
       if (review?.id) {
         triggerSearchEngineIndexing(review.id).catch(() => {});
-      }
-
-      // Automatically trigger background transcription and Smart Captions synchronization from Bunny Stream
-      if (assignedBunnyId && (!review.hasBunnySmartCaptions || !review.segments || review.segments.length === 0)) {
-        ensureTranscriptionForVideo(review.id, assignedBunnyId).catch((err) => {
-          console.warn("[save-review] Background ensureTranscriptionForVideo notice:", err?.message || err);
-        });
       }
         } catch (bgDbErr) {
           console.warn("Background BunnyDB/SQL save notice:", bgDbErr);
@@ -22671,7 +22522,7 @@ app.post("/api/videos/save-review", async (req, res) => {
                     bio = excluded.bio,
                     data = excluded.data,
                     updatedAt = CURRENT_TIMESTAMP`,
-            args: [profileObj.id, profileObj.email, profileObj.name, profileObj.avatar, profileObj.bio, JSON.stringify(profileObj)]
+            args: [profileObj.id, (profileObj.email || "").trim().toLowerCase() || null, profileObj.name, profileObj.avatar, profileObj.bio, JSON.stringify(profileObj)]
           });
 
           // Cascade author updates across all existing videos in BunnyDB
@@ -23285,7 +23136,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       const finalAvatar = avatar || existingProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
       const finalBanner = banner !== undefined ? banner : (existingProfile?.banner || '');
-      const finalBio = bio !== undefined ? bio : (existingProfile?.bio || 'Verified video reviewer on Yoouz.');
+      const finalBio = bio !== undefined ? bio : (existingProfile?.bio || 'Verified photo reviewer on Yoouz.');
 
       const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
       const assignedRole = isAdminEmail ? 'admin' : (bodyRole || existingProfile?.role || 'user');
@@ -23569,6 +23420,531 @@ app.post("/api/videos/save-review", async (req, res) => {
     } catch (err: any) {
       console.error("user upload asset error:", err);
       return res.status(500).json({ error: err.message || "Failed to upload asset" });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // Live Photo Review Pivot: Anonymous Auth (U/XXXXXX), Username & EXIF-Stripped Photo Upload
+  // --------------------------------------------------------------------------
+  function parseServerCookies(req: express.Request): Record<string, string> {
+    const out: Record<string, string> = {};
+    const raw = req.headers.cookie || "";
+    raw.split(";").forEach((part) => {
+      const idx = part.indexOf("=");
+      if (idx > 0) {
+        const k = part.slice(0, idx).trim();
+        const v = part.slice(idx + 1).trim();
+        try {
+          out[k] = decodeURIComponent(v);
+        } catch {
+          out[k] = v;
+        }
+      }
+    });
+    return out;
+  }
+
+  async function generateUniqueAnonymousHandle(): Promise<string> {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bunnyDb = getBunnyDb();
+    const localUsers = readUsersIndex();
+    const existingSet = new Set(
+      localUsers
+        .map((u: any) => String(u?.username || u?.name || "").trim().toUpperCase())
+        .filter(Boolean)
+    );
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      let code = "";
+      for (let i = 0; i < 6; i++) {
+        code += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+      }
+      const candidate = `U/${code}`;
+      if (existingSet.has(candidate)) continue;
+      if (bunnyDb) {
+        try {
+          const rs = await bunnyDb.execute({
+            sql: "SELECT id FROM users WHERE LOWER(name) = LOWER(?) OR LOWER(data) LIKE LOWER(?) LIMIT 1",
+            args: [candidate, `%"username":"${candidate}"%`]
+          });
+          if (rs.rows && rs.rows.length > 0) continue;
+        } catch {}
+      }
+      return candidate;
+    }
+    return `U/${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  }
+
+  function formatUsernameNormalized(raw: string): string {
+    return String(raw || "").trim().replace(/^@+/, "");
+  }
+
+  function isValidUsernameFormat(username: string): boolean {
+    if (!username) return false;
+    if (/^U\/[A-Za-z0-9]{4,12}$/i.test(username)) return true;
+    return /^[A-Za-z0-9_.-]{3,24}$/.test(username);
+  }
+
+  // Silent Zero-Friction Anonymous Account Provisioning
+  app.post("/api/auth/anonymous", async (req, res) => {
+    try {
+      const cookies = parseServerCookies(req);
+      const existingId = String(req.body?.existingId || cookies["yoouz_anon_uid"] || "").trim();
+      const forceNew = Boolean(req.body?.forceNew);
+
+      const bunnyDb = getBunnyDb();
+      let foundUser: any = null;
+
+      if (!forceNew && existingId && !isDeletedUserServer(existingId)) {
+        foundUser = await resolveUserProfileFromAnySource(existingId).catch(() => null);
+        if (!foundUser) {
+          const localUsers = readUsersIndex();
+          foundUser = localUsers.find((u: any) => u && (u.id === existingId || u.uid === existingId)) || null;
+        }
+      }
+
+      if (foundUser && !foundUser.isDeactivated) {
+        res.cookie("yoouz_anon_uid", String(foundUser.id || foundUser.uid), {
+          httpOnly: true,
+          sameSite: "lax",
+          maxAge: 365 * 24 * 60 * 60 * 1000,
+          path: "/"
+        });
+        return res.json({ success: true, user: foundUser });
+      }
+
+      const handle = await generateUniqueAnonymousHandle();
+      const uid = `anon_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      const userObj = {
+        id: uid,
+        uid,
+        userId: uid,
+        email: "",
+        name: handle,
+        username: handle,
+        handle: `@${handle}`,
+        avatar: "",
+        banner: "",
+        bio: "",
+        role: "user",
+        isAnonymous: true,
+        yoouzPhotoUser: true,
+        linkedProviders: [] as string[],
+        isVerified: false,
+        isNewUser: false,
+        memberSince: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, NULL, ?, '', '', 'user', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET name = excluded.name, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: [uid, handle, JSON.stringify(userObj)]
+        }).catch(() => {});
+      }
+
+      const localUsers = readUsersIndex();
+      localUsers.unshift(userObj);
+      writeUsersIndex(localUsers);
+
+      res.cookie("yoouz_anon_uid", uid, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      return res.json({ success: true, user: userObj });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to provision anonymous user" });
+    }
+  });
+
+  app.get("/api/auth/session", async (req, res) => {
+    try {
+      const cookies = parseServerCookies(req);
+      const userId = String(req.query.userId || cookies["yoouz_anon_uid"] || "").trim();
+      if (!userId) return res.json({ success: true, user: null });
+      const resolved = await resolveUserProfileFromAnySource(userId).catch(() => null);
+      if (resolved) return res.json({ success: true, user: resolved });
+      const localUsers = readUsersIndex();
+      const found = localUsers.find((u: any) => u && (u.id === userId || u.uid === userId)) || null;
+      return res.json({ success: true, user: found });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Session check failed" });
+    }
+  });
+
+  app.get("/api/user/check-username", async (req, res) => {
+    try {
+      const raw = String(req.query.username || "");
+      const currentUserId = String(req.query.currentUserId || "").trim().toLowerCase();
+      const normalized = formatUsernameNormalized(raw);
+
+      if (!isValidUsernameFormat(normalized)) {
+        return res.json({
+          available: false,
+          normalized,
+          error: "Use 3–24 letters, numbers, underscores, or U/XXXXXX format."
+        });
+      }
+
+      const lowerTarget = normalized.toLowerCase();
+      const bunnyDb = getBunnyDb();
+      let conflict = false;
+
+      if (bunnyDb) {
+        try {
+          const rs = await bunnyDb.execute({
+            sql: "SELECT id, name, data FROM users WHERE LOWER(name) = ? OR LOWER(data) LIKE ?",
+            args: [lowerTarget, `%"username":"${lowerTarget}"%`]
+          });
+          for (const row of (rs.rows || []) as any[]) {
+            const rId = String(row.id || "").toLowerCase();
+            if (currentUserId && rId === currentUserId) continue;
+            let parsed: any = {};
+            try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+            const uName = String(parsed.username || row.name || "").replace(/^@+/, "").toLowerCase();
+            if (uName === lowerTarget) {
+              conflict = true;
+              break;
+            }
+          }
+        } catch {}
+      }
+
+      if (!conflict) {
+        const localUsers = readUsersIndex();
+        conflict = localUsers.some((u: any) => {
+          if (!u) return false;
+          const uid = String(u.id || u.uid || "").toLowerCase();
+          if (currentUserId && uid === currentUserId) return false;
+          const un = String(u.username || u.name || "").replace(/^@+/, "").toLowerCase();
+          const uh = String(u.handle || "").replace(/^@+/, "").toLowerCase();
+          return un === lowerTarget || uh === lowerTarget;
+        });
+      }
+
+      return res.json({
+        available: !conflict,
+        normalized,
+        error: conflict ? "That username is already taken." : undefined
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to check username" });
+    }
+  });
+
+  app.post("/api/user/update-username", async (req, res) => {
+    try {
+      const { userId, username: rawUsername } = req.body || {};
+      const cleanUserId = String(userId || "").trim();
+      const normalized = formatUsernameNormalized(String(rawUsername || ""));
+
+      if (!cleanUserId) return res.status(400).json({ error: "Missing userId" });
+      if (!isValidUsernameFormat(normalized)) {
+        return res.status(400).json({ error: "Invalid username. Use 3–24 letters, numbers, _, ., or -" });
+      }
+
+      const lowerTarget = normalized.toLowerCase();
+      const bunnyDb = getBunnyDb();
+
+      // Check uniqueness
+      const localUsers = readUsersIndex();
+      const localConflict = localUsers.some((u: any) => {
+        if (!u) return false;
+        const uid = String(u.id || u.uid || "").toLowerCase();
+        if (uid === cleanUserId.toLowerCase()) return false;
+        const un = String(u.username || u.name || "").replace(/^@+/, "").toLowerCase();
+        return un === lowerTarget;
+      });
+      if (localConflict) {
+        return res.status(409).json({ error: "Username is already taken." });
+      }
+
+      let userRecord = localUsers.find((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId)) || null;
+      if (!userRecord && bunnyDb) {
+        const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [cleanUserId] }).catch(() => null);
+        if (rs && rs.rows && rs.rows[0]) {
+          const row: any = rs.rows[0];
+          let parsed: any = {};
+          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+          userRecord = { id: row.id, uid: row.id, email: row.email || "", ...parsed };
+        }
+      }
+      if (!userRecord) {
+        userRecord = {
+          id: cleanUserId,
+          uid: cleanUserId,
+          email: "",
+          isAnonymous: cleanUserId.startsWith("anon_"),
+          yoouzPhotoUser: true
+        };
+      }
+
+      const updatedUser = {
+        ...userRecord,
+        id: cleanUserId,
+        uid: userRecord.uid || cleanUserId,
+        name: normalized,
+        username: normalized,
+        handle: `@${normalized}`,
+        yoouzPhotoUser: true,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET name = excluded.name, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            cleanUserId,
+            updatedUser.email || null,
+            normalized,
+            updatedUser.avatar || "",
+            updatedUser.bio || "",
+            updatedUser.role || "user",
+            JSON.stringify(updatedUser)
+          ]
+        }).catch(() => {});
+      }
+
+      const idx = localUsers.findIndex((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId));
+      if (idx !== -1) localUsers[idx] = updatedUser;
+      else localUsers.unshift(updatedUser);
+      writeUsersIndex(localUsers);
+
+      // Cascade username update across reviews
+      try {
+        const revList = readReviewsIndex();
+        let revChanged = false;
+        const revIdsToUpdate: string[] = [];
+        revList.forEach((r: any) => {
+          if (!r) return;
+          const rUid = String(r.userId || r.author?.userId || r.author?.id || "").trim();
+          if (rUid === cleanUserId) {
+            r.authorName = normalized;
+            r.author = { ...(r.author || {}), name: normalized, handle: `@${normalized}` };
+            revChanged = true;
+            if (r.id) revIdsToUpdate.push(r.id);
+          }
+        });
+        if (revChanged) writeReviewsIndex(revList);
+        if (Array.isArray(feedCache.videos)) {
+          feedCache.videos.forEach((r: any) => {
+            if (r && String(r.userId || r.author?.userId || r.author?.id || "").trim() === cleanUserId) {
+              r.authorName = normalized;
+              r.author = { ...(r.author || {}), name: normalized, handle: `@${normalized}` };
+            }
+          });
+        }
+        if (bunnyDb && revIdsToUpdate.length > 0) {
+          for (const rId of revIdsToUpdate) {
+            const obj = revList.find((x: any) => x && x.id === rId);
+            if (obj) {
+              bunnyDb.execute({
+                sql: "UPDATE videoReviews SET authorName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                args: [normalized, JSON.stringify(obj), rId]
+              }).catch(() => {});
+            }
+          }
+        }
+      } catch {}
+
+      try {
+        broadcastSseEvent({ type: "user_updated", user: updatedUser });
+      } catch {}
+
+      return res.json({ success: true, user: updatedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to update username" });
+    }
+  });
+
+  // Link anonymous account to Google / Apple so user never loses reviews across phones
+  app.post("/api/auth/link-account", async (req, res) => {
+    try {
+      const { anonymousUserId, provider, email, name, avatar } = req.body || {};
+      const cleanEmail = String(email || "").trim().toLowerCase();
+      const cleanProvider = String(provider || "google").toLowerCase();
+      const cleanAnonId = String(anonymousUserId || "").trim();
+
+      if (!cleanEmail || !cleanEmail.includes("@")) {
+        return res.status(400).json({ error: "Valid email is required to link your account." });
+      }
+
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      const anonUser = cleanAnonId
+        ? localUsers.find((u: any) => u && (u.id === cleanAnonId || u.uid === cleanAnonId)) || await resolveUserProfileFromAnySource(cleanAnonId).catch(() => null)
+        : null;
+      const existingPermUser = localUsers.find((u: any) => u && String(u.email || "").toLowerCase() === cleanEmail)
+        || await resolveUserProfileFromAnySource(cleanEmail).catch(() => null);
+
+      const targetId = existingPermUser?.id || (cleanAnonId || `usr_${cleanEmail.replace(/[^a-z0-9]/g, "_")}`);
+      const preferredUsername = anonUser?.username || anonUser?.name || existingPermUser?.username || existingPermUser?.name || await generateUniqueAnonymousHandle();
+      const providers = Array.from(new Set([...(existingPermUser?.linkedProviders || []), ...(anonUser?.linkedProviders || []), cleanProvider]));
+
+      const mergedUser = {
+        ...(existingPermUser || {}),
+        ...(anonUser || {}),
+        id: targetId,
+        uid: targetId,
+        userId: targetId,
+        email: cleanEmail,
+        name: preferredUsername,
+        username: preferredUsername,
+        handle: `@${preferredUsername.replace(/^@+/, "")}`,
+        avatar: avatar || existingPermUser?.avatar || anonUser?.avatar || "",
+        isAnonymous: false,
+        authProvider: cleanProvider,
+        linkedProviders: providers,
+        isVerified: true,
+        yoouzPhotoUser: true,
+        updatedAt: new Date().toISOString()
+      };
+
+      // Transfer all anonymous reviews, likes, bookmarks & comments to the linked user ID
+      if (cleanAnonId && cleanAnonId !== targetId) {
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET userId = ?, authorName = ? WHERE userId = ?",
+            args: [targetId, preferredUsername, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE likes SET userId = ?, userEmail = ? WHERE userId = ?",
+            args: [targetId, cleanEmail, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE bookmarks SET userId = ?, userEmail = ? WHERE userId = ?",
+            args: [targetId, cleanEmail, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE comments SET userId = ?, userName = ? WHERE userId = ?",
+            args: [targetId, preferredUsername, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "DELETE FROM users WHERE id = ?",
+            args: [cleanAnonId]
+          }).catch(() => {});
+        }
+        const revList = readReviewsIndex();
+        let mutated = false;
+        revList.forEach((r: any) => {
+          if (r && r.userId === cleanAnonId) {
+            r.userId = targetId;
+            r.userEmail = cleanEmail;
+            r.authorName = preferredUsername;
+            r.author = { ...(r.author || {}), id: targetId, userId: targetId, name: preferredUsername, handle: `@${preferredUsername.replace(/^@+/, "")}` };
+            mutated = true;
+          }
+        });
+        if (mutated) writeReviewsIndex(revList);
+      }
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET email = excluded.email, name = excluded.name, avatar = excluded.avatar, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            targetId,
+            cleanEmail,
+            mergedUser.name,
+            mergedUser.avatar || "",
+            mergedUser.bio || "",
+            mergedUser.role || "user",
+            JSON.stringify(mergedUser)
+          ]
+        }).catch(() => {});
+      }
+
+      const filteredUsers = localUsers.filter((u: any) => u && u.id !== cleanAnonId && u.id !== targetId && String(u.email || "").toLowerCase() !== cleanEmail);
+      filteredUsers.unshift(mergedUser);
+      writeUsersIndex(filteredUsers);
+
+      res.cookie("yoouz_anon_uid", targetId, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      try {
+        broadcastSseEvent({ type: "user_updated", user: mergedUser });
+      } catch {}
+
+      return res.json({ success: true, user: mergedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to link account" });
+    }
+  });
+
+  // Live Camera Photo Upload Endpoint (EXIF metadata stripped server-side via sharp, stored on Bunny Storage rev1)
+  app.post("/api/photos/upload", async (req, res) => {
+    try {
+      const { imageBase64, placeId = "place", userId = "anon", reviewId = "" } = req.body || {};
+      if (!imageBase64 || typeof imageBase64 !== "string") {
+        return res.status(400).json({ error: "Missing captured photo data." });
+      }
+
+      const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+      const rawBuffer = Buffer.from(base64Data, "base64");
+      if (!rawBuffer || rawBuffer.length < 100) {
+        return res.status(400).json({ error: "Captured photo is empty or invalid." });
+      }
+
+      // Apply EXIF rotation and strip ALL EXIF/GPS/camera metadata automatically
+      const cleanJpegBuffer = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 1600, withoutEnlargement: true })
+        .jpeg({ quality: 90, mozjpeg: true })
+        .toBuffer();
+
+      const safePlace = String(placeId).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
+      const safeRev = String(reviewId || `photo_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48);
+      const filename = `${safeRev}_${safePlace}_${Date.now()}.jpg`;
+
+      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net";
+      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+
+      if (bunnyAccessKey && bunnyStorageZone) {
+        try {
+          const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+          const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/photos/${filename}`;
+          const uploadRes = await fetch(bunnyUrl, {
+            method: "PUT",
+            headers: {
+              "AccessKey": bunnyAccessKey,
+              "Content-Type": "image/jpeg",
+              "Content-Length": cleanJpegBuffer.length.toString()
+            },
+            body: cleanJpegBuffer
+          });
+          if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
+            const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, "");
+            const cdnUrl = `${cdnBase}/photos/${filename}`;
+            return res.json({ success: true, photoUrl: cdnUrl, thumbnailUrl: cdnUrl, url: cdnUrl, filename });
+          }
+        } catch (bunnyErr) {
+          console.warn("Bunny photo upload notice, falling back to local disk:", bunnyErr);
+        }
+      }
+
+      const localDir = path.join(serverUploadsDir, "photos");
+      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+      fs.writeFileSync(path.join(localDir, filename), cleanJpegBuffer);
+      const localUrl = `/uploads/photos/${filename}`;
+      return res.json({ success: true, photoUrl: localUrl, thumbnailUrl: localUrl, url: localUrl, filename });
+    } catch (err: any) {
+      console.error("photo upload error:", err);
+      return res.status(500).json({ error: err.message || "Failed to process and upload photo" });
     }
   });
 
@@ -25417,7 +25793,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                 "AccessKey": apiKey,
                 "Content-Type": "application/octet-stream"
               },
-              body: videoBuffer,
+              body: new Uint8Array(videoBuffer),
               signal: AbortSignal.timeout(120000)
             });
 
@@ -26104,7 +26480,10 @@ Timestamp: ${new Date(timestamp).toUTCString()}
   });
 
   // Full bidirectional synchronization and auto-recovery of Bunny Stream videos into BunnyDB and JSON feed
-  async function syncAndReconcileBunnyStreamVideos(forceRefreshAll = false): Promise<{ syncedCount: number; recoveredCount: number; details: string[] }> {
+  async function syncAndReconcileBunnyStreamVideos(_forceRefreshAll = false): Promise<{ syncedCount: number; recoveredCount: number; details: string[] }> {
+    return { syncedCount: 0, recoveredCount: 0, details: ["Disabled for Live Photo Reviews pivot"] };
+  }
+  async function _legacySyncDisabled(_forceRefreshAll = false): Promise<{ syncedCount: number; recoveredCount: number; details: string[] }> {
     const apiKey = process.env.BUNNY_STREAM_API_KEY || "1837c4e8-07f2-46dd-9a7a12f84ddb-6189-4d36";
     const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
     const streamPullZone = (process.env.BUNNY_STREAM_CDN_URL || "https://vz-dcd9e101-437.b-cdn.net").replace(/\/+$/, "");
@@ -26244,7 +26623,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
           // Fetch Smart Captions + Hardware Silence Alignment + Smart Title if missing or unpopulated
           const needsTitleUpdate = !cur.hasOfficialBunnyTitle || !cur.aiTitle || !cur.title || cur.title.toLowerCase().trim() === (cur.placeName || "").toLowerCase().trim();
-          if (forceRefreshAll || !cur.hasBunnySmartCaptions || !cur.hasHardwareSilenceSync || !cur.segments || cur.segments.length === 0 || needsTitleUpdate) {
+          if (_forceRefreshAll || !cur.hasBunnySmartCaptions || !cur.hasHardwareSilenceSync || !cur.segments || cur.segments.length === 0 || needsTitleUpdate) {
             const bunnyRes = await fetchBunnyStreamSmartCaptions(guid, cur.id);
             if (bunnyRes) {
               if (bunnyRes.segments && bunnyRes.segments.length > 0) {
@@ -33017,8 +33396,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             cleanDomain = redirectedCleanDom;
             canonicalBaseUrl = `https://${cleanDomain}`;
             url = finalUrl;
-            if (bunnyDb && initialCleanDomain && initialCleanDomain !== cleanDomain) {
-              bunnyDb.execute({
+            const redirectBunnyDb = getBunnyDb();
+            if (redirectBunnyDb && initialCleanDomain && initialCleanDomain !== cleanDomain) {
+              redirectBunnyDb.execute({
                 sql: "DELETE FROM places WHERE LOWER(id) IN (?, ?)",
                 args: [initialCleanDomain.toLowerCase(), `www.${initialCleanDomain.toLowerCase()}`]
               }).catch(() => {});
@@ -35023,7 +35403,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           } else {
             const discovered = await discoverFastStructuredOfficial(q).catch(() => null);
-            let resolvedTop: { title: string; domain: string; websiteUrl?: string } | null = null;
+            let resolvedTop: { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null = null;
             if (discovered && discovered.domain && !isDisallowedNonOfficialHost(discovered.domain, q)) {
               const host = discovered.domain;
               const spelled = extractOfficialBrandSpellingFromText(`${discovered.title} | ${discovered.snippet}`, host);
@@ -35031,7 +35411,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               const merged = mergeOfficialBrandSpellingServer(bestSeg || discovered.title, spelled, host);
               const cand = merged || spelled || formatBusinessName(bestSeg || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
               if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
-                resolvedTop = { title: cand, domain: host, websiteUrl: discovered.url };
+                resolvedTop = { timestamp: Date.now(), title: cand, domain: host, websiteUrl: discovered.url };
               }
             }
             if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
@@ -37809,18 +38189,10 @@ app.get('/api/og-preview-v2', async (req, res) => {
         candidateThumbUrls.push(queryParams.thumbnailUrl);
       }
       if (foundVideo) {
-        const bGuid = foundVideo.bunnyVideoId || foundVideo.bunnyGuid;
-        if (bGuid) {
-          candidateThumbUrls.push(`https://vz-dcd9e101-437.b-cdn.net/${bGuid}/thumbnail.jpg`);
-        }
+        if (foundVideo.photoUrl && typeof foundVideo.photoUrl === 'string' && !foundVideo.photoUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.photoUrl);
         if (foundVideo.thumbnailUrl && typeof foundVideo.thumbnailUrl === 'string' && !foundVideo.thumbnailUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.thumbnailUrl);
-        if (foundVideo.videoThumbnail && typeof foundVideo.videoThumbnail === 'string' && !foundVideo.videoThumbnail.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoThumbnail);
-        if (foundVideo.videoPreviewUrl && typeof foundVideo.videoPreviewUrl === 'string' && !foundVideo.videoPreviewUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.videoPreviewUrl);
         if (foundVideo.coverUrl && typeof foundVideo.coverUrl === 'string' && !foundVideo.coverUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.coverUrl);
         if (foundVideo.posterUrl && typeof foundVideo.posterUrl === 'string' && !foundVideo.posterUrl.startsWith('data:')) candidateThumbUrls.push(foundVideo.posterUrl);
-        if (bGuid) {
-          candidateThumbUrls.push(`https://rev1.b-cdn.net/videos/${bGuid}.jpg`);
-        }
       }
       if (videoId) {
         if (videoId.startsWith('rev-') || videoId.length > 20) {
@@ -38177,12 +38549,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
               ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
             </g>
 
-            <!-- CENTER: Frosted Glass Play Button -->
+            ${(foundVideo?.mediaType === 'photo' || Boolean(foundVideo?.photoUrl)) ? '' : `
+            <!-- CENTER: Frosted Glass Play Button (Video fallback only) -->
             <g transform="translate(535, 250)">
               <circle cx="65" cy="65" r="63" fill="#000000" fill-opacity="0.58"/>
               <circle cx="65" cy="65" r="62" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"/>
               <path d="M54 44 L88 65 L54 86 Z" fill="#ffffff"/>
-            </g>
+            </g>`}
 
             <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
             <g transform="translate(${bottomPillX}, 494)" filter="url(#cardShadow)">
@@ -40891,7 +41264,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       const deletedSet = new Set(readDeletedReviewsIndex());
       const sourceVideos = (feedCache.videos && feedCache.videos.length > 0) ? feedCache.videos : readReviewsIndex();
       const validSource = (sourceVideos || []).filter(
-        (v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.videoUrl || v.hlsUrl || v.bunnyVideoId || v.localBlobUrl || v.blobUrl)
+        (v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.mediaType === 'photo' || Boolean(v.photoUrl))
       );
       const liveVideos = validSource.slice(0, 30);
 
@@ -40960,16 +41333,16 @@ function injectOpenGraphTags(html: string, meta: any) {
     const canonicalRequestUrl = canonicalUrlObj.toString();
     
     const publicBase = baseUrl;
-    let title = "Yoouz - Authentic 60-Second Video Reviews";
-    let description = "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.";
-    let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=25`;
+    let title = "Yoouz - Live Photo Reviews | Real Photos. Real Reviews.";
+    let description = "Yoouz is the live photo review platform. Real people capture live camera photo reviews and 1–5 star ratings with zero fake reviews.";
+    let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=26`;
     let touchIcon = `${publicBase}/apple-touch-icon.png`;
     let videoUrl = "";
     let embedUrl = "";
     let type = "website";
     let twitterCard = "summary_large_image";
     let structuredData: any = null;
-    let keywords = "Yoouz, video reviews, authentic customer reviews, google maps video reviews, 60 second video reviews, restaurant video reviews, local business video ratings";
+    let keywords = "Yoouz, photo reviews, live camera reviews, authentic customer reviews, restaurant photo reviews, local business ratings";
     let robots = "";
     let canonicalVideoUrl = "";
     let canonicalPlaceUrl = "";
@@ -41126,8 +41499,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (isDeletedReviewServer(videoId)) {
           return {
             statusCode: 404,
-            title: "Video Review Removed | Yoouz",
-            description: "This video review has been permanently deleted and is no longer available on Yoouz.",
+            title: "Photo Review Removed | Yoouz",
+            description: "This photo review has been permanently deleted and is no longer available on Yoouz.",
             imageUrl: `${baseUrl}/og-banner.png`,
             touchIcon: `${baseUrl}/apple-touch-icon.png`,
             logoUrl: `${baseUrl}/apple-touch-icon.png`,
@@ -41136,7 +41509,7 @@ function injectOpenGraphTags(html: string, meta: any) {
             type: "website",
             twitterCard: "summary_large_image",
             url: fullUrl,
-            keywords: "Yoouz, deleted video review",
+            keywords: "Yoouz, deleted photo review",
             robots: "noindex, nofollow",
             structuredData: null
           };
@@ -41173,14 +41546,14 @@ function injectOpenGraphTags(html: string, meta: any) {
             }
         }
         
-        const authorName = foundVideo?.author?.name || foundVideo?.authorName || (foundVideo?.userEmail ? foundVideo.userEmail.split('@')[0] : "Steven Akan");
+        const authorName = foundVideo?.author?.name || foundVideo?.authorName || "Anonymous";
         const authorHandle = foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const rawPlace = foundVideo?.placeName || "";
         const rawDomain = foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "";
         const domainSlug = getPlaceSlug(rawDomain) || "yoouz.com";
         const placeName = formatBusinessName(rawPlace || cleanDomainName(rawDomain)) || "Local Business";
-        const rating = Number(foundVideo?.rating || 5.0);
-        const caption = foundVideo?.caption || "";
+        const rating = Math.min(5, Math.max(1, Math.round(Number(foundVideo?.rating || 5))));
+        const caption = "";
 
         // Compute place reviews count & average rating across all reviews for this business (in-memory feedCache first for 0ms latency, then BunnyDB)
         let placeReviewsCount = 1;
@@ -41276,19 +41649,13 @@ function injectOpenGraphTags(html: string, meta: any) {
           ? `${baseUrl}${cleanPathname}`
           : `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
 
-        const smartDesc = foundVideo?.bunnyDescription || foundVideo?.description;
-        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
-        description = smartDesc
-          ? `${smartDesc} Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz.`
-          : (caption 
-              ? `"${caption}" — Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`
-              : `Watch the authentic 60-second video review by ${authorName} for ${placeName} on Yoouz. Real People. Real Reviews.`);
-        keywords = `${placeName}, ${domainSlug}, ${authorName}, video review, ${placeName} customer review, ${placeName} video review, authentic customer review, Yoouz`;
+        title = `${authorName}'s Photo Review of ${placeName} | Yoouz`;
+        description = `Verified ${rating}/5 live photo review by ${authorName} for ${placeName} on Yoouz. Real Photos. Real Reviews.`;
+        keywords = `${placeName}, ${domainSlug}, ${authorName}, photo review, ${placeName} customer review, live photo review, authentic customer review, Yoouz`;
         
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
         imageUrl = `${baseUrl}/api/og-card/v17/${encodeURIComponent(videoId)}.png`;
         touchIcon = `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(videoId)}.png`;
-        // Trigger OG card generation with a non-blocking 120ms race so HTML is delivered in <150ms (never timing out Reddit's Post-Submission scraper)
         await Promise.race([
           generateVideoShareCardBuffer(videoId, {
             placeDomain: cleanPlaceDomForOg,
@@ -41302,51 +41669,23 @@ function injectOpenGraphTags(html: string, meta: any) {
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(videoId)}`;
             
         const cleanAuthorHandle = (authorHandle || '').replace(/^@+/, "");
-        const streamVideoUrl = `${baseUrl}/api/videos/stream/${encodeURIComponent(videoId)}.mp4`;
-        const streamThumbUrl = `${baseUrl}/api/videos/stream/${encodeURIComponent(videoId)}.jpg`;
+        const photoAssetUrl = foundVideo?.photoUrl || foundVideo?.thumbnailUrl || imageUrl;
 
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
             {
-              "@type": "VideoObject",
-              "@id": `${canonicalVideoUrl}#video`,
+              "@type": "ImageObject",
+              "@id": `${canonicalVideoUrl}#photo`,
               "name": title,
-              "description": smartDesc || description,
-              "thumbnailUrl": [
-                imageUrl,
-                streamThumbUrl,
-                foundVideo?.videoThumbnail,
-                foundVideo?.thumbnailUrl,
-                `https://rev1.b-cdn.net/videos/${videoId}.jpg`
-              ].filter(Boolean),
+              "description": description,
+              "contentUrl": photoAssetUrl,
+              "thumbnailUrl": imageUrl,
               "uploadDate": foundVideo?.createdAt ? (typeof foundVideo.createdAt === 'number' ? new Date(foundVideo.createdAt).toISOString() : String(foundVideo.createdAt)) : new Date().toISOString(),
-              "duration": "PT60S",
-              "contentUrl": streamVideoUrl,
-              "embedUrl": embedUrl,
-              "inLanguage": "en",
-              "isFamilyFriendly": true,
-              "transcript": foundVideo?.transcriptText || caption || `Authentic 60-second customer video review of ${foundVideo?.placeName || placeName} on Yoouz.`,
-              "potentialAction": {
-                "@type": "WatchAction",
-                "target": fullUrl
-              },
-              "interactionStatistic": {
-                "@type": "InteractionCounter",
-                "interactionType": { "@type": "WatchAction" },
-                "userInteractionCount": foundVideo?.likes || foundVideo?.likesCount || 15
-              },
               "author": {
                 "@type": "Person",
                 "name": authorName,
                 "url": `${baseUrl}/@${encodeURIComponent(cleanAuthorHandle)}`
-              },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": Number(rating || 5).toFixed(1),
-                "bestRating": "5",
-                "worstRating": "1",
-                "ratingCount": "1"
               },
               "publisher": {
                 "@type": "Organization",
@@ -41367,43 +41706,15 @@ function injectOpenGraphTags(html: string, meta: any) {
               },
               "reviewRating": {
                 "@type": "Rating",
-                "ratingValue": Number(rating || 5).toFixed(1),
-                "bestRating": "5"
+                "ratingValue": String(rating),
+                "bestRating": "5",
+                "worstRating": "1"
               },
               "author": {
                 "@type": "Person",
                 "name": authorName
               },
-              "reviewBody": caption || `Verified 60-second video review of ${foundVideo?.placeName || placeName}.`
-            },
-            {
-              "@type": "FAQPage",
-              "mainEntity": [
-                {
-                  "@type": "Question",
-                  "name": `What is ${authorName}'s rating of ${foundVideo?.placeName || placeName}?`,
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": `${authorName} gave ${foundVideo?.placeName || placeName} a rating of ${rating.toFixed(1)} out of 5 stars in a verified 60-second video review on Yoouz.`
-                  }
-                },
-                {
-                  "@type": "Question",
-                  "name": `How can I embed this video review of ${foundVideo?.placeName || placeName}?`,
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": `You can embed this 60-second video on any website or store using oEmbed or the iframe embed code: <iframe src="${embedUrl}" width="360" height="640" allowfullscreen></iframe>.`
-                  }
-                },
-                {
-                  "@type": "Question",
-                  "name": `Is this video review of ${foundVideo?.placeName || placeName} verified?`,
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": `Yes. This review was recorded live face-to-camera by a verified human customer on Yoouz. Zero bot spam or fake text reviews are allowed.`
-                  }
-                }
-              ]
+              "reviewBody": `Verified ${rating}-star live photo review of ${foundVideo?.placeName || placeName}.`
             }
           ]
         };
@@ -41462,15 +41773,14 @@ function injectOpenGraphTags(html: string, meta: any) {
           : `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}`;
 
         // Keep og:image URL strictly short, fixed-length & canonical (zero dynamic query bloat so social scrapers never reject or mismatch post-publish)
-        title = `Authentic Video Reviews for ${placeName} | Yoouz`;
+        title = `Live Photo Reviews for ${placeName} | Yoouz`;
         description = placeVideos.length > 0
-          ? `Watch ${placeVideos.length} verified 60-second video reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. 100% Real Video Proof. Zero Fake Text Reviews.`
-          : `Discover genuine 60-second video testimonials for ${placeName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`;
+          ? `Browse ${placeVideos.length} live camera photo reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. Real Photos. Real Reviews.`
+          : `Discover genuine live photo reviews for ${placeName} on Yoouz. Real Photos. Real Reviews.`;
         imageUrl = `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         touchIcon = `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
-        // Trigger place OG card generation with a non-blocking 120ms race so HTML is delivered in <150ms
         await Promise.race([
           generatePlaceShareCardBuffer({
             domain: effectiveDomain,
@@ -41479,46 +41789,27 @@ function injectOpenGraphTags(html: string, meta: any) {
           new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
 
-        // Generate top-level VideoObjects for each video review to maximize Google Video indexing
-        const topLevelVideoObjects = placeVideos.slice(0, 10).map((v: any) => {
-          const vAuthor = v.author?.name || v.authorName || (v.userEmail ? v.userEmail.split('@')[0] : "Customer");
-          const vTitle = `${vAuthor}'s 60-Second Video Review of ${placeName}`;
-          const vSmartDesc = v.bunnyDescription || v.description;
-          const vDesc = vSmartDesc || v.caption || `Watch this verified 60-second customer video review of ${placeName} on Yoouz. 100% Real Video Proof.`;
-          const vThumb = v.videoThumbnail || v.thumbnailUrl || `https://rev1.b-cdn.net/videos/${v.id}.jpg` || imageUrl;
+        const topLevelPhotoObjects = placeVideos.slice(0, 10).map((v: any) => {
+          const vAuthor = v.author?.name || v.authorName || "Anonymous";
+          const vThumb = v.photoUrl || v.thumbnailUrl || imageUrl;
           const vDate = v.createdAt ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt)) : new Date().toISOString();
-          const vContentUrl = v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`;
-          const vEmbedUrl = `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`;
           return {
-            "@type": "VideoObject",
-            "@id": `${baseUrl}/video/${encodeURIComponent(v.id)}#video`,
-            "name": vTitle,
-            "description": vDesc,
-            "thumbnailUrl": [vThumb, imageUrl].filter(Boolean),
+            "@type": "ImageObject",
+            "@id": `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}/${encodeURIComponent(v.id)}#photo`,
+            "name": `${vAuthor}'s Photo Review of ${placeName}`,
+            "contentUrl": vThumb,
+            "thumbnailUrl": vThumb,
             "uploadDate": vDate,
-            "duration": "PT60S",
-            "contentUrl": vContentUrl,
-            "embedUrl": vEmbedUrl,
-            "inLanguage": "en",
-            "isFamilyFriendly": true,
-            "transcript": v.transcriptText || v.caption || `Authentic customer video review of ${placeName}.`,
-            "author": {
-              "@type": "Person",
-              "name": vAuthor
-            },
+            "author": { "@type": "Person", "name": vAuthor },
             "publisher": {
               "@type": "Organization",
               "name": "Yoouz",
               "url": "https://www.yoouz.com",
-              "logo": {
-                "@type": "ImageObject",
-                "url": `${baseUrl}/favicon.svg`
-              }
+              "logo": { "@type": "ImageObject", "url": `${baseUrl}/favicon.svg` }
             }
           };
         });
 
-        // Generate rich LocalBusiness + FAQPage Schema with VideoObjects for Google & AI search
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
@@ -41538,27 +41829,18 @@ function injectOpenGraphTags(html: string, meta: any) {
                 "@type": "Review",
                 "reviewRating": {
                   "@type": "Rating",
-                  "ratingValue": Number(v.rating || 5).toFixed(1),
-                  "bestRating": "5"
+                  "ratingValue": String(Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))))),
+                  "bestRating": "5",
+                  "worstRating": "1"
                 },
                 "author": {
                   "@type": "Person",
-                  "name": v.author?.name || v.authorName || (v.userEmail ? v.userEmail.split('@')[0] : "Steven Akan")
+                  "name": v.author?.name || v.authorName || "Anonymous"
                 },
-                "reviewBody": v.caption || `Authentic 60-second video review for ${placeName}.`,
-                "video": {
-                  "@type": "VideoObject",
-                  "name": `${v.author?.name || "Customer"}'s Video Review of ${placeName}`,
-                  "description": v.caption || `Watch this verified 60s video review of ${placeName}`,
-                  "thumbnailUrl": v.videoThumbnail || v.thumbnailUrl || imageUrl,
-                  "uploadDate": v.createdAt || new Date().toISOString(),
-                  "duration": "PT60S",
-                  "contentUrl": v.videoUrl || `https://rev1.b-cdn.net/videos/${v.id}.mp4`,
-                  "embedUrl": `${baseUrl}/embed/video/${encodeURIComponent(v.id)}`
-                }
+                "reviewBody": `Live camera photo review for ${placeName}.`
               }))
             },
-            ...topLevelVideoObjects,
+            ...topLevelPhotoObjects,
             {
               "@type": "FAQPage",
               "mainEntity": [
@@ -41567,23 +41849,23 @@ function injectOpenGraphTags(html: string, meta: any) {
                   "name": `What is the verified customer rating for ${placeName}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `${placeName} has a verified average rating of ${avgRating.toFixed(1)} out of 5 stars based on ${Math.max(1, placeVideos.length)} authentic 60-second customer video reviews on Yoouz.`
+                    "text": `${placeName} has a verified average rating of ${avgRating.toFixed(1)} out of 5 stars based on ${Math.max(1, placeVideos.length)} authentic live camera photo reviews on Yoouz.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `Where can I watch real video reviews of ${placeName}?`,
+                  "name": `Where can I see real photo reviews of ${placeName}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `You can watch verified 60-second face-to-camera video reviews of ${placeName} at ${fullUrl} or through the Yoouz iOS/Android and Web app.`
+                    "text": `You can browse verified live-camera photo reviews of ${placeName} at ${fullUrl} or through the Yoouz iOS/Android and Web app.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `How do I embed ${placeName} video reviews on my website?`,
+                  "name": `How do I embed ${placeName} photo reviews on my website?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `You can embed video reviews for ${placeName} using the Yoouz oEmbed API or standard iframe code. Adding verified video reviews increases website sales conversion rates by over 300%.`
+                    "text": `You can embed photo reviews for ${placeName} using the Yoouz oEmbed API or standard iframe code. Adding verified live photo reviews increases website conversion rates.`
                   }
                 },
                 {
@@ -41591,15 +41873,15 @@ function injectOpenGraphTags(html: string, meta: any) {
                   "name": `Are reviews for ${placeName} verified on Yoouz?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `Yes. 100% of reviews on Yoouz are recorded live through the front camera. No bot accounts, fake AI text, or unverified ratings are permitted.`
+                    "text": `Yes. 100% of reviews on Yoouz are captured live through the device camera with zero gallery uploads allowed. No bot accounts or fake AI text are permitted.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `Why are Yoouz video reviews for ${placeName} better than Yelp or Google Reviews?`,
+                  "name": `Why are Yoouz photo reviews for ${placeName} better than Yelp or Google Reviews?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `Unlike Yelp or Google Reviews where competitors or bots can write fake 1-star or 5-star text rants, Yoouz features real human faces, voice emotion, and live video proof of ${placeName}.`
+                    "text": `Unlike Yelp or Google Reviews where bots can write fake text rants, Yoouz features real live-camera photo proof and honest whole-star ratings of ${placeName}.`
                   }
                 }
               ]
@@ -41648,8 +41930,8 @@ function injectOpenGraphTags(html: string, meta: any) {
           } catch(e) {}
         }
 
-        title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
-        description = `Watch genuine 60-second video testimonials by ${authorName} on Yoouz. Real People. Real Reviews.`;
+        title = `@${cleanH}'s Live Photo Reviews | Yoouz`;
+        description = `Browse live camera photo reviews by ${authorName} on Yoouz. Real Photos. Real Reviews.`;
         imageUrl = `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
@@ -41673,17 +41955,17 @@ function injectOpenGraphTags(html: string, meta: any) {
         else if (pathname.includes("tripadvisor")) { comp = "TripAdvisor"; compSlug = "tripadvisor"; }
         else if (pathname.includes("yelp")) { comp = "Yelp"; compSlug = "yelp"; }
 
-        title = `Yoouz vs ${comp} (2026 Comparison) | The 100% Authentic Video Review Standard`;
-        description = `Compare Yoouz vs ${comp}. Discover why millions of consumers and businesses choose 60-second verified video reviews to eliminate fake AI text and bot spam.`;
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(`Yoouz vs ${comp}`)}&subtitle=${encodeURIComponent("Authentic Video vs Legacy Text Reviews")}&path=${encodeURIComponent("yoouz.com/vs-" + compSlug)}&v=25`;
-        keywords = `Yoouz vs ${comp}, ${comp} alternative, best video review platform, anti-fake review app, authentic restaurant reviews, real customer video feedback`;
+        title = `Yoouz vs ${comp} (2026 Comparison) | The Live Photo Review Standard`;
+        description = `Compare Yoouz vs ${comp}. Discover why consumers and businesses choose live-camera photo reviews and 1–5 whole-star ratings to eliminate fake AI text and bot spam.`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(`Yoouz vs ${comp}`)}&subtitle=${encodeURIComponent("Live Photo vs Legacy Text Reviews")}&path=${encodeURIComponent("yoouz.com/vs-" + compSlug)}&v=26`;
+        keywords = `Yoouz vs ${comp}, ${comp} alternative, best photo review platform, anti-fake review app, authentic restaurant reviews, real customer photo feedback`;
 
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
             {
               "@type": "TechArticle",
-              "headline": `Yoouz vs ${comp}: Comparison of Review Authenticity and Video Verification`,
+              "headline": `Yoouz vs ${comp}: Comparison of Review Authenticity and Live Photo Verification`,
               "description": description,
               "url": fullUrl,
               "author": { "@type": "Organization", "name": "Yoouz Review Intelligence" },
@@ -41697,7 +41979,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                   "name": `Why is Yoouz better than ${comp}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `Yoouz mandates 60-second live camera video reviews, providing genuine face-to-camera proof, voice emotion, and atmosphere while completely eliminating the bot spam and fake text reviews common on ${comp}.`
+                    "text": `Yoouz mandates live-camera photo reviews with whole-star ratings, providing genuine visual proof while eliminating the bot spam and fake text reviews common on ${comp}.`
                   }
                 },
                 {
@@ -41705,7 +41987,7 @@ function injectOpenGraphTags(html: string, meta: any) {
                   "name": `Is Yoouz a verified alternative to ${comp}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `Yes. Yoouz is the premier video-first alternative to ${comp}, trusted worldwide for genuine restaurant, travel, local business, and service recommendations.`
+                    "text": `Yes. Yoouz is the premier live-photo alternative to ${comp}, trusted worldwide for genuine restaurant, travel, local business, and service recommendations.`
                   }
                 }
               ]
@@ -41713,10 +41995,10 @@ function injectOpenGraphTags(html: string, meta: any) {
           ]
         };
     } else if (cleanPathname === '/business' || cleanPathname.startsWith('/business') || cleanPathname === '/claim') {
-        title = "Yoouz for Business | Verified Merchant Portal & Video Reviews";
-        description = "Claim and verify your official business profile on Yoouz. Showcase authentic 60-second customer video reviews, embed trust widgets, and eliminate fake text reviews.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz for Business")}&subtitle=${encodeURIComponent("Verified Merchant Portal & Video Reviews")}&path=${encodeURIComponent("yoouz.com/business")}&v=25`;
-        keywords = "Yoouz business, claim business, authentic video reviews, verified merchant, customer video testimonials, embed video reviews, anti-fake reviews";
+        title = "Yoouz for Business | Verified Merchant Portal & Live Photo Reviews";
+        description = "Claim and verify your official business profile on Yoouz. Showcase authentic live-camera customer photo reviews, embed trust widgets, and eliminate fake text reviews.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz for Business")}&subtitle=${encodeURIComponent("Verified Merchant Portal & Photo Reviews")}&path=${encodeURIComponent("yoouz.com/business")}&v=26`;
+        keywords = "Yoouz business, claim business, authentic photo reviews, verified merchant, customer photo testimonials, embed photo reviews, anti-fake reviews";
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
@@ -41736,45 +42018,45 @@ function injectOpenGraphTags(html: string, meta: any) {
         };
     } else if (cleanPathname === '/search' || cleanPathname.startsWith('/search')) {
         const queryTerm = params.get('q') || params.get('query') || '';
-        title = queryTerm ? `Search Video Reviews for "${queryTerm}" | Yoouz` : "Search Video Reviews | Yoouz";
+        title = queryTerm ? `Search Photo Reviews for "${queryTerm}" | Yoouz` : "Search Photo Reviews | Yoouz";
         description = queryTerm 
-          ? `Discover authentic 60-second customer video reviews for "${queryTerm}" on Yoouz.`
-          : "Search thousands of authentic 60-second video reviews recorded live by real customers for local businesses and places.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(queryTerm ? `Search: ${queryTerm}` : "Search Video Reviews")}&subtitle=${encodeURIComponent("Explore Authentic 60s Testimonials")}&path=${encodeURIComponent("yoouz.com/search")}&v=25`;
+          ? `Discover live-camera customer photo reviews for "${queryTerm}" on Yoouz.`
+          : "Search authentic live-camera photo reviews captured in real time by customers for local businesses and places.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(queryTerm ? `Search: ${queryTerm}` : "Search Photo Reviews")}&subtitle=${encodeURIComponent("Explore Live Photo Testimonials")}&path=${encodeURIComponent("yoouz.com/search")}&v=26`;
     } else if (cleanPathname === '/following' || cleanPathname.startsWith('/following')) {
         title = "Following & Community Feed | Yoouz";
-        description = "Stay up to date with genuine video reviews from reviewers and creators you follow on Yoouz.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Following Feed")}&subtitle=${encodeURIComponent("Live Video Updates from Creators You Follow")}&path=${encodeURIComponent("yoouz.com/following")}&v=25`;
+        description = "Stay up to date with live photo reviews from reviewers and businesses you follow on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Following Feed")}&subtitle=${encodeURIComponent("Live Photo Updates from Reviewers You Follow")}&path=${encodeURIComponent("yoouz.com/following")}&v=26`;
     } else if (cleanPathname === '/messages' || cleanPathname.startsWith('/messages') || cleanPathname.startsWith('/chat')) {
         title = "Messages & Direct Chat | Yoouz";
-        description = "Connect directly with video reviewers, local business owners, and community members on Yoouz.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Direct Messages")}&subtitle=${encodeURIComponent("Connect with Reviewers & Merchants")}&path=${encodeURIComponent("yoouz.com/messages")}&v=25`;
+        description = "Connect directly with photo reviewers, local business owners, and community members on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Direct Messages")}&subtitle=${encodeURIComponent("Connect with Reviewers & Merchants")}&path=${encodeURIComponent("yoouz.com/messages")}&v=26`;
     } else if (cleanPathname === '/map' || cleanPathname.startsWith('/map')) {
-        title = "Interactive Video Review Map | Yoouz";
-        description = "Explore real 60-second video reviews near you on the interactive Yoouz map.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Video Review Map")}&subtitle=${encodeURIComponent("Discover Nearby Verified Video Reviews")}&path=${encodeURIComponent("yoouz.com/map")}&v=25`;
+        title = "Interactive Photo Review Map | Yoouz";
+        description = "Explore real live-camera photo reviews near you on the interactive Yoouz map.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Photo Review Map")}&subtitle=${encodeURIComponent("Discover Nearby Verified Photo Reviews")}&path=${encodeURIComponent("yoouz.com/map")}&v=26`;
     } else if (cleanPathname === '/notifications' || cleanPathname.startsWith('/notifications')) {
         title = "Notifications & Activity | Yoouz";
-        description = "Check your latest video review reactions, comments, followers, and business updates on Yoouz.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Notifications")}&subtitle=${encodeURIComponent("Reactions, Comments & Verified Updates")}&path=${encodeURIComponent("yoouz.com/notifications")}&v=25`;
+        description = "Check your latest photo review reactions, comments, followers, and business updates on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Notifications")}&subtitle=${encodeURIComponent("Reactions, Comments & Verified Updates")}&path=${encodeURIComponent("yoouz.com/notifications")}&v=26`;
     } else if (cleanPathname === '/bookmarks' || cleanPathname.startsWith('/bookmarks') || cleanPathname.startsWith('/saved')) {
-        title = "Saved Video Reviews & Bookmarks | Yoouz";
-        description = "View your saved 60-second video reviews and bookmarked local places on Yoouz.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=25`;
+        title = "Saved Photo Reviews & Bookmarks | Yoouz";
+        description = "View your saved live photo reviews and bookmarked local places on Yoouz.";
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=26`;
     } else if (cleanPathname === '/more' || cleanPathname.startsWith('/more') || cleanPathname === '/about' || cleanPathname === '/settings') {
         title = "Settings & Community | Yoouz";
         description = "Discover Yoouz platform settings, Knowledge Center FAQs, community guidelines, and language options.";
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Settings & Community")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/more")}&v=25`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Settings & Community")}&subtitle=${encodeURIComponent("Authentic Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/more")}&v=26`;
     } else if (cleanPathname === '/privacy' || cleanPathname === '/terms' || cleanPathname === '/faq' || cleanPathname === '/community-guidelines') {
         const pageName = cleanPathname.replace('/', '').replace(/[-_]/g, ' ').toUpperCase();
         title = `${pageName} | Yoouz`;
-        description = `Official ${pageName} information for Yoouz - Authentic 60-Second Video Reviews.`;
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(pageName)}&subtitle=${encodeURIComponent("Official Policy & Information")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=25`;
+        description = `Official ${pageName} information for Yoouz - Live Camera Photo Reviews.`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(pageName)}&subtitle=${encodeURIComponent("Official Policy & Information")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=26`;
     } else if (cleanPathname !== '/' && !detectedVideoId && !placeId && !creatorHandle) {
         const sectionTitle = cleanPathname.replace('/', '').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         title = `${sectionTitle} | Yoouz`;
-        description = `Explore ${sectionTitle} on Yoouz - Authentic 60-Second Video Reviews.`;
-        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(sectionTitle)}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=25`;
+        description = `Explore ${sectionTitle} on Yoouz - Live Camera Photo Reviews.`;
+        imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(sectionTitle)}&subtitle=${encodeURIComponent("Live Camera Photo Reviews")}&path=${encodeURIComponent("yoouz.com" + cleanPathname)}&v=26`;
     }
 
     if (!structuredData) {
@@ -41786,8 +42068,8 @@ function injectOpenGraphTags(html: string, meta: any) {
             "@id": `${baseUrl}/#website`,
             "url": baseUrl,
             "name": "Yoouz",
-            "alternateName": ["Yoouz Video Reviews", "Yoouz.com", "Yoouz Anti-Fake Reviews"],
-            "description": "Authentic 60-second live video reviews for local businesses, restaurants, cafes, hotels, and websites.",
+            "alternateName": ["Yoouz Photo Reviews", "Yoouz.com", "Yoouz Anti-Fake Reviews"],
+            "description": "Authentic live-camera photo reviews and 1–5 whole-star ratings for local businesses, restaurants, cafes, hotels, and websites.",
             "publisher": {
               "@id": `${baseUrl}/#organization`
             },
@@ -41815,8 +42097,8 @@ function injectOpenGraphTags(html: string, meta: any) {
               "height": 512
             },
             "image": `${baseUrl}/og-banner.png`,
-            "slogan": "Real People. Real Reviews.",
-            "description": "Yoouz is the premier authentic video review platform eliminating fake online reviews through live 60-second customer video recordings."
+            "slogan": "Real Photos. Real Reviews.",
+            "description": "Yoouz is the live photo review platform eliminating fake online reviews through live camera capture and whole-star ratings."
           }
         ]
       };
@@ -41872,8 +42154,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         const domSlug = ((parts[0] === 'review' || parts[0] === 'reviews') && parts.length >= 2) ? cleanDomainName(parts[1]) || parts[1] : 'yoouz.com';
         const pName = formatBusinessName(domSlug) || 'Yoouz';
         return {
-          title: `60s Video Review of ${pName} | Yoouz`,
-          description: `Watch the authentic 60-second video review for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
+          title: `Live Photo Review of ${pName} | Yoouz`,
+          description: `See the live camera photo review for ${pName} on Yoouz. Real Photos. Zero Fake Reviews.`,
           imageUrl: `${baseUrl}/api/og-card/v17/${encodeURIComponent(vid)}.png`,
           touchIcon: `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(vid)}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
@@ -41882,7 +42164,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           type: "website",
           twitterCard: "summary_large_image",
           url: cleanUrl,
-          keywords: `${pName}, Yoouz, video reviews`,
+          keywords: `${pName}, Yoouz, photo reviews`,
           robots: "",
           structuredData: null
         };
@@ -41891,8 +42173,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
         const pName = formatBusinessName(dom) || 'Business';
         return {
-          title: `Authentic Video Reviews for ${pName} | Yoouz`,
-          description: `Discover genuine 60-second video testimonials for ${pName} on Yoouz. 100% Real Video. Zero Fake Text Reviews.`,
+          title: `Live Photo Reviews for ${pName} | Yoouz`,
+          description: `Discover genuine live camera photo reviews for ${pName} on Yoouz. Real Photos. Zero Fake Reviews.`,
           imageUrl: `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
           touchIcon: `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
@@ -41901,7 +42183,7 @@ function injectOpenGraphTags(html: string, meta: any) {
           type: "website",
           twitterCard: "summary_large_image",
           url: cleanUrl,
-          keywords: `${pName}, Yoouz, video reviews`,
+          keywords: `${pName}, Yoouz, photo reviews`,
           robots: "",
           structuredData: null
         };
@@ -41910,8 +42192,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         const cleanH = creatorMatch[1].replace(/^@+/, "");
         const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         return {
-          title: `@${cleanH}'s Authentic Video Reviews | Yoouz`,
-          description: `Watch genuine 60-second video testimonials by ${aName} on Yoouz. Real People. Real Reviews.`,
+          title: `@${cleanH}'s Live Photo Reviews | Yoouz`,
+          description: `Browse live camera photo reviews by ${aName} on Yoouz. Real Photos. Real Reviews.`,
           imageUrl: `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
@@ -41920,15 +42202,15 @@ function injectOpenGraphTags(html: string, meta: any) {
           type: "website",
           twitterCard: "summary_large_image",
           url: cleanUrl,
-          keywords: `${aName}, Yoouz, video reviews`,
+          keywords: `${aName}, Yoouz, photo reviews`,
           robots: "",
           structuredData: null
         };
       }
       return {
-        title: "Yoouz - Authentic 60-Second Video Reviews",
-        description: "Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.",
-        imageUrl: `${baseUrl}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Authentic 60-Second Video Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=25`,
+        title: "Yoouz - Live Photo Reviews | Real Photos. Real Reviews.",
+        description: "Yoouz is the live photo review platform. Real people capture live camera photo reviews and 1–5 star ratings with zero fake reviews.",
+        imageUrl: `${baseUrl}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=26`,
         touchIcon: `${baseUrl}/apple-touch-icon.png`,
         logoUrl: `${baseUrl}/apple-touch-icon.png`,
         videoUrl: "",
@@ -41936,7 +42218,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         type: "website",
         twitterCard: "summary_large_image",
         url: cleanUrl,
-        keywords: "Yoouz, video reviews",
+        keywords: "Yoouz, photo reviews",
         robots: "",
         structuredData: null
       };
@@ -42723,12 +43005,44 @@ function injectOpenGraphTags(html: string, meta: any) {
       } catch(e) {}
     }
   };
+  const runPhotoPivotPurgeOnce = async (): Promise<void> => {
+    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v1_done");
+    if (fs.existsSync(markerPath)) return;
+    console.log("🧹 [Photo Pivot] Running one-time purge of legacy video reviews & pre-pivot accounts...");
+    try {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute(`DELETE FROM videoReviews WHERE (data NOT LIKE '%"mediaType":"photo"%' OR data IS NULL)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM users WHERE (data NOT LIKE '%yoouzPhotoUser%' AND id NOT LIKE 'anon_%')`).catch(() => {});
+        await bunnyDb.execute(`UPDATE users SET email = NULL WHERE email = ''`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
+      }
+      if (getDb()) {
+        try {
+          await db.delete(BunnyDB_video_reviews);
+        } catch {}
+      }
+      writeReviewsIndex([]);
+      writeUsersIndex([]);
+      feedCache.videos = [];
+      feedCache.lastFetched = 0;
+      ogVideoCardCache.clear();
+      if (!fs.existsSync(serverUploadsDir)) fs.mkdirSync(serverUploadsDir, { recursive: true });
+      fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
+      console.log("✅ [Photo Pivot] One-time legacy video & account purge completed.");
+    } catch (e) {
+      console.warn("Photo pivot purge warning:", e);
+    }
+  };
+
   const purgeFakeReviewsAndPlaces = async (): Promise<void> => {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return;
     try {
-      // 1. Only purge empty, corrupt, or broken reviews that lack video URLs or IDs or mention renevolt
-      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR videoUrl IS NULL OR videoUrl = '' OR placeName IS NULL OR placeName = '' OR id = 'rev-1792432790505-4ovhe' OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
+      // 1. Purge empty/corrupt rows while preserving live photo reviews (data LIKE '%"mediaType":"photo"%')
+      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR placeName IS NULL OR placeName = '' OR ((videoUrl IS NULL OR videoUrl = '') AND (data NOT LIKE '%\"mediaType\":\"photo\"%' OR data IS NULL)) OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
 
       // 2. Purge broken, unnamed, broker/parked/doorway domains, or legacy synthesized .co.il fallback place records
       await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR LOWER(name) = 'domain details page' OR id LIKE '%renevolt%' OR name LIKE '%renevolt%' OR LOWER(id) IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il', 'sedo.com', 'sedoparking.com', 'hugedomains.com', 'dan.com', 'afternic.com', 'godaddy.com', 'guestreservations.com', 'abudhabinhotel.com', 'hotelabudhabi.net', 'hotelsofabudhabi.com', 'abudhabi-hotels-ae.com', 'abu-dhabi-hotels.net', 'tamm.abudhabi', 'www.tamm.abudhabi', 'stratospherehotel.com', 'www.stratospherehotel.com')").catch(() => {});
@@ -42848,18 +43162,12 @@ function injectOpenGraphTags(html: string, meta: any) {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Yoouz server running on http://0.0.0.0:${PORT}`);
-    // Immediately pre-warm priority OG video & place cards into RAM so cold crawlers after deploy get 0ms responses
+    // Pre-warm live photo review OG cards if present
     setTimeout(async () => {
       try {
-        const priorityIds = ["rev-1792774959649-hot8m", "rev-1792740198020-gknyb"];
-        for (const pid of priorityIds) {
-          await generateVideoShareCardBuffer(pid, {}, "https://www.yoouz.com").catch(() => {});
-        }
-        await generatePlaceShareCardBuffer({ domain: "bk.com" }, "https://www.yoouz.com").catch(() => {});
-        await generatePlaceShareCardBuffer({ domain: "flipper.net" }, "https://www.yoouz.com").catch(() => {});
         const seedVideos = typeof readReviewsIndex === "function" ? readReviewsIndex() : [];
-        for (const sv of seedVideos.slice(0, 25)) {
-          if (sv && sv.id && !priorityIds.includes(sv.id)) {
+        for (const sv of seedVideos.slice(0, 15)) {
+          if (sv && sv.id && (sv.mediaType === "photo" || sv.photoUrl)) {
             await generateVideoShareCardBuffer(sv.id, {}, "https://www.yoouz.com").catch(() => {});
           }
         }
@@ -42867,14 +43175,22 @@ function injectOpenGraphTags(html: string, meta: any) {
     }, 300);
   });
 
-  // Deferred non-blocking background initialization tasks after server is listening and pre-warmed
+  // Run one-time photo pivot purge & schema initialization immediately on startup
+  (async () => {
+    try {
+      await initBunnyDbSchema().catch(() => {});
+      await runPhotoPivotPurgeOnce().catch(() => {});
+    } catch (e) {}
+  })();
+
+  // Deferred non-blocking background initialization tasks after server is listening
   setTimeout(async () => {
     try {
       await initBunnyDbSchema().catch(() => {});
+      await runPhotoPivotPurgeOnce().catch(() => {});
       await purgeFakeReviewsAndPlaces().catch(() => {});
       await syncAndMigrateBusinessPlaces().catch(() => {});
       await syncExistingUsersWelcomeSentIndex().catch(() => {});
-      await syncInitialVideoInteractionsToBunnyDb().catch(() => {});
 
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
@@ -42902,20 +43218,10 @@ function injectOpenGraphTags(html: string, meta: any) {
       }).catch(() => {});
 
       await purgeBlockedPlaceRecords().catch(() => {});
-
-      await syncAndReconcileBunnyStreamVideos().then((res) => {
-        if (res.recoveredCount > 0 || res.syncedCount > 0) {
-          console.log(`🐰 [Server] Bunny Stream Sync complete: ${res.recoveredCount} recovered, ${res.syncedCount} updated.`);
-        }
-      }).catch(() => {});
     } catch (bgErr) {
       console.warn("Background startup sync notice:", bgErr);
     }
-  }, 15000);
-
-  setInterval(() => {
-    syncAndReconcileBunnyStreamVideos().catch(() => {});
-  }, 5 * 60 * 1000);
+  }, 5000);
 }
 
 startServer().catch(err => {

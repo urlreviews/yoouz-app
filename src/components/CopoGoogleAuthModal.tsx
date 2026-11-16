@@ -44,8 +44,8 @@ export const getAuthContextCopy = (intent?: string, customTitle?: string, custom
   switch (intent) {
     case 'record':
       return {
-        title: customTitle || "Sign in to Record",
-        subtitle: customSubtitle || "Sign in to record and share your 60-second video review."
+        title: customTitle || "Add Live Photo Review",
+        subtitle: customSubtitle || "Link an optional account to save and share your live photo reviews."
       };
     case 'following':
       return {
@@ -70,7 +70,7 @@ export const getAuthContextCopy = (intent?: string, customTitle?: string, custom
     case 'profile':
       return {
         title: customTitle || "Sign in to Yoouz",
-        subtitle: customSubtitle || "Sign in to manage your account and video reviews."
+        subtitle: customSubtitle || "Sign in to manage your account and photo reviews."
       };
     case 'comment':
     case 'like':

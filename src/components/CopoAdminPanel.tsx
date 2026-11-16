@@ -231,8 +231,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return [
       {
         id: "bc-1",
-        title: "Yoouz 2.0 Live: Ultra-Fast Search & 60s Reviews",
-        message: "Explore our latest performance upgrades with direct Bunny CDN instant streaming and interactive maps.",
+        title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
+        message: "Explore our latest performance upgrades with direct Bunny CDN instant photo delivery and interactive maps.",
         targetUrl: "/search",
         audience: "all",
         type: "feature",
@@ -241,7 +241,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       {
         id: "bc-2",
         title: "Creator Spotlight: Top 10 Hidden Cafes",
-        message: "Check out this week's trending authentic community video reviews for specialty coffee spots.",
+        message: "Check out this week's trending authentic community photo reviews for specialty coffee spots.",
         targetUrl: "/reviews/pl_1",
         audience: "creators",
         type: "announcement",
@@ -2256,7 +2256,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         name: 'Yoouz',
         brandDomain: 'yoouz.com',
         website: 'https://yoouz.com',
-        category: 'Technology & Video Review Platform',
+        category: 'Technology & Photo Review Platform',
         categoryType: 'all',
         address: 'Global Platform • yoouz.com',
         city: 'Global',
@@ -2274,8 +2274,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         phone: '',
         priceRange: 'Free',
         plusCode: '',
-        description: 'Authentic 60-Second Video Reviews Platform',
-        popularKeywords: [{ tag: 'authentic', count: 1 }, { tag: 'video reviews', count: 1 }],
+        description: 'Live Camera Photo Reviews Platform',
+        popularKeywords: [{ tag: 'authentic', count: 1 }, { tag: 'photo reviews', count: 1 }],
         amenities: ['Official Platform', 'Verified Brand'],
         topDishes: [],
         isClaimed: true,
@@ -2293,7 +2293,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         isClaimed: true,
         isVerified: true,
         claimedByEmail: existingYoouz.claimedByEmail || 'info@yoouz.com',
-        category: existingYoouz.category || 'Technology & Video Review Platform',
+        category: existingYoouz.category || 'Technology & Photo Review Platform',
         logoUrl: existingYoouz.logoUrl || YOOUZ_LOGO_DATA_URI
       });
     }
@@ -2715,7 +2715,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     onDeleteVideo(strId);
 
     // 4. Show instant feedback
-    showToast("Video review removed permanently from feed and database.");
+    showToast("Photo review removed permanently from feed and database.");
 
     // 5. Guarantee backend deletion across all endpoints and sync Bunny Stream library
     try {
@@ -2760,9 +2760,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       idsToDelete.forEach((id) => onDeleteVideo(id));
     }
 
-    showToast(`Deleted ${count} selected video reviews.`);
+    showToast(`Deleted ${count} selected photo reviews.`);
 
-    // 4. Direct backend endpoints & Bunny sync
+    // 4. Direct backend endpoints
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/bulk-delete", {
@@ -2792,9 +2792,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       onPurgeAllVideos();
     }
 
-    showToast("All video reviews purged completely from storage and database.");
+    showToast("All photo reviews purged completely from storage and database.");
 
-    // 3. Direct backend call & Bunny sync
+    // 3. Direct backend call
     try {
       await Promise.allSettled([
         fetch("/api/admin/videos/purge-all", { method: "POST" }),
@@ -3823,17 +3823,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {healthData?.subsystems && Object.entries(healthData.subsystems)
                   .filter(([key, item]: [string, any]) => {
                     const masterTitles: Record<string, string> = {
-                      "1_video_engine_cdn": "1. Video Feed Engine, CDN Range Streaming & Retention",
+                      "1_video_engine_cdn": "1. Vertical Photo Feed Engine & BunnyCDN Delivery",
                       "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
                       "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
                       "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
                       "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
-                      "6_front_camera_recording": "6. Live Front Camera & 60s Recording Engine",
+                      "6_front_camera_recording": "6. Live Camera Capture Engine (No Gallery Uploads)",
                       "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
-                      "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
+                      "8_user_profiles": "8. User Profiles, Anonymous U/XXXXXX IDs & Privacy",
                       "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
                       "10_error_telemetry": "10. Universal Application & Error Telemetry",
-                      "11_first_video_scroll_bound": "11. First Video Feed Top-Bound Scroll Lock & Prevent Upward Overscroll"
+                      "11_first_video_scroll_bound": "11. First Item Feed Top-Bound Scroll Lock"
                     };
 
                     const title = masterTitles[key] || key;
@@ -3862,17 +3862,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   })
                   .map(([key, item]: [string, any]) => {
                     const masterTitles: Record<string, string> = {
-                      "1_video_engine_cdn": "1. Video Feed Engine, CDN Range Streaming & Retention",
+                      "1_video_engine_cdn": "1. Vertical Photo Feed Engine & BunnyCDN Delivery",
                       "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
                       "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
                       "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
                       "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
-                      "6_front_camera_recording": "6. Live Front Camera & 60s Recording Engine",
+                      "6_front_camera_recording": "6. Live Camera Capture Engine (No Gallery Uploads)",
                       "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
-                      "8_user_profiles": "8. User Profiles, Private Email Protection & Identity",
+                      "8_user_profiles": "8. User Profiles, Anonymous U/XXXXXX IDs & Privacy",
                       "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
                       "10_error_telemetry": "10. Universal Application & Error Telemetry",
-                      "11_first_video_scroll_bound": "11. First Video Feed Top-Bound Scroll Lock & Prevent Upward Overscroll"
+                      "11_first_video_scroll_bound": "11. First Item Feed Top-Bound Scroll Lock"
                     };
 
                     const icons: Record<string, string> = {
@@ -4156,7 +4156,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Real-time authoritative telemetry, verified video reviews, claimed merchant entities, and live user interactions.
+                    Real-time authoritative telemetry, verified photo reviews, claimed merchant entities, and live user interactions.
                   </p>
                 </div>
 
@@ -4223,13 +4223,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </div>
 
-                {/* 2. Video Reviews */}
+                {/* 2. Photo Reviews */}
                 <div
                   onClick={() => setActiveTab("videos")}
                   className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Video Reviews</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Photo Reviews</span>
                     <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 group-hover:bg-rose-500/20 transition-colors">
                       <Video className="w-4 h-4" />
                     </div>
@@ -4372,13 +4372,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {/* 2-Column Split Action Hub */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Column 1: Recent Video Reviews */}
+                {/* Column 1: Recent Photo Reviews */}
                 <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                       <div className="flex items-center gap-2">
                         <Video className="w-4 h-4 text-rose-400" />
-                        <h3 className="font-bold text-white text-sm">Recent Video Reviews</h3>
+                        <h3 className="font-bold text-white text-sm">Recent Photo Reviews</h3>
                       </div>
 
                       {/* Filter Chips */}
@@ -4466,7 +4466,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         ))}
                       {activeVideos.length === 0 && (
-                        <div className="py-8 text-center text-zinc-400 text-xs">No video reviews in database yet.</div>
+                        <div className="py-8 text-center text-zinc-400 text-xs">No photo reviews in database yet.</div>
                       )}
                     </div>
                   </div>
@@ -4608,7 +4608,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </span>
                       </h3>
                       <p className="text-[11px] text-zinc-400">
-                        Real-time audit stream showing each member who liked video reviews
+                        Real-time audit stream showing each member who liked photo reviews
                       </p>
                     </div>
                   </div>
@@ -4641,7 +4641,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <Heart className="w-8 h-8 text-zinc-600 mx-auto" />
                     <p className="text-xs font-medium text-zinc-300">No likes recorded yet.</p>
                     <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
-                      When community members tap the heart icon on any video review, their user identity and liked video details will instantly show here.
+                      When community members tap the heart icon on any photo review, their user identity and liked review details will instantly show here.
                     </p>
                   </div>
                 ) : (
@@ -4766,7 +4766,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <Bookmark className="w-8 h-8 text-zinc-600 mx-auto" />
                     <p className="text-xs font-medium text-zinc-300">No bookmarks recorded yet.</p>
                     <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
-                      When community members bookmark places or video reviews, their full identity and saved review details will instantly appear here.
+                      When community members bookmark places or photo reviews, their full identity and saved review details will instantly appear here.
                     </p>
                   </div>
                 ) : (
@@ -4980,7 +4980,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <button
                     onClick={handleSyncReviewBusinessNames}
                     className="px-3 py-1.5 bg-zinc-950 hover:bg-emerald-950/50 text-zinc-300 hover:text-emerald-300 border border-zinc-800 hover:border-emerald-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Scan and synchronize all video review business names with verified official brand names"
+                    title="Scan and synchronize all photo review business names with verified official brand names"
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Sync Business Names
                   </button>
@@ -5301,7 +5301,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {filteredVideos.length === 0 && (
                 <div className="py-16 text-center text-zinc-400 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
-                  No video reviews found matching criteria.
+                  No photo reviews found matching criteria.
                 </div>
               )}
             </div>
@@ -5930,7 +5930,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-bold text-white">Creators & Video Reviewers</span>
+                    <span className="text-sm font-bold text-white">Creators & Photo Reviewers</span>
                   </div>
 
                   <select
@@ -6294,7 +6294,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       Comments & Discussions Moderation
                     </h3>
                     <p className="text-xs text-zinc-400 mt-0.5">
-                      Audit, edit, filter, and moderate user discussions across all video reviews
+                      Audit, edit, filter, and moderate user discussions across all photo reviews
                     </p>
                   </div>
 
@@ -6759,7 +6759,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </span>
                       </h2>
                       <p className="text-xs text-zinc-400 mt-0.5">
-                        Live real-time activity log tracking each user identity, video review, and interaction timestamp
+                        Live real-time activity log tracking each user identity, photo review, and interaction timestamp
                       </p>
                     </div>
                   </div>
@@ -7160,7 +7160,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
                     <h3 className="text-base font-bold text-white">No Bookmarks Recorded Yet</h3>
                     <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                      {bookmarksSearchQuery ? "No bookmarks matching your search query. Try clearing your filter." : "When community members tap the bookmark button on places or video reviews, their full identity and saved review details will appear here."}
+                      {bookmarksSearchQuery ? "No bookmarks matching your search query. Try clearing your filter." : "When community members tap the bookmark button on places or photo reviews, their full identity and saved review details will appear here."}
                     </p>
                   </div>
                 ) : (
@@ -7589,7 +7589,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         chat.lastMessage && chat.lastMessage !== "Conversation started" && chat.lastMessage !== "Direct conversation"
                           ? chat.lastMessage
                           : historyCount > 0
-                          ? chat.history[historyCount - 1]?.text || (chat.history[historyCount - 1]?.videoThumbnail ? "🎬 Shared a video review" : "No messages yet")
+                          ? chat.history[historyCount - 1]?.text || (chat.history[historyCount - 1]?.videoThumbnail ? "📷 Shared a photo review" : "No messages yet")
                           : "No messages yet";
 
                       const updatedAt = chat.updatedAt || chat.createdAt || chat.createdAtMs;
@@ -8144,8 +8144,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         label: "🚀 Feature Release v2.0",
                         type: "feature" as const,
                         audience: "all" as const,
-                        title: "Yoouz 2.0 Live: Ultra-Fast Search & 60s Reviews",
-                        message: "We just rolled out lightning-fast video streaming powered by Bunny CDN and interactive local discovery maps!",
+                        title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
+                        message: "We just rolled out lightning-fast photo CDN delivery powered by Bunny CDN and interactive local discovery maps!",
                         targetUrl: "/search"
                       },
                       {
@@ -8157,11 +8157,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         targetUrl: "/reviews/pl_1"
                       },
                       {
-                        label: "👑 Creator Video Challenge",
+                        label: "👑 Creator Photo Challenge",
                         type: "promo" as const,
                         audience: "creators" as const,
                         title: "Creator Challenge: Review 3 Spots & Earn Badges",
-                        message: "Publish authentic 60-second video reviews this weekend to get featured on the global Yoouz home feed!",
+                        message: "Publish authentic live photo reviews this weekend to get featured on the global Yoouz home feed!",
                         targetUrl: "/profile"
                       },
                       {
@@ -8534,11 +8534,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
 
                 <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
-                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Indexable Video Reviews</div>
+                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Indexable Photo Reviews</div>
                   <div className="text-2xl font-black text-white font-mono">
-                    {metrics.totalVideos} Videos
+                    {metrics.totalVideos} Reviews
                   </div>
-                  <p className="text-xs text-zinc-500">Formatted with Google Video 1.1 Schema and thumbnail URLs.</p>
+                  <p className="text-xs text-zinc-500">Formatted with Google Review & ImageObject Schema URLs.</p>
                 </div>
 
                 <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
@@ -8560,7 +8560,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 <div className="space-y-3 font-mono text-xs">
                   {[
-                    { label: "Main Sitemaps XML", url: "https://www.yoouz.com/sitemap.xml", desc: "Core landing pages, trades, places, and video reviews" },
+                    { label: "Main Sitemaps XML", url: "https://www.yoouz.com/sitemap.xml", desc: "Core landing pages, trades, places, and photo reviews" },
                     { label: "Google Video XML Sitemap", url: "https://www.yoouz.com/video-sitemap.xml", desc: "Dedicated Google Video Schema 1.1 feed" },
                     { label: "Sitemap Index XML", url: "https://www.yoouz.com/sitemap-index.xml", desc: "Google Search Console master sitemap index" },
                     { label: "Robots.txt Engine Policy", url: "https://www.yoouz.com/robots.txt", desc: "Allows Googlebot, Googlebot-Video, Googlebot-Image, and AI agents" }
@@ -8682,7 +8682,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-1">
                   {[
-                    { name: "videoReviews", label: "Video Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, icon: "🎥" },
+                    { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, icon: "📸" },
                     { name: "places", label: "Places Directory", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, icon: "📍" },
                     { name: "users", label: "User Profiles", count: liveStats?.totals?.users ?? metrics.totalUsers, icon: "👤" },
                     { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, icon: "💬" },
@@ -8965,20 +8965,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                       setPreviewVideo(matchedVid);
                                     }}
                                     className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-850 transition-all group"
-                                    title="Click to preview video review"
+                                    title="Click to preview photo review"
                                   >
                                     <div className="w-14 h-20 rounded-xl bg-zinc-950 border border-zinc-700/80 overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-emerald-500 transition-all">
                                       <img
-                                        src={item.thumbnailUrl || item.posterUrl || "https://rev1.b-cdn.net/sample-review.jpg"}
+                                        src={item.photoUrl || item.thumbnailUrl || item.posterUrl || "https://rev1.b-cdn.net/sample-review.jpg"}
                                         alt=""
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                           (e.currentTarget as HTMLImageElement).src = "https://rev1.b-cdn.net/sample-review.jpg";
                                         }}
                                       />
-                                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-colors">
-                                        <Play className="w-4 h-4 text-white fill-white drop-shadow" />
-                                      </div>
                                     </div>
 
                                     <div className="min-w-0 flex-1 space-y-1.5">
@@ -8987,10 +8984,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                           {item.placeName || "Business"}
                                         </span>
                                         <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
-                                          ★ {item.rating || 5}
+                                          ★ {Math.max(1, Math.min(5, Math.round(item.rating || 5)))}
                                         </span>
                                         <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
-                                          🎥 Video Review
+                                          📸 Photo Review
                                         </span>
                                       </div>
 
@@ -9310,7 +9307,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div className="text-center space-y-1">
                       <h3 className="text-lg font-black text-white">Execute Master System Reset?</h3>
                       <p className="text-xs text-zinc-400 leading-relaxed">
-                        ⚠️ <strong className="text-red-400">EXTREME WARNING:</strong> This will permanently wipe all database tables (users, video reviews, places, comments, chats) and all CDN media files from scratch.
+                        ⚠️ <strong className="text-red-400">EXTREME WARNING:</strong> This will permanently wipe all database tables (users, photo reviews, places, comments, chats) and all CDN media files from scratch.
                       </p>
                     </div>
                     <div className="flex items-center gap-3 pt-2">
@@ -10196,7 +10193,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-xl font-black text-white">Edit Video Review</h3>
+              <h3 className="text-xl font-black text-white">Edit Photo Review</h3>
               <button onClick={() => setEditVideoModal(null)} className="p-2 text-zinc-200 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -10215,34 +10212,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Star Rating (1-5)</label>
+                <label className="block text-xs font-bold text-zinc-200 mb-1">Whole-Star Rating (1–5)</label>
                 <input
                   type="number"
                   min="1"
                   max="5"
-                  step="0.5"
-                  value={editVideoModal.rating}
-                  onChange={(e) => setEditVideoModal({ ...editVideoModal, rating: Number(e.target.value) })}
+                  step="1"
+                  value={Math.max(1, Math.min(5, Math.round(editVideoModal.rating || 5)))}
+                  onChange={(e) => setEditVideoModal({ ...editVideoModal, rating: Math.max(1, Math.min(5, Math.round(Number(e.target.value) || 5))) })}
                   className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Review Caption</label>
+                <label className="block text-xs font-bold text-zinc-200 mb-1">Review Notes (Optional)</label>
                 <textarea
                   rows={3}
                   value={editVideoModal.caption || ""}
                   onChange={(e) => setEditVideoModal({ ...editVideoModal, caption: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Voice Transcript</label>
-                <textarea
-                  rows={3}
-                  value={editVideoModal.transcript || ""}
-                  onChange={(e) => setEditVideoModal({ ...editVideoModal, transcript: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
                 />
               </div>
@@ -10635,7 +10622,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <span className="text-white font-bold">{resolvedUser?.location || resolvedUser?.city || "Online"}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Video Reviews</span>
+                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Photo Reviews</span>
                       <span className="text-white font-bold font-mono">{resolvedUser?.videoReviewCount || 0} reviews</span>
                     </div>
                     <div>
@@ -10846,7 +10833,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
             {/* Target Video Card */}
             <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Video Review</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedShareDetailModal.videoThumbnail && (
                   <img
@@ -10936,7 +10923,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
             {/* Target Video Card */}
             <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Video Review</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedLikeDetailModal.videoThumbnail && (
                   <img

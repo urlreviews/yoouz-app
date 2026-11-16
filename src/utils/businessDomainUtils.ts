@@ -98,7 +98,7 @@ export function derivePlaceFromEmailOrDomain(
     id: placeId,
     name: businessName,
     address: '',
-    category: isYoouz ? 'Video Reviews & Discovery Platform' : 'Verified Enterprise & Merchant',
+    category: isYoouz ? 'Photo Reviews & Discovery Platform' : 'Verified Enterprise & Merchant',
     categoryType: 'services',
     city: '',
     country: '',
@@ -110,7 +110,7 @@ export function derivePlaceFromEmailOrDomain(
     website: isYoouz ? 'https://www.yoouz.com' : (cleanDomain ? `https://${cleanDomain}` : ''),
     hours: 'Mon-Fri: 9:00 AM - 6:00 PM',
     description: isYoouz 
-      ? 'Official verified business profile for Yoouz. Real people, authentic 60-second video reviews.' 
+      ? 'Official verified business profile for Yoouz. Real people, authentic live photo reviews.' 
       : `Official verified merchant profile for ${businessName}. Authenticated through official business domain ownership.`,
     logoUrl: logoUrl,
     coverImage: "",

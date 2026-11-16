@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Search, Globe, Loader2, Play, Video, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Globe, Loader2, Camera, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan } from "../utils/placeUtils";
@@ -7,7 +7,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
-import { CopoStarRating } from "./CopoStarRating";
+import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 import { useLanguage } from "../i18n/LanguageContext";
 import { queryGoogleCseForUrl } from "../utils/googleCse";
 
@@ -878,7 +878,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
               </h1>
               <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
-                Watch authentic video reviews of any place, product, or service, or record your own.
+                Browse real live photo reviews of any place, product, or service, or snap your own.
               </p>
             </div>
           )}
@@ -912,12 +912,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
             </div>
           )}
 
-          {/* 4. Trending Video Reviews Carousel - Identical to CopoHomePage */}
+          {/* 4. Trending Photo Reviews Carousel */}
           {!query.trim() && (
             <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4">
               <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
                 <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-                  Trending Video Reviews
+                  Trending Photo Reviews
                 </h2>
                 <button
                   type="button"
@@ -998,19 +998,12 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           </div>
                         )}
 
-                        {/* Top-Left Star Badge: ⭐ 5.0 */}
+                        {/* Top-Left Star Badge: ⭐ 5 */}
                         <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                           <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
-                            {rating.toFixed(1)}
+                            {getRoundedRating(rating)}
                           </span>
-                        </div>
-
-                        {/* Centered Play Button */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
-                            <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                          </div>
                         </div>
 
                         {/* Clean Bottom Scrim: Business Name & Creator Full Name */}
@@ -1233,8 +1226,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     onClick={() => onRecordForPlace && onRecordForPlace(searchedPlace)}
                     className="w-full h-12 px-4 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold shadow-md shadow-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
                   >
-                    <Video className="w-4.5 h-4.5 text-zinc-950 shrink-0" />
-                    <span className="truncate">{t("record.record_review", "Record Review")}</span>
+                    <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0" />
+                    <span className="truncate">{t("record.add_review", "Add Review")}</span>
                   </button>
                 </div>
               </div>
@@ -1244,7 +1237,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           {placeVideos.length > 0 && (
             <div className="w-full mt-8">
               <h3 className="text-sm font-bold tracking-wider text-zinc-400 uppercase mb-4 px-1">
-                {t("search.reviews", "Video Reviews")} ({placeVideos.length})
+                {t("search.reviews", "Photo Reviews")} ({placeVideos.length})
               </h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1252,7 +1245,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
                   const bName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                   const rating = typeof video.rating === "number" ? video.rating : 5.0;
-                  const posterUrl = video.thumbnailUrl || video.videoUrl || "";
+                  const posterUrl = video.photoUrl || video.thumbnailUrl || video.videoUrl || "";
 
                   return (
                     <div 
@@ -1262,22 +1255,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     >
                       <CopoVideoThumbnail
                         video={video}
-                        alt={video.caption || "Thumbnail"}
+                        alt={bName}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                       />
-                      {/* Top-Left Star Badge: ⭐ 5.0 */}
+                      {/* Top-Left Star Badge: ⭐ 5 */}
                       <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                         <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
-                          {rating.toFixed(1)}
+                          {getRoundedRating(rating)}
                         </span>
-                      </div>
-
-                      {/* Centered Play Button */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-white group-hover:text-zinc-950 transition-all duration-200 shadow-xl">
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                        </div>
                       </div>
 
                       {/* Clean Bottom Scrim: Business Name & Creator Name */}

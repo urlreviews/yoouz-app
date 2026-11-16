@@ -15,13 +15,30 @@ if (typeof window !== "undefined") {
 }
 
 /**
+ * Returns true if the review is a Live Photo Review (or has no video source).
+ */
+export function isPhotoReview(video?: VideoReview | null): boolean {
+  if (!video) return false;
+  if (video.mediaType === "photo") return true;
+  if (typeof video.photoUrl === "string" && video.photoUrl.trim().length > 0) return true;
+  const hasVideoStream = Boolean(
+    (typeof video.videoUrl === "string" && video.videoUrl.trim().length > 0) ||
+    (typeof video.hlsUrl === "string" && video.hlsUrl.trim().length > 0) ||
+    (typeof video.bunnyVideoId === "string" && video.bunnyVideoId.trim().length > 0) ||
+    (typeof video.bunnyGuid === "string" && video.bunnyGuid.trim().length > 0) ||
+    (typeof video.videoData === "string" && video.videoData.trim().length > 0)
+  );
+  return !hasVideoStream;
+}
+
+/**
  * Normalizes video URLs to ensure flawless cross-origin and cross-device playback.
  * Automatically handles public static assets, Bunny CDN edge URLs, remote CDNs, and server streaming endpoints.
  */
 export function normalizeVideoUrl(url?: string | null): string {
-  if (!url || typeof url !== "string") return "/default-review.mp4";
+  if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
-  if (!trimmed) return "/default-review.mp4";
+  if (!trimmed) return "";
 
   // 1. Base64 data URI
   if (trimmed.startsWith("data:video/")) {
@@ -194,11 +211,7 @@ export function resolvePlayableVideoSourcesCascade(
     sources.push(video.videoData);
   }
 
-  // 7. Static Bulletproof Fallback Asset (only for completely missing/unseeded fallback)
-  if (!sources.includes("/default-review.mp4")) {
-    sources.push("/default-review.mp4");
-  }
-
+  // 7. Return sources without /default-review.mp4 fallback
   return sources;
 }
 
@@ -210,7 +223,7 @@ export function resolvePlayableVideoSource(
   cachedLocalBlobUrl?: string | null
 ): string {
   const cascade = resolvePlayableVideoSourcesCascade(video, cachedLocalBlobUrl);
-  return cascade[0] || "/default-review.mp4";
+  return cascade[0] || "";
 }
 
 /**
@@ -242,6 +255,10 @@ export function extractBunnyIdFromVideo(video?: VideoReview | null): string | nu
  */
 export function resolveVideoPosterUrl(video?: VideoReview | null): string {
   if (!video) return "";
+
+  if (video.photoUrl && typeof video.photoUrl === "string" && video.photoUrl.trim()) {
+    return video.photoUrl.trim();
+  }
 
   const bunnyId = extractBunnyIdFromVideo(video);
 
@@ -308,7 +325,10 @@ export function resolveVideoPosterCascade(video?: VideoReview | null): string[] 
     }
   };
 
-  // 1. Primary resolved poster URL
+  // 1. Direct photoUrl first (Live Photo Review pivot)
+  if (video.photoUrl) addCandidate(video.photoUrl);
+
+  // 2. Primary resolved poster URL
   addCandidate(resolveVideoPosterUrl(video));
 
   // 2. Bunny Stream guaranteed frame fallbacks (thumbnail_1.jpg and preview.webp always exist on encoded Bunny videos)

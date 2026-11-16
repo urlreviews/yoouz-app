@@ -2,7 +2,7 @@ import React from "react";
 import {
   Home,
   Search,
-  Video,
+  Camera,
   Mail,
   User
 } from "lucide-react";
@@ -108,7 +108,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           </span>
         </button>
 
-        {/* 3. CENTER ACTION: Record Review - Single-Word "Review" on exact baseline */}
+        {/* 3. CENTER ACTION: Add Live Photo Review */}
         <button
           id="mobile-nav-record-btn"
           onClick={() => {
@@ -118,7 +118,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               onSelectSection("record_review");
             }
           }}
-          aria-label="Record 60-Second Video Review"
+          aria-label="Add Live Photo Review"
           className={`flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
             activeSection === "record_review"
               ? "text-white"
@@ -126,7 +126,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           }`}
         >
           <div className="relative">
-            <Video
+            <Camera
               className={`w-[22px] h-[22px] transition-transform duration-200 ${
                 activeSection === "record_review"
                   ? "scale-105 stroke-[2.4] text-white"

@@ -16,7 +16,6 @@ import {
   Store
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { CopoAuthPrompt } from "./CopoGoogleAuthModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
@@ -470,21 +469,6 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
   const totalFollowingCount = followedAuthors.length + followedPlacesList.length;
 
-  // Unauthenticated Gating View
-  if (!currentUser) {
-    return (
-      <div id="following-auth-gate" className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 text-white flex flex-col justify-between pb-32 md:pb-6">
-        <CopoAuthPrompt
-          intent="following"
-          onOpenHelp={onOpenHelp}
-          onOpenLegal={onOpenLegal}
-          onSuccess={onSuccessAuth}
-          isFullPage={true}
-        />
-      </div>
-    );
-  }
-
   return (
     <div id="following-directory-container" className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-3.5 sm:p-6 select-none">
       <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-32 md:pb-12">
@@ -704,12 +688,12 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>
                                     <span className="shrink-0">
-                                      {place.totalReviews} {place.totalReviews === 1 ? t("following.videoReview", "video review") : t("following.videoReviews", "video reviews")}
+                                      {place.totalReviews} {place.totalReviews === 1 ? t("following.photoReview", "photo review") : t("following.photoReviews", "photo reviews")}
                                     </span>
                                   </>
                                 ) : (
                                   <span className="text-zinc-400 text-xs shrink-0">
-                                    0 {t("following.videoReviews", "video reviews")}
+                                    0 {t("following.photoReviews", "photo reviews")}
                                   </span>
                                 )}
                               </div>
@@ -807,7 +791,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                               <span className="shrink-0 text-zinc-300 text-xs">
                                 {author.videoReviewCount
-                                  ? `${author.videoReviewCount} ${author.videoReviewCount === 1 ? "video review" : "video reviews"}`
+                                  ? `${author.videoReviewCount} ${author.videoReviewCount === 1 ? "photo review" : "photo reviews"}`
                                   : author.bio || "Community reviewer"}
                               </span>
                               {author.location && (
@@ -920,7 +904,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                             <span className="shrink-0 text-zinc-300 text-xs">
                               {follower.videoReviewCount
-                                ? `${follower.videoReviewCount} ${follower.videoReviewCount === 1 ? t("following.videoReview", "video review") : t("following.videoReviews", "video reviews")}`
+                                ? `${follower.videoReviewCount} ${follower.videoReviewCount === 1 ? t("following.photoReview", "photo review") : t("following.photoReviews", "photo reviews")}`
                                 : t("following.localReviewer", "Local Reviewer")}
                             </span>
                             {follower.location && (

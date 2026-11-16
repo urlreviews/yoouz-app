@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 import { VideoReview } from "../types";
 import { formatRecordedDate } from "../utils/dateUtils";
-import { resolvePlayableVideoSource, resolveVideoPosterUrl, normalizeVideoUrl, releaseVideoHardwareDecoder } from "../utils/videoUtils";
+import { resolvePlayableVideoSource, resolveVideoPosterUrl, normalizeVideoUrl, releaseVideoHardwareDecoder, isPhotoReview } from "../utils/videoUtils";
 import { useGlobalMute, ensureSharedAudioContextUnlocked } from "../hooks/useGlobalMute";
 import { getVideoBlobFromIndexedDB } from "../lib/videoStorage";
 import { getSafeAvatarUrl, formatCityCountry } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { CopoStarRating } from "./CopoStarRating";
+import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 
 interface GoogleVideoReviewCardProps {
   review: VideoReview;
@@ -151,7 +151,7 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
               </span>
             </h4>
             <p className="text-[12px] text-zinc-200 leading-tight flex items-center gap-1.5 mt-0.5">
-              <span>{`${review.author.videoReviewCount || 4} video reviews`}</span>
+              <span>{`${review.author.videoReviewCount || 1} ${(review.author.videoReviewCount || 1) === 1 ? "photo review" : "photo reviews"}`}</span>
               {review.author.location && (
                 <>
                   <span className="text-zinc-600">•</span>
@@ -176,7 +176,8 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
       {/* 2. Rating Stars & Timestamp */}
       <div className="flex items-center gap-2 text-[13px] text-zinc-200">
         <CopoStarRating
-          rating={review.rating || 5}
+          rating={getRoundedRating(review.rating || 5)}
+          roundToWhole={true}
           starClassName="w-3.5 h-3.5"
           filledColorClass="fill-amber-400 text-amber-400"
           emptyColorClass="fill-zinc-900/90 text-zinc-400"
@@ -188,121 +189,130 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
         )}
       </div>
 
-      {/* 3. Pure Video Review Viewport (100% Video-Only, No Text) */}
-      <div className="relative rounded-2xl overflow-hidden bg-black aspect-[9/13] max-h-[360px] w-full max-w-[280px] border border-zinc-800 shadow-sm group cursor-pointer">
-        {isPlayingInline ? (
-          <video
-            ref={videoRef}
-            src={getReviewVideoSrc(review) || undefined}
-            poster={resolveVideoPosterUrl(review) || undefined}
-            playsInline
-            autoPlay
-            loop
-            preload="auto"
-            muted={isMuted || !isSessionAudioUnlocked || isActualMuted}
-            onClick={toggleInlinePlay}
-            onError={(e) => {
-              const el = e.currentTarget;
-              console.warn(`Video playback error on review card for ${review.id}`);
-              const targetGuid = review.bunnyVideoId || review.bunnyGuid || review.id;
-              const sameVideoFallbacks = (review.fallbackVideoUrls || [])
-                .concat(review.videoUrl ? [review.videoUrl] : [])
-                .map(u => normalizeVideoUrl(u))
-                .filter(
-                  u =>
-                    u &&
-                    !u.includes("default-review") &&
-                    u !== el.src &&
-                    (targetGuid ? u.includes(targetGuid) : false)
-                );
-              if (sameVideoFallbacks.length > 0 && videoRef.current) {
-                videoRef.current.src = sameVideoFallbacks[0];
-                videoRef.current.load();
-              }
-            }}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full relative" onClick={toggleInlinePlay}>
-            <img
-              src={resolveVideoPosterUrl(review)}
-              alt={review.caption || "Video review"}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-              <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/25 shadow-lg group-hover:scale-110 transition-transform">
-                <Play className="w-5 h-5 fill-white ml-0.5" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Video Overlay Info */}
-        <div
-          onClick={toggleInlinePlay}
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-3"
-        >
-          {/* Top Row: Video badge & Sound toggle */}
-          <div className="flex items-center justify-between">
-            <div className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-bold text-white flex items-center gap-1 border border-white/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-pulse" />
-              <span>0:{review.durationSeconds}</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={toggleMute}
-                className={`w-7 h-7 rounded-full bg-black/75 hover:bg-black active:scale-95 backdrop-blur-md text-white flex items-center justify-center border transition-all cursor-pointer ${
-                  isMuted || !isSessionAudioUnlocked || isActualMuted
-                    ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
-                    : "border-white/20"
-                }`}
-                title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
-              >
-                {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
-                  <VolumeX className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                ) : (
-                  <Volume2 className="w-3.5 h-3.5 text-white" />
-                )}
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenVideoModal(review);
+      {/* 3. Live Photo Review Viewport */}
+      {(() => {
+        const isPhoto = isPhotoReview(review);
+        return (
+          <div className="relative rounded-2xl overflow-hidden bg-black aspect-[9/13] max-h-[360px] w-full max-w-[280px] border border-zinc-800 shadow-sm group cursor-pointer">
+            {!isPhoto && isPlayingInline ? (
+              <video
+                ref={videoRef}
+                src={getReviewVideoSrc(review) || undefined}
+                poster={resolveVideoPosterUrl(review) || undefined}
+                playsInline
+                autoPlay
+                loop
+                preload="auto"
+                muted={isMuted || !isSessionAudioUnlocked || isActualMuted}
+                onClick={toggleInlinePlay}
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  console.warn(`Video playback error on review card for ${review.id}`);
+                  const targetGuid = review.bunnyVideoId || review.bunnyGuid || review.id;
+                  const sameVideoFallbacks = (review.fallbackVideoUrls || [])
+                    .concat(review.videoUrl ? [review.videoUrl] : [])
+                    .map(u => normalizeVideoUrl(u))
+                    .filter(
+                      u =>
+                        u &&
+                        !u.includes("default-review") &&
+                        u !== el.src &&
+                        (targetGuid ? u.includes(targetGuid) : false)
+                    );
+                  if (sameVideoFallbacks.length > 0 && videoRef.current) {
+                    videoRef.current.src = sameVideoFallbacks[0];
+                    videoRef.current.load();
+                  }
                 }}
-                className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80"
-                title="Fullscreen video"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-full h-full relative"
+                onClick={() => (isPhoto ? onOpenVideoModal(review) : toggleInlinePlay)}
               >
-                <Maximize2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Center Play Button if paused */}
-          {!isPlayingInline && (
-            <div className="self-center w-12 h-12 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
-              <Play className="w-5 h-5 fill-white translate-x-0.5" />
-            </div>
-          )}
-
-          {/* Bottom Dish / Highlights Tag & Caption preview */}
-          <div className="space-y-1 text-white">
-            {review.dishOrItem && (
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-[11px] font-semibold text-white border border-zinc-700">
-                <Tag className="w-3 h-3" />
-                <span className="truncate max-w-[200px]">{review.dishOrItem}</span>
+                <img
+                  src={review.photoUrl || resolveVideoPosterUrl(review)}
+                  alt={`${review.placeName || "Business"} photo review`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+                {!isPhoto && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/25 shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-5 h-5 fill-white ml-0.5" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            <p className="text-[12px] text-white/95 leading-tight line-clamp-2 drop-shadow-sm font-medium">
-              {review.caption}
-            </p>
+
+            {/* Overlay Info */}
+            <div
+              onClick={(e) => (isPhoto ? onOpenVideoModal(review) : toggleInlinePlay(e))}
+              className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/25 flex flex-col justify-between p-3"
+            >
+              {/* Top Row */}
+              <div className="flex items-center justify-between">
+                <div className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-1 border border-white/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span>{isPhoto ? "LIVE PHOTO" : `0:${review.durationSeconds}`}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {!isPhoto && (
+                    <button
+                      type="button"
+                      onClick={toggleMute}
+                      className={`w-7 h-7 rounded-full bg-black/75 hover:bg-black active:scale-95 backdrop-blur-md text-white flex items-center justify-center border transition-all cursor-pointer ${
+                        isMuted || !isSessionAudioUnlocked || isActualMuted
+                          ? "border-amber-400/80 bg-black/90 animate-pulse-subtle"
+                          : "border-white/20"
+                      }`}
+                      title={isMuted || !isSessionAudioUnlocked || isActualMuted ? "Unmute sound" : "Mute sound"}
+                    >
+                      {isMuted || !isSessionAudioUnlocked || isActualMuted ? (
+                        <VolumeX className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                      ) : (
+                        <Volume2 className="w-3.5 h-3.5 text-white" />
+                      )}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenVideoModal(review);
+                    }}
+                    className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/80"
+                    title="Fullscreen review"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Center Play Button if paused (legacy video only) */}
+              {!isPhoto && !isPlayingInline && (
+                <div className="self-center w-12 h-12 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                  <Play className="w-5 h-5 fill-white translate-x-0.5" />
+                </div>
+              )}
+
+              {/* Bottom Dish Badge */}
+              <div className="space-y-1 text-white">
+                {review.dishOrItem && (
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-[11px] font-semibold text-white border border-zinc-700">
+                    <Tag className="w-3 h-3" />
+                    <span className="truncate max-w-[200px]">{review.dishOrItem}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* 4. Google Review Action Row: Thumbs Up / Share / Helpful */}
       <div className="flex items-center gap-5 pt-1 text-[13px] text-zinc-200">

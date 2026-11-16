@@ -540,6 +540,8 @@ export async function initBunnyDbSchema() {
     try { await client.execute("ALTER TABLE places ADD COLUMN bannerUrl TEXT"); } catch (e) {}
     try { await client.execute("ALTER TABLE places ADD COLUMN brandDomain TEXT"); } catch (e) {}
     try { await client.execute("ALTER TABLE places ADD COLUMN website TEXT"); } catch (e) {}
+    // Ensure anonymous users with blank email store NULL rather than '' so SQLite UNIQUE(email) allows multiple anonymous accounts
+    try { await client.execute("UPDATE users SET email = NULL WHERE email = ''"); } catch (e) {}
     // Strict Author Immutability: Database never modifies or overrides review author names.
     isInitialized = true;
   } catch (err: any) {

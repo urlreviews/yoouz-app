@@ -10,7 +10,7 @@ import {
   Shield,
   User,
   Menu,
-  Video,
+  Camera,
   X,
   ChevronRight,
   Building2,
@@ -33,7 +33,6 @@ interface CopoMobileNavDrawerProps {
   onOpenSearch?: () => void;
   onOpenAuth?: (intent?: string) => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
-  onSignOut?: () => void;
   onOpenEditProfile?: () => void;
   onOpenNotificationSettings?: () => void;
 }
@@ -50,7 +49,6 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
   onOpenSearch,
   onOpenAuth,
   onOpenLegal,
-  onSignOut,
   onOpenEditProfile,
   onOpenNotificationSettings
 }) => {
@@ -189,9 +187,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
 
           </nav>
 
-          {/* Bottom Section: Video Review CTA (Thumb Zone) & Legal Footer */}
+          {/* Bottom Section: Add Review CTA (Thumb Zone) & Legal Footer */}
           <div className="flex flex-col gap-3 px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom,0px))] shrink-0">
-            {/* Video Review Primary Hero CTA (Anchored in Mobile Thumb Zone) */}
+            {/* Add Review Primary Hero CTA (Anchored in Mobile Thumb Zone) */}
             <button
               id="mobile-nav-record-btn"
               onClick={() => {
@@ -200,11 +198,11 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               }}
               className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer"
             >
-              <Video className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
-              <span>{t("nav.record_review", "Video Review")}</span>
+              <Camera className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+              <span>{t("nav.add_review", "Add Review")}</span>
             </button>
 
-            {/* Legal & Copyright Footer (Divided line sits BELOW Video Review) */}
+            {/* Legal & Copyright Footer (Divided line sits BELOW Add Review) */}
             <div className="flex flex-col gap-2 pt-3 border-t border-zinc-900/80">
               {/* Yoouz for Business Clean Bold Title */}
               <button

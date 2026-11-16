@@ -285,10 +285,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm font-bold text-zinc-100 group-hover:text-white transition-colors">
-                        New Video Reviews & Ratings
+                        New Photo Reviews & Ratings
                       </p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        Immediate alerts when customers post a video review for your business
+                        Immediate alerts when customers post a live photo review for your business
                       </p>
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                         Likes & Reactions
                       </p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        When viewers like your video reviews or comment responses
+                        When viewers like your photo reviews or comment responses
                       </p>
                     </div>
                   </div>
@@ -428,7 +428,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                         Saves & Bookmarks
                       </p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        When viewers save your video review to their bucket list
+                        When viewers save your photo review to their bucket list
                       </p>
                     </div>
                   </div>
@@ -456,7 +456,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                         Shares & Recommendations
                       </p>
                       <p className="text-[11px] text-zinc-400 leading-snug">
-                        When viewers share your authentic video reviews or recommend places
+                        When viewers share your authentic photo reviews or recommend places
                       </p>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 // Deployment Trigger: 2026-10-19 19:44 (Fix net::ERR_INSUFFICIENT_RESOURCES)
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination, normalizeReview } from "./hooks/useFeedPagination";
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
@@ -30,7 +30,7 @@ import { CopoDiscoverView } from "./components/CopoDiscoverView";
 import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
 import { CopoMobileBottomNav } from "./components/CopoMobileBottomNav";
 import { CopoAdminPanel } from "./components/CopoAdminPanel";
-import { CopoGoogleAuthModal, AuthIntent, CopoAuthPrompt } from "./components/CopoGoogleAuthModal";
+import { CopoGoogleAuthModal, AuthIntent } from "./components/CopoGoogleAuthModal";
 import { CopoLegalModal } from "./components/CopoLegalModal";
 import { CopoComparisonModal } from "./components/CopoComparisonModal";
 import { InAppNotificationToast, InAppToastPayload } from "./components/InAppNotificationToast";
@@ -100,6 +100,64 @@ export function App() {
     } catch (e) {}
     return null;
   });
+
+  // Silent zero-friction anonymous session helper (checks cookie/server session, or mints U/XXXXXX)
+  const ensureAnonymousUser = useCallback(async (forceNew = false): Promise<UserProfile | null> => {
+    try {
+      if (!forceNew) {
+        const stored = localStorage.getItem("copo_user_profile");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed && (parsed.id || parsed.uid || parsed.email) && !isUserDeleted(parsed)) {
+              setCurrentUser((prev) => prev || parsed);
+              return parsed;
+            }
+          } catch {}
+        }
+        const sessRes = await fetch("/api/auth/session").catch(() => null);
+        if (sessRes && sessRes.ok) {
+          const sessData = await sessRes.json().catch(() => null);
+          if (sessData?.user && !isUserDeleted(sessData.user)) {
+            setCurrentUser(sessData.user);
+            try {
+              localStorage.setItem("copo_user_profile", JSON.stringify(sessData.user));
+              localStorage.setItem("yoouz_current_user", JSON.stringify(sessData.user));
+            } catch {}
+            return sessData.user;
+          }
+        }
+      }
+
+      const existingId = !forceNew ? (currentUserRef.current?.id || currentUserRef.current?.uid || "") : "";
+      const res = await fetch("/api/auth/anonymous", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ existingId, forceNew })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.user) {
+          setCurrentUser(data.user);
+          try {
+            localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
+            localStorage.setItem("yoouz_current_user", JSON.stringify(data.user));
+            if (data.user.id || data.user.uid) localStorage.setItem("copo_user_uid", data.user.id || data.user.uid);
+          } catch {}
+          return data.user;
+        }
+      }
+    } catch (err) {
+      console.warn("Silent anonymous provisioning warning:", err);
+    }
+    return null;
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      ensureAnonymousUser(false);
+    }
+  }, []);
 
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
@@ -757,11 +815,6 @@ export function App() {
     }
   };
   const handleOpenNotifications = () => {
-    if (!currentUser) {
-      setAuthIntent('notifications');
-      setIsAuthModalOpen(true);
-      return;
-    }
     setIsSearchModalOpen(false);
     setIsMobileNavDrawerOpen(false);
     setSelectedPlaceIdForDrawer(null);
@@ -836,17 +889,9 @@ export function App() {
   };
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState<boolean>(false);
 
-  // Helper to verify if user profile is activated with mandatory First & Last name
+  // Helper to verify active user identity (zero-friction: any provisioned or anonymous account passes)
   const isProfileComplete = (user: UserProfile | null) => {
-    if (!user) return false;
-    const fName = (user.firstName || "").trim();
-    const lName = (user.lastName || "").trim();
-    if (fName && lName) return true;
-    const fullName = (user.name || "").trim();
-    if (fullName && !fullName.includes('@') && fullName !== 'Registered User' && fullName !== 'User' && fullName.includes(' ') && !fullName.toLowerCase().startsWith('usr_') && !fullName.toLowerCase().startsWith('user_')) {
-      return true;
-    }
-    return false;
+    return Boolean(user && (user.id || (user as any).uid || user.email || user.name));
   };
 
   const handleSaveNotificationSettings = async (newSettings: NotificationPreferences) => {
@@ -972,8 +1017,11 @@ export function App() {
       window.dispatchEvent(new CustomEvent("copo_auth_changed", { detail: null }));
     } catch (e) {}
 
+    // Immediately re-provision a clean anonymous identity so zero-friction experience stays seamless
+    ensureAnonymousUser(true);
+
     if (reason) {
-      console.warn("[Yoouz Auth] Session terminated:", reason);
+      console.warn("[Yoouz Auth] Session reset:", reason);
     }
   };
 
@@ -1143,23 +1191,23 @@ export function App() {
             setCurrentVideoIndex(0);
           }
 
-          const shouldTriggerRecord = 
-            params.get("action") === "record" || 
-            params.get("record") === "1" || 
+          const shouldTriggerRecord =
+            params.get("action") === "record" ||
+            params.get("record") === "1" ||
             params.get("record") === "true" ||
+            params.get("addReview") === "1" ||
+            params.get("addReview") === "true" ||
             hash.includes("record_review") ||
             pathname.startsWith("/record/");
 
           if (shouldTriggerRecord) {
             setTimeout(() => {
-              const targetPlace = (places || []).find((p: Place) => 
-                p.id === cleanPlaceId || 
-                getPlaceSlug(p) === cleanPlaceId || 
+              const targetPlace = (places || []).find((p: Place) =>
+                p.id === cleanPlaceId ||
+                getPlaceSlug(p) === cleanPlaceId ||
                 (p.name && p.name.toLowerCase() === cleanPlaceId.toLowerCase())
               );
-              if (targetPlace) {
-                handleOpenCreateReview(targetPlace);
-              }
+              handleOpenCreateReview(targetPlace || null);
             }, 300);
           }
         } else if (creatorParam) {
@@ -1263,7 +1311,7 @@ export function App() {
                 name: ku.name,
                 handle: ku.handle || `@${ku.name.toLowerCase().replace(/\s+/g, "")}`,
                 avatar: getSafeAvatarUrl(ku.avatar, ku.name, ku.name),
-                bio: ku.bio || "Verified video reviewer on Yoouz.",
+                bio: ku.bio || "Verified photo reviewer on Yoouz.",
                 location: ku.location || "",
                 isVerified: true,
                 isFollowed: false
@@ -1323,6 +1371,15 @@ export function App() {
         } else {
           setSelectedPlaceIdForDrawer(null);
           setSelectedAuthorForDrawer(null);
+          const triggerAddReview =
+            params.get("addReview") === "1" ||
+            params.get("addReview") === "true" ||
+            params.get("record") === "1" ||
+            params.get("action") === "record";
+          if (triggerAddReview) {
+            setPreselectedPlaceForRecording(null);
+            setIsCreateModalOpen(true);
+          }
           if (
             sectionParam &&
             ["discover", "map", "notifications", "messages", "bookmarks", "profile", "admin", "search", "record_review", "following", "more"].includes(sectionParam)
@@ -1933,7 +1990,7 @@ export function App() {
                 email: data.user.email || magicEmail,
                 avatar: data.user.avatar || avatarSvg,
                 handle: data.user.handle,
-                bio: data.user.bio || "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
+                bio: data.user.bio || "Explorer linking real businesses and websites with authentic live photo reviews.",
                 memberSince: data.user.memberSince || "August 2026",
                 isDeactivated: false
               };
@@ -1955,10 +2012,6 @@ export function App() {
               // Clean query parameters from URL
               const cleanUrl = window.location.pathname;
               window.history.replaceState({}, "", cleanUrl);
-              // If the user has not yet entered their First and Last Name, open the profile completion step immediately
-              if (data.user.isNewUser || !fName || !lName || !fullName.includes(" ")) {
-                setIsAuthModalOpen(true);
-              }
             }
           })
           .catch((err) => console.warn("Magic token verification error:", err));
@@ -2078,7 +2131,7 @@ export function App() {
           name: user.displayName || savedProfile.name || user.email?.split("@")[0] || "User",
           email: user.email || savedProfile.email || "",
           avatar: validAvatar,
-          bio: savedProfile.bio || "Food explorer linking real businesses and websites with authentic 60-second video reviews.",
+          bio: savedProfile.bio || "Explorer linking real businesses and websites with authentic live photo reviews.",
           memberSince: savedProfile.memberSince || "August 2026",
           followedAuthors: initialFollowed,
           followingCount: initialFollowed.length,
@@ -2338,21 +2391,21 @@ export function App() {
           console.warn("Error fetching user from BunnyDB:", e);
         }
       } else {
-        // If auth state is temporarily null (e.g. initial load or storage partitioning), preserve cached session if present
+        // Preserve existing anonymous/registered cached session or silently provision U/XXXXXX
         const storedStr = localStorage.getItem("copo_user_profile");
         if (storedStr) {
           try {
             const parsed = JSON.parse(storedStr);
-            if (parsed && parsed.email) {
+            if (parsed && (parsed.email || parsed.id || parsed.uid)) {
               if (parsed.avatar) {
-                parsed.avatar = getSafeAvatarUrl(parsed.avatar, parsed.name, parsed.email);
+                parsed.avatar = getSafeAvatarUrl(parsed.avatar, parsed.name, parsed.email || parsed.handle);
               }
               setCurrentUser(parsed);
               return;
             }
           } catch (e) {}
         }
-        setCurrentUser(null);
+        await ensureAnonymousUser(false);
       }
     });
 
@@ -3853,7 +3906,7 @@ export function App() {
                     ...yoouzBase,
                     id: 'yoouz.com',
                     name: 'Yoouz',
-                    category: 'Video Reviews & Discovery Platform',
+                    category: 'Photo Reviews & Discovery Platform',
                     categoryType: 'all',
                     address: '',
                     city: '',
@@ -4861,9 +4914,9 @@ export function App() {
       }
 
       let path = "/";
-      let title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
+      let title = "Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews";
 
-      // Current active video being watched in the feed (never fall back to global videos[0] when activeFeedVideos is empty!)
+      // Current active review in the feed
       const currentVid = activeFeedVideos[currentVideoIndex] || null;
       if (pendingVideoId && (!currentVid || currentVid.id !== pendingVideoId)) {
         return;
@@ -4875,17 +4928,17 @@ export function App() {
         path = `/reviews/${domainSlug}/${currentVid.id}`;
         const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
         const placeName = formatBusinessName(currentVid.placeName || domainSlug, domainSlug, undefined, { fromWebsite: Boolean(currentVid.placeName) });
-        title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
+        title = `${authorName}'s Photo Review of ${placeName} | Yoouz`;
       } else if (isPlaceView && (activeDrawerPlace || drawerPlace)) {
         const p = activeDrawerPlace || drawerPlace;
         const slug = getPlaceSlug(p || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = `${displayedDrawerPlaceName || p?.name || "Business"} - Real Video Reviews & Ratings | Yoouz`;
+        title = `${displayedDrawerPlaceName || p?.name || "Business"} - Real Photo Reviews & Ratings | Yoouz`;
       } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = place ? `${displayedDrawerPlaceName || place.name} - Real Video Reviews & Ratings | Yoouz` : `${formatBusinessName(slug, slug)} - Business Profile | Yoouz`;
+        title = place ? `${displayedDrawerPlaceName || place.name} - Real Photo Reviews & Ratings | Yoouz` : `${formatBusinessName(slug, slug)} - Business Profile | Yoouz`;
       } else if (isCreatorView && selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()
@@ -4895,7 +4948,7 @@ export function App() {
           .replace(/[^a-z0-9_-]/g, "")
           .replace(/-+/g, "-");
         path = `/@${cleanSlug}`;
-        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
+        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
       } else if (selectedAuthorForDrawer) {
         const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
           .toLowerCase()
@@ -4905,16 +4958,16 @@ export function App() {
           .replace(/[^a-z0-9_-]/g, "")
           .replace(/-+/g, "-");
         path = `/@${cleanSlug}`;
-        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Video Reviews | Yoouz`;
+        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
       } else if (activeSection === "home") {
         path = "/";
-        title = "Yoouz - Real Video Reviews by Real People | Authentic Business Reviews";
+        title = "Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews";
       } else if (activeSection === "search") {
         path = "/search";
-        title = "Search & Explore Real Video Reviews | Yoouz";
+        title = "Search & Explore Real Photo Reviews | Yoouz";
       } else if (activeSection === "discover") {
         path = "/discover";
-        title = "Discover Trending Places & Video Reviews | Yoouz";
+        title = "Discover Trending Places & Photo Reviews | Yoouz";
       } else if (activeSection === "business") {
         const bSlug = (() => {
           try {
@@ -4931,13 +4984,13 @@ export function App() {
           return '';
         })();
         path = bSlug ? `/business/${bSlug}` : "/business";
-        title = "Yoouz for Business - Verified Customer Video Reviews & Feedback";
+        title = "Yoouz for Business - Verified Customer Photo Reviews & Feedback";
       } else if (activeSection === "following") {
         path = "/following";
-        title = "Following Feed - Creator Video Reviews | Yoouz";
+        title = "Following Feed - Live Photo Reviews | Yoouz";
       } else if (activeSection === "bookmarks") {
         path = "/bookmarks";
-        title = "Saved Video Reviews & Bookmarks | Yoouz";
+        title = "Saved Photo Reviews & Bookmarks | Yoouz";
       } else if (activeSection === "messages") {
         path = "/messages";
         title = "Direct Messages | Yoouz";
@@ -5063,7 +5116,7 @@ export function App() {
   // Handle Video Selection from search/map/profile/bookmarks or place/creator drawer
   const handleSelectVideoById = (
     videoId: string,
-    source?: "profile" | "creator" | "place" | "general"
+    source?: "profile" | "creator" | "place" | "general" | "feed"
   ) => {
     setIsWatchingVideo(true);
     const targetVid = videos.find((v) => v.id === videoId);
@@ -5253,22 +5306,24 @@ export function App() {
     }
   }, [activeSection, currentUser]);
 
-  const handleGoToProfile = () => {
-    if (!currentUser) {
-      setAuthIntent("profile");
-      setIsAuthModalOpen(true);
-      return;
+  const handleGoToProfile = async () => {
+    let activeUser = currentUser;
+    if (!activeUser) {
+      activeUser = await ensureAnonymousUser(false);
     }
-    const handle = currentUser.name || currentUser.email?.split("@")[0] || "me";
+    const handle = activeUser?.username || activeUser?.name || activeUser?.email?.split("@")[0] || "me";
     window.history.pushState(null, "", buildLocalizedPath("/@" + handle, language));
     handleOpenCreatorDrawer({
-      //handle: handle,
-      name: currentUser.name || "Reviewer",
-      avatar: currentUser.avatar || "",
-      isVerified: true,
+      id: activeUser?.id || (activeUser as any)?.uid,
+      userId: activeUser?.id || (activeUser as any)?.uid,
+      email: activeUser?.email,
+      handle: activeUser?.handle || `@${handle.replace(/^@+/, "")}`,
+      name: activeUser?.name || handle,
+      avatar: activeUser?.avatar || "",
+      isVerified: Boolean(activeUser?.isVerified),
       isFollowed: false,
-      bio: currentUser.bio || "",
-      location: currentUser.location || ""
+      bio: activeUser?.bio || "",
+      location: activeUser?.location || ""
     });
     setActiveSection("home");
   };
@@ -5461,12 +5516,11 @@ export function App() {
     setCurrentVideoIndex(0);
   };
 
-  // Handle Likes - fully synced with BunnyDB
+  // Handle Likes - fully synced with BunnyDB (zero-friction)
   const handleToggleLike = async (videoId: string) => {
-    if (!currentUser) {
-      setAuthIntent("like");
-      setIsAuthModalOpen(true);
-      return;
+    let activeUser = currentUser;
+    if (!activeUser) {
+      activeUser = await ensureAnonymousUser(false);
     }
     const now = Date.now();
     const lastClick = pendingLikeClickRef.current.get(videoId) || 0;
@@ -5578,7 +5632,7 @@ export function App() {
             avatar: currentUser.avatar,
             email: currentUser.email
           },
-          text: `liked your video review of ${targetVid.placeName || "a place"}`,
+          text: `liked your photo review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
           placeName: targetVid.placeName,
@@ -5636,12 +5690,10 @@ export function App() {
     };
   };
 
-  // Handle Bookmarks - fully synced with Server, BunnyDB & BunnyDB
+  // Handle Bookmarks - fully synced with Server & BunnyDB (zero-friction)
   const handleToggleBookmark = async (videoId: string) => {
     if (!currentUser) {
-      setAuthIntent("bookmarks");
-      setIsAuthModalOpen(true);
-      return;
+      await ensureAnonymousUser(false);
     }
     let nextBookmarked = false;
     let nextCount = 0;
@@ -5754,7 +5806,7 @@ export function App() {
             avatar: currentUser.avatar,
             email: currentUser.email
           },
-          text: `saved your video review of ${targetVid.placeName || "a place"}`,
+          text: `saved your photo review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
           placeName: targetVid.placeName,
@@ -5764,12 +5816,10 @@ export function App() {
     }
   };
 
-  // Handle Reposts - fully synced with local storage and BunnyDB
+  // Handle Reposts - fully synced with local storage and BunnyDB (zero-friction)
   const handleToggleRepost = async (videoId: string) => {
     if (!currentUser) {
-      setAuthIntent("repost");
-      setIsAuthModalOpen(true);
-      return;
+      await ensureAnonymousUser(false);
     }
 
     let nextReposted = false;
@@ -5845,7 +5895,7 @@ export function App() {
             avatar: currentUser.avatar,
             email: currentUser.email
           },
-          text: `reposted your video review of ${targetVid.placeName || "a place"}`,
+          text: `reposted your photo review of ${targetVid.placeName || "a place"}`,
           videoId: targetVid.id,
           videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
           placeName: targetVid.placeName,
@@ -5861,11 +5911,11 @@ export function App() {
   };
 
   const handleToggleFollow = async (authorHandle: string) => {
-    if (!currentUser) {
-      setAuthIntent('following');
-      setIsAuthModalOpen(true);
-      return;
+    let activeUser = currentUser;
+    if (!activeUser) {
+      activeUser = await ensureAnonymousUser(false);
     }
+    if (!activeUser) return;
 
     const cleanAuthorHandle = (authorHandle || "").trim();
     if (!cleanAuthorHandle) return;
@@ -5881,10 +5931,10 @@ export function App() {
       const stored = localStorage.getItem("copo_followed_authors") || "[]";
       followedList = Array.isArray(JSON.parse(stored)) ? JSON.parse(stored) : [];
     } catch (e) {
-      followedList = currentUser.followedAuthors || [];
+      followedList = activeUser.followedAuthors || [];
     }
-    if (currentUser.followedAuthors && Array.isArray(currentUser.followedAuthors)) {
-      currentUser.followedAuthors.forEach((h) => {
+    if (activeUser.followedAuthors && Array.isArray(activeUser.followedAuthors)) {
+      activeUser.followedAuthors.forEach((h) => {
         if (h && !followedList.some((ex) => ex.toLowerCase() === h.toLowerCase())) {
           followedList.push(h);
         }
@@ -5908,9 +5958,10 @@ export function App() {
 
     // 3. Update currentUser state immediately
     setCurrentUser((prev) => {
-      if (!prev) return prev;
+      const base = prev || activeUser;
+      if (!base) return prev;
       const nextUser = {
-        ...prev,
+        ...base,
         followedAuthors: updatedFollowed,
         followingCount: updatedFollowed.length
       };
@@ -5939,6 +5990,7 @@ export function App() {
     );
 
     // 5. Update selectedAuthorForDrawer if drawer is open
+    const myIdentifier = activeUser.name || activeUser.email || "Reviewer";
     setSelectedAuthorForDrawer((prev) => {
       if (prev && prev.name && prev.name.toLowerCase() === cleanAuthorHandle.toLowerCase()) {
         const curFollowers = Array.isArray((prev as any).followers) ? (prev as any).followers : [];
@@ -5956,7 +6008,6 @@ export function App() {
     });
 
     // 6. Update allRegisteredUsers state immediately so follower counts and follower lists reflect live
-    const myIdentifier = currentUser.name || currentUser.email || "Reviewer";
     let targetUserObj: any = null;
     setAllRegisteredUsers((prev) =>
       prev.map((u) => {
@@ -5982,14 +6033,14 @@ export function App() {
     );
 
     // 7. Persist to server backend API instantly for live database sync across everybody
-    const followerUid = auth.currentUser?.uid || currentUser.uid || currentUser.email || "user";
+    const followerUid = auth.currentUser?.uid || activeUser.uid || activeUser.id || activeUser.email || "user";
     fetch("/api/interactions/follow", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         followerUserId: followerUid,
-        followerName: currentUser.name || "Reviewer",
-        followerAvatar: currentUser.avatar || "",
+        followerName: activeUser.name || "Reviewer",
+        followerAvatar: activeUser.avatar || "",
         targetHandle: cleanAuthorHandle,
         targetUserId: targetUserObj?.id || targetUserObj?.uid || "",
         isFollowed: newFollowState
@@ -6011,7 +6062,7 @@ export function App() {
       })
     }).catch(() => {});
 
-    const cleanEmailKey = (currentUser.email || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const cleanEmailKey = (activeUser.email || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
     if (cleanEmailKey && `usr_${cleanEmailKey}` !== followerUid) {
       fetch(`/api/nosql/users/usr_${cleanEmailKey}`, {
         method: "POST",
@@ -6046,17 +6097,17 @@ export function App() {
 
   };
 
-  // Handle Follow Place (Business) - Strict Explicit Follow Only
-  const handleToggleFollowPlace = (placeId: string) => {
-    if (!currentUser) {
-      setAuthIntent("general");
-      setIsAuthModalOpen(true);
-      return;
+  // Handle Follow Place (Business) - Strict Explicit Follow Only (zero-friction)
+  const handleToggleFollowPlace = async (placeId: string) => {
+    let activeUser = currentUser;
+    if (!activeUser) {
+      activeUser = await ensureAnonymousUser(false);
     }
+    if (!activeUser) return;
     const cleanPlaceId = String(placeId || "").trim();
     if (!cleanPlaceId) return;
 
-    const currentFollows = Array.isArray(currentUser.followedPlaces) ? currentUser.followedPlaces : [];
+    const currentFollows = Array.isArray(activeUser.followedPlaces) ? activeUser.followedPlaces : [];
     const targetClean = cleanPlaceId.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
     
     const isFollowing = currentFollows.some((id) => {
@@ -6074,11 +6125,11 @@ export function App() {
           return clean !== cleanPlaceId.toLowerCase().trim() && clean.replace(/[^a-z0-9]/g, "") !== targetClean;
         }), cleanPlaceId];
       
-    const followerUid = currentUser.id || currentUser.uid || currentUser.email || "guest";
+    const followerUid = activeUser.id || activeUser.uid || activeUser.email || "guest";
     const updatedUser = {
-      ...currentUser,
+      ...activeUser,
       followedPlaces: updatedFollowedPlaces,
-      followingCount: (currentUser.followedAuthors?.length || 0) + updatedFollowedPlaces.length
+      followingCount: (activeUser.followedAuthors?.length || 0) + updatedFollowedPlaces.length
     };
     setCurrentUser(updatedUser);
 
@@ -6106,15 +6157,15 @@ export function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         followerUserId: followerUid,
-        followerName: currentUser.name || "User",
-        followerAvatar: currentUser.avatar || "",
+        followerName: activeUser.name || "User",
+        followerAvatar: activeUser.avatar || "",
         placeId: cleanPlaceId,
         type: "place",
         isFollowed: !isFollowing
       })
     }).catch(() => {});
 
-    // 9. Persist to NoSQL endpoint
+    // Persist to NoSQL endpoint
     fetch(`/api/nosql/users/${followerUid}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -6127,7 +6178,7 @@ export function App() {
     }).catch(() => {});
   };
 
-  // Handle Adding Comment or Threaded Reply - fully synced with BunnyDB
+  // Handle Adding Comment or Threaded Reply - fully synced with BunnyDB (zero-friction)
   const handleAddComment = async (
     videoId: string,
     text: string,
@@ -6138,11 +6189,11 @@ export function App() {
       commentItem?: ReviewComment;
     }
   ) => {
-    if (!currentUser) {
-      setAuthIntent("general");
-      setIsAuthModalOpen(true);
-      return;
+    let commentUser = currentUser;
+    if (!commentUser) {
+      commentUser = await ensureAnonymousUser(false);
     }
+    const safeUser = commentUser || ({ id: "anon", name: "U/ANON", handle: "@u_anon", email: "", avatar: "" } as any);
 
     const cleanText = (text || "").trim();
     const commentAttachments = Array.isArray(options?.commentItem?.attachments) ? options.commentItem.attachments : [];
@@ -6162,9 +6213,9 @@ export function App() {
 
     const isTargetCreator = Boolean(
       options?.postAsCreator ||
-      (currentUser.email && targetVid?.userEmail && currentUser.email.toLowerCase().trim() === (targetVid?.userEmail || "").toLowerCase().trim()) ||
-      (currentUser.email && targetVid?.userId && currentUser.email.toLowerCase().trim() === (targetVid?.userId || "").toLowerCase().trim()) ||
-      (currentUser.name && targetVid?.author?.name && currentUser.name.toLowerCase().trim() === (targetVid?.author?.name || "").toLowerCase().trim())
+      (safeUser.email && targetVid?.userEmail && safeUser.email.toLowerCase().trim() === (targetVid?.userEmail || "").toLowerCase().trim()) ||
+      (safeUser.id && targetVid?.userId && safeUser.id === targetVid?.userId) ||
+      (safeUser.name && targetVid?.author?.name && safeUser.name.toLowerCase().trim() === (targetVid?.author?.name || "").toLowerCase().trim())
     );
 
     const targetPlace = places.find(
@@ -6175,20 +6226,20 @@ export function App() {
 
     const authorName = options?.commentItem?.authorName || (options?.postAsOwner
       ? placeName
-      : (currentUser.name || (isTargetCreator ? "Video Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer"))));
+      : (safeUser.name || (isTargetCreator ? "Photo Reviewer" : (safeUser.email ? safeUser.email.split("@")[0] : "Verified Reviewer"))));
     const authorHandle = options?.commentItem?.authorHandle || (options?.postAsOwner
       ? (targetPlace?.brandDomain || "owner")
-      : (currentUser.email ? currentUser.email.split("@")[0] : (isTargetCreator ? "reviewer" : "user")));
+      : (safeUser.handle || (safeUser.email ? safeUser.email.split("@")[0] : (safeUser.name || "user"))));
     const validCurrentAvatar =
-      currentUser.avatar &&
-      !currentUser.avatar.includes("photo-1534528741775") &&
-      !currentUser.avatar.includes("photo-1535713875002")
-        ? currentUser.avatar
+      safeUser.avatar &&
+      !safeUser.avatar.includes("photo-1534528741775") &&
+      !safeUser.avatar.includes("photo-1535713875002")
+        ? safeUser.avatar
         : "";
 
     const authorAvatar = options?.commentItem?.authorAvatar || (options?.postAsOwner
       ? (placeLogo || getSafeAvatarUrl(null, placeName, placeName))
-      : getSafeAvatarUrl(validCurrentAvatar, authorName, (currentUser as any)?.handle || currentUser?.email || authorName));
+      : getSafeAvatarUrl(validCurrentAvatar, authorName, safeUser?.handle || safeUser?.email || authorName));
 
     const newCommentItem: ReviewComment = options?.commentItem ? {
       ...options.commentItem,
@@ -6339,16 +6390,14 @@ export function App() {
     }
   };
 
-  // Handle Comment Like / Unlike
+  // Handle Comment Like / Unlike (zero-friction)
   const handleToggleCommentLike = async (
     videoId: string,
     commentId: string,
     replyId?: string
   ) => {
     if (!currentUser) {
-      setAuthIntent("general");
-      setIsAuthModalOpen(true);
-      return;
+      await ensureAnonymousUser(false);
     }
 
     let updatedComments: ReviewComment[] = [];
@@ -6868,16 +6917,10 @@ export function App() {
     } catch (e) {}
   };
 
-  // Handle Opening the Create Review Modal
+  // Handle Opening the Create Review Modal (zero-friction — no sign-in wall)
   const handleOpenCreateReview = (place: Place | null = null) => {
-    if (!currentUser || !isProfileComplete(currentUser)) {
-      setAuthIntent('record');
-      setPreselectedPlaceForRecording(place);
-      setIsAuthModalOpen(true);
-    } else {
-      setPreselectedPlaceForRecording(place);
-      setIsCreateModalOpen(true);
-    }
+    setPreselectedPlaceForRecording(place);
+    setIsCreateModalOpen(true);
   };
 
   // Handle Deleting a Video Review
@@ -7126,7 +7169,7 @@ export function App() {
     (newReview as any).isLocalUpload = true;
     if (!newReview.createdAtMs) newReview.createdAtMs = Date.now();
 
-    // 👤 Ensure full First and Last Name from active user is immediately stamped on the review before rendering
+    // Stamp active user's identity/handle cleanly (preserving U/XXXXXX or custom username without clobbering modal state)
     const effectiveUser = currentUser || (() => {
       try {
         const stored = typeof window !== "undefined" ? (localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user")) : null;
@@ -7136,31 +7179,27 @@ export function App() {
     })();
 
     const fullUserName = (
-      ((effectiveUser as any)?.firstName && (effectiveUser as any)?.lastName)
+      effectiveUser?.username ||
+      (((effectiveUser as any)?.firstName && (effectiveUser as any)?.lastName)
         ? `${String((effectiveUser as any).firstName).trim()} ${String((effectiveUser as any).lastName).trim()}`.trim()
-        : (effectiveUser?.name || "")
+        : (effectiveUser?.name || ""))
     ).trim();
 
     if (fullUserName) {
       const currentAuthor = (newReview.author && typeof newReview.author === "object") ? newReview.author : ({} as any);
-      const bestName = (fullUserName.includes(" ") || !currentAuthor.name || !currentAuthor.name.includes(" "))
-        ? fullUserName
-        : currentAuthor.name;
-      const fName = (effectiveUser as any)?.firstName || currentAuthor.firstName || (bestName.includes(" ") ? bestName.split(" ")[0] : bestName);
-      const lName = (effectiveUser as any)?.lastName || currentAuthor.lastName || (bestName.includes(" ") ? bestName.split(" ").slice(1).join(" ") : "");
-      
+      const bestName = currentAuthor.name || fullUserName;
+      const defaultHandle = `@${bestName.replace(/^U\//i, "u_").replace(/^@+/, "").toLowerCase().replace(/[^a-z0-9_]/g, "")}`;
+
       newReview.authorName = bestName;
       newReview.author = {
         ...currentAuthor,
         name: bestName,
-        firstName: fName,
-        lastName: lName,
-        handle: currentAuthor.handle || `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        handle: currentAuthor.handle || effectiveUser?.handle || defaultHandle,
         avatar: effectiveUser?.avatar || currentAuthor.avatar || newReview.authorAvatar,
         location: effectiveUser?.location || currentAuthor.location || "",
         city: effectiveUser?.city || currentAuthor.city || "",
         country: effectiveUser?.country || currentAuthor.country || "",
-        isVerified: true,
+        isVerified: Boolean(effectiveUser?.isVerified ?? true),
         isLocalGuide: true
       };
       if (newReview.author.avatar) {
@@ -7169,8 +7208,6 @@ export function App() {
       updateUserRegistry({
         ...effectiveUser,
         name: bestName,
-        firstName: fName,
-        lastName: lName,
         handle: newReview.author.handle,
         avatar: newReview.author.avatar,
         location: newReview.author.location
@@ -7189,16 +7226,13 @@ export function App() {
     savedHomeVideoIndexRef.current = 0;
     setPendingVideoId(newReview.id);
 
-    // Automatically grant verified badge (isVerified = true) to user on publishing their first video review
-    if (currentUser) {
-      const nextCount = (currentUser.videoReviewCount || 0) + 1;
-      const fullName = (currentUser.firstName && currentUser.lastName)
-        ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
-        : currentUser.name;
+    if (effectiveUser) {
+      const nextCount = (effectiveUser.videoReviewCount || effectiveUser.photosCount || 0) + 1;
       const updatedUser: UserProfile = {
-        ...currentUser,
-        name: fullName || currentUser.name,
+        ...effectiveUser,
+        name: effectiveUser.username || effectiveUser.name,
         videoReviewCount: nextCount,
+        photosCount: nextCount,
         isVerified: true
       };
       setCurrentUser(updatedUser);
@@ -7211,15 +7245,14 @@ export function App() {
       setAllRegisteredUsers((prev) =>
         prev.map((u) => {
           if (
-            (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()) ||
-            (u.id && currentUser.id && u.id === currentUser.id)
+            (u.email && effectiveUser.email && u.email.toLowerCase() === effectiveUser.email.toLowerCase()) ||
+            (u.id && effectiveUser.id && u.id === effectiveUser.id)
           ) {
             return {
               ...u,
-              name: fullName || u.name,
-              firstName: currentUser.firstName || u.firstName,
-              lastName: currentUser.lastName || u.lastName,
+              name: updatedUser.name,
               videoReviewCount: nextCount,
+              photosCount: nextCount,
               isVerified: true
             };
           }
@@ -7232,16 +7265,13 @@ export function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...updatedUser,
-          email: currentUser.email,
-          name: fullName || currentUser.name,
-          firstName: currentUser.firstName,
-          lastName: currentUser.lastName,
-          city: currentUser.city,
-          country: currentUser.country,
-          location: currentUser.location,
-          avatar: currentUser.avatar,
-          bio: currentUser.bio,
+          email: effectiveUser.email,
+          name: updatedUser.name,
+          location: effectiveUser.location,
+          avatar: effectiveUser.avatar,
+          bio: effectiveUser.bio,
           videoReviewCount: nextCount,
+          photosCount: nextCount,
           isVerified: true
         })
       }).catch(() => {});
@@ -7345,7 +7375,7 @@ export function App() {
             avatar: currentUser?.avatar || newReview.author?.avatar || "",
             email: currentUser?.email || ""
           },
-          text: `posted a ${newReview.rating}★ video review for ${placeNameClean}`,
+          text: `posted a ${newReview.rating}★ photo review for ${placeNameClean}`,
           videoId: newReview.id,
           videoThumbnail: resolveVideoPosterUrl(newReview) || newReview.author?.avatar,
           placeId: placeIdClean,
@@ -7437,7 +7467,7 @@ export function App() {
   }, [videos, allRegisteredUsers, savedCreators, currentUser]);
 
   const handleOpenReport = (target: ReportTarget | VideoReview | { type: "user"; author: VideoAuthor } | { type: "place"; placeName: string; placeId: string }) => {
-    if ("videoUrl" in target) {
+    if ("photoUrl" in target || "videoUrl" in target || ("placeId" in target && !("type" in target))) {
       setActiveReportTarget({ type: "video", video: target as VideoReview });
     } else if ("type" in target) {
       setActiveReportTarget(target as ReportTarget);
@@ -7525,20 +7555,20 @@ export function App() {
   }, [activeCommentPlace, activeCommentVideo]);
 
   const seoTitle = useMemo(() => {
-    if (embedTargetId) return `Embedded Video Review Player for ${embedTargetId} - Yoouz`;
-    if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Video Reviews';
+    if (embedTargetId) return `Embedded Photo Review Feed for ${embedTargetId} - Yoouz`;
+    if (activeSection === 'business') return 'Yoouz for Business - Claim Your Profile & Leverage Live Photo Reviews';
     if (activeSection === 'home' && activeSubTab === 'following') return 'Following - Your Favorite Reviewers on Yoouz';
-    if (activeSection === 'home' && activeSubTab === 'discover') return 'Discover Authentic Video Reviews on Yoouz';
+    if (activeSection === 'home' && activeSubTab === 'discover') return 'Discover Authentic Live Photo Reviews on Yoouz';
     if (activeSection === 'admin') return 'Yoouz Admin Dashboard';
-    return 'Yoouz - Real Video Reviews by Real People | Authentic Business Reviews';
+    return 'Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews';
   }, [activeSection, activeSubTab, embedTargetId]);
 
   const seoDescription = useMemo(() => {
-    if (embedTargetId) return `Watch authentic 60-second video reviews for ${embedTargetId} on Yoouz.`;
-    if (activeSection === 'business') return 'Claim your business profile on Yoouz, monitor authentic 60-second video reviews, and connect with your customers through authentic video feedback.';
-    if (activeSection === 'home' && activeSubTab === 'following') return 'Watch the latest video reviews from the creators and local businesses you follow on Yoouz.';
-    if (activeSection === 'home' && activeSubTab === 'discover') return 'Explore a continuous feed of authentic 60-second video reviews. Discover the best local businesses, food, and experiences near you.';
-    return 'Yoouz is the #1 authentic video review network. Discover local businesses, restaurants, cafes, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.';
+    if (embedTargetId) return `Browse authentic live photo reviews for ${embedTargetId} on Yoouz.`;
+    if (activeSection === 'business') return 'Claim your business profile on Yoouz, monitor authentic live photo reviews, and connect with your customers through visual proof.';
+    if (activeSection === 'home' && activeSubTab === 'following') return 'Browse the latest live photo reviews from the creators and local businesses you follow on Yoouz.';
+    if (activeSection === 'home' && activeSubTab === 'discover') return 'Explore a vertical feed of authentic live photo reviews. Discover the best local businesses, restaurants, and services near you.';
+    return 'Yoouz is the #1 authentic live photo review network. Discover local businesses, restaurants, cafes, services, and online brands with 100% genuine camera-only photo proof by real customers.';
   }, [activeSection, activeSubTab, embedTargetId]);
 
   const seoUrl = useMemo(() => {
@@ -7553,7 +7583,7 @@ export function App() {
         id="copo-app-root"
         className="w-full h-full min-h-0 bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
       >
-        <SEOTags title={`Embedded Video Review Player - Yoouz`} description={`Watch authentic 60-second video reviews for ${embedTargetId}`} url={seoUrl} />
+        <SEOTags title={`Embedded Photo Review Feed - Yoouz`} description={`Browse authentic live photo reviews for ${embedTargetId}`} url={seoUrl} />
         
         <CopoEmbedView
           embedId={embedTargetId}
@@ -7573,10 +7603,7 @@ export function App() {
             setPreselectedPlaceForRecording(place || null);
             setIsCreateModalOpen(true);
           }}
-          onOpenAuth={() => {
-            setAuthIntent('record');
-            setIsAuthModalOpen(true);
-          }}
+          onOpenAuth={() => {}}
           onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onSelectSection={(section) => {
@@ -7588,13 +7615,8 @@ export function App() {
             } else if (section === "record_review") {
               setIsCreateModalOpen(true);
             } else if (section === "messages" || section === "profile" || section === "notifications") {
-              if (!currentUser) {
-                setAuthIntent(section as AuthIntent);
-                setIsAuthModalOpen(true);
-              } else {
-                setEmbedTargetId(null);
-                setActiveSection(section);
-              }
+              setEmbedTargetId(null);
+              setActiveSection(section);
             } else {
               setEmbedTargetId(null);
               setActiveSection(section);
@@ -7684,14 +7706,6 @@ export function App() {
             isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
             onToggleSaveCreator={handleToggleSaveCreator}
             onOpenCreator={handleOpenCreatorDrawer}
-            onSignOut={async () => {
-              await logOutUser();
-              setCurrentUser(null);
-              try {
-                localStorage.removeItem("copo_user_profile");
-              } catch (e) {}
-              handleCloseDrawers();
-            }}
             onDeactivateProfile={async () => {
               await handleDeactivateProfile();
               handleCloseDrawers();
@@ -7713,8 +7727,7 @@ export function App() {
             allUsers={allRegisteredUsers}
             onClose={() => setActiveCommentVideo(null)}
             onRequireAuth={() => {
-              setAuthIntent('comment');
-              setIsAuthModalOpen(true);
+              ensureAnonymousUser(false);
             }}
             onAddComment={handleAddComment}
             onToggleCommentLike={handleToggleCommentLike}
@@ -7832,13 +7845,6 @@ export function App() {
             setIsAuthModalOpen(true);
           }}
           onOpenLegal={handleOpenLegal}
-          onSignOut={async () => {
-            await logOutUser();
-            setCurrentUser(null);
-            try {
-              localStorage.removeItem("copo_user_profile");
-            } catch (e) {}
-          }}
           onOpenEditProfile={handleGoToProfile}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
         />
@@ -7871,14 +7877,8 @@ export function App() {
             }}
             onRecordForPlace={(place) => {
               setIsSearchModalOpen(false);
-              if (!currentUser) {
-                setAuthIntent('record');
-                setPreselectedPlaceForRecording(place);
-                setIsAuthModalOpen(true);
-              } else {
-                setPreselectedPlaceForRecording(place);
-                setIsCreateModalOpen(true);
-              }
+              setPreselectedPlaceForRecording(place);
+              setIsCreateModalOpen(true);
             }}
             onOpenNotifications={handleOpenNotifications}
             unreadNotifsCount={effectiveUnreadNotifsCount}
@@ -7964,14 +7964,6 @@ export function App() {
           isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
           onToggleSaveCreator={handleToggleSaveCreator}
           onOpenCreator={handleOpenCreatorDrawer}
-          onSignOut={async () => {
-            await logOutUser();
-            setCurrentUser(null);
-            try {
-              localStorage.removeItem("copo_user_profile");
-            } catch (e) {}
-            handleCloseDrawers();
-          }}
           onDeactivateProfile={async () => {
             await handleDeactivateProfile();
             handleCloseDrawers();
@@ -8069,12 +8061,6 @@ export function App() {
               setBusinessClaimTargetPlace(null);
               setBusinessInitialMode('signin');
             }
-            if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
-              setAuthIntent(section as AuthIntent);
-              setIsAuthModalOpen(true);
-              return;
-            }
-
             setSelectedPlaceIdForDrawer(null);
             setSelectedAuthorForDrawer(null);
             setActiveSection(section);
@@ -8083,20 +8069,15 @@ export function App() {
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenSearch={handleOpenSearchModal}
           onOpenCreateModal={() => {
-            if (!currentUser || !isProfileComplete(currentUser)) {
-              setAuthIntent('record');
-              setIsAuthModalOpen(true);
-            } else {
-              setPreselectedPlaceForRecording(null);
-              setIsCreateModalOpen(true);
-            }
+            setPreselectedPlaceForRecording(null);
+            setIsCreateModalOpen(true);
           }}
         />
       )}
 
       {/* 2. Main Stage Content Switcher */}
       <div className="copo-has-bottom-nav flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
-        {/* If in Video Player mode (watching specific review, place/creator view, or full-screen feed context) */}
+        {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
             <CopoVideoPlayer
               key={currentFeedContextKey}
@@ -8110,14 +8091,8 @@ export function App() {
               contextKey={currentFeedContextKey}
               onOpenCreateModal={() => {
                 const targetPlaceForReview = isPlaceView ? (activeDrawerPlace || drawerPlace) : null;
-                if (!currentUser || !isProfileComplete(currentUser)) {
-                  setAuthIntent('record');
-                  setPreselectedPlaceForRecording(targetPlaceForReview);
-                  setIsAuthModalOpen(true);
-                } else {
-                  setPreselectedPlaceForRecording(targetPlaceForReview);
-                  setIsCreateModalOpen(true);
-                }
+                setPreselectedPlaceForRecording(targetPlaceForReview);
+                setIsCreateModalOpen(true);
               }}
               onLoadMore={loadMoreVideos}
               videos={activeFeedVideos}
@@ -8246,14 +8221,8 @@ export function App() {
             videos={videos}
             onOpenPlace={handleOpenPlaceDrawer}
             onRecordForPlace={(place) => {
-              if (!currentUser) {
-                setAuthIntent('record');
-                setPreselectedPlaceForRecording(place);
-                setIsAuthModalOpen(true);
-              } else {
-                setPreselectedPlaceForRecording(place);
-                setIsCreateModalOpen(true);
-              }
+              setPreselectedPlaceForRecording(place);
+              setIsCreateModalOpen(true);
             }}
           />
         ) : !isPlaceView && !isCreatorView && (
@@ -8296,7 +8265,7 @@ export function App() {
               <CopoDiscoverView
                 videos={videos}
                 allUsers={allRegisteredUsers}
-                currentUser={null}
+                currentUser={currentUser}
                 onOpenCreator={handleOpenCreatorDrawer}
                 onToggleFollow={handleToggleFollow}
                 onStartChat={handleStartChat}
@@ -8618,18 +8587,10 @@ export function App() {
               />
             )}
 
-            {/* Profile View (Unauthenticated Only) */}
+            {/* Profile hydrating placeholder (zero-friction auto-provision) */}
             {activeSection === "profile" && !currentUser && (
-              <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-900 flex flex-col justify-between pb-32 md:pb-6" >
-                <CopoAuthPrompt
-                  intent="profile"
-                  onOpenHelp={() => setActiveSection('more')}
-                  onOpenLegal={handleOpenLegal}
-                  onSuccess={(user) => {
-                    setCurrentUser(user);
-                  }}
-                  isFullPage={true}
-                />
+              <div className="flex-1 h-full flex items-center justify-center bg-zinc-950 text-zinc-400 text-sm font-medium">
+                Loading profile...
               </div>
             )}
 
@@ -8795,13 +8756,6 @@ export function App() {
                   setIsAuthModalOpen(true);
                 }}
                 onSuccessAuth={(user) => setCurrentUser(user)}
-                onSignOut={async () => {
-                  await logOutUser();
-                  setCurrentUser(null);
-                  try {
-                    localStorage.removeItem("copo_user_profile");
-                  } catch (e) {}
-                }}
                 onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
                 onNavigate={(section) => {
                   if (section === "home") {
@@ -8948,11 +8902,6 @@ export function App() {
             setBusinessClaimTargetPlace(null);
             setBusinessInitialMode('signin');
           }
-          if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
-            setAuthIntent(section as AuthIntent);
-            setIsAuthModalOpen(true);
-            return;
-          }
           setSelectedPlaceIdForDrawer(null);
           setSelectedAuthorForDrawer(null);
           setActiveSection(section);
@@ -8970,13 +8919,6 @@ export function App() {
           setIsAuthModalOpen(true);
         }}
         onOpenLegal={handleOpenLegal}
-        onSignOut={async () => {
-          await logOutUser();
-          setCurrentUser(null);
-          try {
-            localStorage.removeItem("copo_user_profile");
-          } catch (e) {}
-        }}
         onOpenEditProfile={handleGoToProfile}
         onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
       />
@@ -9011,11 +8953,6 @@ export function App() {
               handleGoToProfile();
               return;
             }
-            if (!currentUser && ["messages", "notifications", "bookmarks", "following"].includes(section as string)) {
-              setAuthIntent(section as AuthIntent);
-              setIsAuthModalOpen(true);
-              return;
-            }
             setSelectedPlaceIdForDrawer(null);
             setSelectedAuthorForDrawer(null);
             setIsWatchingVideo(false);
@@ -9027,12 +8964,8 @@ export function App() {
             handleOpenSearchModal();
           }}
           onOpenCreateModal={() => {
-            if (!currentUser) {
-              setAuthIntent('review');
-              setIsAuthModalOpen(true);
-            } else {
-              setIsCreateModalOpen(true);
-            }
+            setPreselectedPlaceForRecording(null);
+            setIsCreateModalOpen(true);
           }}
         />
       )}
@@ -9065,14 +8998,8 @@ export function App() {
           }}
           onRecordForPlace={(place) => {
             setIsSearchModalOpen(false);
-            if (!currentUser) {
-              setAuthIntent('record');
-              setPreselectedPlaceForRecording(place);
-              setIsAuthModalOpen(true);
-            } else {
-              setPreselectedPlaceForRecording(place);
-              setIsCreateModalOpen(true);
-            }
+            setPreselectedPlaceForRecording(place);
+            setIsCreateModalOpen(true);
           }}
           onAddPlace={(newPlace, skipServerSync = false) => {
             if (!newPlace) return;
@@ -9237,16 +9164,11 @@ export function App() {
         onClose={() => setIsComparisonModalOpen(false)}
         initialCompetitor={comparisonCompetitor}
         onStartReview={() => {
-          if (!currentUser || !isProfileComplete(currentUser)) {
-            setAuthIntent('record');
-            setIsAuthModalOpen(true);
-          } else {
-            setIsCreateModalOpen(true);
-          }
+          setIsCreateModalOpen(true);
         }}
       />
 
-      {/* Record Video Review Modal */}
+      {/* Add Photo Review Modal */}
       <CopoCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => {
@@ -9258,6 +9180,7 @@ export function App() {
         preselectedPlace={preselectedPlaceForRecording}
         onPublishVideoReview={handlePublishVideoReview}
         currentUser={currentUser}
+        onUpdateUserProfile={(u) => setCurrentUser(u)}
         onAddPlace={handleUpdatePlace}
         onStartBackgroundUpload={(placeName, progress) => {
           setBackgroundUpload({ isPublishing: true, progress, placeName });

@@ -4,11 +4,10 @@ import {
   Shield,
   HelpCircle,
   Info,
-  LogOut,
   ChevronDown,
   ChevronLeft,
   Globe,
-  Video,
+  Camera,
   Lock,
   ArrowRight,
   ChevronRight,
@@ -290,50 +289,50 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "rev-1",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_1_q", "How long can my video review be?"),
-      answer: t("trustCenter.faq_rev_1_a", "Every video review has a strict limit of 60 seconds. This ensures content remains high-impact, focused, digestible, and easy for other users to browse quickly without fluff or commercial filler."),
-      tags: ["video", "length", "limit", "recording", "duration", "60 seconds"]
+      question: t("trustCenter.faq_rev_1_q", "How fast is posting a live photo review on Yoouz?"),
+      answer: t("trustCenter.faq_rev_1_a", "Posting takes seconds: snap one live photo using your front or rear camera, tap a whole-number 1 to 5 star rating, and publish immediately—with no titles, captions, or editing required."),
+      tags: ["photo", "fast", "camera", "stars", "rating", "instant"]
     },
     {
       id: "rev-2",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_2_q", "Why does the video recorder only use the live front camera and disable gallery uploads?"),
-      answer: t("trustCenter.faq_rev_2_a", "To guarantee 100% authentic human experiences, Yoouz enforces Proof of Presence™ by auto-starting the live front (selfie) camera for direct recording. Uploading pre-recorded gallery files, marketing commercials, or stock video is strictly disabled to eliminate fake reviews and bot uploads."),
-      tags: ["camera", "front camera", "selfie", "recording", "no uploads", "gallery", "authenticity"]
+      question: t("trustCenter.faq_rev_2_q", "Why does Yoouz only use the live camera and disable gallery uploads?"),
+      answer: t("trustCenter.faq_rev_2_a", "To guarantee 100% authentic human experiences, Yoouz enforces Proof of Presence™ by opening the live camera (front or rear) for direct capture. Uploading saved gallery files, marketing commercials, or stock photos is strictly disabled to eliminate fake reviews and bot uploads."),
+      tags: ["camera", "front camera", "rear camera", "live capture", "no uploads", "gallery", "authenticity"]
     },
     {
       id: "rev-3",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_3_q", "Do I need professional equipment or video editing skills to leave a review?"),
-      answer: t("trustCenter.faq_rev_3_a", "Not at all. Yoouz is built for raw, spontaneous, authentic moments. All you need is your smartphone. Open the live front camera, share your genuine feedback for 30–60 seconds, and publish. No studio lighting, script reading, or video editing is needed."),
-      tags: ["equipment", "editing", "skills", "mobile", "simple", "raw", "authentic"]
+      question: t("trustCenter.faq_rev_3_q", "Do I need to create an account or write long text to leave a review?"),
+      answer: t("trustCenter.faq_rev_3_a", "Not at all. Yoouz automatically gives every visitor a zero-friction anonymous reviewer ID (e.g. U/A4B6C8). Just snap a live photo, pick 1–5 whole stars, and publish. You can optionally set a custom @username or link Google/Apple afterward."),
+      tags: ["anonymous", "zero friction", "username", "mobile", "simple", "authentic"]
     },
     {
       id: "rev-4",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_4_q", "Do I automatically receive a Verified badge when I create an account?"),
-      answer: t("trustCenter.faq_rev_4_a", "No. All new accounts start as standard unverified profiles. Your official 'Verified Reviewer' badge is automatically granted as soon as you record and publish your first live video review."),
-      tags: ["verified", "badge", "signup", "first review", "profile"]
+      question: t("trustCenter.faq_rev_4_q", "Do I automatically receive a Verified badge when I join?"),
+      answer: t("trustCenter.faq_rev_4_a", "No. New profiles start unverified. Your official 'Verified Reviewer' badge is automatically granted as soon as you capture and publish your first live photo review."),
+      tags: ["verified", "badge", "first review", "profile"]
     },
     {
       id: "rev-5",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_5_q", "Can viewers comment, ask questions, or interact on my video reviews?"),
-      answer: t("trustCenter.faq_rev_5_a", "Yes! Every video review includes a live 3-way community discussion feed. Viewers can ask follow-up questions ('Is parking easy?', 'Did you try the dessert?'), share tips, and discuss their experiences directly beneath your video."),
+      question: t("trustCenter.faq_rev_5_q", "Can viewers comment, ask questions, or interact on my photo reviews?"),
+      answer: t("trustCenter.faq_rev_5_a", "Yes! Every photo review includes a live community discussion feed. Viewers can ask follow-up questions ('Is parking easy?', 'Did you try the dessert?'), share tips, and discuss their experiences directly beneath your photo."),
       tags: ["comments", "questions", "community", "discussion", "interaction"]
     },
     {
       id: "rev-6",
       category: "reviewers",
       question: t("trustCenter.faq_rev_6_q", "Can I review any website domain or local establishment?"),
-      answer: t("trustCenter.faq_rev_6_a", "Yes! You can search and review any base website domain (e.g., stripe.com, airbnb.com) or local brick-and-mortar place (restaurants, cafes, services, gyms) to build a unified hub of authentic opinions."),
+      answer: t("trustCenter.faq_rev_6_a", "Yes! You can search and review any base website domain (e.g., stripe.com, airbnb.com) or local brick-and-mortar place (restaurants, cafes, services, gyms) to build a unified hub of authentic visual opinions."),
       tags: ["domain", "website", "places", "search", "business", "establishment"]
     },
     {
       id: "rev-7",
       category: "reviewers",
       question: t("trustCenter.faq_rev_7_q", "Can I edit or delete my reviews later?"),
-      answer: t("trustCenter.faq_rev_7_a", "Absolutely. You maintain complete ownership of your uploaded content. You can modify your star rating or permanently delete any of your posted video reviews at any time directly from your Profile drawer or video player options."),
+      answer: t("trustCenter.faq_rev_7_a", "Absolutely. You maintain complete ownership of your published content. You can modify your star rating or permanently delete any of your posted photo reviews at any time directly from your Profile drawer or review options."),
       tags: ["edit", "delete", "rating", "manage", "profile"]
     },
     {
@@ -349,22 +348,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       id: "biz-premium-suite",
       category: "business",
       question: t("trustCenter.faq_biz_premium_suite_q", "What is included in the Yoouz Premium Business Suite ($149/mo)?"),
-      answer: t("trustCenter.faq_biz_premium_suite_a", "The Yoouz Premium Business Suite ($149/mo or $99/mo annual) provides a comprehensive enterprise growth stack: Verified Business Badge, Priority Search Placement in local search results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, HD Branded Video Ad Exporter with watermark overlays, Pinned Owner Video Replies, Direct Messaging Lead Capture, Table & Window QR Standees, and Real-Time Analytics."),
+      answer: t("trustCenter.faq_biz_premium_suite_a", "The Yoouz Premium Business Suite ($149/mo or $99/mo annual) provides a comprehensive enterprise growth stack: Verified Business Badge, Priority Search Placement in local search results, Live Website Review Widget with automated Google Rich Snippets SEO Schema, Branded Social Ad Exporter, Pinned Owner Replies, Direct Messaging Lead Capture, Table & Window QR Standees, and Real-Time Analytics."),
       tags: ["premium", "plan", "membership", "features", "pricing", "$149", "suite", "seo", "ads"]
     },
     {
       id: "biz-premium-seo",
       category: "business",
       question: t("trustCenter.faq_biz_premium_seo_q", "How does the Yoouz Premium Suite improve Google Search SEO & Rich Snippets?"),
-      answer: t("trustCenter.faq_biz_premium_seo_a", "When you embed your Yoouz video review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render star ratings and video thumbnails directly in organic search results, increasing organic click-through rates (CTR) by up to 35%."),
+      answer: t("trustCenter.faq_biz_premium_seo_a", "When you embed your Yoouz photo review widget on your website, our system automatically generates Schema.org JSON-LD structured data. This allows search engines like Google to render whole-number star ratings and live photo proofs directly in organic search results, increasing click-through rates (CTR) by up to 35%."),
       tags: ["seo", "google", "rich snippets", "schema", "ratings", "ctr", "organic search"]
     },
     {
       id: "biz-premium-ads",
       category: "business",
-      question: t("trustCenter.faq_biz_premium_ads_q", "Can businesses export customer video reviews as branded social media ads?"),
-      answer: t("trustCenter.faq_biz_premium_ads_a", "Yes! Premium Suite subscribers can export customer 60-second video reviews as high-definition branded video ad assets with your official venue logo overlay, subtitles, and watermark—ready to run on Instagram Reels, TikTok, Facebook Ads, or YouTube Shorts."),
-      tags: ["ad export", "video ad", "social media", "instagram", "tiktok", "watermark", "branding"]
+      question: t("trustCenter.faq_biz_premium_ads_q", "Can businesses export customer photo reviews as branded social media assets?"),
+      answer: t("trustCenter.faq_biz_premium_ads_a", "Yes! Premium Suite subscribers can export customer live photo reviews as high-definition branded social assets with your official venue logo overlay and watermark—ready to run on Instagram Stories, TikTok, or Facebook Ads."),
+      tags: ["ad export", "social media", "instagram", "tiktok", "watermark", "branding"]
     },
     {
       id: "biz-premium-terms",
@@ -383,57 +382,57 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "biz-2",
       category: "business",
-      question: t("trustCenter.faq_biz_2_q", "Why do live video reviews convert so much higher than traditional text reviews?"),
-      answer: t("trustCenter.faq_biz_2_a", "Written reviews are treated as quick signals that users skim with skepticism, whereas video reviews are multi-sensory experiences. When customers see real human facial expressions and hear sincere vocal enthusiasm, brand trust multiplies up to 20x. Video delivers unscripted proof that dramatically accelerates purchasing decisions."),
-      tags: ["conversion", "trust", "growth", "sales", "testimonials", "roi", "video conversion"]
+      question: t("trustCenter.faq_biz_2_q", "Why do live photo reviews convert higher than traditional text reviews?"),
+      answer: t("trustCenter.faq_biz_2_a", "Written reviews are easily fabricated and skimmed with skepticism, whereas live camera photos provide instant visual proof of real dishes, spaces, products, and service—building immediate buyer confidence."),
+      tags: ["conversion", "trust", "growth", "sales", "testimonials", "roi", "photo conversion"]
     },
     {
       id: "biz-ugc",
       category: "business",
-      question: t("trustCenter.faq_biz_ugc_q", "Why are authentic customer video reviews 9.8x more trusted than paid influencer endorsements?"),
-      answer: t("trustCenter.faq_biz_ugc_a", "Modern consumers are fatigue-blind to sponsored ads. Unscripted 60-second video reviews from everyday customers carry authentic social proof because reviewers have no financial incentive to flatter, making them almost 10x more trustworthy than paid influencers."),
+      question: t("trustCenter.faq_biz_ugc_q", "Why are live customer photo reviews trusted more than paid endorsements?"),
+      answer: t("trustCenter.faq_biz_ugc_a", "Modern consumers are fatigue-blind to sponsored ads and stock imagery. Unfiltered live camera photos from everyday customers carry authentic visual proof because reviewers snap what is actually right in front of them."),
       tags: ["influencer", "ugc", "trust", "authenticity", "social proof", "marketing"]
     },
     {
       id: "biz-returns",
       category: "business",
-      question: t("trustCenter.faq_biz_returns_q", "How do video reviews reduce product return rates and customer misunderstandings?"),
-      answer: t("trustCenter.faq_biz_returns_a", "Text reviews often create ambiguous expectations. A 60-second video walkthrough shows true sizing, atmosphere, portion sizes, or build quality in natural light, aligning customer expectations before purchase and drastically lowering return rates."),
-      tags: ["returns", "expectations", "clarity", "walkthrough", "satisfaction"]
+      question: t("trustCenter.faq_biz_returns_q", "How do live photo reviews reduce product return rates and customer misunderstandings?"),
+      answer: t("trustCenter.faq_biz_returns_a", "Text reviews often create ambiguous expectations. A real customer photo taken live on location or on unboxing shows true sizing, atmosphere, portion sizes, and build quality in natural light, aligning expectations before purchase."),
+      tags: ["returns", "expectations", "clarity", "satisfaction"]
     },
     {
       id: "biz-case-study",
       category: "business",
-      question: t("trustCenter.faq_biz_case_study_q", "Why are 60-second video testimonials replacing long, written case studies for businesses?"),
-      answer: t("trustCenter.faq_biz_case_study_a", "Modern buyers rarely read lengthy PDF case studies or 1,000-word written posts. A concise 60-second video where a client highlights their problem, timeline, and measurable outcome delivers the full value proposition in under a minute."),
-      tags: ["case study", "b2b", "services", "sales asset", "lead conversion"]
+      question: t("trustCenter.faq_biz_case_study_q", "Why are live photo reviews replacing long written essays for local discovery?"),
+      answer: t("trustCenter.faq_biz_case_study_a", "Modern buyers rarely read 500-word written reviews. A full-screen vertical photo paired with a clean 1–5 whole-star rating gives instant visual proof in a single glance."),
+      tags: ["visual proof", "local", "services", "discovery"]
     },
     {
       id: "biz-qr",
       category: "business",
-      question: t("trustCenter.faq_biz_qr_q", "How can businesses use QR codes to capture in-person video testimonials on the spot?"),
-      answer: t("trustCenter.faq_biz_qr_a", "Verified businesses can download branded QR table tents, counter cards, and receipt stickers from their dashboard. When customers scan the code, it launches the live 60-second front-camera review recorder instantly with the place pre-tagged."),
+      question: t("trustCenter.faq_biz_qr_q", "How can businesses use QR codes to capture in-person photo reviews on the spot?"),
+      answer: t("trustCenter.faq_biz_qr_a", "Verified businesses can download branded QR table tents, counter cards, and receipt stickers from their dashboard. When customers scan the code, it opens the live Yoouz camera pre-tagged to the business with zero sign-up required."),
       tags: ["qr code", "in store", "counter card", "table tent", "instant capture"]
     },
     {
       id: "biz-3",
       category: "business",
-      question: t("trustCenter.faq_biz_3_q", "Can businesses embed Yoouz video reviews on their own websites?"),
-      answer: t("trustCenter.faq_biz_3_a", "Yes! Verified businesses can copy responsive iframe video feed embeds from their place drawer or Business Dashboard to display live, authentic 60-second customer video reviews directly on their e-commerce store, Shopify site, or landing page."),
+      question: t("trustCenter.faq_biz_3_q", "Can businesses embed Yoouz photo reviews on their own websites?"),
+      answer: t("trustCenter.faq_biz_3_a", "Yes! Verified businesses can copy responsive iframe review feed embeds from their place drawer or Business Dashboard to display live customer photo reviews directly on their e-commerce store, Shopify site, or landing page."),
       tags: ["embed", "iframe", "website", "widgets", "testimonials", "shopify"]
     },
     {
       id: "biz-4",
       category: "business",
-      question: t("trustCenter.faq_biz_4_q", "Can businesses export or download Branded Video Ads?"),
-      answer: t("trustCenter.faq_biz_4_a", "Yes! Claimed businesses can export customer video reviews as high-resolution branded video ad assets with official watermark overlays for use in social media campaigns, Instagram stories, TikTok ads, and marketing campaigns."),
+      question: t("trustCenter.faq_biz_4_q", "Can businesses export or download Branded Social Ads?"),
+      answer: t("trustCenter.faq_biz_4_a", "Yes! Claimed businesses can export customer photo reviews as high-resolution branded assets with official watermark overlays for use in social media campaigns, Instagram stories, and marketing campaigns."),
       tags: ["export", "branded ad", "ad export", "download", "marketing"]
     },
     {
       id: "biz-5",
       category: "business",
-      question: t("trustCenter.faq_biz_5_q", "Can businesses pay to remove or hide negative video reviews?"),
-      answer: t("trustCenter.faq_biz_5_a", "No. Yoouz is built on uncompromised trust and authenticity. We never delete or alter honest video reviews for payment. Reviews that violate safety or explicit content guidelines can be flagged for human moderation review, and owners can post pinned video replies to provide transparent resolutions."),
+      question: t("trustCenter.faq_biz_5_q", "Can businesses pay to remove or hide negative photo reviews?"),
+      answer: t("trustCenter.faq_biz_5_a", "No. Yoouz is built on uncompromised trust and authenticity. We never delete or alter honest photo reviews for payment. Reviews that violate safety or explicit content guidelines can be flagged for human moderation review, and owners can post official pinned replies."),
       tags: ["policy", "negative reviews", "moderation", "trust", "payment", "no pay to remove"]
     },
     {
@@ -462,57 +461,57 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "trust-1",
       category: "trust",
-      question: t("trustCenter.faq_trust_1_q", "Why do video reviews outperform traditional text feedback so drastically?"),
-      answer: t("trustCenter.faq_trust_1_a", "Written reviews are treated as quick signals to be scanned, whereas video testimonials are experienced through multi-sensory human processing. Humans are hardwired to evaluate vocal tone, facial micro-expressions, and sincerity. People retain 80% to 95% of a video message compared to only 10% to 20% of text, turning skepticism into confident belief."),
-      tags: ["text vs video", "psychology", "retention", "facial expressions", "sincerity", "trust"]
+      question: t("trustCenter.faq_trust_1_q", "Why do live photo reviews outperform traditional text feedback?"),
+      answer: t("trustCenter.faq_trust_1_a", "Text reviews are quick to fake and slow to verify. Live photos let customers see real food, interiors, receipts, products, and experiences captured on the spot with strict whole-star (1–5) scoring."),
+      tags: ["text vs photo", "visual proof", "trust"]
     },
     {
       id: "trust-2",
       category: "trust",
       question: t("trustCenter.faq_trust_2_q", "How does Yoouz eliminate fake reviews, AI bots, and automated spam?"),
-      answer: t("trustCenter.faq_trust_2_a", "With AI copywriters and bot farms making written text reviews effortless to manufacture, Yoouz enforces Proof of Presence™. Every review must be captured live through the device camera in the moment, completely eliminating pre-recorded video uploads, third-party stock footage, and automated text bots."),
-      tags: ["ai bots", "fake reviews", "proof of presence", "spam", "live recording", "authenticity"]
+      answer: t("trustCenter.faq_trust_2_a", "With AI copywriters and bot farms making written text reviews effortless to manufacture, Yoouz enforces Proof of Presence™. Every review photo must be snapped live through the device camera in the moment—blocking gallery uploads, stock imagery, and automated text bots."),
+      tags: ["ai bots", "fake reviews", "proof of presence", "spam", "live camera", "authenticity"]
     },
     {
       id: "trust-smear",
       category: "trust",
-      question: t("trustCenter.faq_trust_smear_q", "How does live video review capture protect businesses from competitor smear campaigns and review extortion?"),
-      answer: t("trustCenter.faq_trust_smear_a", "On legacy text review sites, unethical competitors or anonymous trolls can easily create dozens of burner accounts to post damaging 1-star text complaints. Yoouz neutralizes this threat through Proof of Presence™—requiring real individuals to show their face and speak live on camera, dismantling anonymous trolling and malicious smear attacks."),
+      question: t("trustCenter.faq_trust_smear_q", "How does live photo capture protect businesses from competitor smear campaigns?"),
+      answer: t("trustCenter.faq_trust_smear_a", "On legacy text review sites, competitors or anonymous trolls can paste dozens of fake 1-star text complaints from anywhere. Yoouz requires live camera capture on location or unboxing, dismantling copy-paste spam and bot attacks."),
       tags: ["smear campaign", "extortion", "protection", "competitors", "trolls", "integrity"]
     },
     {
       id: "trust-3",
       category: "trust",
-      question: t("trustCenter.faq_trust_3_q", "When should text be used versus video on a platform?"),
-      answer: t("trustCenter.faq_trust_3_a", "Text reviews provide efficient, scannable proof when speed and volume outweigh the need for deep trust. However, when a purchase feels like an investment, involves a high-ticket service, or requires unwavering credibility, video testimonials act as essential trust anchors that dismantle customer skepticism."),
-      tags: ["text vs video", "high ticket", "trust anchor", "consideration", "comparison"]
+      question: t("trustCenter.faq_trust_3_q", "Why does Yoouz use strict 1–5 whole-star ratings for every review?"),
+      answer: t("trustCenter.faq_trust_3_a", "Individual reviews never use confusing half-stars or ambiguous decimals. Reviewers tap a clear whole rating from 1 to 5 solid stars right after snapping their live photo."),
+      tags: ["stars", "rating", "whole numbers", "clarity"]
     },
     {
       id: "trust-4",
       category: "trust",
       question: t("trustCenter.faq_trust_4_q", "Is my private email address exposed on my public profile or business claim badge?"),
-      answer: t("trustCenter.faq_trust_4_a", "No. Yoouz strictly protects user privacy. Public profiles and claimed business badges remain private and anonymous (e.g., 'Business Claimed') without ever displaying personal or owner email addresses to the public."),
+      answer: t("trustCenter.faq_trust_4_a", "No. Yoouz strictly protects user privacy. Public profiles and claimed business badges remain private and anonymous (e.g., U/A4B6C8 or 'Business Claimed') without ever displaying personal or owner email addresses to the public."),
       tags: ["privacy", "email", "anonymous", "protection", "security"]
     },
     {
       id: "trust-5",
       category: "trust",
       question: t("trustCenter.faq_trust_5_q", "Is Yoouz a misspelling or affiliated with YouTube, Yoox, Youz, or Yelp?"),
-      answer: t("trustCenter.faq_trust_5_a", "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform. It is NOT a misspelling, typo, or subsidiary of YouTube, Yoox, Youz, Yelp, or any other company. Yoouz is specifically dedicated to authentic 60-second live camera video reviews."),
+      answer: t("trustCenter.faq_trust_5_a", "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform. It is NOT a misspelling, typo, or subsidiary of YouTube, Yoox, Youz, Yelp, or any other company. Yoouz is dedicated to authentic live photo reviews."),
       tags: ["yoouz", "name", "spelling", "youtube", "yoox", "yelp", "independent", "brand"]
     },
     {
       id: "trust-6",
       category: "trust",
       question: t("trustCenter.faq_trust_6_q", "How are community guidelines and safety rules enforced?"),
-      answer: t("trustCenter.faq_trust_6_a", "Every video review and comment includes a report flag button. Community submissions triggering policy violations (hate speech, spam, harassment, or explicit content) are queued for immediate review and removal."),
+      answer: t("trustCenter.faq_trust_6_a", "Every photo review and comment includes a report flag button. Community submissions triggering policy violations (hate speech, spam, harassment, or explicit content) are queued for immediate review and removal."),
       tags: ["guidelines", "safety", "report", "moderation", "flag"]
     },
     {
       id: "trust-7",
       category: "trust",
       question: t("trustCenter.faq_trust_7_q", "What are Verified Reviewer and Top Reviewer badges?"),
-      answer: t("trustCenter.faq_trust_7_a", "Active reviewers who regularly contribute high-quality video reviews across local venues and domains automatically earn 'Verified Reviewer' and 'Top Reviewer' badges, highlighting their standing in the community."),
+      answer: t("trustCenter.faq_trust_7_a", "Active reviewers who regularly contribute authentic live photo reviews across local venues and domains automatically earn 'Verified Reviewer' and 'Top Reviewer' badges, highlighting their standing in the community."),
       tags: ["verified reviewer", "top reviewer", "badges", "reputation"]
     },
 
@@ -520,22 +519,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "tech-1",
       category: "technical",
-      question: t("trustCenter.faq_tech_1_q", "How do video reviews impact Google Search, Google Maps, and AI answer engines?"),
-      answer: t("trustCenter.faq_tech_1_a", "Modern search engines (like Google) and AI discovery engines (Perplexity, ChatGPT, Gemini) prioritize rich, verified user-generated video content. Yoouz profiles and 60-second video reviews produce high dwell times and structured Schema.org VideoObject metadata that help businesses rank prominently in local map packs and AI search overviews."),
+      question: t("trustCenter.faq_tech_1_q", "How do live photo reviews impact Google Search, Google Maps, and AI answer engines?"),
+      answer: t("trustCenter.faq_tech_1_a", "Modern search engines (like Google) and AI discovery engines (Perplexity, ChatGPT, Gemini) prioritize rich, verified user-generated visual proof. Yoouz profiles and photo reviews produce structured Schema.org ImageObject & Review metadata that help businesses rank prominently in local search and AI overviews."),
       tags: ["seo", "google", "ai overview", "search ranking", "schema", "rich snippets"]
     },
     {
       id: "tech-seo-snippets",
       category: "technical",
-      question: t("trustCenter.faq_tech_seo_snippets_q", "How do video testimonials improve Google search rankings and generate Video Rich Snippets?"),
-      answer: t("trustCenter.faq_tech_seo_snippets_a", "Video generates significantly higher dwell time and lower bounce rates—two primary Google ranking metrics. Every Yoouz video is structured with Schema.org/VideoObject and Review metadata, enabling search engines to surface interactive video thumbnails, star ratings, and timestamps in Google Search and Google Video results."),
-      tags: ["rich snippets", "video object", "google search", "schema.org", "ranking"]
+      question: t("trustCenter.faq_tech_seo_snippets_q", "How do photo reviews improve Google search rankings and generate Rich Snippets?"),
+      answer: t("trustCenter.faq_tech_seo_snippets_a", "Every Yoouz photo review is structured with Schema.org/Review and ImageObject metadata, enabling search engines to surface visual review thumbnails and star ratings in search results."),
+      tags: ["rich snippets", "image object", "google search", "schema.org", "ranking"]
     },
     {
       id: "tech-ai-engines",
       category: "technical",
-      question: t("trustCenter.faq_tech_ai_engines_q", "Do video reviews help businesses appear in Google AI Overviews, ChatGPT, and Perplexity?"),
-      answer: t("trustCenter.faq_tech_ai_engines_a", "Yes. Generative AI engines look for verified entity signals rather than easily faked text snippets. Because Yoouz ties reviews to real human faces, authentic vocal transcripts, and geolocation, AI engines reference Yoouz reviews as primary proof when answering local and brand queries."),
+      question: t("trustCenter.faq_tech_ai_engines_q", "Do photo reviews help businesses appear in Google AI Overviews, ChatGPT, and Perplexity?"),
+      answer: t("trustCenter.faq_tech_ai_engines_a", "Yes. Generative AI engines look for verified entity signals rather than easily faked text snippets. Because Yoouz ties reviews to live photos, geolocation, and whole-number ratings, AI engines reference Yoouz reviews as authentic proof."),
       tags: ["ai overviews", "chatgpt", "perplexity", "gemini", "entity signals", "search"]
     },
     {
@@ -548,37 +547,37 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "tech-3",
       category: "technical",
-      question: t("trustCenter.faq_tech_3_q", "How can I share video reviews or business profiles with friends?"),
-      answer: t("trustCenter.faq_tech_3_a", "Tap the 'Share' button on any video or place to generate instant direct web links, downloadable QR codes, or share directly to WhatsApp, X (Twitter), Facebook, LinkedIn, or Email."),
+      question: t("trustCenter.faq_tech_3_q", "How can I share photo reviews or business profiles with friends?"),
+      answer: t("trustCenter.faq_tech_3_a", "Tap the 'Share' button on any photo review or place to generate instant direct web links, downloadable QR codes, or share directly to WhatsApp, X (Twitter), Facebook, LinkedIn, or Email."),
       tags: ["share", "qr code", "social", "link", "whatsapp"]
     },
     {
       id: "tech-4",
       category: "technical",
-      question: t("trustCenter.faq_tech_4_q", "Can I customize the appearance of embedded video feeds?"),
-      answer: t("trustCenter.faq_tech_4_a", "Yes! The embed builder allows businesses to preview mobile and desktop views, customize dark/light themes, set video limits, and toggle autoplay or sound controls."),
-      tags: ["embed", "customization", "themes", "autoplay"]
+      question: t("trustCenter.faq_tech_4_q", "Can I customize the appearance of embedded review feeds?"),
+      answer: t("trustCenter.faq_tech_4_a", "Yes! The embed builder allows businesses to preview mobile and desktop views, customize dark/light themes, and set display limits."),
+      tags: ["embed", "customization", "themes"]
     },
     {
       id: "tech-5",
       category: "technical",
-      question: t("trustCenter.faq_tech_5_q", "Where can I find video reviews or places I have saved for later?"),
-      answer: t("trustCenter.faq_tech_5_a", "Any video review or business listing you bookmark or save is immediately stored in your 'Bookmarks' tab in the main navigation menu for quick access on any device."),
+      question: t("trustCenter.faq_tech_5_q", "Where can I find photo reviews or places I have saved for later?"),
+      answer: t("trustCenter.faq_tech_5_a", "Any photo review or business listing you bookmark or save is immediately stored in your 'Bookmarks' tab in the main navigation menu for quick access on any device."),
       tags: ["bookmarks", "saved", "favorites", "navigation"]
     },
     {
       id: "tech-6",
       category: "technical",
-      question: t("trustCenter.faq_tech_6_q", "How do I navigate between video reviews on desktop and mobile?"),
-      answer: t("trustCenter.faq_tech_6_a", "On mobile, swipe up or down to move between videos. On desktop, use your keyboard arrow keys, mouse wheel, or the fixed vertical Up (^) and Down (v) floating chevron buttons. The Up chevron is dimmed on the first video to indicate you are at the start of the feed."),
+      question: t("trustCenter.faq_tech_6_q", "How do I navigate between photo reviews on desktop and mobile?"),
+      answer: t("trustCenter.faq_tech_6_a", "On mobile, swipe up or down in the full-screen vertical feed to move between photo reviews. On desktop, use your keyboard arrow keys, mouse wheel, or the vertical chevron buttons."),
       tags: ["navigation", "desktop", "mobile", "chevrons", "scroll"]
     },
     {
       id: "tech-7",
       category: "technical",
-      question: t("trustCenter.faq_tech_7_q", "How does Yoouz work offline as a Progressive Web App (PWA)?"),
-      answer: t("trustCenter.faq_tech_7_a", "Yoouz supports PWA offline capabilities and IndexedDB video caching, allowing instant zero-latency video playback and offline review draft queues when connectivity is low."),
-      tags: ["pwa", "offline", "cache", "indexeddb", "speed"]
+      question: t("trustCenter.faq_tech_7_q", "How does Yoouz work as a Progressive Web App (PWA)?"),
+      answer: t("trustCenter.faq_tech_7_a", "Yoouz is a fast, mobile-first PWA supporting instant full-screen vertical photo feed browsing and direct camera capture right from your browser without downloading an app."),
+      tags: ["pwa", "mobile", "camera", "speed"]
     },
     {
       id: "tech-8",
@@ -591,7 +590,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       id: "tech-9",
       category: "technical",
       question: t("trustCenter.faq_tech_9_q", "Is Yoouz free for consumers and businesses?"),
-      answer: t("trustCenter.faq_tech_9_a", "Yes. Browsing, discovering local venues, posting authentic 60-second video reviews, and venue profile claiming are included for all users and business operators with no hidden fees."),
+      answer: t("trustCenter.faq_tech_9_a", "Yes. Browsing, discovering local venues, posting authentic live photo reviews, and venue profile claiming are included for all users and business operators with no hidden fees."),
       tags: ["free", "pricing", "cost", "subscription"]
     }
   ];
@@ -734,13 +733,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <span>{t("trustCenter.theYoouzStandard", "The Yoouz Standard")}</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
-                    {t("trustCenter.trustEvolutionTitle", "The Evolution of Trust: From Static Text to Absolute Belief")}
+                    {t("trustCenter.trustEvolutionTitle", "The Evolution of Trust: From Static Text to Visual Proof")}
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
                     {t("trustCenter.trustEvolutionPara1", "For years, online reviews relied on static text. Written reviews served a simple baseline purpose—giving quick signals on whether a place was safe to consider. But text has a structural limit. In a digital landscape saturated with review inflation, bot networks, and AI-generated copy, written text is too easy to manufacture.")}
                   </p>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
-                    {t("trustCenter.trustEvolutionPara2", "When a customer asks \"Is this actually true?\", written reviews stop converting. Yoouz bridges that gap by moving past sterile text to create real human proof. We eliminate pre-recorded uploads, stock video files, and scripted corporate marketing. Every review on Yoouz is captured live through the device camera, restricted to a sharp 60-second focus, and tied directly to a verifiable human face and voice.")}
+                    {t("trustCenter.trustEvolutionPara2", "When a customer asks \"Is this actually true?\", written reviews stop converting. Yoouz bridges that gap with zero-friction, real-time visual proof. We eliminate gallery uploads, stock photos, and scripted marketing. Every review on Yoouz is captured live through the device camera, paired with a whole-number 1–5 star rating, and published in seconds.")}
                   </p>
                 </div>
 
@@ -748,12 +747,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
                     <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
-                      <Video className="w-4 h-4" />
+                      <Camera className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule1Title", "Live Front-Camera Only")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule1Title", "Live Camera Only")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.rule1Desc", "No pre-recorded MP4 uploads or stock footage. Real customers capturing authentic experiences.")}
+                      {t("trustCenter.rule1Desc", "Zero gallery uploads or saved stock photos. Snap a live photo on the spot using your front or rear camera.")}
                     </p>
                   </div>
 
@@ -762,9 +761,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       <Lock className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule2Title", "60-Second Focus")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule2Title", "Strict 1–5 Whole Stars")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.rule2Desc", "Concise, high-impact video reviews that deliver immediate value in under one minute.")}
+                      {t("trustCenter.rule2Desc", "Clean, decisive whole-number ratings from 1 to 5 stars paired directly with live visual proof.")}
                     </p>
                   </div>
 
@@ -773,15 +772,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       <Users className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "3-Way Dialogue")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "Zero-Friction Onboarding")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.rule3Desc", "Living comment threads connecting Reviewers, curious Viewers, and Verified Place Owners.")}
+                      {t("trustCenter.rule3Desc", "Anonymous U/XXXXXX identities let anyone review instantly—and optionally claim a @handle anytime.")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Section: Why Live Video Testimonials Win Every Time */}
+              {/* Section: Why Live Photo Proof Wins Every Time */}
               <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-2 max-w-3xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
@@ -789,10 +788,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <span>{t("trustCenter.conversionScienceLabel", "The Conversion Science")}</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {t("trustCenter.conversionScienceTitle", "Why Live Video Wins Every Time")}
+                    {t("trustCenter.conversionScienceTitle", "Why Live Visual Proof Wins Every Time")}
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                    {t("trustCenter.conversionScienceDesc", "Video doesn't just display an opinion—it transmits emotional conviction, body language, and unmistakable truth.")}
+                    {t("trustCenter.conversionScienceDesc", "Live photos show what actually happened in the moment—replacing anonymous text paragraphs with undeniable proof.")}
                   </p>
                 </div>
 
@@ -802,9 +801,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                       <Zap className="w-5 h-5 text-zinc-200" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point1Title", "1. Instant Human Connection (No Corporate Script)")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.point1Title", "1. Instant Reality Check (No Marketing Fluff)")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.point1Desc", "When users watch a video, they stop evaluating marketing claims and start evaluating a human. Micro-expressions, a natural pause, vocal tone, and body language carry emotional weight that makes feedback feel instantly genuine and unscripted.")}
+                      {t("trustCenter.point1Desc", "When users swipe through live photo reviews, they see real plates, real rooms, real receipts, and genuine moments in natural lighting instead of polished ads.")}
                     </p>
                   </div>
 
@@ -815,7 +814,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.point2Title", "2. Concrete Specifics Over Generic Buzzwords")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.point2Desc", "Written testimonials often rely on interchangeable buzzwords like \"great service, highly recommend\". Video captures unscripted specifics—real dish walkthroughs, exact timelines, and concrete outcomes that provide undeniable proof.")}
+                      {t("trustCenter.point2Desc", "Written testimonials rely on interchangeable buzzwords like \"great service, highly recommend\". Live photos show true quality, portion sizes, and atmosphere at a glance.")}
                     </p>
                   </div>
 
@@ -824,9 +823,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                       <TrendingUp className="w-5 h-5 text-zinc-200" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point3Title", "3. Up to 20x Stronger Brand Trust & 80–95% Retention")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.point3Title", "3. Full-Screen Vertical Feed Speed")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.point3Desc", "Brand trust multiplies exponentially when prospective customers relate directly to a speaker showing a service or place in action. Viewers retain roughly 80% to 95% of a message delivered via video compared to only 10% to 20% from text.")}
+                      {t("trustCenter.point3Desc", "Swipe up or down through full-screen photo reviews paired with whole-star 1–5 ratings and verified venue metadata without wasting time.")}
                     </p>
                   </div>
 
@@ -835,9 +834,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                       <ShieldCheck className="w-5 h-5 text-zinc-200" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point4Title", "4. The Trust Anchor for High-Stakes Decisions")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.point4Title", "4. Trust Anchor for Real Decisions")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.point4Desc", "When a purchase feels like an investment rather than an expense—such as medical care, wedding venues, premium dining, or high-end services—video testimonials act as definitive trust anchors that dismantle customer skepticism.")}
+                      {t("trustCenter.point4Desc", "Before booking dining, hotels, services, or online stores, real customer photos captured live act as definitive proof that dismantles buyer skepticism.")}
                     </p>
                   </div>
 
@@ -846,9 +845,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
                       <Globe className="w-5 h-5 text-zinc-200" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point5Title", "5. A Permanent Competitive Moat & Modern AI Discovery")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.point5Title", "5. Permanent Competitive Moat & AI Discovery")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.point5Desc", "While text review volume can be artificially copied overnight, building a library of authentic 60-second video testimonials creates an uncatchable advantage. Modern search engines and AI answer engines (Google AI Overview, Gemini, Perplexity) prioritize authentic video proof over faceless text snippets.")}
+                      {t("trustCenter.point5Desc", "Text review volume can be copied overnight, but building a library of live customer photo reviews creates an uncatchable trust advantage across Google Search and AI discovery engines.")}
                     </p>
                   </div>
                 </div>
@@ -856,15 +855,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
               {/* 4 Bento Cards: Core Pillars */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Bento 1: No Fake Accounts */}
+                {/* Bento 1 */}
                 <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
                   <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                    <Video className="w-6 h-6" />
+                    <Camera className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">{t("trustCenter.bento1Title", "Immutable Face & Voice Identity")}</h3>
+                    <h3 className="text-base font-black text-white">{t("trustCenter.bento1Title", "Live Camera Visual Proof")}</h3>
                     <p className="text-xs text-zinc-300 leading-relaxed font-normal">
-                      {t("trustCenter.bento1Desc", "Every reviewer builds an open visual review portfolio. Consistent face, verified voice, and historical timeline give viewers immediate confidence that reviews are authored by genuine people.")}
+                      {t("trustCenter.bento1Desc", "Every reviewer builds a public visual review trail. Instant camera capture prevents old gallery uploads, edited ads, and automated spam.")}
                     </p>
                   </div>
                   <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-300">
@@ -925,7 +924,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 </div>
               </div>
 
-              {/* Section: The SEO & Discovery Power of Video Testimonials */}
+              {/* Section: The SEO & Discovery Power of Photo Reviews */}
               <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
                 <div className="space-y-2 max-w-3xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
@@ -933,21 +932,21 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <span>{t("trustCenter.seoVisibilityLabel", "Search Engine & AI Visibility")}</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {t("trustCenter.seoAdvantageTitle", "The SEO & Discovery Advantage of Video Reviews")}
+                    {t("trustCenter.seoAdvantageTitle", "The SEO & Discovery Advantage of Photo Reviews")}
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                    {t("trustCenter.seoAdvantageDesc", "Search engines like Google and generative AI engines prioritize authentic video entities over faceless text snippets.")}
+                    {t("trustCenter.seoAdvantageDesc", "Search engines like Google and generative AI engines prioritize authentic visual entities over faceless text snippets.")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
                   <div className="bg-zinc-800/50 p-5 rounded-2xl border border-zinc-700/40 space-y-2">
                     <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
-                      <Video className="w-4 h-4" />
+                      <Camera className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.seoRichSnippetsTitle", "Google Video Rich Snippets")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.seoRichSnippetsTitle", "Google Review Rich Snippets")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.seoRichSnippetsDesc", "Structured Schema.org VideoObject and Review metadata display video badges, star ratings, and thumbnails directly in Google search results.")}
+                      {t("trustCenter.seoRichSnippetsDesc", "Structured Schema.org ImageObject and Review metadata display star ratings and visual thumbnails directly in Google search results.")}
                     </p>
                   </div>
 
@@ -957,7 +956,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.aiRecommendationsTitle", "AI Grounded Recommendations")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.aiRecommendationsDesc", "Google AI Overviews, Gemini, ChatGPT, and Perplexity index spoken transcripts and geolocation to recommend highly rated authentic venues.")}
+                      {t("trustCenter.aiRecommendationsDesc", "Google AI Overviews, Gemini, ChatGPT, and Perplexity index verified geolocation and star ratings to recommend authentic venues.")}
                     </p>
                   </div>
 
@@ -967,7 +966,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
                     <h4 className="text-sm font-black text-white">{t("trustCenter.qrCaptureTitle", "In-Store QR Capture")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.qrCaptureDesc", "Merchants download instant table tents and counter cards so happy customers can scan and record 60-second video testimonials on the spot.")}
+                      {t("trustCenter.qrCaptureDesc", "Merchants download instant table tents and counter cards so happy customers can scan and snap a live photo review on the spot.")}
                     </p>
                   </div>
                 </div>
@@ -1135,7 +1134,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <ExternalLink className="w-6 h-6 text-white" />
                     <h4 className="font-bold text-sm text-white">{t("trustCenter.embedTrustFeedsTitle", "Embed Trust Feeds")}</h4>
                     <p className="text-xs text-zinc-200 leading-relaxed">
-                      {t("trustCenter.embedTrustFeedsDesc", "Easily embed genuine customer video review carousels onto your landing page to increase conversions.")}
+                      {t("trustCenter.embedTrustFeedsDesc", "Easily embed genuine customer photo review carousels onto your landing page to increase conversions.")}
                     </p>
                   </div>
                 </div>
@@ -1250,10 +1249,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   </div>
 
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("record.title", "Recording Privacy")}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("record.title", "Capture Privacy")}</span>
                     <h4 className="text-xs font-black text-white">{t("trustCenter.recordingPillarTitle", "Real-Time Camera Only")}</h4>
                     <p className="text-[11px] text-zinc-200 leading-normal">
-                      {t("trustCenter.recordingPillarDesc", "Camera and microphone data are accessed strictly during active recording. We never access photo libraries or pre-recorded storage.")}
+                      {t("trustCenter.recordingPillarDesc", "Camera feeds are accessed strictly during live photo capture. We never access photo libraries or saved gallery files.")}
                     </p>
                   </div>
 

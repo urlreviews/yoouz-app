@@ -10,6 +10,7 @@ import { VideoReview, Place } from '../types';
 import { exportBrandedAdVideo, BrandedExportProgress } from '../utils/brandedVideoExporter';
 import { getProxiedImageUrl } from '../utils/logoUtils';
 import { CopoBrandLogo } from './CopoBrandLogo';
+import { getRoundedRating } from './CopoStarRating';
 
 interface CopoBrandedAdExportModalProps {
   isOpen: boolean;
@@ -35,9 +36,9 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
 
   const placeName = place?.name || video.placeName || 'Yoouz';
   const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
-  const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
-  const ratingScore = rawRating.toFixed(1);
-  const ratingNum = Math.round(Number(ratingScore));
+  const rawRating = getRoundedRating(typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5));
+  const ratingScore = String(rawRating);
+  const ratingNum = rawRating;
   const avatarUrl = (video.author as any)?.avatarUrl || video.author?.avatar || (video as any).authorAvatar || "";
   const placeLogoUrl = place?.logoUrl || video.placeLogoUrl || (video as any).logoUrl || "";
 
@@ -83,7 +84,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
               <Star className="w-4 h-4 fill-white text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">Download Video Review</h3>
+              <h3 className="text-sm font-bold text-white tracking-tight">Download Photo Review</h3>
               <p className="text-[11px] text-zinc-400">Ultra-HD with Full Branding</p>
             </div>
           </div>
@@ -192,9 +193,9 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                       </span>
                     ))}
                   </div>
-                  {/* Line 3: Video review for domain */}
+                  {/* Line 3: Photo review for domain */}
                   <span className="text-zinc-400 text-[10px] leading-tight truncate">
-                    Video review for {targetDomain}
+                    Photo review for {targetDomain}
                   </span>
                 </div>
               </div>

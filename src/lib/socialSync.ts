@@ -706,7 +706,7 @@ export async function sendWelcomeNotificationForNewUser(currentUser: UserProfile
         avatar: "/yoouz-avatar-white.png",
         email: "team@yoouz.com"
       },
-      text: "Welcome to Yoouz! Real people, real reviews. Explore authentic video reviews near you or record your first 60s review."
+      text: "Welcome to Yoouz! Real people, real proof. Explore live photo reviews near you or snap your first review."
     });
     if (typeof window !== "undefined") {
       localStorage.setItem(welcomeKey, "true");
