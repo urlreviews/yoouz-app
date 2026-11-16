@@ -2210,10 +2210,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             ctx.fillText(qrTableLabel.toUpperCase(), 970, 143);
           }
 
-          // Draw Business Brand Logo Box at top center (y = 130)
+          // Draw Business Brand Logo Box at top center (y = 120)
           ctx.fillStyle = "#ffffff";
           ctx.beginPath();
-          ctx.roundRect(530, 130, 140, 140, 28);
+          ctx.roundRect(530, 120, 140, 140, 28);
           ctx.fill();
           ctx.strokeStyle = "#e4e4e7";
           ctx.lineWidth = 4;
@@ -2222,9 +2222,9 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           if (logoImg) {
             ctx.save();
             ctx.beginPath();
-            ctx.roundRect(540, 140, 120, 120, 20);
+            ctx.roundRect(540, 130, 120, 120, 20);
             ctx.clip();
-            ctx.drawImage(logoImg, 540, 140, 120, 120);
+            ctx.drawImage(logoImg, 540, 130, 120, 120);
             ctx.restore();
           } else {
             const brandInitial = (currentPlace.name || "B").charAt(0).toUpperCase();
@@ -2232,7 +2232,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
             ctx.font = "900 64px system-ui, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(brandInitial, 600, 202);
+            ctx.fillText(brandInitial, 600, 192);
             ctx.textBaseline = "alphabetic";
           }
 
@@ -2240,23 +2240,23 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           ctx.fillStyle = "#ffffff";
           ctx.font = "900 60px system-ui, sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText(currentPlace.name || 'Venue', 600, 320);
+          ctx.fillText(currentPlace.name || 'Venue', 600, 330);
 
           // URL subtitle
           ctx.fillStyle = "#a1a1aa";
           ctx.font = "bold 26px system-ui, sans-serif";
-          ctx.fillText(`yoouz.com/reviews/${getPlaceSlug(currentPlace)}`, 600, 365);
+          ctx.fillText(`yoouz.com/reviews/${getPlaceSlug(currentPlace)}`, 600, 380);
 
           const avgRatingStr = Number(currentPlace.rating || 5).toFixed(1);
           const reviewCount = Math.max(1, placeVideos.length);
           ctx.fillStyle = "#fbbf24";
           ctx.font = "900 30px system-ui, sans-serif";
-          ctx.fillText(`${avgRatingStr} ★ (${reviewCount} Photo Reviews)`, 600, 420);
+          ctx.fillText(`${avgRatingStr} ★ (${reviewCount} Photo Reviews)`, 600, 435);
 
           // Callout Heading Badge
           ctx.fillStyle = "#18181b";
           ctx.beginPath();
-          ctx.roundRect(250, 470, 700, 70, 35);
+          ctx.roundRect(250, 485, 700, 70, 35);
           ctx.fill();
           ctx.strokeStyle = "#3f3f46";
           ctx.lineWidth = 3;
@@ -2264,24 +2264,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
           ctx.fillStyle = "#ffffff";
           ctx.font = "900 28px system-ui, sans-serif";
-          ctx.fillText((qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW').toUpperCase(), 600, 515);
+          ctx.fillText((qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW').toUpperCase(), 600, 530);
 
           // QR Code background box
           ctx.fillStyle = "#ffffff";
           ctx.beginPath();
-          ctx.roundRect(260, 570, 680, 680, 36);
+          ctx.roundRect(260, 585, 680, 680, 36);
           ctx.fill();
           ctx.strokeStyle = "#e4e4e7";
           ctx.lineWidth = 4;
           ctx.stroke();
 
           // Draw QR code onto export canvas
-          ctx.drawImage(qrCanvas, 320, 630, 560, 560);
+          ctx.drawImage(qrCanvas, 320, 645, 560, 560);
 
           // Center star overlay on QR
           ctx.fillStyle = "#09090b";
           ctx.beginPath();
-          ctx.arc(600, 910, 55, 0, Math.PI * 2);
+          ctx.arc(600, 925, 55, 0, Math.PI * 2);
           ctx.fill();
           ctx.strokeStyle = "#ffffff";
           ctx.lineWidth = 6;
@@ -2291,17 +2291,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           ctx.font = "900 48px system-ui, sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText("★", 600, 912);
+          ctx.fillText("★", 600, 927);
 
           // Footer instructions
           ctx.textBaseline = "alphabetic";
           ctx.fillStyle = "#d4d4d8";
           ctx.font = "bold 30px system-ui, sans-serif";
-          ctx.fillText("Scan with your phone camera app to review", 600, 1350);
+          ctx.fillText("Scan with your phone camera app to review", 600, 1365);
 
           ctx.fillStyle = "#71717a";
           ctx.font = "bold 22px system-ui, sans-serif";
-          ctx.fillText("Powered by Yoouz Live Photo Reviews", 600, 1405);
+          ctx.fillText("Powered by Yoouz Live Photo Reviews", 600, 1420);
 
           const pngUrl = exportCanvas.toDataURL("image/png");
           const downloadLink = document.createElement("a");
