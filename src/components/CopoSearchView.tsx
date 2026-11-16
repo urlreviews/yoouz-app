@@ -872,16 +872,17 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         <main className={isMobileModal ? "w-full max-w-xl flex flex-col items-center mt-2" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-5 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center"}>
           {/* 2. Hero Copy - Identical to CopoHomePage */}
           {!isMobileModal && (
-            <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-9 animate-in fade-in duration-300 px-2">
-              <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.03] sm:leading-[1.05]">
+            <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-9 animate-in fade-in duration-300 px-1">
+              <h1 className="text-[34px] xs:text-[38px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.04] sm:leading-[1.05]">
                 <span className="block">See the Truth</span>
                 <span className="block mt-0.5 sm:mt-1">Before You Decide</span>
               </h1>
-              <p className="text-white/95 text-[15.5px] xs:text-[17px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3.5 sm:mt-4">
+              <p className="text-white/95 text-[15px] xs:text-[16px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3 sm:mt-4">
                 A picture is worth a thousand words.
               </p>
-              <p className="text-zinc-400 text-[13.5px] xs:text-[14.5px] sm:text-[16px] md:text-[16.5px] mt-1.5 sm:mt-2 leading-[1.55] max-w-[335px] xs:max-w-[385px] sm:max-w-lg mx-auto font-normal text-balance">
-                Search any place or brand to see live camera photo reviews and star ratings, or snap your own in seconds.
+              <p className="text-zinc-400 text-[12.5px] xs:text-[13.5px] sm:text-[15.5px] md:text-[16px] mt-1.5 sm:mt-2 leading-[1.48] sm:leading-[1.55] mx-auto font-normal tracking-[-0.01em]">
+                <span className="block">Search any place or brand to see live photo reviews</span>
+                <span className="block">and star ratings, or snap your own in seconds.</span>
               </p>
             </div>
           )}

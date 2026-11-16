@@ -755,8 +755,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-b from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none md:hidden" aria-hidden="true" />
         
         {/* 2. Hero Copy - Luxury 3-tier editorial typography hierarchy for mobile & desktop */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-2 sm:mb-8 md:mb-7 animate-in fade-in duration-300 relative z-10 px-2">
-          <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.03] sm:leading-[1.05]">
+        <div className="w-full text-center max-w-2xl mx-auto mb-2 sm:mb-8 md:mb-7 animate-in fade-in duration-300 relative z-10 px-1">
+          <h1 className="text-[34px] xs:text-[38px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.04] sm:leading-[1.05]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
@@ -770,19 +770,31 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             )}
           </h1>
 
-          <p className="text-white/95 text-[15.5px] xs:text-[17px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3.5 sm:mt-4">
+          <p className="text-white/95 text-[15px] xs:text-[16px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3 sm:mt-4">
             A picture is worth a thousand words.
           </p>
 
-          <p className="text-zinc-400 text-[13.5px] xs:text-[14.5px] sm:text-[16px] md:text-[16.5px] mt-1.5 sm:mt-2 leading-[1.55] max-w-[335px] xs:max-w-[385px] sm:max-w-lg mx-auto font-normal text-balance">
-            {searchMode === "review"
-              ? (headerSubtitle || "Search any business, place, or URL below to snap a live camera photo review.")
-              : "Search any place or brand to see live camera photo reviews and star ratings, or snap your own in seconds."}
+          <p className="text-zinc-400 text-[12.5px] xs:text-[13.5px] sm:text-[15.5px] md:text-[16px] mt-1.5 sm:mt-2 leading-[1.48] sm:leading-[1.55] mx-auto font-normal tracking-[-0.01em]">
+            {searchMode === "review" ? (
+              headerSubtitle ? (
+                <span className="block max-w-md mx-auto text-balance">{headerSubtitle}</span>
+              ) : (
+                <>
+                  <span className="block">Search any business, place, or URL below</span>
+                  <span className="block">to snap a live camera photo review in seconds.</span>
+                </>
+              )
+            ) : (
+              <>
+                <span className="block">Search any place or brand to see live photo reviews</span>
+                <span className="block">and star ratings, or snap your own in seconds.</span>
+              </>
+            )}
           </p>
         </div>
 
         {/* 3. Search Component - Anchored cleanly below headline & subtitle on all screen sizes */}
-        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-5 xs:mt-6 sm:mt-7 mb-6 sm:mb-8 md:mt-1 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
+        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-4 xs:mt-5 sm:mt-7 mb-6 sm:mb-8 md:mt-1 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
             <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
               <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
