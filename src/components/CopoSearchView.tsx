@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Search, Globe, Loader2, Camera, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
@@ -73,10 +73,34 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     return filtered.length > 0 ? filtered : sorted.slice(0, 10);
   }, [videos]);
 
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScrollState = useCallback(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 15);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 15);
+  }, []);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    checkScrollState();
+    el.addEventListener("scroll", checkScrollState, { passive: true });
+    window.addEventListener("resize", checkScrollState);
+    return () => {
+      el.removeEventListener("scroll", checkScrollState);
+      window.removeEventListener("resize", checkScrollState);
+    };
+  }, [checkScrollState, trendingVideos.length]);
+
   const scrollCarousel = (direction: "left" | "right") => {
     if (carouselRef.current) {
-      const scrollAmount = direction === "left" ? -400 : 400;
+      const scrollAmount = direction === "left" ? -440 : 440;
       carouselRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      setTimeout(checkScrollState, 350);
     }
   };
 
@@ -941,17 +965,31 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <>
                     <button
                       type="button"
-                      onClick={() => scrollCarousel("left")}
-                      className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 items-center justify-center text-white shadow-2xl opacity-80 hover:opacity-100 transition-all z-20 cursor-pointer active:scale-95"
-                      aria-label="Previous videos"
+                      onClick={() => {
+                        if (canScrollLeft) scrollCarousel("left");
+                      }}
+                      disabled={!canScrollLeft}
+                      className={`hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full items-center justify-center transition-all duration-300 z-20 ${
+                        canScrollLeft
+                          ? "bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 text-white shadow-2xl opacity-90 hover:opacity-100 cursor-pointer active:scale-95"
+                          : "bg-zinc-800/40 border border-zinc-700/40 text-zinc-400 opacity-30 cursor-not-allowed shadow-none"
+                      }`}
+                      aria-label="Previous photo reviews"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => scrollCarousel("right")}
-                      className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 items-center justify-center text-white shadow-2xl opacity-80 hover:opacity-100 transition-all z-20 cursor-pointer active:scale-95"
-                      aria-label="Next videos"
+                      onClick={() => {
+                        if (canScrollRight) scrollCarousel("right");
+                      }}
+                      disabled={!canScrollRight}
+                      className={`hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full items-center justify-center transition-all duration-300 z-20 ${
+                        canScrollRight
+                          ? "bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 text-white shadow-2xl opacity-90 hover:opacity-100 cursor-pointer active:scale-95"
+                          : "bg-zinc-800/40 border border-zinc-700/40 text-zinc-400 opacity-30 cursor-not-allowed shadow-none"
+                      }`}
+                      aria-label="Next photo reviews"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>

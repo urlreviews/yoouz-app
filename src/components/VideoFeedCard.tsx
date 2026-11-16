@@ -727,11 +727,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           )}
 
           {/* Bottom Area: Anonymous ID / Username, Timestamp, Whole-Number Stars + Mobile Action Rail */}
-          <div className="relative z-45 w-full flex items-end justify-between px-3 md:px-4.5 pt-2 pointer-events-none copo-video-bottom-metadata select-none pb-2">
+          <div className="relative z-45 w-full flex items-end justify-between px-3.5 md:px-5 pt-3 pointer-events-none copo-video-bottom-metadata select-none pb-4 sm:pb-6">
             <footer
               id={`copo-video-bottom-info-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-10 pb-2 px-3 -mx-3 rounded-b-3xl"
+              className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-2 sm:mb-4 bg-gradient-to-t from-black/95 via-black/60 to-transparent pt-12 pb-3 px-3.5 -mx-3.5 rounded-b-3xl"
             >
               <div className="flex flex-col gap-1 w-full">
                 {/* Line 1: Reviewer Anonymous ID / Username + Verified Badge + Timestamp */}

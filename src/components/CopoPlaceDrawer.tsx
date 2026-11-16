@@ -3019,24 +3019,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 </div>
 
-                {/* Primary Action Buttons: Download QR Code & Print Standee */}
-                <div className="w-full mt-4 grid grid-cols-2 gap-3">
+                {/* Premium Primary Action Button: Download High-Res QR Code */}
+                <div className="w-full mt-4">
                   <button
                     type="button"
                     onClick={handleDownloadPlaceQr}
-                    className="w-full py-3 px-4 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    className="w-full py-3.5 px-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-[0.98] text-zinc-950 rounded-2xl text-sm font-black shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer tracking-wide border border-amber-300/30"
                   >
-                    <Download className="w-4 h-4 text-zinc-950 shrink-0" />
-                    <span className="truncate">Download QR Code</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowQrPrintModal(true)}
-                    className="w-full py-3 px-4 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-750 text-white rounded-2xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-zinc-750 active:scale-95 shadow-md"
-                  >
-                    <Printer className="w-4 h-4 text-zinc-300 shrink-0" />
-                    <span className="truncate">Print Standee</span>
+                    <Download className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.5]" />
+                    <span>Download High-Res QR Code</span>
                   </button>
                 </div>
               </div>
