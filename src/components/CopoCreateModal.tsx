@@ -829,7 +829,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </div>
                 <h2 className="text-xl font-black text-white tracking-tight">Claim Your Reviewer Handle</h2>
                 <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your anonymous ID"}</span>. Choose a custom handle or save Face ID—or tap Done to keep browsing.
+                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your anonymous ID"}</span>. Choose a custom handle or save Face ID, or tap Done to keep browsing.
                 </p>
               </div>
 

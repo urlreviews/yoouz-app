@@ -754,36 +754,35 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* Subtle OLED ambient glow behind masthead for depth on mobile */}
         <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-b from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none md:hidden" aria-hidden="true" />
         
-        {/* 2. Hero Copy - Anchored tight under logo with luxury editorial typography, larger & wider */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-2 sm:mb-10 md:mb-6 animate-in fade-in duration-300 relative z-10 px-1">
-          <h1 className="text-[40px] xs:text-[46px] sm:text-5xl md:text-5xl lg:text-[50px] font-black text-white tracking-[-0.04em] leading-[0.98] sm:leading-[1.02]">
+        {/* 2. Hero Copy - Luxury 3-tier editorial typography hierarchy for mobile & desktop */}
+        <div className="w-full text-center max-w-2xl mx-auto mb-2 sm:mb-8 md:mb-7 animate-in fade-in duration-300 relative z-10 px-2">
+          <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.03] sm:leading-[1.05]">
             {searchMode === "review" ? (
               <>
                 <span className="block">Find a Business</span>
-                <span className="block mt-0.5 sm:mt-1.5">To Review</span>
+                <span className="block mt-0.5 sm:mt-1">To Review</span>
               </>
             ) : (
               <>
                 <span className="block">See the Truth</span>
-                <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
+                <span className="block mt-0.5 sm:mt-1">Before You Decide</span>
               </>
             )}
           </h1>
-          <p className="text-zinc-300/90 text-[15px] xs:text-[16.5px] sm:text-lg md:text-[18px] mt-3 sm:mt-4 leading-[1.45] max-w-[355px] xs:max-w-[400px] sm:max-w-xl mx-auto font-normal text-balance tracking-tight">
+
+          <p className="text-white/95 text-[15.5px] xs:text-[17px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3.5 sm:mt-4">
+            A picture is worth a thousand words.
+          </p>
+
+          <p className="text-zinc-400 text-[13.5px] xs:text-[14.5px] sm:text-[16px] md:text-[16.5px] mt-1.5 sm:mt-2 leading-[1.55] max-w-[335px] xs:max-w-[385px] sm:max-w-lg mx-auto font-normal text-balance">
             {searchMode === "review"
-              ? (headerSubtitle || "A picture is worth a thousand words. Search any business, place, or URL below to snap a live camera photo review.")
-              : (
-                <>
-                  <span className="text-white font-semibold">A picture is worth a thousand words.</span>{" "}
-                  Search any place or brand to see live camera photo reviews and star ratings—or snap your own in seconds.
-                </>
-              )
-            }
+              ? (headerSubtitle || "Search any business, place, or URL below to snap a live camera photo review.")
+              : "Search any place or brand to see live camera photo reviews and star ratings, or snap your own in seconds."}
           </p>
         </div>
 
         {/* 3. Search Component - Anchored cleanly below headline & subtitle on all screen sizes */}
-        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-5 xs:mt-6 sm:mt-8 mb-6 sm:mb-8 md:mt-0 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
+        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-5 xs:mt-6 sm:mt-7 mb-6 sm:mb-8 md:mt-1 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
             <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
               <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />

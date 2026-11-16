@@ -872,14 +872,16 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         <main className={isMobileModal ? "w-full max-w-xl flex flex-col items-center mt-2" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-5 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center"}>
           {/* 2. Hero Copy - Identical to CopoHomePage */}
           {!isMobileModal && (
-            <div className="w-full text-center max-w-2xl mx-auto mb-4 xs:mb-5 sm:mb-8 md:mb-11 animate-in fade-in duration-300">
-              <h1 className="text-[26px] xs:text-[28px] sm:text-4xl md:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.12]">
+            <div className="w-full text-center max-w-2xl mx-auto mb-5 xs:mb-6 sm:mb-8 md:mb-9 animate-in fade-in duration-300 px-2">
+              <h1 className="text-[36px] xs:text-[42px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.03] sm:leading-[1.05]">
                 <span className="block">See the Truth</span>
-                <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
+                <span className="block mt-0.5 sm:mt-1">Before You Decide</span>
               </h1>
-              <p className="text-zinc-300/90 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-4 leading-[1.45] max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
-                <span className="text-white font-semibold">A picture is worth a thousand words.</span>{" "}
-                Search any place or brand to see live camera photo reviews and star ratings—or snap your own in seconds.
+              <p className="text-white/95 text-[15.5px] xs:text-[17px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3.5 sm:mt-4">
+                A picture is worth a thousand words.
+              </p>
+              <p className="text-zinc-400 text-[13.5px] xs:text-[14.5px] sm:text-[16px] md:text-[16.5px] mt-1.5 sm:mt-2 leading-[1.55] max-w-[335px] xs:max-w-[385px] sm:max-w-lg mx-auto font-normal text-balance">
+                Search any place or brand to see live camera photo reviews and star ratings, or snap your own in seconds.
               </p>
             </div>
           )}
