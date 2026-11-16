@@ -1403,120 +1403,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   });
   const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
   const [dbUsers, setDbUsers] = useState<any[]>(() => {
-    const baselineUsers = [
-      {
-        id: "usr_elainemethuselahpalleignacio_gmail_com",
-        uid: "usr_elainemethuselahpalleignacio_gmail_com",
-        email: "elainemethuselahpalleignacio@gmail.com",
-        name: "Elaine Methuselah Palle Ignacio",
-        handle: "elainemethuselahpalleignacio",
-        role: "Member (Pending Verification)",
-        status: "pending_verification",
-        isVerified: false,
-        isRegisteredAccount: true,
-        memberSince: "3 days ago"
-      },
-      {
-        id: "4e313bbd-9671-4129-8d5b-e46767f422f8",
-        uid: "4e313bbd-9671-4129-8d5b-e46767f422f8",
-        email: "ghafardhillow@gmail.com",
-        name: "M Faisal",
-        handle: "@mfaisal",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true,
-        location: "United Arab Emirates"
-      },
-      {
-        id: "aouisesmee@gmail.com",
-        uid: "aouisesmee@gmail.com",
-        email: "aouisesmee@gmail.com",
-        name: "Ben Blue",
-        handle: "@benblue",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true,
-        location: "London, City of London, United Kingdom"
-      },
-      {
-        id: "avr6566gd@gmail.com",
-        uid: "avr6566gd@gmail.com",
-        email: "avr6566gd@gmail.com",
-        name: "Steven Akan",
-        handle: "@stevenakan",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true,
-        location: "Miami Beach, Florida, United States"
-      },
-      {
-        id: "a2bf471b-5073-4753-8c28-aabb02b19508",
-        uid: "a2bf471b-5073-4753-8c28-aabb02b19508",
-        email: "mohammedmindri@gmail.com",
-        name: "Mohammed Mindri",
-        handle: "@mohammedmindri",
-        role: "user",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true,
-        bio: "I like cars"
-      },
-      {
-        id: "jadrdc@gmail.com",
-        uid: "jadrdc@gmail.com",
-        email: "jadrdc@gmail.com",
-        name: "Jose Agustin Reinoso",
-        handle: "@joseagustinreinoso",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true
-      },
-      {
-        id: "benmeddourridha7@gmail.com",
-        uid: "benmeddourridha7@gmail.com",
-        email: "benmeddourridha7@gmail.com",
-        name: "redha bm",
-        handle: "@redhabm",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true
-      },
-      {
-        id: "krtpcq@gmail.com",
-        uid: "krtpcq@gmail.com",
-        email: "krtpcq@gmail.com",
-        name: "Kert P",
-        handle: "@kertp",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true
-      },
-      {
-        id: "edjofrancisramos18@gmail.com",
-        uid: "edjofrancisramos18@gmail.com",
-        email: "edjofrancisramos18@gmail.com",
-        name: "Edjo Francis Ramos",
-        handle: "@edjofrancisramos",
-        role: "Creator",
-        status: "verified",
-        isVerified: true,
-        isRegisteredAccount: true
-      }
-    ];
     try {
-      const cached = localStorage.getItem("yoouz_admin_cached_users");
+      localStorage.removeItem("yoouz_admin_cached_users");
+      const cached = localStorage.getItem("yoouz_admin_cached_users_v2");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length >= 9) return [...baselineUsers, ...parsed];
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {}
-    return baselineUsers;
+    return [];
   });
   const [dbComments, setDbComments] = useState<any[]>([]);
 
@@ -1597,10 +1492,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             if (res.ok) {
               const usersData = await res.json();
               const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
-              if (Array.isArray(list) && list.length > 0) {
+              if (Array.isArray(list)) {
                 setDbUsers(list);
                 try {
-                  localStorage.setItem("yoouz_admin_cached_users", JSON.stringify(list));
+                  localStorage.removeItem("yoouz_admin_cached_users");
+                  localStorage.setItem("yoouz_admin_cached_users_v2", JSON.stringify(list));
                 } catch (e) {}
               }
             }
@@ -1988,21 +1884,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
          rawEmail === "admin@users.yoouz.com" ||
          rawEmail === "4samet@users.yoouz.com" ||
          rawEmail === "4samet@gmail.com" ||
+         rawEmail === "avr6566gd@gmail.com" ||
+         rawEmail === "stevenakan@users.yoouz.com" ||
+         rawEmail === "aouisesmee@gmail.com" ||
+         rawEmail === "benblue@users.yoouz.com" ||
          cleanName === "yoouz admin" ||
-         cleanName === "samet"
+         cleanName === "samet" ||
+         cleanName === "steven akan" ||
+         cleanName === "ben blue" ||
+         cleanName === "u/testa1" ||
+         String(u.id || u.uid || "").toLowerCase().trim() === "anon_test_a1"
        ) {
          return;
-       }
-       if (rawEmail === "stevenakan@users.yoouz.com" || cleanName === "steven akan") {
-         u.email = "avr6566gd@gmail.com";
-         u.id = "avr6566gd@gmail.com";
-         u.uid = "avr6566gd@gmail.com";
-         u.role = "Creator";
-       } else if (rawEmail === "benblue@users.yoouz.com" || cleanName === "ben blue") {
-         u.email = "aouisesmee@gmail.com";
-         u.id = "aouisesmee@gmail.com";
-         u.uid = "aouisesmee@gmail.com";
-         u.role = "Creator";
        }
        let existing = null;
        if (u.email) {
@@ -2960,7 +2853,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handlePurgeIncompleteUploads = async () => {
     const incompleteIds = videos
-      .filter(v => v && !v.bunnyVideoId && (!v.videoUrl || v.videoUrl.includes("/api/videos/stream/") || v.videoUrl.includes("sample-review.mp4")) && (!v.videoData || !v.videoData.startsWith("data:video")))
+      .filter(v => v && v.mediaType !== "photo" && !v.photoUrl && !v.bunnyVideoId && (!v.videoUrl || v.videoUrl.includes("/api/videos/stream/") || v.videoUrl.includes("sample-review.mp4")) && (!v.videoData || !v.videoData.startsWith("data:video")))
       .map(v => v.id);
 
     if (incompleteIds.length === 0) {
@@ -3225,7 +3118,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search videos, places, creators, comments..."
+            placeholder="Search reviews, places, users, comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-all"
@@ -3401,7 +3294,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             >
               <div className="flex items-center gap-3.5">
                 <Video className="w-5 h-5 shrink-0 text-white" />
-                <span>Videos</span>
+                <span>Photo Reviews</span>
               </div>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
                 {metrics.totalVideos}
@@ -4985,13 +4878,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Sync Business Names
                   </button>
 
-                  {/* Sync Bunny Library */}
+                  {/* Purge Legacy Bunny Stream Videos */}
                   <button
                     onClick={handleSyncBunnyLibrary}
                     className="px-3 py-1.5 bg-zinc-950 hover:bg-blue-950/50 text-zinc-300 hover:text-blue-300 border border-zinc-800 hover:border-blue-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Purge orphaned videos from Bunny Stream so library matches active admin reviews count"
+                    title="Purge any remaining legacy videos from Bunny Stream (live photo reviews use CDN storage directly)"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Sync Bunny Library
+                    <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Purge Legacy Stream
                   </button>
 
                   {/* Purge Incomplete / Interrupted Uploads */}
@@ -5009,7 +4902,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {viewMode === "grid" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredVideos.map((video) => {
-                    const isBrokenStream = !video.bunnyVideoId && (!video.videoUrl || video.videoUrl.includes("/api/videos/stream/") || video.videoUrl.includes("sample-review.mp4")) && (!video.videoData || !video.videoData.startsWith("data:video"));
+                    const isPhotoItem = video.mediaType === "photo" || Boolean(video.photoUrl);
+                    const isBrokenStream = !isPhotoItem && !video.bunnyVideoId && (!video.videoUrl || video.videoUrl.includes("/api/videos/stream/") || video.videoUrl.includes("sample-review.mp4")) && (!video.videoData || !video.videoData.startsWith("data:video"));
 
                     return (
                       <div
@@ -5059,7 +4953,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="w-12 h-12 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg">
-                            <Play className="w-5 h-5 ml-0.5 fill-current" />
+                            {isPhotoItem ? (
+                              <Eye className="w-5 h-5" />
+                            ) : (
+                              <Play className="w-5 h-5 ml-0.5 fill-current" />
+                            )}
                           </div>
                         </div>
                       </div>

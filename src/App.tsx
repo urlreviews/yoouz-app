@@ -4914,7 +4914,7 @@ export function App() {
       }
 
       let path = "/";
-      let title = "Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews";
+      let title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
 
       // Current active review in the feed
       const currentVid = activeFeedVideos[currentVideoIndex] || null;
@@ -4961,7 +4961,7 @@ export function App() {
         title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
       } else if (activeSection === "home") {
         path = "/";
-        title = "Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews";
+        title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
       } else if (activeSection === "search") {
         path = "/search";
         title = "Search & Explore Real Photo Reviews | Yoouz";
@@ -7560,7 +7560,7 @@ export function App() {
     if (activeSection === 'home' && activeSubTab === 'following') return 'Following - Your Favorite Reviewers on Yoouz';
     if (activeSection === 'home' && activeSubTab === 'discover') return 'Discover Authentic Live Photo Reviews on Yoouz';
     if (activeSection === 'admin') return 'Yoouz Admin Dashboard';
-    return 'Yoouz - Real Photo Reviews by Real People | Authentic Business Reviews';
+    return 'Yoouz - Real Photos. Real Proof. | Live Photo Reviews';
   }, [activeSection, activeSubTab, embedTargetId]);
 
   const seoDescription = useMemo(() => {

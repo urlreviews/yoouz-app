@@ -1645,7 +1645,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               {t("legal.networkLocation", "Yoouz Trust Network")}
             </p>
             <p className="text-[11px] text-zinc-200">
-              {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real People. Real Reviews.")}
+              {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real Photos. Real Proof.")}
             </p>
           </div>
         </footer>

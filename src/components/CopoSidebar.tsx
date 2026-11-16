@@ -123,7 +123,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 </span>
               </div>
               <span className="text-[11.5px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
-                {t("legal.tagline", "Real People. Real Reviews.")}
+                {t("legal.tagline", "Real Photos. Real Proof.")}
               </span>
             </div>
           </div>

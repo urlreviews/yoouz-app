@@ -105,7 +105,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                 </span>
               </div>
               <span className="text-[11px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
-                {t("legal.tagline", "Real People. Real Reviews.")}
+                {t("legal.tagline", "Real Photos. Real Proof.")}
               </span>
             </div>
           </div>

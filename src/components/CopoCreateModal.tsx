@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SpecialStarSelector } from "./SpecialStarSelector";
@@ -9,7 +9,6 @@ import {
   Check,
   AlertCircle,
   Loader2,
-  SwitchCamera,
   Smartphone,
   Copy,
   Sparkles,
@@ -76,10 +75,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   });
   const [qrCopied, setQrCopied] = useState(false);
 
-  // Live Camera & Captured Photo states (Mobile)
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
-  const [cameraReady, setCameraReady] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  // Native Camera & Captured Photo states (Mobile)
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
   const [capturedPhotoUrl, setCapturedPhotoUrl] = useState<string | null>(null);
   const [capturedPhotoBlob, setCapturedPhotoBlob] = useState<Blob | null>(null);
 
@@ -99,8 +96,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [linkEmailInput, setLinkEmailInput] = useState("");
   const [linkStatusMsg, setLinkStatusMsg] = useState<string | null>(null);
 
-  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
-  const activeStreamRef = useRef<MediaStream | null>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   const isPublishingRef = useRef(false);
 
   // Track viewport size cleanly
@@ -113,74 +109,6 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     return () => window.removeEventListener("resize", updateDevice);
   }, []);
 
-  const stopCamera = useCallback(() => {
-    if (activeStreamRef.current) {
-      activeStreamRef.current.getTracks().forEach((track) => {
-        try {
-          track.stop();
-        } catch {}
-      });
-      activeStreamRef.current = null;
-    }
-    if (liveVideoRef.current) {
-      try {
-        liveVideoRef.current.srcObject = null;
-      } catch {}
-    }
-    setCameraReady(false);
-  }, []);
-
-  const startCamera = useCallback(
-    async (mode: "environment" | "user" = facingMode) => {
-      stopCamera();
-      setCameraError(null);
-      setCameraReady(false);
-
-      if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError("Camera access is not supported on this browser. Please open Yoouz on HTTPS.");
-        return;
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: mode },
-            width: { ideal: 1280 },
-            height: { ideal: 1920 }
-          }
-        });
-        activeStreamRef.current = stream;
-        if (liveVideoRef.current) {
-          liveVideoRef.current.srcObject = stream;
-          await liveVideoRef.current.play().catch(() => {});
-        }
-        setCameraReady(true);
-      } catch (err: any) {
-        console.warn("Primary camera constraint fallback:", err);
-        try {
-          const fallbackStream = await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: true
-          });
-          activeStreamRef.current = fallbackStream;
-          if (liveVideoRef.current) {
-            liveVideoRef.current.srcObject = fallbackStream;
-            await liveVideoRef.current.play().catch(() => {});
-          }
-          setCameraReady(true);
-        } catch (fallbackErr: any) {
-          setCameraError(
-            fallbackErr?.name === "NotAllowedError"
-              ? "Camera permission denied. Please allow camera access in browser settings to take a live photo review."
-              : "Could not start live camera. Please close other camera apps and try again."
-          );
-        }
-      }
-    },
-    [facingMode, stopCamera]
-  );
-
   // Sync preselectedPlace on open
   useEffect(() => {
     if (isOpen) {
@@ -188,47 +116,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setRating(0);
       setCapturedPhotoUrl(null);
       setCapturedPhotoBlob(null);
+      setIsProcessingPhoto(false);
       setErrorMessage(null);
-      setCameraError(null);
       setPostSubmitOnboarding(false);
       setPublishedReview(null);
       setUsernameInput("");
       setUsernameStatus("idle");
       setUsernameMessage("");
       setLinkStatusMsg(null);
-    } else {
-      stopCamera();
     }
-  }, [isOpen, preselectedPlace, stopCamera]);
-
-  // Start rear camera automatically on mobile once place is selected & no captured photo yet
-  useEffect(() => {
-    if (isOpen && !isDesktopViewport && selectedPlace && !capturedPhotoUrl && !postSubmitOnboarding) {
-      startCamera(facingMode);
-      return () => {
-        stopCamera();
-      };
-    } else {
-      stopCamera();
-    }
-  }, [isOpen, isDesktopViewport, selectedPlace?.id, capturedPhotoUrl, postSubmitOnboarding, facingMode, startCamera, stopCamera]);
-
-  // Cleanup camera when tab becomes hidden
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.hidden) stopCamera();
-    };
-    window.addEventListener("pagehide", stopCamera);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => {
-      stopCamera();
-      window.removeEventListener("pagehide", stopCamera);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [stopCamera]);
+  }, [isOpen, preselectedPlace]);
 
   const handleCloseModal = () => {
-    stopCamera();
     if (capturedPhotoUrl) {
       try {
         URL.revokeObjectURL(capturedPhotoUrl);
@@ -236,69 +135,81 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
     setCapturedPhotoUrl(null);
     setCapturedPhotoBlob(null);
+    setIsProcessingPhoto(false);
     setPostSubmitOnboarding(false);
     setPublishedReview(null);
     onClose();
   };
 
-  const handleFlipCamera = () => {
-    triggerHaptic("light");
-    const nextMode = facingMode === "environment" ? "user" : "environment";
-    setFacingMode(nextMode);
+  const optimizeCapturedPhoto = async (file: File): Promise<Blob> => {
+    const maxEdge = 2000;
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error("Image decode fallback"));
+        el.src = objectUrl;
+      });
+      const srcW = img.naturalWidth || img.width;
+      const srcH = img.naturalHeight || img.height;
+      if (!srcW || !srcH) return file;
+
+      const scale = Math.min(1, maxEdge / Math.max(srcW, srcH));
+      const targetW = Math.max(1, Math.round(srcW * scale));
+      const targetH = Math.max(1, Math.round(srcH * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return file;
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+
+      const jpegBlob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+      );
+      return jpegBlob || file;
+    } catch {
+      return file;
+    } finally {
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {}
+    }
   };
 
-  const handleCapturePhoto = () => {
-    const vid = liveVideoRef.current;
-    if (!vid || vid.videoWidth === 0 || vid.videoHeight === 0) {
-      setErrorMessage("Camera is still initializing. Hold on a moment and try again.");
+  const handleNativeCameraChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset value immediately so retaking always triggers onChange cleanly
+    e.target.value = "";
+    if (!file) return;
+
+    if (file.type && !file.type.startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "")) {
+      setErrorMessage("Please take a photo using your phone camera.");
       return;
     }
 
+    setErrorMessage(null);
+    setIsProcessingPhoto(true);
     triggerHaptic("medium");
-    setErrorMessage(null);
 
-    const w = vid.videoWidth;
-    const h = vid.videoHeight;
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Un-mirror front selfie capture so stored photo reads naturally
-    if (facingMode === "user") {
-      ctx.translate(w, 0);
-      ctx.scale(-1, 1);
+    try {
+      const preparedBlob = await optimizeCapturedPhoto(file);
+      const nextPreviewUrl = URL.createObjectURL(preparedBlob);
+      if (capturedPhotoUrl) {
+        try {
+          URL.revokeObjectURL(capturedPhotoUrl);
+        } catch {}
+      }
+      setCapturedPhotoBlob(preparedBlob);
+      setCapturedPhotoUrl(nextPreviewUrl);
+      setRating(0);
+    } catch {
+      setErrorMessage("Could not process captured photo. Please try taking it again.");
+    } finally {
+      setIsProcessingPhoto(false);
     }
-    ctx.drawImage(vid, 0, 0, w, h);
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          setErrorMessage("Could not capture photo frame. Please retry.");
-          return;
-        }
-        const previewUrl = URL.createObjectURL(blob);
-        setCapturedPhotoBlob(blob);
-        setCapturedPhotoUrl(previewUrl);
-        stopCamera();
-      },
-      "image/jpeg",
-      0.92
-    );
-  };
-
-  const handleRetake = () => {
-    triggerHaptic("light");
-    if (capturedPhotoUrl) {
-      try {
-        URL.revokeObjectURL(capturedPhotoUrl);
-      } catch {}
-    }
-    setCapturedPhotoUrl(null);
-    setCapturedPhotoBlob(null);
-    setRating(0);
-    setErrorMessage(null);
   };
 
   const handleSearchMetadata = async (domain: string) => {
@@ -881,6 +792,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-6 overflow-hidden animate-in fade-in duration-200"
     >
       <div className="relative w-full h-full md:h-[780px] md:max-h-[90vh] max-w-[440px] bg-zinc-950 md:rounded-[36px] overflow-hidden shadow-2xl flex flex-col border border-white/10">
+        {/* Native HTML5 Mobile Camera Input (forces iOS Safari & Android Chrome to open native phone camera app directly) */}
+        <input
+          ref={nativeCameraInputRef}
+          id="native-camera-capture-input"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleNativeCameraChange}
+          className="sr-only"
+          aria-label="Open native camera to take review photo"
+        />
+
         {/* POST-SUBMIT ZERO-FRICTION ONBOARDING (Anonymous -> Optional Username / Google or Apple Link) */}
         {postSubmitOnboarding && publishedReview ? (
           <div className="flex flex-col h-full w-full bg-zinc-950 p-6 justify-between overflow-y-auto">
@@ -1022,7 +945,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             </button>
           </div>
         ) : capturedPhotoUrl ? (
-          /* PREVIEW STAGE: Captured Live Photo + Retake + SpecialStarSelector (1-5) + Publish */
+          /* PREVIEW STAGE: Native Captured Photo + Retake + SpecialStarSelector (1-5) + Publish */
           <div className="relative w-full h-full bg-black flex flex-col justify-between overflow-hidden">
             <img
               src={capturedPhotoUrl}
@@ -1097,14 +1020,20 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleRetake}
-                    className="px-5 py-3.5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 backdrop-blur-xl border border-white/20 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
+                  <label
+                    htmlFor="native-camera-capture-input"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setErrorMessage(null);
+                      if (nativeCameraInputRef.current) {
+                        nativeCameraInputRef.current.value = "";
+                      }
+                    }}
+                    className="px-5 py-3.5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 backdrop-blur-xl border border-white/20 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all select-none"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Retake</span>
-                  </button>
+                  </label>
 
                   <button
                     type="button"
@@ -1124,27 +1053,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             </div>
           </div>
         ) : (
-          /* LIVE CAMERA CAPTURE STAGE (Rear Camera Default + Flip Camera + Shutter; ZERO gallery upload) */
-          <div className="relative w-full h-full bg-black flex flex-col justify-between overflow-hidden">
-            <video
-              ref={liveVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className={`absolute inset-0 w-full h-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""}`}
-            />
-
-            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-transparent to-black/85 pointer-events-none" />
-
+          /* NATIVE CAMERA LAUNCH STAGE: Opens iOS/Android phone camera app directly */
+          <div className="relative w-full h-full bg-zinc-950 flex flex-col justify-between overflow-hidden">
             {/* Top Place Pill & Close */}
             <div className="relative z-20 flex items-center justify-between gap-2 p-4 pt-5">
               <button
                 type="button"
-                onClick={() => {
-                  stopCamera();
-                  setSelectedPlace(null);
-                }}
-                className="px-3.5 py-2 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center gap-2.5 min-w-0 cursor-pointer transition-colors"
+                onClick={() => setSelectedPlace(null)}
+                className="px-3.5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 backdrop-blur-xl border border-white/15 text-white flex items-center gap-2.5 min-w-0 cursor-pointer transition-colors"
                 title="Change business"
               >
                 <CopoBrandLogo
@@ -1165,79 +1081,67 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center cursor-pointer shrink-0"
+                className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center cursor-pointer shrink-0"
                 title="Close"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Camera Init / Error Banner */}
-            {(cameraError || isSearchingMetadata || (!cameraReady && !cameraError)) && (
-              <div className="relative z-20 px-6 my-auto text-center">
-                {cameraError ? (
-                  <div className="p-5 rounded-3xl bg-zinc-950/90 border border-red-800/60 backdrop-blur-xl space-y-3">
-                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
-                    <p className="text-xs sm:text-sm text-zinc-200 font-medium leading-relaxed">{cameraError}</p>
-                    <button
-                      type="button"
-                      onClick={() => startCamera(facingMode)}
-                      className="px-5 py-2.5 rounded-xl bg-white text-zinc-950 font-bold text-xs cursor-pointer"
-                    >
-                      Retry Camera
-                    </button>
+            {/* Center Prompt + Native Camera Launch CTA */}
+            <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-6 text-center space-y-6">
+              {isProcessingPhoto || isSearchingMetadata ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-2xl">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
                   </div>
-                ) : (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-xl border border-white/15 text-xs font-semibold text-zinc-300">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Opening live camera...</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Bottom Camera Controls: Live-Only Indicator + Shutter + Flip Camera (Front/Rear) */}
-            <div className="relative z-20 px-6 pb-[max(28px,calc(env(safe-area-inset-bottom,0px)+20px))] space-y-4">
-              {errorMessage && (
-                <div className="p-3 rounded-2xl bg-red-950/90 border border-red-800 text-red-200 text-xs font-medium text-center">
-                  {errorMessage}
+                  <p className="text-sm font-bold text-white">Preparing your photo...</p>
                 </div>
+              ) : (
+                <>
+                  <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-2xl">
+                    <Camera className="w-9 h-9 text-white" />
+                  </div>
+
+                  <div className="space-y-2 max-w-xs">
+                    <h2 className="text-2xl font-black text-white tracking-tight">
+                      Snap a Native Photo
+                    </h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                      Opens your phone&apos;s camera app directly for full native quality, HDR, and stabilization.
+                    </p>
+                  </div>
+
+                  {errorMessage && (
+                    <div className="w-full max-w-xs p-3 rounded-2xl bg-red-950/90 border border-red-800 text-red-200 text-xs font-medium text-center flex items-center justify-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                      <span>{errorMessage}</span>
+                    </div>
+                  )}
+
+                  <label
+                    htmlFor="native-camera-capture-input"
+                    id="btn-capture-live-photo"
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      setErrorMessage(null);
+                      if (nativeCameraInputRef.current) {
+                        nativeCameraInputRef.current.value = "";
+                      }
+                    }}
+                    className="w-full max-w-xs py-4 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-black text-base flex items-center justify-center gap-2.5 shadow-[0_12px_32px_rgba(255,255,255,0.18)] active:scale-95 transition-all cursor-pointer select-none"
+                  >
+                    <Camera className="w-5 h-5 stroke-[2.5]" />
+                    <span>Open Camera</span>
+                  </label>
+                </>
               )}
+            </div>
 
-              <div className="flex items-center justify-center">
-                <span className="px-3 py-1 rounded-full bg-black/65 backdrop-blur-xl border border-white/15 text-[11px] font-bold text-zinc-200 flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-white" />
-                  <span>Live Camera Only • Tap Shutter</span>
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between max-w-[280px] mx-auto">
-                <div className="w-12 h-12" />
-
-                {/* Shutter Button */}
-                <button
-                  type="button"
-                  id="btn-capture-live-photo"
-                  disabled={!cameraReady}
-                  onClick={handleCapturePhoto}
-                  aria-label="Take Photo"
-                  className="w-20 h-20 rounded-full border-4 border-white p-1.5 flex items-center justify-center bg-black/30 hover:scale-105 active:scale-90 transition-all cursor-pointer disabled:opacity-40 shadow-2xl"
-                >
-                  <div className="w-full h-full rounded-full bg-white" />
-                </button>
-
-                {/* Flip Camera Button */}
-                <button
-                  type="button"
-                  id="btn-flip-camera"
-                  onClick={handleFlipCamera}
-                  aria-label="Flip Camera"
-                  title="Flip Front / Rear Camera"
-                  className="w-12 h-12 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/25 text-white flex items-center justify-center active:scale-90 transition-all cursor-pointer shadow-xl"
-                >
-                  <SwitchCamera className="w-5 h-5" />
-                </button>
-              </div>
+            <div className="px-6 pb-[max(28px,calc(env(safe-area-inset-bottom,0px)+20px))] text-center">
+              <p className="text-[11px] font-medium text-zinc-500">
+                1 live photo + 1–5 whole stars • No text required
+              </p>
             </div>
           </div>
         )}

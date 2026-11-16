@@ -1595,7 +1595,7 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       termsOfService: "Terms of Service",
       and: "and",
       privacyPolicy: "Privacy Policy",
-      copyright: "© 2026 Yoouz. Real People. Visual Proof."
+      copyright: "© 2026 Yoouz. Real Photos. Real Proof."
     },
     businessAuth: {
       title: "Sign in to Yoouz Business",

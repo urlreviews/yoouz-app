@@ -1054,7 +1054,7 @@ export const CopoAuthPrompt: React.FC<{
 
       {isFullPage && (
         <div className="w-full pt-6 pb-2 text-center text-[12px] text-zinc-200 font-medium">
-          © 2026 Yoouz. Real People. Real Reviews.
+          © 2026 Yoouz. Real Photos. Real Proof.
         </div>
       )}
     </div>

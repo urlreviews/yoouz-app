@@ -877,8 +877,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 <span className="block">See the Truth</span>
                 <span className="block mt-0.5 sm:mt-1.5">Before You Decide</span>
               </h1>
-              <p className="text-zinc-300 text-[13px] xs:text-sm sm:text-lg md:text-[19px] mt-2 sm:mt-4 leading-relaxed max-w-[320px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
-                Browse real live photo reviews of any place, product, or service, or snap your own.
+              <p className="text-zinc-300/90 text-[14.5px] xs:text-[15.5px] sm:text-lg md:text-[18px] mt-2.5 sm:mt-4 leading-[1.45] max-w-[340px] xs:max-w-md sm:max-w-xl mx-auto font-normal text-balance">
+                <span className="text-white font-semibold">A picture is worth a thousand words.</span>{" "}
+                Search any place or brand to see live camera photo reviews and star ratings—or snap your own in seconds.
               </p>
             </div>
           )}

@@ -236,7 +236,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     resolvedBannerUrl = video.placeBannerUrl || (video as any)?.bannerUrl || (video as any)?.place?.bannerUrl;
   } else {
     shareUrl = propShareUrl || appOrigin;
-    title = propTitle || "Yoouz - Real People. Real Reviews.";
+    title = propTitle || "Yoouz - Real Photos. Real Proof.";
     subtitle = propSubtitle || "Authentic Live Photo Reviews";
     isBusiness = Boolean(propIsBusinessProfile || propDomain || propWebsite || propLogoUrl);
     resolvedDomain = propDomain || (propWebsite ? extractCleanDomain(propWebsite) : "");
@@ -408,7 +408,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
   const shareText = isVideoMode && video
     ? `See ${video.author?.name || "a reviewer"}'s live photo review of ${title} on Yoouz! ${video.rating ? `★ ${Math.min(5, Math.max(1, Math.round(Number(video.rating))))}/5` : ""}`
-    : `Check out ${title} on Yoouz - Real People. Real Reviews.`;
+    : `Check out ${title} on Yoouz — Real Photos. Real Proof.`;
 
   // Pre-generate embed codes
   const embedSlug = isVideoMode && video

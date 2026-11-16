@@ -5744,10 +5744,10 @@ async function startServer() {
     return res.json({
       entity: "Yoouz",
       canonicalUrl: "https://yoouz.com/",
-      category: "Authentic Video Review Platform & Consumer Trust Network",
-      tagline: "Real People. Real Video Reviews. Zero Fake Text Reviews.",
-      mission: "Eliminate fake online reviews, bot spam, and paid review extortion by replacing anonymous text ratings with authentic, 60-second live video testimonials.",
-      verificationStandard: "100% verified live front-camera video recordings of real human customers.",
+      category: "Live Photo Review Platform & Visual Proof Network",
+      tagline: "Real Photos. Real Proof. Zero Fake Text Reviews.",
+      mission: "Eliminate fake online reviews, bot spam, and paid review extortion by replacing anonymous text ratings with authentic live camera photo reviews and 1–5 star ratings.",
+      verificationStandard: "100% live camera photo capture with whole-number 1–5 star ratings and zero gallery uploads.",
       disambiguation: {
         officialName: "Yoouz",
         spelling: "Y-O-O-U-Z",
@@ -5807,7 +5807,7 @@ async function startServer() {
       frequentlyAskedQuestions: [
         {
           q: "What is Yoouz?",
-          a: "Yoouz (https://yoouz.com) is the premier authentic video review and local discovery platform. Real people record genuine 60-second live camera reviews for restaurants, cafes, hotels, local businesses, services, and online stores with zero fake text reviews."
+          a: "Yoouz (https://yoouz.com) is the live photo review and local discovery platform. A picture is worth a thousand words — customers snap genuine live camera photo reviews with 1–5 star ratings for restaurants, cafes, hotels, local businesses, services, and online stores."
         },
         {
           q: "Is Yoouz a misspelling or typo of YouTube, Yoox, Youz, or Yelp?",
@@ -5891,7 +5891,7 @@ async function startServer() {
     const category = typeof req.query.category === "string" ? req.query.category.toLowerCase().trim() : "";
 
     const allFaqs = [
-      { id: "brand-1", category: "brand", q: "What is Yoouz?", a: "Yoouz (https://yoouz.com) is the premier authentic video review platform. Real people record genuine 60-second live camera video reviews for restaurants, cafes, hotels, local businesses, services, and online stores with zero fake text reviews." },
+      { id: "brand-1", category: "brand", q: "What is Yoouz?", a: "Yoouz (https://yoouz.com) is the live photo review platform. A picture is worth a thousand words — customers capture live camera photo reviews with 1–5 star ratings for restaurants, cafes, hotels, local businesses, services, and online stores." },
       { id: "brand-2", category: "brand", q: "Is Yoouz a misspelling or typo of YouTube, Yoox, Youz, or Yelp?", a: "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform. It is NOT a misspelling, typo, abbreviation, or subsidiary of YouTube, Yoox, Youz, Yelp, or any other company." },
       { id: "brand-3", category: "brand", q: "What does the name Yoouz mean and how is it pronounced?", a: "Yoouz is pronounced 'Use' or 'Yooz' (/juːz/). It represents real users sharing authentic, first-hand video experiences about businesses they actually use and visit." },
       { id: "rev-1", category: "reviewers", q: "Why are Yoouz video reviews capped strictly at 60 seconds?", a: "The 60-second maximum cap ensures reviews remain punchy, direct, and concise, allowing consumers to get immediate, transparent visual proof without watching long, drawn-out video vlogs." },
@@ -5941,8 +5941,8 @@ async function startServer() {
         color: "#09090b",
         symbol: "White 5-pointed star in dark squircle"
       },
-      tagline: "Real People. Real Video Reviews. Zero Fake Text Reviews.",
-      summary: "Yoouz is the anti-fake review platform that mandates live 60-second video reviews recorded via camera for all local businesses and websites."
+      tagline: "Real Photos. Real Proof. Zero Fake Text Reviews.",
+      summary: "Yoouz is the visual-proof review platform built on a simple truth: a picture is worth a thousand words — live camera photo reviews and 1–5 star ratings for local businesses and websites."
     });
   });
 
@@ -7865,7 +7865,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       try {
         const localList = readReviewsIndex();
         localList.forEach((r: any) => {
-          if (r && r.id && !isDeletedReviewServer(r.id)) {
+          const isPhotoReviewItem = r && (r.mediaType === 'photo' || Boolean(r.photoUrl));
+          if (r && r.id && isPhotoReviewItem && !isDeletedReviewServer(r.id)) {
             const existing = itemMap.get(r.id) || itemMap.get(String(r.id).toLowerCase().trim()) || {};
             const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
             const localAuthor = (typeof r.author === 'object' && r.author) ? r.author : {};
@@ -8390,7 +8391,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
 
     if (colName === 'videoReviews' || colName === 'videos' || colName === 'video_reviews') {
-      items = items.filter((item: any) => item && item.id && !isDeletedReviewServer(item.id));
+      items = items.filter((item: any) => item && item.id && !isDeletedReviewServer(item.id) && (item.mediaType === 'photo' || Boolean(item.photoUrl)));
     }
 
     if (colName === 'places') {
@@ -8568,7 +8569,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           photos: [],
           openingHours: 'Available 24/7',
           isOpen: true,
-          description: 'Official claimed business profile for Yoouz. Real people, authentic 60-second video reviews.',
+          description: 'Official claimed business profile for Yoouz. Real Photos. Real Proof.',
           isClaimed: true,
           isVerified: true,
           claimedByEmail: 'info@yoouz.com'
@@ -9954,28 +9955,35 @@ app.get('/api/admin/users', async (req, res) => {
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
 
+    const LEGACY_PURGED_IDS = new Set([
+      "anon_test_a1", "u/testa1", "avr6566gd@gmail.com", "aouisesmee@gmail.com",
+      "usr_elainemethuselahpalleignacio_gmail_com", "elainemethuselahpalleignacio@gmail.com",
+      "4e313bbd-9671-4129-8d5b-e46767f422f8", "ghafardhillow@gmail.com",
+      "a2bf471b-5073-4753-8c28-aabb02b19508", "mohammedmindri@gmail.com",
+      "benmeddourridha7@gmail.com", "edjofrancisramos18@gmail.com",
+      "jadrdc@gmail.com", "krtpcq@gmail.com", "chotrevlee@gmail.com",
+      "sophiecieloo@gmail.com", "yudansha14@gmail.com"
+    ]);
     const usersMap = new Map<string, any>();
     const putUser = (u: any) => {
       if (!u) return;
       const key = getCanonicalAdminUserKey(u);
       if (!key || key === "__skip_system_user__") return;
+      const rawId = String(u.id || u.uid || "").toLowerCase().trim();
+      const rawEmail = String(u.email || "").toLowerCase().trim();
+      const rawName = String(u.name || "").toLowerCase().trim();
+      if (
+        LEGACY_PURGED_IDS.has(key) ||
+        LEGACY_PURGED_IDS.has(rawId) ||
+        LEGACY_PURGED_IDS.has(rawEmail) ||
+        rawName === "steven akan" ||
+        rawName === "ben blue" ||
+        rawName === "u/testa1"
+      ) {
+        return;
+      }
       const existing = usersMap.get(key) || {};
       const merged = { ...existing, ...u };
-      if (key === "avr6566gd@gmail.com") {
-        merged.id = "avr6566gd@gmail.com";
-        merged.uid = "avr6566gd@gmail.com";
-        merged.email = "avr6566gd@gmail.com";
-        merged.name = "Steven Akan";
-        merged.handle = "@stevenakan";
-        merged.role = "Creator";
-      } else if (key === "aouisesmee@gmail.com") {
-        merged.id = "aouisesmee@gmail.com";
-        merged.uid = "aouisesmee@gmail.com";
-        merged.email = "aouisesmee@gmail.com";
-        merged.name = "Ben Blue";
-        merged.handle = "@benblue";
-        merged.role = "Creator";
-      }
       usersMap.set(key, merged);
     };
 
@@ -10059,7 +10067,7 @@ app.get('/api/admin/users', async (req, res) => {
             status: "verified",
             isVerified: true,
             avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=27272a&color=fff&bold=true&size=128`,
-            bio: v.author.bio || "Verified video reviewer on Yoouz.",
+            bio: v.author.bio || "Verified photo reviewer on Yoouz.",
             location: v.author.location || "",
             isRegisteredAccount: true
           });
@@ -11348,7 +11356,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
   const localUsers = readUsersIndex();
   const localPlaces = readPlacesIndex();
-  const localReviews = readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+  const localReviews = readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id) && (v.mediaType === 'photo' || Boolean(v.photoUrl)));
   const deletedCommentSet = new Set(readDeletedCommentsIndex());
   const localComments = readCommentsIndex().filter((c: any) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedCommentSet.has(String(c.id)));
 
@@ -11389,8 +11397,8 @@ app.get('/api/admin/live-stats', async (_req, res) => {
 
   const storageFilesCount = localReviews.length;
   const totalBytes = localReviews.reduce((acc: number, v: any) => {
-    const dur = Number(v.durationSeconds || v.duration || 30);
-    return acc + Math.round(dur * 480000);
+    const size = Number(v.fileSize || v.bytes || 0);
+    return acc + (size > 0 ? size : 180000);
   }, 0);
 
   const storageStats = {
@@ -11398,7 +11406,7 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     totalBytes,
     formattedSize: (totalBytes / (1024 * 1024)).toFixed(2) + " MB",
     zoneName: process.env.BUNNY_STORAGE_ZONE_NAME || "yoouz-storage",
-    folder: "/videos/",
+    folder: "/photos/",
     connected: true,
     error: null as string | null
   };
@@ -12001,27 +12009,34 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
     try {
       const bunnyDb = getBunnyDb();
       const allUsersMap = new Map<string, any>();
+      const LEGACY_PURGED_KEYS = new Set([
+        "anon_test_a1", "u/testa1", "avr6566gd@gmail.com", "aouisesmee@gmail.com",
+        "usr_elainemethuselahpalleignacio_gmail_com", "elainemethuselahpalleignacio@gmail.com",
+        "4e313bbd-9671-4129-8d5b-e46767f422f8", "ghafardhillow@gmail.com",
+        "a2bf471b-5073-4753-8c28-aabb02b19508", "mohammedmindri@gmail.com",
+        "benmeddourridha7@gmail.com", "edjofrancisramos18@gmail.com",
+        "jadrdc@gmail.com", "krtpcq@gmail.com", "chotrevlee@gmail.com",
+        "sophiecieloo@gmail.com", "yudansha14@gmail.com"
+      ]);
       const putCanonical = (u: any) => {
         if (!u) return;
         const key = getCanonicalAdminUserKey(u);
         if (!key || key === "__skip_system_user__") return;
+        const rawId = String(u.id || u.uid || "").toLowerCase().trim();
+        const rawEmail = String(u.email || "").toLowerCase().trim();
+        const rawName = String(u.name || "").toLowerCase().trim();
+        if (
+          LEGACY_PURGED_KEYS.has(key) ||
+          LEGACY_PURGED_KEYS.has(rawId) ||
+          LEGACY_PURGED_KEYS.has(rawEmail) ||
+          rawName === "steven akan" ||
+          rawName === "ben blue" ||
+          rawName === "u/testa1"
+        ) {
+          return;
+        }
         const existing = allUsersMap.get(key) || {};
         const merged = { ...existing, ...u };
-        if (key === "avr6566gd@gmail.com") {
-          merged.id = "avr6566gd@gmail.com";
-          merged.uid = "avr6566gd@gmail.com";
-          merged.email = "avr6566gd@gmail.com";
-          merged.name = "Steven Akan";
-          merged.handle = "@stevenakan";
-          merged.role = "Creator";
-        } else if (key === "aouisesmee@gmail.com") {
-          merged.id = "aouisesmee@gmail.com";
-          merged.uid = "aouisesmee@gmail.com";
-          merged.email = "aouisesmee@gmail.com";
-          merged.name = "Ben Blue";
-          merged.handle = "@benblue";
-          merged.role = "Creator";
-        }
         allUsersMap.set(key, merged);
       };
 
@@ -12080,7 +12095,7 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
               status: "verified",
               isVerified: true,
               avatar: v.author.avatar || `/api/avatar?name=${encodeURIComponent(aName)}&background=27272a&color=fff&bold=true&size=128`,
-              bio: v.author.bio || "Verified video reviewer on Yoouz.",
+              bio: v.author.bio || "Verified photo reviewer on Yoouz.",
               location: v.author.location || "",
               isRegisteredAccount: true
             });
@@ -14333,7 +14348,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
         const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
         const videoPageUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
-        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Verified Reviewer');
         const rawAuthorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const cleanAuthorHandle = (rawAuthorHandle || '').replace(/^@+/, "");
         const rawPlace = v.placeName || '';
@@ -14474,8 +14489,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     </image:image>
     <image:image>
       <image:loc>${baseUrl}/og-banner.png</image:loc>
-      <image:title>Yoouz Video Reviews Banner</image:title>
-      <image:caption>Real People. Real Reviews.</image:caption>
+      <image:title>Yoouz Photo Reviews Banner</image:title>
+      <image:caption>Real Photos. Real Proof.</image:caption>
     </image:image>
   </url>
   <url>
@@ -14583,7 +14598,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
         const domainSlug = getPlaceSlug(rawDomain) || 'yoouz.com';
         const videoUrl = `${baseUrl}/review/${encodeURIComponent(domainSlug)}/${encodeURIComponent(v.id)}`;
-        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Steven Akan');
+        const authorName = v.author?.name || (v as any).authorName || (v.userEmail ? v.userEmail.split('@')[0] : 'Verified Reviewer');
         const rawAuthorHandle = v.author?.handle || authorName.toLowerCase().replace(/\s+/g, "");
         const cleanAuthorHandle = (rawAuthorHandle || '').replace(/^@+/, "");
         const rawPlace = v.placeName || '';
@@ -22823,7 +22838,7 @@ app.post("/api/videos/save-review", async (req, res) => {
                 </td>
                 <td style="padding-left: 14px; vertical-align: middle;">
                   <div style="font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px; line-height: 1.2;">Yoouz</div>
-                  <div style="font-size: 11px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.2px; margin-top: 2px;">Real People. Real Reviews.</div>
+                  <div style="font-size: 11px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.2px; margin-top: 2px;">Real Photos. Real Proof.</div>
                 </td>
               </tr>
             </table>
@@ -24837,7 +24852,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
                     <div style="border-top: 1px solid #27272a; padding-top: 20px; margin-top: 12px;">
                       <p style="font-size: 11px; line-height: 16px; color: #71717a; margin: 0;">
-                        Powered by Yoouz • 100% Authentic 60-Second Video Reviews. Real People. Real Reviews.
+                        Powered by Yoouz • Live Photo Reviews. Real Photos. Real Proof.
                       </p>
                     </div>
                   </div>
@@ -25633,16 +25648,27 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         await db.delete(reviews);
       } catch(e) {}
       
-      // 4. Remove all files from uploads/ directory
+      // 4. Remove all files from uploads/ and uploads/videos/ directories, plus data/reviews_index.json
       if (fs.existsSync(uploadsDir)) {
         const files = fs.readdirSync(uploadsDir);
         for (const file of files) {
-          if (file.endsWith(".json")) continue; // Keep index file structures
+          if (file.endsWith(".json")) continue;
           try {
-            fs.unlinkSync(path.join(uploadsDir, file));
+            const fp = path.join(uploadsDir, file);
+            if (fs.statSync(fp).isFile()) fs.unlinkSync(fp);
           } catch (e) {}
         }
       }
+      const videosSubDir = path.join(uploadsDir, "videos");
+      if (fs.existsSync(videosSubDir)) {
+        for (const file of fs.readdirSync(videosSubDir)) {
+          try { fs.unlinkSync(path.join(videosSubDir, file)); } catch (e) {}
+        }
+      }
+      try {
+        const dataIdx = path.join(process.cwd(), "data", "reviews_index.json");
+        if (fs.existsSync(dataIdx)) fs.writeFileSync(dataIdx, "[]", "utf8");
+      } catch (e) {}
 
       // 5. Reset in-memory feed cache & broadcast real-time purge to all active browsers
       feedCache.videos = [];
@@ -36725,8 +36751,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
     const type = options.type || "homepage";
     const rawTitle = options.title || options.placeName || (type === 'creator' ? (options.author || '@user') : "Yoouz");
-    const rawSubtitle = options.subtitle || (type === 'video' ? "Authentic 60-Second Video Review" : "Real People. Real Reviews.");
-    const rawBadge = options.badge || (type === 'video' ? "60s VIDEO REVIEW" : type === 'place' ? "VERIFIED BUSINESS" : type === 'creator' ? "VERIFIED CREATOR" : "100% REAL VIDEO REVIEWS");
+    const rawSubtitle = options.subtitle || (type === 'video' ? "Authentic Live Photo Review" : "Real Photos. Real Proof.");
+    const rawBadge = options.badge || (type === 'video' ? "LIVE PHOTO REVIEW" : type === 'place' ? "VERIFIED BUSINESS" : type === 'creator' ? "VERIFIED REVIEWER" : "REAL PHOTOS. REAL PROOF.");
     const rating = typeof options.rating === 'number' ? options.rating : 5.0;
     const author = escapeXml(options.author || (type === 'homepage' ? 'Kassim E.' : 'Verified Reviewer'));
     const caption = escapeXml(options.caption || "");
@@ -37116,10 +37142,10 @@ const isPlaceCard = type === 'place';
 
           <!-- Big Title -->
           <text x="0" y="80" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
-            Real People.
+            Real Photos.
           </text>
           <text x="0" y="136" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
-            Real Reviews.
+            Real Proof.
           </text>
 
           <!-- Descriptive Subtitle -->
@@ -37522,30 +37548,30 @@ const isPlaceCard = type === 'place';
           if (preset === 'homepage') {
             url += '?type=homepage&v=4';
             details = {
-              title: 'Yoouz - Authentic 60-Second Video Reviews',
-              description: 'Yoouz is the premier authentic video review platform. Real people record genuine 60-second live video testimonials with zero fake reviews.',
+              title: 'Yoouz - Real Photos. Real Proof.',
+              description: 'A picture is worth a thousand words. Live camera photo reviews and 1–5 star ratings with zero fake uploads.',
               shareUrl: 'https://yoouz.com/'
             };
           } else if (preset === 'londontrust') {
             url += '?type=video&id=rev-1787774080951-vuu2k&v=4';
             details = {
-              title: "avt ertuop's 60s Video Review of londontrustedtherapy.com | Yoouz",
-              description: 'Watch the authentic 60-second video review by avt ertuop for londontrustedtherapy.com on Yoouz. Real People. Real Reviews.',
-              shareUrl: 'https://yoouz.com/@avr6566gd/video/rev-1787774080951-vuu2k'
+              title: "Live Photo Review of londontrustedtherapy.com | Yoouz",
+              description: 'See the live photo review for londontrustedtherapy.com on Yoouz. Real Photos. Real Proof.',
+              shareUrl: 'https://yoouz.com/review/londontrustedtherapy-dot-com/rev-1787774080951-vuu2k'
             };
           } else if (preset === 'l500') {
             url += '?type=video&id=rev-1788290824170-vg5vg&v=4';
             details = {
-              title: "aouisesmee's 60s Video Review of Legal 500 | Yoouz",
-              description: 'Watch the authentic 60-second video review by aouisesmee for Legal 500 on Yoouz. Real People. Real Reviews.',
-              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1788290824170-vg5vg'
+              title: "Live Photo Review of Legal 500 | Yoouz",
+              description: 'See the live photo review for Legal 500 on Yoouz. Real Photos. Real Proof.',
+              shareUrl: 'https://yoouz.com/review/legal500-dot-com/rev-1788290824170-vg5vg'
             };
           } else if (preset === 'dubaidigital') {
             url += '?type=video&id=rev-1788279180166-rh08t&v=4';
             details = {
-              title: "aouisesmee's 60s Video Review of Dubai Digital Park | Yoouz",
-              description: 'Watch the authentic 60-second video review by aouisesmee for Dubai Digital Park on Yoouz. Real People. Real Reviews.',
-              shareUrl: 'https://yoouz.com/@aouisesmee/video/rev-1788279180166-rh08t'
+              title: "Live Photo Review of Dubai Digital Park | Yoouz",
+              description: 'See the live photo review for Dubai Digital Park on Yoouz. Real Photos. Real Proof.',
+              shareUrl: 'https://yoouz.com/review/dubaidigitalpark/rev-1788279180166-rh08t'
             };
           }
 
@@ -37564,8 +37590,8 @@ const isPlaceCard = type === 'place';
 
           const url = '${baseUrl}/api/og-image.png?type=video&id=' + encodeURIComponent(id) + '&v=4';
           updateAllImages(url, {
-            title: 'Dynamic Video Review (' + id + ') | Yoouz',
-            description: 'Authentic 60-second customer video review on Yoouz. Real People. Real Reviews.',
+            title: 'Live Photo Review (' + id + ') | Yoouz',
+            description: 'Authentic live photo review on Yoouz. Real Photos. Real Proof.',
             shareUrl: input.startsWith('http') ? input : 'https://yoouz.com/video/' + id
           });
         }
@@ -41333,8 +41359,8 @@ function injectOpenGraphTags(html: string, meta: any) {
     const canonicalRequestUrl = canonicalUrlObj.toString();
     
     const publicBase = baseUrl;
-    let title = "Yoouz - Live Photo Reviews | Real Photos. Real Reviews.";
-    let description = "Yoouz is the live photo review platform. Real people capture live camera photo reviews and 1–5 star ratings with zero fake reviews.";
+    let title = "Yoouz - Live Photo Reviews | Real Photos. Real Proof.";
+    let description = "A picture is worth a thousand words. Live camera photo reviews and 1–5 star ratings with zero fake uploads.";
     let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=26`;
     let touchIcon = `${publicBase}/apple-touch-icon.png`;
     let videoUrl = "";
@@ -42208,8 +42234,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         };
       }
       return {
-        title: "Yoouz - Live Photo Reviews | Real Photos. Real Reviews.",
-        description: "Yoouz is the live photo review platform. Real people capture live camera photo reviews and 1–5 star ratings with zero fake reviews.",
+        title: "Yoouz - Live Photo Reviews | Real Photos. Real Proof.",
+        description: "A picture is worth a thousand words. Live camera photo reviews and 1–5 star ratings with zero fake uploads.",
         imageUrl: `${baseUrl}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=26`,
         touchIcon: `${baseUrl}/apple-touch-icon.png`,
         logoUrl: `${baseUrl}/apple-touch-icon.png`,
@@ -42629,7 +42655,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       for (const r of list) {
         if (!r || !r.id) continue;
         const placeName = formatBusinessName(r.placeName || (r.placeId ? cleanDomainName(r.placeId) : "Local Business"));
-        const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Steven Akan");
+        const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Verified Reviewer");
         const rating = r.rating || 5.0;
 
         let thumbArg = r.thumbnailUrl || r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || "";
@@ -43006,32 +43032,108 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   };
   const runPhotoPivotPurgeOnce = async (): Promise<void> => {
-    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v1_done");
+    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v3_done");
     if (fs.existsSync(markerPath)) return;
-    console.log("🧹 [Photo Pivot] Running one-time purge of legacy video reviews & pre-pivot accounts...");
+    console.log("🧹 [Photo Pivot] Running v3 purge of legacy video reviews, test/legacy users, mp4 files, and Bunny Stream library...");
     try {
+      const LEGACY_USER_IDS = [
+        'anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com',
+        'usr_elainemethuselahpalleignacio_gmail_com', '4e313bbd-9671-4129-8d5b-e46767f422f8',
+        'a2bf471b-5073-4753-8c28-aabb02b19508', 'benmeddourridha7@gmail.com',
+        'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com',
+        'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com',
+        'usr_steven_akan', 'usr_ben_blue'
+      ];
+      const LEGACY_SET = new Set(LEGACY_USER_IDS.map((x) => x.toLowerCase()));
+      const isSurvivingPhotoUser = (u: any): boolean => {
+        if (!u) return false;
+        const id = String(u.id || u.uid || "").toLowerCase().trim();
+        const email = String(u.email || "").toLowerCase().trim();
+        const name = String(u.name || "").toLowerCase().trim();
+        if (LEGACY_SET.has(id) || LEGACY_SET.has(email) || name === "steven akan" || name === "ben blue" || name === "u/testa1") {
+          return false;
+        }
+        return Boolean(u.yoouzPhotoUser || id.startsWith("anon_"));
+      };
+
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
-        await bunnyDb.execute(`DELETE FROM videoReviews WHERE (data NOT LIKE '%"mediaType":"photo"%' OR data IS NULL)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM users WHERE (data NOT LIKE '%yoouzPhotoUser%' AND id NOT LIKE 'anon_%')`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM videoReviews WHERE (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection IN ('videoReviews', 'videos', 'video_reviews') AND (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM users WHERE (data NOT LIKE '%yoouzPhotoUser%' AND id NOT LIKE 'anon_%') OR LOWER(id) IN ('anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com', 'usr_elainemethuselahpalleignacio_gmail_com', '4e313bbd-9671-4129-8d5b-e46767f422f8', 'a2bf471b-5073-4753-8c28-aabb02b19508', 'benmeddourridha7@gmail.com', 'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com', 'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com', 'usr_steven_akan', 'usr_ben_blue') OR LOWER(email) IN ('avr6566gd@gmail.com', 'aouisesmee@gmail.com', 'elainemethuselahpalleignacio@gmail.com', 'ghafardhillow@gmail.com', 'mohammedmindri@gmail.com', 'benmeddourridha7@gmail.com', 'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com', 'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com') OR LOWER(name) IN ('u/testa1', 'steven akan', 'ben blue')`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'users' AND (data NOT LIKE '%yoouzPhotoUser%' OR LOWER(id) IN ('anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com'))`).catch(() => {});
         await bunnyDb.execute(`UPDATE users SET email = NULL WHERE email = ''`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM shares WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
       }
       if (getDb()) {
         try {
           await db.delete(BunnyDB_video_reviews);
         } catch {}
       }
-      writeReviewsIndex([]);
-      writeUsersIndex([]);
-      feedCache.videos = [];
+
+      // Preserve any real photo reviews if already created, purge all legacy videos
+      const currentRevs = readReviewsIndex().filter((r: any) => r && (r.mediaType === 'photo' || Boolean(r.photoUrl)));
+      writeReviewsIndex(currentRevs);
+      try {
+        const dataIdx = path.join(process.cwd(), "data", "reviews_index.json");
+        if (fs.existsSync(dataIdx)) fs.writeFileSync(dataIdx, JSON.stringify(currentRevs, null, 2), "utf8");
+      } catch {}
+
+      // Clean uploads/users_index.json so ONLY active anonymous photo accounts remain (no Steven Akan / no U/TESTA1 / no pre-pivot emails)
+      const keptUsers = readUsersIndex().filter(isSurvivingPhotoUser);
+      writeUsersIndex(keptUsers);
+
+      // Remove legacy local video files (.mp4 / .webm) from uploads/ & uploads/videos/
+      try {
+        for (const dirCandidate of [serverUploadsDir, path.join(serverUploadsDir, "videos")]) {
+          if (fs.existsSync(dirCandidate)) {
+            for (const f of fs.readdirSync(dirCandidate)) {
+              if (f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov")) {
+                try { fs.unlinkSync(path.join(dirCandidate, f)); } catch {}
+              }
+            }
+          }
+        }
+      } catch {}
+
+      // Purge all legacy videos from Bunny Stream Library (no longer used for photo reviews)
+      const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY || "1837c4e8-07f2-46dd-9a7a12f84ddb-6189-4d36";
+      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
+      if (bunnyStreamKey) {
+        try {
+          const listResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos?page=1&itemsPerPage=200`, {
+            headers: { "AccessKey": bunnyStreamKey, "Accept": "application/json" },
+            signal: AbortSignal.timeout(15000)
+          });
+          if (listResp.ok) {
+            const listData: any = await listResp.json();
+            const bunnyVideos = Array.isArray(listData.items) ? listData.items : [];
+            let deletedBunnyCount = 0;
+            for (const bv of bunnyVideos) {
+              if (!bv?.guid) continue;
+              const delRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bv.guid}`, {
+                method: "DELETE",
+                headers: { "AccessKey": bunnyStreamKey },
+                signal: AbortSignal.timeout(10000)
+              }).catch(() => null);
+              if (delRes && (delRes.ok || delRes.status === 404)) deletedBunnyCount++;
+            }
+            console.log(`🗑️ [Photo Pivot] Deleted ${deletedBunnyCount} legacy video(s) from Bunny Stream library ${bunnyLibraryId}.`);
+          }
+        } catch (streamErr) {
+          console.warn("Bunny Stream purge warning:", streamErr);
+        }
+      }
+
+      feedCache.videos = currentRevs;
       feedCache.lastFetched = 0;
       ogVideoCardCache.clear();
       if (!fs.existsSync(serverUploadsDir)) fs.mkdirSync(serverUploadsDir, { recursive: true });
       fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-      console.log("✅ [Photo Pivot] One-time legacy video & account purge completed.");
+      console.log("✅ [Photo Pivot] v2 legacy video & Bunny Stream purge completed.");
     } catch (e) {
       console.warn("Photo pivot purge warning:", e);
     }
@@ -43175,15 +43277,7 @@ function injectOpenGraphTags(html: string, meta: any) {
     }, 300);
   });
 
-  // Run one-time photo pivot purge & schema initialization immediately on startup
-  (async () => {
-    try {
-      await initBunnyDbSchema().catch(() => {});
-      await runPhotoPivotPurgeOnce().catch(() => {});
-    } catch (e) {}
-  })();
-
-  // Deferred non-blocking background initialization tasks after server is listening
+  // Deferred sequential background initialization tasks after server is listening (purge runs BEFORE user sync to prevent race conditions)
   setTimeout(async () => {
     try {
       await initBunnyDbSchema().catch(() => {});

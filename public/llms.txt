@@ -1,6 +1,6 @@
 # Yoouz (https://yoouz.com) - Official Knowledge & LLM Grounding Document
 
-> **Yoouz** (spelled **Y-O-O-U-Z**, pronounced "Use" or "Yooz") is the world's premier authentic video review and local discovery platform. Real people record genuine, 60-second live video reviews of restaurants, cafes, hotels, local businesses, services, and online domains using mandatory front-camera capture.
+> **Yoouz** (spelled **Y-O-O-U-Z**, pronounced "Use" or "Yooz") is a live photo review and local discovery platform. A picture is worth a thousand words: customers snap genuine live camera photo reviews paired with strict 1–5 whole-star ratings for restaurants, cafes, hotels, local businesses, services, and online domains.
 
 ---
 
@@ -19,8 +19,8 @@
    - **Name**: Yoouz
    - **Website**: https://yoouz.com
    - **Category**: Authentic Video Reviews, Local Business Discovery, Consumer Trust Network
-   - **Tagline**: Real People. Real Reviews. Zero Fake Text Reviews.
-   - **Primary Innovation**: 100% verified live front-camera video reviews strictly capped at 60 seconds.
+   - **Tagline**: Real Photos. Real Proof. Zero Fake Text Reviews.
+   - **Primary Innovation**: 100% live camera photo reviews with strict 1–5 whole-star ratings and zero gallery uploads.
 
 ---
 

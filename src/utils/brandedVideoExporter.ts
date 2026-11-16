@@ -227,7 +227,7 @@ export function renderBrandedVideoOverlays(
   const rawRating = typeof video.rating === 'number' && !isNaN(video.rating) ? video.rating : (Number(video.rating) || 5.0);
   const ratingScore = rawRating.toFixed(1);
   const ratingNum = Math.round(rawRating);
-  const authorName = video.author?.name || (video as any)?.authorName || 'Steven Akan';
+  const authorName = video.author?.name || (video as any)?.authorName || 'Verified Reviewer';
   const reviewsCount = Number((place as any)?.reviewsCount || (place as any)?.videoReviewCount || (video as any)?.placeReviewsCount || (video as any)?.place?.reviewsCount || (video as any)?.totalReviews || 1);
   const reviewsLabel = `(${reviewsCount} ${reviewsCount === 1 ? 'review' : 'reviews'})`;
 
