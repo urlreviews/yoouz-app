@@ -23936,7 +23936,8 @@ app.post("/api/videos/save-review", async (req, res) => {
         passkeyRegisteredAt: new Date().toISOString(),
         authProvider: "passkey",
         linkedProviders: ["passkey"],
-        isVerified: false,
+        isVerified: true,
+        verified: true,
         yoouzPhotoUser: true,
         scratchVersion: 6,
         updatedAt: new Date().toISOString()
@@ -23962,6 +23963,57 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (idx !== -1) localUsers[idx] = updatedUser;
       else localUsers.unshift(updatedUser);
       writeUsersIndex(localUsers);
+
+      // Cascade passkeyProtected & verified status to all reviews authored by this user
+      try {
+        const localReviews = readReviewsIndex();
+        let reviewsChanged = false;
+        const cleanHandleNoAt = String(updatedUser.handle || "").replace(/^@+/, "").toLowerCase();
+        for (const rev of localReviews) {
+          if (!rev) continue;
+          const revAuthorId = String(rev.userId || rev.author?.id || "").trim();
+          const revHandle = String(rev.author?.handle || "").replace(/^@+/, "").toLowerCase();
+          if (revAuthorId === cleanUserId || (cleanHandleNoAt && revHandle === cleanHandleNoAt)) {
+            rev.author = {
+              ...(rev.author || {}),
+              id: cleanUserId,
+              name: updatedUser.name,
+              handle: updatedUser.handle,
+              passkeyProtected: true,
+              isVerified: true
+            };
+            reviewsChanged = true;
+            if (bunnyDb && rev.id) {
+              bunnyDb.execute({
+                sql: `UPDATE videoReviews SET data = ? WHERE id = ?`,
+                args: [JSON.stringify(rev), String(rev.id)]
+              }).catch(() => {});
+            }
+          }
+        }
+        if (reviewsChanged) {
+          writeReviewsIndex(localReviews);
+        }
+        if (Array.isArray(feedCache?.videos)) {
+          for (const rev of feedCache.videos) {
+            if (!rev) continue;
+            const revAuthorId = String(rev.userId || rev.author?.id || "").trim();
+            const revHandle = String(rev.author?.handle || "").replace(/^@+/, "").toLowerCase();
+            if (revAuthorId === cleanUserId || (cleanHandleNoAt && revHandle === cleanHandleNoAt)) {
+              rev.author = {
+                ...(rev.author || {}),
+                id: cleanUserId,
+                name: updatedUser.name,
+                handle: updatedUser.handle,
+                passkeyProtected: true,
+                isVerified: true
+              };
+            }
+          }
+        }
+        ogVideoCardCache.clear();
+        ogCreatorCardCache.clear();
+      } catch {}
 
       res.cookie("yoouz_anon_uid", cleanUserId, {
         httpOnly: true,
@@ -36157,22 +36209,6 @@ const isPlaceCard = type === 'place';
             <!-- Dark Vignette Gradient Overlay -->
             <rect x="5" y="5" width="330" height="572" fill="url(#videoDarkVignette)"/>
 
-            <!-- Top Right Audio / Sound Icon Button -->
-            <g transform="translate(280, 24)">
-              <circle cx="18" cy="18" r="18" fill="#000000" fill-opacity="0.65" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1"/>
-              <g transform="translate(9, 9)">
-                <path d="M6 3.5L2.5 6H0v6h2.5l3.5 2.5V3.5z" fill="#ffffff"/>
-                <path d="M10 5a5 5 0 0 1 0 8" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                <path d="M13 2.5a8.5 8.5 0 0 1 0 13" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-              </g>
-            </g>
-
-            <!-- Center Dark Translucent Circular Play Button -->
-            <g transform="translate(165, 275)">
-              <circle cx="0" cy="0" r="32" fill="#000000" fill-opacity="0.65" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.5"/>
-              <path d="M-5 -12l16 12-16 12z" fill="#ffffff"/>
-            </g>
-
             <!-- Right Side Vertical Interaction Rail -->
             <g transform="translate(280, 155)">
               <!-- 1. Creator Avatar with '+' Badge -->
@@ -36325,10 +36361,10 @@ const isPlaceCard = type === 'place';
         
         <!-- Bottom left subtle text -->
         <text x="48" y="582" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
-          yoouz.com · Authentic 60-Second Video Reviews
+          yoouz.com · Authentic Live Photo Reviews
         </text>
 
-        <!-- Centered Mobile Video Player Mockup -->
+        <!-- Centered Mobile Photo Card Mockup -->
         ${playerMockup}
       </svg>`;
     } else if (isPlaceCard) {
@@ -36345,21 +36381,21 @@ const isPlaceCard = type === 'place';
             ${placeTspans}
           </text>
 
-          <!-- Rating & Video Count Pill -->
+          <!-- Rating & Photo Count Pill -->
           <g transform="translate(72, ${placeLines.length > 1 ? 335 : 280})">
             <rect width="360" height="44" rx="22" fill="#18181b" stroke="#f59e0b" stroke-width="1.5"/>
             <text x="24" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#fbbf24">★ ${(rating || 5.0).toFixed(1)}</text>
-            <text x="80" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Video Reviews</text>
+            <text x="80" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#e4e4e7">· ${reviewsCount || 18} Authentic Photo Reviews</text>
           </g>
 
           <!-- Subtitle -->
           <g transform="translate(72, ${placeLines.length > 1 ? 400 : 345})">
-            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Watch genuine customer video reviews recorded live before you visit.</text>
-            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% verified customer video testimonials</text>
+            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">See genuine customer photo reviews snapped live before you visit.</text>
+            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Zero fake text reviews · 100% live camera photo proof</text>
           </g>
         </g>
 
-        <!-- Right Side Mockup Player -->
+        <!-- Right Side Mockup Card -->
         ${renderVideoPlayerMockup({
           photoBase64: reviewerPhotoBase64,
           authorName: 'Chloe Mitchell',
@@ -36375,7 +36411,7 @@ const isPlaceCard = type === 'place';
 
       mainContentSvg = `
         <g transform="translate(0, 10)">
-          <text x="72" y="190" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">VERIFIED VIDEO REVIEWER PROFILE</text>
+          <text x="72" y="190" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#a1a1aa" letter-spacing="1.5">REVIEWER PROFILE</text>
 
           <text x="72" y="245" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#f4f4f5" letter-spacing="-1">
             @${cleanHandle}
@@ -36385,16 +36421,16 @@ const isPlaceCard = type === 'place';
             <rect width="320" height="42" rx="21" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
             <circle cx="21" cy="21" r="8" fill="#ffffff"/>
             <path d="M17.5 21l2.5 2.5 4.5-4.5" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="38" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Verified Video Reviewer on Yoouz</text>
+            <text x="38" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#f4f4f5">Photo Reviewer on Yoouz</text>
           </g>
 
           <g transform="translate(72, 355)">
-            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic 60-second video reviews and honest customer ratings.</text>
-            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">Watch verified reviews for top local restaurants, cafes, and businesses.</text>
+            <text x="0" y="26" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#d4d4d8">Explore authentic live photo reviews and honest customer ratings.</text>
+            <text x="0" y="58" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#71717a">See live camera reviews for top local restaurants, cafes, and businesses.</text>
           </g>
         </g>
 
-        <!-- Right Side Mockup Player -->
+        <!-- Right Side Mockup Card -->
         ${renderVideoPlayerMockup({
           photoBase64: reviewerPhotoBase64,
           authorName: cleanHandle,
@@ -36413,7 +36449,7 @@ const isPlaceCard = type === 'place';
           <!-- Tagline Pill -->
           <rect width="280" height="32" rx="16" fill="#18181b" stroke="#27272a" stroke-width="1"/>
           <circle cx="16" cy="16" r="4" fill="#ffffff"/>
-          <text x="28" y="20" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC VIDEO REVIEWS</text>
+          <text x="28" y="20" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#e4e4e7" letter-spacing="1">AUTHENTIC PHOTO REVIEWS</text>
 
           <!-- Big Title -->
           <text x="0" y="80" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1.5">
@@ -36425,10 +36461,10 @@ const isPlaceCard = type === 'place';
 
           <!-- Descriptive Subtitle -->
           <text x="0" y="186" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
-            The #1 authentic 60-second video review network.
+            The #1 authentic live camera photo review network.
           </text>
           <text x="0" y="214" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
-            Watch genuine live customer testimonials before you visit.
+            See genuine live customer photo proof before you visit.
           </text>
           <text x="0" y="242" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="400" fill="#a1a1aa">
             Zero fake text reviews · 100% verified trust.
@@ -36439,13 +36475,13 @@ const isPlaceCard = type === 'place';
             <!-- Pill 1 -->
             <g>
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
-              <circle cx="20" cy="20" r="4.5" fill="#ef4444"/>
-              <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">60s Live Video Only</text>
+              <circle cx="20" cy="20" r="4.5" fill="#ffffff"/>
+              <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Live Camera Only</text>
             </g>
             <!-- Pill 2 -->
             <g transform="translate(192, 0)">
               <rect width="180" height="40" rx="20" fill="#18181b" stroke="#3f3f46" stroke-width="1.2"/>
-              <circle cx="20" cy="20" r="4.5" fill="#22c55e"/>
+              <circle cx="20" cy="20" r="4.5" fill="#ffffff"/>
               <text x="34" y="25" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">Zero Fake Reviews</text>
             </g>
             <!-- Pill 3 -->
@@ -36524,7 +36560,7 @@ const isPlaceCard = type === 'place';
       <!-- Footer Tagline (Positioned cleanly on the left, zero overlap with right player) -->
       <g transform="translate(72, 564)">
         <text x="0" y="0" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#71717a" letter-spacing="0.2">
-          yoouz.com · Authentic 60-Second Video Reviews
+          yoouz.com · Authentic Live Photo Reviews
         </text>
       </g>
     </svg>`;
@@ -37053,7 +37089,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       <text x="0" y="240" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">${placeName.substring(0, 22)}${placeName.length > 22 ? '...' : ''}</text>
       
       <!-- Tagline -->
-      <text x="0" y="300" font-family="system-ui, sans-serif" font-size="26" font-weight="600" fill="#a1a1aa">Authentic 60-Second Video Review</text>
+      <text x="0" y="300" font-family="system-ui, sans-serif" font-size="26" font-weight="600" fill="#a1a1aa">Authentic Live Photo Review</text>
 
       <!-- Reviewer Profile -->
       <g transform="translate(0, 420)">
@@ -37063,32 +37099,20 @@ app.get('/api/og-preview-v2', async (req, res) => {
            <text x="28" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${authorName.charAt(0)}</text>
         </g>
         <text x="76" y="24" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorName}</text>
-        <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#a1a1aa">Verified Video Reviewer</text>
+        <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#a1a1aa">Photo Reviewer</text>
       </g>
     </g>
 
-    <!-- RIGHT COLUMN: The 9:16 Video Thumbnail -->
+    <!-- RIGHT COLUMN: The 9:16 Photo Thumbnail -->
     <g transform="translate(750, 35)" filter="url(#shadow)">
       <!-- Thumbnail Wrapper with border radius -->
       <g clip-path="url(#thumbClip)">
         <image href="${thumbBase64}" x="0" y="0" width="315" height="560" preserveAspectRatio="xMidYMid slice"/>
-        
-        <!-- Dark tint overlay for better play button contrast -->
-        <rect width="315" height="560" fill="#000000" fill-opacity="0.15"/>
+        <rect width="315" height="560" fill="#000000" fill-opacity="0.10"/>
       </g>
       
       <!-- Glossy Premium Border -->
       <rect width="315" height="560" rx="32" fill="none" stroke="url(#glass)" stroke-width="2"/>
-
-      <!-- Center Play Button Overlay -->
-      <g transform="translate(113.5, 236)">
-        <!-- Frosted Glass Circle -->
-        <circle cx="44" cy="44" r="44" fill="#000000" fill-opacity="0.4"/>
-        <!-- Thin sleek border -->
-        <circle cx="44" cy="44" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.5"/>
-        <!-- Play Triangle -->
-        <path d="M36 28l24 16-24 16V28z" fill="#ffffff"/>
-      </g>
     </g>
   </svg>
   `;
@@ -37333,7 +37357,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     // Dynamic brand & page OpenGraph share card generator (Centered logo + Title/Button metadata)
     async function generateBrandOgCardBuffer(title?: string, subtitle?: string, pathText?: string): Promise<Buffer> {
       const safeTitleText = (title || "Yoouz").trim() || "Yoouz";
-      const safeSubtitleText = (subtitle || "Authentic 60-Second Video Reviews").trim() || "Authentic 60-Second Video Reviews";
+      const safeSubtitleText = (subtitle || "Authentic Live Photo Reviews").trim() || "Authentic Live Photo Reviews";
       let displayPathText = (pathText || "yoouz.com").replace(/^https?:\/\//i, '').trim();
       if (!displayPathText.startsWith('yoouz.com')) {
         displayPathText = 'yoouz.com' + (displayPathText.startsWith('/') ? displayPathText : '/' + displayPathText);
@@ -37343,7 +37367,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const pathW = getTextAdvanceWidth(displayPathText, 17, true);
       const pillW = Math.max(240, Math.min(800, Math.round(pathW + 64)));
       const subW = getTextAdvanceWidth(safeSubtitleText, 22, false);
-      const footText = "YOOUZ • 100% AUTHENTIC 60s VIDEO REVIEWS";
+      const footText = "YOOUZ • 100% AUTHENTIC LIVE PHOTO REVIEWS";
       const footW = getTextAdvanceWidth(footText, 15, true);
 
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
@@ -37785,7 +37809,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const initialX = 50 - (initialWidth / 2);
 
       const videoAuthorWidth = getTextAdvanceWidth(authorPrefix, 26, true);
-      const videoAuthorPillWidth = Math.min(580, Math.max(290, 102 + videoAuthorWidth + 38));
+      const isAuthorPasskeyVerified = Boolean(
+        foundVideo?.author?.passkeyProtected ||
+        (foundVideo as any)?.passkeyProtected ||
+        queryParams.authorVerified === 'true'
+      );
+      const videoAuthorPillWidth = Math.min(580, Math.max(290, 102 + videoAuthorWidth + (isAuthorPasskeyVerified ? 38 : 18)));
 
       if (thumbBuf) {
         const overlaySvg = `
@@ -37850,14 +37879,6 @@ app.get('/api/og-preview-v2', async (req, res) => {
               ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
             </g>
 
-            ${(foundVideo?.mediaType === 'photo' || Boolean(foundVideo?.photoUrl)) ? '' : `
-            <!-- CENTER: Frosted Glass Play Button (Video fallback only) -->
-            <g transform="translate(535, 250)">
-              <circle cx="65" cy="65" r="63" fill="#000000" fill-opacity="0.58"/>
-              <circle cx="65" cy="65" r="62" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"/>
-              <path d="M54 44 L88 65 L54 86 Z" fill="#ffffff"/>
-            </g>`}
-
             <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
             <g transform="translate(${bottomPillX}, 494)" filter="url(#cardShadow)">
               <rect width="${videoAuthorPillWidth}" height="104" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
@@ -37874,12 +37895,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
                 ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
               `}
               
-              <!-- Line 1: By Reviewer Name + Verified Badge -->
+              <!-- Line 1: By Reviewer Name + Verified Badge (only if passkeyProtected) -->
               ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
+              ${isAuthorPasskeyVerified ? `
               <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
                 <circle cx="10" cy="10" r="10" fill="#ffffff"/>
                 <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              </g>
+              </g>` : ''}
 
               <!-- Line 2: 5 Stars Row -->
               ${renderFiveStarsRowSvg(100, 58, ratingNum)}
@@ -38011,12 +38033,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
               ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
             `}
             
-            <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge -->
+            <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge (only if passkeyProtected) -->
             ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
+            ${isAuthorPasskeyVerified ? `
             <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
               <circle cx="10" cy="10" r="10" fill="#ffffff"/>
               <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
+            </g>` : ''}
 
             <!-- Line 2: 5 Stars Row -->
             ${renderFiveStarsRowSvg(100, 58, ratingNum)}
@@ -38816,9 +38839,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       // Calculations for Bottom Author Pill (Scaled + crop-safe x=152)
       const safeAuthorDisplay = displayName.length > 24 ? `${displayName.substring(0, 22)}...` : displayName;
+      const isCreatorPasskeyVerified = Boolean(
+        (profile as any)?.passkeyProtected ||
+        query.authorVerified === 'true'
+      );
       const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 28, true);
       const subWidth = getTextAdvanceWidth(subtitleText, 19, true);
-      const maxTextWidth = Math.max(authorWidth + 32, subWidth);
+      const maxTextWidth = Math.max(authorWidth + (isCreatorPasskeyVerified ? 32 : 12), subWidth);
       const authorPillWidth = Math.min(580, Math.max(310, 114 + maxTextWidth + 36));
 
       const overlaySvg = `
@@ -38859,8 +38886,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
               </g>
             `}
 
-            <!-- Line 1: User Display Name -->
+            <!-- Line 1: User Display Name + Verified Badge (only if passkeyProtected) -->
             ${renderTextPath(safeAuthorDisplay, 114, 51, 28, true, '#ffffff')}
+            ${isCreatorPasskeyVerified ? `
+            <g transform="translate(${114 + authorWidth + 10}, 30)">
+              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
+              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>` : ''}
 
             <!-- Line 2: Subtitle (Reviewer Profile) -->
             ${renderTextPath(subtitleText, 114, 82, 19, true, '#cbd5e1')}
@@ -39011,7 +39043,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         // For all non-video pages/buttons (Homepage, Business, Search, Following, Messages, etc.)
         // Generate a dynamic card featuring OUR LOGO in the middle + Title/Button metadata
         const titleParam = (query.title as string) || (query.name as string) || "Yoouz";
-        const subtitleParam = (query.subtitle as string) || (query.desc as string) || "Authentic 60-Second Video Reviews";
+        const subtitleParam = (query.subtitle as string) || (query.desc as string) || "Authentic Live Photo Reviews";
         const pathParam = (query.path as string) || (query.button as string) || (query.url as string) || "yoouz.com";
 
         const brandBuf = await generateBrandOgCardBuffer(titleParam, subtitleParam, pathParam);

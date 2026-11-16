@@ -2194,10 +2194,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const toggleHideVideo = (id: string) => {
     if (hiddenVideoIds.includes(id)) {
       setHiddenVideoIds(prev => prev.filter(item => item !== id));
-      setWidgetNotice('Video restored to website widget.');
+      setWidgetNotice('Photo review restored to website widget.');
     } else {
       setHiddenVideoIds(prev => [...prev, id]);
-      setWidgetNotice('👁️ Video hidden from website widget.');
+      setWidgetNotice('👁️ Photo review hidden from website widget.');
     }
     setTimeout(() => setWidgetNotice(null), 3500);
   };
@@ -2380,7 +2380,7 @@ ${jsonLd}
     { 
       id: 'reviews' as BusinessTab, 
       label: 'Reviews', 
-      icon: Video, 
+      icon: Camera, 
       badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined 
     },
     { 
@@ -3328,15 +3328,9 @@ ${jsonLd}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
-                                      <Camera className="w-2.5 h-2.5 text-zinc-200" /> {isPhoto ? 'Live Photo' : `0:${video.durationSeconds || 15}`}
+                                      <Camera className="w-2.5 h-2.5 text-zinc-200" /> Live Photo
                                     </span>
                                   </div>
-
-                                  {!isPhoto && (
-                                    <div className="self-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg border border-white/40 group-hover:scale-110 transition-transform">
-                                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                                    </div>
-                                  )}
 
                                   <div>
                                     <span className="text-xs font-bold text-white block line-clamp-1">

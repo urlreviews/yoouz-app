@@ -57,7 +57,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
     setExportState({
       status: 'initializing',
       progress: 10,
-      message: 'Preparing Ultra-HD video...',
+      message: 'Preparing Ultra-HD photo...',
     });
 
     await exportBrandedAdVideo(video, place, (progress) => {
@@ -145,26 +145,17 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 </div>
               </div>
 
-              {/* CENTER: Play Button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* BOTTOM LEFT: Reviewer Profile Pill (Matches Screenshot 4) */}
+              {/* BOTTOM LEFT: Reviewer Profile Pill */}
               <div className="absolute bottom-2.5 left-2.5 z-10 flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/85 backdrop-blur-md border border-white/20 shadow-lg min-w-0 max-w-[75%] pointer-events-none">
                 {/* Circular Avatar */}
-                <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 bg-lime-600 shrink-0 shadow-xs flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full overflow-hidden border border-white/30 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
                   {avatarUrl ? (
                     <img
                       src={getProxiedImageUrl(avatarUrl)}
                       alt={authorName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(authorName)}&background=65a30d&color=fff&bold=true&size=128`;
+                        (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`;
                       }}
                     />
                   ) : (
@@ -173,14 +164,16 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
                 </div>
                 {/* 3 Lines of Text */}
                 <div className="flex flex-col min-w-0 justify-center">
-                  {/* Line 1: By AuthorName + Verified badge */}
+                  {/* Line 1: By AuthorName + Passkey Verified badge */}
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-white text-xs font-bold truncate leading-tight">{authorName}</span>
-                    <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
-                      <svg className="w-2 h-2 text-zinc-950 stroke-[2.8]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
+                    {Boolean(video.author?.passkeyProtected) && (
+                      <span className="w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+                        <svg className="w-2 h-2 text-zinc-950 stroke-[2.8]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    )}
                   </div>
                   {/* Line 2: 5 Stars */}
                   <div className="flex items-center gap-0.5 leading-none my-0.5">
@@ -215,7 +208,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-zinc-300 flex items-center gap-1.5">
                   <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
-                  <span>{exportState.message || 'Rendering video...'}</span>
+                  <span>{exportState.message || 'Rendering photo...'}</span>
                 </span>
                 <span className="font-bold text-white font-mono">{exportState.progress}%</span>
               </div>
@@ -230,8 +223,8 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
 
           {exportState.status === 'completed' && !isExporting && (
             <div className="flex items-center gap-2 text-xs text-white font-medium bg-white/10 py-2 px-3 rounded-xl border border-white/20 animate-in fade-in">
-              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Video downloaded successfully!</span>
+              <CheckCircle className="w-4 h-4 text-white shrink-0" />
+              <span>Photo review downloaded!</span>
             </div>
           )}
 
@@ -249,17 +242,17 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
             {isExporting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
-                <span>Rendering Video ({exportState.progress}%)...</span>
+                <span>Rendering Photo ({exportState.progress}%)...</span>
               </>
             ) : exportState.status === 'completed' ? (
               <>
                 <Download className="w-4 h-4 text-black" />
-                <span>Re-Download Video</span>
+                <span>Re-Download Photo</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4 text-black" />
-                <span>Download Video</span>
+                <span>Download Photo</span>
               </>
             )}
           </button>

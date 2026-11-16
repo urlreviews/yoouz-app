@@ -738,80 +738,34 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
             </div>
           </div>
         ) : (
-          /* Video Carousel when reviews exist */
+          /* Photo Review Carousel when reviews exist */
           <>
-            {/* Background Full-Bleed Photo / Video Poster */}
-            <div 
-              className="absolute inset-0 w-full h-full bg-black cursor-pointer"
-              onClick={() => !isCurrentPhoto && currentVideo && handleTogglePlay(currentVideo)}
-            >
-              {!isCurrentPhoto && isPlaying ? (
-                <video
-                  ref={(el) => {
-                    videoElementRef.current = el;
-                    if (el) {
-                      if (isVideoPaused || !playingVideoId) {
-                        el.pause();
-                      } else {
-                        el.play().catch(() => {});
-                      }
-                    }
-                  }}
-                  src={currentVideo.videoUrl}
-                  poster={
-                    currentVideo.photoUrl ||
-                    currentVideo.thumbnailUrl ||
-                    currentVideo.bannerUrl ||
-                    currentVideo.ogImage ||
-                    `https://rev1.b-cdn.net/videos/${currentVideo.id}.jpg`
-                  }
-                  playsInline
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src={
-                    getProxiedImageUrl(
-                      currentVideo?.photoUrl ||
-                      currentVideo?.thumbnailUrl ||
-                      currentVideo?.bannerUrl ||
-                      currentVideo?.ogImage ||
-                      `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
-                    )
-                  }
-                  alt={currentVideo?.placeName || "Yoouz Review"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
-                  }}
-                />
-              )}
+            {/* Background Full-Bleed Photo */}
+            <div className="absolute inset-0 w-full h-full bg-black">
+              <img
+                src={
+                  getProxiedImageUrl(
+                    currentVideo?.photoUrl ||
+                    currentVideo?.thumbnailUrl ||
+                    currentVideo?.bannerUrl ||
+                    currentVideo?.ogImage ||
+                    `https://rev1.b-cdn.net/videos/${currentVideo?.id}.jpg`
+                  )
+                }
+                alt={currentVideo?.placeName || "Yoouz Review"}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
+                }}
+              />
 
               {/* Cinematic Top and Bottom Gradients for Uncompromising Legibility */}
               <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/85 via-black/40 to-transparent pointer-events-none z-10" />
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-none z-10" />
-
-              {/* Center Play / Pause Indicator (legacy video items only) */}
-              {!isCurrentPhoto && ((!isPlaying || isVideoPaused) ? (
-                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                  <div className="w-14 h-14 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/30 text-white shadow-2xl flex items-center justify-center group-hover/embed:scale-110 transition-all duration-300">
-                    <Play className="w-6 h-6 fill-white text-white ml-1 drop-shadow-md" />
-                  </div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none opacity-0 group-hover/embed:opacity-100 transition-opacity duration-200">
-                  <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg flex items-center justify-center">
-                    <Pause className="w-5 h-5 fill-white text-white" />
-                  </div>
-                </div>
-              ))}
             </div>
 
-            {/* TOP OVERLAY: Brand Trust Header Pill + Sound Toggle */}
+            {/* TOP OVERLAY: Brand Trust Header Pill */}
             <div className="relative z-30 p-3 sm:p-3.5 flex items-start justify-between gap-2 pointer-events-auto">
               <div
                 className="flex items-center gap-2 pl-1.5 pr-3.5 py-1 rounded-full bg-black/65 backdrop-blur-2xl border border-white/20 text-white transition-all text-left shadow-xl min-w-0 max-w-[calc(100%-48px)] select-none"
@@ -842,25 +796,6 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Mute / Unmute Button (only for legacy video reviews) */}
-              {!isCurrentPhoto && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMuted((prev) => !prev);
-                  }}
-                  className="w-8 h-8 rounded-full bg-black/65 hover:bg-black/85 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0 mt-0.5"
-                  title={isMuted ? "Unmute" : "Mute"}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-3.5 h-3.5 text-white" />
-                  ) : (
-                    <Volume2 className="w-3.5 h-3.5 text-white" />
-                  )}
-                </button>
-              )}
             </div>
 
             {/* SIDE CHEVRONS (Desktop hover or tap navigation) */}
@@ -921,13 +856,16 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                 </div>
 
                 <div className="min-w-0 flex flex-col gap-0.5">
-                  {/* Line 1: Author Name with Verified Check */}
+                  {/* Line 1: Author Name with Passkey Verified Check */}
                   <div
                     className="flex items-center gap-1.5 min-w-0 w-fit select-none"
                   >
                     <span className="text-[13.5px] sm:text-[14px] font-black text-white truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {safeAuthor.name}
                     </span>
+                    {Boolean(safeAuthor.passkeyProtected) && (
+                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                    )}
                   </div>
 
                   {/* Line 2: Rating Stars & Recorded Time */}
@@ -955,7 +893,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
               {/* Footer Bar: Live Sync on Left, Review Count on Right */}
               <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/10 mt-0.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0" />
                   <a
                     href="https://yoouz.com"
                     target="_blank"

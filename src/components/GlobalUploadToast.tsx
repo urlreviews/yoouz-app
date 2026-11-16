@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, CheckCircle, XCircle, Video } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Camera } from 'lucide-react';
 
 interface UploadState {
   id: string;
@@ -81,14 +81,14 @@ export const GlobalUploadToast: React.FC = () => {
             ) : (
               <div className="relative flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
-                <Video className="w-3 h-3 text-white absolute" />
+                <Camera className="w-3 h-3 text-white absolute" />
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <p className="text-sm font-bold truncate">
-                {up.isError ? "Upload Failed" : up.isComplete ? "Published!" : "Uploading Video"}
+                {up.isError ? "Upload Failed" : up.isComplete ? "Published!" : "Publishing Photo"}
               </p>
               {!up.isComplete && !up.isError && (
                 <span className="text-xs font-medium text-zinc-200">{up.percent}%</span>

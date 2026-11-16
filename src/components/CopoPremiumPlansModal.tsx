@@ -280,7 +280,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                   <div className="flex items-start gap-3">
                     <BarChart3 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Real-time Video Analytics & watch impression tracking
+                      Real-time Photo Review Analytics & view impression tracking
                     </span>
                   </div>
 

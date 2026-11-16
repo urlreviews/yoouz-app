@@ -311,15 +311,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       id: "rev-passkey",
       category: "reviewers",
       question: t("trustCenter.faq_rev_passkey_q", "If I switch to a new phone, how do I keep my account—and do I need to remember my U/XXXXXX username?"),
-      answer: t("trustCenter.faq_rev_passkey_a", "No—you never have to remember or write down your U/XXXXXX username, and there are no emails or passwords. Simply open your profile and tap 'Save Face ID (1-Time)' once (shown with a reminder badge until saved). Your phone saves a hardware Passkey in Apple iCloud Keychain or Android Google Password Manager with your U/XXXXXX username stored inside it. On a new phone, just tap 'Restore Account with Face ID' and look at your screen—your phone's Face ID or fingerprint restores your exact U/XXXXXX profile automatically."),
-      tags: ["passkey", "face id", "new phone", "switch phone", "remember username", "biometric", "backup", "icloud", "android"]
+      answer: t("trustCenter.faq_rev_passkey_a", "No—you never have to remember or write down your U/XXXXXX username, and there are no emails or passwords. Simply open your profile and tap 'Save Face ID (1-Time)' once (shown with a reminder badge until saved). Your phone saves a hardware Passkey in Apple iCloud Keychain or Android Google Password Manager with your U/XXXXXX username stored inside it, and immediately awards your profile a Verified Reviewer badge (✓). On a new phone, just tap 'Restore Account with Face ID' and look at your screen—your phone's Face ID or fingerprint restores your exact U/XXXXXX profile automatically."),
+      tags: ["passkey", "face id", "new phone", "switch phone", "remember username", "biometric", "backup", "icloud", "android", "verified badge"]
     },
     {
       id: "rev-4",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_4_q", "Do reviewers receive Verified badges on Yoouz?"),
-      answer: t("trustCenter.faq_rev_4_a", "No. Verified badges on Yoouz are reserved exclusively for official claimed businesses. Community reviewers participate with anonymous U/ IDs or custom @usernames so every photo stands on its own authenticity."),
-      tags: ["verified", "badge", "business", "anonymous", "profile"]
+      question: t("trustCenter.faq_rev_4_q", "How do reviewers get a Verified badge (✓) on Yoouz?"),
+      answer: t("trustCenter.faq_rev_4_a", "Reviewers earn a Verified badge (✓) next to their U/XXXXXX or custom @username exclusively after securing their account with a 1-time Face ID / Biometric Passkey. Until a Passkey is saved, reviewer profiles and photo reviews do not display a verified checkmark."),
+      tags: ["verified", "badge", "passkey", "face id", "biometric", "checkmark", "profile"]
     },
     {
       id: "rev-5",
@@ -518,8 +518,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       id: "trust-7",
       category: "trust",
       question: t("trustCenter.faq_trust_7_q", "Which profiles display a Verified checkmark badge?"),
-      answer: t("trustCenter.faq_trust_7_a", "Verified checkmark badges are reserved exclusively for claimed business profiles and official brand domains. Individual community reviewers do not receive verified badges."),
-      tags: ["verified business", "badges", "trust", "businesses"]
+      answer: t("trustCenter.faq_trust_7_a", "Verified checkmark badges (✓) are displayed on official claimed business profiles and on community reviewers who have verified and locked their account with a 1-time Face ID / Biometric Passkey. Reviewers without a saved Passkey do not display a verified badge."),
+      tags: ["verified business", "verified reviewer", "passkey", "badges", "trust", "businesses"]
     },
 
     // --- Technical & Navigation FAQs ---

@@ -9,8 +9,7 @@ import {
   Phone,
   Globe,
   Clock,
-  Video,
-  Play,
+  Eye,
   Share2,
   Navigation,
   Bookmark,
@@ -1974,7 +1973,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
                             </span>
                             <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold">
-                              <Play className="w-2.5 h-2.5 fill-current" />
+                              <Eye className="w-2.5 h-2.5 shrink-0" />
                               <span>{formattedViews}</span>
                             </div>
                           </div>
@@ -2199,7 +2198,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
                           </span>
                           <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
-                            <Play className="w-2.5 h-2.5 fill-current shrink-0" />
+                            <Eye className="w-2.5 h-2.5 shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
                         </div>

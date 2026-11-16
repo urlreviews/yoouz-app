@@ -12,7 +12,7 @@ import {
   Edit3,
   Trash2,
   MoreVertical,
-  Play,
+  Eye,
   AtSign,
   Check,
   Loader2,
@@ -583,7 +583,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   });
 
   const isPasskeyProtected = Boolean(
-    (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
+    (isOwner && (currentUser as any)?.passkeyProtected) ||
+    (liveUserProfile as any)?.passkeyProtected ||
+    (author as any)?.passkeyProtected
   );
 
   useEffect(() => {
@@ -1359,12 +1361,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="min-w-0 flex-1 pr-2">
               <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
                 <bdi dir="auto">{displayName || ""}</bdi>
+                {isPasskeyProtected && (
+                  <span title="Verified Reviewer (Passkey Protected)" className="inline-flex shrink-0">
+                    <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0" />
+                  </span>
+                )}
                 {isOwner && !isPasskeyProtected && (
                   <button
                     type="button"
                     onClick={handleRegisterPasskeyInline}
                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
-                    title="Tap once to remember your account with Face ID if you switch phones"
+                    title="Tap once to get your Verified Badge & remember your account with Face ID if you switch phones"
                   >
                     <ScanFace className="w-3.5 h-3.5 text-white shrink-0" />
                     <span>Save Face ID (1-Time)</span>
@@ -1659,7 +1666,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                               {v.placeName || formatBusinessName(v.placeId) || "Business"}
                             </span>
                             <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
-                              <Play className="w-2.5 h-2.5 fill-current shrink-0" />
+                              <Eye className="w-2.5 h-2.5 shrink-0" />
                               <span>{formattedViews}</span>
                             </div>
                           </div>
@@ -1731,7 +1738,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             {v.placeName || formatBusinessName(v.placeId) || "Business"}
                           </span>
                           <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
-                            <Play className="w-2.5 h-2.5 fill-current shrink-0" />
+                            <Eye className="w-2.5 h-2.5 shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
                         </div>
@@ -2221,6 +2228,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         avatarUrl={effectiveAvatar}
         bannerUrl={effectiveBanner}
         isCreatorProfile={true}
+        isAuthorVerified={isPasskeyProtected}
         onOpenReport={onOpenReport ? () => onOpenReport(author) : undefined}
       />
 
@@ -2534,7 +2542,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {isPlace ? formattedTitle : nameStr}
                             </h4>
-                            {isPlace && (
+                            {(isPlace || Boolean(u.passkeyProtected)) && (
                               <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                             )}
                             {isPlace && (

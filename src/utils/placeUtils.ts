@@ -3421,7 +3421,9 @@ export function updateUserRegistry(users: any[] | any): void {
       location: u.location || prevEntry?.location,
       city: u.city || prevEntry?.city,
       country: u.country || prevEntry?.country,
-      email: u.email || prevEntry?.email
+      email: u.email || prevEntry?.email,
+      passkeyProtected: Boolean(u.passkeyProtected ?? prevEntry?.passkeyProtected),
+      isVerified: Boolean(u.passkeyProtected ?? prevEntry?.passkeyProtected)
     };
 
     if (emailKey) memoryUserRegistry[emailKey] = entry;
@@ -3725,7 +3727,12 @@ export function resolveSafeAuthor(
   const finalCountry = rawCountry || (finalLocation.includes("United States") ? "United States" : "");
 
   const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
-  const isVerifiedUser = false;
+  const isPasskeyVerifiedUser = Boolean(
+    (isActiveUserMatch && (activeUser as any)?.passkeyProtected) ||
+    (registryMatch as any)?.passkeyProtected ||
+    (authorObj as any)?.passkeyProtected ||
+    (video as any)?.authorPasskeyProtected
+  );
 
   const resolvedFirstName = finalName;
   const resolvedLastName = "";
@@ -3736,7 +3743,8 @@ export function resolveSafeAuthor(
     lastName: resolvedLastName,
     handle: finalHandle,
     avatar: finalAvatar,
-    isVerified: isVerifiedUser,
+    isVerified: isPasskeyVerifiedUser,
+    passkeyProtected: isPasskeyVerifiedUser,
     isLocalGuide: false,
     videoReviewCount: reviewCount,
     photosCount: authorObj.photosCount ?? 0,

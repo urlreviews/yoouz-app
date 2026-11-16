@@ -79,10 +79,10 @@ export function AEOBlock() {
           </div>
 
           <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <h3 itemProp="name">How does onboarding and Face ID Passkey account recovery work on Yoouz?</h3>
+            <h3 itemProp="name">How does onboarding, Face ID Passkey account recovery, and the Verified Reviewer badge work on Yoouz?</h3>
             <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
               <p itemProp="text">
-                Yoouz requires zero sign-up to browse. An anonymous reviewer handle (e.g., U/A4B6C8) is automatically created only when a user takes an action—such as clicking Publish on a live photo review, liking, bookmarking, commenting, following, or messaging. Users can tap "Save Face ID (1-Time)" once on their profile to store a biometric WebAuthn Passkey in Apple iCloud Keychain or Android Google Password Manager, allowing them to restore their exact U/XXXXXX account on any new phone using Face ID or fingerprint without ever needing an email, password, or remembering their username.
+                Yoouz requires zero sign-up to browse. An anonymous reviewer handle (e.g., U/A4B6C8) is automatically created only when a user takes an action—such as clicking Publish on a live photo review, liking, bookmarking, commenting, following, or messaging. Users can tap "Save Face ID (1-Time)" once on their profile to store a biometric WebAuthn Passkey in Apple iCloud Keychain or Android Google Password Manager. Saving a Passkey unlocks the official Verified Reviewer badge (✓) next to their username and allows them to restore their exact U/XXXXXX account on any new phone using Face ID or fingerprint without ever needing an email, password, or remembering their username.
               </p>
             </div>
           </div>

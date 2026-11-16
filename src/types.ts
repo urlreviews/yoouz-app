@@ -126,6 +126,7 @@ export interface UserProfile {
   isAdmin?: boolean;
   username?: string;
   isAnonymous?: boolean;
+  passkeyProtected?: boolean;
   linkedProviders?: string[];
   authProvider?: string;
   yoouzPhotoUser?: boolean;
@@ -174,6 +175,7 @@ export interface VideoReview {
     videoReviewCount?: number;
     photosCount?: number;
     isVerified?: boolean;
+    passkeyProtected?: boolean;
     isFollowed?: boolean;
     followersCount?: number;
   };

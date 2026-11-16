@@ -135,8 +135,8 @@ export function CopoComparisonModal({
           <div className="grid grid-cols-12 gap-3 pb-3 border-b border-white/10 text-xs font-bold text-zinc-200 uppercase tracking-wider">
             <div className="col-span-5 sm:col-span-4">{t("comparison.evaluationCriteria", "Evaluation Criteria")}</div>
             <div className="col-span-7 sm:col-span-4 text-white flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-              Yoouz ({t("comparison.videoFirst", "Video First")})
+              <div className="w-2 h-2 rounded-full bg-white"></div>
+              Yoouz ({t("comparison.photoFirst", "Live Photo First")})
             </div>
             <div className="hidden sm:block sm:col-span-4 text-zinc-200">
               {current.name}
@@ -155,8 +155,8 @@ export function CopoComparisonModal({
                 </div>
                 
                 {/* Yoouz Side */}
-                <div className="col-span-12 sm:col-span-4 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-medium flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <div className="col-span-12 sm:col-span-4 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white font-medium flex items-center gap-2">
+                  <Check className="w-4 h-4 text-white flex-shrink-0" />
                   <span className="text-xs sm:text-sm">{row.yoouz}</span>
                 </div>
 

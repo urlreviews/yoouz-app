@@ -52,6 +52,7 @@ interface CopoShareModalProps {
   handle?: string;
   isCreatorProfile?: boolean;
   isBusinessProfile?: boolean;
+  isAuthorVerified?: boolean;
   rating?: number;
   reviewsCount?: number;
   reviewCount?: number;
@@ -78,6 +79,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   handle: propHandle,
   isCreatorProfile: propIsCreatorProfile,
   isBusinessProfile: propIsBusinessProfile,
+  isAuthorVerified: propIsAuthorVerified,
   rating: propRating,
   reviewsCount: propReviewsCount,
   reviewCount: propReviewCount,
@@ -255,6 +257,23 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     ? (safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Photo Reviewer")
     : (title || "Community Reviewer");
 
+  const isAuthorPasskeyVerified = Boolean(
+    propIsAuthorVerified ||
+    (isVideoMode && video
+      ? Boolean(
+          (safeAuthor as any)?.passkeyProtected ||
+          (video.author as any)?.passkeyProtected ||
+          (safeAuthor as any)?.isVerified === true
+        )
+      : Boolean(
+          propIsCreatorProfile &&
+          currentUser &&
+          ((currentUser.name || "").toLowerCase() === (title || "").toLowerCase() ||
+            (currentUser.handle || "").replace(/^@+/, "").toLowerCase() === (propHandle || "").replace(/^@+/, "").toLowerCase()) &&
+          currentUser.passkeyProtected
+        ))
+  );
+
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);
 
   // Helper to compute place rating & review count (matching live database and local storage)
@@ -354,10 +373,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png`;
 
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v17/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=32`
+    ? `${appOrigin}/api/og-card/v17/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=34`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v17/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=41`
-    : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&v=45`;
+    ? `${appOrigin}/api/og-image/v17/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=42`
+    : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}&v=46`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Live Photo Review");
@@ -756,9 +775,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "copy",
       name: copied ? "Copied" : t("shareModal.copyLinkShort", "Copy"),
-      icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-emerald-400" /> : <Copy className="w-5.5 h-5.5 text-zinc-100" />,
+      icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-zinc-950" /> : <Copy className="w-5.5 h-5.5 text-zinc-100" />,
       circleClass: copied
-        ? "bg-emerald-950/90 border-emerald-500/80 text-emerald-300"
+        ? "bg-white border-white text-zinc-950"
         : "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
       onClick: handleCopy
     },
@@ -851,7 +870,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
         {/* Toast Feedback Notification Banner */}
         {toastMessage && (
           <div className="mx-4 mt-2 py-2 px-3.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 shadow-md">
-            <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+            <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -917,8 +936,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       <div className="flex flex-col min-w-0 justify-center pr-0.5">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
-                          {/* Dark Mode Verified Checkmark */}
-                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                          {isAuthorPasskeyVerified && (
+                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                          )}
                         </div>
                         <p className="text-zinc-300 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5 opacity-90">
                           {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
@@ -1052,18 +1072,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                     </div>
                   </div>
 
-                  {/* CENTER: Play Button for Videos */}
-                  {isVideoMode && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-black/55 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-2xl transition-transform group-hover:scale-105">
-                        <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-white ml-0.5" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* BOTTOM BAR: Author Info (Sleek Compact 2-Row: By Name • Date, 5 Stars domain.com) */}
+                  {/* BOTTOM BAR: Author Info (Sleek Compact 2-Row: By Name, 5 Stars) */}
                   <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
                     {isVideoMode && video ? (
                       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
@@ -1079,10 +1088,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                           />
                         </div>
                         <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                          {/* Line 1: By AuthorName + Verified badge */}
+                          {/* Line 1: By AuthorName + Passkey Verified badge */}
                           <div className="flex items-center gap-1 min-w-0">
                             <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
-                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                            {isAuthorPasskeyVerified && (
+                              <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
+                            )}
                           </div>
                           {/* Line 2: 5 Stars */}
                           <div className="flex items-center gap-1.5 leading-none mt-0.5">
@@ -1293,7 +1304,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-zinc-750 flex items-center justify-center text-white shrink-0">
-                        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                        {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
                       </div>
                       <span className="text-xs font-medium text-white">
                         {copied ? t("shareModal.copied", "Copied Link!") : t("shareModal.copyLink", "Copy Link")}
@@ -1351,7 +1362,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" />
+                      <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
                       <span>{t("shareModal.copied", "Copied")}</span>
                     </>
                   ) : (
@@ -1407,7 +1418,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {t("shareModal.htmlCode", "HTML iFrame Code")}
                 </span>
                 {embedCopied && (
-                  <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-white flex items-center gap-1">
                     <Check className="w-3 h-3 stroke-[2.5]" /> {t("shareModal.copied", "Copied!")}
                   </span>
                 )}

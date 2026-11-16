@@ -746,6 +746,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                     title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
                   >
                     <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
+                    {Boolean(safeAuthor?.passkeyProtected) && (
+                      <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                    )}
                   </button>
                   {(video.recordedAt || video.createdAtMs) && (
                     <>

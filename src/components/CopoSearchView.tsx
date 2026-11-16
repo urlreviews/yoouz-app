@@ -1020,7 +1020,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           </div>
                           <div className="text-white/85 text-[10.5px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
                             <span className="truncate text-white/85">{creatorFullName}</span>
-                            {author?.isVerified !== false && (
+                            {Boolean(author?.passkeyProtected || (video as any)?.author?.passkeyProtected) && (
                               <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
                             )}
                           </div>
@@ -1280,7 +1280,9 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         </div>
                         <div className="text-white/85 text-[11px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
                           <span className="truncate text-white/85">{video.authorName || "Reviewer"}</span>
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
+                          {Boolean((video as any)?.author?.passkeyProtected) && (
+                            <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
+                          )}
                         </div>
                       </div>
                     </div>
