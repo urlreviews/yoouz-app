@@ -2209,24 +2209,44 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
           ctx.fillText(qrTableLabel.toUpperCase(), 970, 143);
         }
 
+        // Draw Business Brand Logo Box at top center (y = 130)
         ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.roundRect(530, 130, 140, 140, 28);
+        ctx.fill();
+        ctx.strokeStyle = "#e4e4e7";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        const brandInitial = (currentPlace.name || "B").charAt(0).toUpperCase();
+        ctx.fillStyle = "#09090b";
         ctx.font = "900 64px system-ui, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(currentPlace.name || 'Venue', 600, 260);
+        ctx.textBaseline = "middle";
+        ctx.fillText(brandInitial, 600, 202);
+        ctx.textBaseline = "alphabetic";
 
+        // Title / Venue Name
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 60px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(currentPlace.name || 'Venue', 600, 320);
+
+        // URL subtitle
         ctx.fillStyle = "#a1a1aa";
-        ctx.font = "bold 28px system-ui, sans-serif";
-        ctx.fillText(`yoouz.com/reviews/${getPlaceSlug(currentPlace)}`, 600, 310);
+        ctx.font = "bold 26px system-ui, sans-serif";
+        ctx.fillText(`yoouz.com/reviews/${getPlaceSlug(currentPlace)}`, 600, 365);
 
         const avgRatingStr = Number(currentPlace.rating || 5).toFixed(1);
         const reviewCount = Math.max(1, placeVideos.length);
         ctx.fillStyle = "#fbbf24";
-        ctx.font = "900 32px system-ui, sans-serif";
-        ctx.fillText(`${avgRatingStr} ★ (${reviewCount} Photo Reviews)`, 600, 370);
+        ctx.font = "900 30px system-ui, sans-serif";
+        ctx.fillText(`${avgRatingStr} ★ (${reviewCount} Photo Reviews)`, 600, 420);
 
+        // Callout Heading Badge
         ctx.fillStyle = "#18181b";
         ctx.beginPath();
-        ctx.roundRect(250, 420, 700, 70, 35);
+        ctx.roundRect(250, 470, 700, 70, 35);
         ctx.fill();
         ctx.strokeStyle = "#3f3f46";
         ctx.lineWidth = 3;
@@ -2234,21 +2254,24 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "900 28px system-ui, sans-serif";
-        ctx.fillText((qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW').toUpperCase(), 600, 465);
+        ctx.fillText((qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW').toUpperCase(), 600, 515);
 
+        // QR Code background box
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();
-        ctx.roundRect(260, 520, 680, 680, 36);
+        ctx.roundRect(260, 570, 680, 680, 36);
         ctx.fill();
         ctx.strokeStyle = "#e4e4e7";
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        ctx.drawImage(qrCanvas, 320, 580, 560, 560);
+        // Draw QR code onto export canvas
+        ctx.drawImage(qrCanvas, 320, 630, 560, 560);
 
+        // Center star overlay on QR
         ctx.fillStyle = "#09090b";
         ctx.beginPath();
-        ctx.arc(600, 860, 55, 0, Math.PI * 2);
+        ctx.arc(600, 910, 55, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 6;
@@ -2258,16 +2281,17 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         ctx.font = "900 48px system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("★", 600, 862);
+        ctx.fillText("★", 600, 912);
 
+        // Footer instructions
         ctx.textBaseline = "alphabetic";
         ctx.fillStyle = "#d4d4d8";
-        ctx.font = "bold 32px system-ui, sans-serif";
-        ctx.fillText("Scan with your phone camera app to review", 600, 1310);
+        ctx.font = "bold 30px system-ui, sans-serif";
+        ctx.fillText("Scan with your phone camera app to review", 600, 1350);
 
         ctx.fillStyle = "#71717a";
-        ctx.font = "bold 24px system-ui, sans-serif";
-        ctx.fillText("Powered by Yoouz Live Photo Reviews", 600, 1370);
+        ctx.font = "bold 22px system-ui, sans-serif";
+        ctx.fillText("Powered by Yoouz Live Photo Reviews", 600, 1405);
 
         const pngUrl = exportCanvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
