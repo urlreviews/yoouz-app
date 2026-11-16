@@ -42437,6 +42437,48 @@ function injectOpenGraphTags(html: string, meta: any) {
         } catch (e) {}
       }
 
+      // Purge any reviews whose photoUrl/thumbnailUrl incorrectly points to a business banner or stock image (e.g. Whopper.jpg)
+      const allRevsRs = await bunnyDb.execute("SELECT id, thumbnailUrl, data FROM videoReviews").catch(() => null);
+      if (allRevsRs && allRevsRs.rows) {
+        for (const revRow of allRevsRs.rows as any[]) {
+          if (!revRow || !revRow.id) continue;
+          let rData: any = {};
+          try { rData = typeof revRow.data === 'string' ? JSON.parse(revRow.data) : (revRow.data || {}); } catch {}
+          const checkUrl = String(revRow.thumbnailUrl || rData.photoUrl || rData.thumbnailUrl || "");
+          if (
+            checkUrl.includes("upload.wikimedia.org") ||
+            checkUrl.includes("wikimedia.org") ||
+            checkUrl.includes("pexels.com") ||
+            checkUrl.includes("unsplash.com") ||
+            checkUrl.includes("Whopper.jpg")
+          ) {
+            await bunnyDb.execute({
+              sql: "DELETE FROM videoReviews WHERE id = ?",
+              args: [revRow.id]
+            }).catch(() => {});
+          }
+        }
+      }
+      try {
+        const localRevs = readReviewsIndex();
+        const cleanLocalRevs = localRevs.filter((rev: any) => {
+          if (!rev) return false;
+          const u = String(rev.thumbnailUrl || rev.photoUrl || "");
+          return !(
+            u.includes("upload.wikimedia.org") ||
+            u.includes("wikimedia.org") ||
+            u.includes("pexels.com") ||
+            u.includes("unsplash.com") ||
+            u.includes("Whopper.jpg")
+          );
+        });
+        if (cleanLocalRevs.length !== localRevs.length) {
+          writeReviewsIndex(cleanLocalRevs);
+          feedCache.videos = cleanLocalRevs;
+          feedCache.lastFetched = 0;
+        }
+      } catch (e) {}
+
       // Heal existing place records in BunnyDB ONLY when name is genuinely corrupted, brokered, a false syllable split, or mismatched Chipotle banner
       const allPlacesRs = await bunnyDb.execute("SELECT id, name, bannerUrl, data FROM places").catch(() => null);
       if (allPlacesRs && allPlacesRs.rows) {

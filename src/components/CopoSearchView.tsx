@@ -990,9 +990,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                               if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
                                 target.dataset.triedProxy = "true";
                                 target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
-                              } else if (!target.dataset.triedBanner && video.placeBannerUrl) {
-                                target.dataset.triedBanner = "true";
-                                target.src = video.placeBannerUrl;
                               }
                             }}
                           />
