@@ -167,12 +167,22 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                       {item.hasDot && (
                         <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
                       )}
+                      {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected && (
+                        <span
+                          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
+                          title="Tap to save your account with Face ID (1-time setup)"
+                        />
+                      )}
                     </div>
                     <span className="truncate flex-1">
                       {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
                     </span>
-                    
-                    {item.badge && item.badge > 0 ? (
+
+                    {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected ? (
+                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                        Save Key
+                      </span>
+                    ) : item.badge && item.badge > 0 ? (
                       <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>

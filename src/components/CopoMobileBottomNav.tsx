@@ -187,40 +187,53 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               ? "text-white"
               : "text-zinc-200 hover:text-white"
           }`}
+          title={
+            currentUser && !(currentUser as any).passkeyProtected
+              ? "Tap to save your account with Face ID (1-time setup)"
+              : undefined
+          }
         >
-          {currentUser?.avatar ? (
-            <img
-              src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, currentUser.handle || currentUser.email)}
-              alt={currentUser.name || "Profile"}
-              className={`w-[22px] h-[22px] rounded-full object-cover ring-1 transition-all ${
-                activeSection === "profile" || activeSection === "more"
-                  ? "ring-2 ring-white scale-105 opacity-100"
-                  : "ring-zinc-600/80 opacity-90"
-              }`}
-              referrerPolicy="no-referrer"
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement;
-                const fallback = generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, currentUser.handle || currentUser.name);
-                if (target.src !== fallback) {
-                  target.src = fallback;
-                }
-              }}
-            />
-          ) : (
-            <User
-              className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                activeSection === "profile" || activeSection === "more"
-                  ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[2] text-zinc-200"
-              }`}
-            />
-          )}
+          <div className="relative">
+            {currentUser?.avatar ? (
+              <img
+                src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, currentUser.handle || currentUser.email)}
+                alt={currentUser.name || "Profile"}
+                className={`w-[22px] h-[22px] rounded-full object-cover ring-1 transition-all ${
+                  activeSection === "profile" || activeSection === "more"
+                    ? "ring-2 ring-white scale-105 opacity-100"
+                    : "ring-zinc-600/80 opacity-90"
+                }`}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  const fallback = generateGoogleLetterAvatarSvg(currentUser.name || "User", 128, currentUser.handle || currentUser.name);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+            ) : (
+              <User
+                className={`w-[22px] h-[22px] transition-transform duration-200 ${
+                  activeSection === "profile" || activeSection === "more"
+                    ? "scale-105 stroke-[2.4] text-white"
+                    : "stroke-[2] text-zinc-200"
+                }`}
+              />
+            )}
+            {currentUser && !(currentUser as any).passkeyProtected && (
+              <span
+                className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
+                title="1-Time Face ID Passkey not saved yet"
+              />
+            )}
+          </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors ${
+            className={`text-[10px] tracking-tight mt-1 transition-colors flex items-center gap-1 ${
               activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-200"
             }`}
           >
-            {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
+            <span>{currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}</span>
           </span>
         </button>
       </div>

@@ -21975,7 +21975,7 @@ app.post("/api/videos/save-review", async (req, res) => {
                 handle: `@${reviewAuthorName.replace(/^@+/, '')}`,
                 isVerified: false,
                 yoouzPhotoUser: true,
-                scratchVersion: 5,
+                scratchVersion: 6,
                 totalReviews: (Number(existingAuthorRecord?.totalReviews) || 0) + 1
               };
             await bunnyDb.execute({
@@ -23304,7 +23304,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         role: assignedRole,
         status: "active",
         yoouzPhotoUser: true,
-        scratchVersion: 5,
+        scratchVersion: 6,
         isVerified: false,
         ...(videoReviewCount !== undefined ? { videoReviewCount: Number(videoReviewCount) } : {}),
         updatedAt: new Date().toISOString()
@@ -23639,8 +23639,8 @@ app.post("/api/videos/save-review", async (req, res) => {
             foundUser = { id: row.id, uid: row.id, email: row.email || "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
           }
         }
-        // Only accept users created after the scratch v5 reset; any older user session is automatically logged out
-        if (foundUser && Number(foundUser.scratchVersion || 0) < 5) {
+        // Only accept users created after the scratch v6 reset; any older user session is automatically logged out
+        if (foundUser && Number(foundUser.scratchVersion || 0) < 6) {
           foundUser = null;
         }
       }
@@ -23672,7 +23672,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         isAnonymous: true,
         passkeyProtected: false,
         yoouzPhotoUser: true,
-        scratchVersion: 5,
+        scratchVersion: 6,
         linkedProviders: [] as string[],
         isVerified: false,
         isNewUser: false,
@@ -23726,7 +23726,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           }
         }
       }
-      if (found && Number(found.scratchVersion || 0) < 5) {
+      if (found && Number(found.scratchVersion || 0) < 6) {
         res.clearCookie("yoouz_anon_uid", { path: "/" });
         return res.json({ success: true, user: null, expiredScratch: true });
       }
@@ -23960,7 +23960,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           handle: `@${handle}`,
           isAnonymous: cleanUserId.startsWith("anon_"),
           yoouzPhotoUser: true,
-          scratchVersion: 5
+          scratchVersion: 6
         };
       }
 
@@ -23972,7 +23972,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         bio: cleanBio,
         isVerified: false,
         yoouzPhotoUser: true,
-        scratchVersion: 5,
+        scratchVersion: 6,
         updatedAt: new Date().toISOString()
       };
 
@@ -24067,7 +24067,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         linkedProviders: ["passkey"],
         isVerified: false,
         yoouzPhotoUser: true,
-        scratchVersion: 5,
+        scratchVersion: 6,
         updatedAt: new Date().toISOString()
       };
 
@@ -43418,9 +43418,9 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   };
   const runPhotoPivotPurgeOnce = async (): Promise<void> => {
-    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v5_done");
+    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v6_done");
     if (fs.existsSync(markerPath)) return;
-    console.log("🧹 [Photo Pivot] Running v5 scratch reset: removing all existing users, legacy chats/notifications, legacy videos, and starting clean from scratch...");
+    console.log("🧹 [Photo Pivot] Running v6 scratch reset: removing all existing users, legacy chats/notifications, legacy videos, and starting clean from scratch...");
     try {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {

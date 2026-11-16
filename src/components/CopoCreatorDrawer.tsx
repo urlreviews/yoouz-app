@@ -216,7 +216,35 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const settingsMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const isOwner = Boolean(author && currentUser && isAuthorMatch({ author: author } as any, currentUser));
+  const isGuestPreview = Boolean(author && (author.id === "guest_preview" || author.userId === "guest_preview"));
+  const isOwner = Boolean(
+    isGuestPreview || (author && currentUser && isAuthorMatch({ author: author } as any, currentUser))
+  );
+
+  const ensureOwnerAccountProvisioned = async (): Promise<{ id: string; name: string } | null> => {
+    const existingId = currentUser?.id || (currentUser as any)?.uid;
+    if (existingId && existingId !== "guest_preview") {
+      return { id: existingId, name: currentUser?.name || existingId };
+    }
+    try {
+      const res = await fetch("/api/auth/anonymous", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({})
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.user) {
+          setLiveUserProfile((prev) => ({ ...(prev || {}), ...data.user }));
+          localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
+          localStorage.setItem("yoouz_current_user", JSON.stringify(data.user));
+          window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
+          return { id: data.user.id || data.user.uid, name: data.user.name };
+        }
+      }
+    } catch {}
+    return null;
+  };
 
   useEffect(() => {
     if (isOwner && currentUser) {
@@ -309,9 +337,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   }, [usernameInput, isOwner, currentUser?.id, currentUser?.uid, currentUser?.name]);
 
   const handleSaveUsernameInline = async () => {
-    const uid = currentUser?.id || currentUser?.uid;
-    if (!uid || !usernameInput.trim() || usernameStatus !== "available") return;
+    if (!usernameInput.trim() || usernameStatus !== "available") return;
     setUsernameStatus("checking");
+    const provisioned = await ensureOwnerAccountProvisioned();
+    const uid = provisioned?.id;
+    if (!uid) {
+      setUsernameStatus("error");
+      setUsernameMessage("Could not initialize account");
+      return;
+    }
     try {
       const res = await fetch("/api/user/update-username", {
         method: "POST",
@@ -340,11 +374,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   const handleSaveBioInline = async () => {
-    const uid = currentUser?.id || (currentUser as any)?.uid;
-    if (!uid || inlineBioStatus === "saving") return;
+    if (inlineBioStatus === "saving") return;
     const cleanBio = inlineBioInput.trim().slice(0, 240);
     setInlineBioStatus("saving");
     setInlineBioMessage("");
+    const provisioned = await ensureOwnerAccountProvisioned();
+    const uid = provisioned?.id;
+    if (!uid) {
+      setInlineBioStatus("error");
+      setInlineBioMessage("Could not initialize account");
+      return;
+    }
     try {
       const res = await fetch("/api/user/update-bio", {
         method: "POST",
@@ -377,14 +417,20 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   const handleRegisterPasskeyInline = async () => {
-    const uid = currentUser?.id || (currentUser as any)?.uid;
-    if (!uid || isLinkingAccount) return;
+    if (isLinkingAccount) return;
     setIsLinkingAccount(true);
     setLinkStatusMsg(null);
+    const provisioned = await ensureOwnerAccountProvisioned();
+    const uid = provisioned?.id;
+    if (!uid) {
+      setIsLinkingAccount(false);
+      setLinkStatusMsg("Could not initialize account.");
+      return;
+    }
     try {
       const result = await registerFaceIdPasskey({
         id: uid,
-        name: currentUser?.name || uid
+        name: provisioned?.name || currentUser?.name || uid
       });
       if (result.success && result.user) {
         setLiveUserProfile((prev) => ({ ...(prev || {}), ...result.user }));
@@ -535,6 +581,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [liveUserProfile, setLiveUserProfile] = useState<{ avatar?: string; banner?: string; bio?: string; name?: string; location?: string; city?: string; state?: string; country?: string } | null>(() => {
     return resolveTargetProfile(author, isOwner, currentUser, allUsers, allVideos);
   });
+
+  const isPasskeyProtected = Boolean(
+    (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
+  );
 
   useEffect(() => {
     if (!author) return;
@@ -1291,6 +1341,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="min-w-0 flex-1 pr-2">
               <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
                 <bdi dir="auto">{displayName || ""}</bdi>
+                {isOwner && !isPasskeyProtected && (
+                  <button
+                    type="button"
+                    onClick={handleRegisterPasskeyInline}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/40 text-amber-300 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
+                    title="Tap once to remember your account with Face ID if you switch phones"
+                  >
+                    <ScanFace className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>Save Face ID (1-Time)</span>
+                  </button>
+                )}
               </h2>
             </div>
 

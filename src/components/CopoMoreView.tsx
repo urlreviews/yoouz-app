@@ -303,9 +303,16 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "rev-3",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_3_q", "Do I need to create an account or write long text to leave a review?"),
-      answer: t("trustCenter.faq_rev_3_a", "Not at all. Yoouz automatically gives every visitor a zero-friction anonymous reviewer ID (e.g. U/A4B6C8). Just snap a live photo, pick 1–5 whole stars, and publish. You can optionally set a custom @username or link Google/Apple afterward."),
-      tags: ["anonymous", "zero friction", "username", "mobile", "simple", "authentic"]
+      question: t("trustCenter.faq_rev_3_q", "When is my U/XXXXXX account created—do I need to sign up to browse or click Like?"),
+      answer: t("trustCenter.faq_rev_3_a", "No account is ever created just from visiting or browsing Yoouz. Your anonymous U/XXXXXX username is created automatically in the background the exact moment you take an action—such as clicking 'Publish Photo Review' on a live camera photo, or tapping Like, Bookmark, Comment, Follow, or Message. You never see a sign-up form, email prompt, or password wall."),
+      tags: ["anonymous", "zero friction", "username", "when created", "like", "submit", "account"]
+    },
+    {
+      id: "rev-passkey",
+      category: "reviewers",
+      question: t("trustCenter.faq_rev_passkey_q", "If I switch to a new phone, how do I keep my account—and do I need to remember my U/XXXXXX username?"),
+      answer: t("trustCenter.faq_rev_passkey_a", "No—you never have to remember or write down your U/XXXXXX username, and there are no emails or passwords. Simply open your profile and tap 'Save Face ID (1-Time)' once (shown with a reminder badge until saved). Your phone saves a hardware Passkey in Apple iCloud Keychain or Android Google Password Manager with your U/XXXXXX username stored inside it. On a new phone, just tap 'Restore Account with Face ID' and look at your screen—your phone's Face ID or fingerprint restores your exact U/XXXXXX profile automatically."),
+      tags: ["passkey", "face id", "new phone", "switch phone", "remember username", "biometric", "backup", "icloud", "android"]
     },
     {
       id: "rev-4",
@@ -772,9 +779,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       <Users className="w-4 h-4" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "Zero-Friction Onboarding")}</h4>
+                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "On-Action U/XXXXXX & Face ID Passkey")}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed">
-                      {t("trustCenter.rule3Desc", "Anonymous U/XXXXXX identities let anyone review instantly—and optionally claim a @handle anytime.")}
+                      {t("trustCenter.rule3Desc", "Browsing requires zero account. An anonymous U/XXXXXX handle is assigned automatically when you publish a photo or interact—and backed up across phones with a 1-time Face ID Passkey (no emails or passwords).")}
                     </p>
                   </div>
                 </div>
@@ -1182,11 +1189,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-black text-white">{t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}</h3>
                       <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
-                        {t("trustCenter.privacyVerifiedBadge", "Enterprise Security • Zero Passwords Stored")}
+                        {t("trustCenter.privacyVerifiedBadge", "Biometric Passkeys • Zero Emails or Passwords")}
                       </span>
                     </div>
                     <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
-                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. We use secure email verification for passwordless authentication, process camera streams in real-time without photo library harvesting, and enforce strict global privacy compliance standards.")}
+                      {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. Visitors browse freely without creating an account; anonymous U/XXXXXX handles are provisioned only when you publish a review or interact, and can be secured across phones with a 1-time Face ID / Biometric Passkey—with zero emails or passwords stored.")}
                     </p>
                   </div>
                 </div>
@@ -1197,13 +1204,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-                          {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
+                          {t("trustCenter.updatedDate", "Updated Nov 16, 2026")}
                         </span>
                         <ShieldCheck className="w-4 h-4 text-white" />
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
                       <p className="text-xs text-zinc-200 leading-normal">
-                        {t("trustCenter.privacyPolicyDesc", "Covers account profile data handling, real-time camera/mic usage, zero password storage, zero data selling, and your right to data deletion.")}
+                        {t("trustCenter.privacyPolicyDesc", "Covers on-action U/XXXXXX handles, 1-time Face ID / Biometric Passkey security, real-time camera usage, zero gallery harvesting, and zero data selling.")}
                       </p>
                     </div>
                     <button
@@ -1219,13 +1226,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
-                          {t("trustCenter.updatedDate", "Updated Aug 24, 2026")}
+                          {t("trustCenter.updatedDate", "Updated Nov 16, 2026")}
                         </span>
                         <Scale className="w-4 h-4 text-white" />
                       </div>
                       <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
                       <p className="text-xs text-zinc-200 leading-normal">
-                        {t("trustCenter.termsConditionsDesc", "Covers live recording standards, anti-scraping rules, business streaming licenses, limitation of liability, and governing compliance terms.")}
+                        {t("trustCenter.termsConditionsDesc", "Covers live camera capture standards, on-action anonymous accounts, Face ID Passkeys, anti-scraping rules, and governing compliance terms.")}
                       </p>
                     </div>
                     <button
@@ -1241,10 +1248,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 {/* 4 Pillars Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("auth.title", "Authentication")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.authPillarTitle", "Passwordless Email Security")}</h4>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("auth.title", "Biometric Passkeys")}</span>
+                    <h4 className="text-xs font-black text-white">{t("trustCenter.authPillarTitle", "1-Time Face ID Passkey (Zero Emails)")}</h4>
                     <p className="text-[11px] text-zinc-200 leading-normal">
-                      {t("trustCenter.authPillarDesc", "We never store passwords. All logins use secure verification codes sent to your verified email with encrypted HTTPS transport.")}
+                      {t("trustCenter.authPillarDesc", "We never ask reviewers for emails or passwords. Your anonymous U/XXXXXX account is created only when you interact or post, and can be saved once with your phone's Face ID or Android Biometric Passkey to restore automatically on any new phone without remembering your username.")}
                     </p>
                   </div>
 

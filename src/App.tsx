@@ -78,20 +78,20 @@ export function App() {
   const { language } = useLanguage();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
-      if (localStorage.getItem("yoouz_scratch_users_v5") !== "done") {
+      if (localStorage.getItem("yoouz_scratch_users_v6") !== "done") {
         localStorage.removeItem("copo_user_profile");
         localStorage.removeItem("yoouz_current_user");
         localStorage.removeItem("copo_user");
         localStorage.removeItem("copo_user_uid");
         localStorage.removeItem("yoouz_all_users");
         localStorage.removeItem("yoouz_saved_creators");
-        localStorage.setItem("yoouz_scratch_users_v5", "done");
+        localStorage.setItem("yoouz_scratch_users_v6", "done");
         return null;
       }
       const saved = localStorage.getItem("copo_user_profile");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (isUserDeleted(parsed) || Number(parsed?.scratchVersion || 0) < 5) {
+        if (isUserDeleted(parsed) || Number(parsed?.scratchVersion || 0) < 6) {
           localStorage.removeItem("copo_user_profile");
           localStorage.removeItem("yoouz_current_user");
           localStorage.removeItem("copo_user");
@@ -113,42 +113,49 @@ export function App() {
     return null;
   });
 
-  // Silent zero-friction anonymous session helper (checks cookie/server session, or mints U/XXXXXX from scratch)
-  const ensureAnonymousUser = useCallback(async (forceNew = false): Promise<UserProfile | null> => {
+  // Restore existing session on page load WITHOUT creating a new account for passive visitors
+  const restoreExistingSessionOnly = useCallback(async (): Promise<UserProfile | null> => {
     try {
-      if (!forceNew) {
-        const stored = localStorage.getItem("copo_user_profile");
-        let parsedStored: any = null;
-        if (stored) {
-          try {
-            const p = JSON.parse(stored);
-            if (p && (p.id || p.uid) && Number(p.scratchVersion || 0) >= 5 && !isUserDeleted(p)) {
-              parsedStored = p;
-            } else {
-              localStorage.removeItem("copo_user_profile");
-              localStorage.removeItem("yoouz_current_user");
-            }
-          } catch {}
-        }
-        const checkId = parsedStored?.id || parsedStored?.uid || "";
-        const sessRes = await fetch(checkId ? `/api/auth/session?userId=${encodeURIComponent(checkId)}` : "/api/auth/session").catch(() => null);
-        if (sessRes && sessRes.ok) {
-          const sessData = await sessRes.json().catch(() => null);
-          if (sessData?.user && Number(sessData.user.scratchVersion || 0) >= 5 && !isUserDeleted(sessData.user)) {
-            setCurrentUser(sessData.user);
-            try {
-              localStorage.setItem("copo_user_profile", JSON.stringify(sessData.user));
-              localStorage.setItem("yoouz_current_user", JSON.stringify(sessData.user));
-            } catch {}
-            return sessData.user;
+      const stored = localStorage.getItem("copo_user_profile");
+      let parsedStored: any = null;
+      if (stored) {
+        try {
+          const p = JSON.parse(stored);
+          if (p && (p.id || p.uid) && Number(p.scratchVersion || 0) >= 6 && !isUserDeleted(p)) {
+            parsedStored = p;
           } else {
             localStorage.removeItem("copo_user_profile");
             localStorage.removeItem("yoouz_current_user");
           }
-        } else if (parsedStored) {
-          setCurrentUser((prev) => prev || parsedStored);
-          return parsedStored;
+        } catch {}
+      }
+      const checkId = parsedStored?.id || parsedStored?.uid || "";
+      const sessRes = await fetch(checkId ? `/api/auth/session?userId=${encodeURIComponent(checkId)}` : "/api/auth/session").catch(() => null);
+      if (sessRes && sessRes.ok) {
+        const sessData = await sessRes.json().catch(() => null);
+        if (sessData?.user && Number(sessData.user.scratchVersion || 0) >= 6 && !isUserDeleted(sessData.user)) {
+          setCurrentUser(sessData.user);
+          try {
+            localStorage.setItem("copo_user_profile", JSON.stringify(sessData.user));
+            localStorage.setItem("yoouz_current_user", JSON.stringify(sessData.user));
+          } catch {}
+          return sessData.user;
+        } else {
+          setCurrentUser(null);
+          localStorage.removeItem("copo_user_profile");
+          localStorage.removeItem("yoouz_current_user");
         }
+      }
+    } catch {}
+    return null;
+  }, []);
+
+  // On-demand account creation (called ONLY when user posts a review, likes, bookmarks, comments, messages, or creates profile)
+  const ensureAnonymousUser = useCallback(async (forceNew = false): Promise<UserProfile | null> => {
+    try {
+      if (!forceNew) {
+        const existing = await restoreExistingSessionOnly();
+        if (existing) return existing;
       }
 
       const existingId = !forceNew ? (currentUserRef.current?.id || currentUserRef.current?.uid || "") : "";
@@ -173,10 +180,10 @@ export function App() {
       console.warn("Silent anonymous provisioning warning:", err);
     }
     return null;
-  }, []);
+  }, [restoreExistingSessionOnly]);
 
   useEffect(() => {
-    ensureAnonymousUser(false);
+    restoreExistingSessionOnly();
     const onProfileUpdated = (e: any) => {
       const updated = e?.detail;
       if (updated && (updated.id || updated.uid)) {
@@ -185,7 +192,7 @@ export function App() {
     };
     window.addEventListener("copo-profile-updated", onProfileUpdated);
     return () => window.removeEventListener("copo-profile-updated", onProfileUpdated);
-  }, [ensureAnonymousUser]);
+  }, [restoreExistingSessionOnly]);
 
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
@@ -1044,9 +1051,6 @@ export function App() {
     try {
       window.dispatchEvent(new CustomEvent("copo_auth_changed", { detail: null }));
     } catch (e) {}
-
-    // Immediately re-provision a clean anonymous identity so zero-friction experience stays seamless
-    ensureAnonymousUser(true);
 
     if (reason) {
       console.warn("[Yoouz Auth] Session reset:", reason);
@@ -2410,7 +2414,7 @@ export function App() {
         if (storedStr) {
           try {
             const parsed = JSON.parse(storedStr);
-            if (parsed && (parsed.email || parsed.id || parsed.uid)) {
+            if (parsed && (parsed.email || parsed.id || parsed.uid) && Number(parsed.scratchVersion || 0) >= 6) {
               if (parsed.avatar) {
                 parsed.avatar = getSafeAvatarUrl(parsed.avatar, parsed.name, parsed.email || parsed.handle);
               }
@@ -2419,7 +2423,7 @@ export function App() {
             }
           } catch (e) {}
         }
-        await ensureAnonymousUser(false);
+        await restoreExistingSessionOnly();
       }
     });
 
@@ -5315,17 +5319,31 @@ export function App() {
     setCurrentVideoIndex(0);
   };
 
-  // If the user authenticates while on the 'profile' view placeholder, redirect them to the creator drawer
+  // If the user navigates to 'profile', open the profile drawer (in Guest/Restore mode if no account exists yet)
   useEffect(() => {
-    if (activeSection === "profile" && currentUser) {
+    if (activeSection === "profile") {
       handleGoToProfile();
     }
   }, [activeSection, currentUser]);
 
   const handleGoToProfile = async () => {
-    let activeUser = currentUser;
+    const activeUser = currentUser || (await restoreExistingSessionOnly());
     if (!activeUser) {
-      activeUser = await ensureAnonymousUser(false);
+      // Open Profile Drawer in Guest / Restore Mode without creating a database account yet
+      handleOpenCreatorDrawer({
+        id: "guest_preview",
+        userId: "guest_preview",
+        email: "",
+        handle: "@guest",
+        name: "Guest",
+        avatar: "",
+        isVerified: false,
+        isFollowed: false,
+        bio: "",
+        location: ""
+      });
+      setActiveSection("home");
+      return;
     }
     const handle = activeUser?.username || activeUser?.name || activeUser?.email?.split("@")[0] || "me";
     window.history.pushState(null, "", buildLocalizedPath("/@" + handle, language));

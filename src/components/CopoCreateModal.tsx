@@ -358,12 +358,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
     const reviewId = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-    // Ensure active user (silently provision anonymous if missing)
-    let activeAuthUser = currentUser;
+    // Ensure active user (silently provision anonymous on publish if missing)
+    let activeAuthUser = currentUser && Number((currentUser as any)?.scratchVersion || 0) >= 6 ? currentUser : null;
     if (!activeAuthUser) {
       try {
-        const stored = localStorage.getItem("copo_user_profile") || localStorage.getItem("copo_user");
-        if (stored) activeAuthUser = JSON.parse(stored);
+        const stored = localStorage.getItem("copo_user_profile");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && Number(parsed.scratchVersion || 0) >= 6) {
+            activeAuthUser = parsed;
+          }
+        }
       } catch {}
     }
     if (!activeAuthUser) {
@@ -375,6 +380,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             activeAuthUser = anonData.user;
             onUpdateUserProfile?.(anonData.user);
             localStorage.setItem("copo_user_profile", JSON.stringify(anonData.user));
+            window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: anonData.user }));
           }
         }
       } catch {}
