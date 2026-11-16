@@ -2178,16 +2178,105 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   };
 
   const downloadQRCode = () => {
-    const canvas = (document.getElementById("yoouz-qr-code-mobile") as HTMLCanvasElement) || 
+    const qrCanvas = (document.getElementById("yoouz-qr-code-mobile") as HTMLCanvasElement) || 
                    (document.getElementById("yoouz-qr-code") as HTMLCanvasElement);
-    if (canvas) {
-      const pngUrl = canvas.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = pngUrl;
-      downloadLink.download = `${(currentPlace.name || 'venue').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-yoouz-qr.png`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+    if (qrCanvas) {
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = 1200;
+      exportCanvas.height = 1500;
+      const ctx = exportCanvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#09090b";
+        ctx.fillRect(0, 0, 1200, 1500);
+
+        ctx.strokeStyle = "#27272a";
+        ctx.lineWidth = 8;
+        ctx.strokeRect(40, 40, 1120, 1420);
+
+        ctx.fillStyle = "#52525b";
+        ctx.beginPath();
+        ctx.roundRect(500, 70, 200, 16, 8);
+        ctx.fill();
+
+        if (qrTableLabel) {
+          ctx.fillStyle = "#27272a";
+          ctx.beginPath();
+          ctx.roundRect(850, 110, 240, 50, 25);
+          ctx.fill();
+          ctx.fillStyle = "#f4f4f5";
+          ctx.font = "bold 22px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(qrTableLabel.toUpperCase(), 970, 143);
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 64px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(currentPlace.name || 'Venue', 600, 260);
+
+        ctx.fillStyle = "#a1a1aa";
+        ctx.font = "bold 28px system-ui, sans-serif";
+        ctx.fillText(`yoouz.com/reviews/${getPlaceSlug(currentPlace)}`, 600, 310);
+
+        const avgRatingStr = Number(currentPlace.rating || 5).toFixed(1);
+        const reviewCount = Math.max(1, placeVideos.length);
+        ctx.fillStyle = "#fbbf24";
+        ctx.font = "900 32px system-ui, sans-serif";
+        ctx.fillText(`${avgRatingStr} ★ (${reviewCount} Photo Reviews)`, 600, 370);
+
+        ctx.fillStyle = "#18181b";
+        ctx.beginPath();
+        ctx.roundRect(250, 420, 700, 70, 35);
+        ctx.fill();
+        ctx.strokeStyle = "#3f3f46";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 28px system-ui, sans-serif";
+        ctx.fillText((qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW').toUpperCase(), 600, 465);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.roundRect(260, 520, 680, 680, 36);
+        ctx.fill();
+        ctx.strokeStyle = "#e4e4e7";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.drawImage(qrCanvas, 320, 580, 560, 560);
+
+        ctx.fillStyle = "#09090b";
+        ctx.beginPath();
+        ctx.arc(600, 860, 55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 48px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("★", 600, 862);
+
+        ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = "#d4d4d8";
+        ctx.font = "bold 32px system-ui, sans-serif";
+        ctx.fillText("Scan with your phone camera app to review", 600, 1310);
+
+        ctx.fillStyle = "#71717a";
+        ctx.font = "bold 24px system-ui, sans-serif";
+        ctx.fillText("Powered by Yoouz Live Photo Reviews", 600, 1370);
+
+        const pngUrl = exportCanvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = `${(currentPlace.name || 'venue').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-yoouz-table-standee.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      }
     }
   };
 
@@ -4338,7 +4427,7 @@ ${jsonLd}
                     </div>
                   </div>
 
-                  {/* Premium Primary Action Button: Download High-Res QR Code */}
+                  {/* Premium Primary Action Button: Download Print-Ready Table Standee */}
                   <div className="w-full mt-4">
                     <button
                       type="button"
@@ -4346,7 +4435,7 @@ ${jsonLd}
                       className="w-full py-3.5 px-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-[0.98] text-zinc-950 rounded-2xl text-sm font-black shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer tracking-wide border border-amber-300/30"
                     >
                       <Download className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.5]" />
-                      <span>Download High-Res QR Code</span>
+                      <span>Download Print-Ready Table Standee</span>
                     </button>
                   </div>
                 </div>
