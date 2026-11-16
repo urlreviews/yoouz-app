@@ -160,9 +160,7 @@ export const resolveCommentUserMeta = (
   }
 
   if (!name || name === "Reviewer" || name === "User" || name === "Copo Reviewer" || name === "Guest") {
-    name = email
-      ? (email.split("@")[0] ? email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1) : "Verified Reviewer")
-      : "Verified Reviewer";
+    name = "Community Member";
   }
 
   if (!handle) {
@@ -914,7 +912,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
       const authorName = isOwnerPosting
         ? `${placeName || video.placeName || "Business"}`
-        : (currentUser.name || (isTargetCreator ? "Photo Reviewer" : (currentUser.email ? currentUser.email.split("@")[0] : "Verified Reviewer")));
+        : (currentUser.name || (isTargetCreator ? "Photo Reviewer" : "Community Member"));
       const authorHandle = isOwnerPosting
         ? "owner"
         : (currentUser.email ? currentUser.email.split("@")[0] : (isTargetCreator ? "reviewer" : "user"));

@@ -2,7 +2,7 @@
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { getCleanLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, getProxiedImageUrl, YOOUZ_LOGO_DATA_URI } from "./logoUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { getCanonicalUserKey } from "../lib/userCanonicalization";
+import { getCanonicalUserKey, formatAnonymousUserDisplayName, isLegacyDeletedIdentity } from "../lib/userCanonicalization";
 
 export const YOOUZ_VIDEOS_CACHE_KEY = "yoouz_cached_videos_v50_photo_pivot";
 
@@ -3094,38 +3094,7 @@ export function getEffectivePlaceDescription(place?: any, fallbackCategory?: str
   });
 }
 
-export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string; followersCount?: number }> = {
-  "stevenakan": {
-    name: "Steven Akan",
-    handle: "@stevenakan",
-    avatar: generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan"),
-    bio: "Verified video reviewer on Yoouz.",
-    location: "Auckland, New Zealand"
-  },
-  "steven-akan": {
-    name: "Steven Akan",
-    handle: "@stevenakan",
-    avatar: generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan"),
-    bio: "Verified video reviewer on Yoouz.",
-    location: "Auckland, New Zealand"
-  },
-  "benblue": {
-    name: "Ben Blue",
-    handle: "@benblue",
-    avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
-    bio: "Authentic food & venue explorer on Yoouz.",
-    location: "Sydney, Australia",
-    followersCount: 1
-  },
-  "ben-blue": {
-    name: "Ben Blue",
-    handle: "@benblue",
-    avatar: generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue"),
-    bio: "Authentic food & venue explorer on Yoouz.",
-    location: "Sydney, Australia",
-    followersCount: 1
-  }
-};
+export const KNOWN_COMMUNITY_USERS: Record<string, { name: string; handle: string; avatar: string; bio?: string; location?: string; followersCount?: number }> = {};
 
 /**
  * Deleted Users Helpers: Synchronized across localStorage, SSE, and server index
@@ -3246,14 +3215,6 @@ export function recordDeletedUsersInLocalStorage(ids: string[]): void {
 }
 
 const PROTECTED_CREATORS_SET = new Set([
-  "steven akan",
-  "stevenakan",
-  "@stevenakan",
-  "ben blue",
-  "benblue",
-  "@benblue",
-  "avr6566gd@gmail.com",
-  "aouisesmee@gmail.com",
   "info@yoouz.com",
   "yoouz"
 ]);
@@ -3264,7 +3225,7 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
   const isFakeOrDeletedStr = (str?: any) => {
     if (!str) return false;
     const s = String(str).toLowerCase().trim().replace(/^@+/, '');
-    return s === 'deleted_user' || s === 'deleted' || s === 'purged_user';
+    return s === 'deleted_user' || s === 'deleted' || s === 'purged_user' || isLegacyDeletedIdentity(s);
   };
 
   if (typeof userOrIdOrEmail === 'string') {
@@ -3283,7 +3244,7 @@ export function isUserDeleted(userOrIdOrEmail: any, deletedIds?: string[]): bool
     const s = String(v).toLowerCase().trim();
     if (!s) return false;
     if (PROTECTED_CREATORS_SET.has(s)) return false;
-    if (s.includes("@") || s.includes("steven") || s.includes("ben") || s.includes("yoouz")) return false; // Never flag real emails or protected names as deleted
+    if (s.includes("yoouz")) return false;
     const withoutAt = s.replace(/^@+/, "");
     if (PROTECTED_CREATORS_SET.has(withoutAt)) return false;
 
@@ -3689,40 +3650,30 @@ export function resolveSafeAuthor(
     isActiveUserMatch = true;
   }
 
-  // Helper to prefer a full First + Last Name (containing a space and not equal to email prefix) over a single-word email handle
-  const isFullHumanName = (n?: string | null) => {
-    if (!n) return false;
-    const clean = n.trim();
-    const low = clean.toLowerCase();
-    if (!clean || low === "reviewer" || low === "verified reviewer" || low === "yoouz reviewer" || low === "user") return false;
-    return clean.includes(" ") && (!emailPrefixKey || low !== emailPrefixKey);
-  };
-
-  const registryFirstLast = (registryMatch?.firstName && registryMatch?.lastName)
-    ? `${String(registryMatch.firstName).trim()} ${String(registryMatch.lastName).trim()}`.trim()
-    : "";
-
   const nameCandidates = [
-    isActiveUserMatch ? activeUserFullName : "",
-    registryFirstLast,
+    isActiveUserMatch ? activeUser?.name : "",
     registryMatch?.name,
     knownMatch?.name,
-    authorFirstLast,
     authorObj.name,
     (video as any)?.authorName,
     rawName && rawName.toLowerCase() !== "reviewer" ? rawName : ""
   ].filter(Boolean) as string[];
 
-  let finalName =
-    nameCandidates.find((c) => isFullHumanName(c)) ||
+  const rawResolvedCandidate =
+    nameCandidates.find((c) => /^U\/[A-Z0-9]{4,}$/i.test(c.trim()) || /^@[a-z0-9_.-]+$/i.test(c.trim())) ||
     nameCandidates.find((c) => c.toLowerCase() !== emailPrefixKey && c.toLowerCase() !== "verified reviewer" && c.toLowerCase() !== "yoouz reviewer") ||
     nameCandidates[0] ||
-    "Yoouz Reviewer";
+    "";
+
+  let finalName = formatAnonymousUserDisplayName(
+    rawResolvedCandidate,
+    video?.userId || video?.userEmail || authorObj.handle || rawResolvedCandidate,
+    false
+  );
 
   const isAnonymousUidFormat = /^U\/[A-Z0-9]{4,}$/i.test(finalName);
   let finalHandle =
     (isAnonymousUidFormat ? `@${finalName.replace(/^U\//i, "u_").toLowerCase()}` : "") ||
-    (finalName.includes(" ") ? `@${finalName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "") ||
     registryMatch?.handle ||
     knownMatch?.handle ||
     authorObj.handle ||
@@ -3731,31 +3682,6 @@ export function resolveSafeAuthor(
 
   // 4. Resolve authentic candidate avatar
   let candidateAvatar = (isActiveUserMatch && activeUser?.avatar) || registryMatch?.avatar || authorObj.avatar || (video as any)?.authorAvatar || (video as any)?.avatar;
-
-  // Strict canonical identity verification (ONLY if rawName is generic or absent)
-  const isGeneric = !rawName || rawName.toLowerCase() === "reviewer" || rawName.toLowerCase() === "verified reviewer" || rawName.toLowerCase() === "yoouz reviewer";
-  if (isGeneric) {
-    const videoCluster = getCanonicalUserKey({
-      email: video?.userEmail || video?.userId,
-      name: rawName,
-      handle: authorObj.handle,
-      id: video?.userId
-    });
-
-    if (videoCluster === "user_group_aouisesmee") {
-      finalName = "Ben Blue";
-      finalHandle = "@benblue";
-      if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("7CB342") || candidateAvatar.includes("%237CB342")) {
-        candidateAvatar = generateGoogleLetterAvatarSvg("Ben Blue", 128, "@benblue");
-      }
-    } else if (videoCluster === "user_group_stevenakan") {
-      finalName = "Steven Akan";
-      finalHandle = "@stevenakan";
-      if (!candidateAvatar || candidateAvatar.includes("data:image/svg") || candidateAvatar.includes("1E88E5") || candidateAvatar.includes("%231E88E5") || candidateAvatar.includes("00897B") || candidateAvatar.includes("%2300897B")) {
-        candidateAvatar = generateGoogleLetterAvatarSvg("Steven Akan", 128, "@stevenakan");
-      }
-    }
-  }
 
   // Filter out invalid video file paths mistakenly passed as avatars
   if (
@@ -3799,10 +3725,10 @@ export function resolveSafeAuthor(
   const finalCountry = rawCountry || (finalLocation.includes("United States") ? "United States" : "");
 
   const reviewCount = authorObj.videoReviewCount !== undefined ? authorObj.videoReviewCount : (registryMatch?.videoReviewCount ?? 0);
-  const isVerifiedUser = authorObj.isVerified !== undefined ? authorObj.isVerified : (reviewCount > 0 || !!registryMatch?.isVerified);
+  const isVerifiedUser = false;
 
-  const resolvedFirstName = (isActiveUserMatch && (activeUser as any)?.firstName) || registryMatch?.firstName || authorObj.firstName || (finalName.includes(" ") ? finalName.split(" ")[0] : finalName);
-  const resolvedLastName = (isActiveUserMatch && (activeUser as any)?.lastName) || registryMatch?.lastName || authorObj.lastName || (finalName.includes(" ") ? finalName.split(" ").slice(1).join(" ") : "");
+  const resolvedFirstName = finalName;
+  const resolvedLastName = "";
 
   return {
     name: finalName,
@@ -3811,7 +3737,7 @@ export function resolveSafeAuthor(
     handle: finalHandle,
     avatar: finalAvatar,
     isVerified: isVerifiedUser,
-    isLocalGuide: authorObj.isLocalGuide !== undefined ? authorObj.isLocalGuide : (reviewCount > 0),
+    isLocalGuide: false,
     videoReviewCount: reviewCount,
     photosCount: authorObj.photosCount ?? 0,
     isFollowed: authorObj.isFollowed ?? false,

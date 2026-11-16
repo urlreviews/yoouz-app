@@ -97,9 +97,9 @@ export function normalizeReview(v: any): VideoReview {
       ...v,
       id: v?.id || `rev-err-${Math.random().toString(36).substring(2, 9)}`,
       author: v?.author || { 
-        name: "Verified Reviewer", 
+        name: "Community Member", 
         handle: "@user", 
-        avatar: `/api/avatar?name=Reviewer&background=27272a&color=fff` 
+        avatar: `/api/avatar?name=Community&background=27272a&color=fff` 
       },
       createdAtMs: v?.createdAtMs || Date.now()
     } as VideoReview;

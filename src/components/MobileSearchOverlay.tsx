@@ -123,7 +123,9 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 font-bold text-sm text-white truncate">
                 <span>{item.title}</span>
-                <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                {!item.isCreator && (
+                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                )}
               </div>
               {item.domain && (
                 <div className="text-xs text-zinc-400 truncate font-medium mt-0.5">

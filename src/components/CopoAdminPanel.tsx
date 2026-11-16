@@ -1318,10 +1318,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const arr = JSON.parse(stored);
       const filtered = (Array.isArray(arr) ? arr : []).filter((k: string) => {
         const s = String(k).toLowerCase();
-        return !s.includes("aouisesmee") && 
-               !s.includes("4samet") && 
-               !s.includes("admin@yoouz.com") &&
-               s !== "mlio66hdr9trvofdgddgwm30rku2";
+        return !s.includes("4samet") && !s.includes("admin@yoouz.com");
       });
       return new Set(filtered.map((k: string) => String(k).toLowerCase()));
     } catch {
@@ -1832,10 +1829,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         return;
       }
       const author = v.author || {
-        name: "Verified Reviewer",
+        name: "Community Member",
         handle: v.userId || "reviewer",
         avatar: "",
-        isVerified: true
+        isVerified: false
       };
       
       const vEmail = (v.userEmail || "").toLowerCase().trim();
@@ -1863,11 +1860,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         mergedList.push({
           id: vUserId || vCleanHandle,
           uid: vUserId || vCleanHandle,
-          name: author.name || "Verified Reviewer",
+          name: author.name || "Community Member",
           email: vEmail,
           handle: vCleanHandle,
           avatar: getSafeAvatarUrl(author.avatar, author.name, vCleanHandle || author.handle),
-          isVerified: author.isVerified !== false,
+          isVerified: false,
           isRegisteredAccount: Boolean(vUserId),
           role: "Creator",
           memberSince: "Active"
@@ -1946,7 +1943,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
 
     let resolvedName = matchedUser?.name || rawName;
-    if (!resolvedName || resolvedName === "User" || resolvedName === "Verified Reviewer") {
+    if (!resolvedName || resolvedName === "User" || resolvedName === "Verified Reviewer" || resolvedName === "Community Member") {
       if (rawUserId.includes("@")) {
         const prefix = rawUserId.split("@")[0];
         resolvedName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
@@ -5837,7 +5834,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
                   >
                     <option value="all">All Creators ({creatorsList.length})</option>
-                    <option value="verified">Verified Creators Only ({creatorsList.filter((c) => c.isVerified).length})</option>
                     <option value="top">Top Creators (3+ Reviews)</option>
                   </select>
                 </div>
@@ -5884,11 +5880,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <h3 className="font-bold text-white text-base truncate">{creator.name}</h3>
-                            {creator.isVerified && (
-                              <span title="Verified Creator">
-                                <BadgeCheck className="w-4 h-4 text-amber-400 shrink-0 fill-amber-400/20" />
-                              </span>
-                            )}
                           </div>
                           
                           <p className="text-xs text-amber-400/90 font-mono truncate">
@@ -5999,7 +5990,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="all">All Users ({uniqueUsers.length})</option>
                     <option value="members">Standard Users ({standardUsersList.length})</option>
                     <option value="creators">Creators ({creatorsList.length})</option>
-                    <option value="pending">Pending Verification ({uniqueUsers.filter(u => u.status === "pending_verification" || (u.role && String(u.role).includes("Pending")) || !u.isVerified).length})</option>
                     <option value="registered">Registered Accounts</option>
                   </select>
 
@@ -6058,7 +6048,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <h3 className="font-bold text-white text-base truncate">{user.name}</h3>
-                            {user.isVerified && <BadgeCheck className="w-4 h-4 text-emerald-400 shrink-0 fill-emerald-400/20" />}
                           </div>
                           
                           {user.email && <p className="text-xs text-zinc-400 truncate">{user.email}</p>}
@@ -6076,15 +6065,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <span className="font-bold text-white">{user.role || "Community Member"}</span>
                         </div>
                         <span className={`px-2 py-0.5 rounded-md font-semibold text-[10px] ${
-                          (user.status === "pending_verification" || (user.role && String(user.role).includes("Pending")) || !user.isVerified)
-                            ? "bg-amber-950/80 text-amber-300 border border-amber-700/80"
-                            : user.role === "Creator" 
-                              ? "bg-blue-950/60 text-blue-300 border border-blue-800/60" 
-                              : "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
+                          user.role === "Creator" 
+                            ? "bg-blue-950/60 text-blue-300 border border-blue-800/60" 
+                            : "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
                         }`}>
-                          {(user.status === "pending_verification" || (user.role && String(user.role).includes("Pending")) || !user.isVerified)
-                            ? "Pending Verification"
-                            : (user.role || "Member")}
+                          {user.role || "Member"}
                         </span>
                       </div>
 
@@ -8015,9 +8000,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <span className="text-[10px] text-zinc-500 block mt-0.5">All registered accounts</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Verified Creators</span>
+                    <span className="text-zinc-400 block mb-1">Photo Reviewers</span>
                     <span className="font-mono text-lg font-bold text-amber-400">{metrics.totalCreators} {metrics.totalCreators === 1 ? 'reviewer' : 'reviewers'}</span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">Active video publishers</span>
+                    <span className="text-[10px] text-zinc-500 block mt-0.5">Active photo reviewers</span>
                   </div>
                   <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
                     <span className="text-zinc-400 block mb-1">Business Accounts</span>
@@ -10233,16 +10218,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   onChange={(e) => setEditUserModal({ ...editUserModal, avatar: e.target.value })}
                   placeholder="https://... or data:image/..."
                   className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 text-xs font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-950 border border-zinc-800">
-                <span className="text-xs font-bold text-zinc-200">Verified Badge</span>
-                <input
-                  type="checkbox"
-                  checked={editUserModal.isVerified !== false}
-                  onChange={(e) => setEditUserModal({ ...editUserModal, isVerified: e.target.checked })}
-                  className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-white focus:ring-zinc-500 cursor-pointer accent-white"
                 />
               </div>
 

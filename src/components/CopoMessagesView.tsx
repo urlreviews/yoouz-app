@@ -38,7 +38,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { ReportTarget } from "./CopoReportModal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { deduplicateChatHistory, deduplicateChatThreads, getThreadPartnerKey, getThreadPartnerIdentifiers, saveReadThreadTimestamp, getDeletedThreadsMap, saveDeletedThreadsMap, unmarkDeletedThread } from "../lib/socialSync";
-import { getCanonicalUserKey } from "../lib/userCanonicalization";
+import { getCanonicalUserKey, formatAnonymousUserDisplayName, isLegacyDeletedIdentity } from "../lib/userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getSafeAvatarUrl, formatBusinessName, formatCityCountry } from "../utils/placeUtils";
 import { getPlaceLogoUrl } from "../utils/logoUtils";
@@ -268,6 +268,12 @@ export function getThreadPartnerDetails(thread: any, currentUser: UserProfile | 
       }
     }
   }
+
+  partner.name = formatAnonymousUserDisplayName(
+    partner.name,
+    partner.id || partner.email || thread.id,
+    Boolean(partner.isBusiness)
+  );
 
   return partner;
 }
@@ -537,10 +543,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     const myUid = (currentUser?.uid || currentUser?.id || "").toLowerCase().trim();
     const myHandle = ((currentUser as any)?.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
-    const isAvtErtuop = myEmail.includes("avr6566gd") || myName === "avt ertuop" || myHandle === "avtertuop" || myUid.includes("avr6566gd") || myName.includes("avt");
-    const isAouisesmee = myEmail.includes("aouisesmee") || myName.includes("aouisesmee") || myHandle.includes("aouisesmee") || myUid.includes("aouisesmee");
-    const isBizRiv = myEmail.includes("louis42111") || myName === "biz riv" || myHandle === "bizriv" || myUid.includes("louis42111") || myEmail.includes("biz");
-
     const isMe = (cand: { email?: string; name?: string; id?: string; handle?: string }) => {
       const e = (cand.email || "").toLowerCase().trim();
       const n = (cand.name || "").toLowerCase().trim();
@@ -551,10 +553,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       if (n && myName && n === myName && n !== "reviewer" && n !== "user") return true;
       if (i && myUid && (i === myUid || i === `usr_${myUid}` || myUid === `usr_${i}`)) return true;
       if (h && myHandle && h === myHandle) return true;
-
-      if (isAouisesmee && (e.includes("aouisesmee") || n.includes("aouisesmee") || h.includes("aouisesmee"))) return true;
-      if (isAvtErtuop && (e.includes("avr6566gd") || n.includes("avt") || h.includes("avt"))) return true;
-      if (isBizRiv && (e.includes("louis42111") || n.includes("biz") || h.includes("biz"))) return true;
 
       return false;
     };
@@ -631,17 +629,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         existing?.avatar;
       const bestEmail = (uEmail && uEmail.includes("@") ? uEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
       
-      let bestName = uName && uName !== "Registered User" && uName !== "Reviewer" && uName !== "User" ? uName : (existing?.name || "");
-      if (!bestName && bestEmail) {
-        bestName = bestEmail.split("@")[0];
-      }
-      if (!bestName || bestName.toLowerCase() === "reviewer" || bestName.toLowerCase() === "user" || bestName.toLowerCase() === "registered user") {
-        return; // Never insert a mock/nameless "Reviewer" card
+      const bestName = formatAnonymousUserDisplayName(
+        uName && uName !== "Registered User" && uName !== "Reviewer" && uName !== "User" ? uName : (existing?.name || ""),
+        uId || uEmail || key,
+        false
+      );
+      if (isLegacyDeletedIdentity(bestName) || isLegacyDeletedIdentity(uEmail) || isLegacyDeletedIdentity(uId)) {
+        return;
       }
 
       const bestLocation = (u.location && u.location.length >= (existing?.location?.length || 0)) ? u.location : (existing?.location || u.location);
-      const bestBio = (u.bio && u.bio.length >= (existing?.bio?.length || 0)) ? u.bio : (existing?.bio || u.bio || (bestLocation ? `Creator in ${bestLocation}` : "Community Member"));
-      const isVerified = Boolean(u.isVerified ?? existing?.isVerified ?? true);
+      const bestBio = (u.bio && u.bio.length >= (existing?.bio?.length || 0)) ? u.bio : (existing?.bio || u.bio || (bestLocation ? `Reviewer in ${bestLocation}` : "Community Member"));
+      const isVerified = false;
       const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || uId || existing?.id || key;
 
       map.set(key, {
@@ -677,17 +676,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         existing?.avatar;
       const bestEmail = (aEmail && aEmail.includes("@") ? aEmail : "") || (existing?.email && existing.email.includes("@") ? existing.email : "");
       
-      let bestName = aName && aName !== "Registered User" && aName !== "Reviewer" && aName !== "User" ? aName : (existing?.name || "");
-      if (!bestName && bestEmail) {
-        bestName = bestEmail.split("@")[0];
-      }
-      if (!bestName || bestName.toLowerCase() === "reviewer" || bestName.toLowerCase() === "user" || bestName.toLowerCase() === "registered user") {
-        return; // Never insert a mock/nameless "Reviewer" card
+      const bestName = formatAnonymousUserDisplayName(
+        aName && aName !== "Registered User" && aName !== "Reviewer" && aName !== "User" ? aName : (existing?.name || ""),
+        aId || aEmail || key,
+        false
+      );
+      if (isLegacyDeletedIdentity(bestName) || isLegacyDeletedIdentity(aEmail) || isLegacyDeletedIdentity(aId)) {
+        return;
       }
 
       const bestLocation = (v.author.location && v.author.location.length >= (existing?.location?.length || 0)) ? v.author.location : (existing?.location || v.author.location);
-      const bestBio = (v.author.bio && v.author.bio.length >= (existing?.bio?.length || 0)) ? v.author.bio : (existing?.bio || v.author.bio || (bestLocation ? `Creator in ${bestLocation}` : "Video Creator"));
-      const isVerified = Boolean(v.author.isVerified ?? existing?.isVerified ?? true);
+      const bestBio = (v.author.bio && v.author.bio.length >= (existing?.bio?.length || 0)) ? v.author.bio : (existing?.bio || v.author.bio || (bestLocation ? `Reviewer in ${bestLocation}` : "Community Member"));
+      const isVerified = false;
       const bestId = (bestEmail && bestEmail.includes("@") ? bestEmail : "") || (existing?.id && existing.id.includes("@") ? existing.id : "") || aId || existing?.id || key;
 
       map.set(key, {
@@ -850,12 +850,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         finalEmail = rId;
       } else if (rName === "yoouz" || rId === "yoouz.com" || rId === "yoouz") {
         finalEmail = "info@yoouz.com";
-      } else if (rName.includes("steven") || rName.includes("sten") || rId.includes("steven") || rId.includes("sten") || rName === "avt ertuop" || rId.includes("avtertuop") || rId.includes("avr6566gd")) {
-        finalEmail = "avr6566gd@gmail.com";
-      } else if (rName === "biz riv" || rId.includes("bizriv") || rId.includes("louis42111")) {
-        finalEmail = "louis42111@gmail.com";
-      } else if (rName.includes("aouisesmee") || rId.includes("aouisesmee")) {
-        finalEmail = "aouisesmee@gmail.com";
       }
     }
 
@@ -934,10 +928,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         recipient.id,
         recipient.id.toLowerCase(),
         recipient.name.toLowerCase(),
-        ...(rName === "yoouz" || rId === "yoouz.com" || finalEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : []),
-        ...(rName === "avt ertuop" || finalEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
-        ...(rName === "biz riv" || finalEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
-        ...(rName.includes("aouisesmee") || finalEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
+        ...(rName === "yoouz" || rId === "yoouz.com" || finalEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : [])
       ].filter(Boolean))
     );
 
@@ -1129,28 +1120,6 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
     if (isCurBiz) {
       if (curPlaceId && (msgSenderId === curPlaceId || msgSenderEmail === curPlaceId)) return true;
       if (curPlaceId === "yoouz.com" && (msgSenderName === "yoouz" || msgSenderId === "yoouz" || msgSenderId === "yoouz.com" || msgSenderEmail.includes("info@yoouz.com"))) return true;
-    }
-
-    // Persona checks
-    const isStevenViewing = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
-    const isBenViewing = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
-
-    if (isStevenViewing) {
-      if (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderId.includes("ben")) {
-        return false;
-      }
-      if (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt")) {
-        return true;
-      }
-    }
-
-    if (isBenViewing) {
-      if (msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderEmail.includes("avr6566gd") || msgSenderId.includes("steven") || msgSenderId.includes("avt")) {
-        return false;
-      }
-      if (msgSenderName.includes("ben") || msgSenderEmail.includes("aouisesmee") || msgSenderId.includes("ben")) {
-        return true;
-      }
     }
 
     // 4. Name match (only if not a generic string)
@@ -1544,35 +1513,18 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
         (u.email && id && u.email === id)
     );
     if (matchUser) {
-      const uName = (matchUser.name || name || "").trim();
       const uEmail = matchUser.email || (id && id.includes('@') ? id : undefined);
-      if (!uName || uName.toLowerCase() === "reviewer" || uName.toLowerCase() === "user" || uName.toLowerCase() === "registered user") {
-        if (uEmail) {
-          const derivedName = uEmail.split("@")[0];
-          return {
-            name: derivedName,
-            email: uEmail,
-            userId: matchUser.userId || matchUser.id || id,
-            id: matchUser.id || matchUser.userId || id,
-            avatar: getSafeAvatarUrl(matchUser.avatar || avatar, derivedName, matchUser.userId || matchUser.id || id || derivedName),
-            bio: matchUser.bio || "",
-            location: matchUser.location || "",
-            followersCount: matchUser.followersCount || 0,
-            isVerified: Boolean(matchUser.isVerified === true),
-          };
-        }
-        return null;
-      }
+      const safeUserName = formatAnonymousUserDisplayName(matchUser.name || name, matchUser.userId || matchUser.id || id || uEmail, false);
       return {
-        name: uName,
+        name: safeUserName,
         email: uEmail,
         userId: matchUser.userId || matchUser.id || id,
         id: matchUser.id || matchUser.userId || id,
-        avatar: getSafeAvatarUrl(matchUser.avatar || avatar, uName, matchUser.userId || matchUser.id || id || uName),
+        avatar: getSafeAvatarUrl(matchUser.avatar || avatar, safeUserName, matchUser.userId || matchUser.id || id || safeUserName),
         bio: matchUser.bio || "",
         location: matchUser.location || "",
         followersCount: matchUser.followersCount || 0,
-        isVerified: Boolean(matchUser.isVerified === true),
+        isVerified: false,
       };
     }
 
@@ -1636,20 +1588,9 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
       return false;
     }
 
-    // 3. User / Creator: verify ONLY if user explicitly has isVerified === true
-    const matchUser = (allUsers || []).find(
-      (u) =>
-        (u.name && u.name.toLowerCase() === sName) ||
-        (u.userId && u.userId.toLowerCase() === sId) ||
-        (u.id && u.id.toLowerCase() === sId) ||
-        (u.email && u.email.toLowerCase() === sEmail)
-    );
-    if (matchUser && matchUser.isVerified === true) {
-      return true;
-    }
-
+    // Regular users never receive verified badges (Business-Only verification)
     return false;
-  }, [places, allUsers]);
+  }, [places]);
 
   const isPartnerVerified = useMemo(() => {
     if (!activeThread) return false;
@@ -2059,8 +2000,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                                 setIsOptionsOpen(true);
                               }}
                               className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors active:scale-95 cursor-pointer shrink-0"
-                              title={`Options for ${thread.senderName}`}
-                              aria-label={`Options for ${thread.senderName}`}
+                              title={`Options for ${threadPartner.name}`}
+                              aria-label={`Options for ${threadPartner.name}`}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
@@ -2184,7 +2125,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                            <span>{t("messages.unblockUser", `Unblock {name}`, { name: targetActionThread.senderName })}</span>
+                            <span>{t("messages.unblockUser", `Unblock {name}`, { name: getThreadPartnerDetails(targetActionThread, currentUser).name })}</span>
                           </button>
                         ) : (
                           <button
@@ -2193,7 +2134,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                             className="w-full px-3.5 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 flex items-center gap-2.5 transition-colors cursor-pointer"
                           >
                             <UserX className="w-4 h-4 text-zinc-200" />
-                            <span>{t("messages.blockUser", `Block {name}`, { name: targetActionThread.senderName })}</span>
+                            <span>{t("messages.blockUser", `Block {name}`, { name: getThreadPartnerDetails(targetActionThread, currentUser).name })}</span>
                           </button>
                         )}
 
@@ -2309,9 +2250,13 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                       const rawSenderName = (msg.senderName || "").trim();
                       const displaySenderName = isMe
                         ? "You"
-                        : (rawSenderName && rawSenderName.toLowerCase() !== currentUserName && rawSenderName.toLowerCase() !== "you"
-                            ? rawSenderName 
-                            : partnerDetails.name);
+                        : formatAnonymousUserDisplayName(
+                            rawSenderName && rawSenderName.toLowerCase() !== currentUserName && rawSenderName.toLowerCase() !== "you"
+                              ? rawSenderName
+                              : partnerDetails.name,
+                            msg.senderId || msg.senderEmail || partnerDetails.id,
+                            isBiz
+                          );
                       const displayAvatar = isMe
                         ? (currentUser?.avatar || msg.senderAvatar)
                         : (msg.senderAvatar || partnerDetails.avatar);
@@ -2493,8 +2438,8 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder={
                       isSenderBlocked
-                        ? t("messages.blockedPlaceholder", `You have blocked {name}`, { name: partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user" })
-                        : t("messages.inputPlaceholder", `Message {name}...`, { name: partnerDetails.name || activeThread.recipientName || activeThread.senderName || "user" })
+                        ? t("messages.blockedPlaceholder", `You have blocked {name}`, { name: partnerDetails.name || "user" })
+                        : t("messages.inputPlaceholder", `Message {name}...`, { name: partnerDetails.name || "user" })
                     }
                     className="flex-1 bg-zinc-900 sm:bg-zinc-800 disabled:bg-zinc-900 disabled:text-zinc-200 text-white placeholder-zinc-500 text-[16px] sm:text-sm px-4 py-2.5 min-h-[44px] sm:min-h-[40px] rounded-full border border-zinc-700/80 sm:border-zinc-700 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 transition-all font-medium"
                   />
@@ -2617,7 +2562,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-emerald-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-                  <span>{t("messages.unblockUser", `Unblock {name}`, { name: targetActionThread.senderName })}</span>
+                  <span>{t("messages.unblockUser", `Unblock {name}`, { name: getThreadPartnerDetails(targetActionThread, currentUser).name })}</span>
                 </button>
               ) : (
                 <button
@@ -2627,7 +2572,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   className="w-full px-4 py-3 text-left text-sm font-bold text-zinc-200 hover:bg-zinc-800 hover:text-red-400 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer active:scale-[0.99]"
                 >
                   <UserX className="w-5 h-5 text-zinc-400 shrink-0" />
-                  <span>{t("messages.blockUser", `Block {name}`, { name: targetActionThread.senderName })}</span>
+                  <span>{t("messages.blockUser", `Block {name}`, { name: getThreadPartnerDetails(targetActionThread, currentUser).name })}</span>
                 </button>
               )}
 
@@ -2671,7 +2616,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             
             <div className="text-center space-y-1.5">
               <h3 className="text-base font-black text-white">
-                {t("messages.blockTitle", `Block {name}?`, { name: targetActionThread.senderName })}
+                {t("messages.blockTitle", `Block {name}?`, { name: getThreadPartnerDetails(targetActionThread, currentUser).name })}
               </h3>
               <p className="text-xs text-zinc-200 leading-relaxed">
                 {t("messages.blockDescription", "They will not be able to message you or see your direct chat history. You can unblock them at any time.")}
@@ -2860,7 +2805,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                           <p className="text-xs font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                             {recipient.name}
                           </p>
-                          {recipient.isVerified && (
+                          {recipient.isBusiness && recipient.isVerified && (
                             <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                           )}
                           {recipient.isBusiness && (

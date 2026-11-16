@@ -222,7 +222,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     shareUrl = `${appOrigin}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(video.id)}`;
     const placeName = formatBusinessName(video.placeName || (video.placeId ? extractCleanDomain(video.placeId) : "Business"));
     title = placeName;
-    const authorName = safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Verified Reviewer";
+    const authorName = safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Photo Reviewer";
     resolvedDomain = extractCleanDomain(rawDomain);
     const authorReviewsCount = (video as any)?.author?.reviewCount || (video as any)?.authorReviewCount || 0;
     const cleanDomain = resolvedDomain || (video.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || title.toLowerCase();
@@ -252,7 +252,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     : (resolvedBannerUrl || (isBusiness && resolvedDomain && KNOWN_BRAND_BANNERS[resolvedDomain]) || "");
 
   const resolvedAuthorName = isVideoMode && video
-    ? (safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Verified Reviewer")
+    ? (safeAuthor?.name || video.author?.name || (video as any)?.authorName || "Photo Reviewer")
     : (title || "Community Reviewer");
 
   const ratingVal = isVideoMode && video?.rating ? Math.round(video.rating) : (propRating ? Math.round(propRating) : 5);

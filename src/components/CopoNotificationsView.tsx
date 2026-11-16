@@ -345,6 +345,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       name: notif.user.name,
       avatar: notif.user.avatar,
       handle: notif.user.name.toLowerCase().replace(/\s+/g, ""),
+      isVerified: false,
       isFollowed: false
     });
   };

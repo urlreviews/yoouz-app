@@ -35,8 +35,10 @@ import {
   ChevronRight,
   UserMinus,
   User,
-  Calendar
+  Calendar,
+  ScanFace
 } from "lucide-react";
+import { registerFaceIdPasskey, restoreAccountWithPasskey } from "../lib/passkeyAuth";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -123,13 +125,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  // Inline handle claim / edit & account linking state (zero-friction for U/XXXXXX accounts)
+  // Inline handle claim / edit, mobile bio editor & biometric passkey state (zero-friction for U/XXXXXX accounts)
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "saved" | "error">("idle");
   const [usernameMessage, setUsernameMessage] = useState("");
-  const [pendingLinkProvider, setPendingLinkProvider] = useState<"google" | "apple" | null>(null);
-  const [linkEmailInput, setLinkEmailInput] = useState("");
+  const [inlineBioInput, setInlineBioInput] = useState("");
+  const [inlineBioStatus, setInlineBioStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [inlineBioMessage, setInlineBioMessage] = useState("");
   const [isLinkingAccount, setIsLinkingAccount] = useState(false);
+  const [isRestoringPasskey, setIsRestoringPasskey] = useState(false);
   const [linkStatusMsg, setLinkStatusMsg] = useState<string | null>(null);
 
   // Auto-redirect if this author is a official business to maintain a single canonical Place page
@@ -218,6 +222,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     if (isOwner && currentUser) {
       setEditName(currentUser.name || "");
       setEditBio(currentUser.bio || "");
+      setInlineBioInput(currentUser.bio || "");
       setEditBanner(currentUser.banner || "");
       setEditAvatar(currentUser.avatar || "");
       const loc = currentUser.location || "";
@@ -334,42 +339,97 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     }
   };
 
-  const handleConfirmLinkAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const uid = currentUser?.id || currentUser?.uid;
-    const cleanEmail = linkEmailInput.trim().toLowerCase();
-    if (!uid || !pendingLinkProvider || !cleanEmail.includes("@") || isLinkingAccount) return;
+  const handleSaveBioInline = async () => {
+    const uid = currentUser?.id || (currentUser as any)?.uid;
+    if (!uid || inlineBioStatus === "saving") return;
+    const cleanBio = inlineBioInput.trim().slice(0, 240);
+    setInlineBioStatus("saving");
+    setInlineBioMessage("");
+    try {
+      const res = await fetch("/api/user/update-bio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: uid, bio: cleanBio })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInlineBioStatus("error");
+        setInlineBioMessage(data.error || "Could not save bio");
+        return;
+      }
+      const updatedUser = data.user || { ...(currentUser || {}), bio: cleanBio };
+      setEditBio(cleanBio);
+      setLiveUserProfile((prev) => ({ ...(prev || {}), ...updatedUser, bio: cleanBio }));
+      localStorage.setItem("copo_user_profile", JSON.stringify(updatedUser));
+      localStorage.setItem("yoouz_current_user", JSON.stringify(updatedUser));
+      window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: updatedUser }));
+      onUpdateProfile?.({ bio: cleanBio } as any);
+      setInlineBioStatus("saved");
+      setInlineBioMessage("Bio saved to your profile");
+      triggerHaptic("success");
+      setTimeout(() => {
+        setInlineBioStatus("idle");
+      }, 2500);
+    } catch {
+      setInlineBioStatus("error");
+      setInlineBioMessage("Network error while saving bio");
+    }
+  };
+
+  const handleRegisterPasskeyInline = async () => {
+    const uid = currentUser?.id || (currentUser as any)?.uid;
+    if (!uid || isLinkingAccount) return;
     setIsLinkingAccount(true);
     setLinkStatusMsg(null);
     try {
-      const res = await fetch("/api/auth/link-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          anonymousUserId: uid,
-          provider: pendingLinkProvider,
-          email: cleanEmail,
-          name: currentUser?.name,
-          avatar: currentUser?.avatar
-        })
+      const result = await registerFaceIdPasskey({
+        id: uid,
+        name: currentUser?.name || uid
       });
-      const data = await res.json();
-      if (res.ok && data.user) {
-        setLiveUserProfile((prev) => ({ ...(prev || {}), ...data.user }));
-        localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
-        window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
-        onUpdateProfile?.({ name: data.user.name, avatar: data.user.avatar } as any);
-        setLinkStatusMsg(`Account saved with ${pendingLinkProvider === "google" ? "Google" : "Apple"}!`);
-        setPendingLinkProvider(null);
-        setLinkEmailInput("");
+      if (result.success && result.user) {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...result.user }));
+        onUpdateProfile?.({
+          name: result.user.name,
+          avatar: result.user.avatar,
+          bio: result.user.bio
+        } as any);
+        setLinkStatusMsg("Face ID / Passkey active! Your phone now remembers your face automatically.");
         triggerHaptic("success");
-      } else {
-        setLinkStatusMsg(data.error || "Could not link account right now.");
+      } else if (!result.cancelled) {
+        setLinkStatusMsg(result.error || "Could not set up Passkey right now.");
       }
     } catch {
-      setLinkStatusMsg("Network error while linking account.");
+      setLinkStatusMsg("Could not set up Passkey right now.");
     } finally {
       setIsLinkingAccount(false);
+    }
+  };
+
+  const handleRestorePasskeyInline = async () => {
+    if (isRestoringPasskey) return;
+    const uid = currentUser?.id || (currentUser as any)?.uid || "";
+    setIsRestoringPasskey(true);
+    setLinkStatusMsg(null);
+    try {
+      const result = await restoreAccountWithPasskey(uid);
+      if (result.success && result.user) {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...result.user }));
+        setInlineBioInput(result.user.bio || "");
+        setEditBio(result.user.bio || "");
+        onUpdateProfile?.({
+          name: result.user.name,
+          avatar: result.user.avatar,
+          bio: result.user.bio
+        } as any);
+        setLinkStatusMsg(`Restored account ${result.user.name} via Face ID / Passkey!`);
+        triggerHaptic("success");
+      } else if (!result.cancelled) {
+        setLinkStatusMsg(result.error || "No matching Passkey account found on this device.");
+      }
+    } catch {
+      setLinkStatusMsg("Could not restore account with Passkey.");
+    } finally {
+      setIsRestoringPasskey(false);
     }
   };
 
@@ -557,7 +617,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     );
   });
 
-  const isVerifiedReviewer = authorVideos.length > 0 || (author?.isVerified === true && (author?.videoReviewCount ?? 0) > 0);
+  const isVerifiedReviewer = false;
   const totalLikes = authorVideos.reduce((acc, v) => acc + (typeof v.likes === 'number' ? v.likes : (v.likesCount || 0)), 0);
   const avgRating =
     authorVideos.length > 0
@@ -606,7 +666,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     isOwner ? currentUser?.country : (liveUserProfile?.country || safeCreator.country || author.country)
   );
 
-  const displayBio = (currentUser?.bio && currentUser.bio.trim() ? currentUser.bio : "")
+  const displayBio = (isOwner && currentUser?.bio !== undefined ? currentUser.bio.trim() : "")
     || (liveUserProfile?.bio && liveUserProfile.bio.trim() ? liveUserProfile.bio : "")
     || (safeCreator?.bio && safeCreator.bio.trim() ? safeCreator.bio : "")
     || (author?.bio && author.bio.trim() ? author.bio : "");
@@ -1061,9 +1121,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.15),transparent_70%)]" />
               <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
                 <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
-                  {isVerifiedReviewer
-                    ? (author.isLocalGuide ? t("profile.verifiedTopReviewer", "Verified Top Reviewer") : t("profile.verifiedReviewer", "Verified Reviewer"))
-                    : t("profile.communityMember", "Community Member")}
+                  {t("profile.communityMember", "Community Member")}
                 </span>
               </div>
             </div>
@@ -1233,11 +1291,6 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             <div className="min-w-0 flex-1 pr-2">
               <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
                 <bdi dir="auto">{displayName || ""}</bdi>
-                {isVerifiedReviewer && (
-                  <span title={t("profile.verifiedReviewer", "Verified Reviewer")} className="inline-flex">
-                    <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 inline-block align-middle" />
-                  </span>
-                )}
               </h2>
             </div>
 
@@ -1292,6 +1345,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.following", "following")}</span>
               </button>
             </div>
+
+            {/* Bio preview right inside the profile header so it's immediately visible on mobile */}
+            {displayBio ? (
+              <p className="text-xs text-zinc-300 leading-relaxed pt-1 break-words">
+                {displayBio}
+              </p>
+            ) : null}
 
             {/* Premium Metadata Bar: Location & Joined Date */}
             {(displayLocation || (!isBusinessProfile && memberSinceStr)) && (
@@ -1439,109 +1499,164 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 )}
               </div>
               {/* Reviewer Handle & Zero-Friction Account Backup (Owner Only) */}
+              {/* Reviewer Handle, Inline Mobile Bio & Biometric Passkey (Owner Only) */}
               {isOwner && (
-                <div className="p-5 space-y-3 bg-zinc-900/40">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
-                      Reviewer Handle
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200">
-                      {currentUser?.isAnonymous ? "Anonymous ID" : "Protected Account"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <AtSign className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={usernameInput}
-                        onChange={(e) => setUsernameInput(e.target.value)}
-                        placeholder={displayName || "Choose custom username"}
-                        maxLength={24}
-                        className="w-full pl-8 pr-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs font-semibold text-white outline-none"
-                      />
+                <div className="p-5 space-y-4 bg-zinc-900/40">
+                  {/* 1. Reviewer Handle */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                        Reviewer Handle
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200 flex items-center gap-1">
+                        {(currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected ? (
+                          <>
+                            <ScanFace className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-400">Face ID / Passkey Locked</span>
+                          </>
+                        ) : (
+                          <span>Auto-Locked Session</span>
+                        )}
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      disabled={usernameStatus !== "available"}
-                      onClick={handleSaveUsernameInline}
-                      className="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
-                    >
-                      {usernameStatus === "checking" ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : usernameStatus === "saved" ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Saved</span>
-                        </>
-                      ) : (
-                        <span>Update</span>
-                      )}
-                    </button>
-                  </div>
-                  {usernameMessage && (
-                    <p className={`text-[11px] font-semibold ${usernameStatus === "available" || usernameStatus === "saved" ? "text-emerald-400" : "text-rose-400"}`}>
-                      {usernameMessage}
-                    </p>
-                  )}
 
-                  {currentUser?.isAnonymous && (
-                    <div className="pt-2 border-t border-zinc-800/80 space-y-2">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                        <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                        <span>Save Reviews Across Devices</span>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <AtSign className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={usernameInput}
+                          onChange={(e) => setUsernameInput(e.target.value)}
+                          placeholder={displayName || "Choose custom username"}
+                          maxLength={24}
+                          className="w-full pl-8 pr-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs font-semibold text-white outline-none"
+                        />
                       </div>
-                      {!pendingLinkProvider ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => { setPendingLinkProvider("google"); setLinkStatusMsg(null); }}
-                            className="py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
-                          >
-                            Link Google
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setPendingLinkProvider("apple"); setLinkStatusMsg(null); }}
-                            className="py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
-                          >
-                            Link Apple
-                          </button>
-                        </div>
-                      ) : (
-                        <form onSubmit={handleConfirmLinkAccount} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="email"
-                              required
-                              value={linkEmailInput}
-                              onChange={(e) => setLinkEmailInput(e.target.value)}
-                              placeholder={`Enter your ${pendingLinkProvider === "google" ? "Google" : "Apple"} email`}
-                              className="flex-1 px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-700 text-xs text-white outline-none"
-                            />
-                            <button
-                              type="submit"
-                              disabled={isLinkingAccount}
-                              className="px-3 py-2 rounded-xl bg-white text-zinc-950 font-bold text-xs cursor-pointer disabled:opacity-50"
-                            >
-                              {isLinkingAccount ? "..." : "Save"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setPendingLinkProvider(null)}
-                              className="p-2 rounded-xl bg-zinc-800 text-zinc-300 cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                      {linkStatusMsg && (
-                        <p className="text-[11px] font-semibold text-emerald-400">{linkStatusMsg}</p>
-                      )}
+                      <button
+                        type="button"
+                        disabled={usernameStatus !== "available"}
+                        onClick={handleSaveUsernameInline}
+                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                      >
+                        {usernameStatus === "checking" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : usernameStatus === "saved" ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Saved</span>
+                          </>
+                        ) : (
+                          <span>Update</span>
+                        )}
+                      </button>
                     </div>
-                  )}
+                    {usernameMessage && (
+                      <p className={`text-[11px] font-semibold ${usernameStatus === "available" || usernameStatus === "saved" ? "text-emerald-400" : "text-rose-400"}`}>
+                        {usernameMessage}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 2. Mobile-First Inline Bio Editor */}
+                  <div className="pt-3 border-t border-zinc-800/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                        <Edit3 className="w-3 h-3 text-zinc-400" />
+                        <span>Your Bio</span>
+                      </label>
+                      <span className="text-[10px] text-zinc-500 font-medium">
+                        {inlineBioInput.length}/240
+                      </span>
+                    </div>
+                    <textarea
+                      rows={2}
+                      maxLength={240}
+                      value={inlineBioInput}
+                      onChange={(e) => {
+                        setInlineBioInput(e.target.value);
+                        if (inlineBioStatus !== "idle") setInlineBioStatus("idle");
+                      }}
+                      placeholder="Write a short bio for your profile..."
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-zinc-500 text-xs text-white placeholder:text-zinc-500 outline-none resize-none leading-relaxed"
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      {inlineBioMessage ? (
+                        <span className={`text-[11px] font-semibold ${inlineBioStatus === "error" ? "text-rose-400" : "text-emerald-400"}`}>
+                          {inlineBioMessage}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-zinc-500">Visible on your profile</span>
+                      )}
+                      <button
+                        type="button"
+                        disabled={inlineBioStatus === "saving" || inlineBioInput.trim() === (displayBio || "").trim()}
+                        onClick={handleSaveBioInline}
+                        className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                      >
+                        {inlineBioStatus === "saving" ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : inlineBioStatus === "saved" ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Bio Saved</span>
+                          </>
+                        ) : (
+                          <span>Save Bio</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3. Biometric Face ID / Passkey (No Email, No Links, No Passwords) */}
+                  <div className="pt-3 border-t border-zinc-800/80 space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                      <ScanFace className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Face ID & Biometric Passkey</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Your phone remembers your face automatically via iOS Face ID or Android Biometrics—no email, links, or passwords needed, even if you switch phones.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={isLinkingAccount}
+                        onClick={handleRegisterPasskeyInline}
+                        className={`w-full py-2.5 px-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer border ${
+                          (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
+                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25"
+                            : "bg-white hover:bg-zinc-200 border-white text-zinc-950"
+                        }`}
+                      >
+                        <ScanFace className="w-4 h-4 shrink-0" />
+                        <span>
+                          {isLinkingAccount
+                            ? "Verifying Face / Biometrics..."
+                            : (currentUser as any)?.passkeyProtected || (liveUserProfile as any)?.passkeyProtected
+                            ? "Face ID / Passkey Active (Tap to Update)"
+                            : "Remember My Face (Save Passkey)"}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isRestoringPasskey}
+                        onClick={handleRestorePasskeyInline}
+                        className="w-full py-2 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-semibold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <RefreshCw className={`w-3 h-3 shrink-0 ${isRestoringPasskey ? "animate-spin" : ""}`} />
+                        <span>
+                          {isRestoringPasskey
+                            ? "Checking Synced Passkey..."
+                            : "Switched Phones? Restore Account with Face ID"}
+                        </span>
+                      </button>
+                    </div>
+                    {linkStatusMsg && (
+                      <p className={`text-[11px] font-semibold ${linkStatusMsg.includes("active") || linkStatusMsg.includes("Restored") ? "text-emerald-400" : "text-rose-400"}`}>
+                        {linkStatusMsg}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -2412,7 +2527,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             handle: u.handle || `@${nameStr.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
                             avatar: safeAvatar,
                             location: locationStr,
-                            isVerified: Boolean(u.isVerified)
+                            isVerified: false
                           });
                         }
                       }}
@@ -2446,7 +2561,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {isPlace ? formattedTitle : nameStr}
                             </h4>
-                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                            {isPlace && (
+                              <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                            )}
                             {isPlace && (
                               <span className="bg-zinc-800 text-zinc-300 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-zinc-700 uppercase tracking-wider shrink-0">
                                 {t("profile.business", "Business")}

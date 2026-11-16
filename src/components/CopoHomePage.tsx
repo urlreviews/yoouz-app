@@ -168,7 +168,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           ...author,
           name: cleanName,
           avatar: getSafeAvatarUrl(author.avatar, cleanName, author.handle || cleanName),
-          isVerified: author.isVerified !== false
+          isVerified: false
         });
       }
     };
@@ -186,7 +186,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           avatar: u.avatar,
           bio: u.bio || "Community Reviewer",
           location: u.location || "",
-          isVerified: true
+          isVerified: false
         });
       }
     }
@@ -198,7 +198,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         avatar: currentUser.avatar,
         bio: currentUser.bio || "Community Reviewer",
         location: currentUser.location || "",
-        isVerified: true
+        isVerified: false
       });
     }
     return Array.from(map.values());
@@ -899,7 +899,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                       <span>{item.title}</span>
-                      <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                      {!item.isCreator && (
+                        <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                      )}
                     </div>
                     {item.domain && (
                       <div className="text-xs text-zinc-400 truncate font-medium mt-0.5">
@@ -1043,9 +1045,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
                       <div className="text-white/85 text-[10.5px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
                         <span className="truncate text-white/85">{creatorFullName}</span>
-                        {author?.isVerified !== false && (
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
-                        )}
                       </div>
                     </div>
                   </div>

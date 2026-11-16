@@ -49,6 +49,7 @@ import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVid
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo } from "./utils/logoUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
+import { formatAnonymousUserDisplayName } from "./lib/userCanonicalization";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
 import {
   sendSocialNotification,
@@ -77,11 +78,22 @@ export function App() {
   const { language } = useLanguage();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
+      if (localStorage.getItem("yoouz_scratch_users_v5") !== "done") {
+        localStorage.removeItem("copo_user_profile");
+        localStorage.removeItem("yoouz_current_user");
+        localStorage.removeItem("copo_user");
+        localStorage.removeItem("copo_user_uid");
+        localStorage.removeItem("yoouz_all_users");
+        localStorage.removeItem("yoouz_saved_creators");
+        localStorage.setItem("yoouz_scratch_users_v5", "done");
+        return null;
+      }
       const saved = localStorage.getItem("copo_user_profile");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (isUserDeleted(parsed)) {
+        if (isUserDeleted(parsed) || Number(parsed?.scratchVersion || 0) < 5) {
           localStorage.removeItem("copo_user_profile");
+          localStorage.removeItem("yoouz_current_user");
           localStorage.removeItem("copo_user");
           localStorage.removeItem("copo_business_verified_session");
           return null;
@@ -101,31 +113,41 @@ export function App() {
     return null;
   });
 
-  // Silent zero-friction anonymous session helper (checks cookie/server session, or mints U/XXXXXX)
+  // Silent zero-friction anonymous session helper (checks cookie/server session, or mints U/XXXXXX from scratch)
   const ensureAnonymousUser = useCallback(async (forceNew = false): Promise<UserProfile | null> => {
     try {
       if (!forceNew) {
         const stored = localStorage.getItem("copo_user_profile");
+        let parsedStored: any = null;
         if (stored) {
           try {
-            const parsed = JSON.parse(stored);
-            if (parsed && (parsed.id || parsed.uid || parsed.email) && !isUserDeleted(parsed)) {
-              setCurrentUser((prev) => prev || parsed);
-              return parsed;
+            const p = JSON.parse(stored);
+            if (p && (p.id || p.uid) && Number(p.scratchVersion || 0) >= 5 && !isUserDeleted(p)) {
+              parsedStored = p;
+            } else {
+              localStorage.removeItem("copo_user_profile");
+              localStorage.removeItem("yoouz_current_user");
             }
           } catch {}
         }
-        const sessRes = await fetch("/api/auth/session").catch(() => null);
+        const checkId = parsedStored?.id || parsedStored?.uid || "";
+        const sessRes = await fetch(checkId ? `/api/auth/session?userId=${encodeURIComponent(checkId)}` : "/api/auth/session").catch(() => null);
         if (sessRes && sessRes.ok) {
           const sessData = await sessRes.json().catch(() => null);
-          if (sessData?.user && !isUserDeleted(sessData.user)) {
+          if (sessData?.user && Number(sessData.user.scratchVersion || 0) >= 5 && !isUserDeleted(sessData.user)) {
             setCurrentUser(sessData.user);
             try {
               localStorage.setItem("copo_user_profile", JSON.stringify(sessData.user));
               localStorage.setItem("yoouz_current_user", JSON.stringify(sessData.user));
             } catch {}
             return sessData.user;
+          } else {
+            localStorage.removeItem("copo_user_profile");
+            localStorage.removeItem("yoouz_current_user");
           }
+        } else if (parsedStored) {
+          setCurrentUser((prev) => prev || parsedStored);
+          return parsedStored;
         }
       }
 
@@ -154,10 +176,16 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!currentUser) {
-      ensureAnonymousUser(false);
-    }
-  }, []);
+    ensureAnonymousUser(false);
+    const onProfileUpdated = (e: any) => {
+      const updated = e?.detail;
+      if (updated && (updated.id || updated.uid)) {
+        setCurrentUser((prev) => ({ ...(prev || {}), ...updated }));
+      }
+    };
+    window.addEventListener("copo-profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("copo-profile-updated", onProfileUpdated);
+  }, [ensureAnonymousUser]);
 
   // 0. Cache-Busting & Smart Sync Logic
   useEffect(() => {
@@ -1307,13 +1335,14 @@ export function App() {
               setCurrentVideoIndex(0);
             } else if (KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact]) {
               const ku = KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact];
+              const displayKuName = formatAnonymousUserDisplayName(ku.name, ku.handle || ku.name, false);
               setSelectedAuthorForDrawer({
-                name: ku.name,
-                handle: ku.handle || `@${ku.name.toLowerCase().replace(/\s+/g, "")}`,
-                avatar: getSafeAvatarUrl(ku.avatar, ku.name, ku.name),
-                bio: ku.bio || "Verified photo reviewer on Yoouz.",
+                name: displayKuName,
+                handle: ku.handle || `@${displayKuName.replace(/^U\//i, "u_").toLowerCase().replace(/[^a-z0-9_]/g, "")}`,
+                avatar: getSafeAvatarUrl(ku.avatar, displayKuName, displayKuName),
+                bio: ku.bio || "Photo reviewer on Yoouz.",
                 location: ku.location || "",
-                isVerified: true,
+                isVerified: false,
                 isFollowed: false
               });
               setSelectedPlaceIdForDrawer(null);
@@ -1339,17 +1368,18 @@ export function App() {
                       );
                     });
                     if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
+                      const anonName = formatAnonymousUserDisplayName(matched.name, matched.id || matched.email || matched.name, Boolean(matched.isBusiness));
                       setSelectedAuthorForDrawer({
-                        name: matched.name,
-                        handle: matched.handle || `@${matched.name.toLowerCase().replace(/\s+/g, "")}`,
+                        name: anonName,
+                        handle: matched.handle || `@${anonName.replace(/^U\//i, "u_").toLowerCase().replace(/[^a-z0-9_]/g, "")}`,
                         id: matched.id,
                         userId: matched.id,
                         email: matched.email,
-                        avatar: getSafeAvatarUrl(matched.avatar, matched.name, matched.handle || matched.email || matched.name),
+                        avatar: getSafeAvatarUrl(matched.avatar, anonName, matched.handle || matched.email || anonName),
                         bio: matched.bio || "",
                         banner: matched.banner || "",
                         location: matched.location || "",
-                        isVerified: matched.isVerified !== false,
+                        isVerified: false,
                         isFollowed: false
                       });
                       setSelectedPlaceIdForDrawer(null);
@@ -1936,29 +1966,13 @@ export function App() {
         bio: updatedUser.bio,
         avatar: updatedUser.avatar,
         role: updatedUser.role,
-        isVerified: updatedUser.isVerified
+        isVerified: false
       })
     }).catch(() => {});
   };
 
   // BunnyDB Auth state listener and multi-tab reactive sync
   useEffect(() => {
-    // Purge any accidental blacklist of valid community accounts
-    try {
-      const storedDeleted = localStorage.getItem("yoouz_deleted_users");
-      if (storedDeleted) {
-        const parsed = JSON.parse(storedDeleted);
-        if (Array.isArray(parsed)) {
-          const cleaned = parsed.filter((item: string) => {
-            const s = String(item).toLowerCase();
-            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
-          });
-          if (cleaned.length !== parsed.length) {
-            localStorage.setItem("yoouz_deleted_users", JSON.stringify(cleaned));
-          }
-        }
-      }
-    } catch (e) {}
 
     // 1. Process Magic link token if coming from email
     try {
@@ -2594,9 +2608,7 @@ export function App() {
           lastMsg.isMe ||
           (userEmail && (sEmail === userEmail || sId === userEmail)) ||
           (userId && (sId === userId || sEmail === userId)) ||
-          (userName && sName === userName) ||
-          (userName.includes("ben") && (sName.includes("ben") || sEmail.includes("aouisesmee") || sEmail.includes("aouisemee"))) ||
-          (userName.includes("steven") && (sName.includes("steven") || sName.includes("avt") || sEmail.includes("avr6566gd")))
+          (userName && sName === userName)
         );
         if (isLastMsgFromMe) return acc;
       }
@@ -2737,9 +2749,6 @@ export function App() {
       const userHandle = ((effectiveMessagingUser as any).handle || "").toLowerCase().trim();
       const userId = (effectiveMessagingUser.userId || (effectiveMessagingUser as any).id || "").toLowerCase().trim();
 
-      const isStevenAkan = userEmail.includes("avr6566gd") || userName.includes("steven") || userName.includes("avt");
-      const isBenBlue = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("ben");
-
       for (const t of threads) {
         const prevCount = prevChatHistoryLengthRef.current.get(t.id);
         const currentCount = t.history?.length || 0;
@@ -2757,9 +2766,7 @@ export function App() {
               (userEmail && (senderEmail === userEmail || senderId === userEmail)) ||
               (userName && senderName === userName) ||
               (userHandle && (senderId === userHandle || senderName === userHandle)) ||
-              (userId && (senderId === userId || senderEmail === userId)) ||
-              (isStevenAkan && (senderEmail.includes("avr6566gd") || senderName.includes("steven") || senderName.includes("avt") || senderId.includes("steven"))) ||
-              (isBenBlue && (senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderName.includes("ben") || senderId.includes("ben")));
+              (userId && (senderId === userId || senderEmail === userId));
 
             const isFromOther = !isMeMsg;
             const msgTime = Number(lastMsg.createdAtMs || (lastMsg as any).createdAt || 0);
@@ -2892,14 +2899,14 @@ export function App() {
               }
             } catch (e) {}
 
-            if (latestActiveUser && (latestActiveUser.email || latestActiveUser.uid || latestActiveUser.id)) {
+              if (latestActiveUser && (latestActiveUser.email || latestActiveUser.uid || latestActiveUser.id)) {
               const currentEmail = (latestActiveUser.email || "").toLowerCase().trim();
               const currentUid = (latestActiveUser.uid || latestActiveUser.id || "").toLowerCase().trim();
-              const activeFullName = (
-                (latestActiveUser.firstName && latestActiveUser.lastName)
-                  ? `${String(latestActiveUser.firstName).trim()} ${String(latestActiveUser.lastName).trim()}`.trim()
-                  : (latestActiveUser.name || "")
-              ).trim();
+              const activeDisplayName = formatAnonymousUserDisplayName(
+                latestActiveUser.username || latestActiveUser.name || "",
+                latestActiveUser.id || latestActiveUser.uid || currentEmail,
+                Boolean((latestActiveUser as any).isBusiness)
+              );
 
               let matchedExisting = false;
               validUsers = validUsers.map((u: any) => {
@@ -2907,35 +2914,47 @@ export function App() {
                 const id = (u.id || u.uid || "").toLowerCase().trim();
                 if ((currentEmail && e === currentEmail) || (currentUid && id === currentUid)) {
                   matchedExisting = true;
-                  const uName = String(u.name || "").trim();
-                  const bestName = (activeFullName.includes(" ") && !uName.includes(" ")) ? activeFullName : (uName || activeFullName);
+                  const bestName = formatAnonymousUserDisplayName(
+                    u.username || u.name || activeDisplayName,
+                    u.id || u.uid || e || activeDisplayName,
+                    Boolean(u.isBusiness)
+                  );
                   return {
                     ...latestActiveUser,
                     ...u,
                     name: bestName,
-                    firstName: u.firstName || latestActiveUser.firstName,
-                    lastName: u.lastName || latestActiveUser.lastName,
+                    isVerified: false,
                     avatar: u.avatar || latestActiveUser.avatar,
                     location: u.location || latestActiveUser.location,
                     city: u.city || latestActiveUser.city,
                     country: u.country || latestActiveUser.country
                   };
                 }
-                return u;
+                return {
+                  ...u,
+                  name: formatAnonymousUserDisplayName(u.username || u.name, u.id || u.uid || u.email || u.name, Boolean(u.isBusiness)),
+                  isVerified: false
+                };
               });
 
               if (!matchedExisting) {
                 validUsers = [
                   {
                     ...latestActiveUser,
-                    name: activeFullName || latestActiveUser.name,
+                    name: activeDisplayName,
                     id: latestActiveUser.email || latestActiveUser.uid || latestActiveUser.id || currentEmail,
                     role: latestActiveUser.role || (latestActiveUser.email === "admin@yoouz.com" ? "Super Admin" : "Member"),
-                    isVerified: true
+                    isVerified: false
                   },
                   ...validUsers
                 ];
               }
+            } else {
+              validUsers = validUsers.map((u: any) => ({
+                ...u,
+                name: formatAnonymousUserDisplayName(u.username || u.name, u.id || u.uid || u.email || u.name, Boolean(u.isBusiness)),
+                isVerified: false
+              }));
             }
 
             setAllRegisteredUsers(validUsers);
@@ -3708,10 +3727,7 @@ export function App() {
         senderId,
         senderId.toLowerCase(),
         senderName.toLowerCase(),
-        ...(sName === "yoouz" || senderId === "yoouz.com" || targetEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : []),
-        ...(sName === "avt ertuop" || targetEmail === "avr6566gd@gmail.com" ? ["avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop"] : []),
-        ...(sName === "biz riv" || targetEmail === "louis42111@gmail.com" ? ["louis42111@gmail.com", "louis42111", "biz riv", "bizriv"] : []),
-        ...(sName.includes("aouisesmee") || targetEmail === "aouisesmee@gmail.com" ? ["aouisesmee@gmail.com", "aouisesmee"] : [])
+        ...(sName === "yoouz" || senderId === "yoouz.com" || targetEmail === "info@yoouz.com" ? ["yoouz.com", "yoouz", "info@yoouz.com"] : [])
       ].filter(Boolean))
     );
 
@@ -4926,7 +4942,7 @@ export function App() {
       if (isWatchingVideo && !isPlaceView && !isCreatorView && currentVid) {
         const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
         path = `/reviews/${domainSlug}/${currentVid.id}`;
-        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Verified Reviewer";
+        const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Community Member";
         const placeName = formatBusinessName(currentVid.placeName || domainSlug, domainSlug, undefined, { fromWebsite: Boolean(currentVid.placeName) });
         title = `${authorName}'s Photo Review of ${placeName} | Yoouz`;
       } else if (isPlaceView && (activeDrawerPlace || drawerPlace)) {
@@ -5085,7 +5101,7 @@ export function App() {
           bio: matchingVid.author.bio || prev.bio,
           banner: matchingVid.author.banner || prev.banner,
           location: matchingVid.author.location || prev.location,
-          isVerified: matchingVid.author.isVerified ?? prev.isVerified
+          isVerified: false
         };
       });
     }
@@ -5320,7 +5336,7 @@ export function App() {
       handle: activeUser?.handle || `@${handle.replace(/^@+/, "")}`,
       name: activeUser?.name || handle,
       avatar: activeUser?.avatar || "",
-      isVerified: Boolean(activeUser?.isVerified),
+      isVerified: false,
       isFollowed: false,
       bio: activeUser?.bio || "",
       location: activeUser?.location || ""
@@ -5370,7 +5386,11 @@ export function App() {
           (u.id && u.id.toLowerCase().trim() === cleanP)
       );
       const rawName = matchedUser?.name || cleanP.split("@")[0];
-      const cleanName = rawName.includes("@") ? rawName.split("@")[0] : rawName;
+      const cleanName = formatAnonymousUserDisplayName(
+        rawName.includes("@") ? rawName.split("@")[0] : rawName,
+        matchedUser?.id || matchedUser?.email || cleanP,
+        false
+      );
       const email = matchedUser?.email || (cleanP.includes("@") ? cleanP : undefined);
       const authorObj: VideoAuthor = {
         name: cleanName,
@@ -5381,7 +5401,7 @@ export function App() {
         bio: matchedUser?.bio || "Community Reviewer",
         location: matchedUser?.location || "Global Community",
         followersCount: matchedUser?.followersCount || 0,
-        isVerified: matchedUser?.isVerified || false,
+        isVerified: false,
       };
       handleOpenCreatorDrawer(authorObj);
       return;
@@ -5669,17 +5689,6 @@ export function App() {
       if (match) {
         if (match.email && match.email.includes("@")) email = match.email;
         if (!uid) uid = match.id || match.uid || "";
-      }
-    }
-
-    if (!email || !email.includes("@")) {
-      const lower = `${cleanHandle} ${authorHandle} ${(targetVid.userEmail || "")} ${(targetVid.userId || "")}`.toLowerCase();
-      if (lower.includes("avtertuop") || lower.includes("avt ertuop") || lower.includes("avr6566gd") || lower.includes("avt")) {
-        email = "avr6566gd@gmail.com";
-      } else if (lower.includes("bizriv") || lower.includes("biz riv") || lower.includes("louis42111")) {
-        email = "louis42111@gmail.com";
-      } else if (lower.includes("aouisesmee")) {
-        email = "aouisesmee@gmail.com";
       }
     }
 
@@ -6226,7 +6235,7 @@ export function App() {
 
     const authorName = options?.commentItem?.authorName || (options?.postAsOwner
       ? placeName
-      : (safeUser.name || (isTargetCreator ? "Photo Reviewer" : (safeUser.email ? safeUser.email.split("@")[0] : "Verified Reviewer"))));
+      : (safeUser.name || (isTargetCreator ? "Photo Reviewer" : "Community Member")));
     const authorHandle = options?.commentItem?.authorHandle || (options?.postAsOwner
       ? (targetPlace?.brandDomain || "owner")
       : (safeUser.handle || (safeUser.email ? safeUser.email.split("@")[0] : (safeUser.name || "user"))));
@@ -6362,12 +6371,6 @@ export function App() {
           const cleanP = parentAuthor.replace(/^@/, "");
           if (parentAuthor && cleanP.toLowerCase() !== (currentUser.name || "").toLowerCase() && parentAuthor !== currentUser.email) {
             let pEmail = parentComm.authorHandle?.includes("@") ? parentComm.authorHandle : "";
-            if (!pEmail) {
-              const lower = `${cleanP} ${parentComm.authorHandle || ""}`.toLowerCase();
-              if (lower.includes("aouisesmee")) pEmail = "aouisesmee@gmail.com";
-              else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) pEmail = "avr6566gd@gmail.com";
-              else if (lower.includes("bizriv") || lower.includes("louis42111")) pEmail = "louis42111@gmail.com";
-            }
             sendSocialNotification({
               recipientEmail: pEmail || cleanP,
               recipientHandle: parentComm.authorHandle || cleanP,
@@ -6518,12 +6521,6 @@ export function App() {
           const authorName = (likedComment.authorName || likedComment.authorHandle || likedComment.user?.name || "").trim();
           const cleanH = authorName.replace(/^@/, "");
           let authorEmail = likedComment.authorHandle?.includes("@") ? likedComment.authorHandle : (likedComment.user?.email || "");
-          if (!authorEmail) {
-            const lower = `${cleanH} ${likedComment.authorHandle || ""}`.toLowerCase();
-            if (lower.includes("aouisesmee")) authorEmail = "aouisesmee@gmail.com";
-            else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) authorEmail = "avr6566gd@gmail.com";
-            else if (lower.includes("bizriv") || lower.includes("louis42111")) authorEmail = "louis42111@gmail.com";
-          }
           if (authorEmail !== currentUser.email && cleanH.toLowerCase() !== (currentUser.name || "").toLowerCase()) {
             sendSocialNotification({
               recipientEmail: authorEmail || cleanH,
@@ -6639,12 +6636,6 @@ export function App() {
           const cAuthor = (lovedComment.authorName || lovedComment.authorHandle || "").trim();
           const cleanH = cAuthor.replace(/^@/, "");
           let aEmail = lovedComment.authorHandle?.includes("@") ? lovedComment.authorHandle : "";
-          if (!aEmail) {
-            const lower = `${cleanH} ${lovedComment.authorHandle || ""}`.toLowerCase();
-            if (lower.includes("aouisesmee")) aEmail = "aouisesmee@gmail.com";
-            else if (lower.includes("avtertuop") || lower.includes("avr6566gd") || lower.includes("avt")) aEmail = "avr6566gd@gmail.com";
-            else if (lower.includes("bizriv") || lower.includes("louis42111")) aEmail = "louis42111@gmail.com";
-          }
           if (aEmail !== currentUser.email && cleanH.toLowerCase() !== (currentUser.name || "").toLowerCase()) {
             sendSocialNotification({
               recipientEmail: aEmail || cleanH,
@@ -7199,8 +7190,8 @@ export function App() {
         location: effectiveUser?.location || currentAuthor.location || "",
         city: effectiveUser?.city || currentAuthor.city || "",
         country: effectiveUser?.country || currentAuthor.country || "",
-        isVerified: Boolean(effectiveUser?.isVerified ?? true),
-        isLocalGuide: true
+        isVerified: false,
+        isLocalGuide: false
       };
       if (newReview.author.avatar) {
         newReview.authorAvatar = newReview.author.avatar;
@@ -7233,7 +7224,7 @@ export function App() {
         name: effectiveUser.username || effectiveUser.name,
         videoReviewCount: nextCount,
         photosCount: nextCount,
-        isVerified: true
+        isVerified: false
       };
       setCurrentUser(updatedUser);
       updateUserRegistry(updatedUser);
@@ -7253,7 +7244,7 @@ export function App() {
               name: updatedUser.name,
               videoReviewCount: nextCount,
               photosCount: nextCount,
-              isVerified: true
+              isVerified: false
             };
           }
           return u;
@@ -7272,7 +7263,7 @@ export function App() {
           bio: effectiveUser.bio,
           videoReviewCount: nextCount,
           photosCount: nextCount,
-          isVerified: true
+          isVerified: false
         })
       }).catch(() => {});
     }
@@ -7420,7 +7411,7 @@ export function App() {
           location: uLoc || existing?.location,
           city: u.city || existing?.city,
           country: u.country || existing?.country,
-          isVerified: u.isVerified ?? existing?.isVerified,
+          isVerified: false,
           videoReviewCount: existing?.videoReviewCount,
           followersCount: u.followersCount || existing?.followersCount || 0,
           isFollowed: currentUser?.followedAuthors?.includes(u.name) || false
@@ -7449,18 +7440,18 @@ export function App() {
       const loc = existing?.location || regUser?.location || known?.location || (isCurrent ? currentLoc : '') || '';
       const city = existing?.city || regUser?.city || (isCurrent ? currentCity : '') || '';
       const country = existing?.country || regUser?.country || (isCurrent ? currentCountry : '') || '';
-      const avatar = getSafeAvatarUrl((isCurrent ? currentUser?.avatar : undefined) || regUser?.avatar || existing?.avatar || known?.avatar, name, regUser?.handle || known?.handle || name);
-      const isVerified = (isCurrent ? currentUser?.isVerified : undefined) ?? regUser?.isVerified ?? existing?.isVerified ?? (known as any)?.isVerified;
+      const anonDisplay = formatAnonymousUserDisplayName(existing?.name || regUser?.name || known?.name || name, regUser?.id || regUser?.email || name, false);
+      const avatar = getSafeAvatarUrl((isCurrent ? currentUser?.avatar : undefined) || regUser?.avatar || existing?.avatar || known?.avatar, anonDisplay, regUser?.handle || known?.handle || anonDisplay);
 
       return {
         ...(existing || {}),
-        name: existing?.name || regUser?.name || known?.name || name,
-        handle: existing?.handle || regUser?.handle || known?.handle || `@${name.toLowerCase().replace(/\s+/g, '')}`,
+        name: anonDisplay,
+        handle: existing?.handle || regUser?.handle || known?.handle || `@${anonDisplay.replace(/^U\//i, "u_").toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
         avatar,
         location: loc,
         city,
         country,
-        isVerified,
+        isVerified: false,
         isFollowed: currentUser?.followedAuthors?.includes(name) || existing?.isFollowed || false
       };
     });
@@ -8665,7 +8656,8 @@ export function App() {
                       email: 'business@yoouz.com',
                       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
                       handle: 'business',
-                      isVerified: true
+                      isVerified: true,
+                      isBusiness: true
                     };
                   }
                   

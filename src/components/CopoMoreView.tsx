@@ -310,9 +310,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "rev-4",
       category: "reviewers",
-      question: t("trustCenter.faq_rev_4_q", "Do I automatically receive a Verified badge when I join?"),
-      answer: t("trustCenter.faq_rev_4_a", "No. New profiles start unverified. Your official 'Verified Reviewer' badge is automatically granted as soon as you capture and publish your first live photo review."),
-      tags: ["verified", "badge", "first review", "profile"]
+      question: t("trustCenter.faq_rev_4_q", "Do reviewers receive Verified badges on Yoouz?"),
+      answer: t("trustCenter.faq_rev_4_a", "No. Verified badges on Yoouz are reserved exclusively for official claimed businesses. Community reviewers participate with anonymous U/ IDs or custom @usernames so every photo stands on its own authenticity."),
+      tags: ["verified", "badge", "business", "anonymous", "profile"]
     },
     {
       id: "rev-5",
@@ -510,9 +510,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
     {
       id: "trust-7",
       category: "trust",
-      question: t("trustCenter.faq_trust_7_q", "What are Verified Reviewer and Top Reviewer badges?"),
-      answer: t("trustCenter.faq_trust_7_a", "Active reviewers who regularly contribute authentic live photo reviews across local venues and domains automatically earn 'Verified Reviewer' and 'Top Reviewer' badges, highlighting their standing in the community."),
-      tags: ["verified reviewer", "top reviewer", "badges", "reputation"]
+      question: t("trustCenter.faq_trust_7_q", "Which profiles display a Verified checkmark badge?"),
+      answer: t("trustCenter.faq_trust_7_a", "Verified checkmark badges are reserved exclusively for claimed business profiles and official brand domains. Individual community reviewers do not receive verified badges."),
+      tags: ["verified business", "badges", "trust", "businesses"]
     },
 
     // --- Technical & Navigation FAQs ---

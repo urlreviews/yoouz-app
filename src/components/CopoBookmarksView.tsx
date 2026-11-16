@@ -377,11 +377,6 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <h4 className="font-bold text-white text-sm truncate leading-snug">{creator.name}</h4>
-                        {creator.isVerified && (
-                          <span title="Verified Reviewer" className="inline-flex items-center">
-                            <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-0.5 min-w-0">
                         <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />

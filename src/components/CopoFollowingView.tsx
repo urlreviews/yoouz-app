@@ -140,10 +140,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          deletedList = parsed.filter((k: string) => {
-            const s = String(k).toLowerCase();
-            return !s.includes("aouisesmee") && s !== "mlio66hdr9trvofdgddgwm30rku2";
-          });
+          deletedList = parsed.map((k: string) => String(k));
         }
       }
     } catch {}
@@ -172,7 +169,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         location: u.location || existing?.location,
         city: u.city || existing?.city,
         country: u.country || existing?.country,
-        isVerified: u.isVerified || existing?.isVerified || false,
+        isVerified: false,
         isLocalGuide: u.isLocalGuide ?? existing?.isLocalGuide ?? false,
         isFollowed,
         followersCount: Math.max(followersCount, existing?.followersCount || 0),
@@ -375,7 +372,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           avatar: getSafeAvatarUrl(u.avatar || matchingAuthor?.avatar, userName, u.handle || userName),
           bio: u.bio || matchingAuthor?.bio || "Community reviewer",
           location: u.location || matchingAuthor?.location,
-          isVerified: Boolean(u.isVerified || matchingAuthor?.isVerified),
+          isVerified: false,
           isFollowed: followedAuthorsSet.has(userName.toLowerCase()),
           followersCount: typeof u.followersCount === "number" ? u.followersCount : (matchingAuthor?.followersCount || 0),
           videoReviewCount: matchingAuthor?.videoReviewCount || u.videoReviewCount || 0
@@ -784,7 +781,6 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                               <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                                 {author.name}
                               </h3>
-                              {author.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
                             </div>
 
                             {/* Row 2: Video Reviews Count + Location */}
@@ -897,7 +893,6 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                             <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                               {follower.name}
                             </h3>
-                            {follower.isVerified && <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />}
                           </div>
 
                           {/* Row 2: Video Reviews Count + Location */}

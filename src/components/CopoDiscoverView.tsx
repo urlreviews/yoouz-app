@@ -147,14 +147,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
       const aId = (a.id || a.uid || a.userId || "").toLowerCase().trim();
       const bId = (b.id || b.uid || b.userId || "").toLowerCase().trim();
 
-      // 1. Known alias group for aouisesmee
-      const isAouisesmee = (x: any) => {
-        const s = `${x.name || ""} ${x.author?.name || ""} ${x.handle || ""} ${x.author?.handle || ""} ${x.email || x.userEmail || ""} ${x.id || x.uid || x.userId || ""}`.toLowerCase();
-        return s.includes("aouisesmee") || s.includes("aouisesme") || s.includes("mlio66hdr9trvofdgddgwm30rku2");
-      };
-      if (isAouisesmee(a) && isAouisesmee(b)) return true;
-
-      // 2. Direct ID / UID match
+      // 1. Direct ID / UID match
       if (aId && bId && (aId === bId || aId === `usr_${bId}` || bId === `usr_${aId}`)) return true;
 
       // 3. Direct Email match
@@ -206,7 +199,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
             avatar: bestAvatar,
             bio: candidate.bio || candidate.author?.bio || "",
             location: candidateLoc,
-            isVerified: candidate.isVerified ?? candidate.author?.isVerified ?? true,
+            isVerified: false,
             isFollowed: Boolean(candidate.isFollowed || candidate.author?.isFollowed),
             followersCount: candidate.followersCount || candidate.author?.followersCount || 0
           },
@@ -603,11 +596,6 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
                           <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
                             {reviewer.author.name}
                           </h3>
-                          {reviewer.author.isVerified && (
-                            <span title="Verified Reviewer" className="inline-flex items-center">
-                              <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
-                            </span>
-                          )}
                         </div>
                         
                         {reviewer.author.location ? (

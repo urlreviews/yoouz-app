@@ -145,9 +145,6 @@ export const GoogleVideoReviewCard: React.FC<GoogleVideoReviewCardProps> = ({
             <h4 className="font-medium text-[14px] text-white leading-tight min-w-0">
               <span className="inline-flex items-center gap-1">
                 <span className="truncate">{review.author.name}</span>
-                {review.author.isVerified && (
-                  <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block align-middle" />
-                )}
               </span>
             </h4>
             <p className="text-[12px] text-zinc-200 leading-tight flex items-center gap-1.5 mt-0.5">

@@ -385,7 +385,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
                     {target.placeName || target.video?.placeName || target.author?.name || t("reportModal.videoReview", "Photo Review")}
                   </p>
                   <p className="text-zinc-200 text-[11px] truncate">
-                    {target.author?.name || target.video?.author.name || t("reportModal.byVerifiedReviewer", "By Verified Reviewer")}
+                    {target.author?.name || target.video?.author.name || t("reportModal.byPhotoReviewer", "By Photo Reviewer")}
                   </p>
                 </div>
               </div>

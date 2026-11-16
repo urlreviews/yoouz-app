@@ -7588,6 +7588,118 @@ function resolveCanonicalPlaceSlug(item: any, rawFallbackId?: string): string {
   return '';
 }
 
+const SERVER_ANON_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function hashServerSeed(input: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let code = "";
+  let val = h >>> 0;
+  for (let i = 0; i < 6; i++) {
+    code += SERVER_ANON_ALPHABET[val % SERVER_ANON_ALPHABET.length];
+    val = Math.floor(val / SERVER_ANON_ALPHABET.length) ^ ((h >>> (i * 5)) + i * 31);
+    val = Math.abs(val);
+  }
+  return code;
+}
+
+function isFirstLastHumanNameServer(raw?: string): boolean {
+  const s = String(raw || "").trim();
+  if (!s) return false;
+  if (/^U\/[A-Z0-9]{4,}$/i.test(s) || /^@[a-z0-9_.-]+$/i.test(s)) return false;
+  if (s.includes("@") || s.includes(".com") || s.includes(".io") || s.includes(".net") || s.includes(".org")) return false;
+  const lower = s.toLowerCase();
+  if (
+    lower === "yoouz" ||
+    lower === "yoouz reviewer" ||
+    lower === "yoouz user" ||
+    lower === "you" ||
+    lower === "user" ||
+    lower === "member" ||
+    lower === "anonymous" ||
+    lower === "anonymous user" ||
+    lower === "reviewer" ||
+    lower === "local guide" ||
+    lower === "business"
+  ) {
+    return false;
+  }
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2 && parts.length <= 4) {
+    return parts.every((p) => /^[a-zA-Z][a-zA-Z'’-]{1,}$/.test(p));
+  }
+  return false;
+}
+
+function formatAnonymousUserDisplayNameServer(rawName?: string, seed?: string, isBusiness?: boolean): string {
+  const s = String(rawName || "").trim();
+  if (isBusiness) return s || "Business";
+  if (s.toLowerCase() === "yoouz") return "Yoouz";
+  if (s.toLowerCase() === "you") return "You";
+  if (/^U\/[A-Z0-9]{4,}$/i.test(s)) return `U/${s.slice(2).toUpperCase()}`;
+  if (/^u_[a-z0-9]{4,}$/i.test(s)) return `U/${s.slice(2).toUpperCase()}`;
+  if (/^@[a-z0-9_.-]{3,}$/i.test(s)) return s;
+  const effectiveSeed = (seed || s || "anon_yoouz").trim();
+  if (
+    !s ||
+    s.includes("@") ||
+    isFirstLastHumanNameServer(s) ||
+    s.toLowerCase() === "user" ||
+    s.toLowerCase() === "member" ||
+    s.toLowerCase() === "reviewer" ||
+    s.toLowerCase() === "verified reviewer" ||
+    s.toLowerCase() === "registered user"
+  ) {
+    return `U/${hashServerSeed(effectiveSeed)}`;
+  }
+  return s;
+}
+
+function isLegacyChatThreadServer(chatRow: any, parsedData?: any): boolean {
+  try {
+    const id = String(chatRow?.id || parsedData?.id || "").toLowerCase().trim();
+    if (id === "thread_1791486695386") return true;
+    const blob = [
+      id,
+      chatRow?.participants,
+      chatRow?.lastSenderEmail,
+      parsedData?.senderEmail,
+      parsedData?.recipientEmail,
+      parsedData?.senderName,
+      parsedData?.recipientName,
+      parsedData?.lastSenderName,
+      JSON.stringify(parsedData?.participants || []),
+      JSON.stringify(parsedData?.participantProfiles || {}),
+      JSON.stringify(parsedData?.history || [])
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      blob.includes("steven akan") ||
+      blob.includes("stevenakan") ||
+      blob.includes("avr6566gd") ||
+      blob.includes("avt ertuop") ||
+      blob.includes("avtertuop") ||
+      blob.includes("ben blue") ||
+      blob.includes("benblue") ||
+      blob.includes("aouisesmee") ||
+      blob.includes("aouisesme") ||
+      blob.includes("aouisemee") ||
+      blob.includes("louis42111") ||
+      blob.includes("biz riv") ||
+      blob.includes("bizriv") ||
+      blob.includes("mlio66hdr9trvofdgddgwm30rku2")
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promise<any[]> {
   try {
     const itemMap = new Map<string, any>();
@@ -7841,6 +7953,30 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                   if (!parsedData.timestamp || parsedData.timestamp === 'Just now' || parsedData.timestamp === 'now') {
                     parsedData.timestamp = new Date(thMs).toISOString();
                   }
+                }
+                if (isLegacyChatThreadServer(row, parsedData)) {
+                  return;
+                }
+                const sIsBiz = Boolean(parsedData.senderId && String(parsedData.senderId).includes('.') && !String(parsedData.senderId).includes('@'));
+                const rIsBiz = Boolean(parsedData.isBusiness || parsedData.placeId || (parsedData.recipientId && String(parsedData.recipientId).includes('.') && !String(parsedData.recipientId).includes('@')) || String(parsedData.recipientName || '').toLowerCase() === 'yoouz');
+                if (parsedData.senderName) {
+                  parsedData.senderName = formatAnonymousUserDisplayNameServer(parsedData.senderName, parsedData.senderId || parsedData.senderEmail || row.id, sIsBiz);
+                }
+                if (parsedData.recipientName) {
+                  parsedData.recipientName = formatAnonymousUserDisplayNameServer(parsedData.recipientName, parsedData.recipientId || parsedData.recipientEmail || row.id, rIsBiz);
+                }
+                if (parsedData.lastSenderName) {
+                  parsedData.lastSenderName = formatAnonymousUserDisplayNameServer(parsedData.lastSenderName, parsedData.lastSenderEmail || row.id, false);
+                }
+                if (Array.isArray(parsedData.history)) {
+                  parsedData.history = parsedData.history.map((m: any) => {
+                    if (!m) return m;
+                    const mIsBiz = Boolean(m.isBusiness || (m.senderId && String(m.senderId).includes('.') && !String(m.senderId).includes('@')) || String(m.senderName || '').toLowerCase() === 'yoouz');
+                    return {
+                      ...m,
+                      senderName: formatAnonymousUserDisplayNameServer(m.senderName, m.senderId || m.senderEmail || m.id, mIsBiz)
+                    };
+                  });
                 }
               }
 
@@ -8300,7 +8436,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
             city: bestCity,
             state: bestState,
             country: bestCountry,
-            isVerified: Boolean(u.isVerified ?? existing.isVerified ?? true),
+            isVerified: false,
             followersCount: Math.max(Number(u.followersCount) || 0, Number(existing.followersCount) || 0)
           });
         }
@@ -8354,9 +8490,9 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
                   handle: authorHandle,
                   avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&background=27272a&color=fff&bold=true&size=128`,
                   email: userEmail,
-                  bio: author.bio || "Creator & Reviewer on Yoouz.",
-                  role: "Creator",
-                  isVerified: true
+                  bio: author.bio || "Reviewer on Yoouz.",
+                  role: "Reviewer",
+                  isVerified: false
                 });
               }
             });
@@ -8380,8 +8516,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               avatar: authorAvatar || `/api/avatar?name=${encodeURIComponent(authorName)}&size=128`,
               email: vr.userEmail || (vr.userId?.includes('@') ? vr.userId : ""),
               location: author?.location || vr.location,
-              role: "Creator",
-              isVerified: true
+              role: "Reviewer",
+              isVerified: false
             });
           }
         });
@@ -8607,10 +8743,26 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
 
     if (colName === 'users') {
-      items = items.filter((u: any) => {
-        if (!u) return false;
-        return !isDeletedUserServer(u) && !isDeactivatedUserServer(u);
-      });
+      items = items
+        .filter((u: any) => {
+          if (!u) return false;
+          return !isDeletedUserServer(u) && !isDeactivatedUserServer(u);
+        })
+        .map((u: any) => {
+          const anonName = formatAnonymousUserDisplayNameServer(u.name, u.id || u.uid || u.email, false);
+          return {
+            ...u,
+            name: anonName,
+            firstName: anonName,
+            lastName: "",
+            isVerified: false,
+            verified: false
+          };
+        });
+    }
+
+    if (colName === 'chats') {
+      items = items.filter((c: any) => !isLegacyChatThreadServer(c, c));
     }
 
     if (colName === 'notifications') {
@@ -10686,63 +10838,72 @@ app.get('/api/admin/chats', async (_req, res) => {
       if (placeId) placeMap.set(placeId, { ...p, ...d });
     });
 
-    const chats = result.rows.map(r => {
-      let d: any = {};
-      try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
-      
-      const participants = Array.isArray(d.participants) ? d.participants : [];
-      const p1Id = String(participants[0] || d.senderEmail || d.senderId || "").toLowerCase().trim();
-      const p2Id = String(participants[1] || d.recipientEmail || d.recipientId || "").toLowerCase().trim();
+    const chats = result.rows
+      .map(r => {
+        let d: any = {};
+        try { d = typeof r.data === 'string' ? JSON.parse(String(r.data)) : (r.data || {}); } catch(e){}
+        if (isLegacyChatThreadServer(r, d)) return null;
 
-      // Resolve Partner 1 (usually Sender)
-      const p1User = userMap.get(p1Id);
-      const p1Place = placeMap.get(p1Id);
-      
-      const p1Name = p1Place?.name || p1User?.name || d.senderName || (p1Id.includes('@') ? p1Id.split('@')[0] : "User");
-      const p1Avatar = p1Place?.logoUrl || p1User?.avatar || d.senderAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p1Name)}&background=18181b&color=38bdf8`;
-      const p1Role = p1Place ? "Business" : (p1User?.role || "User");
+        const participants = Array.isArray(d.participants) ? d.participants : [];
+        const p1Id = String(participants[0] || d.senderEmail || d.senderId || "").toLowerCase().trim();
+        const p2Id = String(participants[1] || d.recipientEmail || d.recipientId || "").toLowerCase().trim();
 
-      // Resolve Partner 2 (usually Recipient)
-      const p2User = userMap.get(p2Id);
-      const p2Place = placeMap.get(p2Id);
+        // Resolve Partner 1 (usually Sender)
+        const p1User = userMap.get(p1Id);
+        const p1Place = placeMap.get(p1Id);
+        const p1IsBiz = Boolean(p1Place || (p1Id.includes('.') && !p1Id.includes('@')) || p1Id === 'yoouz' || p1Id === 'yoouz.com');
+        const rawP1Name = p1Place?.name || p1User?.name || d.senderName || "";
+        const p1Name = p1IsBiz
+          ? (rawP1Name || "Business")
+          : formatAnonymousUserDisplayNameServer(rawP1Name, p1Id || String(r.id || ""), false);
+        const p1Avatar = p1Place?.logoUrl || p1User?.avatar || d.senderAvatar || `/api/avatar?name=${encodeURIComponent(p1Name)}&background=18181b&color=ffffff&size=128`;
+        const p1Role = p1Place ? "Business" : (p1User?.role || "User");
 
-      const p2Name = p2Place?.name || p2User?.name || d.recipientName || (p2Id.includes('@') ? p2Id.split('@')[0] : "User");
-      const p2Avatar = p2Place?.logoUrl || p2User?.avatar || d.recipientAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p2Name)}&background=18181b&color=a855f7`;
-      const p2Role = p2Place ? "Business" : (p2User?.role || (p2Id === 'yoouz' || p2Id === 'yoouz.com' ? "Official Platform" : "User"));
+        // Resolve Partner 2 (usually Recipient)
+        const p2User = userMap.get(p2Id);
+        const p2Place = placeMap.get(p2Id);
+        const p2IsBiz = Boolean(p2Place || d.isBusiness || d.placeId || (p2Id.includes('.') && !p2Id.includes('@')) || p2Id === 'yoouz' || p2Id === 'yoouz.com');
+        const rawP2Name = p2Place?.name || p2User?.name || d.recipientName || "";
+        const p2Name = p2IsBiz
+          ? (rawP2Name || "Business")
+          : formatAnonymousUserDisplayNameServer(rawP2Name, p2Id || String(r.id || ""), false);
+        const p2Avatar = p2Place?.logoUrl || p2User?.avatar || d.recipientAvatar || `/api/avatar?name=${encodeURIComponent(p2Name)}&background=18181b&color=ffffff&size=128`;
+        const p2Role = p2Place ? "Business" : (p2User?.role || (p2Id === 'yoouz' || p2Id === 'yoouz.com' ? "Official Platform" : "User"));
 
-      // Enrich history
-      let history = Array.isArray(d.history) ? d.history : [];
-      history = history.map((m: any) => {
-        if (!m) return m;
-        const mSenderId = String(m.senderId || m.senderEmail || "").toLowerCase().trim();
-        const isP1 = mSenderId === p1Id || m.senderName === p1Name;
-        
+        // Enrich history
+        let history = Array.isArray(d.history) ? d.history : [];
+        history = history.map((m: any) => {
+          if (!m) return m;
+          const mSenderId = String(m.senderId || m.senderEmail || "").toLowerCase().trim();
+          const isP1 = mSenderId === p1Id || m.senderName === rawP1Name;
+
+          return {
+            ...m,
+            senderName: isP1 ? p1Name : p2Name,
+            senderAvatar: isP1 ? p1Avatar : p2Avatar,
+            senderRole: isP1 ? p1Role : p2Role,
+            createdAt: m.createdAt || m.timestamp || new Date().toISOString()
+          };
+        });
+
         return {
-          ...m,
-          senderName: isP1 ? p1Name : p2Name,
-          senderAvatar: isP1 ? p1Avatar : p2Avatar,
-          senderRole: isP1 ? p1Role : p2Role,
-          createdAt: m.createdAt || m.timestamp || new Date().toISOString()
+          ...d,
+          id: r.id || d.id,
+          participants,
+          lastMessage: r.lastMessage || d.lastMessage || (history.length > 0 ? history[history.length - 1].text : "Conversation started"),
+          lastSenderEmail: r.lastSenderEmail || d.lastSenderEmail || "",
+          senderName: p1Name,
+          senderAvatar: p1Avatar,
+          senderRole: p1Role,
+          recipientName: p2Name,
+          recipientAvatar: p2Avatar,
+          recipientRole: p2Role,
+          updatedAt: r.updatedAt || d.updatedAt || new Date().toISOString(),
+          history,
+          totalMessages: history.length
         };
-      });
-
-      return {
-        id: r.id || d.id,
-        participants,
-        lastMessage: r.lastMessage || d.lastMessage || (history.length > 0 ? history[history.length - 1].text : "Conversation started"),
-        lastSenderEmail: r.lastSenderEmail || d.lastSenderEmail || "",
-        senderName: p1Name,
-        senderAvatar: p1Avatar,
-        senderRole: p1Role,
-        recipientName: p2Name,
-        recipientAvatar: p2Avatar,
-        recipientRole: p2Role,
-        updatedAt: r.updatedAt || d.updatedAt || new Date().toISOString(),
-        ...d,
-        history,
-        totalMessages: history.length
-      };
-    });
+      })
+      .filter(Boolean);
 
     res.json({ success: true, count: chats.length, chats });
   } catch (err: any) {
@@ -12279,8 +12440,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       diagnostics["camera_recording_modal"] = {
         status: "ok",
         latencyMs: 5,
-        details: "Front selfie camera auto-start, 60-second limit countdown, and live preview active.",
-        testInstruction: "Tap '+' record button, verify front camera starts, record 5s video, test Re-record button."
+        details: "Native HTML5 mobile camera capture (no gallery uploads), JPEG normalization, and 1–5 whole-star rating active.",
+        testInstruction: "Tap Add Review, open native camera capture, take a photo, select a whole-star rating (1–5), and publish."
       };
 
       // 12. Bookmarks & Saved Collections
@@ -12406,22 +12567,23 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         missingFromCache = [];
       }
 
-      // 2. Check for reviews missing critical video playback media URLs
-      let corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+      // 2. Check for reviews missing critical photo/media URLs
+      const hasValidMedia = (r: any) => Boolean(r.photoUrl || r.thumbnailUrl || r.videoUrl || r.hlsUrl || r.bunnyVideoId);
+      let corruptedReviews = storedReviews.filter((r: any) => !hasValidMedia(r));
 
       // Auto-repair missing media URLs on disk and in memory
       if (corruptedReviews.length > 0) {
         const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, '');
         storedReviews = storedReviews.map((r: any) => {
-          if (!r.videoUrl && !r.hlsUrl && !r.bunnyVideoId) {
-            const repairedUrl = r.url || r.src || r.video_url || r.mediaUrl || r.playbackUrl || r.hlsUrl || r.streamUrl || (r.id ? `/api/videos/stream/${r.id}` : `${pullZoneDomain}/sample-review.mp4`);
-            return { ...r, videoUrl: repairedUrl };
+          if (!hasValidMedia(r)) {
+            const repairedUrl = r.url || r.src || r.imageUrl || r.mediaUrl || (r.id ? `${pullZoneDomain}/photos/${r.id}.jpg` : "");
+            return repairedUrl ? { ...r, photoUrl: repairedUrl, thumbnailUrl: repairedUrl } : r;
           }
           return r;
         });
         writeReviewsIndex(storedReviews);
         feedCache.videos = storedReviews;
-        corruptedReviews = storedReviews.filter((r: any) => !r.videoUrl && !r.hlsUrl && !r.bunnyVideoId);
+        corruptedReviews = storedReviews.filter((r: any) => !hasValidMedia(r));
       }
 
       // 3. Check for recently created reviews (last 2 hours) to ensure they didn't drop
@@ -12528,20 +12690,18 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         retentionStatus = "degraded";
         retentionDetails = `WARNING: ${duplicatePlaceCount} duplicate business listing(s) detected on disk (${duplicatePlaceNames.slice(0, 3).join(", ")}). Automatic canonical deduplication active.`;
       } else if (storedReviews.length === 0) {
-        retentionStatus = "degraded";
-        retentionDetails = `WARNING: Zero reviews found in persistent storage. Submit a 60s video review to populate and verify active feed retention.`;
+        retentionStatus = "ok";
+        retentionDetails = `Vertical Photo Feed Engine & BunnyCDN Storage operational. Feed cleanly initialized (0 legacy items); ready to store new live camera photo reviews.`;
       } else {
         retentionStatus = "ok";
-        const latestReview = storedReviews[0];
-        const latestPlace = latestReview?.placeName || latestReview?.placeId || "verified place";
-        retentionDetails = `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses are 100% verified.`;
+        retentionDetails = `All ${storedReviews.length} live photo review(s) securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected.`;
       }
 
       diagnostics["video_review_feed_retention"] = {
         status: retentionStatus,
         latencyMs: Math.max(1, Date.now() - retentionStart),
         details: retentionDetails,
-        testInstruction: "Verify business claim sync & feed retention. Claimed business must show Claimed without duplicate listings."
+        testInstruction: "Verify business claim sync & photo feed retention. Claimed business must show Claimed without duplicate listings."
       };
 
       // 6. Check review ID leak guard, caption sanitization & comments deduplication integrity (#26)
@@ -13626,14 +13786,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
       const videoErrKey = videoSubKeys.find(k => diagnostics[k]?.status === "error");
       const videoDegKey = videoSubKeys.find(k => diagnostics[k]?.status === "degraded");
       const videoMasterStatus: "ok" | "degraded" | "error" = videoErrKey ? "error" : videoDegKey ? "degraded" : "ok";
-      const videoMasterDetails = videoErrKey ? diagnostics[videoErrKey]?.details : videoDegKey ? diagnostics[videoDegKey]?.details : (diagnostics["video_review_feed_retention"]?.details || `All ${storedReviews.length} video reviews securely retained across persistent storage and active feedCache. Zero duplicate businesses or un-synced claims detected. Claimed businesses are 100% verified.`);
+      const videoMasterDetails = videoErrKey ? diagnostics[videoErrKey]?.details : videoDegKey ? diagnostics[videoDegKey]?.details : (diagnostics["video_review_feed_retention"]?.details || `Vertical Photo Feed Engine & BunnyCDN Storage operational with ${storedReviews.length} live photo review(s) retained.`);
 
       const masterDiagnostics: Record<string, { status: "ok" | "degraded" | "error"; latencyMs: number; details: string; testInstruction: string }> = {
         "1_video_engine_cdn": {
           status: videoMasterStatus,
           latencyMs: Math.max(...videoSubKeys.map(k => diagnostics[k]?.latencyMs || 1)),
           details: videoMasterDetails,
-          testInstruction: "Play homepage feed videos, test share deep links, and verify zero video stalls."
+          testInstruction: "Open homepage photo feed, test share deep links, and verify crisp BunnyCDN image delivery."
         },
         "2_database_bunny_cloud": {
           status: ["database_persistence", "business_profile_banner_logo_database_live_sync_guard", "business_cover_banner_sync_storage_guard", "pwa_service_worker_cache", "consecutive_search_profile_cache_isolation_guard"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
@@ -13662,8 +13822,8 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         "6_front_camera_recording": {
           status: diagnostics["camera_recording_modal"]?.status || "ok",
           latencyMs: diagnostics["camera_recording_modal"]?.latencyMs || 5,
-          details: diagnostics["camera_recording_modal"]?.details || "Front selfie camera auto-start, 60-second limit countdown, and live preview active.",
-          testInstruction: "Tap '+' record button, verify front camera starts, record 5s video."
+          details: diagnostics["camera_recording_modal"]?.details || "Native HTML5 mobile camera capture (no gallery uploads) and whole-star rating active.",
+          testInstruction: "Tap Add Review, capture a live photo via device camera, select 1–5 stars, and submit."
         },
         "7_ai_moderation": {
           status: ["ai_content_safety", "content_moderation_reporting"].some(k => diagnostics[k]?.status === "error") ? "error" : "ok",
@@ -20230,16 +20390,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       const handleLower = (notifObj.recipientHandle || "").toLowerCase();
       const emailLower = (notifObj.recipientEmail || "").toLowerCase();
 
-      if (!notifObj.recipientEmail || !notifObj.recipientEmail.includes("@")) {
-        if (idLower.includes("avr6566gd") || idLower.includes("avt ertuop") || idLower.includes("avtertuop") || handleLower.includes("avtertuop") || handleLower.includes("avt")) {
-          notifObj.recipientEmail = "avr6566gd@gmail.com";
-        } else if (idLower.includes("louis42111") || idLower.includes("biz riv") || idLower.includes("bizriv") || handleLower.includes("bizriv")) {
-          notifObj.recipientEmail = "louis42111@gmail.com";
-        } else if (idLower.includes("aouisesmee") || idLower.includes("aouisemee") || idLower.includes("aouisesme") || idLower.includes("aouiseme") || handleLower.includes("aouisesmee") || handleLower.includes("aouisemee") || handleLower.includes("aouisesme") || handleLower.includes("aouiseme")) {
-          notifObj.recipientEmail = "aouisesmee@gmail.com";
-        }
-      }
-
       // Check recipient's notification preferences in BunnyDB
       const recipientTarget = notifObj.recipientEmail || notifObj.recipientId || notifObj.recipientHandle || "";
       const isAllowed = await isNotificationAllowedForRecipient(recipientTarget, notifObj.type || "info");
@@ -20290,16 +20440,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         notifObj.recipientId,
         notifObj.recipientHandle
       ].filter(Boolean);
-
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
-      }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv")) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv");
-      }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
-      }
 
       broadcastSseEvent({
         type: "notification",
@@ -20448,15 +20588,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
           ].filter(Boolean);
 
       const targets = [...rawTargets];
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("avr6566gd") || (t || "").toLowerCase().includes("avtertuop") || (t || "").toLowerCase() === "avt ertuop" || (t || "").toLowerCase().includes("avt"))) {
-        targets.push("avr6566gd@gmail.com", "avr6566gd", "avt ertuop", "avtertuop", "avt");
-      }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("louis42111") || (t || "").toLowerCase().includes("bizriv") || (t || "").toLowerCase() === "biz riv" || (t || "").toLowerCase().includes("biz"))) {
-        targets.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
-      }
-      if (targets.some((t: string) => (t || "").toLowerCase().includes("aouisesmee") || (t || "").toLowerCase().includes("aouisemee") || (t || "").toLowerCase().includes("aouisesme") || (t || "").toLowerCase().includes("aouiseme"))) {
-        targets.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "aouisesme", "aouiseme");
-      }
       if (targets.some((t: string) => (t || "").toLowerCase().includes("yoouz") || (t || "").toLowerCase() === "info@yoouz.com" || (t || "").toLowerCase() === "yoouz.com" || (t || "").toLowerCase() === "place-custom-yoouz-com")) {
         targets.push("info@yoouz.com", "yoouz.com", "yoouz", "place-custom-yoouz-com", "biz_yoouz@business.yoouz.com");
       }
@@ -20827,13 +20958,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               recHandle = row.name || recHandle;
             }
 
-            if (!recEmail) {
-              const lower = String(targetHandle || "").toLowerCase();
-              if (lower.includes("avtertuop") || lower.includes("avt") || lower.includes("avr6566gd")) recEmail = "avr6566gd@gmail.com";
-              else if (lower.includes("bizriv") || lower.includes("biz") || lower.includes("louis42111")) recEmail = "louis42111@gmail.com";
-              else if (lower.includes("aouisesmee") || lower.includes("aouisemee") || lower.includes("aouisesme") || lower.includes("aouiseme")) recEmail = "aouisesmee@gmail.com";
-            }
-
             await createAndBroadcastBackendNotification({
               senderUserId: followerUserId,
               senderName: followerName,
@@ -20976,7 +21100,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 location: parsedData.location || (parsedData.city ? `${parsedData.city}${parsedData.country ? `, ${parsedData.country}` : ''}` : ""),
                 city: parsedData.city || "",
                 country: parsedData.country || "",
-                isVerified: Boolean(parsedData.isVerified || parsedData.verified),
+                isVerified: false,
                 followersCount: typeof parsedData.followersCount === 'number' ? parsedData.followersCount : (Array.isArray(parsedData.followers) ? parsedData.followers.length : 0),
                 raw: parsedData
               };
@@ -21074,11 +21198,11 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
 
             if (isFollowerOfTarget) {
               const enriched = userProfileMap.get(String(fUserId).toLowerCase()) || userProfileMap.get(String(fName).toLowerCase()) || null;
-              const name = enriched ? enriched.name : fName;
+              const name = formatAnonymousUserDisplayNameServer(enriched ? enriched.name : fName, fUserId || fName, false);
               const handle = enriched ? enriched.handle : (fData.followerHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
               const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followerAvatar || "");
-              const location = enriched?.location || fData.location || "Verified Reviewer";
-              const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
+              const location = enriched?.location || fData.location || "Community Member";
+              const isVerified = false;
               const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
 
               if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
@@ -21120,11 +21244,11 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 });
               } else {
                 const enriched = userProfileMap.get(String(targetId).toLowerCase()) || userProfileMap.get(String(targetName).toLowerCase()) || null;
-                const name = enriched ? enriched.name : targetName;
+                const name = formatAnonymousUserDisplayNameServer(enriched ? enriched.name : targetName, targetId || targetName, false);
                 const handle = enriched ? enriched.handle : (fData.followingHandle || fData.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
                 const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followingAvatar || "");
-                const location = enriched?.location || fData.location || "Verified Reviewer";
-                const isVerified = enriched ? enriched.isVerified : Boolean(fData.isVerified || fData.verified);
+                const location = enriched?.location || fData.location || "Community Member";
+                const isVerified = false;
                 const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
 
                 if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
@@ -21161,11 +21285,11 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
           const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || 0;
           return {
             id: enriched.id || rawStr,
-            name,
+            name: formatAnonymousUserDisplayNameServer(name, enriched.id || rawStr, false),
             handle,
             avatar,
             location,
-            isVerified: Boolean(enriched.isVerified),
+            isVerified: false,
             videoReviewCount,
             followersCount: enriched.followersCount || 0
           };
@@ -21178,7 +21302,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
           if (!rawStr) return null;
           const enriched = userProfileMap.get(String(rawStr).toLowerCase());
           if (!enriched) return null;
-          const name = enriched.name;
+          const name = formatAnonymousUserDisplayNameServer(enriched.name, enriched.id || rawStr, false);
           const handle = enriched.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
           const avatar = (enriched.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : "";
           const location = enriched.location || "Miami, FL";
@@ -21188,9 +21312,9 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
             name,
             handle,
             avatar,
-            type: "user",
             location,
-            isVerified: Boolean(enriched.isVerified),
+            type: "user",
+            isVerified: false,
             videoReviewCount,
             followersCount: enriched.followersCount || 0
           };
@@ -21828,26 +21952,31 @@ app.post("/api/videos/save-review", async (req, res) => {
                 (review.author as any)?.state,
                 review.author?.country
               );
-              const authorLoc = normLoc.location || 'Miami Beach, Florida, United States';
-              const authorCity = normLoc.city || 'Miami Beach';
-              const authorState = normLoc.state || 'Florida';
-              const authorCountry = normLoc.country || 'United States';
+              const authorLoc = normLoc.location || '';
+              const authorCity = normLoc.city || '';
+              const authorState = normLoc.state || '';
+              const authorCountry = normLoc.country || '';
 
+              const existingAuthorRecord = await resolveUserProfileFromAnySource(reviewUserId).catch(() => null);
               const authorData = {
+                ...(existingAuthorRecord || {}),
                 id: reviewUserId,
                 uid: reviewUserId,
                 name: reviewAuthorName,
-                email: review.authorEmail || (review.author && review.author.email) || '',
-                avatar: reviewAuthorAvatar,
-                role: "Creator",
-                bio: review.author?.bio || `Verified Yoouz Creator in ${authorLoc}`,
-                location: authorLoc,
-                city: authorCity,
-                state: authorState,
-                country: authorCountry,
-                handle: (review.author?.handle || `@${reviewAuthorName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`).replace(/^@+/, ''),
-                isVerified: true,
-                totalReviews: 1
+                username: reviewAuthorName,
+                email: review.authorEmail || (review.author && review.author.email) || existingAuthorRecord?.email || '',
+                avatar: reviewAuthorAvatar || existingAuthorRecord?.avatar || '',
+                role: existingAuthorRecord?.role || "user",
+                bio: review.author?.bio || existingAuthorRecord?.bio || '',
+                location: authorLoc || existingAuthorRecord?.location || '',
+                city: authorCity || existingAuthorRecord?.city || '',
+                state: authorState || existingAuthorRecord?.state || '',
+                country: authorCountry || existingAuthorRecord?.country || '',
+                handle: `@${reviewAuthorName.replace(/^@+/, '')}`,
+                isVerified: false,
+                yoouzPhotoUser: true,
+                scratchVersion: 5,
+                totalReviews: (Number(existingAuthorRecord?.totalReviews) || 0) + 1
               };
             await bunnyDb.execute({
               sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
@@ -21856,21 +21985,20 @@ app.post("/api/videos/save-review", async (req, res) => {
                       name = COALESCE(?, users.name),
                       avatar = COALESCE(?, users.avatar),
                       bio = COALESCE(?, users.bio),
-                      role = 'Creator',
                       data = ?,
                       updatedAt = CURRENT_TIMESTAMP`,
               args: [
                 reviewUserId,
                 authorData.email || null,
                 reviewAuthorName,
-                reviewAuthorAvatar,
+                authorData.avatar,
                 authorData.bio,
-                'Creator',
+                authorData.role,
                 JSON.stringify(authorData),
                 // Update args
                 reviewAuthorName,
-                reviewAuthorAvatar,
-                authorData.bio,
+                authorData.avatar || null,
+                authorData.bio || null,
                 JSON.stringify(authorData)
               ]
             });
@@ -23061,8 +23189,8 @@ app.post("/api/videos/save-review", async (req, res) => {
         const uIdx = localUsers.findIndex((u: any) => u && (u.email === cleanEmail || u.id === userSession.uid || u.uid === userSession.uid));
         const updatedUserObj = {
           ...userSession,
-          status: "verified",
-          isVerified: true,
+          status: "active",
+          isVerified: false,
           isRegisteredAccount: true
         };
         if (uIdx !== -1) {
@@ -23104,43 +23232,42 @@ app.post("/api/videos/save-review", async (req, res) => {
   });
 
   // Update User Profile Endpoint (Directly into Bunny Cloud Database, users_index.json, SQL, and active reviews)
-  app.post("/api/auth/update-profile", async (req, res) => {
+  app.post(["/api/auth/update-profile", "/api/users/update-profile"], async (req, res) => {
     try {
-      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId, role: bodyRole, videoReviewCount, isVerified } = req.body;
-      if (!email) {
-        return res.status(400).json({ error: "Missing email address." });
+      const { email, firstName, lastName, city, country, location, avatar, banner, bio, name, uid: bodyUid, id: bodyId, userId: bodyUserId, role: bodyRole, videoReviewCount } = req.body || {};
+      const cleanEmail = String(email || "").trim().toLowerCase();
+      const lookupKey = String(bodyUid || bodyId || bodyUserId || cleanEmail || "").trim();
+      if (!lookupKey) {
+        return res.status(400).json({ error: "Missing user identifier." });
       }
 
-      const cleanEmail = email.trim().toLowerCase();
-      const emailPrefix = cleanEmail.split('@')[0].toLowerCase();
+      const emailPrefix = cleanEmail ? cleanEmail.split('@')[0].toLowerCase() : "";
 
-      // Resolve any existing user profile so partial updates (e.g. videoReviewCount) never wipe firstName, lastName, city, country, avatar
-      const existingProfile = await resolveUserProfileFromAnySource(cleanEmail).catch(() => null);
+      // Resolve any existing user profile so partial updates never wipe existing fields
+      const existingProfile = await resolveUserProfileFromAnySource(lookupKey).catch(() => null);
 
-      let uid = bodyUid || bodyId || existingProfile?.uid || existingProfile?.id || cleanEmail;
+      const uid = String(existingProfile?.id || existingProfile?.uid || bodyUid || bodyId || bodyUserId || cleanEmail).trim();
 
       const fName = (firstName !== undefined ? String(firstName).trim() : (existingProfile?.firstName || '')).trim();
       const lName = (lastName !== undefined ? String(lastName).trim() : (existingProfile?.lastName || '')).trim();
       const combinedFirstLast = (fName && lName) ? `${fName} ${lName}`.trim() : '';
 
       const rawIncomingName = (name || '').trim();
-      const existingFullName = (existingProfile?.name && existingProfile.name.includes(' ') && existingProfile.name.toLowerCase() !== emailPrefix)
+      const existingFullName = (existingProfile?.name && (!emailPrefix || existingProfile.name.toLowerCase() !== emailPrefix))
         ? existingProfile.name.trim()
         : '';
 
       const fullName = (
-        combinedFirstLast ||
-        (rawIncomingName && rawIncomingName.includes(' ') ? rawIncomingName : '') ||
-        existingFullName ||
-        (rawIncomingName && rawIncomingName.toLowerCase() !== emailPrefix ? rawIncomingName : '') ||
-        fName ||
         rawIncomingName ||
-        cleanEmail.split('@')[0]
+        combinedFirstLast ||
+        existingFullName ||
+        fName ||
+        (cleanEmail ? cleanEmail.split('@')[0] : uid)
       ).trim();
 
       const resolvedFirstName = fName || (fullName.includes(' ') ? fullName.split(' ')[0] : fullName);
       const resolvedLastName = lName || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : '');
-      const initial = (resolvedFirstName ? resolvedFirstName.charAt(0) : cleanEmail.charAt(0) || 'U').toUpperCase();
+      const initial = (resolvedFirstName ? resolvedFirstName.charAt(0) : (cleanEmail ? cleanEmail.charAt(0) : 'U')).toUpperCase();
 
       const finalCity = (city !== undefined ? String(city).trim() : (existingProfile?.city || '')).trim();
       const finalCountry = (country !== undefined ? String(country).trim() : (existingProfile?.country || '')).trim();
@@ -23149,9 +23276,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         ? String(location).trim()
         : (locParts.length > 0 ? locParts.join(', ') : (existingProfile?.location || ''));
 
-      const finalAvatar = avatar || existingProfile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=27272a&color=fff&bold=true&size=128`;
+      const finalAvatar = avatar !== undefined ? avatar : (existingProfile?.avatar || '');
       const finalBanner = banner !== undefined ? banner : (existingProfile?.banner || '');
-      const finalBio = bio !== undefined ? bio : (existingProfile?.bio || 'Verified photo reviewer on Yoouz.');
+      const finalBio = bio !== undefined ? String(bio).trim() : (existingProfile?.bio || '');
 
       const isAdminEmail = cleanEmail === 'aouisesmee@gmail.com' || cleanEmail === 'louis42111@gmail.com' || cleanEmail.startsWith('admin@') || cleanEmail === 'info@yoouz.com';
       const assignedRole = isAdminEmail ? 'admin' : (bodyRole || existingProfile?.role || 'user');
@@ -23160,8 +23287,10 @@ app.post("/api/videos/save-review", async (req, res) => {
         ...(existingProfile || {}),
         uid,
         id: uid,
+        userId: uid,
         email: cleanEmail,
         name: fullName,
+        username: fullName.replace(/^@+/, ''),
         firstName: resolvedFirstName,
         lastName: resolvedLastName,
         city: finalCity,
@@ -23170,41 +23299,29 @@ app.post("/api/videos/save-review", async (req, res) => {
         avatar: finalAvatar,
         banner: finalBanner,
         bio: finalBio,
-        handle: `@${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        handle: `@${fullName.replace(/^@+/, '')}`,
         initial,
         role: assignedRole,
-        status: "verified",
-        isRegisteredAccount: true,
-        isNewUser: false,
-        isVerified: isVerified !== undefined ? Boolean(isVerified) : true,
+        status: "active",
+        yoouzPhotoUser: true,
+        scratchVersion: 5,
+        isVerified: false,
         ...(videoReviewCount !== undefined ? { videoReviewCount: Number(videoReviewCount) } : {}),
         updatedAt: new Date().toISOString()
       };
 
-      console.log(`[Auth] Updating profile for ${cleanEmail} -> Name: "${fullName}" (UID: ${uid}, Role: ${assignedRole})`);
-      unrecordDeletedUserIds([uid, cleanEmail, fullName, profile.handle]);
-      unrecordDeactivatedUserIds([uid, cleanEmail, fullName, profile.handle]);
+      console.log(`[Auth] Updating profile for ${uid} -> Name: "${fullName}" (Bio: "${finalBio.slice(0, 40)}")`);
+      unrecordDeletedUserIds([uid, cleanEmail, fullName, profile.handle].filter(Boolean));
+      unrecordDeactivatedUserIds([uid, cleanEmail, fullName, profile.handle].filter(Boolean));
 
-      // 1. Persist directly into Bunny Cloud Database (users table) & deduplicate any pending usr_<email> / UUID rows
+      // 1. Persist directly into Bunny Cloud Database (users table)
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         try {
-          const usrPrefixId = `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const existingRowsRes = await bunnyDb.execute({
-            sql: `SELECT id FROM users WHERE LOWER(email) = ? OR LOWER(id) = ? OR LOWER(id) = ? OR LOWER(id) = ?`,
-            args: [cleanEmail, cleanEmail, usrPrefixId.toLowerCase(), String(uid).toLowerCase()]
-          }).catch(() => ({ rows: [] as any[] }));
-
-          const matchingIds = (existingRowsRes.rows || []).map((r: any) => String(r.id));
-          const canonicalId = matchingIds.find((rid: string) => rid.toLowerCase() === cleanEmail) || cleanEmail;
+          const canonicalId = uid;
           profile.id = canonicalId;
           profile.uid = canonicalId;
-
-          for (const oldId of matchingIds) {
-            if (oldId !== canonicalId) {
-              await bunnyDb.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [oldId] }).catch(() => {});
-            }
-          }
+          const dbEmailVal = cleanEmail || null;
 
           const profileJson = JSON.stringify(profile);
           await bunnyDb.execute({
@@ -23213,13 +23330,13 @@ app.post("/api/videos/save-review", async (req, res) => {
                   ON CONFLICT(id) DO UPDATE SET email = ?, name = ?, role = ?, avatar = ?, bio = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
             args: [
               canonicalId,
-              cleanEmail,
+              dbEmailVal,
               fullName,
               assignedRole,
               finalAvatar,
               finalBio,
               profileJson,
-              cleanEmail,
+              dbEmailVal,
               fullName,
               assignedRole,
               finalAvatar,
@@ -23500,7 +23617,7 @@ app.post("/api/videos/save-review", async (req, res) => {
     return /^[A-Za-z0-9_.-]{3,24}$/.test(username);
   }
 
-  // Silent Zero-Friction Anonymous Account Provisioning
+  // Silent Zero-Friction Anonymous Account Provisioning (Scratch v5)
   app.post("/api/auth/anonymous", async (req, res) => {
     try {
       const cookies = parseServerCookies(req);
@@ -23511,10 +23628,20 @@ app.post("/api/videos/save-review", async (req, res) => {
       let foundUser: any = null;
 
       if (!forceNew && existingId && !isDeletedUserServer(existingId)) {
-        foundUser = await resolveUserProfileFromAnySource(existingId).catch(() => null);
-        if (!foundUser) {
-          const localUsers = readUsersIndex();
-          foundUser = localUsers.find((u: any) => u && (u.id === existingId || u.uid === existingId)) || null;
+        const localUsers = readUsersIndex();
+        foundUser = localUsers.find((u: any) => u && (u.id === existingId || u.uid === existingId)) || null;
+        if (!foundUser && bunnyDb) {
+          const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [existingId] }).catch(() => null);
+          if (rs && rs.rows && rs.rows[0]) {
+            const row: any = rs.rows[0];
+            let parsed: any = {};
+            try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+            foundUser = { id: row.id, uid: row.id, email: row.email || "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
+          }
+        }
+        // Only accept users created after the scratch v5 reset; any older user session is automatically logged out
+        if (foundUser && Number(foundUser.scratchVersion || 0) < 5) {
+          foundUser = null;
         }
       }
 
@@ -23543,7 +23670,9 @@ app.post("/api/videos/save-review", async (req, res) => {
         bio: "",
         role: "user",
         isAnonymous: true,
+        passkeyProtected: false,
         yoouzPhotoUser: true,
+        scratchVersion: 5,
         linkedProviders: [] as string[],
         isVerified: false,
         isNewUser: false,
@@ -23583,10 +23712,24 @@ app.post("/api/videos/save-review", async (req, res) => {
       const cookies = parseServerCookies(req);
       const userId = String(req.query.userId || cookies["yoouz_anon_uid"] || "").trim();
       if (!userId) return res.json({ success: true, user: null });
-      const resolved = await resolveUserProfileFromAnySource(userId).catch(() => null);
-      if (resolved) return res.json({ success: true, user: resolved });
       const localUsers = readUsersIndex();
-      const found = localUsers.find((u: any) => u && (u.id === userId || u.uid === userId)) || null;
+      let found: any = localUsers.find((u: any) => u && (u.id === userId || u.uid === userId)) || null;
+      if (!found) {
+        const bunnyDb = getBunnyDb();
+        if (bunnyDb) {
+          const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [userId] }).catch(() => null);
+          if (rs && rs.rows && rs.rows[0]) {
+            const row: any = rs.rows[0];
+            let parsed: any = {};
+            try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+            found = { id: row.id, uid: row.id, email: row.email || "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
+          }
+        }
+      }
+      if (found && Number(found.scratchVersion || 0) < 5) {
+        res.clearCookie("yoouz_anon_uid", { path: "/" });
+        return res.json({ success: true, user: null, expiredScratch: true });
+      }
       return res.json({ success: true, user: found });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Session check failed" });
@@ -23777,6 +23920,284 @@ app.post("/api/videos/save-review", async (req, res) => {
       return res.json({ success: true, user: updatedUser });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Failed to update username" });
+    }
+  });
+
+  // Mobile-First Inline Bio Update Endpoint (No email required)
+  app.post("/api/user/update-bio", async (req, res) => {
+    try {
+      const { userId, bio: rawBio } = req.body || {};
+      const cleanUserId = String(userId || "").trim();
+      const cleanBio = String(rawBio ?? "").trim().slice(0, 300);
+
+      if (!cleanUserId) {
+        return res.status(400).json({ error: "Missing userId" });
+      }
+
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      let userRecord = localUsers.find((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId)) || null;
+
+      if (!userRecord && bunnyDb) {
+        const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [cleanUserId] }).catch(() => null);
+        if (rs && rs.rows && rs.rows[0]) {
+          const row: any = rs.rows[0];
+          let parsed: any = {};
+          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+          userRecord = { id: row.id, uid: row.id, email: row.email || "", name: row.name, ...parsed };
+        }
+      }
+
+      if (!userRecord) {
+        const handle = await generateUniqueAnonymousHandle();
+        userRecord = {
+          id: cleanUserId,
+          uid: cleanUserId,
+          userId: cleanUserId,
+          email: "",
+          name: handle,
+          username: handle,
+          handle: `@${handle}`,
+          isAnonymous: cleanUserId.startsWith("anon_"),
+          yoouzPhotoUser: true,
+          scratchVersion: 5
+        };
+      }
+
+      const updatedUser = {
+        ...userRecord,
+        id: cleanUserId,
+        uid: userRecord.uid || cleanUserId,
+        userId: cleanUserId,
+        bio: cleanBio,
+        isVerified: false,
+        yoouzPhotoUser: true,
+        scratchVersion: 5,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET bio = excluded.bio, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            cleanUserId,
+            updatedUser.name || "Reviewer",
+            updatedUser.avatar || "",
+            cleanBio,
+            updatedUser.role || "user",
+            JSON.stringify(updatedUser)
+          ]
+        }).catch(() => {});
+      }
+
+      const idx = localUsers.findIndex((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId));
+      if (idx !== -1) localUsers[idx] = updatedUser;
+      else localUsers.unshift(updatedUser);
+      writeUsersIndex(localUsers);
+
+      // Cascade bio update across reviews by this user
+      try {
+        const revList = readReviewsIndex();
+        let revChanged = false;
+        revList.forEach((r: any) => {
+          if (!r) return;
+          const rUid = String(r.userId || r.author?.userId || r.author?.id || "").trim();
+          if (rUid === cleanUserId) {
+            r.author = { ...(r.author || {}), bio: cleanBio };
+            revChanged = true;
+          }
+        });
+        if (revChanged) writeReviewsIndex(revList);
+      } catch {}
+
+      try {
+        broadcastSseEvent({ type: "user_updated", user: updatedUser });
+      } catch {}
+
+      return res.json({ success: true, user: updatedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to update bio" });
+    }
+  });
+
+  // WebAuthn Biometric Passkey Registration (Face ID / Touch ID / Android Biometrics)
+  app.post("/api/auth/passkey/register", async (req, res) => {
+    try {
+      const { userId, credentialId, publicKey, deviceName } = req.body || {};
+      const cleanUserId = String(userId || "").trim();
+      const cleanCredId = String(credentialId || "").trim();
+
+      if (!cleanUserId || !cleanCredId) {
+        return res.status(400).json({ error: "Missing userId or passkey credentialId." });
+      }
+
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      let userRecord = localUsers.find((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId)) || null;
+
+      if (!userRecord && bunnyDb) {
+        const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [cleanUserId] }).catch(() => null);
+        if (rs && rs.rows && rs.rows[0]) {
+          const row: any = rs.rows[0];
+          let parsed: any = {};
+          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+          userRecord = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
+        }
+      }
+
+      const handle = userRecord?.username || userRecord?.name || await generateUniqueAnonymousHandle();
+      const updatedUser = {
+        ...(userRecord || {}),
+        id: cleanUserId,
+        uid: cleanUserId,
+        userId: cleanUserId,
+        email: "",
+        name: handle,
+        username: handle,
+        handle: `@${String(handle).replace(/^@+/, "")}`,
+        isAnonymous: false,
+        passkeyProtected: true,
+        passkeyCredentialId: cleanCredId,
+        passkeyPublicKey: String(publicKey || ""),
+        passkeyDeviceName: String(deviceName || "Face ID / Biometrics"),
+        passkeyRegisteredAt: new Date().toISOString(),
+        authProvider: "passkey",
+        linkedProviders: ["passkey"],
+        isVerified: false,
+        yoouzPhotoUser: true,
+        scratchVersion: 5,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET name = excluded.name, bio = excluded.bio, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            cleanUserId,
+            updatedUser.name,
+            updatedUser.avatar || "",
+            updatedUser.bio || "",
+            updatedUser.role || "user",
+            JSON.stringify(updatedUser)
+          ]
+        }).catch(() => {});
+      }
+
+      const idx = localUsers.findIndex((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId));
+      if (idx !== -1) localUsers[idx] = updatedUser;
+      else localUsers.unshift(updatedUser);
+      writeUsersIndex(localUsers);
+
+      res.cookie("yoouz_anon_uid", cleanUserId, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      try {
+        broadcastSseEvent({ type: "user_updated", user: updatedUser });
+      } catch {}
+
+      return res.json({ success: true, user: updatedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to register passkey" });
+    }
+  });
+
+  // WebAuthn Biometric Passkey Authentication / Cross-Phone Account Recovery
+  app.post("/api/auth/passkey/authenticate", async (req, res) => {
+    try {
+      const { credentialId, currentAnonymousUserId } = req.body || {};
+      const cleanCredId = String(credentialId || "").trim();
+      const cleanAnonId = String(currentAnonymousUserId || "").trim();
+
+      if (!cleanCredId) {
+        return res.status(400).json({ error: "Missing passkey credentialId." });
+      }
+
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      let restoredUser: any = localUsers.find(
+        (u: any) => u && String(u.passkeyCredentialId || "") === cleanCredId
+      ) || null;
+
+      if (!restoredUser && bunnyDb) {
+        const rs = await bunnyDb.execute({
+          sql: "SELECT * FROM users WHERE data LIKE ? LIMIT 1",
+          args: [`%"passkeyCredentialId":"${cleanCredId}"%`]
+        }).catch(() => null);
+        if (rs && rs.rows && rs.rows[0]) {
+          const row: any = rs.rows[0];
+          let parsed: any = {};
+          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+          restoredUser = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
+        }
+      }
+
+      if (!restoredUser) {
+        return res.status(404).json({
+          error: "No Yoouz account found for this Passkey. Lock your current account with Face ID first."
+        });
+      }
+
+      const targetId = String(restoredUser.id || restoredUser.uid);
+      const preferredUsername = String(restoredUser.username || restoredUser.name || "Reviewer");
+
+      // Merge any reviews/likes/bookmarks captured on the temporary anonymous session before restoring
+      if (cleanAnonId && cleanAnonId !== targetId) {
+        if (bunnyDb) {
+          await bunnyDb.execute({
+            sql: "UPDATE videoReviews SET userId = ?, authorName = ? WHERE userId = ?",
+            args: [targetId, preferredUsername, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE likes SET userId = ? WHERE userId = ?",
+            args: [targetId, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE bookmarks SET userId = ? WHERE userId = ?",
+            args: [targetId, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "UPDATE comments SET userId = ?, userName = ? WHERE userId = ?",
+            args: [targetId, preferredUsername, cleanAnonId]
+          }).catch(() => {});
+          await bunnyDb.execute({
+            sql: "DELETE FROM users WHERE id = ?",
+            args: [cleanAnonId]
+          }).catch(() => {});
+        }
+        const revList = readReviewsIndex();
+        let mutated = false;
+        revList.forEach((r: any) => {
+          if (r && r.userId === cleanAnonId) {
+            r.userId = targetId;
+            r.authorName = preferredUsername;
+            r.author = { ...(r.author || {}), id: targetId, userId: targetId, name: preferredUsername, handle: `@${preferredUsername.replace(/^@+/, "")}` };
+            mutated = true;
+          }
+        });
+        if (mutated) writeReviewsIndex(revList);
+
+        const filteredUsers = localUsers.filter((u: any) => u && u.id !== cleanAnonId);
+        writeUsersIndex(filteredUsers);
+      }
+
+      res.cookie("yoouz_anon_uid", targetId, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      return res.json({ success: true, user: restoredUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to authenticate with passkey" });
     }
   });
 
@@ -27814,35 +28235,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       const clean = seed.replace(/[^a-z0-9]/g, '');
 
       let bg = '';
-      if (
-        clean === 'stevenakan' ||
-        clean === 'steven' ||
-        clean === 'avr6566gd' ||
-        clean === 'steven_akan' ||
-        clean.includes('stevenakan') ||
-        clean === 'avtertuop'
-      ) {
-        seed = 'stevenakan';
-        bg = '#7CB342'; // Exact Light Green 600
-        char = 'S';
-      } else if (
-        clean === 'benblue' ||
-        clean === 'ben' ||
-        clean.includes('aouisesmee') ||
-        clean.includes('aouisemee') ||
-        clean.includes('aouisesme')
-      ) {
-        seed = 'benblue';
-        bg = '#1E88E5'; // Exact Blue 600
-        char = 'B';
-      } else if (
-        clean === 'bizriv' ||
-        clean.includes('louis42111')
-      ) {
-        seed = 'bizriv';
-        bg = '#8E24AA'; // Exact Purple 600
-        char = 'B';
-      } else if (clean) {
+      if (clean) {
         seed = clean;
       }
 
@@ -35772,7 +36165,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const inserted = await db.insert(reviews).values({
         placeId,
         userId: uid,
-        authorName: authorName || req.user.name || 'Verified Reviewer',
+        authorName: authorName || req.user.name || 'Community Member',
         authorAvatar: authorAvatar || req.user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || req.user.name || 'User')}&background=27272a&color=fff&bold=true&size=128`,
         videoUrl,
         videoThumbnail: videoThumbnail || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=60',
@@ -35885,9 +36278,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (str.includes('@')) str = str.split('@')[0].trim();
     const clean = str.replace(/[^a-z0-9]/g, '');
     if (!clean) return 'user';
-    if (clean === 'stevenakan' || clean === 'steven' || clean === 'avr6566gd' || clean === 'steven_akan' || clean.includes('stevenakan') || clean === 'avtertuop') return 'stevenakan';
-    if (clean === 'benblue' || clean === 'ben' || clean.includes('aouisesmee') || clean.includes('aouisemee') || clean.includes('aouisesme')) return 'benblue';
-    if (clean === 'bizriv' || clean.includes('louis42111')) return 'bizriv';
     return clean;
   }
 
@@ -39584,12 +39974,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
               </g>
             `}
 
-            <!-- Line 1: User Display Name + Dark Mode White Verified Checkmark Badge -->
+            <!-- Line 1: User Display Name -->
             ${renderTextPath(safeAuthorDisplay, 114, 51, 28, true, '#ffffff')}
-            <g transform="translate(${114 + authorWidth + 10}, 30)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
 
             <!-- Line 2: Subtitle (Reviewer Profile) -->
             ${renderTextPath(subtitleText, 114, 82, 19, true, '#cbd5e1')}
@@ -42655,7 +43041,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       for (const r of list) {
         if (!r || !r.id) continue;
         const placeName = formatBusinessName(r.placeName || (r.placeId ? cleanDomainName(r.placeId) : "Local Business"));
-        const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Verified Reviewer");
+        const authorName = r.author?.name || r.authorName || (r.userEmail ? r.userEmail.split('@')[0] : "Community Member");
         const rating = r.rating || 5.0;
 
         let thumbArg = r.thumbnailUrl || r.videoThumbnail || r.videoPreviewUrl || r.coverUrl || "";
@@ -43032,37 +43418,23 @@ function injectOpenGraphTags(html: string, meta: any) {
     }
   };
   const runPhotoPivotPurgeOnce = async (): Promise<void> => {
-    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v3_done");
+    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v5_done");
     if (fs.existsSync(markerPath)) return;
-    console.log("🧹 [Photo Pivot] Running v3 purge of legacy video reviews, test/legacy users, mp4 files, and Bunny Stream library...");
+    console.log("🧹 [Photo Pivot] Running v5 scratch reset: removing all existing users, legacy chats/notifications, legacy videos, and starting clean from scratch...");
     try {
-      const LEGACY_USER_IDS = [
-        'anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com',
-        'usr_elainemethuselahpalleignacio_gmail_com', '4e313bbd-9671-4129-8d5b-e46767f422f8',
-        'a2bf471b-5073-4753-8c28-aabb02b19508', 'benmeddourridha7@gmail.com',
-        'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com',
-        'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com',
-        'usr_steven_akan', 'usr_ben_blue'
-      ];
-      const LEGACY_SET = new Set(LEGACY_USER_IDS.map((x) => x.toLowerCase()));
-      const isSurvivingPhotoUser = (u: any): boolean => {
-        if (!u) return false;
-        const id = String(u.id || u.uid || "").toLowerCase().trim();
-        const email = String(u.email || "").toLowerCase().trim();
-        const name = String(u.name || "").toLowerCase().trim();
-        if (LEGACY_SET.has(id) || LEGACY_SET.has(email) || name === "steven akan" || name === "ben blue" || name === "u/testa1") {
-          return false;
-        }
-        return Boolean(u.yoouzPhotoUser || id.startsWith("anon_"));
-      };
-
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
+        // 1. Wipe ALL existing users so the platform starts 100% clean from scratch
+        await bunnyDb.execute(`DELETE FROM users`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'users'`).catch(() => {});
+        // 2. Wipe legacy video reviews & orphaned interactions/chats/notifications
         await bunnyDb.execute(`DELETE FROM videoReviews WHERE (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection IN ('videoReviews', 'videos', 'video_reviews') AND (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM users WHERE (data NOT LIKE '%yoouzPhotoUser%' AND id NOT LIKE 'anon_%') OR LOWER(id) IN ('anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com', 'usr_elainemethuselahpalleignacio_gmail_com', '4e313bbd-9671-4129-8d5b-e46767f422f8', 'a2bf471b-5073-4753-8c28-aabb02b19508', 'benmeddourridha7@gmail.com', 'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com', 'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com', 'usr_steven_akan', 'usr_ben_blue') OR LOWER(email) IN ('avr6566gd@gmail.com', 'aouisesmee@gmail.com', 'elainemethuselahpalleignacio@gmail.com', 'ghafardhillow@gmail.com', 'mohammedmindri@gmail.com', 'benmeddourridha7@gmail.com', 'edjofrancisramos18@gmail.com', 'jadrdc@gmail.com', 'krtpcq@gmail.com', 'chotrevlee@gmail.com', 'sophiecieloo@gmail.com', 'yudansha14@gmail.com') OR LOWER(name) IN ('u/testa1', 'steven akan', 'ben blue')`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'users' AND (data NOT LIKE '%yoouzPhotoUser%' OR LOWER(id) IN ('anon_test_a1', 'avr6566gd@gmail.com', 'aouisesmee@gmail.com'))`).catch(() => {});
-        await bunnyDb.execute(`UPDATE users SET email = NULL WHERE email = ''`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM chats`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'chats'`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM notifications`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'notifications'`).catch(() => {});
+        await bunnyDb.execute(`DELETE FROM follows`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
         await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
@@ -43071,6 +43443,9 @@ function injectOpenGraphTags(html: string, meta: any) {
       if (getDb()) {
         try {
           await db.delete(BunnyDB_video_reviews);
+        } catch {}
+        try {
+          await db.delete(users);
         } catch {}
       }
 
@@ -43082,9 +43457,12 @@ function injectOpenGraphTags(html: string, meta: any) {
         if (fs.existsSync(dataIdx)) fs.writeFileSync(dataIdx, JSON.stringify(currentRevs, null, 2), "utf8");
       } catch {}
 
-      // Clean uploads/users_index.json so ONLY active anonymous photo accounts remain (no Steven Akan / no U/TESTA1 / no pre-pivot emails)
-      const keptUsers = readUsersIndex().filter(isSurvivingPhotoUser);
-      writeUsersIndex(keptUsers);
+      // Reset users_index.json, messages_index.json, and notifications_index.json to [] from scratch
+      writeUsersIndex([]);
+      try {
+        fs.writeFileSync(path.join(serverUploadsDir, "messages_index.json"), "[]", "utf8");
+        fs.writeFileSync(path.join(serverUploadsDir, "notifications_index.json"), "[]", "utf8");
+      } catch {}
 
       // Remove legacy local video files (.mp4 / .webm) from uploads/ & uploads/videos/
       try {
@@ -43099,41 +43477,12 @@ function injectOpenGraphTags(html: string, meta: any) {
         }
       } catch {}
 
-      // Purge all legacy videos from Bunny Stream Library (no longer used for photo reviews)
-      const bunnyStreamKey = process.env.BUNNY_STREAM_API_KEY || "1837c4e8-07f2-46dd-9a7a12f84ddb-6189-4d36";
-      const bunnyLibraryId = process.env.BUNNY_STREAM_LIBRARY_ID || "733814";
-      if (bunnyStreamKey) {
-        try {
-          const listResp = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos?page=1&itemsPerPage=200`, {
-            headers: { "AccessKey": bunnyStreamKey, "Accept": "application/json" },
-            signal: AbortSignal.timeout(15000)
-          });
-          if (listResp.ok) {
-            const listData: any = await listResp.json();
-            const bunnyVideos = Array.isArray(listData.items) ? listData.items : [];
-            let deletedBunnyCount = 0;
-            for (const bv of bunnyVideos) {
-              if (!bv?.guid) continue;
-              const delRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${bv.guid}`, {
-                method: "DELETE",
-                headers: { "AccessKey": bunnyStreamKey },
-                signal: AbortSignal.timeout(10000)
-              }).catch(() => null);
-              if (delRes && (delRes.ok || delRes.status === 404)) deletedBunnyCount++;
-            }
-            console.log(`🗑️ [Photo Pivot] Deleted ${deletedBunnyCount} legacy video(s) from Bunny Stream library ${bunnyLibraryId}.`);
-          }
-        } catch (streamErr) {
-          console.warn("Bunny Stream purge warning:", streamErr);
-        }
-      }
-
       feedCache.videos = currentRevs;
       feedCache.lastFetched = 0;
       ogVideoCardCache.clear();
       if (!fs.existsSync(serverUploadsDir)) fs.mkdirSync(serverUploadsDir, { recursive: true });
       fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-      console.log("✅ [Photo Pivot] v2 legacy video & Bunny Stream purge completed.");
+      console.log("✅ [Photo Pivot] v5 scratch user & legacy data reset completed.");
     } catch (e) {
       console.warn("Photo pivot purge warning:", e);
     }

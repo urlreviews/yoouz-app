@@ -508,8 +508,7 @@ export const CopoAuthPrompt: React.FC<{
         bio: (bio || "").trim(),
         role: 'user',
         isNewUser: false,
-        isVerified: Boolean((currentUser?.videoReviewCount || tempUser?.videoReviewCount || 0) > 0),
-        verifiedAt: (currentUser?.videoReviewCount || tempUser?.videoReviewCount || 0) > 0 ? new Date().toISOString() : undefined
+        isVerified: false
       };
       console.log("[Auth] User object prepared:", updatedUser);
 

@@ -928,9 +928,6 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                     <span className="text-[13.5px] sm:text-[14px] font-black text-white truncate leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {safeAuthor.name}
                     </span>
-                    {safeAuthor.isVerified && (
-                      <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
-                    )}
                   </div>
 
                   {/* Line 2: Rating Stars & Recorded Time */}

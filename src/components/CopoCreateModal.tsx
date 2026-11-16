@@ -13,8 +13,10 @@ import {
   Copy,
   Sparkles,
   AtSign,
-  ShieldCheck
+  ShieldCheck,
+  ScanFace
 } from "lucide-react";
+import { registerFaceIdPasskey } from "../lib/passkeyAuth";
 import { Place, UserProfile, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isBadBanner } from "../utils/logoUtils";
 import {
@@ -87,13 +89,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [postSubmitOnboarding, setPostSubmitOnboarding] = useState(false);
   const [publishedReview, setPublishedReview] = useState<VideoReview | null>(null);
 
-  // Username & 1-tap linking inside post-submit onboarding
+  // Username & 1-tap Face ID / Passkey inside post-submit onboarding
   const [usernameInput, setUsernameInput] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "saved" | "error">("idle");
   const [usernameMessage, setUsernameMessage] = useState("");
   const [isLinkingAccount, setIsLinkingAccount] = useState(false);
-  const [pendingLinkProvider, setPendingLinkProvider] = useState<"google" | "apple" | null>(null);
-  const [linkEmailInput, setLinkEmailInput] = useState("");
   const [linkStatusMsg, setLinkStatusMsg] = useState<string | null>(null);
 
   const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -494,10 +494,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         name: reviewerName,
         handle: resolvedAuthor.handle || `@${reviewerName.replace(/^U\//i, "u_").toLowerCase().replace(/[^a-z0-9_]/g, "")}`,
         avatar: resolvedAuthor.avatar || getSafeAvatarUrl(activeAuthUser?.avatar, reviewerName),
-        isLocalGuide: true,
+        isLocalGuide: false,
         videoReviewCount: 1,
         photosCount: 1,
-        isVerified: true
+        isVerified: false
       },
       rating: wholeStars,
       durationSeconds: 0,
@@ -653,36 +653,25 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     }
   };
 
-  const handleConfirmQuickLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanEmail = linkEmailInput.trim().toLowerCase();
-    if (!currentUser?.id || !pendingLinkProvider || !cleanEmail.includes("@") || isLinkingAccount) return;
+  const handleRegisterPasskey = async () => {
+    const uid = currentUser?.id || (currentUser as any)?.uid;
+    if (!uid || isLinkingAccount) return;
     setIsLinkingAccount(true);
     setLinkStatusMsg(null);
     try {
-      const res = await fetch("/api/auth/link-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          anonymousUserId: currentUser.id,
-          provider: pendingLinkProvider,
-          email: cleanEmail,
-          name: currentUser.name
-        })
+      const result = await registerFaceIdPasskey({
+        id: uid,
+        name: currentUser?.name || uid
       });
-      const data = await res.json();
-      if (res.ok && data.user) {
-        onUpdateUserProfile?.(data.user);
-        localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
-        setLinkStatusMsg(`Linked to ${pendingLinkProvider === "google" ? "Google" : "Apple"} cleanly!`);
-        setPendingLinkProvider(null);
-        setLinkEmailInput("");
+      if (result.success && result.user) {
+        onUpdateUserProfile?.(result.user);
+        setLinkStatusMsg("Face ID / Passkey saved! Your phone & cloud keychain now remember your account automatically.");
         triggerHaptic("success");
-      } else {
-        setLinkStatusMsg(data.error || "Could not link account right now.");
+      } else if (!result.cancelled) {
+        setLinkStatusMsg(result.error || "Could not save Passkey right now.");
       }
     } catch {
-      setLinkStatusMsg("Network error while linking account.");
+      setLinkStatusMsg("Could not save Passkey right now.");
     } finally {
       setIsLinkingAccount(false);
     }
@@ -875,61 +864,32 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 )}
               </div>
 
-              {/* 1-Tap Account Linking */}
+              {/* 1-Tap Biometric Face ID / Passkey Account Lock */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-300" />
-                  <span>Protect Your Reviews Across Devices</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Remember My Face Across Phones (Passkey)</span>
                 </div>
-                {!pendingLinkProvider ? (
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      disabled={isLinkingAccount}
-                      onClick={() => { setPendingLinkProvider("google"); setLinkStatusMsg(null); }}
-                      className="py-2.5 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
-                    >
-                      Save with Google
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isLinkingAccount}
-                      onClick={() => { setPendingLinkProvider("apple"); setLinkStatusMsg(null); }}
-                      className="py-2.5 px-3 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs transition-colors cursor-pointer"
-                    >
-                      Save with Apple
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleConfirmQuickLink} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="email"
-                        required
-                        value={linkEmailInput}
-                        onChange={(e) => setLinkEmailInput(e.target.value)}
-                        placeholder={`Enter your ${pendingLinkProvider === "google" ? "Google" : "Apple"} email`}
-                        className="flex-1 px-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-700 text-xs text-white outline-none focus:border-white"
-                      />
-                      <button
-                        type="submit"
-                        disabled={isLinkingAccount}
-                        className="px-3.5 py-2.5 rounded-xl bg-white text-zinc-950 font-bold text-xs cursor-pointer disabled:opacity-50"
-                      >
-                        {isLinkingAccount ? "..." : "Save"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPendingLinkProvider(null)}
-                        className="p-2.5 rounded-xl bg-zinc-800 text-zinc-300 cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </form>
-                )}
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  No email, links, or passwords. Your phone uses Face ID or Android Biometrics to keep your account even if you switch phones.
+                </p>
+                <button
+                  type="button"
+                  disabled={isLinkingAccount || Boolean((currentUser as any)?.passkeyProtected)}
+                  onClick={handleRegisterPasskey}
+                  className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-emerald-500/15 disabled:text-emerald-400 disabled:border-emerald-500/30 border border-white text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <ScanFace className="w-4 h-4" />
+                  <span>
+                    {(currentUser as any)?.passkeyProtected
+                      ? "Face ID / Passkey Active"
+                      : isLinkingAccount
+                      ? "Verifying Face / Biometrics..."
+                      : "Save Account with Face ID / Passkey"}
+                  </span>
+                </button>
                 {linkStatusMsg && (
-                  <p className={`text-[11px] font-semibold ${linkStatusMsg.includes("cleanly") ? "text-emerald-400" : "text-rose-400"}`}>
+                  <p className={`text-[11px] font-semibold ${linkStatusMsg.includes("saved") ? "text-emerald-400" : "text-rose-400"}`}>
                     {linkStatusMsg}
                   </p>
                 )}
@@ -945,48 +905,56 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             </button>
           </div>
         ) : capturedPhotoUrl ? (
-          /* PREVIEW STAGE: Native Captured Photo + Retake + SpecialStarSelector (1-5) + Publish */
+          /* PREVIEW STAGE: Crisp Native Captured Photo + Elevated Star Selector + Retake & Publish */
           <div className="relative w-full h-full bg-black flex flex-col justify-between overflow-hidden">
             <img
               src={capturedPhotoUrl}
               alt="Captured review preview"
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-transparent to-black/95 pointer-events-none" />
+            {/* Measured Top & Bottom Scrims — keeps the photo vibrant & bright through the middle 60% */}
+            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/75 via-black/30 to-transparent pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/95 via-black/65 to-transparent pointer-events-none" />
 
-            {/* Top Bar */}
-            <div className="relative z-20 flex items-center justify-between gap-2 p-4 pt-5">
-              <div className="px-3.5 py-2 rounded-full bg-black/65 backdrop-blur-xl border border-white/20 text-white flex items-center gap-2.5 min-w-0">
+            {/* Top Bar: Clean Business Context & 44px Close */}
+            <div className="relative z-20 flex items-center justify-between gap-3 px-4 pt-[max(16px,env(safe-area-inset-top,16px))]">
+              <div className="flex items-center gap-2.5 min-w-0 pr-3 py-1.5 pl-1.5 rounded-2xl bg-black/55 backdrop-blur-xl border border-white/15 text-white shadow-lg">
                 <CopoBrandLogo
                   domain={selectedPlace?.brandDomain || extractCleanDomain(selectedPlace?.website || selectedPlace?.id || selectedPlace?.name)}
                   name={selectedPlace?.name}
                   website={selectedPlace?.website}
                   logoUrl={selectedPlace?.logoUrl || selectedPlace?.avatarUrl}
                   bannerUrl={selectedPlace?.bannerUrl || selectedPlace?.ogImage}
-                  className="w-6 h-6 rounded-lg bg-white overflow-hidden flex items-center justify-center shrink-0 p-0.5"
+                  className="w-8 h-8 rounded-xl bg-white overflow-hidden flex items-center justify-center shrink-0 p-0.5"
                   imageClassName="w-full h-full object-contain"
-                  fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
+                  fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                 />
-                <span className="font-extrabold text-xs truncate">
-                  {formatBusinessName(selectedPlace?.name, selectedPlace?.brandDomain || selectedPlace?.website, selectedPlace?.id)}
-                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-300 leading-none mb-0.5">
+                    Reviewing
+                  </p>
+                  <p className="font-extrabold text-sm leading-tight truncate">
+                    {formatBusinessName(selectedPlace?.name, selectedPlace?.brandDomain || selectedPlace?.website, selectedPlace?.id)}
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 disabled={isPublishing}
                 onClick={handleCloseModal}
-                className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-50"
+                className="w-11 h-11 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-50 transition-colors active:scale-95"
                 title="Close"
+                aria-label="Close review preview"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Bottom Controls: Error + SpecialStarSelector + Retake/Publish */}
-            <div className="relative z-20 p-4 pb-[max(20px,calc(env(safe-area-inset-bottom,0px)+16px))] space-y-3">
+            {/* Bottom Controls: Error + SpecialStarSelector + Action Row */}
+            <div className="relative z-20 px-4 pb-[max(20px,calc(env(safe-area-inset-bottom,0px)+16px))] space-y-3">
               {errorMessage && (
-                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-red-950/90 border border-red-700/70 text-red-200 text-xs font-semibold backdrop-blur-xl">
+                <div className="flex items-center gap-2.5 px-3.5 py-3 rounded-2xl bg-red-950/90 border border-red-700/70 text-red-100 text-xs font-semibold backdrop-blur-xl">
                   <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                   <span>{errorMessage}</span>
                 </div>
@@ -999,17 +967,17 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   setErrorMessage(null);
                 }}
                 disabled={isPublishing}
-                label="Rate This Place (1–5 Whole Stars)"
+                label="Rate your experience"
               />
 
               {isPublishing ? (
-                <div className="p-4 rounded-2xl bg-zinc-900/95 backdrop-blur-xl border border-white/15 space-y-2.5">
+                <div className="p-4 rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/15 space-y-2.5 shadow-2xl">
                   <div className="flex items-center justify-between text-xs font-bold text-white">
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       {publishStage}
                     </span>
-                    <span>{publishProgress}%</span>
+                    <span className="tabular-nums">{publishProgress}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
@@ -1019,7 +987,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <label
                     htmlFor="native-camera-capture-input"
                     onClick={() => {
@@ -1029,7 +997,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                         nativeCameraInputRef.current.value = "";
                       }
                     }}
-                    className="px-5 py-3.5 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 backdrop-blur-xl border border-white/20 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all select-none"
+                    className="min-h-[52px] px-5 rounded-2xl bg-zinc-950/85 hover:bg-zinc-900 backdrop-blur-xl border border-white/18 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all select-none shrink-0"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Retake</span>
@@ -1039,14 +1007,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     type="button"
                     disabled={rating < 1}
                     onClick={handlePublish}
-                    className={`flex-1 py-3.5 px-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl ${
+                    className={`flex-1 min-h-[52px] px-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-2xl ${
                       rating >= 1
                         ? "bg-white hover:bg-zinc-100 text-zinc-950 cursor-pointer"
-                        : "bg-zinc-800/80 text-zinc-500 border border-white/10 cursor-not-allowed"
+                        : "bg-zinc-900/85 text-zinc-500 border border-white/10 cursor-not-allowed"
                     }`}
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span>Publish Photo Review</span>
+                    <span>{rating >= 1 ? "Publish Photo Review" : "Select a Star Rating"}</span>
                   </button>
                 </div>
               )}

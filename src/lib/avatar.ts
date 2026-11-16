@@ -56,8 +56,6 @@ export function getFirstLetter(nameOrEmail?: string): string {
 
 /**
  * Normalizes any user identifier (Name, Handle, Email, User ID) into a canonical seed string.
- * E.g. "Steven Akan", "Steven", "@stevenakan", "stevenakan", "avr6566gd@gmail.com" all normalize to "stevenakan".
- * "Ben Blue", "Ben", "@benblue", "benblue", "aouisesmee@gmail.com" all normalize to "benblue".
  */
 export function normalizeAvatarSeed(input?: string): string {
   if (!input || typeof input !== 'string') return 'user';
@@ -68,35 +66,6 @@ export function normalizeAvatarSeed(input?: string): string {
   // Clean alphanumeric characters
   const clean = str.replace(/[^a-z0-9]/g, '');
   if (!clean) return 'user';
-
-  // Canonical clusters for known community reviewer identities
-  if (
-    clean === 'stevenakan' ||
-    clean === 'steven' ||
-    clean === 'avr6566gd' ||
-    clean === 'steven_akan' ||
-    clean.includes('stevenakan') ||
-    clean === 'avtertuop'
-  ) {
-    return 'stevenakan';
-  }
-
-  if (
-    clean === 'benblue' ||
-    clean === 'ben' ||
-    clean.includes('aouisesmee') ||
-    clean.includes('aouisemee') ||
-    clean.includes('aouisesme')
-  ) {
-    return 'benblue';
-  }
-
-  if (
-    clean === 'bizriv' ||
-    clean.includes('louis42111')
-  ) {
-    return 'bizriv';
-  }
 
   return clean;
 }
@@ -111,17 +80,6 @@ export function getAvatarColor(nameOrSeed?: string, colorSeed?: string): { bg: s
     seed = normalizeAvatarSeed(colorSeed);
   } else if (nameOrSeed && nameOrSeed.trim() !== '') {
     seed = normalizeAvatarSeed(nameOrSeed);
-  }
-
-  // Exact canonical colors for known personas
-  if (seed === 'benblue') {
-    return { bg: '#1E88E5', text: '#FFFFFF', name: 'blue' }; // Material Blue 600
-  }
-  if (seed === 'stevenakan') {
-    return { bg: '#7CB342', text: '#FFFFFF', name: 'lightGreen' }; // Material Light Green 600
-  }
-  if (seed === 'bizriv') {
-    return { bg: '#8E24AA', text: '#FFFFFF', name: 'purple' }; // Material Purple 600
   }
 
   const index = hashString(seed) % GOOGLE_AVATAR_PALETTE.length;

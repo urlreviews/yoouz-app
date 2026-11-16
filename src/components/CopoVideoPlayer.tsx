@@ -936,7 +936,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       t("common.businessPlace", "Business Place")}
                   </h3>
                   <p className="text-xs text-zinc-200 truncate">
-                    {moreMenuVideo?.author?.name || t("common.verifiedReviewer", "Verified Reviewer")}
+                    {moreMenuVideo?.author?.name || t("common.photoReviewer", "Photo Reviewer")}
                   </p>
                 </div>
               </div>

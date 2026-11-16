@@ -1,4 +1,5 @@
 import { ReviewComment } from "../types";
+import { formatAnonymousUserDisplayName } from "../lib/userCanonicalization";
 
 export function sanitizeCommentUser(c: any): any {
   if (!c) return c;
@@ -8,28 +9,10 @@ export function sanitizeCommentUser(c: any): any {
   let avatar = c.authorAvatar || c.userAvatar || "";
   let email = (c.authorEmail || c.userEmail || c.userId || "").trim().toLowerCase();
 
-  if (email && (email.includes("4samet") || email.includes("bizriv"))) {
-    name = "Biz Riv";
-    handle = "@bizriv";
-  }
-
-  if (!name || name === "Reviewer" || name === "Copo Reviewer" || name === "User" || name === "Guest") {
-    if (handle) {
-      const cleanH = handle.replace(/^@+/, "").toLowerCase();
-      if (cleanH.includes("bizriv") || cleanH.includes("4samet")) {
-        name = "Biz Riv";
-        handle = "@bizriv";
-      }
-    }
-  }
-
-  if (!name || name === "Reviewer" || name === "User" || name === "Copo Reviewer") {
-    if (email && email.includes("@")) {
-      const part = email.split("@")[0];
-      name = part ? part.charAt(0).toUpperCase() + part.slice(1) : "Verified Reviewer";
-    } else {
-      name = "Verified Reviewer";
-    }
+  if (!name || name === "Reviewer" || name === "User" || name === "Copo Reviewer" || name === "Guest") {
+    name = "Community Member";
+  } else if (!c.isOwner) {
+    name = formatAnonymousUserDisplayName(name, c.userId || email || handle || name, false);
   }
 
   if (!handle) {

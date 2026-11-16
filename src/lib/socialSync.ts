@@ -1,5 +1,5 @@
 import { CopoNotification, CopoMessage, UserProfile } from "../types";
-import { getCanonicalUserKey, isGenericUsername } from "./userCanonicalization";
+import { getCanonicalUserKey, isGenericUsername, formatAnonymousUserDisplayName, isLegacyDeletedIdentity } from "./userCanonicalization";
 import { generateGoogleLetterAvatarSvg } from "./avatar";
 import { formatRecordedDate, parseTimestampToMs, resolveMessageTimestampMs } from "../utils/dateUtils";
 
@@ -215,26 +215,10 @@ export async function sendSocialNotification(params: CreateNotificationParams): 
   if (!targetEmail || !targetEmail.includes("@")) {
     if (targetId.includes("@")) {
       targetEmail = targetId;
-    } else if (targetId === "avt ertuop" || targetId.includes("avtertuop") || targetHandle.includes("avtertuop") || targetId.includes("avr6566gd")) {
-      targetEmail = "avr6566gd@gmail.com";
-    } else if (targetId === "biz riv" || targetId.includes("bizriv") || targetHandle.includes("bizriv") || targetId.includes("louis42111")) {
-      targetEmail = "louis42111@gmail.com";
-    } else if (targetId.includes("aouisesmee") || targetHandle.includes("aouisesmee")) {
-      targetEmail = "aouisesmee@gmail.com";
     }
   }
 
-  // Canonicalize sender email if missing
   let canonSenderEmail = senderEmail;
-  if (!canonSenderEmail || !canonSenderEmail.includes("@")) {
-    if (senderName === "avt ertuop" || senderName.includes("avtertuop") || senderName.includes("avr6566gd")) {
-      canonSenderEmail = "avr6566gd@gmail.com";
-    } else if (senderName === "biz riv" || senderName.includes("bizriv") || senderName.includes("louis42111")) {
-      canonSenderEmail = "louis42111@gmail.com";
-    } else if (senderName.includes("aouisesmee")) {
-      canonSenderEmail = "aouisesmee@gmail.com";
-    }
-  }
 
   // Do not send notifications to oneself (unless explicitly different canonical users)
   if (targetEmail && canonSenderEmail && targetEmail === canonSenderEmail && !targetEmail.includes("test")) {
@@ -371,42 +355,6 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 
   const deletedSet = getDeletedNotifIds(userKey);
 
-  const isAvtErtuopUser =
-    userEmail.includes("avr6566gd") ||
-    userName === "avt ertuop" ||
-    userHandle === "avtertuop" ||
-    userId.includes("avr6566gd") ||
-    userName === "avt" ||
-    userHandle === "avt" ||
-    userName.includes("avt") ||
-    userHandle.includes("avt");
-
-  const isAouisesmeeUser =
-    userEmail.includes("aouisesmee") ||
-    userEmail.includes("aouisemee") ||
-    userEmail.includes("aouisesme") ||
-    userEmail.includes("aouiseme") ||
-    userName.includes("aouisesmee") ||
-    userName.includes("aouisemee") ||
-    userName.includes("aouisesme") ||
-    userName.includes("aouiseme") ||
-    userHandle.includes("aouisesmee") ||
-    userHandle.includes("aouisemee") ||
-    userHandle.includes("aouisesme") ||
-    userHandle.includes("aouiseme") ||
-    userId.includes("aouisesmee") ||
-    userId.includes("aouisemee") ||
-    userId.includes("aouisesme") ||
-    userId.includes("aouiseme");
-
-  const isBizRivUser =
-    userEmail.includes("louis42111") ||
-    userName === "biz riv" ||
-    userHandle === "bizriv" ||
-    userId.includes("louis42111") ||
-    userName.includes("biz") ||
-    userHandle.includes("biz");
-
   const isYoouzBizUser =
     userEmail.includes("yoouz") ||
     userName.includes("yoouz") ||
@@ -454,56 +402,11 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
     const normRecId = recId.replace(/\s+/g, "");
     const normRecHandle = recHandle.replace(/\s+/g, "");
 
+    if ([senderEmail, senderName, recEmail, recId, recHandle].some((val) => isLegacyDeletedIdentity(val))) {
+      continue;
+    }
+
     const isSystemOrGlobal = recEmail === "all" || recId === "all" || recHandle === "all";
-
-    // Matching aliases
-    const matchesAvtErtuop = isAvtErtuopUser && (
-      recEmail.includes("avr6566gd") ||
-      recId === "avt ertuop" ||
-      recHandle === "avt ertuop" ||
-      normRecId.includes("avtertuop") ||
-      normRecHandle.includes("avtertuop") ||
-      recId.includes("avr6566gd") ||
-      recEmail.includes("avt") ||
-      recHandle.includes("avt") ||
-      recId.includes("avt") ||
-      normRecId === "avt" ||
-      normRecHandle === "avt"
-    );
-
-    const matchesAouisesmee = isAouisesmeeUser && (
-      recEmail.includes("aouisesmee") ||
-      recEmail.includes("aouisemee") ||
-      recEmail.includes("aouisesme") ||
-      recEmail.includes("aouiseme") ||
-      normRecHandle.includes("aouisesmee") ||
-      normRecHandle.includes("aouisemee") ||
-      normRecHandle.includes("aouisesme") ||
-      normRecHandle.includes("aouiseme") ||
-      normRecId.includes("aouisesmee") ||
-      normRecId.includes("aouisemee") ||
-      normRecId.includes("aouisesme") ||
-      normRecId.includes("aouiseme") ||
-      recId.includes("aouisesmee") ||
-      recId.includes("aouisemee") ||
-      recId.includes("aouisesme") ||
-      recId.includes("aouiseme") ||
-      recHandle.includes("aouisesmee") ||
-      recHandle.includes("aouisemee") ||
-      recHandle.includes("aouisesme") ||
-      recHandle.includes("aouiseme")
-    );
-
-    const matchesBizRiv = isBizRivUser && (
-      recEmail.includes("louis42111") ||
-      normRecHandle.includes("bizriv") ||
-      normRecId.includes("louis42111") ||
-      normRecId.includes("bizriv") ||
-      recId === "biz riv" ||
-      recHandle === "biz riv" ||
-      recHandle.includes("bizriv") ||
-      normRecHandle.includes("biz")
-    );
 
     const matchesYoouzBiz = isYoouzBizUser && (
       recEmail.includes("yoouz") ||
@@ -526,9 +429,6 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
 
     const isGeneralMatch =
       isSystemOrGlobal ||
-      matchesAvtErtuop ||
-      matchesAouisesmee ||
-      matchesBizRiv ||
       matchesYoouzBiz ||
       matchesPlaceId ||
       (userEmail && (recEmail === userEmail || recId === userEmail || recHandle === userEmail || normRecId === userEmail)) ||
@@ -575,37 +475,14 @@ function filterNotificationsForUser(rawItems: any[], currentUser: UserProfile): 
       Date.now();
 
     let rawSenderName = (data.user?.name || parsedInner.user?.name || "").trim();
-    let rawSenderEmail = (data.user?.email || parsedInner.user?.email || senderEmail || "").trim();
-    let rawSenderAvatar = (data.user?.avatar || parsedInner.user?.avatar || "").trim();
+    const rawSenderEmail = (data.user?.email || parsedInner.user?.email || senderEmail || "").trim();
+    const rawSenderAvatar = (data.user?.avatar || parsedInner.user?.avatar || "").trim();
 
-    const lowerId = String(data.id || "").toLowerCase();
-    const lowerCheck = `${rawSenderEmail} ${rawSenderName} ${lowerId}`.toLowerCase();
-
-    if (lowerCheck.includes("avr6566gd") || lowerCheck.includes("avtertuop") || lowerCheck.includes("steven akan")) {
-      rawSenderName = "Steven Akan";
-      rawSenderEmail = "avr6566gd@gmail.com";
-      if (!rawSenderAvatar) {
-        rawSenderAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2228%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-      }
-    } else if (lowerCheck.includes("aouisesmee") || lowerCheck.includes("ben blue")) {
-      rawSenderName = "Ben Blue";
-      rawSenderEmail = "aouisesmee@gmail.com";
-      if (!rawSenderAvatar) {
-        rawSenderAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20rx%3D%2264%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EB%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E";
-      }
-    } else if (lowerCheck.includes("louis42111") || lowerCheck.includes("biz riv")) {
-      rawSenderName = "Biz Riv";
-      rawSenderEmail = "louis42111@gmail.com";
+    if (isLegacyDeletedIdentity(rawSenderName) || isLegacyDeletedIdentity(rawSenderEmail)) {
+      continue;
     }
 
-    if (!rawSenderName || rawSenderName === "User" || rawSenderName === "Community Reviewer" || rawSenderName === "Community Member" || rawSenderName === "Yoouz Member") {
-      if (rawSenderEmail && rawSenderEmail.includes("@") && !rawSenderEmail.startsWith("anon")) {
-        const prefix = rawSenderEmail.split("@")[0];
-        rawSenderName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
-      } else {
-        rawSenderName = "Yoouz Member";
-      }
-    }
+    rawSenderName = formatAnonymousUserDisplayName(rawSenderName, rawSenderEmail || data.id, false);
 
     const effectiveText = (data.text || parsedInner.text || "")
       .replace(/^yoouz member /i, `${rawSenderName} `)
@@ -1369,10 +1246,29 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
 
   const threads: CopoMessage[] = [];
 
+  const isLegacyChatObj = (d: any): boolean => {
+    if (!d) return false;
+    const tid = String(d.id || "").toLowerCase().trim();
+    if (tid === "thread_1791486695386") return true;
+    const checkFields = [
+      tid,
+      d.senderEmail,
+      d.recipientEmail,
+      d.lastSenderEmail,
+      d.senderId,
+      d.recipientId,
+      d.senderName,
+      d.recipientName,
+      d.lastSenderName,
+      ...(Array.isArray(d.participants) ? d.participants : []),
+    ];
+    return checkFields.some((v) => isLegacyDeletedIdentity(String(v || "")));
+  };
+
   for (const data of rawItems) {
     if (!data) continue;
     const threadId = String(data.id || "").trim();
-    if (!threadId) continue;
+    if (!threadId || isLegacyChatObj(data)) continue;
 
     // Check if deleted specifically on the server record
     const deletedForUsers = Array.isArray(data.deletedForUsers)
@@ -1428,43 +1324,6 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
     const participants: string[] = Array.isArray(data.participants)
       ? data.participants.map((p: string) => (p || "").toLowerCase().trim().replace(/^@/, ""))
       : [];
-
-    // Known Personas Matching (Steven Akan / Ben Blue / Biz Riv / Yoouz)
-    const isStevenAkan =
-      userEmail.includes("avr6566gd") ||
-      userName.includes("steven") ||
-      userHandle.includes("steven") ||
-      userFirstName === "steven" ||
-      userName.includes("sten") ||
-      userHandle.includes("sten") ||
-      userFirstName === "sten" ||
-      userName === "avt ertuop" ||
-      userHandle === "avtertuop" ||
-      userId.includes("avr6566gd") ||
-      userName.includes("avt") ||
-      userHandle.includes("avt") ||
-      userId.includes("avt");
-
-    const isBenBlue =
-      userEmail.includes("aouisesmee") ||
-      userEmail.includes("aouisemee") ||
-      userEmail.includes("aouisesme") ||
-      userEmail.includes("aouiseme") ||
-      userName.includes("ben") ||
-      userHandle.includes("ben") ||
-      userFirstName === "ben" ||
-      userName.includes("aouisesmee") ||
-      userHandle.includes("aouisesmee") ||
-      userId.includes("aouisesmee");
-
-    const isBizRiv =
-      userEmail.includes("louis42111") ||
-      userName === "biz riv" ||
-      userHandle === "bizriv" ||
-      userFirstName === "biz" ||
-      userId.includes("louis42111") ||
-      userEmail.includes("biz") ||
-      userName.includes("biz");
 
     let isParticipant = false;
 
@@ -1539,26 +1398,6 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         myCanonicalKey && (myCanonicalKey === dataSenderCanonical || myCanonicalKey === dataRecipientCanonical)
       );
 
-      const matchesStevenAkan = isStevenAkan && (
-        participants.some(p => p.includes("avr6566gd") || p.includes("steven") || p.includes("sten") || p === "avt ertuop" || p === "avtertuop" || p.includes("avt")) ||
-        senderEmail.includes("avr6566gd") || senderEmail.includes("avt") || recipientEmail.includes("avr6566gd") || recipientEmail.includes("avt") ||
-        senderName.includes("steven") || recipientName.includes("steven") || senderName.includes("sten") || recipientName.includes("sten") || senderName.includes("avt") || recipientName.includes("avt") ||
-        senderId.includes("steven") || recipientId.includes("steven") || senderId.includes("sten") || recipientId.includes("sten") || senderId.includes("avr6566gd") || recipientId.includes("avr6566gd")
-      );
-
-      const matchesBenBlue = isBenBlue && (
-        participants.some(p => p.includes("aouisesmee") || p.includes("aouisemee") || p.includes("ben")) ||
-        senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") ||
-        senderName.includes("ben") || recipientName.includes("ben") ||
-        senderId.includes("ben") || recipientId.includes("ben") || senderId.includes("aouisesmee") || recipientId.includes("aouisesmee")
-      );
-
-      const matchesBizRiv = isBizRiv && (
-        participants.some(p => p.includes("louis42111") || p === "biz riv" || p === "bizriv" || p.includes("biz")) ||
-        senderEmail.includes("louis42111") || senderEmail.includes("biz") || recipientEmail.includes("louis42111") || recipientEmail.includes("biz") ||
-        senderName.includes("biz") || recipientName.includes("biz") || senderId.includes("biz") || recipientId.includes("biz")
-      );
-
       const historyHasUser = Array.isArray(data.history) && data.history.some((m: any) => {
         if (!m) return false;
         const mSE = (m.senderEmail || "").toLowerCase().trim();
@@ -1571,10 +1410,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           (emailPrefix && emailPrefix.length >= 3 && (mSE.startsWith(emailPrefix) || mSI === emailPrefix)) ||
           (userHandle && userHandle.length >= 3 && (mSI === userHandle || mSN === userHandle)) ||
           (!isGenericName && (mSN === userName || (userFirstName.length >= 3 && mSN.includes(userFirstName)))) ||
-          (userId && (mSI === userId || mSE === userId)) ||
-          (isBenBlue && (mSE.includes("aouisesmee") || mSE.includes("aouisemee") || mSN.includes("ben") || mSI.includes("ben"))) ||
-          (isStevenAkan && (mSE.includes("avr6566gd") || mSN.includes("steven") || mSN.includes("avt") || mSI.includes("steven") || mSI.includes("avt") || mSN.includes("sten") || mSI.includes("sten"))) ||
-          (isBizRiv && (mSE.includes("louis42111") || mSN.includes("biz") || mSI.includes("biz")))
+          (userId && (mSI === userId || mSE === userId))
         );
       });
 
@@ -1582,19 +1418,13 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
       const threadIdMatchesUser = Boolean(
         (userEmail && threadIdStr.includes(userEmail)) ||
         (emailPrefix && emailPrefix.length >= 3 && threadIdStr.includes(emailPrefix)) ||
-        (userHandle && userHandle.length >= 3 && threadIdStr.includes(userHandle)) ||
-        (isBenBlue && (threadIdStr.includes("aouisesmee") || threadIdStr.includes("ben"))) ||
-        (isStevenAkan && (threadIdStr.includes("avr6566gd") || threadIdStr.includes("steven") || threadIdStr.includes("avt") || threadIdStr.includes("sten"))) ||
-        (isBizRiv && (threadIdStr.includes("louis42111") || threadIdStr.includes("biz")))
+        (userHandle && userHandle.length >= 3 && threadIdStr.includes(userHandle))
       );
 
       const first3 = userFirstName.length >= 3 ? userFirstName : "";
 
       isParticipant = Boolean(
         matchesCanonical ||
-        matchesStevenAkan ||
-        matchesBenBlue ||
-        matchesBizRiv ||
         historyHasUser ||
         threadIdMatchesUser ||
         (userEmail && (participants.some(p => p.includes(userEmail)) || senderEmail === userEmail || recipientEmail === userEmail || senderId === userEmail || recipientId === userEmail)) ||
@@ -1619,10 +1449,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         (emailPrefix && emailPrefix.length >= 3 && (senderEmail.startsWith(emailPrefix) || senderId === emailPrefix)) ||
         (userHandle && userHandle.length >= 3 && (senderId === userHandle || senderName === userHandle)) ||
         (!isGenericName && userName && (senderName === userName || (userFirstName.length >= 3 && senderName.includes(userFirstName)))) ||
-        (userId && (senderId === userId || senderEmail === userId)) ||
-        (isBenBlue && (senderEmail.includes("aouisesmee") || senderEmail.includes("aouisemee") || senderName.includes("ben") || senderId.includes("ben"))) ||
-        (isStevenAkan && (senderEmail.includes("avr6566gd") || senderName.includes("steven") || senderName.includes("avt") || senderId.includes("steven") || senderId.includes("avt") || senderName.includes("sten") || senderId.includes("sten"))) ||
-        (isBizRiv && (senderEmail.includes("louis42111") || senderName.includes("biz") || senderId.includes("biz")))
+        (userId && (senderId === userId || senderEmail === userId))
       );
 
       const isRecipientMe = Boolean(
@@ -1631,10 +1458,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         (emailPrefix && emailPrefix.length >= 3 && (recipientEmail.startsWith(emailPrefix) || recipientId === emailPrefix)) ||
         (userHandle && userHandle.length >= 3 && (recipientId === userHandle || recipientName === userHandle)) ||
         (!isGenericName && userName && (recipientName === userName || (userFirstName.length >= 3 && recipientName.includes(userFirstName)))) ||
-        (userId && (recipientId === userId || recipientEmail === userId)) ||
-        (isBenBlue && (recipientEmail.includes("aouisesmee") || recipientEmail.includes("aouisemee") || recipientName.includes("ben") || recipientId.includes("ben"))) ||
-        (isStevenAkan && (recipientEmail.includes("avr6566gd") || recipientName.includes("steven") || recipientName.includes("avt") || recipientId.includes("steven") || recipientId.includes("avt") || recipientName.includes("sten") || recipientId.includes("sten"))) ||
-        (isBizRiv && (recipientEmail.includes("louis42111") || recipientName.includes("biz") || recipientId.includes("biz")))
+        (userId && (recipientId === userId || recipientEmail === userId))
       );
 
       let otherName = "";
@@ -1659,10 +1483,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
               normK === bizPlaceId ||
               normK === bizDomain ||
               (isYoouzBiz && (normK === "info@yoouz.com" || normK === "yoouz.com" || normK === "yoouz"))
-            )) ||
-            (isBenBlue && (normK.includes("aouisesmee") || normK.includes("ben"))) ||
-            (isStevenAkan && (normK.includes("avr6566gd") || normK.includes("steven") || normK.includes("avt") || normK.includes("sten"))) ||
-            (isBizRiv && (normK.includes("louis42111") || normK.includes("biz")))
+            ))
           );
           return !isKeyMe;
         });
@@ -1698,10 +1519,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         (myCanonicalKey && otherCanonical && myCanonicalKey === otherCanonical) ||
         (userEmail && normOther === userEmail) ||
         (userName && normOther === userName) ||
-        (userHandle && normOther === userHandle) ||
-        (isBenBlue && (normOther.includes("ben") || normOther.includes("aouisesmee"))) ||
-        (isStevenAkan && (normOther.includes("steven") || normOther.includes("avt") || normOther.includes("avr6566gd") || normOther.includes("sten"))) ||
-        (isBizRiv && (normOther.includes("biz") || normOther.includes("louis42111")))
+        (userHandle && normOther === userHandle)
       );
 
       if (isOtherActuallyMe) {
@@ -1771,6 +1589,16 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         }
       }
 
+      const isOtherBusiness = Boolean(
+        data.isBusiness ||
+        data.placeId ||
+        (otherId && otherId.includes(".") && !otherId.includes("@")) ||
+        otherId.startsWith("place_") ||
+        otherId.startsWith("place-") ||
+        otherName.toLowerCase().trim() === "yoouz"
+      );
+      otherName = formatAnonymousUserDisplayName(otherName, otherId || otherEmail || threadId, isOtherBusiness);
+
       if (!otherAvatar) {
         otherAvatar = generateGoogleLetterAvatarSvg(otherName, 128, otherId || otherName);
       }
@@ -1787,9 +1615,6 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
           data.unreadCounts[userName] ??
           data.unreadCounts[userId] ??
           (isBusinessUser ? (data.unreadCounts[bizPlaceId] ?? (bizDomain ? data.unreadCounts[bizDomain] : undefined) ?? (isYoouzBiz ? (data.unreadCounts["info@yoouz.com"] ?? data.unreadCounts["yoouz.com"] ?? data.unreadCounts["yoouz"]) : undefined)) : undefined) ??
-          (isStevenAkan ? (data.unreadCounts["avr6566gd@gmail.com"] ?? data.unreadCounts["avr6566gd"] ?? data.unreadCounts["steven akan"] ?? data.unreadCounts["stevenakan"] ?? data.unreadCounts["steven"] ?? data.unreadCounts["avt ertuop"] ?? data.unreadCounts["avtertuop"] ?? data.unreadCounts["avt"]) : undefined) ??
-          (isBenBlue ? (data.unreadCounts["aouisesmee@gmail.com"] ?? data.unreadCounts["aouisemee@gmail.com"] ?? data.unreadCounts["ben blue"] ?? data.unreadCounts["benblue"] ?? data.unreadCounts["ben"] ?? data.unreadCounts["aouisesmee"] ?? data.unreadCounts["aouisemee"]) : undefined) ??
-          (isBizRiv ? (data.unreadCounts["louis42111@gmail.com"] ?? data.unreadCounts["louis42111"] ?? data.unreadCounts["biz riv"] ?? data.unreadCounts["bizriv"]) : undefined) ??
           0;
       } else if (data.lastSenderEmail && data.lastSenderEmail.toLowerCase() !== userEmail) {
         unreadCount = typeof data.unreadCount === "number" ? data.unreadCount : 1;
@@ -1805,10 +1630,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
         const isLastFromMe = Boolean(
           lastHistMsg.isMe ||
           (userEmail && (lastMsgSenderEmail === userEmail || lastMsgSenderId === userEmail)) ||
-          (userName && lastMsgSenderName === userName) ||
-          (isBenBlue && (lastMsgSenderName.includes("ben") || lastMsgSenderEmail.includes("aouisesmee") || lastMsgSenderEmail.includes("aouisemee") || lastMsgSenderId.includes("ben"))) ||
-          (isStevenAkan && (lastMsgSenderName.includes("steven") || lastMsgSenderName.includes("avt") || lastMsgSenderEmail.includes("avr6566gd") || lastMsgSenderId.includes("steven"))) ||
-          (isBizRiv && (lastMsgSenderName.includes("biz") || lastMsgSenderEmail.includes("louis42111")))
+          (userName && lastMsgSenderName === userName)
         );
         if (isLastFromMe) {
           unreadCount = 0;
@@ -1845,19 +1667,26 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             (isBusinessUser && (
               (bizPlaceId && (msgSenderId === bizPlaceId || msgSenderEmail === bizPlaceId)) ||
               (isYoouzBiz && (msgSenderEmail.includes("yoouz") || msgSenderName === "yoouz" || msgSenderId === "yoouz" || msgSenderId === "yoouz.com"))
-            )) ||
-            (isBenBlue && (msgSenderEmail.includes("aouisesmee") || msgSenderEmail.includes("aouisemee") || msgSenderName.includes("ben") || msgSenderId.includes("ben"))) ||
-            (isStevenAkan && (msgSenderEmail.includes("avr6566gd") || msgSenderName.includes("steven") || msgSenderName.includes("avt") || msgSenderId.includes("steven") || msgSenderId.includes("avt"))) ||
-            (isBizRiv && (msgSenderEmail.includes("louis42111") || msgSenderName.includes("biz") || msgSenderId.includes("biz")));
+            ));
 
-          let finalSenderName = m.senderName || "Member";
+          let finalSenderName = m.senderName || "";
           let finalSenderAvatar = m.senderAvatar;
           let finalSenderEmail = m.senderEmail || msgSenderEmail;
           let finalSenderId = m.senderId || msgSenderId;
 
+          const msgIsBusiness = Boolean(
+            m.isBusiness ||
+            (!isSender && isOtherBusiness) ||
+            (isSender && isBusinessUser) ||
+            msgSenderName === "yoouz" ||
+            (msgSenderId && msgSenderId.includes(".") && !msgSenderId.includes("@"))
+          );
+
           if (!isSender) {
             if (finalSenderName === "You" || !finalSenderName) {
-              finalSenderName = otherName || "Member";
+              finalSenderName = otherName;
+            } else {
+              finalSenderName = formatAnonymousUserDisplayName(finalSenderName, finalSenderId || finalSenderEmail || m.id || otherId, msgIsBusiness);
             }
             if (!finalSenderAvatar) {
               finalSenderAvatar = otherAvatar || generateGoogleLetterAvatarSvg(finalSenderName, 128, finalSenderId || finalSenderEmail || finalSenderName);
@@ -1866,6 +1695,7 @@ function processChatThreadsForUser(rawItems: any[], currentUser: UserProfile): C
             if (finalSenderName === "You" && currentUser.name) {
               finalSenderName = currentUser.name;
             }
+            finalSenderName = formatAnonymousUserDisplayName(finalSenderName || currentUser.name, finalSenderId || finalSenderEmail || userId, isBusinessUser);
             if (!finalSenderAvatar && currentUser.avatar) {
               finalSenderAvatar = currentUser.avatar;
             }
@@ -2367,6 +2197,7 @@ export function subscribeToChats(
         const filteredParsed = parsed.filter((t: any) => {
           if (!t) return false;
           const tId = String(t.id || "").trim();
+          if (tId.toLowerCase() === "thread_1791486695386") return false;
           const pKey = getThreadPartnerKey(t, currentUser);
           const sId = (t.senderId || "").toLowerCase().trim().replace(/^@/, '');
           const rId = (((t as any).recipientId || "") as string).toLowerCase().trim().replace(/^@/, '');
@@ -2374,6 +2205,10 @@ export function subscribeToChats(
           const rEmail = ((t as any).recipientEmail || "").toLowerCase().trim();
           const sName = (t.senderName || "").toLowerCase().trim();
           const rName = ((t as any).recipientName || "").toLowerCase().trim();
+
+          if ([tId, sId, rId, sEmail, rEmail, sName, rName].some((val) => isLegacyDeletedIdentity(val))) {
+            return false;
+          }
 
           const delTime = 
             deletedMap.get(tId) ?? 
@@ -2393,7 +2228,15 @@ export function subscribeToChats(
           }
           return true;
         });
-        const dedupedInitial = deduplicateChatThreads(filteredParsed, currentUser);
+        const anonymizedCache = filteredParsed.map((t: any) => {
+          const isBizT = Boolean(t.isBusiness || t.placeId || (t.senderId && String(t.senderId).includes(".") && !String(t.senderId).includes("@")) || String(t.senderName || "").toLowerCase().trim() === "yoouz");
+          return {
+            ...t,
+            senderName: formatAnonymousUserDisplayName(t.senderName, t.senderId || t.senderEmail || t.id, isBizT),
+            recipientName: t.recipientName ? formatAnonymousUserDisplayName(t.recipientName, t.recipientId || t.recipientEmail || t.id, isBizT) : t.recipientName,
+          };
+        });
+        const dedupedInitial = deduplicateChatThreads(anonymizedCache, currentUser);
         cachedThreads = dedupedInitial;
         onUpdate(dedupedInitial);
       }
@@ -2567,18 +2410,12 @@ export async function sendChatMessage(
   const recipientName = (recipient.name || "").trim();
   const recipientHandle = recipientId || recipientName.toLowerCase().replace(/\s+/g, "");
 
-  // Auto-resolve known user canonical emails if not explicitly set
+  // Auto-resolve Yoouz official email if not explicitly set
   if (!recipientEmail || !recipientEmail.includes("@")) {
     if (recipientId.includes("@")) {
       recipientEmail = recipientId.toLowerCase();
     } else if (recipientId === "yoouz.com" || recipientId === "yoouz" || recipientName.toLowerCase() === "yoouz") {
       recipientEmail = "info@yoouz.com";
-    } else if (recipientName.toLowerCase() === "avt ertuop" || recipientId.includes("avtertuop") || recipientId.includes("avr6566gd")) {
-      recipientEmail = "avr6566gd@gmail.com";
-    } else if (recipientName.toLowerCase() === "biz riv" || recipientId.includes("bizriv") || recipientId.includes("louis42111")) {
-      recipientEmail = "louis42111@gmail.com";
-    } else if (recipientName.toLowerCase().includes("aouisesmee") || recipientId.includes("aouisesmee")) {
-      recipientEmail = "aouisesmee@gmail.com";
     }
   }
 
@@ -2661,24 +2498,6 @@ export async function sendChatMessage(
   if (userName.toLowerCase() === "yoouz" || userEmail === "info@yoouz.com" || userEmail.endsWith("@yoouz.com")) {
     canonicalAliases.push("info@yoouz.com", "yoouz.com", "yoouz");
   }
-  if (recipientName.toLowerCase().includes("steven") || recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("steven") || recipientId.includes("avtertuop") || recipientId.includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "steven akan", "stevenakan", "steven", "avt ertuop", "avtertuop", "avt");
-  }
-  if (userName.toLowerCase().includes("steven") || userEmail === "avr6566gd@gmail.com" || userHandle.includes("steven") || userEmail.includes("avt") || userName.toLowerCase().includes("avt")) {
-    canonicalAliases.push("avr6566gd@gmail.com", "avr6566gd", "steven akan", "stevenakan", "steven", "avt ertuop", "avtertuop", "avt");
-  }
-  if (recipientName.toLowerCase().includes("ben") || recipientEmail.includes("aouisesmee") || recipientId.includes("ben") || recipientId.includes("aouisesmee")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "ben blue", "benblue", "ben");
-  }
-  if (userName.toLowerCase().includes("ben") || userEmail.includes("aouisesmee") || userHandle.includes("ben")) {
-    canonicalAliases.push("aouisesmee@gmail.com", "aouisemee@gmail.com", "aouisesmee", "aouisemee", "ben blue", "benblue", "ben");
-  }
-  if (recipientName.toLowerCase() === "biz riv" || recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientId.includes("biz")) {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
-  }
-  if (userName.toLowerCase() === "biz riv" || userEmail === "louis42111@gmail.com" || userEmail.includes("biz") || userName.toLowerCase().includes("biz")) {
-    canonicalAliases.push("louis42111@gmail.com", "louis42111", "biz riv", "bizriv", "biz");
-  }
 
   const participantsList = Array.from(
     new Set(
@@ -2738,37 +2557,7 @@ export async function sendChatMessage(
       ...(recipientEmail && recipientEmail.includes("@") && { [recipientEmail.split("@")[0]]: nextUnreadCount }),
       ...(recipientId && { [recipientId.toLowerCase()]: nextUnreadCount, [recipientId.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
       ...(recipientHandle && { [recipientHandle.toLowerCase()]: nextUnreadCount, [recipientHandle.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
-      ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount, [recipientName.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount }),
-      ...((recipientEmail === "avr6566gd@gmail.com" || recipientId.includes("steven") || recipientName.toLowerCase().includes("steven") || recipientId.includes("avt") || recipientName.toLowerCase().includes("avt")) ? {
-        "avr6566gd@gmail.com": nextUnreadCount,
-        "avr6566gd": nextUnreadCount,
-        "steven akan": nextUnreadCount,
-        "stevenakan": nextUnreadCount,
-        "steven": nextUnreadCount,
-        "avt ertuop": nextUnreadCount,
-        "avtertuop": nextUnreadCount,
-        "avt": nextUnreadCount
-      } : {}),
-      ...((recipientEmail.includes("aouisesmee") || recipientId.includes("ben") || recipientName.toLowerCase().includes("ben")) ? {
-        "aouisesmee@gmail.com": nextUnreadCount,
-        "aouisemee@gmail.com": nextUnreadCount,
-        "aouisesmee": nextUnreadCount,
-        "aouisemee": nextUnreadCount,
-        "ben blue": nextUnreadCount,
-        "benblue": nextUnreadCount,
-        "ben": nextUnreadCount
-      } : {}),
-      ...((recipientEmail === "louis42111@gmail.com" || recipientId.includes("bizriv") || recipientName.toLowerCase() === "biz riv" || recipientId.includes("biz")) ? {
-        "louis42111@gmail.com": nextUnreadCount,
-        "louis42111": nextUnreadCount,
-        "biz riv": nextUnreadCount,
-        "bizriv": nextUnreadCount,
-        "biz": nextUnreadCount
-      } : {}),
-      ...((recipientEmail.includes("aouisesmee") || recipientName.toLowerCase().includes("aouisesmee")) ? {
-        "aouisesmee@gmail.com": nextUnreadCount,
-        "aouisesmee": nextUnreadCount
-      } : {})
+      ...(recipientName && { [recipientName.toLowerCase()]: nextUnreadCount, [recipientName.toLowerCase().replace(/\s+/g, "")]: nextUnreadCount })
     }
   });
 
@@ -2879,42 +2668,12 @@ export async function markChatThreadAsRead(threadId: string, currentUser: UserPr
   const userName = (currentUser.name || "").toLowerCase().trim();
   const userId = (currentUser.userId || (currentUser as any).id || "").toLowerCase().trim();
 
-  const isAvt = userEmail.includes("avr6566gd") || userName.includes("avt") || userHandle.includes("avt") || userId.includes("avr6566gd") || userName.includes("steven") || userHandle.includes("steven");
-  const isAou = userEmail.includes("aouisesmee") || userEmail.includes("aouisemee") || userName.includes("aouisesmee") || userId.includes("aouisesmee") || userName.includes("ben") || userHandle.includes("ben");
-  const isBiz = userEmail.includes("louis42111") || userName.includes("biz") || userHandle.includes("biz") || userId.includes("louis42111");
-
   const unreadCountsUpdates: Record<string, number> = {};
   if (userEmail) unreadCountsUpdates[userEmail] = 0;
   if (emailPrefix) unreadCountsUpdates[emailPrefix] = 0;
   if (userHandle) unreadCountsUpdates[userHandle] = 0;
   if (userName) unreadCountsUpdates[userName] = 0;
   if (userId) unreadCountsUpdates[userId] = 0;
-  if (isAvt) {
-    unreadCountsUpdates["avr6566gd@gmail.com"] = 0;
-    unreadCountsUpdates["avr6566gd"] = 0;
-    unreadCountsUpdates["steven akan"] = 0;
-    unreadCountsUpdates["stevenakan"] = 0;
-    unreadCountsUpdates["steven"] = 0;
-    unreadCountsUpdates["avt ertuop"] = 0;
-    unreadCountsUpdates["avtertuop"] = 0;
-    unreadCountsUpdates["avt"] = 0;
-  }
-  if (isAou) {
-    unreadCountsUpdates["aouisesmee@gmail.com"] = 0;
-    unreadCountsUpdates["aouisemee@gmail.com"] = 0;
-    unreadCountsUpdates["aouisesmee"] = 0;
-    unreadCountsUpdates["aouisemee"] = 0;
-    unreadCountsUpdates["ben blue"] = 0;
-    unreadCountsUpdates["benblue"] = 0;
-    unreadCountsUpdates["ben"] = 0;
-  }
-  if (isBiz) {
-    unreadCountsUpdates["louis42111@gmail.com"] = 0;
-    unreadCountsUpdates["louis42111"] = 0;
-    unreadCountsUpdates["biz riv"] = 0;
-    unreadCountsUpdates["bizriv"] = 0;
-    unreadCountsUpdates["biz"] = 0;
-  }
 
   // Immediately update local cache so on page refresh it's marked as read
   try {

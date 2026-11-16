@@ -1,6 +1,6 @@
 /**
  * Centralized User Identity and Grouping Utilities
- * Provides consistent deduplication keys and canonical grouping for users across views and services.
+ * Provides consistent deduplication keys, canonical grouping, and anonymous U/XXXXXX handle formatting.
  */
 
 export interface UserIdentityCandidate {
@@ -18,8 +18,116 @@ const GENERIC_NAMES = new Set([
   "communityreviewer",
   "local guide",
   "guest",
-  "anon"
+  "anon",
 ]);
+
+const ANON_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function hashSeed(input: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let code = "";
+  let val = h >>> 0;
+  for (let i = 0; i < 6; i++) {
+    code += ANON_ALPHABET[val % ANON_ALPHABET.length];
+    val = Math.floor(val / ANON_ALPHABET.length) ^ ((h >>> (i * 5)) + i * 31);
+    val = Math.abs(val);
+  }
+  return code;
+}
+
+export function isLegacyDeletedIdentity(raw?: string): boolean {
+  const s = String(raw || "").toLowerCase().trim();
+  if (!s) return false;
+  const compact = s.replace(/[^a-z0-9]/g, "");
+  return (
+    s.includes("steven akan") ||
+    compact.includes("stevenakan") ||
+    s.includes("avr6566gd") ||
+    s.includes("avt ertuop") ||
+    compact.includes("avtertuop") ||
+    s.includes("ben blue") ||
+    compact.includes("benblue") ||
+    s.includes("aouisesmee") ||
+    s.includes("aouisesme") ||
+    s.includes("aouisemee") ||
+    s.includes("aouiseme") ||
+    s.includes("louis42111") ||
+    s === "biz riv" ||
+    compact === "bizriv" ||
+    s === "mlio66hdr9trvofdgddgwm30rku2"
+  );
+}
+
+/**
+ * Returns true if the given display name appears to be a personal "First Last" human name.
+ */
+export function isFirstLastHumanName(raw?: string): boolean {
+  const s = String(raw || "").trim();
+  if (!s) return false;
+  if (/^U\/[A-Z0-9]{4,}$/i.test(s) || /^@[a-z0-9_.-]+$/i.test(s)) return false;
+  if (s.includes("@") || s.includes(".com") || s.includes(".io") || s.includes(".net") || s.includes(".org")) return false;
+  const lower = s.toLowerCase();
+  if (
+    lower === "yoouz" ||
+    lower === "yoouz reviewer" ||
+    lower === "yoouz user" ||
+    lower === "you" ||
+    lower === "user" ||
+    lower === "member" ||
+    lower === "anonymous" ||
+    lower === "anonymous user" ||
+    lower === "reviewer" ||
+    lower === "local guide"
+  ) {
+    return false;
+  }
+  // Two or more alphabetical name tokens like "Steven Akan", "Ben Blue", "Sarah Jenkins"
+  const parts = s.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2 && parts.length <= 4) {
+    const allAlphaWords = parts.every((p) => /^[a-zA-Z][a-zA-Z'’-]{1,}$/.test(p));
+    if (allAlphaWords) return true;
+  }
+  return false;
+}
+
+/**
+ * Converts any non-business user still displaying a First + Last human name (or legacy identity)
+ * into a clean, deterministic U/XXXXXX anonymous handle.
+ */
+export function formatAnonymousUserDisplayName(
+  rawName?: string,
+  seed?: string,
+  isBusiness?: boolean
+): string {
+  const s = String(rawName || "").trim();
+  if (isBusiness) return s || "Business";
+  if (s.toLowerCase() === "yoouz") return "Yoouz";
+  if (s.toLowerCase() === "you") return "You";
+
+  // Keep valid U/XXXXXX or custom @handle formats
+  if (/^U\/[A-Z0-9]{4,}$/i.test(s)) {
+    return `U/${s.slice(2).toUpperCase()}`;
+  }
+  if (/^u_[a-z0-9]{4,}$/i.test(s)) {
+    return `U/${s.slice(2).toUpperCase()}`;
+  }
+  if (/^@[a-z0-9_.-]{3,}$/i.test(s)) {
+    return s;
+  }
+
+  const effectiveSeed = (seed || s || "anon_yoouz").trim();
+
+  // If rawName is a First + Last human name, empty, email, or legacy deleted identity -> return U/XXXXXX
+  if (!s || s.includes("@") || isFirstLastHumanName(s) || isLegacyDeletedIdentity(s) || isGenericUsername(s)) {
+    return `U/${hashSeed(effectiveSeed)}`;
+  }
+
+  return s;
+}
 
 export function isGenericUsername(str: string): boolean {
   if (!str) return true;
@@ -38,67 +146,13 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
   const handle = (candidate.handle || "").replace(/^@+/, "").toLowerCase().trim();
   const id = (candidate.id || candidate.uid || "").toLowerCase().trim();
 
-  // Cluster 1: Ese / aouisesmee
-  if (
-    email.includes("aouisesmee") ||
-    email.includes("aouisesme") ||
-    email.includes("aouisemee") ||
-    email.includes("aouiseme") ||
-    name.includes("aouisesmee") ||
-    name.includes("aouisemee") ||
-    handle.includes("aouisesmee") ||
-    handle.includes("aouisemee") ||
-    id.includes("aouisesmee") ||
-    id.includes("aouisemee") ||
-    id === "mlio66hdr9trvofdgddgwm30rku2" ||
-    name === "ben blue" ||
-    name.replace(/[^a-z0-9]/g, "") === "benblue" ||
-    handle === "benblue"
-  ) {
-    return "user_group_aouisesmee";
-  }
-
-  // Cluster 2: Biz Riv
-  if (
-    name === "biz riv" ||
-    name.replace(/[^a-z0-9]/g, "") === "bizriv" ||
-    handle === "bizriv" ||
-    email.includes("louis42111") ||
-    handle.includes("louis42111") ||
-    id.includes("louis42111")
-  ) {
-    return "user_group_bizriv";
-  }
-
-  // Cluster 3: Steven Akan (unified with avr6566gd and previous test aliases)
-  if (
-    name === "steven akan" ||
-    name.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
-    name.includes("steven") ||
-    handle.includes("steven") ||
-    name.includes("sten") ||
-    handle.includes("sten") ||
-    handle === "stevenakan" ||
-    handle.replace(/[^a-z0-9]/g, "") === "stevenakan" ||
-    id === "steven_akan" ||
-    id.includes("steven_akan") ||
-    id.includes("stevenakan") ||
-    name === "avt ertuop" ||
-    name.replace(/[^a-z0-9]/g, "") === "avtertuop" ||
-    email.includes("avr6566gd") ||
-    handle.includes("avr6566gd") ||
-    id.includes("avr6566gd")
-  ) {
-    return "user_group_stevenakan";
-  }
-
   // Priority 1: Non-generic handle
   const cleanHandle = handle.replace(/[^a-z0-9]/g, "");
   if (cleanHandle && !isGenericUsername(cleanHandle) && cleanHandle.length >= 3) {
     return `user_group_handle_${cleanHandle}`;
   }
 
-  // Priority 2: Non-generic real name
+  // Priority 2: Non-generic name
   const cleanName = name.replace(/[^a-z0-9]/g, "");
   if (cleanName && !isGenericUsername(cleanName) && cleanName.length >= 3) {
     return `user_group_name_${cleanName}`;
@@ -110,7 +164,7 @@ export function getCanonicalUserKey(candidate: UserIdentityCandidate): string {
     if (emailPrefix) return `user_group_email_${emailPrefix}`;
   }
 
-  // Fallback by id (only if not an anonymous generic ID)
+  // Fallback by id
   if (id) {
     const cleanId = id.replace(/[^a-z0-9]/g, "");
     const isBareUuid = /^[0-9a-f]{32}$/i.test(cleanId);
