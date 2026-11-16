@@ -250,7 +250,7 @@ export interface VideoReview {
   ogImage?: string;
   businessName?: string;
   isLandscape?: boolean;
-  aspectRatio?: 'portrait' | 'landscape';
+  aspectRatio?: 'portrait' | 'landscape' | number;
 }
 
 export type VideoAuthor = VideoReview["author"];

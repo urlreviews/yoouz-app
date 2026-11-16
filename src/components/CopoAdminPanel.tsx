@@ -12,6 +12,7 @@ import {
   Search,
   Plus,
   Trash2,
+  Camera,
   Edit,
   Edit3,
   Check,
@@ -259,6 +260,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [tableDataQuery, setTableDataQuery] = useState("");
   const [selectedItemJsonModal, setSelectedItemJsonModal] = useState<any | null>(null);
+  const [isSeedingCommunity, setIsSeedingCommunity] = useState(false);
 
   const fetchTableData = async (tableName: string) => {
     setIsLoadingTableData(true);
@@ -2695,6 +2697,36 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setTimeout(fetchLiveStats, 300);
   };
 
+  const executeSeedCommunityReviews = async () => {
+    if (isSeedingCommunity) return;
+    setIsSeedingCommunity(true);
+    showToast("Auto-seeding 20 authentic accounts & business photo reviews...");
+    try {
+      const res = await fetch("/api/admin/seed-photo-reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || "20 authentic accounts and business photo reviews seeded successfully!");
+        try {
+          const feedRes = await fetch(`/api/videos/feed?limit=100&_t=${Date.now()}`);
+          const feedData = await feedRes.json();
+          if (feedData.videos) {
+            setDbVideos(feedData.videos);
+          }
+        } catch (e) {}
+        setTimeout(fetchLiveStats, 400);
+      } else {
+        showToast(data.error || "Failed to seed community reviews");
+      }
+    } catch (err: any) {
+      showToast(err.message || "Network error while seeding");
+    } finally {
+      setIsSeedingCommunity(false);
+    }
+  };
+
   const executeDeletePlace = (id: string) => {
     onDeletePlace(id);
     setSelectedPlaceIds((prev) => prev.filter((pId) => pId !== id));
@@ -4061,6 +4093,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <span>Live Tester</span>
                   </a>
                   <button
+                    onClick={executeSeedCommunityReviews}
+                    disabled={isSeedingCommunity}
+                    className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-amber-600/20 active:scale-95"
+                    title="Auto-seed 20 authentic accounts and business-matched camera reviews"
+                  >
+                    <Sparkles className={`w-3.5 h-3.5 fill-current ${isSeedingCommunity ? "animate-spin" : ""}`} />
+                    <span>{isSeedingCommunity ? "Seeding..." : "Auto-Seed Community (20)"}</span>
+                  </button>
+                  <button
                     onClick={() => setIsAddPlaceOpen(true)}
                     className="px-3.5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
@@ -4865,6 +4906,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <Trash2 className="w-3.5 h-3.5" /> Purge All Reviews
                     </button>
                   )}
+
+                  {/* Auto-Seed Community Reviews Button */}
+                  <button
+                    onClick={executeSeedCommunityReviews}
+                    disabled={isSeedingCommunity}
+                    className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
+                    title="Auto-seed 20 authentic accounts and business-matched camera reviews"
+                  >
+                    <Sparkles className={`w-3.5 h-3.5 fill-current ${isSeedingCommunity ? "animate-spin" : ""}`} />
+                    <span>{isSeedingCommunity ? "Seeding..." : "Auto-Seed Community (20)"}</span>
+                  </button>
 
                   {/* Sync & Fix Business Names */}
                   <button
@@ -9507,84 +9559,99 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            {/* Video Player Box */}
-            <div className="md:w-1/2 bg-black flex items-center justify-center relative aspect-[9/16] md:aspect-auto max-h-[50vh] md:max-h-full">
-              <video
-                ref={videoPlayerRef}
-                src={previewVideo.videoUrl || previewVideo.localVideoUrl}
-                poster={previewVideo.thumbnailUrl}
-                loop
-                playsInline
-                muted={isVideoMuted}
-                onCanPlay={() => {
-                  if (!hasVideoStarted && videoPlayerRef.current) {
-                    videoPlayerRef.current.pause();
-                    setIsVideoPlaying(false);
-                  }
-                }}
-                onPlaying={() => {
-                  if (!hasVideoStarted && videoPlayerRef.current) {
-                    videoPlayerRef.current.pause();
-                    setIsVideoPlaying(false);
-                  } else {
-                    setIsVideoPlaying(true);
-                  }
-                }}
-                onPlay={() => setIsVideoPlaying(true)}
-                onPause={() => setIsVideoPlaying(false)}
-                onTimeUpdate={(e) => {
-                  const t = e.currentTarget;
-                  // Safety catch: force pause if it should be stopped but is moving
-                  if ((!hasVideoStarted || !isVideoPlaying) && !t.paused) {
-                    t.pause();
-                  }
-                }}
-                className="w-full h-full object-contain"
-              />
-
-              {/* Central Play Overlay if not started */}
-              {!hasVideoStarted && (
-                <button
-                  onClick={() => {
-                    setHasVideoStarted(true);
-                    setIsVideoPlaying(true);
-                    videoPlayerRef.current?.play().catch(e => {
-                      if (e.name !== 'AbortError') console.error("Playback error:", e);
-                    });
-                  }}
-                  className="absolute inset-0 w-full h-full z-20 flex items-center justify-center bg-black/20 group hover:bg-black/30 transition-all cursor-pointer"
-                >
-                  <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 transition-transform">
-                    <Play className="w-10 h-10 fill-white ml-1" />
+            {/* Photo / Video Media Viewport */}
+            <div className="md:w-1/2 bg-black flex items-center justify-center relative aspect-[9/16] md:aspect-auto max-h-[50vh] md:max-h-full overflow-hidden">
+              {previewVideo.mediaType === "photo" || Boolean(previewVideo.photoUrl) || !previewVideo.videoUrl ? (
+                <div className="w-full h-full flex items-center justify-center relative bg-zinc-950">
+                  <img
+                    src={previewVideo.photoUrl || previewVideo.thumbnailUrl}
+                    alt={`${previewVideo.placeName || "Business"} review`}
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 text-xs font-bold text-white shadow-md">
+                    <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                    <span>Live Photo Review</span>
                   </div>
-                </button>
+                </div>
+              ) : (
+                <>
+                  <video
+                    ref={videoPlayerRef}
+                    src={previewVideo.videoUrl || previewVideo.localVideoUrl}
+                    poster={previewVideo.thumbnailUrl}
+                    loop
+                    playsInline
+                    muted={isVideoMuted}
+                    onCanPlay={() => {
+                      if (!hasVideoStarted && videoPlayerRef.current) {
+                        videoPlayerRef.current.pause();
+                        setIsVideoPlaying(false);
+                      }
+                    }}
+                    onPlaying={() => {
+                      if (!hasVideoStarted && videoPlayerRef.current) {
+                        videoPlayerRef.current.pause();
+                        setIsVideoPlaying(false);
+                      } else {
+                        setIsVideoPlaying(true);
+                      }
+                    }}
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                    onTimeUpdate={(e) => {
+                      const t = e.currentTarget;
+                      if ((!hasVideoStarted || !isVideoPlaying) && !t.paused) {
+                        t.pause();
+                      }
+                    }}
+                    className="w-full h-full object-contain"
+                  />
+
+                  {/* Central Play Overlay if not started */}
+                  {!hasVideoStarted && (
+                    <button
+                      onClick={() => {
+                        setHasVideoStarted(true);
+                        setIsVideoPlaying(true);
+                        videoPlayerRef.current?.play().catch(e => {
+                          if (e.name !== 'AbortError') console.error("Playback error:", e);
+                        });
+                      }}
+                      className="absolute inset-0 w-full h-full z-20 flex items-center justify-center bg-black/20 group hover:bg-black/30 transition-all cursor-pointer"
+                    >
+                      <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 transition-transform">
+                        <Play className="w-10 h-10 fill-white ml-1" />
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Player Overlay Controls */}
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        if (videoPlayerRef.current) {
+                          if (!hasVideoStarted) setHasVideoStarted(true);
+                          if (isVideoPlaying) videoPlayerRef.current.pause();
+                          else videoPlayerRef.current.play().catch(e => {
+                            if (e.name !== 'AbortError') console.error("Playback error:", e);
+                          });
+                          setIsVideoPlaying(!isVideoPlaying);
+                        }
+                      }}
+                      className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
+                    >
+                      {isVideoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </button>
+
+                    <button
+                      onClick={() => setIsVideoMuted(!isVideoMuted)}
+                      className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
+                    >
+                      {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </>
               )}
-
-              {/* Player Overlay Controls */}
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    if (videoPlayerRef.current) {
-                      if (!hasVideoStarted) setHasVideoStarted(true);
-                      if (isVideoPlaying) videoPlayerRef.current.pause();
-                      else videoPlayerRef.current.play().catch(e => {
-                        if (e.name !== 'AbortError') console.error("Playback error:", e);
-                      });
-                      setIsVideoPlaying(!isVideoPlaying);
-                    }
-                  }}
-                  className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
-                >
-                  {isVideoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </button>
-
-                <button
-                  onClick={() => setIsVideoMuted(!isVideoMuted)}
-                  className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
-                >
-                  {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                </button>
-              </div>
             </div>
 
             {/* Video Metadata & Controls */}

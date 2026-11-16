@@ -16473,24 +16473,27 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     const cleanId = r.id ? String(r.id).replace(/\.[^.]+$/, "") : "";
     const serverStreamUrl = cleanId ? `/api/videos/stream/${cleanId}.mp4` : "";
     const cdnUrl = r.bunnyVideoId ? `${pullZoneDomain}/videos/${r.bunnyVideoId}.mp4` : (cleanId ? `${pullZoneDomain}/videos/${cleanId}.mp4` : "");
+    const isPhotoReviewItem = r.mediaType === "photo" || Boolean(r.photoUrl) || Boolean(r.photoDataUrl);
 
-    // Prioritize direct Bunny CDN edge URL or valid server stream URL
+    // Prioritize direct Bunny CDN edge URL or valid server stream URL (for video reviews only)
     let resolvedVideoUrl = "";
-    if (r.videoUrl && typeof r.videoUrl === "string" && !r.videoUrl.startsWith("blob:") && (r.videoUrl.includes("b-cdn.net") || r.videoUrl.startsWith("http"))) {
-      resolvedVideoUrl = r.videoUrl;
-    } else if (r.videoUrl && typeof r.videoUrl === "string" && r.videoUrl.startsWith("/api/videos/stream/")) {
-      resolvedVideoUrl = r.videoUrl;
-    } else if (cdnUrl) {
-      resolvedVideoUrl = cdnUrl;
-    } else if (serverStreamUrl) {
-      resolvedVideoUrl = serverStreamUrl;
-    } else {
-      resolvedVideoUrl = "/default-review.mp4";
+    if (!isPhotoReviewItem) {
+      if (r.videoUrl && typeof r.videoUrl === "string" && !r.videoUrl.startsWith("blob:") && (r.videoUrl.includes("b-cdn.net") || r.videoUrl.startsWith("http"))) {
+        resolvedVideoUrl = r.videoUrl;
+      } else if (r.videoUrl && typeof r.videoUrl === "string" && r.videoUrl.startsWith("/api/videos/stream/")) {
+        resolvedVideoUrl = r.videoUrl;
+      } else if (cdnUrl) {
+        resolvedVideoUrl = cdnUrl;
+      } else if (serverStreamUrl) {
+        resolvedVideoUrl = serverStreamUrl;
+      } else {
+        resolvedVideoUrl = "/default-review.mp4";
+      }
     }
 
     const rawFallbacks = Array.isArray(r.fallbackVideoUrls) ? r.fallbackVideoUrls : [];
     const bId = r.bunnyVideoId || r.bunnyGuid || cleanId;
-    const cleanFallbacks = Array.from(new Set([
+    const cleanFallbacks = isPhotoReviewItem ? [] : Array.from(new Set([
       resolvedVideoUrl,
       cdnUrl,
       serverStreamUrl,
@@ -16510,8 +16513,9 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       ...r,
       placeName: effectivePlaceName,
       businessName: effectivePlaceName,
-      videoUrl: resolvedVideoUrl,
-      fallbackVideoUrls: cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl].filter(Boolean),
+      mediaType: isPhotoReviewItem ? "photo" : (r.mediaType || "video"),
+      videoUrl: isPhotoReviewItem ? "" : resolvedVideoUrl,
+      fallbackVideoUrls: isPhotoReviewItem ? [] : (cleanFallbacks.length > 0 ? cleanFallbacks : [resolvedVideoUrl].filter(Boolean)),
       placeBannerUrl: banner || r.placeBannerUrl || "",
       bannerUrl: banner || r.bannerUrl || "",
       ogImage: banner || r.ogImage || "",
@@ -26050,6 +26054,18 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     } catch (err: any) {
       console.error("Admin bulk video delete error:", err);
       return res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin Auto-Seed Community Reviews & Accounts Endpoint
+  app.post("/api/admin/seed-photo-reviews", async (req, res) => {
+    try {
+      const { seedAuthenticCommunity } = await import("./src/utils/communitySeeder.ts");
+      const result = await seedAuthenticCommunity({ force: true });
+      return res.json({ success: true, ...result });
+    } catch (err: any) {
+      console.error("[Admin] Error seeding photo reviews:", err);
+      return res.status(500).json({ success: false, error: err.message || "Failed to seed community reviews" });
     }
   });
 
@@ -42742,6 +42758,19 @@ function injectOpenGraphTags(html: string, meta: any) {
       }).catch(() => {});
 
       await purgeBlockedPlaceRecords().catch(() => {});
+
+      // Auto-seed authentic community photo reviews and reviewer accounts if less than 5 reviews exist
+      try {
+        const countRes = await bunnyDb.execute("SELECT COUNT(*) as c FROM videoReviews WHERE data LIKE '%\"mediaType\":\"photo\"%'");
+        const revCount = Number(countRes.rows?.[0]?.c || 0);
+        if (revCount < 5) {
+          console.log(`📸 [Server] Community review count is ${revCount} (< 5). Auto-seeding 20 authentic accounts & photo reviews...`);
+          const { seedAuthenticCommunity } = await import("./src/utils/communitySeeder.ts");
+          await seedAuthenticCommunity();
+        }
+      } catch (seedErr: any) {
+        console.warn("Auto-seeding startup notice:", seedErr?.message || seedErr);
+      }
     } catch (bgErr) {
       console.warn("Background startup sync notice:", bgErr);
     }
