@@ -562,8 +562,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             aria-label="Double tap to like photo review"
           />
 
-          {/* Vignette Gradients for crisp overlay readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-transparent to-black/85 z-10 pointer-events-none" />
+          {/* Subtle corner-only vignette — leaves the photo crisp and unobstructed */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 md:from-black/10 md:via-transparent md:to-black/15 z-10 pointer-events-none" />
 
           {/* Top Header Overlay: Business Name / Logo */}
           <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 pt-3.5 md:pt-4 pointer-events-none">
@@ -726,34 +726,34 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </div>
           )}
 
-          {/* Bottom Area: Anonymous ID / Username, Timestamp, Whole-Number Stars + Mobile Action Rail */}
-          <div className="relative z-45 w-full flex items-end justify-between px-3.5 md:px-5 pt-3 pointer-events-none copo-video-bottom-metadata select-none pb-2 sm:pb-3">
+          {/* Bottom Area: Compact Bottom-Left Pill (Reviewer, Timestamp, Stars, Domain) + Mobile Action Rail */}
+          <div className="relative z-45 w-full flex items-end justify-between gap-2 px-3 md:px-3.5 pt-2 pointer-events-none copo-video-bottom-metadata select-none">
             <footer
               id={`copo-video-bottom-info-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex flex-col gap-1.5 pointer-events-auto pr-3 md:pr-4 min-w-0 flex-1 mb-1 sm:mb-2 bg-gradient-to-t from-black/95 via-black/60 to-transparent pt-12 pb-2 px-3.5 -mx-3.5 rounded-b-3xl"
+              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/85 backdrop-blur-2xl border border-white/20 text-white shadow-2xl transition-all"
             >
-              <div className="flex flex-col gap-1 w-full">
+              <div className="flex flex-col gap-1 min-w-0">
                 {/* Line 1: Reviewer Anonymous ID / Username + Verified Badge + Timestamp */}
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onOpenCreator(safeAuthor);
                     }}
-                    className="font-extrabold text-white text-[15px] sm:text-[16px] drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                    className="font-black text-white text-[13px] sm:text-[13.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit max-w-full outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                     title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
                   >
                     <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
                     {Boolean(safeAuthor?.passkeyProtected) && (
-                      <CheckCircle className="w-4 h-4 fill-white text-zinc-950 shrink-0" />
+                      <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
                     )}
                   </button>
                   {(video.recordedAt || video.createdAtMs) && (
                     <>
-                      <span className="text-zinc-400 text-xs select-none">•</span>
-                      <span className="text-zinc-300 text-xs sm:text-[13px] font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)]">
+                      <span className="text-zinc-400 text-[11px] select-none">•</span>
+                      <span className="text-zinc-300 text-[11px] sm:text-[11.5px] font-semibold whitespace-nowrap">
                         {formatRecordedDate(video.recordedAt, video.createdAtMs)}
                       </span>
                     </>
@@ -761,10 +761,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 </div>
 
                 {/* Line 2: Strict Whole-Number Solid Star Rating (1-5) + Clickable Domain */}
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <CopoStarRating
                     rating={wholeStarScore}
-                    starClassName="w-4 h-4"
+                    starClassName="w-3.5 h-3.5"
                     filledColorClass="fill-amber-400 text-amber-400 drop-shadow-sm"
                     emptyColorClass="fill-zinc-700/70 text-zinc-400/70"
                   />
@@ -781,10 +781,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                           video.id;
                         onOpenPlace(targetPlaceId, video.id);
                       }}
-                      className="inline-flex items-center gap-1 text-white hover:text-white/80 active:opacity-75 transition-colors cursor-pointer text-[12px] sm:text-[13px] font-medium drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] truncate"
+                      className="inline-flex items-center gap-1 text-zinc-200 hover:text-white active:opacity-75 transition-colors cursor-pointer text-[11.5px] sm:text-[12px] font-semibold truncate max-w-[180px] sm:max-w-[220px]"
                       title={`${cleanDomain}`}
                     >
-                      <Globe className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                      <Globe className="w-3 h-3 text-zinc-300 shrink-0" />
                       <span className="truncate">{cleanDomain}</span>
                     </button>
                   )}
@@ -796,7 +796,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             <aside
               id={`copo-video-actions-col-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="md:hidden relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0 mb-1 sm:mb-2"
+              className="md:hidden relative z-50 flex flex-col items-center gap-2.5 sm:gap-3 text-white pointer-events-auto shrink-0"
             >
               {renderActionButtons(false)}
             </aside>

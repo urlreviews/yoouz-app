@@ -754,13 +754,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           </h2>
           <p className="w-full max-w-[320px] text-xs sm:text-sm text-zinc-400 mb-8 sm:mb-10 leading-relaxed font-medium break-words">
             {feedContextTitle ? (
-              <>
-                Be the first to snap a live photo review and star rating for{" "}
-                <span className="inline text-zinc-300 font-semibold break-words max-w-full">
-                  {toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}
-                </span>
-                !
-              </>
+              "A picture is worth a thousand words. Snap 1 live photo and rate in 2 seconds, no signup, no typing."
             ) : (
               "Snap a real-time photo review and select 1–5 stars for any business or place!"
             )}
