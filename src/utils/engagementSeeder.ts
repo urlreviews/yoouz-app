@@ -18,7 +18,100 @@ interface ReviewEngagementSpec {
   comments: CommentBlueprint[];
 }
 
-// Tailored, natural, to-the-point human engagement plan for all 41 current photo reviews
+// Realistic, staggered ages (in hours before now) for all 40 seeded photo reviews
+export const REVIEW_AGE_HOURS: Record<string, number> = {
+  "rev_sephora_cosmetics_15": 9,      // 9h ago
+  "rev_lerner_21": 14,                // 14h ago
+  "rev_makicafe_32": 17,              // 17h ago
+  "rev_wolt_delivery_11": 19,         // 19h ago
+  "rev_flipper_40": 21,               // 21h ago
+  "rev_healis_25": 23,                // 23h ago
+  "rev_dunkin_coffee_02": 29,         // Yesterday
+  "rev_soluxecleaning_38": 33,        // Yesterday
+  "rev_jollibee_food_04": 38,         // Yesterday
+  "rev_hotel_julien_27": 43,          // Yesterday
+  "rev_apple_tech_03": 54,            // 2 days ago
+  "rev_noma_34": 60,                  // 2 days ago
+  "rev_propercoffee_bakery_13": 66,   // 2 days ago
+  "rev_zara_apparel_01": 78,          // 3 days ago
+  "rev_regalia_30": 84,               // 3 days ago
+  "rev_art_coffee_06": 90,            // 3 days ago
+  "rev_mcdonalds_meal_10": 102,       // 4 days ago
+  "rev_celler_35": 108,               // 4 days ago
+  "rev_praktijk_26": 114,             // 4 days ago
+  "rev_dominos_pizza_07": 126,        // 5 days ago
+  "rev_pintoart_18": 132,             // 5 days ago
+  "rev_benchdepot_37": 138,           // 5 days ago
+  "rev_hilton_hotel_08": 150,         // 6 days ago
+  "rev_hoteldesgaleries_28": 156,     // 6 days ago
+  "rev_refalo_22": 162,               // 6 days ago
+  "rev_uniqlo_clothing_05": 180,      // 1 week ago
+  "rev_fourseasons_12": 192,          // 1 week ago
+  "rev_easyhotel_29": 204,            // 1 week ago
+  "rev_calvin_klein_09": 216,         // 1 week ago
+  "rev_bclaw_24": 228,                // 1 week ago
+  "rev_multipharma_14": 240,          // 1 week ago
+  "rev_guardslip_33": 252,            // 1 week ago
+  "rev_seveneleven_16": 264,          // 1 week ago
+  "rev_brightbeautiful_39": 276,      // 1 week ago
+  "rev_autowerkplaats_17": 290,       // 1 week ago
+  "rev_villaggio_31": 304,            // 1 week ago
+  "rev_havanna_19": 318,              // 1 week ago
+  "rev_nevada_legal_23": 344,         // 2 weeks ago
+  "rev_burgerking_meal_20": 356,      // 2 weeks ago
+  "rev_batterymart_36": 370,          // 2 weeks ago
+  "rev-1794849576888-eavyc": 110,     // 4 days ago
+};
+
+// Returns strictly decreasing comment ages (in hours ago), each guaranteed < reviewAgeHours
+// and landing in distinct human-readable relative time buckets
+function getDistinctCommentAgesHours(reviewAgeHours: number, count: number, seedHash: number): number[] {
+  const jitter = seedHash % 2; // 0 or 1h variation
+  if (reviewAgeHours === 19) {
+    return [14, 8, 3].slice(0, count);
+  }
+  if (reviewAgeHours <= 12) {
+    return [7, 4, 2].slice(0, count);
+  }
+  if (reviewAgeHours <= 18) {
+    return [12, 7, 3].slice(0, count);
+  }
+  if (reviewAgeHours <= 24) {
+    return [16, 10, 4].slice(0, count);
+  }
+  if (reviewAgeHours < 48) {
+    // Review is "Yesterday" -> comments are distinct hours ago today
+    return [19 - jitter, 11 - jitter, 4 - jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 72) {
+    // Review is "2 days ago" -> comments are "Yesterday", "15h ago", "5h ago"
+    return [32 + jitter, 15 - jitter, 5 - jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 96) {
+    // Review is "3 days ago" -> comments are "2 days ago", "Yesterday", "10h ago"
+    return [54 + jitter, 30 + jitter, 10 - jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 120) {
+    // Review is "4 days ago" -> comments are "3 days ago", "Yesterday", "12h ago"
+    return [78 + jitter, 33 + jitter, 12 - jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 144) {
+    // Review is "5 days ago" -> comments are "4 days ago", "2 days ago", "16h ago"
+    return [102 + jitter, 56 + jitter, 16 - jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 168) {
+    // Review is "6 days ago" -> comments are "4 days ago", "2 days ago", "Yesterday"
+    return [106 + jitter, 58 + jitter, 31 + jitter].slice(0, count);
+  }
+  if (reviewAgeHours < 336) {
+    // Review is "1 week ago" -> comments are "5 days ago", "3 days ago", "Yesterday"
+    return [128 + jitter, 80 + jitter, 32 + jitter].slice(0, count);
+  }
+  // Review is "2 weeks ago" -> comments are "1 week ago", "4 days ago", "2 days ago"
+  return [208 + jitter, 104 + jitter, 55 + jitter].slice(0, count);
+}
+
+// Tailored, natural, to-the-point human engagement plan for all current photo reviews
 const ENGAGEMENT_PLAN: Record<string, ReviewEngagementSpec> = {
   "rev-1794849576888-eavyc": {
     likes: 11,
@@ -125,9 +218,9 @@ const ENGAGEMENT_PLAN: Record<string, ReviewEngagementSpec> = {
     bookmarks: 3,
     shares: 2,
     comments: [
-      { authorUserId: "usr_comm_37", text: "22 mins is impressive for ramen", likesCount: 2, hoursAfterReview: 3 },
-      { authorUserId: "usr_aiko_tanaka", text: "broth didnt spill at all?", likesCount: 1, hoursAfterReview: 7 },
-      { authorUserId: "__REVIEW_AUTHOR__", text: "sealed lid held up great", likesCount: 2, replyToPrev: true, hoursAfterReview: 8 },
+      { authorUserId: "usr_comm_37", text: "22 mins is impressive for ramen", likesCount: 2, hoursAfterReview: 5 },
+      { authorUserId: "usr_aiko_tanaka", text: "broth didnt spill at all?", likesCount: 1, hoursAfterReview: 11 },
+      { authorUserId: "__REVIEW_AUTHOR__", text: "sealed lid held up great", likesCount: 2, replyToPrev: true, hoursAfterReview: 16 },
     ],
   },
   "rev_fourseasons_12": {
@@ -160,9 +253,9 @@ const ENGAGEMENT_PLAN: Record<string, ReviewEngagementSpec> = {
     bookmarks: 5,
     shares: 4,
     comments: [
-      { authorUserId: "usr_elena_rostova", text: "does the matte lipstick dry out your lips?", likesCount: 2, hoursAfterReview: 4 },
-      { authorUserId: "__REVIEW_AUTHOR__", text: "not at all with a light balm underneath", likesCount: 3, replyToPrev: true, hoursAfterReview: 6 },
-      { authorUserId: "usr_comm_28", text: "that shade is so pretty", likesCount: 1, hoursAfterReview: 15 },
+      { authorUserId: "usr_elena_rostova", text: "does the matte lipstick dry out your lips?", likesCount: 2, hoursAfterReview: 2 },
+      { authorUserId: "__REVIEW_AUTHOR__", text: "not at all with a light balm underneath", likesCount: 3, replyToPrev: true, hoursAfterReview: 5 },
+      { authorUserId: "usr_comm_28", text: "that shade is so pretty", likesCount: 1, hoursAfterReview: 7 },
     ],
   },
   "rev_seveneleven_16": {
@@ -465,193 +558,210 @@ export async function seedCommunityEngagementV1(): Promise<{
     const reviewAuthorHandle = String(revData.author?.handle || `@${videoAuthor.toLowerCase().replace(/[^a-z0-9]/g, "")}`);
     const videoRating = Number(row.rating || revData.rating || 5);
 
-    const parsedCreatedMs = Number(revData.createdAtMs) || Date.parse(String(row.createdAt || revData.createdAt || "")) || (now - 4 * 86400000);
-    const baseMs = Math.min(parsedCreatedMs, now - 6 * 3600000);
-
     const seedHash = hashStr(videoId);
-    const plan: ReviewEngagementSpec = ENGAGEMENT_PLAN[videoId] || {
-      likes: 4 + (seedHash % 7),
-      bookmarks: 1 + (seedHash % 3),
-      shares: 1 + (seedHash % 3),
-      comments: [
-        { authorUserId: communityUsers[seedHash % communityUsers.length]?.id || "usr_comm_27", text: "looks super legit, thanks for sharing", likesCount: 1, hoursAfterReview: 4 },
-      ],
-    };
+    const isSeededReview = Object.prototype.hasOwnProperty.call(REVIEW_AGE_HOURS, videoId);
+    const reviewAgeHours = isSeededReview
+      ? REVIEW_AGE_HOURS[videoId]
+      : Math.max(1, Math.round((now - (Number(revData.createdAtMs) || Date.parse(String(row.createdAt || revData.createdAt || "")) || now)) / 3600_000));
+
+    const baseMs = isSeededReview
+      ? now - reviewAgeHours * 3600_000 - ((seedHash % 24) * 60_000)
+      : (Number(revData.createdAtMs) || Date.parse(String(row.createdAt || revData.createdAt || "")) || now);
+    const isoRevAt = new Date(baseMs).toISOString();
+    const sqlRevAt = toSqliteTimestamp(baseMs);
+
+    const plan: ReviewEngagementSpec | undefined = ENGAGEMENT_PLAN[videoId];
 
     // Eligible pool of community users excluding review author
     const eligibleActors = communityUsers.filter((u) => u.id !== reviewAuthorId);
     const actorCount = eligibleActors.length;
     if (actorCount === 0) continue;
 
-    // 2a. Seed Likes
-    const targetLikes = Math.min(plan.likes, actorCount);
-    for (let i = 0; i < targetLikes; i++) {
-      const actor = eligibleActors[(seedHash + i * 7) % actorCount];
-      const likeId = `like_${actor.id}_${videoId}`;
-      const tsMs = Math.min(now - 900_000 - (i * 180_000), baseMs + Math.round(((i + 1) / (targetLikes + 1)) * Math.max(3600_000, now - baseMs - 900_000)));
-      const safeTsMs = Math.max(baseMs + 300_000 * (i + 1), Math.min(tsMs, now - 600_000));
-      const isoAt = new Date(safeTsMs).toISOString();
-      const sqlAt = toSqliteTimestamp(safeTsMs);
+    if (plan) {
+      // 2a. Seed Likes (all strictly between review creation time and now)
+      const targetLikes = Math.min(plan.likes, actorCount);
+      for (let i = 0; i < targetLikes; i++) {
+        const actor = eligibleActors[(seedHash + i * 7) % actorCount];
+        const likeId = `like_${actor.id}_${videoId}`;
+        const spanMs = Math.max(1800_000, now - baseMs - 600_000);
+        const safeTsMs = Math.min(
+          now - 300_000 - i * 60_000,
+          baseMs + Math.round(((i + 1) / (targetLikes + 1)) * spanMs)
+        );
+        const isoAt = new Date(safeTsMs).toISOString();
+        const sqlAt = toSqliteTimestamp(safeTsMs);
 
-      const likeData = {
-        id: likeId,
-        videoId,
-        userId: actor.id,
-        userEmail: actor.email,
-        userName: actor.name,
-        authorName: actor.name,
-        userAvatar: actor.avatar,
-        authorAvatar: actor.avatar,
-        userHandle: actor.handle,
-        authorHandle: actor.handle,
-        placeId,
-        placeName,
-        videoThumbnail,
-        videoUrl: "",
-        videoAuthor,
-        videoRating,
-        isLiked: true,
-        createdAt: isoAt,
-        createdAtMs: safeTsMs,
-      };
+        const likeData = {
+          id: likeId,
+          videoId,
+          userId: actor.id,
+          userEmail: actor.email,
+          userName: actor.name,
+          authorName: actor.name,
+          userAvatar: actor.avatar,
+          authorAvatar: actor.avatar,
+          userHandle: actor.handle,
+          authorHandle: actor.handle,
+          placeId,
+          placeName,
+          videoThumbnail,
+          videoUrl: "",
+          videoAuthor,
+          videoRating,
+          isLiked: true,
+          createdAt: isoAt,
+          createdAtMs: safeTsMs,
+        };
 
-      await db.execute({
-        sql: `INSERT OR IGNORE INTO likes (id, userId, userEmail, videoId, data, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        args: [likeId, actor.id, actor.email, videoId, JSON.stringify(likeData), sqlAt, sqlAt],
-      });
-      likesAdded++;
-    }
+        await db.execute({
+          sql: `INSERT OR REPLACE INTO likes (id, userId, userEmail, videoId, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          args: [likeId, actor.id, actor.email, videoId, JSON.stringify(likeData), sqlAt, sqlAt],
+        });
+        likesAdded++;
+      }
 
-    // 2b. Seed Bookmarks / Saves
-    const targetBookmarks = Math.min(plan.bookmarks, actorCount);
-    for (let i = 0; i < targetBookmarks; i++) {
-      const actor = eligibleActors[(seedHash + 13 + i * 11) % actorCount];
-      const safeSlug = videoId.replace(/[^a-z0-9]/gi, "_");
-      const bmId = `bm_${actor.id}_${safeSlug}`;
-      const safeTsMs = Math.max(baseMs + 900_000 * (i + 1), Math.min(now - 1200_000 - i * 240_000, baseMs + (i + 2) * 5400_000));
-      const isoAt = new Date(safeTsMs).toISOString();
-      const sqlAt = toSqliteTimestamp(safeTsMs);
+      // 2b. Seed Bookmarks / Saves
+      const targetBookmarks = Math.min(plan.bookmarks, actorCount);
+      for (let i = 0; i < targetBookmarks; i++) {
+        const actor = eligibleActors[(seedHash + 13 + i * 11) % actorCount];
+        const safeSlug = videoId.replace(/[^a-z0-9]/gi, "_");
+        const bmId = `bm_${actor.id}_${safeSlug}`;
+        const spanMs = Math.max(1800_000, now - baseMs - 900_000);
+        const safeTsMs = Math.min(
+          now - 450_000 - i * 90_000,
+          baseMs + Math.round(((i + 1) / (targetBookmarks + 1)) * spanMs)
+        );
+        const isoAt = new Date(safeTsMs).toISOString();
+        const sqlAt = toSqliteTimestamp(safeTsMs);
 
-      const bmData = {
-        id: bmId,
-        videoId,
-        placeId,
-        placeName,
-        placeCategory,
-        placeLogo,
-        userId: actor.id,
-        userEmail: actor.email,
-        userName: actor.name,
-        authorName: actor.name,
-        userAvatar: actor.avatar,
-        authorAvatar: actor.avatar,
-        userHandle: actor.handle,
-        authorHandle: actor.handle,
-        videoThumbnail,
-        videoAuthor,
-        videoRating,
-        videoUrl: "",
-        isBookmarked: true,
-        createdAt: isoAt,
-        createdAtMs: safeTsMs,
-      };
+        const bmData = {
+          id: bmId,
+          videoId,
+          placeId,
+          placeName,
+          placeCategory,
+          placeLogo,
+          userId: actor.id,
+          userEmail: actor.email,
+          userName: actor.name,
+          authorName: actor.name,
+          userAvatar: actor.avatar,
+          authorAvatar: actor.avatar,
+          userHandle: actor.handle,
+          authorHandle: actor.handle,
+          videoThumbnail,
+          videoAuthor,
+          videoRating,
+          videoUrl: "",
+          isBookmarked: true,
+          createdAt: isoAt,
+          createdAtMs: safeTsMs,
+        };
 
-      await db.execute({
-        sql: `INSERT OR IGNORE INTO bookmarks (id, userId, userEmail, placeId, videoId, data, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [bmId, actor.id, actor.email, placeId, videoId, JSON.stringify(bmData), sqlAt, sqlAt],
-      });
-      bookmarksAdded++;
-    }
+        await db.execute({
+          sql: `INSERT OR REPLACE INTO bookmarks (id, userId, userEmail, placeId, videoId, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [bmId, actor.id, actor.email, placeId, videoId, JSON.stringify(bmData), sqlAt, sqlAt],
+        });
+        bookmarksAdded++;
+      }
 
-    // 2c. Seed Shares (preserves existing rows via deterministic IDs)
-    const targetShares = Math.min(plan.shares, actorCount);
-    for (let i = 0; i < targetShares; i++) {
-      const actor = eligibleActors[(seedHash + 19 + i * 5) % actorCount];
-      const platform = SHARE_PLATFORMS[(seedHash + i) % SHARE_PLATFORMS.length];
-      const shareId = `share_seed_${actor.id}_${videoId}_${i}`;
-      const safeTsMs = Math.max(baseMs + 1500_000 * (i + 1), Math.min(now - 1800_000 - i * 300_000, baseMs + (i + 3) * 7200_000));
-      const isoAt = new Date(safeTsMs).toISOString();
-      const sqlAt = toSqliteTimestamp(safeTsMs);
+      // 2c. Seed Shares
+      const targetShares = Math.min(plan.shares, actorCount);
+      for (let i = 0; i < targetShares; i++) {
+        const actor = eligibleActors[(seedHash + 19 + i * 5) % actorCount];
+        const platform = SHARE_PLATFORMS[(seedHash + i) % SHARE_PLATFORMS.length];
+        const shareId = `share_seed_${actor.id}_${videoId}_${i}`;
+        const spanMs = Math.max(1800_000, now - baseMs - 1200_000);
+        const safeTsMs = Math.min(
+          now - 600_000 - i * 120_000,
+          baseMs + Math.round(((i + 1) / (targetShares + 1)) * spanMs)
+        );
+        const isoAt = new Date(safeTsMs).toISOString();
+        const sqlAt = toSqliteTimestamp(safeTsMs);
 
-      const shareData = {
-        id: shareId,
-        videoId,
-        userId: actor.id,
-        userEmail: actor.email,
-        userName: actor.name,
-        authorName: actor.name,
-        userAvatar: actor.avatar,
-        authorAvatar: actor.avatar,
-        userHandle: actor.handle,
-        authorHandle: actor.handle,
-        placeName,
-        videoThumbnail,
-        videoAuthor,
-        platform,
-        timestamp: safeTsMs,
-        createdAt: isoAt,
-        createdAtMs: safeTsMs,
-      };
+        const shareData = {
+          id: shareId,
+          videoId,
+          userId: actor.id,
+          userEmail: actor.email,
+          userName: actor.name,
+          authorName: actor.name,
+          userAvatar: actor.avatar,
+          authorAvatar: actor.avatar,
+          userHandle: actor.handle,
+          authorHandle: actor.handle,
+          placeName,
+          videoThumbnail,
+          videoAuthor,
+          platform,
+          timestamp: safeTsMs,
+          createdAt: isoAt,
+          createdAtMs: safeTsMs,
+        };
 
-      await db.execute({
-        sql: `INSERT OR IGNORE INTO shares (id, userId, videoId, platform, data, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        args: [shareId, actor.id, videoId, platform, JSON.stringify(shareData), sqlAt, sqlAt],
-      });
-      sharesAdded++;
-    }
+        await db.execute({
+          sql: `INSERT OR REPLACE INTO shares (id, userId, videoId, platform, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          args: [shareId, actor.id, videoId, platform, JSON.stringify(shareData), sqlAt, sqlAt],
+        });
+        sharesAdded++;
+      }
 
-    // 2d. Seed Natural Comments & Replies (deterministic IDs for 100% idempotency)
-    let lastTopLevelCommentId: string | undefined = undefined;
-    for (let i = 0; i < plan.comments.length; i++) {
-      const cb = plan.comments[i];
-      const isAuthorReply = cb.authorUserId === "__REVIEW_AUTHOR__";
-      const matchedActor = !isAuthorReply ? (userById.get(cb.authorUserId) || eligibleActors[i % actorCount]) : null;
+      // 2d. Seed Natural Comments & Replies with realistic, distinct relative timestamps newer than the review
+      const distinctCommentAges = getDistinctCommentAgesHours(reviewAgeHours, plan.comments.length, seedHash);
+      let lastTopLevelCommentId: string | undefined = undefined;
+      for (let i = 0; i < plan.comments.length; i++) {
+        const cb = plan.comments[i];
+        const isAuthorReply = cb.authorUserId === "__REVIEW_AUTHOR__";
+        const matchedActor = !isAuthorReply ? (userById.get(cb.authorUserId) || eligibleActors[i % actorCount]) : null;
 
-      const actorId = isAuthorReply ? reviewAuthorId : matchedActor!.id;
-      const actorName = isAuthorReply ? videoAuthor : matchedActor!.name;
-      const actorHandle = isAuthorReply ? reviewAuthorHandle : matchedActor!.handle;
-      const actorAvatar = isAuthorReply ? reviewAuthorAvatar : matchedActor!.avatar;
+        const actorId = isAuthorReply ? reviewAuthorId : matchedActor!.id;
+        const actorName = isAuthorReply ? videoAuthor : matchedActor!.name;
+        const actorHandle = isAuthorReply ? reviewAuthorHandle : matchedActor!.handle;
+        const actorAvatar = isAuthorReply ? reviewAuthorAvatar : matchedActor!.avatar;
 
-      const hoursAfter = cb.hoursAfterReview ?? (i + 2) * 3;
-      const safeTsMs = Math.min(now - 600_000 - (plan.comments.length - i) * 300_000, baseMs + hoursAfter * 3600_000);
-      const finalTsMs = Math.max(baseMs + 600_000 * (i + 1), safeTsMs);
-      const isoAt = new Date(finalTsMs).toISOString();
-      const sqlAt = toSqliteTimestamp(finalTsMs);
+        const commentAgeHours = distinctCommentAges[i] ?? Math.max(1, Math.floor(reviewAgeHours / (i + 2)));
+        const commentMinuteOffset = ((seedHash + i * 13) % 19) * 60_000;
+        const rawCommentMs = now - commentAgeHours * 3600_000 - commentMinuteOffset;
+        // Guarantee strictly newer than review and strictly before now
+        const finalTsMs = Math.max(baseMs + (i + 1) * 900_000, Math.min(rawCommentMs, now - 120_000));
+        const isoAt = new Date(finalTsMs).toISOString();
+        const sqlAt = toSqliteTimestamp(finalTsMs);
 
-      const commentId = `comm_seed_${videoId.replace(/[^a-z0-9]/gi, "_")}_${i}`;
-      const isReply = Boolean(cb.replyToPrev && lastTopLevelCommentId);
-      const parentId = isReply ? lastTopLevelCommentId : undefined;
-      if (!isReply) lastTopLevelCommentId = commentId;
+        const commentId = `comm_seed_${videoId.replace(/[^a-z0-9]/gi, "_")}_${i}`;
+        const isReply = Boolean(cb.replyToPrev && lastTopLevelCommentId);
+        const parentId = isReply ? lastTopLevelCommentId : undefined;
+        if (!isReply) lastTopLevelCommentId = commentId;
 
-      const commentObj: any = {
-        id: commentId,
-        videoId,
-        userId: actorId,
-        authorId: actorId,
-        authorName: actorName,
-        authorHandle: actorHandle,
-        authorAvatar: actorAvatar,
-        text: cb.text,
-        createdAt: isoAt,
-        createdAtMs: finalTsMs,
-        likesCount: cb.likesCount ?? 0,
-        likedByCreator: Boolean(cb.likedByCreator),
-        isCreator: isAuthorReply,
-        isVerified: true,
-        attachments: [],
-        replies: [],
-        ...(isReply && parentId ? { replyToId: parentId, parentId, isReply: true } : {}),
-      };
+        const commentObj: any = {
+          id: commentId,
+          videoId,
+          userId: actorId,
+          authorId: actorId,
+          authorName: actorName,
+          authorHandle: actorHandle,
+          authorAvatar: actorAvatar,
+          text: cb.text,
+          createdAt: isoAt,
+          createdAtMs: finalTsMs,
+          likesCount: cb.likesCount ?? 0,
+          likedByCreator: Boolean(cb.likedByCreator),
+          isCreator: isAuthorReply,
+          isVerified: true,
+          attachments: [],
+          replies: [],
+          ...(isReply && parentId ? { replyToId: parentId, parentId, isReply: true } : {}),
+        };
 
-      await db.execute({
-        sql: `INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, createdAt, updatedAt)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [commentId, videoId, actorId, actorName, actorAvatar, cb.text, JSON.stringify(commentObj), sqlAt, sqlAt],
-      });
-      commentsAdded++;
+        await db.execute({
+          sql: `INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [commentId, videoId, actorId, actorName, actorAvatar, cb.text, JSON.stringify(commentObj), sqlAt, sqlAt],
+        });
+        commentsAdded++;
+      }
     }
 
     // Remove any legacy non-deterministic timestamped seed comments for this videoId
@@ -682,6 +792,8 @@ export async function seedCommunityEngagementV1(): Promise<{
         authorName: cr.userName || cd.authorName || "Member",
         authorAvatar: cr.userAvatar || cd.authorAvatar || "",
         text: cr.text || cd.text || "",
+        createdAt: cd.createdAt || cr.createdAt,
+        createdAtMs: typeof cd.createdAtMs === "number" ? cd.createdAtMs : undefined,
       };
     });
 
@@ -698,6 +810,9 @@ export async function seedCommunityEngagementV1(): Promise<{
     const { photoDataUrl: _omitPhotoDataUrl, ...cleanRevData } = revData;
     const updatedData = {
       ...cleanRevData,
+      createdAt: isoRevAt,
+      createdAtMs: baseMs,
+      recordedAt: isoRevAt,
       likes: realLikes,
       likesCount: realLikes,
       bookmarks: realBookmarks,
@@ -709,8 +824,8 @@ export async function seedCommunityEngagementV1(): Promise<{
     };
 
     await db.execute({
-      sql: `UPDATE videoReviews SET likesCount = ?, bookmarksCount = ?, sharesCount = ?, commentsCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-      args: [realLikes, realBookmarks, realShares, videoComments.length, JSON.stringify(updatedData), videoId],
+      sql: `UPDATE videoReviews SET likesCount = ?, bookmarksCount = ?, sharesCount = ?, commentsCount = ?, data = ?, createdAt = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+      args: [realLikes, realBookmarks, realShares, videoComments.length, JSON.stringify(updatedData), sqlRevAt, videoId],
     });
     updatedReviewsCount++;
   }
@@ -737,6 +852,7 @@ export async function seedCommunityEngagementV1(): Promise<{
       authorAvatar: cr.userAvatar || cd.authorAvatar || "",
       text: cr.text || cd.text || "",
       createdAt: cd.createdAt || cr.createdAt,
+      createdAtMs: typeof cd.createdAtMs === "number" ? cd.createdAtMs : undefined,
     };
   });
 

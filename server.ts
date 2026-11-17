@@ -2568,8 +2568,11 @@ setTimeout(async () => {
             videoUrl: r.videoUrl || parsedData.videoUrl,
             thumbnailUrl: r.thumbnailUrl || parsedData.thumbnailUrl,
             duration: r.duration || parsedData.duration || 60,
-            createdAt: r.createdAt || parsedData.createdAt,
-            createdAtMs: typeof parsedData.createdAtMs === 'number' ? parsedData.createdAtMs : (r.createdAt ? new Date(r.createdAt.replace(' ', 'T') + 'Z').getTime() : Date.now()),
+            createdAt: parsedData.createdAt || r.createdAt,
+            recordedAt: parsedData.recordedAt || parsedData.createdAt || r.createdAt,
+            createdAtMs: (typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1500000000000)
+              ? parsedData.createdAtMs
+              : (r.createdAt ? new Date(r.createdAt.includes('T') ? r.createdAt : r.createdAt.replace(' ', 'T') + 'Z').getTime() : Date.now()),
             likesCount: typeof r.likesCount === 'number' ? r.likesCount : (typeof parsedData.likesCount === 'number' ? parsedData.likesCount : 0),
             bookmarksCount: typeof r.bookmarksCount === 'number' ? r.bookmarksCount : (typeof parsedData.bookmarksCount === 'number' ? parsedData.bookmarksCount : 0),
             sharesCount: typeof r.sharesCount === 'number' ? r.sharesCount : (typeof parsedData.sharesCount === 'number' ? parsedData.sharesCount : 0),
@@ -17821,11 +17824,10 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               const viewsCountVal = typeof r.viewsCount === 'number' ? r.viewsCount : (typeof parsedData.viewsCount === 'number' ? parsedData.viewsCount : (parsedData.views || 0));
 
               const parsedDt = r.createdAt ? new Date(r.createdAt.includes('T') ? r.createdAt : r.createdAt.replace(' ', 'T') + 'Z').getTime() : 0;
-              const effCreatedAtMs = Math.max(
-                parsedDt || 0,
-                typeof parsedData.createdAtMs === 'number' ? parsedData.createdAtMs : 0,
-                (r.id && typeof r.id === 'string' && r.id.startsWith('rev-')) ? parseInt(r.id.split('-')[1], 10) : 0
-              );
+              const idEmbeddedMs = (r.id && typeof r.id === 'string' && r.id.startsWith('rev-')) ? parseInt(r.id.split('-')[1], 10) : 0;
+              const effCreatedAtMs = (typeof parsedData.createdAtMs === 'number' && parsedData.createdAtMs > 1500000000000)
+                ? parsedData.createdAtMs
+                : (parsedDt > 1500000000000 ? parsedDt : (idEmbeddedMs > 1500000000000 ? idEmbeddedMs : Date.now()));
 
               const rawDbRating = (typeof r.rating === 'number' && !isNaN(r.rating) && r.rating > 0) ? Number(r.rating) : (Number(r.rating) || 0);
               const rawParsedRating = (typeof parsedData.rating === 'number' && !isNaN(parsedData.rating) && parsedData.rating > 0) ? Number(parsedData.rating) : (Number(parsedData.rating) || 0);
@@ -17852,7 +17854,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 videoUrl: isPhotoItem ? '' : (r.videoUrl || parsedData.videoUrl),
                 thumbnailUrl: resolvedPhotoUrl || r.thumbnailUrl || parsedData.thumbnailUrl,
                 duration: r.duration || parsedData.duration || 0,
-                createdAt: r.createdAt || parsedData.createdAt,
+                createdAt: parsedData.createdAt || r.createdAt,
+                recordedAt: parsedData.recordedAt || parsedData.createdAt || r.createdAt,
                 createdAtMs: effCreatedAtMs,
                 likesCount: likesCountVal,
                 likes: likesCountVal,
@@ -18617,7 +18620,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               authorAvatar: row.userAvatar || parsed.authorAvatar,
               text: row.text || parsed.text || '',
               attachments: Array.isArray(parsed.attachments) ? parsed.attachments : (parsed.attachment ? [parsed.attachment] : []),
-              createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+              createdAt: parsed.createdAt || row.createdAt || new Date().toISOString(),
+              createdAtMs: typeof parsed.createdAtMs === 'number' ? parsed.createdAtMs : undefined
             };
           });
 
@@ -18695,9 +18699,23 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       let treeResult = { comments: [] as any[], count: 0 };
 
       if (bunnyDb) {
-        // 1. Insert or replace this comment into BunnyDB comments table
+        const nowMs = (typeof comment.createdAtMs === 'number' && comment.createdAtMs > 1500000000000)
+          ? comment.createdAtMs
+          : Date.now();
+        const isoCreated = (typeof comment.createdAt === 'string' && comment.createdAt.includes('T') && !isNaN(Date.parse(comment.createdAt)))
+          ? comment.createdAt
+          : new Date(nowMs).toISOString();
+        const sqlCreated = new Date(nowMs).toISOString().replace('T', ' ').substring(0, 19);
+        const normalizedComment = {
+          ...comment,
+          videoId,
+          createdAt: isoCreated,
+          createdAtMs: nowMs
+        };
+
+        // 1. Insert or replace this comment into BunnyDB comments table with accurate timestamp
         await bunnyDb.execute({
-          sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+          sql: "INSERT OR REPLACE INTO comments (id, videoId, userId, userName, userAvatar, text, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
           args: [
             comment.id,
             videoId,
@@ -18705,7 +18723,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
             comment.authorName || "",
             comment.authorAvatar || "",
             comment.text || "",
-            JSON.stringify({ ...comment, videoId })
+            JSON.stringify(normalizedComment),
+            sqlCreated
           ]
         });
 
@@ -18726,7 +18745,8 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
             authorAvatar: row.userAvatar || parsed.authorAvatar,
             text: row.text || parsed.text || '',
             attachments: Array.isArray(parsed.attachments) ? parsed.attachments : (parsed.attachment ? [parsed.attachment] : []),
-            createdAt: row.createdAt || parsed.createdAt || new Date().toISOString()
+            createdAt: parsed.createdAt || row.createdAt || new Date().toISOString(),
+            createdAtMs: typeof parsed.createdAtMs === 'number' ? parsed.createdAtMs : undefined
           };
         });
 
@@ -21782,6 +21802,17 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       review.isReady = true;
       review.isProcessing = false;
+      const liveUploadMs = (typeof review.createdAtMs === 'number' && review.createdAtMs > 1500000000000)
+        ? review.createdAtMs
+        : Date.now();
+      const liveUploadIso = (typeof review.createdAt === 'string' && review.createdAt.includes('T') && !isNaN(Date.parse(review.createdAt)))
+        ? review.createdAt
+        : new Date(liveUploadMs).toISOString();
+      review.createdAtMs = liveUploadMs;
+      review.createdAt = liveUploadIso;
+      if (!review.recordedAt || review.recordedAt === "Just now" || isNaN(Date.parse(String(review.recordedAt)))) {
+        review.recordedAt = liveUploadIso;
+      }
 
       // 1. Save to local server JSON index
       const existingIdx = list.findIndex((item: any) => item.id === review.id);
@@ -43457,7 +43488,7 @@ function injectOpenGraphTags(html: string, meta: any) {
       await seedWave2CommunityV1().catch(() => {});
 
       const runCommunityEngagementV1 = async () => {
-        const markerPath = path.join(globalUploadsDir, ".community_engagement_v2_done");
+        const markerPath = path.join(globalUploadsDir, ".community_engagement_v3_done");
         if (bunnyDb) {
           await Promise.all([
             bunnyDb.execute("DELETE FROM comments WHERE id LIKE 'comm_179%' OR videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
@@ -43473,12 +43504,15 @@ function injectOpenGraphTags(html: string, meta: any) {
 
           if (bunnyDb) {
             try {
-              const vrRows = await bunnyDb.execute("SELECT id, likesCount, bookmarksCount, sharesCount, commentsCount, data FROM videoReviews");
+              const vrRows = await bunnyDb.execute("SELECT id, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt FROM videoReviews");
               const dbMap = new Map<string, any>();
               for (const r of (vrRows.rows || []) as any[]) {
                 let d: any = {};
                 try { d = typeof r.data === "string" ? JSON.parse(r.data) : (r.data || {}); } catch {}
                 dbMap.set(String(r.id), {
+                  createdAt: d.createdAt || r.createdAt,
+                  createdAtMs: typeof d.createdAtMs === "number" ? d.createdAtMs : undefined,
+                  recordedAt: d.recordedAt || d.createdAt || r.createdAt,
                   likes: Number(r.likesCount || d.likes || 0),
                   likesCount: Number(r.likesCount || d.likesCount || 0),
                   bookmarks: Number(r.bookmarksCount || d.bookmarks || 0),
