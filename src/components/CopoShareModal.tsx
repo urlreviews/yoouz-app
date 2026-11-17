@@ -368,24 +368,24 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
   const cleanShareDom = (resolvedDomain || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
   const cleanShareHandle = (resolvedDomain || title || "").replace(/^@+/, "").trim();
   const canonicalPrewarmUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v17/${encodeURIComponent(video.id)}.png`
+    ? `${appOrigin}/api/og-card/v18/${encodeURIComponent(video.id)}.png`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v17/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png`
-    : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png`;
+    ? `${appOrigin}/api/og-image/v18/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png`
+    : `${appOrigin}/api/og-image/v18/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png`;
 
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v17/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=34`
+    ? `${appOrigin}/api/og-card/v18/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=35`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v17/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=42`
-    : `${appOrigin}/api/og-image/v17/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}&v=46`;
+    ? `${appOrigin}/api/og-image/v18/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=43`
+    : `${appOrigin}/api/og-image/v18/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}&v=47`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
   const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Live Photo Review");
 
   const resolvedTouchIcon = isVideoMode && video
-    ? `${appOrigin}/api/touch-icon/v17/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=14`
+    ? `${appOrigin}/api/touch-icon/v18/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=15`
     : isBusiness
-    ? `${appOrigin}/api/touch-icon/v17/reviews/${encodeURIComponent((resolvedDomain || title).replace(/\./g, '-dot-'))}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=27`
+    ? `${appOrigin}/api/touch-icon/v18/reviews/${encodeURIComponent((resolvedDomain || title).replace(/\./g, '-dot-'))}.png?placeName=${encodeURIComponent(title)}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=28`
     : "";
 
   useEffect(() => {

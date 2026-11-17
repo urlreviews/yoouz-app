@@ -2963,212 +2963,54 @@ const businessVerificationStore = new Map<string, BusinessVerificationRecord>();
 // Brand & Business Official Logo Resolver (Google Favicon & Clearbit API Engine)
 function resolveBrandLogo(name: string, website?: string, category?: string): { logoUrl?: string; brandDomain?: string } {
   const norm = (name || "").toLowerCase();
-  
-  if (norm.includes("ibis budget") || norm.includes("ibis styles") || norm.includes("ibis")) {
+  const pickKnownOrFavicon = (brandDomain: string): { logoUrl: string; brandDomain: string } => {
+    const cleanD = brandDomain.replace(/^www\./, "").toLowerCase().trim();
+    const known = KNOWN_BRAND_LOGOS[cleanD] || KNOWN_BRAND_LOGOS[`www.${cleanD}`];
+    if (known && !known.includes("/api/brand-banner")) {
+      return { logoUrl: known, brandDomain: cleanD };
+    }
     return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=ibis.accor.com&sz=128",
-      brandDomain: "ibis.accor.com"
+      logoUrl: `/api/favicon?domain=${encodeURIComponent(cleanD)}`,
+      brandDomain: cleanD
     };
-  }
-  if (norm.includes("hilton")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=hilton.com&sz=128",
-      brandDomain: "hilton.com"
-    };
-  }
-  if (norm.includes("marriott") || norm.includes("sheraton") || norm.includes("westin") || norm.includes("courtyard") || norm.includes("renaissance")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=marriott.com&sz=128",
-      brandDomain: "marriott.com"
-    };
-  }
-  if (norm.includes("radisson")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=radissonhotels.com&sz=128",
-      brandDomain: "radissonhotels.com"
-    };
-  }
-  if (norm.includes("accor") || norm.includes("novotel") || norm.includes("mercure") || norm.includes("sofitel") || norm.includes("pullman")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=all.accor.com&sz=128",
-      brandDomain: "all.accor.com"
-    };
-  }
-  if (norm.includes("isrotel") || norm.includes("ישרוטל")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=isrotel.co.il&sz=128",
-      brandDomain: "isrotel.co.il"
-    };
-  }
-  if (norm.includes("dan hotel") || norm.includes("מלון דן") || norm.includes("dan eilat")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=danhotels.com&sz=128",
-      brandDomain: "danhotels.com"
-    };
-  }
-  if (norm.includes("kfc") || norm.includes("kentucky fried")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=kfc.com&sz=128",
-      brandDomain: "kfc.com"
-    };
-  }
-  if (norm.includes("mcdonald") || norm.includes("מקדונלד")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=mcdonalds.com&sz=128",
-      brandDomain: "mcdonalds.com"
-    };
-  }
-  if (norm.includes("burger king")) {
-    return {
-      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg",
-      brandDomain: "bk.com"
-    };
-  }
-  if (norm.includes("flipper") || norm.includes("flipper zero")) {
-    return {
-      logoUrl: "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
-      brandDomain: "flipper.net"
-    };
-  }
-  if (norm.includes("starbucks")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=starbucks.com&sz=128",
-      brandDomain: "starbucks.com"
-    };
-  }
-  if (norm.includes("subway")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=subway.com&sz=128",
-      brandDomain: "subway.com"
-    };
-  }
-  if (norm.includes("super-pharm") || norm.includes("סופר-פארם")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=super-pharm.co.il&sz=128",
-      brandDomain: "super-pharm.co.il"
-    };
-  }
-  if (norm.includes("shufersal") || norm.includes("שופרסל")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=shufersal.co.il&sz=128",
-      brandDomain: "shufersal.co.il"
-    };
-  }
-  if (norm.includes("aldi")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=aldi.be&sz=128",
-      brandDomain: "aldi.be"
-    };
-  }
-  if (norm.includes("delhaize")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=delhaize.be&sz=128",
-      brandDomain: "delhaize.be"
-    };
-  }
-  if (norm.includes("carrefour")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=carrefour.com&sz=128",
-      brandDomain: "carrefour.com"
-    };
-  }
-  if (norm.includes("issta") || norm.includes("איסתא")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=issta.co.il&sz=128",
-      brandDomain: "issta.co.il"
-    };
-  }
+  };
+
+  if (norm.includes("ibis budget") || norm.includes("ibis styles") || norm.includes("ibis")) return pickKnownOrFavicon("ibis.accor.com");
+  if (norm.includes("hilton")) return pickKnownOrFavicon("hilton.com");
+  if (norm.includes("marriott") || norm.includes("sheraton") || norm.includes("westin") || norm.includes("courtyard") || norm.includes("renaissance")) return pickKnownOrFavicon("marriott.com");
+  if (norm.includes("radisson")) return pickKnownOrFavicon("radissonhotels.com");
+  if (norm.includes("accor") || norm.includes("novotel") || norm.includes("mercure") || norm.includes("sofitel") || norm.includes("pullman")) return pickKnownOrFavicon("all.accor.com");
+  if (norm.includes("isrotel") || norm.includes("ישרוטל")) return pickKnownOrFavicon("isrotel.co.il");
+  if (norm.includes("dan hotel") || norm.includes("מלון דן") || norm.includes("dan eilat")) return pickKnownOrFavicon("danhotels.com");
+  if (norm.includes("kfc") || norm.includes("kentucky fried")) return pickKnownOrFavicon("kfc.com");
+  if (norm.includes("mcdonald") || norm.includes("מקדונלד")) return pickKnownOrFavicon("mcdonalds.com");
+  if (norm.includes("wolt")) return pickKnownOrFavicon("wolt.com");
+  if (norm.includes("burger king")) return pickKnownOrFavicon("bk.com");
+  if (norm.includes("flipper") || norm.includes("flipper zero")) return pickKnownOrFavicon("flipper.net");
+  if (norm.includes("starbucks")) return pickKnownOrFavicon("starbucks.com");
+  if (norm.includes("subway")) return pickKnownOrFavicon("subway.com");
+  if (norm.includes("super-pharm") || norm.includes("סופר-פארם")) return pickKnownOrFavicon("super-pharm.co.il");
+  if (norm.includes("shufersal") || norm.includes("שופרסל")) return pickKnownOrFavicon("shufersal.co.il");
+  if (norm.includes("aldi")) return pickKnownOrFavicon("aldi.be");
+  if (norm.includes("delhaize")) return pickKnownOrFavicon("delhaize.be");
+  if (norm.includes("carrefour")) return pickKnownOrFavicon("carrefour.com");
+  if (norm.includes("issta") || norm.includes("איסתא")) return pickKnownOrFavicon("issta.co.il");
   // Major Israeli & Global Banks
-  if (norm.includes("hapoalim") || norm.includes("הפועלים") || norm.includes("בנק הפועלים") || norm.includes("poalim")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=bankhapoalim.co.il&sz=128",
-      brandDomain: "bankhapoalim.co.il"
-    };
-  }
-  if (norm.includes("leumi") || norm.includes("לאומי") || norm.includes("בנק לאומי")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=leumi.co.il&sz=128",
-      brandDomain: "leumi.co.il"
-    };
-  }
-  if (norm.includes("mizrahi") || norm.includes("מזרחי") || norm.includes("טפחות") || norm.includes("tefahot")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=mizrahi-tefahot.co.il&sz=128",
-      brandDomain: "mizrahi-tefahot.co.il"
-    };
-  }
-  if (norm.includes("discount") || norm.includes("דיסקונט") || norm.includes("בנק דיסקונט")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=discountbank.co.il&sz=128",
-      brandDomain: "discountbank.co.il"
-    };
-  }
-  if (norm.includes("fibi") || norm.includes("הבינלאומי") || norm.includes("בנק הבינלאומי")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=fibi.co.il&sz=128",
-      brandDomain: "fibi.co.il"
-    };
-  }
-  if (norm.includes("yahav") || norm.includes("יהב") || norm.includes("בנק יהב")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=bank-yahav.co.il&sz=128",
-      brandDomain: "bank-yahav.co.il"
-    };
-  }
-  if (norm.includes("chase")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=chase.com&sz=128",
-      brandDomain: "chase.com"
-    };
-  }
-  if (norm.includes("bank of america") || norm.includes("bofa")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=bankofamerica.com&sz=128",
-      brandDomain: "bankofamerica.com"
-    };
-  }
-  if (norm.includes("citibank") || norm.includes("citi")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=citi.com&sz=128",
-      brandDomain: "citi.com"
-    };
-  }
-  if (norm.includes("wells fargo")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=wellsfargo.com&sz=128",
-      brandDomain: "wellsfargo.com"
-    };
-  }
-  if (norm.includes("deutsche bank")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=db.com&sz=128",
-      brandDomain: "db.com"
-    };
-  }
-  if (norm.includes("bnp paribas")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=group.bnpparibas&sz=128",
-      brandDomain: "group.bnpparibas"
-    };
-  }
-  if (norm.includes("belfius")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=belfius.be&sz=128",
-      brandDomain: "belfius.be"
-    };
-  }
-  if (norm.includes("kbc")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=kbc.be&sz=128",
-      brandDomain: "kbc.be"
-    };
-  }
-  if (norm.includes("ing bank") || norm.includes("ing ")) {
-    return {
-      logoUrl: "https://www.google.com/s2/favicons?domain=ing.com&sz=128",
-      brandDomain: "ing.com"
-    };
-  }
+  if (norm.includes("hapoalim") || norm.includes("הפועלים") || norm.includes("בנק הפועלים") || norm.includes("poalim")) return pickKnownOrFavicon("bankhapoalim.co.il");
+  if (norm.includes("leumi") || norm.includes("לאומי") || norm.includes("בנק לאומי")) return pickKnownOrFavicon("leumi.co.il");
+  if (norm.includes("mizrahi") || norm.includes("מזרחי") || norm.includes("טפחות") || norm.includes("tefahot")) return pickKnownOrFavicon("mizrahi-tefahot.co.il");
+  if (norm.includes("discount") || norm.includes("דיסקונט") || norm.includes("בנק דיסקונט")) return pickKnownOrFavicon("discountbank.co.il");
+  if (norm.includes("fibi") || norm.includes("הבינלאומי") || norm.includes("בנק הבינלאומי")) return pickKnownOrFavicon("fibi.co.il");
+  if (norm.includes("yahav") || norm.includes("יהב") || norm.includes("בנק יהב")) return pickKnownOrFavicon("bank-yahav.co.il");
+  if (norm.includes("chase")) return pickKnownOrFavicon("chase.com");
+  if (norm.includes("bank of america") || norm.includes("bofa")) return pickKnownOrFavicon("bankofamerica.com");
+  if (norm.includes("citibank") || norm.includes("citi")) return pickKnownOrFavicon("citi.com");
+  if (norm.includes("wells fargo")) return pickKnownOrFavicon("wellsfargo.com");
+  if (norm.includes("deutsche bank")) return pickKnownOrFavicon("db.com");
+  if (norm.includes("bnp paribas")) return pickKnownOrFavicon("group.bnpparibas");
+  if (norm.includes("belfius")) return pickKnownOrFavicon("belfius.be");
+  if (norm.includes("kbc")) return pickKnownOrFavicon("kbc.be");
+  if (norm.includes("ing bank") || norm.includes("ing ")) return pickKnownOrFavicon("ing.com");
   if (website) {
     try {
       const parsed = new URL(website);
@@ -5103,21 +4945,21 @@ async function startServer() {
         title = `${authorName}'s 60s Video Review of ${placeName} | Yoouz`;
         authorUrl = `${baseUrl}/@${encodeURIComponent(String(foundVideo?.author?.handle || authorName.toLowerCase().replace(/\s+/g, "")).replace(/^@+/, ""))}`;
         embedUrl = `${baseUrl}/embed/video/${encodeURIComponent(vidKey)}`;
-        thumbnailUrl = `${baseUrl}/api/og-card/v17/${encodeURIComponent(vidKey)}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-card/v18/${encodeURIComponent(vidKey)}.png`;
       } else if (placeMatch && placeMatch[1]) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
         const pName = formatBusinessName(dom) || "Business";
         title = `Authentic Video Reviews for ${pName} | Yoouz`;
         authorName = pName;
         authorUrl = `${baseUrl}/reviews/${encodeURIComponent(dom)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v18/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`;
       } else if (creatorMatch && creatorMatch[1]) {
         const cleanH = creatorMatch[1].replace(/^@+/, "");
         const aName = formatBusinessName(cleanH.replace(/[-_]+/g, ' '));
         title = `@${cleanH}'s Authentic Video Reviews | Yoouz`;
         authorName = aName;
         authorUrl = `${baseUrl}/@${encodeURIComponent(cleanH)}`;
-        thumbnailUrl = `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
+        thumbnailUrl = `${baseUrl}/api/og-image/v18/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
       }
 
       const wantEmbedHtml = req.query.embed === "1" || req.query.embed === "true";
@@ -9757,6 +9599,13 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             writePlacesIndex(currentPlaces);
           } catch (pIdxErr) {}
 
+          try {
+            if (typeof placeLogoAssetCache !== "undefined") placeLogoAssetCache.clear();
+            if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
+            if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+            if (typeof BUSINESS_QUERY_CACHE !== "undefined") BUSINESS_QUERY_CACHE.clear();
+          } catch {}
+
           broadcastSseEvent({
             type: "place_updated",
             placeId: id,
@@ -9822,6 +9671,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             feedCache.videos.unshift(rev);
           }
           feedCache.lastFetched = Date.now();
+          try {
+            if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
+            if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+          } catch {}
 
           // Broadcast to connected users
           broadcastSseEvent({
@@ -27042,7 +26895,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                   lng: Number(pData.lng) || 0,
                   rating: Number(pData.rating) || 5.0,
                   totalReviews: Number(pData.totalReviews) || 1,
-                  avatarUrl: row.logoUrl || pData.avatarUrl || pData.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+                  avatarUrl: (pData.customized && (pData.logoUrl || row.logoUrl)) ? (pData.logoUrl || row.logoUrl) : (KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`] || row.logoUrl || pData.avatarUrl || pData.logoUrl || `/api/favicon?domain=${encodeURIComponent(domain)}`),
                   bannerUrl: row.bannerUrl || pData.bannerUrl || pData.ogImage || "",
                   photos: pData.photos || (row.bannerUrl || pData.bannerUrl ? [row.bannerUrl || pData.bannerUrl] : []),
                   openingHours: pData.openingHours || "Mon-Fri: 9:00 AM - 5:00 PM",
@@ -27119,7 +26972,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           const finalCountry = (typeof scrapedCountry !== "undefined" && scrapedCountry) ? scrapedCountry : (matchedKnownLoc?.country || "Worldwide");
           const finalCategory = (typeof scrapedCategory !== "undefined" && scrapedCategory) ? scrapedCategory : (matchedKnownLoc?.category || "Business & Professional Services");
 
-          const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          const faviconUrl = KNOWN_BRAND_LOGOS[domain] || KNOWN_BRAND_LOGOS[`www.${domain}`] || `/api/favicon?domain=${encodeURIComponent(domain)}`;
 
           const websitePlace = {
             id: siteId,
@@ -27133,6 +26986,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
             rating: 5.0,
             totalReviews: 1,
             avatarUrl: faviconUrl,
+            logoUrl: faviconUrl,
             bannerUrl: ogImage || "",
             photos: ogImage ? [ogImage] : [],
             openingHours: "Mon-Fri: 9:00 AM - 5:00 PM",
@@ -35642,6 +35496,87 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     </svg>`;
   }
 
+  async function scrapeWebsiteAuthenticLogoUrl(cleanDomain: string): Promise<string> {
+    if (!cleanDomain || !cleanDomain.includes(".")) return "";
+    try {
+      let html = "";
+      let finalSiteUrl = `https://${cleanDomain}`;
+      let redirDom = cleanDomain;
+      try {
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 2800);
+        const siteResp = await fetch(`https://${cleanDomain}`, {
+          signal: ctrl.signal,
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml"
+          }
+        });
+        clearTimeout(tid);
+        if (siteResp.ok) {
+          finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
+          redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
+          html = await siteResp.text();
+        } else if (siteResp.status === 403 || siteResp.status === 503) {
+          const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
+            headers: {
+              "X-Return-Format": "html",
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            },
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
+          });
+          if (jinaResp.ok) {
+            const jinaHtml = await jinaResp.text();
+            if (jinaHtml && jinaHtml.includes("<")) html = jinaHtml;
+          }
+        }
+      } catch {}
+
+      if (html) {
+        const $f = cheerio.load(html);
+        let extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
+        if (extractedLogo && extractedLogo.startsWith("http") && !(await verifyLogoUrlReachable(extractedLogo))) {
+          extractedLogo = "";
+        }
+        if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
+          const wdLogo = await lookupWikidataOfficialLogo(redirDom);
+          if (wdLogo) extractedLogo = wdLogo;
+        }
+        if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo)) {
+          return extractedLogo;
+        }
+
+        const iconSelectors = [
+          'link[rel="apple-touch-icon"]',
+          'link[rel="apple-touch-icon-precomposed"]',
+          'link[rel="icon"][sizes="192x192"]',
+          'link[rel="icon"][sizes="180x180"]',
+          'link[rel="icon"][sizes="152x152"]',
+          'link[rel="icon"][sizes="128x128"]',
+          'link[rel="icon"][sizes="96x96"]',
+          'link[rel="icon"][sizes="64x64"]',
+          'link[rel="icon"][sizes="32x32"]',
+          'link[rel="icon"]',
+          'link[rel="shortcut icon"]'
+        ];
+        for (const sel of iconSelectors) {
+          const href = ($f(sel).first().attr("href") || "").trim();
+          if (href && !isGenericOrPlaceholderLogo(href)) {
+            try {
+              let absIcon = new URL(href, finalSiteUrl).toString();
+              if (absIcon.includes("squarespace-cdn.com") && absIcon.includes("format=")) {
+                absIcon = absIcon.replace(/format=\d+w/, "format=500w");
+              }
+              return absIcon;
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+    return "";
+  }
+
   app.get("/api/favicon", async (req, res) => {
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
@@ -35716,24 +35651,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       "www.whatsapp.com": "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
     };
 
-    if (KNOWN_FAVICON_LOGOS[cleanDomain]) {
-      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_FAVICON_LOGOS[cleanDomain])}`);
-    }
-
-    if (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
-      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
-    }
-
-    if (KNOWN_PLACE_METADATA[cleanDomain]?.logoUrl && !KNOWN_PLACE_METADATA[cleanDomain].logoUrl.includes("/api/favicon")) {
-      return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
-    }
-
-    // Check BunnyDB & saved places index for an already-verified locked standalone logo (NEVER use bannerUrl as logo!)
+    // Respect owner-customized standalone logos stored in BunnyDB or places index FIRST
+    let matchedPlaceCustomLogo = "";
+    let matchedPlaceLogo = "";
     try {
       const lockedDbRec = await getLockedSavedPlaceRecord(cleanDomain).catch(() => null);
       if (lockedDbRec?.logoUrl && isImmutablePersistedLogo(lockedDbRec.logoUrl, cleanDomain, lockedDbRec.bannerUrl)) {
-        const targetDbLogo = lockedDbRec.logoUrl.startsWith("/api/") ? lockedDbRec.logoUrl : `/api/proxy-image?url=${encodeURIComponent(lockedDbRec.logoUrl)}`;
-        return res.redirect(302, targetDbLogo);
+        matchedPlaceLogo = lockedDbRec.logoUrl;
       }
       const savedPlaces = readPlacesIndex();
       const matchedPlace = savedPlaces.find((p: any) => {
@@ -35741,138 +35665,94 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         const pDom = String(p.brandDomain || "").toLowerCase().replace(/^www\./, "");
         return pId === cleanDomain || pDom === cleanDomain;
       });
-      if (matchedPlace) {
-        const isMatchedLogoSameAsBanner = Boolean(
-          matchedPlace.logoUrl &&
-          (matchedPlace.logoUrl === matchedPlace.bannerUrl || matchedPlace.logoUrl === matchedPlace.ogImage)
-        );
-        const isMatchedLogoCrossBrand = Boolean(
-          matchedPlace.logoUrl && isCrossBrandPortfolioLogoServer(matchedPlace.logoUrl, cleanDomain)
-        );
-        const isMatchedLogoCorrupt = Boolean(
-          matchedPlace.logoUrl && /\/catalog\/|\/lookbook\/|\/pdp\/|shutterstock|blank\.jpg|logoheader|navigation-tile/i.test(matchedPlace.logoUrl)
-        );
-        if (matchedPlace.logoUrl && !isMatchedLogoSameAsBanner && !isMatchedLogoCrossBrand && !isMatchedLogoCorrupt && !isGenericOrPlaceholderLogo(matchedPlace.logoUrl) && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
-          if (matchedPlace.logoUrl.startsWith("data:image/svg+xml")) {
-            const commaIdx = matchedPlace.logoUrl.indexOf(",");
-            const svgContent = commaIdx >= 0 ? decodeURIComponent(matchedPlace.logoUrl.slice(commaIdx + 1)) : "";
-            res.setHeader("Content-Type", "image/svg+xml");
-            res.setHeader("Cache-Control", "public, max-age=604800");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(svgContent);
-          }
-          if (matchedPlace.logoUrl.startsWith("data:image/")) {
-            const parts = matchedPlace.logoUrl.split(",");
-            const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
-            const buf = Buffer.from(parts[1] || "", "base64");
-            res.setHeader("Content-Type", mime);
-            res.setHeader("Cache-Control", "public, max-age=604800");
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            return res.status(200).send(buf);
-          }
-          const targetLogo = matchedPlace.logoUrl.startsWith("/api/") ? matchedPlace.logoUrl : `/api/proxy-image?url=${encodeURIComponent(matchedPlace.logoUrl)}`;
-          return res.redirect(302, targetLogo);
+      if (matchedPlace?.logoUrl) {
+        const isSameBanner = matchedPlace.logoUrl === matchedPlace.bannerUrl || matchedPlace.logoUrl === matchedPlace.ogImage;
+        const isCross = isCrossBrandPortfolioLogoServer(matchedPlace.logoUrl, cleanDomain);
+        const isCorrupt = /\/catalog\/|\/lookbook\/|\/pdp\/|shutterstock|blank\.jpg|logoheader|navigation-tile/i.test(matchedPlace.logoUrl);
+        if (!isSameBanner && !isCross && !isCorrupt && !isGenericOrPlaceholderLogo(matchedPlace.logoUrl) && !matchedPlace.logoUrl.includes("/api/favicon") && !isFaviconUrl(matchedPlace.logoUrl)) {
+          const isExplicitCustom = Boolean(matchedPlace.customized || matchedPlace.customEdited || (matchedPlace.isClaimed && matchedPlace.claimedByEmail) || matchedPlace.logoUrl.includes("b-cdn.net") || matchedPlace.logoUrl.includes("/uploads/"));
+          if (isExplicitCustom) matchedPlaceCustomLogo = matchedPlace.logoUrl;
+          else if (!matchedPlaceLogo) matchedPlaceLogo = matchedPlace.logoUrl;
         }
       }
     } catch (e) {}
 
-    // Attempt to extract the authentic brand logo OR high-res HTML <link rel="icon" / "apple-touch-icon"> from the website before falling back to Google S2 / DuckDuckGo favicons
-    if (cleanDomain && cleanDomain.includes(".")) {
-      try {
-        let html = "";
-        let finalSiteUrl = `https://${cleanDomain}`;
-        let redirDom = cleanDomain;
-        try {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 2800);
-          const siteResp = await fetch(`https://${cleanDomain}`, {
-            signal: ctrl.signal,
-            redirect: "follow",
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml"
-            }
-          });
-          clearTimeout(tid);
-          if (siteResp.ok) {
-            finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
-            redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
-            html = await siteResp.text();
-          } else if (siteResp.status === 403 || siteResp.status === 503) {
-            // Bypass WAF via r.jina.ai HTML reader
-            const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
-              headers: {
-                "X-Return-Format": "html",
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-              },
-              signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
-            });
-            if (jinaResp.ok) {
-              const jinaHtml = await jinaResp.text();
-              if (jinaHtml && jinaHtml.includes("<")) html = jinaHtml;
-            }
-          }
-        } catch (fetchErr) {}
+    if (matchedPlaceCustomLogo) {
+      if (matchedPlaceCustomLogo.startsWith("data:image/svg+xml")) {
+        const commaIdx = matchedPlaceCustomLogo.indexOf(",");
+        const svgContent = commaIdx >= 0 ? decodeURIComponent(matchedPlaceCustomLogo.slice(commaIdx + 1)) : "";
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(svgContent);
+      }
+      if (matchedPlaceCustomLogo.startsWith("data:image/")) {
+        const parts = matchedPlaceCustomLogo.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+        const buf = Buffer.from(parts[1] || "", "base64");
+        res.setHeader("Content-Type", mime);
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(buf);
+      }
+      const targetCustom = matchedPlaceCustomLogo.startsWith("/api/") ? matchedPlaceCustomLogo : `/api/proxy-image?url=${encodeURIComponent(matchedPlaceCustomLogo)}`;
+      return res.redirect(302, targetCustom);
+    }
 
-        if (html) {
-          const $f = cheerio.load(html);
-          let extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
-          if (extractedLogo && extractedLogo.startsWith("http") && !(await verifyLogoUrlReachable(extractedLogo))) {
-            extractedLogo = "";
-          }
-          if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
-            const wdLogo = await lookupWikidataOfficialLogo(redirDom);
-            if (wdLogo) extractedLogo = wdLogo;
-          }
-          if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo)) {
-            if (extractedLogo.startsWith("data:image/svg+xml")) {
-              const commaIdx = extractedLogo.indexOf(",");
-              const svgContent = commaIdx >= 0 ? decodeURIComponent(extractedLogo.slice(commaIdx + 1)) : "";
-              res.setHeader("Content-Type", "image/svg+xml");
-              res.setHeader("Cache-Control", "public, max-age=604800");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(svgContent);
-            }
-            if (extractedLogo.startsWith("data:image/")) {
-              const parts = extractedLogo.split(",");
-              const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
-              const buf = Buffer.from(parts[1] || "", "base64");
-              res.setHeader("Content-Type", mime);
-              res.setHeader("Cache-Control", "public, max-age=604800");
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              return res.status(200).send(buf);
-            }
-            return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}`);
-          }
+    if (KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_BRAND_LOGOS[cleanDomain])}`);
+    }
 
-          // Extract explicit <link rel="apple-touch-icon"> or <link rel="icon"> declared on the website (e.g. Squarespace / WordPress / custom favicons)
-          const iconSelectors = [
-            'link[rel="apple-touch-icon"]',
-            'link[rel="apple-touch-icon-precomposed"]',
-            'link[rel="icon"][sizes="192x192"]',
-            'link[rel="icon"][sizes="180x180"]',
-            'link[rel="icon"][sizes="152x152"]',
-            'link[rel="icon"][sizes="128x128"]',
-            'link[rel="icon"][sizes="96x96"]',
-            'link[rel="icon"][sizes="64x64"]',
-            'link[rel="icon"][sizes="32x32"]',
-            'link[rel="icon"]',
-            'link[rel="shortcut icon"]'
-          ];
-          for (const sel of iconSelectors) {
-            const href = ($f(sel).first().attr("href") || "").trim();
-            if (href && !isGenericOrPlaceholderLogo(href)) {
-              try {
-                let absIcon = new URL(href, finalSiteUrl).toString();
-                if (absIcon.includes("squarespace-cdn.com") && absIcon.includes("format=")) {
-                  absIcon = absIcon.replace(/format=\d+w/, "format=500w");
-                }
-                return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(absIcon)}`);
-              } catch {}
-            }
-          }
-        }
-      } catch (e) {}
+    if (KNOWN_FAVICON_LOGOS[cleanDomain]) {
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(KNOWN_FAVICON_LOGOS[cleanDomain])}`);
+    }
+
+    if (KNOWN_PLACE_METADATA[cleanDomain]?.logoUrl && !KNOWN_PLACE_METADATA[cleanDomain].logoUrl.includes("/api/favicon")) {
+      return res.redirect(302, KNOWN_PLACE_METADATA[cleanDomain].logoUrl);
+    }
+
+    if (matchedPlaceLogo) {
+      if (matchedPlaceLogo.startsWith("data:image/svg+xml")) {
+        const commaIdx = matchedPlaceLogo.indexOf(",");
+        const svgContent = commaIdx >= 0 ? decodeURIComponent(matchedPlaceLogo.slice(commaIdx + 1)) : "";
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(svgContent);
+      }
+      if (matchedPlaceLogo.startsWith("data:image/")) {
+        const parts = matchedPlaceLogo.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+        const buf = Buffer.from(parts[1] || "", "base64");
+        res.setHeader("Content-Type", mime);
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(buf);
+      }
+      const targetLogo = matchedPlaceLogo.startsWith("/api/") ? matchedPlaceLogo : `/api/proxy-image?url=${encodeURIComponent(matchedPlaceLogo)}`;
+      return res.redirect(302, targetLogo);
+    }
+
+    const scrapedLogo = await scrapeWebsiteAuthenticLogoUrl(cleanDomain);
+    if (scrapedLogo) {
+      if (scrapedLogo.startsWith("data:image/svg+xml")) {
+        const commaIdx = scrapedLogo.indexOf(",");
+        const svgContent = commaIdx >= 0 ? decodeURIComponent(scrapedLogo.slice(commaIdx + 1)) : "";
+        res.setHeader("Content-Type", "image/svg+xml");
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(svgContent);
+      }
+      if (scrapedLogo.startsWith("data:image/")) {
+        const parts = scrapedLogo.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+        const buf = Buffer.from(parts[1] || "", "base64");
+        res.setHeader("Content-Type", mime);
+        res.setHeader("Cache-Control", "public, max-age=604800");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        return res.status(200).send(buf);
+      }
+      return res.redirect(302, `/api/proxy-image?url=${encodeURIComponent(scrapedLogo)}`);
     }
 
     // High-resolution authentic brand favicon from website root / Google gstatic / s2 service fetched server-side
@@ -37564,7 +37444,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const videoThumbBufferCache = new Map<string, Buffer>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `v17_video_${videoId || 'vid'}`;
+      const cacheKey = `v18_video_${videoId || 'vid'}_${String(queryParams?.v || '')}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -37721,7 +37601,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
 
       const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
-      const placeName = formatBusinessName(rawPlace);
+      const targetDomForName = cleanDomainName(queryParams.placeDomain || foundVideo?.placeWebsite || foundVideo?.website || foundVideo?.placeId || rawPlace || "").toLowerCase().replace(/^www\./, "");
+      const placeName = KNOWN_OFFICIAL_NAMES[targetDomForName] || KNOWN_OFFICIAL_NAMES[`www.${targetDomForName}`] || formatBusinessName(rawPlace, targetDomForName);
       const authorName = queryParams.author || foundVideo?.author?.name || foundVideo?.authorName || "Verified Reviewer";
       const authorHandle = queryParams.authorHandle || queryParams.handle || foundVideo?.author?.handle || foundVideo?.authorHandle || authorName;
       const ratingNum = Math.max(1, Math.min(5, Math.round(Number(queryParams.rating || foundVideo?.rating || 5))));
@@ -38201,8 +38082,14 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return workPromise;
     }
 
-    // Dedicated clean routes for direct social scraper access (path-versioned /v17/ with single-dot .png filenames so Reddit & BunnyCDN never fail or serve stale PNGs)
+    // Dedicated clean routes for direct social scraper access (path-versioned /v18/ with single-dot .png filenames)
     app.get([
+      '/api/og-card/v18/:id.png',
+      '/api/og-card/v18/:id.jpg',
+      '/api/og-card/v18/:id',
+      '/api/og-card/v18/:domain/:id.png',
+      '/api/og-card/v18/:domain/:id.jpg',
+      '/api/og-card/v18/:domain/:id',
       '/api/og-card/v17/:id.png',
       '/api/og-card/v17/:id.jpg',
       '/api/og-card/v17/:id',
@@ -38334,7 +38221,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     }
 
     // Dedicated high-resolution touch icon endpoint for iOS Safari native share sheet & AirDrop
-    app.get(['/api/touch-icon/v17/video/:id.png', '/api/touch-icon/v17/video/:id', '/api/touch-icon/v16/video/:id.png', '/api/touch-icon/v16/video/:id', '/api/touch-icon/v15/video/:id.png', '/api/touch-icon/v15/video/:id', '/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v18/video/:id.png', '/api/touch-icon/v18/video/:id', '/api/touch-icon/v17/video/:id.png', '/api/touch-icon/v17/video/:id', '/api/touch-icon/v16/video/:id.png', '/api/touch-icon/v16/video/:id', '/api/touch-icon/v15/video/:id.png', '/api/touch-icon/v15/video/:id', '/api/touch-icon/video/:id.png', '/api/touch-icon/video/:id', '/api/og-icon/video/:id.png', '/api/og-icon/video/:id'], async (req: any, res: any) => {
       try {
         const videoId = (req.params.id || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38365,8 +38252,9 @@ app.get('/api/og-preview-v2', async (req, res) => {
         }
 
         const rawPlace = queryParams.placeName || foundVideo?.placeName || (foundVideo?.placeId ? cleanDomainName(foundVideo.placeId) : "") || "Local Business";
-        const placeName = formatBusinessName(rawPlace);
-        const rawTargetDomain = queryParams.placeDomain || queryParams.domain || foundVideo?.placeWebsite || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (placeName.includes('.') ? placeName.toLowerCase() : placeName));
+        const rawTargetDomain = queryParams.placeDomain || queryParams.domain || foundVideo?.placeWebsite || (foundVideo?.placeId && foundVideo.placeId.includes('.') ? cleanDomainName(foundVideo.placeId) : (rawPlace.includes('.') ? rawPlace.toLowerCase() : rawPlace));
+        const cleanDomLower = cleanDomainName(rawTargetDomain).toLowerCase().replace(/^www\./, "");
+        const placeName = KNOWN_OFFICIAL_NAMES[cleanDomLower] || KNOWN_OFFICIAL_NAMES[`www.${cleanDomLower}`] || formatBusinessName(rawPlace, cleanDomLower);
         const explicitLogoUrl = queryParams.logoUrl || queryParams.placeLogoUrl || foundVideo?.placeLogoUrl || foundVideo?.logoUrl || (foundVideo as any)?.placeAvatarUrl || "";
 
         const iconBuf = await generateSquareTouchIconBuffer(rawTargetDomain, placeName, explicitLogoUrl, foundVideo);
@@ -38383,7 +38271,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/touch-icon/v17/reviews/:domain.png', '/api/touch-icon/v17/reviews/:domain', '/api/touch-icon/v17/place/:domain.png', '/api/touch-icon/v17/place/:domain', '/api/touch-icon/v16/reviews/:domain.png', '/api/touch-icon/v16/reviews/:domain', '/api/touch-icon/v16/place/:domain.png', '/api/touch-icon/v16/place/:domain', '/api/touch-icon/v15/reviews/:domain.png', '/api/touch-icon/v15/reviews/:domain', '/api/touch-icon/v15/place/:domain.png', '/api/touch-icon/v15/place/:domain', '/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/touch-icon/v18/reviews/:domain.png', '/api/touch-icon/v18/reviews/:domain', '/api/touch-icon/v18/place/:domain.png', '/api/touch-icon/v18/place/:domain', '/api/touch-icon/v17/reviews/:domain.png', '/api/touch-icon/v17/reviews/:domain', '/api/touch-icon/v17/place/:domain.png', '/api/touch-icon/v17/place/:domain', '/api/touch-icon/v16/reviews/:domain.png', '/api/touch-icon/v16/reviews/:domain', '/api/touch-icon/v16/place/:domain.png', '/api/touch-icon/v16/place/:domain', '/api/touch-icon/v15/reviews/:domain.png', '/api/touch-icon/v15/reviews/:domain', '/api/touch-icon/v15/place/:domain.png', '/api/touch-icon/v15/place/:domain', '/api/touch-icon/reviews/:domain.png', '/api/touch-icon/reviews/:domain', '/api/touch-icon/place/:domain.png', '/api/touch-icon/place/:domain', '/api/og-icon/reviews/:domain.png', '/api/og-icon/reviews/:domain', '/api/og-icon/place/:domain.png', '/api/og-icon/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.png$/i, "").replace(/-dot-/gi, ".").trim();
         const queryParams = sanitizeQueryParams(req.query);
@@ -38393,7 +38281,8 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch (e) {}
 
         const cleanDomain = cleanDomainName(rawDomain || placeObj?.domain || placeObj?.website || "business.com");
-        const placeName = formatBusinessName(placeObj?.name || queryParams.name || cleanDomain || "Business");
+        const cleanDomLower = cleanDomain.toLowerCase().replace(/^www\./, "");
+        const placeName = KNOWN_OFFICIAL_NAMES[cleanDomLower] || KNOWN_OFFICIAL_NAMES[`www.${cleanDomLower}`] || formatBusinessName(placeObj?.name || queryParams.name || cleanDomain || "Business", cleanDomLower);
         const explicitLogoUrl = queryParams.logoUrl || placeObj?.logoUrl || "";
 
         const iconBuf = await generateSquareTouchIconBuffer(cleanDomain, placeName, explicitLogoUrl, placeObj);
@@ -38410,7 +38299,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       }
     });
 
-    app.get(['/api/og-image/v17/reviews/:domain.png', '/api/og-image/v17/reviews/:domain.jpg', '/api/og-image/v17/reviews/:domain', '/api/og-image/v17/place/:domain.png', '/api/og-image/v17/place/:domain.jpg', '/api/og-image/v17/place/:domain', '/api/og-image/v16/reviews/:domain.png', '/api/og-image/v16/reviews/:domain', '/api/og-image/v16/place/:domain.png', '/api/og-image/v16/place/:domain', '/api/og-image/v15/reviews/:domain.png', '/api/og-image/v15/reviews/:domain', '/api/og-image/v15/place/:domain.png', '/api/og-image/v15/place/:domain', '/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v18/reviews/:domain.png', '/api/og-image/v18/reviews/:domain.jpg', '/api/og-image/v18/reviews/:domain', '/api/og-image/v18/place/:domain.png', '/api/og-image/v18/place/:domain.jpg', '/api/og-image/v18/place/:domain', '/api/og-image/v17/reviews/:domain.png', '/api/og-image/v17/reviews/:domain.jpg', '/api/og-image/v17/reviews/:domain', '/api/og-image/v17/place/:domain.png', '/api/og-image/v17/place/:domain.jpg', '/api/og-image/v17/place/:domain', '/api/og-image/v16/reviews/:domain.png', '/api/og-image/v16/reviews/:domain', '/api/og-image/v16/place/:domain.png', '/api/og-image/v16/place/:domain', '/api/og-image/v15/reviews/:domain.png', '/api/og-image/v15/reviews/:domain', '/api/og-image/v15/place/:domain.png', '/api/og-image/v15/place/:domain', '/api/og-image/reviews/:domain.png', '/api/og-image/reviews/:domain', '/api/og-image/place/:domain.png', '/api/og-image/place/:domain'], async (req: any, res: any) => {
       try {
         const rawDomain = (req.params.domain || "").replace(/\.(?:png|jpe?g)$/i, "").replace(/-dot-/gi, ".").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -38438,66 +38327,108 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawQueryDomain = String((query.domain as string) || (query.website as string) || (query.id as string) || "").replace(/-dot-/gi, ".");
       const explicitLogoUrl = (query.logoUrl as string) || "";
       const explicitBannerUrl = (query.bannerUrl as string) || "";
-      const cacheKey = `v17_place_${cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName}`;
+      const domCacheKey = cleanDomainName(rawQueryDomain || rawQueryName) || rawQueryDomain || rawQueryName;
+      const inFlightKey = `v18_place_${domCacheKey}`;
 
-      const cachedEntry = ogPlaceCardCache.get(cacheKey);
-      if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
-        return Promise.resolve(cachedEntry.buf);
-      }
-      const existingInFlight = ogPlaceCardInFlight.get(cacheKey);
+      const existingInFlight = ogPlaceCardInFlight.get(inFlightKey);
       if (existingInFlight) {
         return existingInFlight;
       }
 
       const workPromise = (async (): Promise<Buffer> => {
       let placeObj: any = null;
+      let placeResolveTimedOut = false;
       try {
         placeObj = await Promise.race([
           resolvePlaceFromAnySource(rawQueryDomain || rawQueryName || (query.id as string) || ""),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1200))
+          new Promise<null>((resolve) => setTimeout(() => { placeResolveTimedOut = true; resolve(null); }, 1800))
         ]);
       } catch (e) {}
 
       const rawDomain = cleanDomainName(rawQueryDomain || placeObj?.domain || placeObj?.website || rawQueryName || "business.com");
-      const placeName = formatBusinessName(placeObj?.name || rawQueryName || rawDomain || "Business");
+      const cleanT = rawDomain.toLowerCase().replace(/^www\./, "");
+      const placeName = KNOWN_OFFICIAL_NAMES[cleanT] || KNOWN_OFFICIAL_NAMES[`www.${cleanT}`] || formatBusinessName(placeObj?.name || rawQueryName || rawDomain || "Business", cleanT);
       const isYoouzPlace = rawDomain === 'yoouz.com' || rawDomain === 'www.yoouz.com' || rawDomain.includes('yoouz') || placeName.toLowerCase().includes('yoouz');
 
-      // 1. Live Review Metrics (feedCache in-memory first -> placeObj -> local index -> BunnyDB)
+      // 1. Live Review Metrics (feedCache + local index + seeds + placeObj + BunnyDB)
       let placeReviewsCount = 0;
       let placeAvgRating = 5.0;
 
-      const cleanT = rawDomain.toLowerCase();
-      if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0 && cleanT) {
-        const matching = feedCache.videos.filter((v: any) => {
+      const collectMatchedReviews = (list: any[]): any[] => {
+        if (!Array.isArray(list) || !cleanT) return [];
+        return list.filter((v: any) => {
           if (!v || isDeletedReviewServer(v)) return false;
-          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-          return vDom && (vDom === cleanT || vDom.includes(cleanT) || cleanT.includes(vDom));
+          const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase().replace(/^www\./, "");
+          return Boolean(vDom && (vDom === cleanT || vDom.includes(cleanT) || cleanT.includes(vDom) || areDomainAliases(cleanT, vDom)));
         });
-        if (matching.length > 0) {
-          placeReviewsCount = matching.length;
-          const sum = matching.reduce((acc: number, v: any) => acc + (Number(v.rating) || 5), 0);
-          placeAvgRating = Number((sum / matching.length).toFixed(1));
+      };
+
+      const seenRevIds = new Set<string>();
+      const combinedRevs: any[] = [];
+      const addRevs = (items: any[]) => {
+        for (const item of items) {
+          const rid = String(item?.id || "");
+          if (rid && seenRevIds.has(rid)) continue;
+          if (rid) seenRevIds.add(rid);
+          combinedRevs.push(item);
         }
-      }
+      };
 
-      if (placeReviewsCount === 0 && placeObj && typeof placeObj.reviewCount === 'number' && placeObj.reviewCount > 0) {
-        placeReviewsCount = placeObj.reviewCount;
-        placeAvgRating = Number(placeObj.rating || 5.0);
+      if (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0) {
+        addRevs(collectMatchedReviews(feedCache.videos));
       }
+      if (Array.isArray(placeObj?.reviews) && placeObj.reviews.length > 0) {
+        addRevs(placeObj.reviews);
+      }
+      try {
+        const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
+        addRevs(collectMatchedReviews(localList));
+      } catch {}
+      try {
+        const seedsPath = path.join(process.cwd(), 'public', 'seeds', 'reviews_index.json');
+        if (fs.existsSync(seedsPath)) {
+          const seeds = JSON.parse(fs.readFileSync(seedsPath, 'utf8'));
+          addRevs(collectMatchedReviews(seeds));
+        }
+      } catch {}
 
-      if (placeReviewsCount === 0) {
+      if (combinedRevs.length === 0) {
         try {
-          const localList = typeof readReviewsIndex === 'function' ? readReviewsIndex() : [];
-          const matching = localList.filter((v: any) => {
-            const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase();
-            return cleanT && vDom && (vDom.includes(cleanT) || cleanT.includes(vDom));
-          });
-          if (matching.length > 0) {
-            placeReviewsCount = matching.length;
-            const sum = matching.reduce((acc: number, item: any) => acc + (Number(item.rating) || 5), 0);
-            placeAvgRating = Number((sum / matching.length).toFixed(1));
+          const bunnyDb = getBunnyDb();
+          if (bunnyDb && cleanT) {
+            const bRes = await Promise.race([
+              bunnyDb.execute({ sql: "SELECT id, rating, placeId, placeName, data FROM videoReviews", args: [] }),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 900))
+            ]) as any;
+            if (bRes?.rows?.length) {
+              const rows = bRes.rows.map((r: any) => {
+                const d = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+                return { id: r.id, rating: r.rating, placeId: r.placeId, placeName: r.placeName, ...d };
+              });
+              addRevs(collectMatchedReviews(rows));
+            }
           }
-        } catch (e) {}
+        } catch {}
+      }
+
+      if (combinedRevs.length > 0) {
+        placeReviewsCount = combinedRevs.length;
+        const sum = combinedRevs.reduce((acc: number, v: any) => acc + (Number(v.rating) || 5), 0);
+        placeAvgRating = Number((sum / combinedRevs.length).toFixed(1));
+      } else if (placeObj) {
+        const objRevCount = Number(placeObj.reviewCount || placeObj.totalReviews || placeObj.ratingCount || 0);
+        if (objRevCount > 0) {
+          placeReviewsCount = objRevCount;
+          placeAvgRating = Number(placeObj.rating || 5.0);
+        } else if (placeObj.starCounts && typeof placeObj.starCounts === 'object') {
+          const sc = placeObj.starCounts;
+          const totalSc = [1, 2, 3, 4, 5].reduce((acc, s) => acc + (Number(sc[s] || sc[String(s)] || 0)), 0);
+          if (totalSc > 0) {
+            placeReviewsCount = totalSc;
+            const weighted = [1, 2, 3, 4, 5].reduce((acc, s) => acc + s * (Number(sc[s] || sc[String(s)] || 0)), 0);
+            placeAvgRating = Number((weighted / totalSc).toFixed(1));
+          }
+        }
       }
 
       if (query.reviewsCount !== undefined && query.reviewsCount !== null && query.reviewsCount !== "") {
@@ -38512,6 +38443,12 @@ app.get('/api/og-preview-v2', async (req, res) => {
 
       const placeRatingStr = placeAvgRating.toFixed(1);
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
+      const resolvedLogoSig = (explicitLogoUrl || placeObj?.logoUrl || KNOWN_BRAND_LOGOS[cleanT] || "").slice(0, 120);
+      const cacheKey = `v18_place_${cleanT || domCacheKey}_${placeName}_${placeReviewsCount}_${placeRatingStr}_${resolvedLogoSig}`;
+      const cachedEntry = ogPlaceCardCache.get(cacheKey);
+      if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
+        return cachedEntry.buf;
+      }
 
       // 2. Comprehensive Banner / Cover Photo Resolution (Known Brand Banners have absolute priority)
       let bannerCandidateUrl = (KNOWN_BRAND_BANNERS[rawDomain] || KNOWN_BRAND_BANNERS[`www.${rawDomain}`]) || explicitBannerUrl || placeObj?.bannerUrl || placeObj?.placeBannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
@@ -38520,12 +38457,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
         bannerCandidateUrl = "https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg";
       }
 
-      // Check reviews for this place to find an authentic video frame or cover photo
       if (!bannerCandidateUrl) {
         try {
-          const sourceList = (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0)
-            ? feedCache.videos
-            : (typeof readReviewsIndex === 'function' ? readReviewsIndex() : []);
+          const sourceList = combinedRevs.length > 0
+            ? combinedRevs
+            : (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0
+                ? feedCache.videos
+                : (typeof readReviewsIndex === 'function' ? readReviewsIndex() : []));
           const m = sourceList.find((v: any) =>
             v.placeId === rawDomain ||
             v.placeId === rawQueryDomain ||
@@ -38552,13 +38490,13 @@ app.get('/api/og-preview-v2', async (req, res) => {
         }
       } catch {}
 
-      // 3. Resolve Business Logo Asset (bounded to 1800ms so scrapers never time out)
+      // 3. Resolve Business Logo Asset (bounded to 3500ms so upstream SVGs/mirrors finish cleanly)
       let logoBuf: Buffer | null = null;
       let logoIsFullBleed = false;
       try {
         const logoAsset = await Promise.race([
           fetchPlaceLogoAsset(rawDomain, placeName, explicitLogoUrl || placeObj?.logoUrl, placeObj),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1800))
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500))
         ]);
         if (logoAsset) {
           logoBuf = logoAsset.buf;
@@ -38761,18 +38699,18 @@ app.get('/api/og-preview-v2', async (req, res) => {
           .toBuffer();
       }
 
-      // Only cache for full 30 min if we actually resolved the banner (otherwise cache briefly for 15s while background banner fetch finishes)
-      if (bannerBuf) {
+      // Cache for full 30 min only when banner, logo, and place metadata resolved without timeout
+      if (bannerBuf && logoBuf && !placeResolveTimedOut) {
         ogPlaceCardCache.set(cacheKey, { buf: finalImage, ts: Date.now() });
       } else {
         ogPlaceCardCache.set(cacheKey, { buf: finalImage, ts: Date.now() - (1000 * 60 * 29.75) });
       }
       return finalImage;
       })().finally(() => {
-        ogPlaceCardInFlight.delete(cacheKey);
+        ogPlaceCardInFlight.delete(inFlightKey);
       });
 
-      ogPlaceCardInFlight.set(cacheKey, workPromise);
+      ogPlaceCardInFlight.set(inFlightKey, workPromise);
       return workPromise;
     }
 
@@ -38787,7 +38725,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       return res.send(finalImage);
     }
 
-    app.get(['/api/og-image/v17/creator/:handle.png', '/api/og-image/v17/creator/:handle.jpg', '/api/og-image/v17/creator/:handle', '/api/og-image/v16/creator/:handle.png', '/api/og-image/v16/creator/:handle', '/api/og-image/v15/creator/:handle.png', '/api/og-image/v15/creator/:handle', '/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
+    app.get(['/api/og-image/v18/creator/:handle.png', '/api/og-image/v18/creator/:handle.jpg', '/api/og-image/v18/creator/:handle', '/api/og-image/v17/creator/:handle.png', '/api/og-image/v17/creator/:handle.jpg', '/api/og-image/v17/creator/:handle', '/api/og-image/v16/creator/:handle.png', '/api/og-image/v16/creator/:handle', '/api/og-image/v15/creator/:handle.png', '/api/og-image/v15/creator/:handle', '/api/og-image/creator/:handle.png', '/api/og-image/creator/:handle'], async (req: any, res: any) => {
       try {
         const rawHandle = (req.params.handle || "").replace(/\.(?:png|jpe?g)$/i, "").replace(/-dot-/gi, ".").trim();
         const host = req.headers['x-forwarded-host'] || req.headers.host || 'yoouz.com';
@@ -38814,7 +38752,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = String((query.handle as string) || rawName).replace(/^@+/, "").replace(/-dot-/gi, ".");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `v17_creator_${cleanLower}`;
+      const cacheKey = `v18_creator_${cleanLower}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -39488,28 +39426,54 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
     reviews: []
   };
 
-  // 1. In-Memory Feed Cache & Video Reviews Index (0ms fast lookup)
+  // 1. In-Memory Feed Cache + Local Index + Seeds Index (0ms fast lookup)
   let resolvedReviewsFromCache = false;
   try {
     const hasFeedCache = Array.isArray(feedCache?.videos) && feedCache.videos.length > 0;
-    const rawList = hasFeedCache ? feedCache.videos : (typeof readReviewsIndex === 'function' ? readReviewsIndex() : []);
     const cleanT = domain.toLowerCase().replace(/^www\./, "").trim();
-    const matchedVideos = rawList.filter((v: any) => {
-      if (!v || !v.id || isDeletedReviewServer(v)) return false;
-      const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase().replace(/^www\./, "").trim();
-      if (cleanT && vDom && (vDom === cleanT || vDom.includes(cleanT) || cleanT.includes(vDom))) return true;
-      if (areDomainAliases(cleanT, vDom)) return true;
-      if (v.placeName && v.placeName.toLowerCase() === formattedName.toLowerCase()) return true;
-      if (v.placeId && (v.placeId === raw || v.placeId === cleanSlug)) return true;
-      return false;
-    });
-    if (hasFeedCache) resolvedReviewsFromCache = true;
+    const filterMatching = (list: any[]) =>
+      list.filter((v: any) => {
+        if (!v || !v.id || isDeletedReviewServer(v)) return false;
+        const vDom = cleanDomainName(v.placeWebsite || v.placeId || v.placeName || '').toLowerCase().replace(/^www\./, "").trim();
+        if (cleanT && vDom && (vDom === cleanT || vDom.includes(cleanT) || cleanT.includes(vDom))) return true;
+        if (areDomainAliases(cleanT, vDom)) return true;
+        if (v.placeName && v.placeName.toLowerCase() === formattedName.toLowerCase()) return true;
+        if (v.placeId && (v.placeId === raw || v.placeId === cleanSlug)) return true;
+        return false;
+      });
+
+    const seenRids = new Set<string>();
+    const matchedVideos: any[] = [];
+    const appendUnique = (items: any[]) => {
+      for (const item of items) {
+        const rid = String(item?.id || "");
+        if (rid && seenRids.has(rid)) continue;
+        if (rid) seenRids.add(rid);
+        matchedVideos.push(item);
+      }
+    };
+
+    if (hasFeedCache) {
+      resolvedReviewsFromCache = true;
+      appendUnique(filterMatching(feedCache.videos));
+    }
+    if (typeof readReviewsIndex === 'function') {
+      appendUnique(filterMatching(readReviewsIndex()));
+    }
+    try {
+      const seedsPath = path.join(process.cwd(), 'public', 'seeds', 'reviews_index.json');
+      if (fs.existsSync(seedsPath)) {
+        const seeds = JSON.parse(fs.readFileSync(seedsPath, 'utf8'));
+        if (Array.isArray(seeds)) appendUnique(filterMatching(seeds));
+      }
+    } catch {}
+
     if (matchedVideos.length > 0) {
       place.reviews = matchedVideos;
       place.reviewCount = matchedVideos.length;
       place.totalReviews = matchedVideos.length;
       const first = matchedVideos[0];
-      if (first.placeName) place.name = formatBusinessName(first.placeName);
+      if (first.placeName) place.name = formatBusinessName(first.placeName, cleanT);
       if (first.placeLogo || first.placeLogoUrl || first.logoUrl) {
         place.logoUrl = first.placeLogo || first.placeLogoUrl || first.logoUrl;
       }
@@ -39671,20 +39635,51 @@ async function resolvePlaceFromAnySource(placeIdOrDomain: string): Promise<any> 
 
   
 
-  // 5. Direct match for known brand vector logo
+  // 5. Canonical brand name, owner-customized logo protection & known brand logo parity
+  const domKey = (domain || raw || "").toLowerCase().replace(/^www\./, "").trim();
   const isYoouz = domain === 'yoouz.com' || domain === 'www.yoouz.com' || domain.includes('yoouz');
+  const isOwnerCustomizedPlace = Boolean(
+    place.customized ||
+    place.customEdited ||
+    (place.isClaimed && place.claimedByEmail) ||
+    (place.logoUrl && (place.logoUrl.includes("b-cdn.net") || place.logoUrl.includes("/uploads/")) && place.logoUrl !== place.bannerUrl && !isGenericOrPlaceholderLogo(place.logoUrl) && !isFaviconUrl(place.logoUrl))
+  );
+
   if (isYoouz) {
     place.name = 'Yoouz';
     place.logoUrl = 'https://www.yoouz.com/favicon.svg';
-  } else if (!place.logoUrl && KNOWN_BRAND_LOGOS[domain]) {
-    const brand = KNOWN_BRAND_LOGOS[domain];
-    place.logoUrl = brand.startsWith('<svg')
-      ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
-      : brand;
+  } else {
+    const officialName = KNOWN_OFFICIAL_NAMES[domKey] || KNOWN_OFFICIAL_NAMES[`www.${domKey}`];
+    if (officialName) {
+      place.name = officialName;
+    } else if (place.name && !place.customized) {
+      place.name = formatBusinessName(place.name, domKey);
+    }
+
+    const knownLogo = KNOWN_BRAND_LOGOS[domKey] || KNOWN_BRAND_LOGOS[`www.${domKey}`] || KNOWN_BRAND_LOGOS[domain];
+    if (!isOwnerCustomizedPlace && knownLogo && !knownLogo.includes('/api/favicon')) {
+      place.logoUrl = knownLogo.startsWith('<svg')
+        ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(knownLogo)}`
+        : knownLogo;
+      place.avatarUrl = place.logoUrl;
+    }
+  }
+
+  // Fallback reviewCount from ratingCount / starCounts when reviews list wasn't hydrated
+  if ((!place.reviewCount || place.reviewCount === 0) && (Number(place.totalReviews) > 0 || Number(place.ratingCount) > 0)) {
+    place.reviewCount = Number(place.totalReviews || place.ratingCount || 0);
+  }
+  if ((!place.reviewCount || place.reviewCount === 0) && place.starCounts && typeof place.starCounts === 'object') {
+    const totalSc = [1, 2, 3, 4, 5].reduce((acc, s) => acc + Number(place.starCounts[s] || place.starCounts[String(s)] || 0), 0);
+    if (totalSc > 0) {
+      place.reviewCount = totalSc;
+      place.totalReviews = totalSc;
+      const weighted = [1, 2, 3, 4, 5].reduce((acc, s) => acc + s * Number(place.starCounts[s] || place.starCounts[String(s)] || 0), 0);
+      place.rating = Number((weighted / totalSc).toFixed(1));
+    }
   }
 
   // Final sanitization of banners across all data sources
-  const domKey = (domain || raw || "").toLowerCase().replace(/^www\./, "").trim();
   const knownBrandBanner = (domKey && (KNOWN_BRAND_BANNERS[domKey] || KNOWN_BRAND_BANNERS[`www.${domKey}`])) || "";
   if (knownBrandBanner) {
     place.bannerUrl = knownBrandBanner;
@@ -39775,7 +39770,7 @@ async function normalizeLogoAsset(rawBuf: Buffer, skipTrim = false): Promise<Pla
       return pxData[(cy * w + cx) * ch + 3] ?? 255;
     };
 
-    // Edge midpoints tell us if artwork fills a full square/squircle container (even when corners are rounded!)
+    // Edge midpoints tell us if artwork fills a full square/squircle container (NEVER treat wide pills/wordmarks as full-bleed square cover crops!)
     const edgeMidAlphas = [
       getAlphaAt(w / 2, Math.min(2, h - 1)),
       getAlphaAt(w / 2, Math.max(0, h - 3)),
@@ -39783,7 +39778,9 @@ async function normalizeLogoAsset(rawBuf: Buffer, skipTrim = false): Promise<Pla
       getAlphaAt(Math.max(0, w - 3), h / 2),
     ];
     const opaqueEdgeMidCount = edgeMidAlphas.filter((a) => a >= 225).length;
-    const isFullBleed = opaqueEdgeMidCount >= 3;
+    const aspect = Math.max(w, h) / Math.max(1, Math.min(w, h));
+    const isNearlySquare = aspect <= 1.25;
+    const isFullBleed = isNearlySquare && opaqueEdgeMidCount >= 3;
 
     let finalSharp = sharp(preparedBuf, { density }).ensureAlpha();
     if (!isFullBleed && !skipTrim && w >= 16 && h >= 16) {
@@ -39817,9 +39814,20 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
     .toLowerCase()
     .trim();
 
-  let directUrl = explicitLogoUrl || placeObj?.logoUrl || placeObj?.placeLogoUrl || placeObj?.avatarUrl || placeObj?.icon || "";
+  const unwrapProxy = (u: string): string => {
+    let out = (u || "").trim();
+    let guard = 0;
+    while (out.includes("proxy-image") && guard < 4) {
+      guard++;
+      const m = out.match(/url=([^&]+)/);
+      if (m && m[1]) {
+        try { out = decodeURIComponent(m[1]).trim(); } catch { break; }
+      } else break;
+    }
+    return out;
+  };
 
-  // Extract domain if directUrl is /api/favicon?domain=...
+  let directUrl = unwrapProxy(explicitLogoUrl || placeObj?.logoUrl || placeObj?.placeLogoUrl || placeObj?.avatarUrl || placeObj?.icon || "");
   if (directUrl && directUrl.includes("/api/favicon")) {
     try {
       const m = directUrl.match(/domain=([^&]+)/i);
@@ -39830,7 +39838,37 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
     directUrl = "";
   }
 
-  const cacheKey = `${cleanDom || domain || ''}_${name || ''}_${directUrl || ''}_hd2`;
+  // Check if owner explicitly customized the logo on the business profile (placeObj or local index)
+  let savedPlaceRec: any = null;
+  if (cleanDom) {
+    try {
+      const memList = typeof readPlacesIndex === 'function' ? readPlacesIndex() : [];
+      savedPlaceRec = memList.find((p: any) => p && (p.id === cleanDom || p.brandDomain === cleanDom || (p.website && cleanDomainName(p.website) === cleanDom))) || null;
+    } catch {}
+  }
+
+  const savedCustomLogo = savedPlaceRec?.logoUrl ? unwrapProxy(savedPlaceRec.logoUrl) : "";
+  const hasSavedCustom = Boolean(
+    savedCustomLogo &&
+    !savedCustomLogo.includes("/api/favicon") &&
+    !isFaviconUrl(savedCustomLogo) &&
+    !isGenericOrPlaceholderLogo(savedCustomLogo) &&
+    savedCustomLogo !== unwrapProxy(savedPlaceRec?.bannerUrl || "") &&
+    (savedPlaceRec?.customized || savedPlaceRec?.customEdited || (savedPlaceRec?.isClaimed && savedPlaceRec?.claimedByEmail) || savedCustomLogo.includes("b-cdn.net") || savedCustomLogo.includes("/uploads/"))
+  );
+  if (hasSavedCustom) {
+    directUrl = savedCustomLogo;
+  }
+
+  const isExplicitCustomDirect = Boolean(
+    hasSavedCustom ||
+    (directUrl &&
+      !isFaviconUrl(directUrl) &&
+      !isGenericOrPlaceholderLogo(directUrl) &&
+      (placeObj?.customized || placeObj?.customEdited || (placeObj?.isClaimed && placeObj?.claimedByEmail) || directUrl.includes("b-cdn.net") || directUrl.includes("/uploads/")))
+  );
+
+  const cacheKey = `${cleanDom || domain || ''}_${name || ''}_${directUrl || ''}_hd3`;
   if (placeLogoAssetCache.has(cacheKey)) {
     const cached = placeLogoAssetCache.get(cacheKey)!;
     if (Date.now() - cached.timestamp < 3600000) {
@@ -39839,16 +39877,7 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
   }
 
   let logoAsset: PlaceLogoAsset | null = null;
-
-  // Unwrap proxy-image?url=
-  if (directUrl && directUrl.includes("proxy-image")) {
-    try {
-      const match = directUrl.match(/url=([^&]+)/);
-      if (match && match[1]) {
-        directUrl = decodeURIComponent(match[1]);
-      }
-    } catch (e) {}
-  }
+  let usedAuthoritativeSource = false;
 
   // Check if this is Yoouz itself
   if (cleanDom === 'yoouz.com' || cleanDom.includes('yoouz') || name?.toLowerCase() === 'yoouz') {
@@ -39870,131 +39899,139 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
     "Accept": "image/png,image/jpeg,image/webp,image/svg+xml,image/*;q=0.9"
   };
 
-  // 1. TOP PRIORITY: Known Brand Logos (SVG / Data URI / HTTP URL)
-  if (!logoAsset && (cleanDom || name)) {
-    const rawKnown = KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "");
-    if (rawKnown && !rawKnown.includes("/api/favicon")) {
+  const fetchImageBufferWithMirrors = async (targetUrl: string, timeoutMs = 3000): Promise<Buffer | null> => {
+    if (!targetUrl || !targetUrl.startsWith("http")) return null;
+    const tryUrls = [targetUrl];
+    const cleanTarget = targetUrl.replace(/^https?:\/\//, "");
+    tryUrls.push(`https://wsrv.nl/?url=${encodeURIComponent(targetUrl)}`);
+    tryUrls.push(`https://i0.wp.com/${cleanTarget}`);
+    for (const u of tryUrls) {
       try {
-        if (rawKnown.startsWith('<svg')) {
-          logoAsset = await normalizeLogoAsset(Buffer.from(rawKnown, 'utf8'));
-        } else if (rawKnown.startsWith('data:image/svg')) {
-          const commaIdx = rawKnown.indexOf(',');
-          const svgStr = commaIdx >= 0 ? decodeURIComponent(rawKnown.slice(commaIdx + 1)) : "";
-          if (svgStr) logoAsset = await normalizeLogoAsset(Buffer.from(svgStr, 'utf8'));
-        } else if (rawKnown.startsWith('data:image')) {
-          const decoded = decodeDataUrl(rawKnown);
-          if (decoded) logoAsset = await normalizeLogoAsset(decoded);
-        } else if (rawKnown.startsWith('http://') || rawKnown.startsWith('https://')) {
-          const rResp = await fetch(rawKnown, {
-            headers: browserHeaders,
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-          });
-          if (rResp.ok) {
-            const ab = await rResp.arrayBuffer();
-            const b = Buffer.from(ab);
-            if (b.length > 50) {
-              logoAsset = await normalizeLogoAsset(b);
-            }
-          }
-        }
-      } catch (e) {}
+        const isWiki = u.includes("wikimedia.org") || u.includes("wikipedia.org");
+        const hdrs = isWiki
+          ? { "User-Agent": "Yoouz/1.0 (https://www.yoouz.com)", "Accept": "image/svg+xml,image/*,*/*;q=0.9" }
+          : browserHeaders;
+        const rResp = await fetch(u, {
+          headers: hdrs,
+          redirect: "follow",
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(timeoutMs) : undefined
+        });
+        if (!rResp.ok) continue;
+        const cType = (rResp.headers.get("content-type") || "").toLowerCase();
+        if (cType.includes("text/html")) continue;
+        const b = Buffer.from(await rResp.arrayBuffer());
+        if (b.length > 50) return b;
+      } catch {}
     }
+    return null;
+  };
+
+  const resolveSingleLogoSource = async (srcUrl: string): Promise<PlaceLogoAsset | null> => {
+    const clean = unwrapProxy(srcUrl);
+    if (!clean || clean.includes("/api/favicon")) return null;
+    if (clean.startsWith('<svg')) {
+      return await normalizeLogoAsset(Buffer.from(clean, 'utf8'));
+    }
+    if (clean.startsWith('data:image/svg')) {
+      const commaIdx = clean.indexOf(',');
+      const svgStr = commaIdx >= 0 ? decodeURIComponent(clean.slice(commaIdx + 1)) : "";
+      if (svgStr) return await normalizeLogoAsset(Buffer.from(svgStr, 'utf8'));
+    }
+    if (clean.startsWith('data:image')) {
+      const decoded = decodeDataUrl(clean);
+      if (decoded && decoded.length > 50) {
+        const asStr = decoded.toString("utf8");
+        const isRawTextMonogram = asStr.includes("<svg") && asStr.includes("<text") && !asStr.includes("<path");
+        if (!isRawTextMonogram) return await normalizeLogoAsset(decoded);
+      }
+      return null;
+    }
+    if (clean.startsWith("/") && !clean.startsWith("//") && !clean.startsWith("/api/")) {
+      try {
+        const localP = path.join(process.cwd(), clean.startsWith("/public") ? clean : `public${clean}`);
+        if (fs.existsSync(localP)) {
+          return await normalizeLogoAsset(fs.readFileSync(localP));
+        }
+      } catch {}
+      return null;
+    }
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      const buf = await fetchImageBufferWithMirrors(clean, 3000);
+      if (buf) return await normalizeLogoAsset(buf);
+    }
+    return null;
+  };
+
+  // 0. PRIORITY #1: Explicit owner-customized logo ALWAYS wins (matches CopoBrandLogo)
+  if (isExplicitCustomDirect && directUrl) {
+    logoAsset = await resolveSingleLogoSource(directUrl);
+    if (logoAsset) usedAuthoritativeSource = true;
   }
 
-  // If no direct URL yet, attempt to lookup place in database / memory
+  // 1. PRIORITY #2: Authoritative Known Brand Logos / Metadata (always before favicons)
+  const rawKnown = (cleanDom || name)
+    ? (KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "") || KNOWN_PLACE_METADATA[cleanDom]?.logoUrl || "")
+    : "";
+  if (!logoAsset && rawKnown && !rawKnown.includes("/api/favicon")) {
+    logoAsset = await resolveSingleLogoSource(rawKnown);
+    if (logoAsset) usedAuthoritativeSource = true;
+  }
+
+  // 2. If no direct URL yet, lookup place in database / memory (never let DB s2/favicons overwrite scraping for newly searched sites)
   if (!logoAsset && !directUrl && (cleanDom || name || placeObj?.placeId)) {
     try {
       const resolved = await resolvePlaceFromAnySource(cleanDom || name || placeObj?.placeId);
       if (resolved && resolved.logoUrl && !resolved.logoUrl.includes("/api/favicon")) {
-        directUrl = resolved.logoUrl;
-        if (directUrl.includes("proxy-image")) {
-          const match = directUrl.match(/url=([^&]+)/);
-          if (match && match[1]) {
-            directUrl = decodeURIComponent(match[1]);
-          }
-        }
+        directUrl = unwrapProxy(resolved.logoUrl);
       }
     } catch (e) {}
   }
 
-  // Direct Local File (ignore /api/* routes)
-  if (!logoAsset && directUrl && directUrl.startsWith("/") && !directUrl.startsWith("//") && !directUrl.startsWith("/api/")) {
-    try {
-      const localP = path.join(process.cwd(), directUrl.startsWith("/public") ? directUrl : `public${directUrl}`);
-      if (fs.existsSync(localP)) {
-        const fileData = fs.readFileSync(localP);
-        logoAsset = await normalizeLogoAsset(fileData);
-      }
-    } catch(e) {}
+  // 3. Explicit / persisted standalone directUrl (skip generic s2/gstatic favicons here so website extractor runs first)
+  if (!logoAsset && directUrl && !isFaviconUrl(directUrl) && !isGenericOrPlaceholderLogo(directUrl)) {
+    logoAsset = await resolveSingleLogoSource(directUrl);
+    if (logoAsset) usedAuthoritativeSource = true;
   }
 
-  // 2. Direct Data URL (vectorizes any embedded <text> tags automatically!)
-  if (!logoAsset && directUrl && directUrl.startsWith("data:")) {
-    const decoded = decodeDataUrl(directUrl);
-    if (decoded && decoded.length > 50) {
-      const asStr = decoded.toString("utf8");
-      const isRawTextMonogram = asStr.includes("<svg") && asStr.includes("<text") && !asStr.includes("<path");
-      if (!isRawTextMonogram) {
-        logoAsset = await normalizeLogoAsset(decoded);
-      }
+  // 4. Shared /api/favicon authentic website extractor for newly searched / dynamically discovered sites
+  if (!logoAsset && cleanDom && cleanDom.includes(".")) {
+    const scrapedUrl = await scrapeWebsiteAuthenticLogoUrl(cleanDom);
+    if (scrapedUrl) {
+      logoAsset = await resolveSingleLogoSource(scrapedUrl);
+      if (logoAsset) usedAuthoritativeSource = true;
     }
   }
 
-  // 3. Resolution-scored parallel network fetch (never lets a fast 16x16 .ico beat an HD PNG or SVG!)
-  let bestNetworkDim = 0;
-  if (!logoAsset) {
-    interface ScoredCandidate { url: string; baseBonus: number; }
-    const candidates: ScoredCandidate[] = [];
-    const seenU = new Set<string>();
-    const addCandidate = (u: string, baseBonus: number) => {
-      if (!u || seenU.has(u)) return;
-      seenU.add(u);
-      candidates.push({ url: u, baseBonus });
-    };
-
-    if (cleanDom) {
-      const knownHttp = KNOWN_BRAND_LOGOS[cleanDom] || KNOWN_BRAND_LOGOS[`www.${cleanDom}`] || (name ? KNOWN_BRAND_LOGOS[name.toLowerCase().trim()] : "");
-      if (knownHttp && (knownHttp.startsWith("http://") || knownHttp.startsWith("https://"))) {
-        addCandidate(knownHttp, 700);
-      }
-    }
-    if (directUrl && (directUrl.startsWith("http://") || directUrl.startsWith("https://"))) {
-      addCandidate(directUrl, 600);
-    }
-    if (cleanDom && cleanDom.includes(".")) {
-      addCandidate(`https://${cleanDom}/apple-touch-icon.png`, 450);
-      addCandidate(`https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDom)}&size=256`, 350);
-      addCandidate(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDom)}&sz=256`, 300);
-      addCandidate(`https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDom)}.ico`, 40);
-    }
-
+  // 5. Resolution-scored network favicon fallback ONLY when no brand logo, custom logo, or website logo succeeded
+  if (!logoAsset && cleanDom && cleanDom.includes(".")) {
+    const fallbackUrls = [
+      `https://${cleanDom}/apple-touch-icon.png`,
+      `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDom)}&size=256`,
+      `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDom)}&sz=256`,
+      `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDom)}.ico`
+    ];
     const settled = await Promise.allSettled(
-      candidates.map(async ({ url: u, baseBonus }) => {
+      fallbackUrls.map(async (u, idx) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 1800);
         try {
           const resp = await fetch(u, { signal: controller.signal, headers: browserHeaders });
           clearTimeout(timeout);
           if (!resp.ok) return null;
-          const ab = await resp.arrayBuffer();
-          const buf = Buffer.from(ab);
+          const buf = Buffer.from(await resp.arrayBuffer());
           if (buf.length <= 80) return null;
-
           const head = buf.slice(0, Math.min(buf.length, 400)).toString("utf8");
           const isSvg = head.includes("<svg");
           const rawMeta = isSvg ? null : await sharp(buf).metadata().catch(() => null);
           if (!isSvg && (!rawMeta || !rawMeta.width || !rawMeta.height || rawMeta.width <= 1 || rawMeta.height <= 1)) {
             return null;
           }
-
           const origMaxDim = isSvg ? 512 : Math.max(rawMeta!.width || 0, rawMeta!.height || 0);
           const norm = await normalizeLogoAsset(buf);
           if (!norm) return null;
-
-          const resScore = isSvg
-            ? 520
-            : (origMaxDim < 48 ? -300 : origMaxDim < 96 ? origMaxDim : 220 + Math.min(origMaxDim, 512));
-          return { norm, origMaxDim, score: baseBonus + resScore };
+          const baseBonus = idx === 0 ? 450 : idx === 1 ? 350 : idx === 2 ? 300 : 40;
+          const resScore = isSvg ? 520 : (origMaxDim < 48 ? -300 : origMaxDim < 96 ? origMaxDim : 220 + Math.min(origMaxDim, 512));
+          return { norm, score: baseBonus + resScore };
         } catch {
           clearTimeout(timeout);
           return null;
@@ -40007,58 +40044,11 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
       if (r.status === "fulfilled" && r.value && r.value.score > bestScore) {
         bestScore = r.value.score;
         logoAsset = r.value.norm;
-        bestNetworkDim = r.value.origMaxDim;
       }
     }
   }
 
-  // 4. Live Scrape fallback if no logo OR only low-res <64px favicon was found
-  if ((!logoAsset || bestNetworkDim < 64) && cleanDom && cleanDom.includes(".")) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1600);
-      const siteResp = await fetch(`https://${cleanDom}`, {
-        signal: controller.signal,
-        headers: {
-          "User-Agent": browserHeaders["User-Agent"],
-          "Accept": "text/html,application/xhtml+xml"
-        }
-      });
-      clearTimeout(timeout);
-      if (siteResp.ok) {
-        const html = await siteResp.text();
-        const appleIconMatch = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed|icon)["'][^>]+href=["']([^"']+)["']/i);
-        const iconHref = appleIconMatch ? appleIconMatch[1] : null;
-        if (iconHref) {
-          let fullIconUrl = iconHref;
-          if (iconHref.startsWith("//")) fullIconUrl = `https:${iconHref}`;
-          else if (iconHref.startsWith("/")) fullIconUrl = `https://${cleanDom}${iconHref}`;
-          else if (!iconHref.startsWith("http")) fullIconUrl = `https://${cleanDom}/${iconHref}`;
-
-          const iconResp = await fetch(fullIconUrl, {
-            headers: browserHeaders,
-            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(1800) : undefined
-          });
-          if (iconResp.ok) {
-            const ab = await iconResp.arrayBuffer();
-            const buf = Buffer.from(ab);
-            if (buf.length > 80) {
-              const head = buf.slice(0, Math.min(buf.length, 400)).toString("utf8");
-              const isSvg = head.includes("<svg");
-              const rawMeta = isSvg ? null : await sharp(buf).metadata().catch(() => null);
-              const scrapedDim = isSvg ? 512 : Math.max(rawMeta?.width || 0, rawMeta?.height || 0);
-              if (scrapedDim > bestNetworkDim || !logoAsset) {
-                const scrapedNorm = await normalizeLogoAsset(buf);
-                if (scrapedNorm) logoAsset = scrapedNorm;
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {}
-  }
-
-  // 5. If STILL not found: Render a colorful vector Brand Monogram specifically for THIS business
+  // 6. If STILL not found: Render a colorful vector Brand Monogram specifically for THIS business
   if (!logoAsset) {
     try {
       const monoSvg = generateBrandMonogramSvg(name || cleanDom || domain, 512);
@@ -40067,8 +40057,10 @@ async function fetchPlaceLogoAsset(domain: string, name: string, explicitLogoUrl
     } catch (e) {}
   }
 
+  // Only cache for full 1 hour if authoritative; transient fallbacks expire in 30s
   if (logoAsset) {
-    placeLogoAssetCache.set(cacheKey, { asset: logoAsset, timestamp: Date.now() });
+    const cacheTs = usedAuthoritativeSource ? Date.now() : (Date.now() - (3600000 - 30000));
+    placeLogoAssetCache.set(cacheKey, { asset: logoAsset, timestamp: cacheTs });
   }
 
   return logoAsset;
@@ -41121,8 +41113,8 @@ function injectOpenGraphTags(html: string, meta: any) {
         keywords = `${placeName}, ${domainSlug}, ${authorName}, photo review, ${placeName} customer review, live photo review, authentic customer review, Yoouz`;
         
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
-        imageUrl = `${baseUrl}/api/og-card/v17/${encodeURIComponent(videoId)}.png`;
-        touchIcon = `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(videoId)}.png`;
+        imageUrl = `${baseUrl}/api/og-card/v18/${encodeURIComponent(videoId)}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v18/video/${encodeURIComponent(videoId)}.png`;
         await Promise.race([
           generateVideoShareCardBuffer(videoId, {
             placeDomain: cleanPlaceDomForOg,
@@ -41211,18 +41203,68 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         const effectiveDomain = domain || cleanDomainName(placeId) || placeId.toLowerCase();
         const cleanDomainLookup = (effectiveDomain || "").toLowerCase().replace(/^www\./, "").trim();
+        const officialCanonicalName = KNOWN_OFFICIAL_NAMES[cleanDomainLookup] || KNOWN_OFFICIAL_NAMES[`www.${cleanDomainLookup}`];
+        if (officialCanonicalName) {
+          placeName = officialCanonicalName;
+        } else if (placeName && !placeObj?.customized) {
+          placeName = formatBusinessName(placeName, cleanDomainLookup);
+        }
+
+        if (placeVideos.length === 0) {
+          try {
+            const matchRev = (v: any) => {
+              if (!v) return false;
+              const vDom = cleanDomainName(v.placeDomain || v.brandDomain || v.website || v.placeId || "").toLowerCase().replace(/^www\./, "");
+              return vDom === cleanDomainLookup || v.placeId === placeId || v.placeId === effectiveDomain;
+            };
+            const seenIds = new Set<string>();
+            const mergedRevs: any[] = [];
+            const pushRev = (v: any) => {
+              if (!v || !v.id || seenIds.has(v.id)) return;
+              seenIds.add(v.id);
+              mergedRevs.push(v);
+            };
+            if (Array.isArray(feedCache?.videos)) {
+              for (const v of feedCache.videos) if (matchRev(v)) pushRev(v);
+            }
+            if (typeof readReviewsIndex === "function") {
+              for (const v of readReviewsIndex()) if (matchRev(v)) pushRev(v);
+            }
+            try {
+              const seedRevPath = path.join(process.cwd(), "public", "seeds", "reviews_index.json");
+              if (fs.existsSync(seedRevPath)) {
+                const seedRevs = JSON.parse(fs.readFileSync(seedRevPath, "utf8"));
+                if (Array.isArray(seedRevs)) {
+                  for (const v of seedRevs) if (matchRev(v)) pushRev(v);
+                }
+              }
+            } catch {}
+            if (mergedRevs.length > 0) {
+              placeVideos = mergedRevs;
+              const sum = mergedRevs.reduce((acc, r) => acc + Number(r.rating || 5), 0);
+              avgRating = Number((sum / mergedRevs.length).toFixed(1));
+            }
+          } catch {}
+        }
+
         let foundBanner = (cleanDomainLookup && (KNOWN_BRAND_BANNERS[cleanDomainLookup] || KNOWN_BRAND_BANNERS[`www.${cleanDomainLookup}`])) || (KNOWN_BRAND_BANNERS[effectiveDomain] || KNOWN_BRAND_BANNERS[`www.${effectiveDomain}`]) || placeObj?.bannerUrl || placeObj?.ogImage || placeObj?.image || placeObj?.photo || (placeObj?.photos && placeObj.photos[0]) || "";
+        const isOwnerCustomizedPlace = Boolean(
+          placeObj?.customized ||
+          placeObj?.customEdited ||
+          (placeObj?.isClaimed && placeObj?.claimedByEmail) ||
+          (foundLogo && (foundLogo.includes("b-cdn.net") || foundLogo.includes("/uploads/")) && foundLogo !== foundBanner && !isGenericOrPlaceholderLogo(foundLogo) && !isFaviconUrl(foundLogo))
+        );
         const isYoouzPlace = effectiveDomain === 'yoouz.com' || effectiveDomain === 'www.yoouz.com' || effectiveDomain.includes('yoouz') || placeName?.toLowerCase() === 'yoouz';
         if (isYoouzPlace) {
           foundLogo = 'https://www.yoouz.com/favicon.svg';
           foundBanner = 'https://rev1.b-cdn.net/banners/yoouz_brand_banner.jpg';
           placeName = 'Yoouz';
-        } else if (cleanDomainLookup && (KNOWN_BRAND_LOGOS[cleanDomainLookup] || KNOWN_BRAND_LOGOS[`www.${cleanDomainLookup}`])) {
+        } else if (!isOwnerCustomizedPlace && cleanDomainLookup && (KNOWN_BRAND_LOGOS[cleanDomainLookup] || KNOWN_BRAND_LOGOS[`www.${cleanDomainLookup}`])) {
           const brand = KNOWN_BRAND_LOGOS[cleanDomainLookup] || KNOWN_BRAND_LOGOS[`www.${cleanDomainLookup}`];
           foundLogo = brand.startsWith('<svg')
             ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
             : brand;
-        } else if (KNOWN_BRAND_LOGOS[effectiveDomain] || KNOWN_BRAND_LOGOS[`www.${effectiveDomain}`]) {
+        } else if (!isOwnerCustomizedPlace && (KNOWN_BRAND_LOGOS[effectiveDomain] || KNOWN_BRAND_LOGOS[`www.${effectiveDomain}`])) {
           const brand = KNOWN_BRAND_LOGOS[effectiveDomain] || KNOWN_BRAND_LOGOS[`www.${effectiveDomain}`];
           foundLogo = brand.startsWith('<svg')
             ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(brand)}`
@@ -41234,6 +41276,13 @@ function injectOpenGraphTags(html: string, meta: any) {
           foundBanner = v.placeBannerUrl || v.thumbnailUrl || v.videoThumbnail || (v.id ? `https://rev1.b-cdn.net/videos/${v.id}.jpg` : "");
         }
 
+        const effectiveReviewCount = placeVideos.length > 0
+          ? placeVideos.length
+          : Number(placeObj?.reviewCount || placeObj?.totalReviews || placeObj?.ratingCount || 0);
+        if (effectiveReviewCount > 0 && Number(placeObj?.rating) > 0) {
+          avgRating = Number(placeObj.rating);
+        }
+
         // Preserve exact canonical path (/reviews/<domain> or /place/<id>) with zero tracking query bloat
         canonicalPlaceUrl = (cleanPathname.startsWith('/reviews/') || cleanPathname.startsWith('/place/'))
           ? canonicalRequestUrl
@@ -41241,17 +41290,17 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         // Keep og:image URL strictly short, fixed-length & canonical (zero dynamic query bloat so social scrapers never reject or mismatch post-publish)
         title = `Live Photo Reviews for ${placeName} | Yoouz`;
-        description = placeVideos.length > 0
-          ? `Browse ${placeVideos.length} live camera photo reviews for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. Real Photos. Real Reviews.`
+        description = effectiveReviewCount > 0
+          ? `Browse ${effectiveReviewCount} live camera photo ${effectiveReviewCount === 1 ? 'review' : 'reviews'} for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. Real Photos. Real Reviews.`
           : `Discover genuine live photo reviews for ${placeName} on Yoouz. Real Photos. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
-        touchIcon = `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
+        imageUrl = `${baseUrl}/api/og-image/v18/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
+        touchIcon = `${baseUrl}/api/touch-icon/v18/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
         await Promise.race([
           generatePlaceShareCardBuffer({
             domain: effectiveDomain,
-            v: "41"
+            v: "42"
           }, baseUrl),
           new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
@@ -41399,7 +41448,7 @@ function injectOpenGraphTags(html: string, meta: any) {
 
         title = `@${cleanH}'s Live Photo Reviews | Yoouz`;
         description = `Browse live camera photo reviews by ${authorName} on Yoouz. Real Photos. Real Reviews.`;
-        imageUrl = `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
+        imageUrl = `${baseUrl}/api/og-image/v18/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
 
         await Promise.race([
@@ -41619,12 +41668,13 @@ function injectOpenGraphTags(html: string, meta: any) {
         const vid = revMatch[1];
         const parts = cleanPathname.split('/').filter(Boolean);
         const domSlug = ((parts[0] === 'review' || parts[0] === 'reviews') && parts.length >= 2) ? cleanDomainName(parts[1]) || parts[1] : 'yoouz.com';
-        const pName = formatBusinessName(domSlug) || 'Yoouz';
+        const domClean = domSlug.toLowerCase().replace(/^www\./, "").trim();
+        const pName = KNOWN_OFFICIAL_NAMES[domClean] || KNOWN_OFFICIAL_NAMES[`www.${domClean}`] || formatBusinessName(domSlug, domClean) || 'Yoouz';
         return {
           title: `Live Photo Review of ${pName} | Yoouz`,
           description: `See the live camera photo review for ${pName} on Yoouz. Real Photos. Zero Fake Reviews.`,
-          imageUrl: `${baseUrl}/api/og-card/v17/${encodeURIComponent(vid)}.png`,
-          touchIcon: `${baseUrl}/api/touch-icon/v17/video/${encodeURIComponent(vid)}.png`,
+          imageUrl: `${baseUrl}/api/og-card/v18/${encodeURIComponent(vid)}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v18/video/${encodeURIComponent(vid)}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: `${baseUrl}/embed/video/${encodeURIComponent(vid)}`,
@@ -41638,12 +41688,13 @@ function injectOpenGraphTags(html: string, meta: any) {
       }
       if (placeMatch && placeMatch[1]) {
         const dom = cleanDomainName(placeMatch[1]) || placeMatch[1];
-        const pName = formatBusinessName(dom) || 'Business';
+        const domClean = dom.toLowerCase().replace(/^www\./, "").trim();
+        const pName = KNOWN_OFFICIAL_NAMES[domClean] || KNOWN_OFFICIAL_NAMES[`www.${domClean}`] || formatBusinessName(dom, domClean) || 'Business';
         return {
           title: `Live Photo Reviews for ${pName} | Yoouz`,
           description: `Discover genuine live camera photo reviews for ${pName} on Yoouz. Real Photos. Zero Fake Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
-          touchIcon: `${baseUrl}/api/touch-icon/v17/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
+          imageUrl: `${baseUrl}/api/og-image/v18/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
+          touchIcon: `${baseUrl}/api/touch-icon/v18/reviews/${encodeURIComponent(dom.replace(/\./g, '-dot-'))}.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
           embedUrl: "",
@@ -41661,7 +41712,7 @@ function injectOpenGraphTags(html: string, meta: any) {
         return {
           title: `@${cleanH}'s Live Photo Reviews | Yoouz`,
           description: `Browse live camera photo reviews by ${aName} on Yoouz. Real Photos. Real Reviews.`,
-          imageUrl: `${baseUrl}/api/og-image/v17/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`,
+          imageUrl: `${baseUrl}/api/og-image/v18/creator/${encodeURIComponent(cleanH.replace(/\./g, '-dot-'))}.png`,
           touchIcon: `${baseUrl}/apple-touch-icon.png`,
           logoUrl: `${baseUrl}/apple-touch-icon.png`,
           videoUrl: "",
@@ -41791,6 +41842,21 @@ function injectOpenGraphTags(html: string, meta: any) {
       }
       if (typeof placeLogoAssetCache !== "undefined") {
         placeLogoAssetCache.clear();
+      }
+      if (typeof ogPlaceCardCache !== "undefined") {
+        ogPlaceCardCache.clear();
+      }
+      if (typeof ogVideoCardCache !== "undefined") {
+        ogVideoCardCache.clear();
+      }
+      if (typeof ogCreatorCardCache !== "undefined") {
+        ogCreatorCardCache.clear();
+      }
+      if (typeof placeBannerBufferCache !== "undefined") {
+        placeBannerBufferCache.clear();
+      }
+      if (typeof videoThumbBufferCache !== "undefined") {
+        videoThumbBufferCache.clear();
       }
       if (typeof failedRecoveryCache !== "undefined") {
         failedRecoveryCache.clear();

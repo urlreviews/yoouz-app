@@ -97,7 +97,20 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return u === bannerUrl || u === proxiedBannerUrl || getProxiedImageUrl(u) === proxiedBannerUrl;
     };
 
-    // 0. Direct match for verified high-resolution vector brand logos takes absolute precedence!
+    // -1. Explicit owner-uploaded custom logo (b-cdn.net / /uploads/) always takes top priority if updated by business
+    if (
+      logoUrl &&
+      (logoUrl.includes("b-cdn.net") || logoUrl.startsWith("/uploads/")) &&
+      !isSameAsBanner(logoUrl) &&
+      !isGenericOrPlaceholderLogo(logoUrl) &&
+      !isBrokenSvg(logoUrl)
+    ) {
+      const proxiedCustom = getProxiedImageUrl(logoUrl);
+      if (proxiedCustom) candidates.push(proxiedCustom);
+      if (logoUrl !== proxiedCustom) candidates.push(logoUrl);
+    }
+
+    // 0. Direct match for verified high-resolution vector brand logos
     if (cleanDomain) {
       const strippedDomain = cleanDomain.replace(/^www\./, "");
       if (KNOWN_BRAND_LOGOS[cleanDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[cleanDomain])) {

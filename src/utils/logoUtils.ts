@@ -1743,9 +1743,6 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
   if (cleanDomain && (cleanDomain === "yoouz.com" || cleanDomain === "www.yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz"))) {
     return YOOUZ_LOGO_DATA_URI;
   }
-  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
-    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
-  }
 
   const effectiveBannerFallback = bannerUrl || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : null);
   const proxiedBannerFallback = effectiveBannerFallback ? getProxiedImageUrl(effectiveBannerFallback) : null;
@@ -1754,6 +1751,20 @@ export function getCleanLogoUrl(url: string | null | undefined, domain?: string 
     effectiveBannerFallback &&
     (url === effectiveBannerFallback || url === proxiedBannerFallback || getProxiedImageUrl(url) === proxiedBannerFallback)
   );
+
+  const isUploadedCustomLogo = Boolean(
+    url &&
+    (url.includes("b-cdn.net") || url.startsWith("/uploads/")) &&
+    !isSameAsBanner &&
+    !isGenericOrPlaceholderLogo(url)
+  );
+  if (isUploadedCustomLogo && url) {
+    return getProxiedImageUrl(url);
+  }
+
+  if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
+  }
 
   // 1. Explicit authentic custom high-res standalone logo URL takes top priority (must not merely be a duplicate of the banner)
   if (
@@ -1807,6 +1818,27 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
     return YOOUZ_LOGO_DATA_URI;
   }
 
+  const fallbackBanner = place.bannerUrl || place.ogImage || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : "");
+  const proxiedFallbackBanner = fallbackBanner ? getProxiedImageUrl(fallbackBanner) : "";
+  const isDuplicateOfBanner = (u?: string | null): boolean => {
+    if (!u || !fallbackBanner) return false;
+    return u === fallbackBanner || u === place.bannerUrl || u === place.ogImage || u === proxiedFallbackBanner || getProxiedImageUrl(u) === proxiedFallbackBanner;
+  };
+
+  // 0. Owner-customized / uploaded logo takes highest precedence when explicitly set on the place
+  const isOwnerCustomLogo = Boolean(
+    place.logoUrl &&
+    ((place as any).customized || place.logoUrl.includes("b-cdn.net") || place.logoUrl.startsWith("/uploads/")) &&
+    !isDuplicateOfBanner(place.logoUrl) &&
+    !isGenericOrPlaceholderLogo(place.logoUrl) &&
+    !isFaviconUrl(place.logoUrl) &&
+    !place.logoUrl.includes("/api/favicon") &&
+    !place.logoUrl.includes("/api/brand-banner")
+  );
+  if (isOwnerCustomLogo && place.logoUrl) {
+    return getProxiedImageUrl(place.logoUrl);
+  }
+
   // 1. Direct match for known high-quality brand vector logos takes absolute precedence
   if (cleanDomain && KNOWN_BRAND_LOGOS[cleanDomain] && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/brand-banner") && !KNOWN_BRAND_LOGOS[cleanDomain].includes("/api/favicon")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[cleanDomain]);
@@ -1814,13 +1846,6 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
   if (cleanDomain && KNOWN_BRAND_LOGOS[`www.${cleanDomain}`] && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/brand-banner") && !KNOWN_BRAND_LOGOS[`www.${cleanDomain}`].includes("/api/favicon")) {
     return getProxiedImageUrl(KNOWN_BRAND_LOGOS[`www.${cleanDomain}`]);
   }
-
-  const fallbackBanner = place.bannerUrl || place.ogImage || (cleanDomain ? (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]) : "");
-  const proxiedFallbackBanner = fallbackBanner ? getProxiedImageUrl(fallbackBanner) : "";
-  const isDuplicateOfBanner = (u?: string | null): boolean => {
-    if (!u || !fallbackBanner) return false;
-    return u === fallbackBanner || u === place.bannerUrl || u === place.ogImage || u === proxiedFallbackBanner || getProxiedImageUrl(u) === proxiedFallbackBanner;
-  };
 
   // 2. Explicit custom standalone logoUrl provided (must not be a duplicate of bannerUrl)
   if (

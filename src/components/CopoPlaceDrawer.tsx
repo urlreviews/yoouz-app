@@ -1083,6 +1083,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
+    const isOwnerUploadedLogo = Boolean(
+      place.logoUrl &&
+      ((place as any).customized || place.logoUrl.includes("b-cdn.net") || place.logoUrl.startsWith("/uploads/")) &&
+      !isGenericOrPlaceholderLogo(place.logoUrl) &&
+      !isFaviconUrl(place.logoUrl) &&
+      !place.logoUrl.includes("/api/favicon") &&
+      place.logoUrl !== place.bannerUrl
+    );
+    if (isOwnerUploadedLogo && place.logoUrl) return place.logoUrl;
+
     const cleanD = (drawerDomain || "").replace(/^www\./, "").toLowerCase().trim();
     if (cleanD && KNOWN_BRAND_LOGOS[cleanD] && !KNOWN_BRAND_LOGOS[cleanD].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[cleanD];
     if (drawerDomain && KNOWN_BRAND_LOGOS[drawerDomain] && !KNOWN_BRAND_LOGOS[drawerDomain].includes("/api/favicon")) return KNOWN_BRAND_LOGOS[drawerDomain];
