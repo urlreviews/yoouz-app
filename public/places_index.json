@@ -1210,8 +1210,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "logoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "photos": [
@@ -1265,8 +1265,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=webflow.com",
-    "logoUrl": "/api/favicon?domain=webflow.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -1421,8 +1421,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
-    "logoUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "photos": [
@@ -1532,8 +1532,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "photos": [
@@ -1595,8 +1595,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=calvinklein.com",
-    "logoUrl": "/api/favicon?domain=calvinklein.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "photos": [
@@ -1651,8 +1651,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=dominos.com",
-    "logoUrl": "/api/favicon?domain=dominos.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -4720,8 +4720,8 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
     ],
-    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
-    "avatarUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_favicon.png%3Fv%3D1765368570%26width%3D500",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_favicon.png%3Fv%3D1765368570%26width%3D500",
     "category": "Tech & Gadgets",
     "categoryType": "all",
     "lat": 0,
@@ -4750,204 +4750,7 @@
     "hours": "Available 24/7",
     "locations": [],
     "videoReviewCount": 1,
-    "reviews": [
-      {
-        "id": "rev-1792740198020-gknyb",
-        "userId": "yudansha14@gmail.com",
-        "userEmail": "yudansha14@gmail.com",
-        "createdAtMs": 1792740198021,
-        "isLocalUpload": true,
-        "localBlobUrl": "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
-        "blobUrl": "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
-        "isCurrentSessionBlob": true,
-        "placeId": "flipper.net",
-        "placeName": "Flipper Zero",
-        "placeCategory": "Verified Business",
-        "placeAddress": "",
-        "placeCity": "",
-        "placeCountry": "",
-        "placePhone": "",
-        "placeEmail": "business@flipper.net",
-        "placeRating": 5,
-        "placeWebsite": "https://flipper.net",
-        "placeLogoUrl": "/api/favicon?domain=flipper.net",
-        "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
-        "placeDescription": "Flipper Zero · verified business · flipper.net",
-        "author": {
-          "name": "Josh Montgomery",
-          "handle": "@joshmontgomery",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EJ%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true
-        },
-        "rating": 5,
-        "durationSeconds": 47,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-          "blob:https://www.yoouz.com/7a54f2a0-be0f-4c22-ad25-2c3c96db8f3b",
-          "/api/videos/stream/rev-1792740198020-gknyb.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/thumbnail.jpg",
-        "caption": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-        "title": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-        "transcriptText": "Hey guys, I just got news that my flipper zero is coming in the mail Saturday, and I'm excited to open it up This is a product. I've been excited too Check out and a little bit to Do different things with I don't know I will actually come back here and revise this review probably once I have some input on the product. But at this point, it's just super exciting to get my Flipper Zero finally. Yay! This is a test. ABC123, check,",
-        "segments": [
-          {
-            "start": 1.54,
-            "end": 2.28,
-            "text": "Hey guys,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 2.82,
-            "end": 4.05,
-            "text": "I just got news",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.18,
-            "end": 6.15,
-            "text": "that my flipper zero is coming",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 6.24,
-            "end": 7.78,
-            "text": "in the mail Saturday,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.87,
-            "end": 10.04,
-            "text": "and I'm excited to open it up",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.1,
-            "end": 12.3,
-            "text": "This is a product.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 12.52,
-            "end": 14.67,
-            "text": "I've been excited too Check out",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 15.73,
-            "end": 18.82,
-            "text": "and a little bit to Do",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 20.88,
-            "end": 22.28,
-            "text": "different things with",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 23.02,
-            "end": 25.5,
-            "text": "I don't know",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 26.29,
-            "end": 28.84,
-            "text": "I will actually come back here",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 28.97,
-            "end": 31.01,
-            "text": "and revise this review probably",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 31.36,
-            "end": 32.51,
-            "text": "once I have some input",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 32.51,
-            "end": 33.05,
-            "text": "on the product.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 33.33,
-            "end": 34.3,
-            "text": "But at this point,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 34.3,
-            "end": 36.19,
-            "text": "it's just super exciting to get",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 36.19,
-            "end": 38,
-            "text": "my Flipper Zero finally.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 39.16,
-            "end": 39.61,
-            "text": "Yay!",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 39.97,
-            "end": 40.88,
-            "text": "This is a test.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 41.96,
-            "end": 42.6,
-            "text": "ABC123, check,",
-            "isHardwareTimed": true
-          }
-        ],
-        "hasBunnySmartCaptions": true,
-        "dishOrItem": "Flipper Zero",
-        "businessName": "Flipper Zero",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 1,
-        "viewsCount": 1,
-        "sharesCount": 0,
-        "tags": [
-          "Verified Business"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyVideoId": "189297f7-78ae-4049-963a-6ac619762152",
-        "bunnyGuid": "189297f7-78ae-4049-963a-6ac619762152",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/189297f7-78ae-4049-963a-6ac619762152/captions/en-auto.vtt",
-        "isReady": true,
-        "isProcessing": false,
-        "aiTitle": "Excited for Flipper Zero Unboxing! Initial Thoughts & Review Coming Soon! 🎉",
-        "description": "The speaker is thrilled to announce the arrival of their Flipper Zero product, scheduled for delivery on Saturday. They express excitement about exploring its features and potential uses. The speaker plans to return with a more detailed review after testing the product.",
-        "hasHardwareSilenceSync": true,
-        "hasOfficialBunnyTitle": true
-      }
-    ],
+    "reviews": [],
     "isSavedToProfile": true,
     "placeLogoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
     "ratingCount": 1,
@@ -7351,8 +7154,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=nfx.com",
-    "logoUrl": "/api/favicon?domain=nfx.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -7409,8 +7212,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=2b.vc",
-    "logoUrl": "/api/favicon?domain=2b.vc",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -7743,8 +7546,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
-    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -8411,8 +8214,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
-    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -8936,8 +8739,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=researchgate.net",
-    "logoUrl": "/api/favicon?domain=researchgate.net",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [
@@ -9046,8 +8849,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=cetaphil.com",
-    "logoUrl": "/api/favicon?domain=cetaphil.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "photos": [
@@ -9073,143 +8876,7 @@
     "brandDomain": "cetaphil.com",
     "selectedName": "Cetaphil",
     "videoReviewCount": 1,
-    "reviews": [
-      {
-        "id": "rev-1792775736880-yyxx1",
-        "userId": "sophiecieloo@gmail.com",
-        "userEmail": "sophiecieloo@gmail.com",
-        "createdAtMs": 1792775736883,
-        "isLocalUpload": true,
-        "localBlobUrl": "blob:https://www.yoouz.com/a552c03c-3ac0-461c-b9ac-43de5a83e7b3",
-        "blobUrl": "blob:https://www.yoouz.com/a552c03c-3ac0-461c-b9ac-43de5a83e7b3",
-        "isCurrentSessionBlob": true,
-        "placeId": "cetaphil.com",
-        "placeName": "Cetaphil",
-        "placeCategory": "Verified Business",
-        "placeAddress": "",
-        "placeCity": "",
-        "placeCountry": "",
-        "placePhone": "",
-        "placeEmail": "",
-        "placeRating": 5,
-        "placeWebsite": "https://cetaphil.com",
-        "placeLogoUrl": "/api/favicon?domain=cetaphil.com",
-        "placeBannerUrl": "",
-        "placeDescription": "Cetaphil · verified business · cetaphil.com",
-        "author": {
-          "name": "Sophie Cielo",
-          "handle": "@sophiecielo",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true
-        },
-        "rating": 5,
-        "durationSeconds": 17,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
-          "blob:https://www.yoouz.com/a552c03c-3ac0-461c-b9ac-43de5a83e7b3",
-          "/api/videos/stream/rev-1792775736880-yyxx1.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/thumbnail.jpg",
-        "caption": "Perfect Hydration for Soft & Smooth Skin",
-        "title": "Perfect Hydration for Soft & Smooth Skin",
-        "transcriptText": "Hey, so if you have been looking for a perfect moisturize where it leaves your skin like with a babe touch, I think I found the perfect one. Cetaphil has been in my skincare routine a long time and it's simple, effective and in love.",
-        "segments": [
-          {
-            "start": 0.57,
-            "end": 1.91,
-            "text": "Hey, so if you have been",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 1.91,
-            "end": 3.94,
-            "text": "looking for a perfect moisturize",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 3.94,
-            "end": 6.14,
-            "text": "where it leaves your skin like",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 6.14,
-            "end": 7.66,
-            "text": "with a babe touch,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.66,
-            "end": 8.06,
-            "text": "I think",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.82,
-            "end": 8.56,
-            "text": "I found the perfect one.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 9.07,
-            "end": 10.64,
-            "text": "Cetaphil has been in my skincare",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.18,
-            "end": 12.78,
-            "text": "routine a long time",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 13.29,
-            "end": 14.37,
-            "text": "and it's simple,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 14.77,
-            "end": 15.81,
-            "text": "effective and in love.",
-            "isHardwareTimed": true
-          }
-        ],
-        "hasBunnySmartCaptions": true,
-        "dishOrItem": "Cetaphil",
-        "businessName": "Cetaphil",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 1,
-        "viewsCount": 1,
-        "sharesCount": 0,
-        "tags": [
-          "Verified Business"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyVideoId": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
-        "bunnyGuid": "b71c0598-84a4-43a7-a56a-1886eda29ffc",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b71c0598-84a4-43a7-a56a-1886eda29ffc/captions/en-auto.vtt",
-        "aiTitle": "Perfect Hydration for Soft & Smooth Skin",
-        "isReady": true,
-        "isProcessing": false,
-        "hasOfficialBunnyTitle": true,
-        "hasHardwareSilenceSync": true
-      }
-    ],
+    "reviews": [],
     "isSavedToProfile": true,
     "ratingCount": 1,
     "starCounts": {
@@ -9273,131 +8940,7 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "reviews": [
-      {
-        "id": "rev-1792774959649-hot8m",
-        "userId": "sophiecieloo@gmail.com",
-        "userEmail": "sophiecieloo@gmail.com",
-        "createdAtMs": 1792774959651,
-        "isLocalUpload": true,
-        "localBlobUrl": "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-        "blobUrl": "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-        "isCurrentSessionBlob": true,
-        "placeId": "bk.com",
-        "placeName": "Burger King",
-        "placeCategory": "Verified Business",
-        "placeAddress": "",
-        "placeCity": "",
-        "placeCountry": "",
-        "placePhone": "",
-        "placeEmail": "",
-        "placeRating": 5,
-        "placeWebsite": "https://bk.com",
-        "placeLogoUrl": "/api/favicon?domain=bk.com",
-        "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fdpm.demdex.net%2Fdemconf.jpg",
-        "placeDescription": "Bk · verified business · bk.com",
-        "author": {
-          "name": "Sophie Cielo",
-          "handle": "@sophiecielo",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true
-        },
-        "rating": 5,
-        "durationSeconds": 18,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-          "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-          "/api/videos/stream/rev-1792774959649-hot8m.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/thumbnail.jpg",
-        "caption": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "title": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
-        "segments": [
-          {
-            "start": 2.13,
-            "end": 3.54,
-            "text": "I want to share my experience",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 3.54,
-            "end": 3.94,
-            "text": "with Burger King.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.31,
-            "end": 7.74,
-            "text": "I always have been really satisfied",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.98,
-            "end": 8.63,
-            "text": "with the combos,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 9.93,
-            "end": 11.42,
-            "text": "with crispy fries",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.65,
-            "end": 13.45,
-            "text": "and bananas is one of my",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 14.33,
-            "end": 16.1,
-            "text": "favorite hamburgers in the whole world.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 16.81,
-            "end": 17.26,
-            "text": "Love that.",
-            "isHardwareTimed": true
-          }
-        ],
-        "hasBunnySmartCaptions": true,
-        "dishOrItem": "Burger King",
-        "businessName": "Burger King",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 1,
-        "viewsCount": 1,
-        "sharesCount": 0,
-        "tags": [
-          "Verified Business"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyVideoId": "c3a61590-755a-4f83-b031-fa3890ff816d",
-        "bunnyGuid": "c3a61590-755a-4f83-b031-fa3890ff816d",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/captions/en-auto.vtt",
-        "isReady": true,
-        "isProcessing": false,
-        "aiTitle": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "hasOfficialBunnyTitle": true,
-        "hasHardwareSilenceSync": true
-      }
-    ],
+    "reviews": [],
     "image": "/api/proxy-image?url=https%3A%2F%2Fwww.bk.com%2Fstatic%2Fmedia%2FFreeWhooper.bfcca180c2a3afcba437.png"
   },
   {
@@ -9459,131 +9002,7 @@
     "isVerified": false,
     "isFollowed": false,
     "selectedName": "Bk",
-    "reviews": [
-      {
-        "id": "rev-1792774959649-hot8m",
-        "userId": "sophiecieloo@gmail.com",
-        "userEmail": "sophiecieloo@gmail.com",
-        "createdAtMs": 1792774959651,
-        "isLocalUpload": true,
-        "localBlobUrl": "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-        "blobUrl": "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-        "isCurrentSessionBlob": true,
-        "placeId": "bk.com",
-        "placeName": "Burger King",
-        "placeCategory": "Verified Business",
-        "placeAddress": "",
-        "placeCity": "",
-        "placeCountry": "",
-        "placePhone": "",
-        "placeEmail": "",
-        "placeRating": 5,
-        "placeWebsite": "https://bk.com",
-        "placeLogoUrl": "/api/favicon?domain=bk.com",
-        "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fdpm.demdex.net%2Fdemconf.jpg",
-        "placeDescription": "Bk · verified business · bk.com",
-        "author": {
-          "name": "Sophie Cielo",
-          "handle": "@sophiecielo",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%231E88E5%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ES%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true
-        },
-        "rating": 5,
-        "durationSeconds": 18,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-          "blob:https://www.yoouz.com/c258f708-6521-4954-a437-97283e65f65b",
-          "/api/videos/stream/rev-1792774959649-hot8m.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/thumbnail.jpg",
-        "caption": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "title": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "transcriptText": "I want to share my experience with Burger King. I always have been really satisfied with the combos, with crispy fries and bananas is one of my favorite hamburgers in the whole world. Love that.",
-        "segments": [
-          {
-            "start": 2.13,
-            "end": 3.54,
-            "text": "I want to share my experience",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 3.54,
-            "end": 3.94,
-            "text": "with Burger King.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.31,
-            "end": 7.74,
-            "text": "I always have been really satisfied",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.98,
-            "end": 8.63,
-            "text": "with the combos,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 9.93,
-            "end": 11.42,
-            "text": "with crispy fries",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.65,
-            "end": 13.45,
-            "text": "and bananas is one of my",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 14.33,
-            "end": 16.1,
-            "text": "favorite hamburgers in the whole world.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 16.81,
-            "end": 17.26,
-            "text": "Love that.",
-            "isHardwareTimed": true
-          }
-        ],
-        "hasBunnySmartCaptions": true,
-        "dishOrItem": "Burger King",
-        "businessName": "Burger King",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 1,
-        "viewsCount": 1,
-        "sharesCount": 0,
-        "tags": [
-          "Verified Business"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyVideoId": "c3a61590-755a-4f83-b031-fa3890ff816d",
-        "bunnyGuid": "c3a61590-755a-4f83-b031-fa3890ff816d",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/c3a61590-755a-4f83-b031-fa3890ff816d/captions/en-auto.vtt",
-        "isReady": true,
-        "isProcessing": false,
-        "aiTitle": "Crispy Fries & Bananas - My Favorite Burger! 🍔🍟🍌",
-        "hasOfficialBunnyTitle": true,
-        "hasHardwareSilenceSync": true
-      }
-    ],
+    "reviews": [],
     "isSavedToProfile": true,
     "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
   },
@@ -9615,8 +9034,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
-    "logoUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "photos": [
@@ -9745,263 +9164,7 @@
     },
     "selectedName": "Zara",
     "hours": "Available 24/7",
-    "reviews": [
-      {
-        "id": "rev-1792505047137-smiho",
-        "userId": "krtpcq@gmail.com",
-        "userEmail": "krtpcq@gmail.com",
-        "createdAtMs": 1792505047138,
-        "isLocalUpload": false,
-        "isCurrentSessionBlob": true,
-        "placeId": "zara.com",
-        "placeName": "Zara",
-        "placeCategory": "Real Estate",
-        "placeAddress": "Online",
-        "placeCity": "Online",
-        "placeCountry": "Belgium",
-        "placePhone": "",
-        "placeEmail": "",
-        "placeRating": 5,
-        "placeWebsite": "https://www.zara.com/",
-        "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dzara.com%26sz%3D128",
-        "placeBannerUrl": "",
-        "placeDescription": "Zara · real estate · Online",
-        "author": {
-          "name": "Kert P",
-          "handle": "@kertp",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true,
-          "location": "",
-          "city": "",
-          "country": ""
-        },
-        "rating": 5,
-        "durationSeconds": 14,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-          "https://rev1.b-cdn.net/videos/f5452859-5b43-43f1-857f-7b13fcfa80d8.mp4",
-          "/api/videos/stream/rev-1792505047137-smiho.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/thumbnail_9d571ef3.jpg",
-        "caption": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-        "transcriptText": "This Zara perfume is my new favorite. It fits my vibe perfectly. And unlike any other brands at this price, it actually lasts all day. So you have to give it a try.",
-        "segments": [
-          {
-            "start": 0.92,
-            "end": 4.12,
-            "text": "This Zara perfume is my new favorite.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.65,
-            "end": 6.29,
-            "text": "It fits my vibe perfectly.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 6.47,
-            "end": 8.12,
-            "text": "And unlike any other brands at",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 8.21,
-            "end": 8.69,
-            "text": "this price,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 9.19,
-            "end": 11.04,
-            "text": "it actually lasts all day.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.08,
-            "end": 12.04,
-            "text": "So you have to give it",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 12.04,
-            "end": 12.44,
-            "text": "a try.",
-            "isHardwareTimed": true
-          }
-        ],
-        "dishOrItem": "Zara",
-        "businessName": "Zara",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 19,
-        "viewsCount": 19,
-        "sharesCount": 0,
-        "tags": [
-          "Real Estate"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": true,
-        "aspectRatio": "landscape",
-        "bunnyVideoId": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-        "bunnyGuid": "f5452859-5b43-43f1-857f-7b13fcfa80d8",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/f5452859-5b43-43f1-857f-7b13fcfa80d8/captions/en-auto.vtt",
-        "hasBunnySmartCaptions": true,
-        "bannerUrl": "",
-        "ogImage": "",
-        "authorName": "Kert P",
-        "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dzara.com%26sz%3D128",
-        "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-        "duration": 14,
-        "createdAt": "2026-10-20T14:04:07.138Z",
-        "likesCount": 0,
-        "bookmarks": 0,
-        "shares": 0,
-        "reviewsCount": 2,
-        "reviewCount": 2,
-        "totalReviews": 2,
-        "title": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-        "aiTitle": "Long-lasting scent that matches your vibe perfectly! Must-try at this price!",
-        "isReady": true,
-        "isProcessing": false,
-        "bunnyDescription": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
-        "description": "A person shares that the Zara perfume is their new favorite, perfectly matching their vibe. They highlight its long-lasting scent, unlike other brands at a similar price point. The person recommends giving it a try due to its all-day longevity.",
-        "hasHardwareSilenceSync": true,
-        "hasOfficialBunnyTitle": true
-      },
-      {
-        "id": "rev-1792505354614-j01wo",
-        "userId": "krtpcq@gmail.com",
-        "userEmail": "krtpcq@gmail.com",
-        "createdAtMs": 1792505354615,
-        "isLocalUpload": true,
-        "isCurrentSessionBlob": true,
-        "placeId": "zara.com",
-        "placeName": "Zara",
-        "placeCategory": "Real Estate",
-        "placeAddress": "Online",
-        "placeCity": "",
-        "placeCountry": "Belgium",
-        "placePhone": "",
-        "placeEmail": "",
-        "placeRating": 5,
-        "placeWebsite": "https://www.zara.com/",
-        "placeLogoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dzara.com%26sz%3D128",
-        "placeBannerUrl": "",
-        "placeDescription": "Zara · real estate · Online",
-        "author": {
-          "name": "Kert P",
-          "handle": "@kertp",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%237CB342%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EK%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true
-        },
-        "rating": 5,
-        "durationSeconds": 23,
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-          "https://rev1.b-cdn.net/videos/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3.mp4",
-          "/api/videos/stream/rev-1792505354614-j01wo.mp4",
-          "/default-review.mp4"
-        ],
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/thumbnail.jpg",
-        "caption": "Long-lasting winter scent matching my style perfectly!",
-        "transcriptText": "I found another Zara perfume that I am obsessed with. It's called Night Pour Homme II Winter, and it matches my style perfectly. And honestly, it lasts way longer than anything else I have tried at this price point. So you should try it.",
-        "segments": [
-          {
-            "start": 0.94,
-            "end": 3.87,
-            "text": "I found another Zara perfume",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.03,
-            "end": 6.56,
-            "text": "that I am obsessed with.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.84,
-            "end": 11.24,
-            "text": "It's called Night Pour Homme II Winter,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.87,
-            "end": 15.46,
-            "text": "and it matches my style perfectly.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 15.67,
-            "end": 16.19,
-            "text": "And honestly,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 16.36,
-            "end": 18.18,
-            "text": "it lasts way longer than anything else",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 18.18,
-            "end": 20.48,
-            "text": "I have tried at this price point.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 20.86,
-            "end": 21.59,
-            "text": "So you should try it.",
-            "isHardwareTimed": true
-          }
-        ],
-        "dishOrItem": "Zara",
-        "businessName": "Zara",
-        "likes": 0,
-        "isLiked": false,
-        "commentsCount": 0,
-        "comments": [],
-        "bookmarksCount": 0,
-        "isBookmarked": false,
-        "repostsCount": 0,
-        "views": 1,
-        "viewsCount": 1,
-        "sharesCount": 0,
-        "tags": [
-          "Real Estate"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyVideoId": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-        "bunnyGuid": "40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/40c5f02b-bcd5-40bd-8cb2-db9e7f0ecbd3/captions/en-auto.vtt",
-        "hasBunnySmartCaptions": true,
-        "bannerUrl": "",
-        "ogImage": "",
-        "authorName": "Kert P",
-        "hasHardwareSilenceSync": true,
-        "aiTitle": "Long-lasting winter scent matching my style perfectly!",
-        "title": "Long-lasting winter scent matching my style perfectly!",
-        "hasOfficialBunnyTitle": true
-      }
-    ],
+    "reviews": [],
     "createdAt": "2026-10-20 13:57:42",
     "isClaimed": false,
     "isVerified": false,
@@ -10055,202 +9218,7 @@
     "hours": "Available 24/7",
     "domain": "anthropic.com",
     "reviewCount": 0,
-    "reviews": [
-      {
-        "id": "rev-1792531482229-aux2t",
-        "bunnyVideoId": "b660b548-6135-4657-907a-3d2d5d750e33",
-        "transcriptText": "If you're a business owner searching for some editors or developers, you can now in 2026, You shouldn't do that. You can go to Anthropic. They have cloud, they have Cloud code, They can make codes, the normal code. It's for free. you Can make all the video editing. So we don't need any of this now. All we can do is focus on your business and these things come easily.",
-        "segments": [
-          {
-            "start": 0.63,
-            "end": 2.01,
-            "text": "If you're a business owner",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 2.01,
-            "end": 3.74,
-            "text": "searching for some editors",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 4.51,
-            "end": 5.23,
-            "text": "or developers,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 5.59,
-            "end": 7.54,
-            "text": "you can now in 2026,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 7.54,
-            "end": 8.82,
-            "text": "You shouldn't do that.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 9.53,
-            "end": 10.86,
-            "text": "You can go to Anthropic.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 11.08,
-            "end": 12.25,
-            "text": "They have cloud,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 12.34,
-            "end": 13.4,
-            "text": "they have Cloud code,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 13.52,
-            "end": 15.04,
-            "text": "They can make codes,",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 15.68,
-            "end": 16.41,
-            "text": "the normal code.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 16.72,
-            "end": 17.4,
-            "text": "It's for free.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 17.42,
-            "end": 19.28,
-            "text": "you Can make all the video editing.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 19.34,
-            "end": 21.01,
-            "text": "So we don't need any of",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 21.01,
-            "end": 21.41,
-            "text": "this now.",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 22.21,
-            "end": 23.18,
-            "text": "All we can do is focus",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 23.18,
-            "end": 24.11,
-            "text": "on your business",
-            "isHardwareTimed": true
-          },
-          {
-            "start": 24.11,
-            "end": 25.89,
-            "text": "and these things come easily.",
-            "isHardwareTimed": true
-          }
-        ],
-        "aiTitle": "Free Cloud Code for Easy Video Editing in 2026",
-        "title": "Free Cloud Code for Easy Video Editing in 2026",
-        "caption": "Free Cloud Code for Easy Video Editing in 2026",
-        "bunnyDescription": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-        "description": "In 2026, business owners no longer need to search for editors or developers. Anthropic offers Cloud code for free, allowing users to easily create and edit videos. This service enables businesses to focus on their core operations while effortlessly handling coding and editing tasks.",
-        "thumbnailUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/thumbnail.jpg",
-        "hasBunnySmartCaptions": true,
-        "isProcessing": false,
-        "isReady": true,
-        "placeBannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-        "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-        "placeLogoUrl": "/api/favicon?domain=anthropic.com",
-        "logoUrl": "/api/favicon?domain=anthropic.com",
-        "placeName": "Anthropic",
-        "placeCity": "Gent",
-        "placeCountry": "Belgium",
-        "rating": 5,
-        "placeRating": 5,
-        "placeId": "anthropic.com",
-        "authorName": "redha bm",
-        "authorAvatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-        "videoUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-        "duration": 27,
-        "createdAt": "2026-10-20T21:24:42.229Z",
-        "createdAtMs": 1792531482229,
-        "likesCount": 1,
-        "likes": 1,
-        "bookmarksCount": 0,
-        "bookmarks": 0,
-        "sharesCount": 0,
-        "shares": 0,
-        "viewsCount": 2,
-        "views": 2,
-        "author": {
-          "name": "redha bm",
-          "handle": "@redhabm",
-          "avatar": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%2343A047%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3ER%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-          "isLocalGuide": true,
-          "videoReviewCount": 1,
-          "photosCount": 0,
-          "isVerified": true,
-          "location": "",
-          "city": "",
-          "country": ""
-        },
-        "businessName": "Anthropic",
-        "fallbackVideoUrls": [
-          "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-          "https://rev1.b-cdn.net/videos/b660b548-6135-4657-907a-3d2d5d750e33.mp4",
-          "/api/videos/stream/rev-1792531482229-aux2t.mp4",
-          "/default-review.mp4"
-        ],
-        "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F6d4a0d28992ade92d6fa63646fd9c9d318245c6c.jpg",
-        "placeWebsite": "https://anthropic.com",
-        "placeAddress": "",
-        "placePhone": "",
-        "placeCategory": "Verified Business",
-        "comments": [],
-        "commentsCount": 0,
-        "isBookmarked": false,
-        "isLiked": false,
-        "reviewsCount": 1,
-        "reviewCount": 1,
-        "totalReviews": 1,
-        "userId": "benmeddourridha7@gmail.com",
-        "userEmail": "benmeddourridha7@gmail.com",
-        "isLocalUpload": true,
-        "isCurrentSessionBlob": true,
-        "placeEmail": "",
-        "placeDescription": "Anthropic · verified business · anthropic.com",
-        "durationSeconds": 27,
-        "dishOrItem": "Anthropic",
-        "repostsCount": 0,
-        "tags": [
-          "Verified Business"
-        ],
-        "recordedAt": "Just now",
-        "isLandscape": false,
-        "aspectRatio": "portrait",
-        "bunnyGuid": "b660b548-6135-4657-907a-3d2d5d750e33",
-        "hlsUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/playlist.m3u8",
-        "vttUrl": "https://vz-dcd9e101-437.b-cdn.net/b660b548-6135-4657-907a-3d2d5d750e33/captions/en-auto.vtt",
-        "updatedAt": 1792531684347,
-        "hasHardwareSilenceSync": true,
-        "hasOfficialBunnyTitle": true
-      }
-    ],
+    "reviews": [],
     "latitude": 0,
     "longitude": 0,
     "videoReviewCount": 1,
@@ -10455,19 +9423,19 @@
   {
     "id": "yoouz.com",
     "name": "Yoouz",
-    "category": "Restaurant & Cafe",
+    "category": "Video Reviews Platform",
     "categoryType": "all",
     "address": "",
-    "city": "Worldwide",
+    "city": "",
     "state": "FL",
     "zipCode": "33132",
-    "country": "Global",
+    "country": "",
     "lat": 0,
     "lng": 0,
-    "rating": 4.5,
-    "totalReviews": 2,
+    "rating": 0,
+    "totalReviews": 0,
     "ratingDistribution": {
-      "stars5": 2,
+      "stars5": 1,
       "stars4": 0,
       "stars3": 0,
       "stars2": 0,
@@ -10484,21 +9452,34 @@
     "phone": "",
     "email": "support@yoouz.com",
     "website": "https://yoouz.com",
-    "priceRange": "N/A",
-    "description": "Yoouz Video Reviews Platform",
+    "priceRange": "Free",
+    "description": "The #1 authentic video review network. Discover local businesses, services, and online brands with 100% genuine 60-second video reviews by real customers. Zero fake text reviews.",
     "brandDomain": "yoouz.com",
     "isClaimed": true,
     "claimedByEmail": "info@yoouz.com",
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "plusCode": "",
     "locations": [],
-    "popularKeywords": [],
-    "amenities": [],
+    "popularKeywords": [
+      {
+        "tag": "Authentic",
+        "count": 1
+      },
+      {
+        "tag": "Video Reviews",
+        "count": 1
+      }
+    ],
+    "amenities": [
+      "Verified Merchant",
+      "Live Camera Only",
+      "Instant Sync"
+    ],
     "topDishes": [],
     "ownerId": "info@yoouz.com",
     "isVerified": true,
     "isFollowed": false,
-    "videoReviewCount": 2,
+    "videoReviewCount": 0,
     "hours": "Mon-Fri: 9:00 AM - 6:00 PM",
     "placeLogoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22512%22%20height%3D%22512%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%0A%20%20%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%220.5%22%20y%3D%220.5%22%20width%3D%2223%22%20height%3D%2223%22%20rx%3D%225.5%22%20stroke%3D%22rgba(255%2C%20255%2C%20255%2C%200.18)%22%20stroke-width%3D%220.8%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M12%203.8l2.32%204.7%205.18%200.75-3.75%203.65%200.88%205.16L12%2015.62l-4.63%202.44%200.88-5.16-3.75-3.65%205.18-0.75L12%203.8z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "placeBannerUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAQDAwMDAgQDAwMEBAQFBgoGBgUFBgwICQcKDgwPDg4MDQ0PERYTDxAVEQ0NExoTFRcYGRkZDxIbHRsYHRYYGRj/2wBDAQQEBAYFBgsGBgsYEA0QGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBj/wAARCAIAAgADASIAAhEBAxEB/8QAHQABAAIBBQEAAAAAAAAAAAAAAAEFAgMEBggJB//EAEoQAAIBAwIBBgsDCgMIAgMAAAABAgMEBQYRIQcIEjFBwRMUFkRRYWRxgqPhIoGRFSMyQlJicpKx0QmhoiQ0Q1Njk7LwM1Rzg8L/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAXEQEBAQEAAAAAAAAAAAAAAAAAAREx/9oADAMBAAIRAxEAPwDz/AAAAAAAAANa1tLm9uFQtaM6tR9kV1e/0AaJnSpVa9VU6NOdSb6owW7f3HLrHRtGjSVxmLlRXX4Km9kvfL+xaxv8bjqTo4yzguzpJbJ+99b+8uDi9npDL3SUqkIW0X/zXx/Bd5cUtHYy2SlkMhKT9Cagu9mpXyl7X/SrOEf2YfZNk22929xgsY2mlbX/AOO0jVf7ylP/AMuBrRyGJo/7vjIR26tqcY/0KcFF3+Xqcf0LLb4tu4eUPsnzPoUgAu/KH2T5n0HlD7J8z6FIALvyh9k+Z9B5Q+yfM+hSBsC7eodvM/mfQjyi9j+Z9CjAF55Rex/M+g8ovY/mfQowBeeUXsfzPoPKL2P5n0KMAXnlF7H8z6Dyi9j+Z9CjAF55Rex/M+hD1H7H8z6FG2QMF55Rex/M+g8ovY/mfQowBeeUXsfzPoPKL2P5n0KMAXnlF7H8z6Dyi9j+Z9CjAF55Rex/M+g8ovY/mfQozEYLzyi9j+Z9B5Rex/M+hRgC88ovY/mfQeUXsfzPoUYAvPKL2P5n0HlF7H8z6FGALzyi9j+Z9B5Rex/M+hRkNgXj1H7H8z6EeUXsfzPoUYAvPKL2P5n0I/L9N/pWS/n37ikAFy8liqq2r42DXrhGX9TTlb6XultO1jRfpScP6cCqAG9qaTxlym7DISi/Q2pruZVXelMrbbypQhcR/wCm+P4M3CbT3T2ZvKGUvbfbo1nOP7M/tEwcSqUqtGo6danOnNdcZrZowOePJ4/IU/A5O0g1+010ku9Ffe6To1qbr4i5TX/Lm919z/uMHEwa1zaXNnXdG5oypTXZJdfu9JokAAAAAAAAAAAAAABlCE6lSNOnFznJ7KMVu2zmuH05bYuhHIZfoyrLjGk+Kg+9gVeF0pcX0Vc3zlbW3Wl1SmvV6F6zkbvLDF2/iuKt4Lbrkurf0t9bZtb7J1rxuEd6dL9ldvvNiaGrXuK1xU6dapKb9fUjSBDYBsgAAAAAAAABsA2YgAAAAAAAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAAAAAAAAAYgADVoXFa2qdOhUcH6u00gBdRv7HJ0PFcpQhx6pdn49jKLL6Yr2UXcWTlcW/W0uMorvXrMzf2GUrWclCW9Sj+y+z3AcOBzHK4G2ydB3+JcY1XxlTXBS/sziE4Tp1JQqRcZRezi1s0zIxAAAAAAAAMoQnUqRp04uU5PZRit22YnN9OYeli7L8r5GO1ZrenB9cE+9ga2Hw9tgLJX1+lK8kuC6+h6l6/Szb3d3WvK7qVXw/ViupC7u6l5curUfDqjHsSNA0ABDYBsgAAAAAAAABsA2YgAAAAAAAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAAAAAAAAAYgAAAAAAAAAbi0vK1nXVSk+H60X1SRvMpjLbO2XjtklG7iuK6ul6n6/QyqbNezu6tncqrTe66pR7JIDjM4Sp1JQnFxlF7OLWzTMTmGdxdLJ2X5VsFvVS+3Fdcku9HDzIAAAAa1pa1b2+pWtBb1KkuivV6wL3SmFV9eO+uY/7NQfBPqnL0e5df4Fzk753lz0YP81DhH1+s3V46WLxNHFWnDaO0n27drfrbKc0ABDYBsgAAAAAAAABsA2YgAAAAAAAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAAAAAAAAAYgAAAAAAAAACGw2QAAAG/wAXfuzuejNvwM+El6PWV+psSrO7V7bpeL1nxS6oy/syS6sJUsniquLuuP2fst9e3Y/emBwUGtdW1WzvKltWW06ctn/c0TIHMdG2MKNtXzFwtkk4U9/Qut934nEaVKdevCjTW85yUYr0t8D6HfxhjsLbYyi+qKT27Uu373xLBWXFaVxdTrT65Pf3GkCGyg2QAAAAAAAAA2AbMQAAAAAAAAABDYbIAAAAAAAAAAGIAAAAAAAAAAhsA2QAAAAAAAAAAMQAAAAAAAAABDYbIAAAAAABq29edtdQrQ64vf3+o0gBu9V2cK1tQy1BbppRn7n1Pu/A4oc6xvQv8PcY2s+Gz29Sf9mcHqU50a06VRbShJxa9DRKLzSFmrrUcaslvGhF1Pv6l/Xf7i8ylfw+TqST+zF9Bfd/6zT0dSVtgby/kuMpbLf0RX92zbNtvdsQGyACgAAAAAABsA2YgAAAAAAAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAAAAAAAAAYgAAAAAAAAACGw2QAAAAAAAAAAMQN7i6/gMrSk39mT6D+/67Fdqi18Xz0qkV9mtFVPv6n/T/ADNRNp7rrRYaph4zhLS+S4ppP3SX90SiwtI+K6Bt6fU6iT/ml0v6FaXGQj4HT9jb9XRjFbe6OxTlAAAAAAADYBsxAAAAAAAAAAENhsgAAAAAAAAAAYgAAAAAAAAACGwDZAAAAAAAAAAAxAAAAAAAAAAENhsgAAAAAAAAAAYgAAALatHxrQtaHW6ab/B7/wBCpLrGLwuBvaD6nGX+cdgN/nvs0raHo6XcUhd6h82+LuKQAAAAAbANmIAAAAAAAAAAhsNkAAAAAAAAAADEAAAAAAAAAAQ2AbIAAAAAAAAAAGIAAAAAAAAAAhsNkAAAAAAAAAADEAAAAAAF5p/7VK5j/D3lGXmnfOfh7wN7qHzb4u4pC71D5t8XcUgAANgGzEAAAAAAAAAAQ2GyAAAAAAAAAABiAAAAAAAAAAIbANnK+TLQmS5TOVnB6IxfSjVyNyqdSqlv4GkvtVKj/hgpS9e23acTO/8AzC+Sn8maTyXKzlrba5ynSsMX01xjbwl+dqL+KcVH/wDW+yQHSzlN0HkuTPlZzmiMp0pVcdcunTqtbeGpP7VOov4oOL9W+3YcTO//AD9OSn8qaTxvKxibbe6xfRsMp0Fxlbzl+aqP+CcnH3VF6DoAAAAAAADEAAAAAAAAAAQ2GyAAAAAAAAAABiAAAAAAAAALzTvnPw95Rl3p5/7z8PeBvtQ+bfF3FIXeofNvi7ikbANmIAAAAAAAAAAhsNkAAAAAAAAAADEAAAAAAAAAAQ2AbIAA5TycaHyfKRyp4TROITVxkrmNKVRLdUaa+1UqNeiMFKX3Hshp/BYzS2k8bpvC26t8fjrana29NfqwhFRW/pfDi+1nT7mFclPiGncnytZa22r5DpY/FdNdVGMvz1RfxTioJ9f5uXYzukSit1DgcZqjSeS05mbdXGPyNtUtbik/1oTi4vb0PjwfYzxw5R9D5Pk35U83onLJu4xtzKlGo1sq1N/ap1F6pQcZfee0LZ0t5+fJV4/p3GcrWJtt6+P6OPyvQXXRlL81Uf8ADOTg3/1I9iEHQcAFAxAAAAAAAAAAENhsgAAAAAAAAAAYgAAAAAAAAACGwDZd6d85+HvKMvNO+c/D3gb/AFC9vFvi7iiLzUXm3xdxRgAAAAAAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAcl5PtFZTlF5TsLorDxfjWTuY0entuqUOudRr0RgpSfqicaO+XMJ5KfFcPlOVzLW35276WOxPTXVSi/z1Ve+SUE+zoTXaB3D01p7F6S0djNMYWgqGPxttTtben2qEIpJt9re27fa22WjYbIMgVWpdPYvVmjsnpnNUFXx+StqlrcU+1wnFptehrfdPsaTLUxA8XuUHReU5OuU3NaLzMX41jLmVHp7bKrDrhUS9EoOMl6mcYO+XP05KfG8PjOVvE229W06OOy3QXXSk/wAzVfuk3Bv9+C7DoaaAAAAAAAAAhsNkAAAAAAAAAADEAAAAAAAAAAQ2AbIAAF5p3zn4e8oy8075z8PeBvtRebfF3FGXmovNvi7ijAAAAAABDYbIAAAAAAAAAAGIAAAAAAAAAAhsA2QAAAAHItB6OyvKDyk4bRmFjveZS6jbxk1uqcXxnUf7sYqUn6os9kNLabxejtFYrSuEo+Bx+MtYWtCPb0Yrbd+mT62+1ts6c8wrkq8DYZTlcy1t9uv0sbiemuqCf56qve0oJ/u1F2ndwlABvYxIABi2BU6p05i9Y6Kyuls3Q8Nj8nbTta8e3oyW269El1p9jSZ44670dlOT/lJzOjczHa8xlzK3lLbZVIrjCov3ZRcZL1SR7SHSTn6clXh7DF8rmJtvt0Ojjct0F1wbfgar9zbg3+9TXYWDooACgAABDYbIAAAAAAAAAAGIAAAAAAAAAAhsA2QAAAAAvNO+c/D3lGXmnfOfh7wN9qLzb4u4oy81F5t8XcUYAAACGw2QAAAAAAAAAAMQAAAAAAAAABDYBsgAAAABf6I0jldecomH0dhYdK9yl1C3ptrdQTf2py/djFOT9SZQHebmFclPRp5Tldy1txl0sbiOmuz/AI9Vf5U0/VURNHcjSOl8VorQuJ0nhKXgrDGWsLWiu1qK2cn6ZN7tvtbZdNhsxIABiAbAIbKDZS6t0xitaaFy2k83S8LYZO1na1kutKS2Ul6JJ7NPsaTLkhsDxb1vpHK6D5RMxo/NQ6N7i7qdvUaWymk/szj+7KLjJepooDvHz8uSvpU8XyuYm24x6ONy/QXZ/wACq/8AOm366aOjg0CGw2QUAAAAAAAAADEAAAAAAAAAAQ2AbIAAAAAAABead85+HvKMvNO+c/D3gb7UXm3xdxRl5qLzb4u4owBDYbIAAAAAAAAAAGIAAAAAAB9J5JuQ/WnLPeXtro2vhlVslGVenfXsaM4xfVNQ2cnHfhuk0nw7UffMN/h7a6ryj+X9faesE/0vEaFa7a/mVPcDp0D0Hwv+Htoa328odfagyDXX4jQo2if8yqn0PDcy7kAxLjK40xfZacV+lf5Gs/vapygn+BNHlo2brH4rKZa5Vtisbd31Z/8ADtaMqsvwimz2Dw3IfyPafjH8lcmWlqU49VWpjqVWovjmnL/M5xbWlrY20beztqNvRj+jTowUIr3JcBo8gcNzfuWzPxhLHcmGpehP9GdzZytov4qvRW3rPomG5kPL1lHHx3E4bCp9t/koS2/7PhD0+A0dA8N/h56nrdB6h5SMRZftKwsql1+DnKn/AEPoWG/w/uTW1alndYamyUl+rbeBtoP3pwm/8zty2QNHwrCcz3m/4boyloueSqx/4mQvq9Xf3xU1D/SfZMJg8PprT9rgtP422x2NtYdChaW0FCnTW7eyS9bb97LBsggAGIAAhsA2QCGyg2QABX5zB4fUmn7rB5/G22Rxt1HoV7S5gp06i3T2afrSfvSPjmY5ofIBmFOS0Q7CrL/iWF9cUtvdHpuH+k+4gDqbmeYHyZXTlPCar1NjZP8AVrSo3MF7l0Iv8ZHzzMf4fGoKXTen+UnGXf7Mb+wnb/c3CVT8djvo2QUeZeZ5kfLri9/ErDB5nb/6GRjHf/vKmfPczzfOWzAqTyHJlqKUY/pStLV3UV99LpLb1nrq2QB4nZLD5fDXPi+XxV7j63/Lu6EqUvwkkbI9ubi3t7q3lQuqFOvSlwlTqRUov3pnCszyM8kufUnluTfS9ecuuqsdShU/njFS/wAwPHsHqHmeZzyB5ZynR0rdYupLrnYZCtHb3RnKUV+B88zPMB0FcdJ4HXGobBvqV5To3SX8sab/AMwPP0HcHMf4f2sqCm8Br/B3+36Kvbara7/y+E2PgvKryJ6y5HLqzt9YV8O6l5u6ELK9jVnKK65uGyko78N2kt+AHzgAAAAAAIbANkAAAAAAAAAAC6095z8PeUZead85+HvAsNRebfF3FE2Xmo3/ALt8XcUQgAAAAAAAAAGIAAAAAAAAF5pDV+otCaysdU6WyVXH5Syn06Vam+v0xkuqUWuDi+DTPUrm+84XTvLfpLZeCx2qLKmnkcV0vu8NR34ypt/fFvZ9jl5MlvpfVWf0Xq6x1NpjJ1sdlLKoqlG4pPin2prqlFrdOL4NNpge2jZB8R5vHOLwHLdpfxa48DjdW2VNO/xilsqi6vDUd+MqbfWuuLez34N/bjIGIAAhsNkACGw2QAAb2MQABi2US2QCGwDZADYBvYxAHAMWw2ABDYbIKAbDZiAAMQDYB8V5wXOFwPIrpfxej4HI6qvKbdjjelwgurw1bbjGmn1Lrk1su1oNxy+8v+nuRTSf2vBZDU15Tf5PxfS6+zwtXbjGmn98mtl2teYGrtXah11rC91RqjJVb/J3k+nUq1HwS7IxXVGKXBRXBI09Uaoz2s9W3updTZKtkMne1PCVq9V8X6El1RilslFcEkkioAAAAAQ2AbIAAAAAAAAAAGIAAvNO+c/D3lGXmnfOfh7wN9qLzb4u4oy81F5t8XcUYAAAAAAAMQAAAAAAAAABDYBsgAC005qPOaS1TZaj05kq+OyllUVWhc0XtKEl/k01umnwabT3TPUDm585DB8tenFjci6GN1hZ0k7uwT2jcRXB1qG/Fx9MeuLfatm/KsscFncxpjUlnn9P5Gvj8nZVVWt7qhLozpyXb7uxp8Gm0+AHtyYtnwDm3c5bD8s2Chg81KhjtZ2lLe4tF9mF5Fddaj//AFDrj61xPv5kCGw2QADYbMQABiUGwCGwDZAIbAlsxAHAMQABDYbIAENhsgoAGIAA+Cc4znIYfkcwUsNh5UMhrG7pb29o30oWkX1Vq23Z+zHrl6lxA3POH5xeE5GNOPH2Do5HV15Tbs7BveNCL4KtW26o+iPXJrZbLdrzJ1FqLN6t1Re6i1Hkq+Qyd7UdWvc1nvKT/oklsklwSSS4I087ncxqbUd5n8/kK+QyV5UdW4ua8t5Tk/6LsSXBJJLgV4AAAACGwDZAAAAAAAAAAAxAAAAAXmnfOfh7yjLzTvnPw94G+1F5t8XcUZeai82+LuKMAAAABiAAAAAAAAAAIbANkAAAAAABLRvcPmMpp/PWmawl/XsMhZ1VWt7q3m4TpzXU00emXNq5zWL5YcNT03qOpQsNa2tPepRX2KeQhFcatJdku2UOzrXDfbzANzjspkMLmLXLYm9r2V9a1Y1qFzQm4TpTi91KLXU0yD29IbOt3Nl50GP5W8XS0pqyrQsda21PqW0KeShFcalNdSmlxlD3yjw3UeyBQAMQABDYBsgENgGyAABiAAIbDZAAhsNkFABvYxAAHXLnK85rH8k+Mq6W0tVoX2s7inwi9p08bCS4VKi7ZtcYw++XDZSDc85HnK4vkhw09PaenQv9Z3VPenQf2oWEGuFWqvT2xh29b4dfmpmMxlNQZ67zWbv69/kLuo61xc3E3KdST622zHJ5PI5rM3WWy17Xvb66qSrV7mvNznVm3u5Sb62bQAAAABDYBsgAAAAAAAAAAYgAAAAAAAvNO+c/D3lGXmnfOfh7wN9qLzb4u4oy81F5t8XcUYAAxAAAAAAAAAAENgGyAAAAAAAloAENpEENmIBobiwv73F5S3yWNu61peW1SNahcUJuE6U4vdSjJcU0+09JebFzo7LlTsKOjdZ16NnrOhT2p1OEKeUjFcZQXUqqS3lBdfGUeG6j5pGtaXd1j7+hfWNzVtrqhUjVpV6M3CdOcXupRa4pprfdAe4AOI8ld7ncnyH6Ryep7nxnMXeItrm7rOKi5VJ0oye6XDfjx27TljZBLZAIbANkANgG9jEAAYthsACGw2QUA2GzEAAcQ5Ur7O4zkS1bk9NXPi2XtMTc3NpVUFNxqQpSktk+DfDhv27AfGOczznrLkusK2j9HVqN5rGvT2nPhOnjItcJzXU6jT3jB9XCUuGyl5w39/e5TKXGSyV3Wu7y5qSrVrivNznUnJ7uUm+LbfaY3d5dZDIV76+uatzdV6kqtavWm5zqTk93KTfFtt77miS0AAQACGzQNkAAAAAAAAAADEAAAAAAAAAAXmnfOfh7yibLzTnnPw94G/1F5t8XcUZeai82+LuKEQAAAAAAAAACGwDZAAAAAAAS0AAQQ3sYEsg0AAAG9w+NrZnUVhiLb/5r25p21Phv9qclFf5s2R9T5tuC8ouddobHuHTjTycL2S23W1CLr8f+2B61WVpQx+MtrC2j0KFvSjRpx9EYpJL8Ea4IbIDZAIbAlsxAAGIAAhsNkFAhsNkAADEAaF7aUMhjLiwuY9KhcUpUakfTGSaa/BmuQ2B4pZfHVsPqC+xNytq1ncVLap/FCTi/80bM+oc43B+TvOp1xj1T6EamSlexW2y2rpV1t/3D5eZAAhsA2QAaAAAAAAAAAxAAAAAAAAAAENhsgAXunPOfh7yiL3TnnPw94o3uovNvi7ijLzUXm3xdxRgAAAAAAAhsA2QAAAAAAEtAAEAwbe5Jj2mgAAAAADtDzEMF+UucpeZecN6eKw9arGXoqVJwppfyyqfgdXjvb/h74Lwen9b6mnDfw1xbWFOXo6EZzmvv8JD8AO6zZAIbIDZAAAxAKBDYbIAENhsgAA3sYgADFsCWyAQ2B5x8+nB/k3nJWmXhDanlcRRqylt11Kc502v5Y0/xOsh3m/xAsF4TA6J1LCG3gbi5sakvT04wnBfLn+J0XJglsgAoAAloAAQAAUDEAAAAAAAAAAQ2GyAAAAF7pzzn4e8oi9055z8PeKN7qLzb4u4oy81F5t8XcUYAAAACGwDZAAAAAAAAABkDEB9RoQ2QAAAAAAAD065k+C/I/NMx164dGWWv7q+e64vafgU/woo8xGz2H5FsF5M83fRWEcOhUoYe2dWPoqTpqc/9UpAc7bIAbIDZiAAMWw2CgQ2fJ+VbnFcmXJJQq2+czCv8zFfYw2Oaq3G/Z0+O1NeubXDqTOi/K1zuOUzlK8PjMXcPSuAqbxdljqr8NVj6KtfhKXuj0YtdaYHp+Gzy+5Judtym8mjoY3I3T1VgYbR8RyVVurSj6KVfjKPDglLpRXYkd5uSnnGcmfK3SpW2Fyyx+blH7eGyLVKvv2+D49Gqv4W3t1pAfWQDEA2AQ2AbIBDYHXvnp4P8r81DIXih0pYm/tb5bda3n4Fv8KzPMw9feWfB+UnN61phlDp1K2HuXSj6akabnD/VGJ5BAAAS0AAQAAAMQDQAAAAAAAAENhsgAAAAAAF7pzzn4e8oi9055z8PeKN7qLzb4u4oy81F5t8XcUYAAhsA2QAAAAAAAAAAMQAAfUA+oDEAAAAAIbDZAFrpjDT1FrfDafpb9PI31Czjt171KkYL/wAj2qpUqdChCjSgoU4RUYxXUkuCR5Qc1rBPUHO30XauHShbXcr+bfVHwFOVVP8AmhH8UesLYBsgAAYnDOUPlY0ByXYfx/WmorWwlKLlRtE/CXFf/wDHSX2pceG+2y7WjpBys897WeqXXxPJxay0tipbx8em1O+qr0p8Y0vh3kuyQHc3lN5ceTfklsXPVufpxvnHpUsXabVrur6Nqaf2U/2pOMfWdG+Vrnm8oeuvD4rR/S0hhJbx3tam95Wj+9WW3Q39ENturpM64Xl7d5C/rX2Qu693dVpudWvXqOpOpJ9blJ8W/WzbgZ1atSvXnWrVJVKk5OUpze7k3xbb7WYAADKnUnSqxq0pyhODUoyi9nFrqaZiAOyXJNzyuUTQngMVq2UtX4SG0druq1eUY/uVnu5e6e/VsnE7xcmXLnyb8rVkpaUz0PH1HpVcVebUbql6fsN/aS/ag5L1nkWa1pd3VhfUryxua1tc0ZKdOtRm4ThJdTjJcU/WgPbNsg87+Sfns610rKhieUW3lqnFR2j45FqF9SXp6X6NX3S2k+2R3a5PeVrQHKjiFfaM1FbXs4x6Vazk/B3ND+Ok/tLjw34p9jYHNWyAAMKtOnWoTo1YKdOcXGUX1NPg0eMGpsPU09rbMYCrv4THX1azlv1706koP/xPaA8qOc/g/wAgc7HWVrGHRhcXcb6L7JeHpxqt/wA05L7iUfIgAQAAAMQCyAACgAAAAAENhsgAAAAAAAAAXunPOfh7yiLvTr38Z+HvA3+ovNvi7ijLzUXm3xdxRNgGyAAAAAAAAAABiAAAAAPqAfUTRiACgQ2GyAAAA7W8wjBePcvmazs4b08bh5wi/wBmpVqwS/0xqHomdHuZHkdMaC5HtbcoWrszZYiwr5CjYq5u6iipeBpObjBdcpPw6+zFNv0Gnys8+6rUVfD8kOKdJcYvOZOmnL30qD4L0pz39cAO3+tuULRnJ1p+WZ1nqGzxNrx6Hhpb1KzX6tOC3lN+qKZ0p5WefTnsv4xh+SnGPDWj3h+WL6Mal1NemnT4wp+99J/ws6o6j1PqLV+fq5vVGavctkKv6dxeVXUlt6Fv1JdiWyXYVIG9y2Yy2ezFfLZvJXeRv7iXTq3V3VlVqVH6XKTbZsgYgAAAAAAAAACGwDZu8VlspgsvQyuFyN1j763l06N1a1ZUqlN+lSi00bMAdvuSjny6gwyoYjlTxrzlmtoLLWUY07qC9M4cIVPeui/4md0tE8oejOUbArMaM1BZ5W24dNUpbVKLfZUpvaUH6pJHjeWmntS6g0nnaWa01mb3FZCl+hc2lV05pehtdafanwYHtEeeXPvwfiXLxhs5Th0aeSw8Iyf7VSlUmn/plTOV8lHPnuKUaOI5W8W7iK2is3jKaU/fVorZP1uG38LNXnp5PTGveSHRev8ASOZssvY2+QrWLuLSopdF1qSmozXXGS8A/sySa36iUdKAAQDEAsgAAoAAAAABDYbIAAAAAAAAAAGLYBsvdOec/D3lEXunPOfh7xRvtRv/AHb4u4oi81F5t8XcUYAAAAAAAAAxAAAAAACWgACDHYhsybMDQAAAAANSVevO3hbzrVJUqbcoU3JuMW9t2l2b7L8EaYAAAxAAAAAAAAAAENgGyAAAAAAEpbASjUjXrQt50I1qkaU2pTpqTUZNb7Nrt23f4mmDIGIBZAABQAAAAACGw2QAAAAAAAAAAMWwDYAAF7pzzn4e8oi9055z8PeKN7qLzb4u4oy7z/Gjay9Uu4pAAAAAAAYgAAAAAAAAEoENhsgSAYvrMiGiiAAAAAAAh9YEAAAAAAAAAENgGyAAAAAAGSAhIkAyBiAWQAAUAAAAAAhsNkAAAAAAAAAADFsA2AAAAAF7pzzn4e8oi80/wo3Uv4e8UbvJPwuAsa64pxi9/fHcpi1t5eNaDoTXF00l+D2/oVQAAADEAAAAAAAAAAQ2GyAAAAAACGQZNbmOwAAAAABi0DIxAAAAAQ2AbIAAAAAAZARsSAZAxALIAAKAAAAAAQ2GyAAAAAAAAAABi2AbAAAAAAAALzEvwWDva76kpP8ACO5RlxOXi2h6su2omvxe39BRnpOp4zg7ywb4xe637FJf3Rsmmns+tG30pd+LagjSk9o14un9/Wv6bfeWmVo+L5SrHbhJ9Nff/wCskGzMQCgAAAAAAAAQ2GyAAAAAAAAAABiAAAAAAAAAAIbANkAAAAAAAAAADEAAAAAAAAAAQ2GyAAAAAAAAAABi2AbAAAAAAAAAIbAni3suLZZ6kmrbC2tknxbW/rUV/dm3xVDxjK0otfZi+m/u+uxttS3Ph83KnF7xoxUPv63/AO+olFVSqTo14Vqb2nCSlF+ho5zknDIYe3ydFdcU3t2J9n3PgcDOWaTvYVraviK73TTlDf0PrXf+Ig2oNW4oTtrqdCfXF7b+n1mkUAAAAAAhsNkAAAAAAAAAADEAAAAAAAAAAQ2AbIAAAAAAAAAAGIAAAAAAAAAAhsNkAAAAAAAAAADFsA2AAAAAAAAAQ2AbIBq21CdzdQoQ65Pbf0esC3xSjY4i4yNVdj6PrS/uziNSpKrWnVm95Tbk362ck1LdQo21HF0HsklKfuXUu84ySga1pc1bO9pXVF7Tpy6S9fqNEEHPL+NLJ4qllLXj9n7S7du1P1plKYaZy6srt2Vw/wDZ6z4N9UZen3MsspYOzuelBfmZ8Yv0eo0NgAABDYbIAAAAAAAAAAGIAAAAAAAAAAhsA2QAAAAAAAAAAMQAAAAAAAAABDYbIAAAAAAAAAAGLYBsAAAAAAAAAhsA2QAALzHU6eOxlXJ3K2bj9lPr2+pssVYO8uelNfmYPeT9PqNvqHKK6uVaUJLwFJ8WuqUv7ICpubipd3lS4qv7c5bv1eo0gDIAAAcxwOVpZKy/JN/LeqltTk/1ku9HDjKE506kakJOMovdST2aYHKLy0q2dy6VRcOuMuySNs2WuMylvnbLxG92jdRXCXV0vWvX6UbG7s61nX8HVXD9WS6pGhtwAAAAAAAADEAAAAAAAAAAQ2AbIAAAAAAAAAAGIAAAAAAAAAAhsNkAAAAAAAAAADFsA2AAAAAAAAAQ2AbIAAG4s7Sre3KpU1suuUuyKFnZ1r2uqdJcP1pPqiiyv7+3wll4nZ7SuZLi+vb1vuQGnmcjSxtksXYvao1tOS64r+7OKkznKc3OcnKUnu2+tsgyAAAAAAAAMoTnTqRnCTjKL3Uk9mmcuxedtslbqwy3RVV8I1HwUv7M4eAOX3+LrWbc471KP7S7PebAxxOpq9nFW94pXFv1Jt/aiu9eovJWFjk6HjWLrw49cV1feuxmhSg1a9vXtqnQrU5Qfr6n7jSAAGIAAAAAAAAAAhsA2QAAAAAAAAAAMQAAAAAAAAABDYbIAAAAAAAAAAGLYBsAAAAAAAAAhsA2QDVoW1e5qdChTlN+rsA0jf2GKrXjU5b06P7b7fcb2njrLHUfGcnWg9uqHZv7u0qspqGtdxdC0ToUOrdfpSXcgN/kczbY23dji1F1FwlUXFRfezi05ynNznJylJ7tt7tkAyAAAAAAAAAAAAAAa1tdXFnXVa2rSpTXbF/19JogDldnqujWpKhlrZSX/Mgt196/sb/8nY6/putjbuL/AHU90u9HBTKnUqUaiqUqkoSXVKL2aLo5TXxd9Qe7oucfTT+0bJpp7NbP0M07XVGUt0o1JwuI/wDUXH8UWkNU425SV9YSi/SkpruY0V4LaNbTFz+hcRpN+luP9eBqLF4uqt6GSi16pxl/QopQXnk/CXGN7w/g37x5O+2fL+oFGC88nfbPl/Uh6e9s+X9QKNsgvPJ32z5f1Hk77Z8v6gUYLzyd9s+X9R5O+2fL+oFGC88nfbPl/UeTvtny/qBRgvPJ32z5f1Hk77Z8v6gUZiXnk97Z8v6jyd9s+X9QKMF55O+2fL+o8nfbPl/UCjBeeTvtny/qPJ32z5f1AowXnk77Z8v6jyd9s+X9QKMhsvfJ32z5f1I8nPbPl/UCiBe+Tntny/qPJz2z5f1GiiBe+Tntny/qPJz2z5f1GiiBe+Tntny/qPJz2z5f1GiiBe+Tntny/qYvTvtny/qBRNgvfJz2z5f1Hk57Z8v6jRRAvfJz2z5f1Hk57Z8v6jRRAvfJz2z5f1Hk/Tj+le/6Nu8aKIF48TjKXGvkYpeucY/1NOU9NW36VdVX6m5f0Gin4t7Jbs3dDFX1xxjRcI/tT+ybiepMdbJqysW36dlBPvK651Lkq+6pyhQi/wBhcfxZNFysVYWNPw2Ruo7fs79FPvZtLrUtGhTdDFW8Ul+vJbL7l/c43UqVKtRzq1JTk+uUnuzEaNW4ubi6rOrcVZVJvtk//djSAIAAAAAAAAP/2Q==",

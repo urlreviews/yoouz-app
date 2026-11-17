@@ -43549,6 +43549,70 @@ function injectOpenGraphTags(html: string, meta: any) {
 
       await runCommunityEngagementV1().catch(() => {});
 
+      // Purge legacy /videos/ folder from Bunny Storage (rev1) and strip any stale .mp4 references in places table
+      (async () => {
+        try {
+          if (bunnyDb) {
+            const pRes = await bunnyDb.execute({
+              sql: "SELECT id, data FROM places WHERE data LIKE ? OR data LIKE ?",
+              args: ["%.mp4%", "%rev1.b-cdn.net/videos%"]
+            });
+            for (const row of (pRes.rows || []) as any[]) {
+              let d: any = {};
+              try { d = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+              for (const k of Object.keys(d)) {
+                if (typeof d[k] === "string" && (d[k].includes(".mp4") || d[k].includes("rev1.b-cdn.net/videos"))) {
+                  delete d[k];
+                } else if (Array.isArray(d[k])) {
+                  d[k] = d[k].filter((item: any) => {
+                    const s = typeof item === "string" ? item : JSON.stringify(item || "");
+                    return !s.includes(".mp4") && !s.includes("rev1.b-cdn.net/videos") && !s.includes("vz-dcd9e101-437");
+                  });
+                }
+              }
+              await bunnyDb.execute({ sql: "UPDATE places SET data = ? WHERE id = ?", args: [JSON.stringify(d), row.id] });
+            }
+          }
+          const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+          const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+          const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+          if (bunnyAccessKey && bunnyStorageZone) {
+            const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+            const legacyVideoFiles = [
+              "rev-1791021692476-auirn.jpg",
+              "rev-1791021692476-auirn.mp4",
+              "rev-1791023009708-0qszq.jpg",
+              "rev-1791023009708-0qszq.mp4",
+              "rev-1791140190341-p8kpy.jpg",
+              "rev-1791140190341-p8kpy.mp4"
+            ];
+            try {
+              const listRes = await fetch(`https://${hostname}/${bunnyStorageZone}/videos/`, {
+                headers: { AccessKey: bunnyAccessKey, Accept: "application/json" }
+              });
+              if (listRes.ok) {
+                const items: any[] = await listRes.json();
+                for (const item of items) {
+                  if (item && item.ObjectName && !legacyVideoFiles.includes(item.ObjectName)) {
+                    legacyVideoFiles.push(item.ObjectName);
+                  }
+                }
+              }
+            } catch {}
+            for (const f of legacyVideoFiles) {
+              await fetch(`https://${hostname}/${bunnyStorageZone}/videos/${f}`, {
+                method: "DELETE",
+                headers: { AccessKey: bunnyAccessKey }
+              }).catch(() => {});
+            }
+            await fetch(`https://${hostname}/${bunnyStorageZone}/videos/`, {
+              method: "DELETE",
+              headers: { AccessKey: bunnyAccessKey }
+            }).catch(() => {});
+          }
+        } catch {}
+      })();
+
       await reconcileDuplicateUserProfiles().then((res) => {
         if (res.reconciledCount > 0) {
           console.log(`👤 [Server] Successfully reconciled ${res.reconciledCount} duplicate user profile(s) on startup.`);
