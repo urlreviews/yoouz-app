@@ -109,9 +109,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     return () => window.removeEventListener("resize", updateDevice);
   }, []);
 
-  // Sync preselectedPlace on open
+  const userClearedPlaceRef = useRef(false);
+  const wasOpenRef = useRef(false);
+
+  // Reset modal flow only on open transition, never when preselectedPlace asynchronously enriches
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
+      userClearedPlaceRef.current = false;
       setSelectedPlace(preselectedPlace || null);
       setRating(0);
       setCapturedPhotoUrl(null);
@@ -125,6 +129,28 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUsernameMessage("");
       setLinkStatusMsg(null);
     }
+    wasOpenRef.current = isOpen;
+  }, [isOpen, preselectedPlace]);
+
+  // Smoothly enrich selectedPlace metadata as server/website lookup completes without interrupting camera or rating
+  useEffect(() => {
+    if (!isOpen || !preselectedPlace || userClearedPlaceRef.current) return;
+    setSelectedPlace((prev) => {
+      if (!prev) return preselectedPlace;
+      const prevDom = (extractCleanDomain(prev.website || prev.brandDomain || prev.id || "") || "").toLowerCase();
+      const nextDom = (extractCleanDomain(preselectedPlace.website || preselectedPlace.brandDomain || preselectedPlace.id || "") || "").toLowerCase();
+      const isSame = prev.id === preselectedPlace.id || (prevDom && nextDom && prevDom === nextDom);
+      if (!isSame) return prev;
+      if (prev.isSkeleton && !preselectedPlace.isSkeleton) return preselectedPlace;
+      return {
+        ...prev,
+        ...preselectedPlace,
+        logoUrl: preselectedPlace.logoUrl && !preselectedPlace.logoUrl.includes("/api/favicon")
+          ? preselectedPlace.logoUrl
+          : prev.logoUrl || preselectedPlace.logoUrl,
+        name: preselectedPlace.name || prev.name
+      };
+    });
   }, [isOpen, preselectedPlace]);
 
   const handleCloseModal = () => {
@@ -690,7 +716,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   // DESKTOP: Clean QR Code Mobile Handoff Modal
   if (isDesktopViewport && !postSubmitOnboarding) {
-    const placeParam = selectedPlace ? `&place=${encodeURIComponent(getPlaceSlug(selectedPlace.id))}` : "";
+    const targetSlug = selectedPlace ? (getPlaceSlug(selectedPlace) || getPlaceSlug(selectedPlace.id) || selectedPlace.id) : "";
+    const placeParam = targetSlug ? `&place=${encodeURIComponent(targetSlug)}` : "";
     const qrUrl = `${typeof window !== "undefined" ? window.location.origin : "https://yoouz.com"}/?addReview=1${placeParam}`;
 
     return (
@@ -1036,7 +1063,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             <div className="relative z-20 flex items-center justify-between gap-2 p-4 pt-5">
               <button
                 type="button"
-                onClick={() => setSelectedPlace(null)}
+                onClick={() => {
+                  userClearedPlaceRef.current = true;
+                  setSelectedPlace(null);
+                }}
                 className="px-3.5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 backdrop-blur-xl border border-white/15 text-white flex items-center gap-2.5 min-w-0 cursor-pointer transition-colors"
                 title="Change business"
               >
