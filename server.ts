@@ -4741,26 +4741,33 @@ async function startServer() {
     next();
   });
 
-  // Dedicated route to stream the exact 100% original Investor Pitch Memorandum PDF inline
-  app.get(["/api/pitch/raw-pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf", "/Yoouz_Institutional_Investor_Memorandum.pdf"], (_req, res) => {
+  // Dedicated route to stream or download the 8-page Visual Investor Pitch Deck PDF
+  app.get(["/api/pitch/raw-pdf", "/Yoouz_Visual_Investor_Pitch_Deck.pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf", "/Yoouz_Institutional_Investor_Memorandum.pdf"], async (req, res) => {
+    const disposition = req.query.download === "1" ? "attachment" : "inline";
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `${disposition}; filename="Yoouz_Visual_Investor_Pitch_Deck.pdf"`);
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
     const candidates = [
-      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"),
-      path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
       path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
-      path.join(process.cwd(), "dist", "Yoouz_Institutional_Investor_Memorandum.pdf"),
+      path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
+      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"),
       path.join(process.cwd(), "dist", "Yoouz_Investor_Pitch_Memorandum.pdf"),
       path.join(_dirname, "public", "Yoouz_Investor_Pitch_Memorandum.pdf")
     ];
     for (const p of candidates) {
       if (fs.existsSync(p)) {
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", "inline; filename=\"Yoouz_Institutional_Investor_Memorandum.pdf\"");
-        res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         return res.sendFile(p);
       }
     }
-    return res.status(404).send("Original PDF file not found");
+    try {
+      const { writeVisualPitchPdfFiles } = await import("./src/utils/pitchPdfGenerator.ts");
+      const buf = await writeVisualPitchPdfFiles();
+      return res.send(buf);
+    } catch (e: any) {
+      return res.status(500).send("Error generating pitch PDF");
+    }
   });
 
   // Serve PDF.js worker, standard_fonts, and cmaps locally to guarantee 100% original PDF font & vector quality
