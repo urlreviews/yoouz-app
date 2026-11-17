@@ -1491,9 +1491,6 @@ const usersIndexPath = path.join(globalUploadsDir, "users_index.json");
 function getCanonicalAdminUserKey(u: any): string {
   if (!u) return "";
   const id = String(u.id || u.uid || "").toLowerCase().trim();
-  if (u.isAnonymous || u.yoouzPhotoUser || id.startsWith("anon_")) {
-    return id || String(u.username || u.name || "").toLowerCase().trim();
-  }
   const email = String(u.email || "").toLowerCase().trim();
   const name = String(u.name || "").toLowerCase().trim();
   const handle = String(u.handle || "").replace(/^@+/, "").toLowerCase().trim();
@@ -1511,11 +1508,15 @@ function getCanonicalAdminUserKey(u: any): string {
     return "__skip_system_user__";
   }
 
+  if (id.startsWith("anon_")) {
+    return id || String(u.username || u.name || "").toLowerCase().trim();
+  }
   if (email && email.includes("@")) return email;
+  if (id) return id;
   if (name && name !== "user" && name !== "registered user" && name !== "verified reviewer") {
     return `name_${name.replace(/[^a-z0-9]/g, "_")}`;
   }
-  return id || handle;
+  return handle;
 }
 
 function readUsersIndex(): any[] {
@@ -1562,6 +1563,12 @@ function writeUsersIndex(list: any[]): void {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
     fs.writeFileSync(usersIndexPath, jsonStr, "utf8");
+    const publicUsersPath = path.join(process.cwd(), "public", "users_index.json");
+    try {
+      if (fs.existsSync(publicUsersPath)) {
+        fs.writeFileSync(publicUsersPath, jsonStr, "utf8");
+      }
+    } catch (e) {}
   } catch (e) {}
 }
 
@@ -7485,15 +7492,34 @@ function formatAnonymousUserDisplayNameServer(rawName?: string, seed?: string, i
   if (/^u_[a-z0-9]{4,}$/i.test(s)) return `U/${s.slice(2).toUpperCase()}`;
   if (/^@[a-z0-9_.-]{3,}$/i.test(s)) return s;
   const effectiveSeed = (seed || s || "anon_yoouz").trim();
+  const lower = s.toLowerCase();
+  const compact = lower.replace(/[^a-z0-9]/g, "");
+  const isLegacyDeleted =
+    lower.includes("steven akan") ||
+    compact.includes("stevenakan") ||
+    lower.includes("ben blue") ||
+    compact.includes("benblue") ||
+    lower.includes("avt ertuop") ||
+    compact.includes("avtertuop") ||
+    lower.includes("avr6566gd") ||
+    lower.includes("aouisesmee") ||
+    lower.includes("louis42111");
   if (
     !s ||
     s.includes("@") ||
-    isFirstLastHumanNameServer(s) ||
-    s.toLowerCase() === "user" ||
-    s.toLowerCase() === "member" ||
-    s.toLowerCase() === "reviewer" ||
-    s.toLowerCase() === "verified reviewer" ||
-    s.toLowerCase() === "registered user"
+    isLegacyDeleted ||
+    lower === "user" ||
+    lower === "member" ||
+    lower === "reviewer" ||
+    lower === "verified reviewer" ||
+    lower === "registered user" ||
+    lower === "community member" ||
+    lower === "anonymous" ||
+    lower === "anonymous user" ||
+    lower === "yoouz reviewer" ||
+    lower === "yoouz user" ||
+    lower === "guest" ||
+    lower === "anon"
   ) {
     return `U/${hashServerSeed(effectiveSeed)}`;
   }
@@ -8215,33 +8241,34 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           }
 
           const emailPrefix = bestEmail ? bestEmail.split("@")[0].toLowerCase() : "";
-          const uCandidateName = ((u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}`.trim() : (u.name || "")).trim();
-          const exCandidateName = ((existing.firstName && existing.lastName) ? `${existing.firstName} ${existing.lastName}`.trim() : (existing.name || "")).trim();
+          const uRawName = (u.username || u.name || "").trim();
+          const uCandidateName = (uRawName || ((u.firstName && u.lastName) ? `${u.firstName} ${u.lastName}`.trim() : (u.firstName || ""))).trim();
+          const exRawName = (existing.username || existing.name || "").trim();
+          const exCandidateName = (exRawName || ((existing.firstName && existing.lastName) ? `${existing.firstName} ${existing.lastName}`.trim() : (existing.firstName || ""))).trim();
 
-          const isFullHumanName = (n: string) => Boolean(
-            n &&
-            n !== "Reviewer" &&
-            n !== "User" &&
-            n !== "Verified Reviewer" &&
-            n.includes(" ") &&
-            (!emailPrefix || n.toLowerCase() !== emailPrefix)
-          );
+          const isGenericFallbackName = (n: string) => {
+            if (!n) return true;
+            const l = n.toLowerCase().trim();
+            return l === "reviewer" || l === "user" || l === "verified reviewer" || l === "registered user" || l === "community member" || (emailPrefix && l === emailPrefix);
+          };
 
           const bestName =
-            (isFullHumanName(uCandidateName) ? uCandidateName : "") ||
-            (isFullHumanName(exCandidateName) ? exCandidateName : "") ||
-            (uCandidateName && uCandidateName !== "Reviewer" && uCandidateName !== "User" && uCandidateName.toLowerCase() !== emailPrefix ? uCandidateName : "") ||
-            (exCandidateName && exCandidateName !== "Reviewer" && exCandidateName !== "User" && exCandidateName.toLowerCase() !== emailPrefix ? exCandidateName : "") ||
+            (!isGenericFallbackName(uCandidateName) ? uCandidateName : "") ||
+            (!isGenericFallbackName(exCandidateName) ? exCandidateName : "") ||
             uCandidateName ||
             exCandidateName;
 
-          const bestFirstName = u.firstName || existing.firstName || (bestName.includes(" ") ? bestName.split(" ")[0] : bestName);
-          const bestLastName = u.lastName || existing.lastName || (bestName.includes(" ") ? bestName.split(" ").slice(1).join(" ") : "");
+          const bestNameParts = bestName.split(/\s+/).filter(Boolean);
+          const bestFirstName = u.firstName !== undefined && !isGenericFallbackName(uCandidateName)
+            ? (u.firstName || bestNameParts[0] || bestName)
+            : (bestNameParts[0] || existing.firstName || bestName);
+          const bestLastName = u.name && !isGenericFallbackName(uCandidateName)
+            ? (u.lastName !== undefined ? u.lastName : (bestNameParts.length > 1 ? bestNameParts.slice(1).join(" ") : ""))
+            : (existing.lastName !== undefined ? existing.lastName : (bestNameParts.length > 1 ? bestNameParts.slice(1).join(" ") : ""));
 
-          const canonicalHandleFromBestName = `@${bestName.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
-          const rawHandle = (bestName.includes(" ") ? canonicalHandleFromBestName : "") ||
-                            (u.handle && u.handle !== "@user" ? u.handle : "") || 
-                            (existing.handle && existing.handle !== "@user" ? existing.handle : "") || 
+          const canonicalHandleFromBestName = buildHandleFromDisplayName(bestName);
+          const rawHandle = (u.handle && u.handle !== "@user" ? u.handle : "") ||
+                            (existing.handle && existing.handle !== "@user" ? existing.handle : "") ||
                             canonicalHandleFromBestName;
           const bestHandle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
 
@@ -8585,22 +8612,32 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     }
 
     if (colName === 'users') {
-      items = items
+      const dedupUsersMap = new Map<string, any>();
+      items
         .filter((u: any) => {
           if (!u) return false;
           return !isDeletedUserServer(u) && !isDeactivatedUserServer(u);
         })
-        .map((u: any) => {
-          const anonName = formatAnonymousUserDisplayNameServer(u.name, u.id || u.uid || u.email, false);
-          return {
+        .forEach((u: any) => {
+          const anonName = formatAnonymousUserDisplayNameServer(u.username || u.name, u.id || u.uid || u.email, false);
+          const nameParts = anonName.split(/\s+/).filter(Boolean);
+          const firstN = nameParts[0] || anonName;
+          const lastN = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+          const normalizedObj = {
             ...u,
             name: anonName,
-            firstName: anonName,
-            lastName: "",
+            username: anonName,
+            firstName: firstN,
+            lastName: lastN,
             isVerified: false,
             verified: false
           };
+          const dedupKey = getCanonicalAdminUserKey(normalizedObj) || String(u.id || u.uid || u.email || anonName).toLowerCase();
+          if (dedupKey === "__skip_system_user__") return;
+          const prev = dedupUsersMap.get(dedupKey) || {};
+          dedupUsersMap.set(dedupKey, { ...prev, ...normalizedObj });
         });
+      items = Array.from(dedupUsersMap.values());
     }
 
     if (colName === 'chats') {
@@ -8670,6 +8707,64 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         }
         return true;
       });
+    }
+
+    if (colName === 'videoReviews') {
+      try {
+        const liveUsersById = new Map<string, any>();
+        const liveUsersByEmail = new Map<string, any>();
+        const regUser = (u: any) => {
+          if (!u) return;
+          const uid = String(u.id || u.uid || u.userId || "").toLowerCase().trim();
+          const uem = String(u.email || "").toLowerCase().trim();
+          if (uid) liveUsersById.set(uid, { ...(liveUsersById.get(uid) || {}), ...u });
+          if (uem && uem.includes("@")) liveUsersByEmail.set(uem, { ...(liveUsersByEmail.get(uem) || {}), ...u });
+        };
+        readUsersIndex().forEach(regUser);
+        const bunnyDbUsers = getBunnyDb();
+        if (bunnyDbUsers) {
+          try {
+            const uRows = await bunnyDbUsers.execute("SELECT id, email, name, avatar, bio, data FROM users");
+            (uRows?.rows || []).forEach((row: any) => {
+              let p: any = {};
+              try { p = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
+              regUser({ ...p, id: row.id || p.id, email: row.email || p.email, name: p.name || row.name, avatar: p.avatar || row.avatar, bio: p.bio !== undefined ? p.bio : row.bio });
+            });
+          } catch {}
+        }
+        items = items.map((r: any) => {
+          if (!r) return r;
+          const rUid = String(r.userId || r.author?.userId || r.author?.id || "").toLowerCase().trim();
+          const rEm = String(r.userEmail || r.author?.email || "").toLowerCase().trim();
+          const matched = (rUid && liveUsersById.get(rUid)) || (rEm && liveUsersByEmail.get(rEm));
+          if (matched && (matched.username || matched.name)) {
+            const liveName = formatAnonymousUserDisplayNameServer(matched.username || matched.name, matched.id || matched.email || rUid, false);
+            const parts = liveName.split(/\s+/).filter(Boolean);
+            const liveHandle = matched.handle || (
+              /^U\/[A-Z0-9]{4,}$/i.test(liveName)
+                ? `@${liveName.replace(/^U\//i, "u_").toLowerCase()}`
+                : `@${liveName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9_.-]/g, "")}`
+            );
+            return {
+              ...r,
+              authorName: liveName,
+              authorAvatar: matched.avatar || r.authorAvatar,
+              author: {
+                ...(r.author || {}),
+                id: matched.id || r.author?.id || r.userId,
+                userId: matched.id || r.author?.userId || r.userId,
+                name: liveName,
+                firstName: parts[0] || liveName,
+                lastName: parts.length > 1 ? parts.slice(1).join(" ") : "",
+                handle: liveHandle.startsWith("@") ? liveHandle : `@${liveHandle}`,
+                avatar: matched.avatar || r.author?.avatar || r.authorAvatar,
+                bio: matched.bio !== undefined ? matched.bio : r.author?.bio
+              }
+            };
+          }
+          return r;
+        });
+      } catch {}
     }
 
     return items;
@@ -10052,7 +10147,14 @@ app.get('/api/admin/users', async (req, res) => {
       });
     }
 
-    // 4. Include authors from active video reviews index (e.g. Jose Agustin Reinoso, redha bm, Kert P, Edjo Francis Ramos)
+    // 4. Include authors from active video reviews index ONLY if not already registered in usersMap
+    const existingIdsOrEmails = new Set<string>();
+    usersMap.forEach((existingU) => {
+      if (!existingU) return;
+      if (existingU.id) existingIdsOrEmails.add(String(existingU.id).toLowerCase().trim());
+      if (existingU.uid) existingIdsOrEmails.add(String(existingU.uid).toLowerCase().trim());
+      if (existingU.email) existingIdsOrEmails.add(String(existingU.email).toLowerCase().trim());
+    });
     const reviewsIndex = readReviewsIndex();
     if (Array.isArray(reviewsIndex)) {
       reviewsIndex.forEach(v => {
@@ -10062,6 +10164,11 @@ app.get('/api/admin/users', async (req, res) => {
           const aSlug = aName.toLowerCase().replace(/[^a-z0-9]/g, '_');
           const emailKey = String(v.userEmail || (aHandle ? `${aHandle}@users.yoouz.com` : `${aSlug}@users.yoouz.com`)).toLowerCase().trim();
           const uId = String(v.userId || `usr_${aSlug}`);
+          if (existingIdsOrEmails.has(uId.toLowerCase().trim()) || (emailKey && existingIdsOrEmails.has(emailKey))) {
+            return;
+          }
+          const synthKey = getCanonicalAdminUserKey({ id: uId, uid: uId, email: emailKey, name: aName });
+          if (synthKey && usersMap.has(synthKey)) return;
           putUser({
             id: uId,
             uid: uId,
@@ -12089,7 +12196,14 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
         } catch (e) {}
       }
 
-      // 2. Add Video Review Authors from reviews_index.json
+      // 2. Add Video Review Authors from reviews_index.json ONLY if not already present in allUsersMap
+      const existingSyncIds = new Set<string>();
+      allUsersMap.forEach((existingU) => {
+        if (!existingU) return;
+        if (existingU.id) existingSyncIds.add(String(existingU.id).toLowerCase().trim());
+        if (existingU.uid) existingSyncIds.add(String(existingU.uid).toLowerCase().trim());
+        if (existingU.email) existingSyncIds.add(String(existingU.email).toLowerCase().trim());
+      });
       const reviewsIndex = readReviewsIndex();
       if (Array.isArray(reviewsIndex)) {
         reviewsIndex.forEach(v => {
@@ -12099,6 +12213,11 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
             const aSlug = aName.toLowerCase().replace(/[^a-z0-9]/g, '_');
             const emailKey = String(v.userEmail || (aHandle ? `${aHandle}@users.yoouz.com` : `${aSlug}@users.yoouz.com`)).toLowerCase().trim();
             const uId = String(v.userId || `usr_${aSlug}`);
+            if (existingSyncIds.has(uId.toLowerCase().trim()) || (emailKey && existingSyncIds.has(emailKey))) {
+              return;
+            }
+            const synthKey = getCanonicalAdminUserKey({ id: uId, uid: uId, email: emailKey, name: aName });
+            if (synthKey && allUsersMap.has(synthKey)) return;
             putCanonical({
               id: uId,
               uid: uId,
@@ -12132,13 +12251,31 @@ app.post('/api/agencies/request-upgrade', express.json(), async (req, res) => {
           try {
             const isPending = u.status === "pending_verification" || u.isVerified === false;
             const role = u.role || (isPending ? "Member (Pending Verification)" : "user");
+            const resolvedName = u.name || (cleanEmail ? cleanEmail.split('@')[0] : 'User');
+            const nameParts = resolvedName.trim().split(/\s+/);
+            const fName = u.firstName !== undefined ? String(u.firstName) : (nameParts[0] || resolvedName);
+            const lName = u.lastName !== undefined ? String(u.lastName) : (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "");
             await bunnyDb.execute({
-              sql: `INSERT OR REPLACE INTO users (id, email, name, role, data, createdAt, updatedAt)
-                    VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+              sql: `INSERT INTO users (id, email, name, firstName, lastName, avatar, bio, role, data, createdAt, updatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+                    ON CONFLICT(id) DO UPDATE SET
+                      email = COALESCE(excluded.email, users.email),
+                      name = excluded.name,
+                      firstName = excluded.firstName,
+                      lastName = excluded.lastName,
+                      avatar = COALESCE(NULLIF(excluded.avatar, ''), users.avatar),
+                      bio = COALESCE(NULLIF(excluded.bio, ''), users.bio),
+                      role = excluded.role,
+                      data = excluded.data,
+                      updatedAt = CURRENT_TIMESTAMP`,
               args: [
                 cleanId,
                 cleanEmail || null,
-                u.name || (cleanEmail ? cleanEmail.split('@')[0] : 'User'),
+                resolvedName,
+                fName,
+                lName,
+                u.avatar || "",
+                u.bio || "",
                 role,
                 JSON.stringify(u)
               ]
@@ -17608,6 +17745,28 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       const map = new Map<string, any>();
       let bunnyFetchSuccess = false;
 
+      // Load live user directory so author names always mirror latest profile/admin updates
+      const feedUsersById = new Map<string, any>();
+      const feedUsersByEmail = new Map<string, any>();
+      const indexFeedUser = (u: any) => {
+        if (!u) return;
+        const uid = String(u.id || u.uid || u.userId || "").toLowerCase().trim();
+        const uem = String(u.email || "").toLowerCase().trim();
+        if (uid) feedUsersById.set(uid, { ...(feedUsersById.get(uid) || {}), ...u });
+        if (uem && uem.includes("@")) feedUsersByEmail.set(uem, { ...(feedUsersByEmail.get(uem) || {}), ...u });
+      };
+      try { readUsersIndex().forEach(indexFeedUser); } catch {}
+      if (bunnyDb) {
+        try {
+          const uRows = await bunnyDb.execute("SELECT id, email, name, avatar, bio, data FROM users");
+          (uRows?.rows || []).forEach((row: any) => {
+            let p: any = {};
+            try { p = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
+            indexFeedUser({ ...p, id: row.id || p.id, email: row.email || p.email, name: p.name || row.name, avatar: p.avatar || row.avatar, bio: p.bio !== undefined ? p.bio : row.bio });
+          });
+        } catch {}
+      }
+
       if (bunnyDb) {
         try {
           const bunnyRows = await bunnyDb.execute("SELECT * FROM videoReviews ORDER BY COALESCE(createdAt, updatedAt, CURRENT_TIMESTAMP) DESC");
@@ -17618,24 +17777,33 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               const existing = map.get(r.id) || {};
               const parsedAuthor = (typeof parsedData.author === 'object' && parsedData.author) ? parsedData.author : {};
               const existingAuthor = (typeof existing.author === 'object' && existing.author) ? existing.author : {};
-              const authorFirstLast = (parsedAuthor.firstName && parsedAuthor.lastName)
-                ? `${String(parsedAuthor.firstName).trim()} ${String(parsedAuthor.lastName).trim()}`.trim()
-                : ((existingAuthor.firstName && existingAuthor.lastName) ? `${String(existingAuthor.firstName).trim()} ${String(existingAuthor.lastName).trim()}`.trim() : '');
+              const revUid = String(r.userId || parsedData.userId || parsedAuthor.userId || parsedAuthor.id || "").toLowerCase().trim();
+              const revEmail = String(parsedData.userEmail || parsedAuthor.email || "").toLowerCase().trim();
+              const liveUser = (revUid && feedUsersById.get(revUid)) || (revEmail && feedUsersByEmail.get(revEmail)) || null;
+              const liveUserName = liveUser ? formatAnonymousUserDisplayNameServer(liveUser.username || liveUser.name, liveUser.id || liveUser.email || revUid, false) : "";
               const authorCandidates = [
-                authorFirstLast,
+                liveUserName,
                 parsedAuthor.name,
                 parsedData.authorName,
                 r.authorName,
                 existingAuthor.name
               ].filter(Boolean) as string[];
-              const bestAuthorName = authorCandidates.find(n => n.trim().includes(" ")) || authorCandidates[0] || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId);
+              const bestAuthorName = authorCandidates[0] || (r.userId && r.userId.includes('@') ? r.userId.split('@')[0] : r.userId);
+              const nameParts = String(bestAuthorName || "").split(/\s+/).filter(Boolean);
+              const bestHandle = liveUser?.handle || parsedAuthor.handle || existingAuthor.handle || (
+                /^U\/[A-Z0-9]{4,}$/i.test(bestAuthorName)
+                  ? `@${bestAuthorName.replace(/^U\//i, "u_").toLowerCase()}`
+                  : `@${bestAuthorName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9_.-]/g, "")}`
+              );
               const mergedAuthor = {
                 ...existingAuthor,
                 ...parsedAuthor,
                 name: bestAuthorName,
-                firstName: parsedAuthor.firstName || existingAuthor.firstName || (bestAuthorName.includes(" ") ? bestAuthorName.split(" ")[0] : bestAuthorName),
-                lastName: parsedAuthor.lastName || existingAuthor.lastName || (bestAuthorName.includes(" ") ? bestAuthorName.split(" ").slice(1).join(" ") : ""),
-                avatar: r.authorAvatar || parsedData.authorAvatar || parsedAuthor.avatar || existingAuthor.avatar || '',
+                firstName: nameParts[0] || bestAuthorName,
+                lastName: nameParts.length > 1 ? nameParts.slice(1).join(" ") : "",
+                handle: bestHandle.startsWith("@") ? bestHandle : `@${bestHandle}`,
+                avatar: liveUser?.avatar || r.authorAvatar || parsedData.authorAvatar || parsedAuthor.avatar || existingAuthor.avatar || '',
+                bio: (liveUser?.bio !== undefined ? liveUser.bio : undefined) ?? parsedAuthor.bio ?? existingAuthor.bio ?? '',
                 location: (parsedAuthor && parsedAuthor.location) || (existingAuthor && existingAuthor.location) || '',
                 city: (parsedAuthor && parsedAuthor.city) || (existingAuthor && existingAuthor.city) || '',
                 country: (parsedAuthor && parsedAuthor.country) || (existingAuthor && existingAuthor.country) || ''
@@ -17672,7 +17840,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 placeId: r.placeId || parsedData.placeId,
                 placeName: r.placeName || parsedData.placeName,
                 authorName: bestAuthorName || r.authorName || parsedData.authorName,
-                authorAvatar: r.authorAvatar || parsedData.authorAvatar,
+                authorAvatar: mergedAuthor.avatar || r.authorAvatar || parsedData.authorAvatar,
                 rating: effRating,
                 placeRating: effRating,
                 videoUrl: isPhotoItem ? '' : (r.videoUrl || parsedData.videoUrl),
@@ -22393,12 +22561,22 @@ app.post("/api/videos/save-review", async (req, res) => {
       const nextLocation = (location || locParts.join(", ")).trim();
       const nextLang = (language || preferredLanguage || "").toLowerCase().trim();
 
+      const nameParts = nextName ? nextName.split(/\s+/) : [];
+      const derivedFirstName = nameParts[0] || "";
+      const derivedLastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+      const resolvedHandle = nextHandle
+        ? (nextHandle.startsWith("@") ? nextHandle : `@${nextHandle}`)
+        : (nextName ? buildHandleFromDisplayName(nextName) : "@user");
+
       const profileObj: any = {
         id: targetUserId || `usr-${Date.now()}`,
         uid: targetUserId || `usr-${Date.now()}`,
         email: (email || "").toLowerCase().trim(),
         name: nextName,
-        handle: nextHandle.startsWith("@") ? nextHandle : (nextHandle ? `@${nextHandle}` : `@${nextName.toLowerCase().replace(/[^a-z0-9]/g, "")}`),
+        username: nextName,
+        firstName: derivedFirstName,
+        lastName: derivedLastName,
+        handle: resolvedHandle,
         avatar: nextAvatar,
         bio: nextBio,
         banner: nextBanner,
@@ -22407,7 +22585,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         state: nextState,
         country: nextCountry,
         ...(nextLang && { language: nextLang, preferredLanguage: nextLang }),
-        updatedAt: Date.now()
+        updatedAt: new Date().toISOString()
       };
 
       // Un-blacklist user so re-registering or updating profiles is active immediately
@@ -22436,10 +22614,9 @@ app.post("/api/videos/save-review", async (req, res) => {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         try {
-          // Resolve canonical user ID to prevent duplicate accounts when updating city/address/location
           const findExistingRes = await bunnyDb.execute({
-            sql: `SELECT id, email, name, data FROM users WHERE id = ? OR (email != '' AND email = ?) OR (name != '' AND name = ?)`,
-            args: [targetUserId || "", profileObj.email || "", profileObj.name || ""]
+            sql: `SELECT id, email, name, data FROM users WHERE id = ? OR (email != '' AND email = ?)`,
+            args: [targetUserId || "", profileObj.email || ""]
           });
           const matchingRows = findExistingRes.rows || [];
           if (matchingRows.length > 0) {
@@ -22450,35 +22627,37 @@ app.post("/api/videos/save-review", async (req, res) => {
             if (!profileObj.email && primary.email) {
               profileObj.email = String(primary.email).toLowerCase().trim();
             }
-
-            // Remove any secondary duplicate entries (e.g. steven_akan when primary is avr6566gd@gmail.com)
-            for (const r of matchingRows) {
-              if (String(r.id) !== canonicalId) {
-                await bunnyDb.execute({
-                  sql: `DELETE FROM users WHERE id = ?`,
-                  args: [String(r.id)]
-                });
-              }
-            }
+            let prevParsed: any = {};
+            try { prevParsed = typeof primary.data === 'string' ? JSON.parse(primary.data) : (primary.data || {}); } catch {}
+            Object.assign(profileObj, {
+              ...prevParsed,
+              ...profileObj,
+              name: nextName || prevParsed.name || primary.name || "",
+              username: nextName || prevParsed.username || prevParsed.name || "",
+              firstName: nextName ? derivedFirstName : (prevParsed.firstName || ""),
+              lastName: nextName ? derivedLastName : (prevParsed.lastName || "")
+            });
           }
 
           await bunnyDb.execute({
-            sql: `INSERT INTO users (id, email, name, avatar, bio, data, updatedAt)
-                  VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            sql: `INSERT INTO users (id, email, name, firstName, lastName, avatar, bio, data, updatedAt)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET
                     email = COALESCE(NULLIF(excluded.email, ''), users.email),
                     name = excluded.name,
+                    firstName = excluded.firstName,
+                    lastName = excluded.lastName,
                     avatar = excluded.avatar,
                     bio = excluded.bio,
                     data = excluded.data,
                     updatedAt = CURRENT_TIMESTAMP`,
-            args: [profileObj.id, (profileObj.email || "").trim().toLowerCase() || null, profileObj.name, profileObj.avatar, profileObj.bio, JSON.stringify(profileObj)]
+            args: [profileObj.id, (profileObj.email || "").trim().toLowerCase() || null, profileObj.name, profileObj.firstName || "", profileObj.lastName || "", profileObj.avatar, profileObj.bio, JSON.stringify(profileObj)]
           });
 
           // Cascade author updates across all existing videos in BunnyDB
           const matchingReviews = await bunnyDb.execute({
-            sql: `SELECT id, data FROM videoReviews WHERE userId = ? OR authorName = ?`,
-            args: [profileObj.id, profileObj.name]
+            sql: `SELECT id, data FROM videoReviews WHERE userId = ?`,
+            args: [profileObj.id]
           });
 
           for (const row of matchingReviews.rows) {
@@ -22491,6 +22670,8 @@ app.post("/api/videos/save-review", async (req, res) => {
               const updatedAuthor = {
                 ...(rData.author || {}),
                 name: profileObj.name || rData.author?.name,
+                firstName: profileObj.firstName !== undefined ? profileObj.firstName : rData.author?.firstName,
+                lastName: profileObj.lastName !== undefined ? profileObj.lastName : rData.author?.lastName,
                 handle: profileObj.handle || rData.author?.handle,
                 avatar: profileObj.avatar || rData.author?.avatar,
                 bio: profileObj.bio || rData.author?.bio,
@@ -22508,8 +22689,8 @@ app.post("/api/videos/save-review", async (req, res) => {
               };
 
               await bunnyDb.execute({
-                sql: `UPDATE videoReviews SET authorName = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-                args: [profileObj.name, profileObj.avatar, JSON.stringify(newRowData), row.id]
+                sql: `UPDATE videoReviews SET authorName = ?, authorHandle = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                args: [profileObj.name, profileObj.handle, profileObj.avatar, JSON.stringify(newRowData), row.id]
               });
             }
           }
@@ -22518,42 +22699,69 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       }
 
-      // 2. Cascade author updates into local reviews_index.json
+      // 1b. Update local users_index.json so App & Admin stay synced immediately
+      try {
+        const localUsers = readUsersIndex();
+        const uIdx = localUsers.findIndex((u: any) =>
+          u && (
+            u.id === profileObj.id ||
+            u.uid === profileObj.id ||
+            (profileObj.email && String(u.email || "").toLowerCase().trim() === profileObj.email)
+          )
+        );
+        if (uIdx !== -1) {
+          localUsers[uIdx] = { ...localUsers[uIdx], ...profileObj };
+        } else {
+          localUsers.unshift(profileObj);
+        }
+        writeUsersIndex(localUsers);
+      } catch (e) {}
+
+      // 2. Cascade author updates into local reviews_index.json and live feedCache
       try {
         const localIndex = readReviewsIndex();
         let indexUpdated = false;
-        localIndex.forEach((r: any) => {
-          const isMatch = (targetUserId && (r.userId === targetUserId || r.author?.id === targetUserId)) ||
-                          (profileObj.name && (r.authorName === profileObj.name || r.author?.name === profileObj.name)) ||
-                          (profileObj.email && r.author?.email === profileObj.email);
+        const applyAuthorToReview = (r: any) => {
+          const isMatch = (targetUserId && (r.userId === targetUserId || r.author?.id === targetUserId || r.author?.userId === targetUserId)) ||
+                          (profileObj.id && (r.userId === profileObj.id || r.author?.id === profileObj.id)) ||
+                          (profileObj.email && String(r.userEmail || r.author?.email || "").toLowerCase().trim() === profileObj.email);
           if (isMatch) {
-            indexUpdated = true;
             if (profileObj.name) {
               r.authorName = profileObj.name;
-              if (r.author) r.author.name = profileObj.name;
+              r.author = { ...(r.author || {}), name: profileObj.name, firstName: profileObj.firstName, lastName: profileObj.lastName };
             }
             if (profileObj.avatar) {
               r.authorAvatar = profileObj.avatar;
-              if (r.author) r.author.avatar = profileObj.avatar;
+              r.author = { ...(r.author || {}), avatar: profileObj.avatar };
             }
-            if (profileObj.handle && r.author) r.author.handle = profileObj.handle;
-            if (profileObj.bio && r.author) r.author.bio = profileObj.bio;
-            if (profileObj.banner && r.author) r.author.banner = profileObj.banner;
-            if (profileObj.location && r.author) r.author.location = profileObj.location;
-            if (profileObj.city && r.author) r.author.city = profileObj.city;
-            if (profileObj.country && r.author) r.author.country = profileObj.country;
+            if (profileObj.handle) r.author = { ...(r.author || {}), handle: profileObj.handle };
+            if (profileObj.bio !== undefined) r.author = { ...(r.author || {}), bio: profileObj.bio };
+            if (profileObj.banner) r.author = { ...(r.author || {}), banner: profileObj.banner };
+            if (profileObj.location) r.author = { ...(r.author || {}), location: profileObj.location };
+            if (profileObj.city) r.author = { ...(r.author || {}), city: profileObj.city };
+            if (profileObj.country) r.author = { ...(r.author || {}), country: profileObj.country };
+            return true;
           }
+          return false;
+        };
+        localIndex.forEach((r: any) => {
+          if (applyAuthorToReview(r)) indexUpdated = true;
         });
         if (indexUpdated) {
           writeReviewsIndex(localIndex);
         }
+        if (Array.isArray(feedCache.videos)) {
+          feedCache.videos.forEach((r: any) => applyAuthorToReview(r));
+        }
       } catch (e) {}
 
-      // 3. Clear feed cache to force instant fresh fetch on next client poll
+      // 3. Clear feed cache & OG caches, then broadcast SSE user_updated
       feedCache.lastFetched = 0;
-
-      // 4. Update BunnyDB users collection if active
-      
+      if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+      if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+      try {
+        broadcastSseEvent({ type: "user_updated", user: profileObj });
+      } catch {}
 
       // 5. Update Postgres if active
       if (getDb()) {
@@ -22566,7 +22774,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         } catch (sErr) {}
       }
 
-      return res.json({ success: true, profile: profileObj, message: "Profile updated globally across all feeds." });
+      return res.json({ success: true, profile: profileObj, user: profileObj, message: "Profile updated globally across all feeds." });
     } catch (err: any) {
       console.error("Profile update error:", err);
       return res.status(500).json({ error: err.message });
@@ -23415,13 +23623,22 @@ app.post("/api/videos/save-review", async (req, res) => {
   }
 
   function formatUsernameNormalized(raw: string): string {
-    return String(raw || "").trim().replace(/^@+/, "");
+    return String(raw || "").trim().replace(/^@+/, "").replace(/\s+/g, " ");
   }
 
   function isValidUsernameFormat(username: string): boolean {
     if (!username) return false;
     if (/^U\/[A-Za-z0-9]{4,12}$/i.test(username)) return true;
-    return /^[A-Za-z0-9_.-]{3,24}$/.test(username);
+    return /^[A-Za-z0-9 _.'-]{2,32}$/.test(username) && !username.includes("@");
+  }
+
+  function buildHandleFromDisplayName(displayName: string): string {
+    const clean = String(displayName || "").trim();
+    if (/^U\/[A-Za-z0-9]{4,}$/i.test(clean)) {
+      return `@u_${clean.slice(2).toLowerCase()}`;
+    }
+    const slug = clean.replace(/^@+/, "").toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9_.-]/g, "");
+    return slug ? `@${slug}` : "@user";
   }
 
   // Silent Zero-Friction Anonymous Account Provisioning (Scratch v5)
@@ -23611,7 +23828,7 @@ app.post("/api/videos/save-review", async (req, res) => {
 
       if (!cleanUserId) return res.status(400).json({ error: "Missing userId" });
       if (!isValidUsernameFormat(normalized)) {
-        return res.status(400).json({ error: "Invalid username. Use 3–24 letters, numbers, _, ., or -" });
+        return res.status(400).json({ error: "Invalid name. Use 2–32 letters, numbers, spaces, _, ., ', or -" });
       }
 
       const lowerTarget = normalized.toLowerCase();
@@ -23650,26 +23867,37 @@ app.post("/api/videos/save-review", async (req, res) => {
         };
       }
 
+      const nameParts = normalized.split(/\s+/).filter(Boolean);
+      const firstName = nameParts[0] || normalized;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+      const nextHandle = buildHandleFromDisplayName(normalized);
+      const isAnonHandle = /^U\/[A-Za-z0-9]{4,}$/i.test(normalized);
+
       const updatedUser = {
         ...userRecord,
         id: cleanUserId,
         uid: userRecord.uid || cleanUserId,
         name: normalized,
         username: normalized,
-        handle: `@${normalized}`,
+        firstName,
+        lastName,
+        handle: nextHandle,
+        isAnonymous: isAnonHandle,
         yoouzPhotoUser: true,
         updatedAt: new Date().toISOString()
       };
 
       if (bunnyDb) {
         await bunnyDb.execute({
-          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET name = excluded.name, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          sql: `INSERT INTO users (id, email, name, firstName, lastName, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET name = excluded.name, firstName = excluded.firstName, lastName = excluded.lastName, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
           args: [
             cleanUserId,
             updatedUser.email || null,
             normalized,
+            firstName,
+            lastName,
             updatedUser.avatar || "",
             updatedUser.bio || "",
             updatedUser.role || "user",
@@ -23683,41 +23911,59 @@ app.post("/api/videos/save-review", async (req, res) => {
       else localUsers.unshift(updatedUser);
       writeUsersIndex(localUsers);
 
-      // Cascade username update across reviews
+      // Cascade username update across reviews, comments, feed cache, and OG card caches
       try {
+        const matchEmail = String(updatedUser.email || "").toLowerCase().trim();
         const revList = readReviewsIndex();
         let revChanged = false;
         const revIdsToUpdate: string[] = [];
-        revList.forEach((r: any) => {
-          if (!r) return;
+        const applyAuthorUpdate = (r: any) => {
+          if (!r) return false;
           const rUid = String(r.userId || r.author?.userId || r.author?.id || "").trim();
-          if (rUid === cleanUserId) {
+          const rEm = String(r.userEmail || r.author?.email || "").toLowerCase().trim();
+          if (rUid === cleanUserId || (matchEmail && rEm === matchEmail)) {
             r.authorName = normalized;
-            r.author = { ...(r.author || {}), name: normalized, handle: `@${normalized}` };
+            r.author = {
+              ...(r.author || {}),
+              name: normalized,
+              firstName,
+              lastName,
+              handle: nextHandle
+            };
+            return true;
+          }
+          return false;
+        };
+        revList.forEach((r: any) => {
+          if (applyAuthorUpdate(r)) {
             revChanged = true;
             if (r.id) revIdsToUpdate.push(r.id);
           }
         });
         if (revChanged) writeReviewsIndex(revList);
         if (Array.isArray(feedCache.videos)) {
-          feedCache.videos.forEach((r: any) => {
-            if (r && String(r.userId || r.author?.userId || r.author?.id || "").trim() === cleanUserId) {
-              r.authorName = normalized;
-              r.author = { ...(r.author || {}), name: normalized, handle: `@${normalized}` };
-            }
-          });
+          feedCache.videos.forEach((r: any) => applyAuthorUpdate(r));
         }
+        feedCache.lastFetched = 0;
         if (bunnyDb && revIdsToUpdate.length > 0) {
           for (const rId of revIdsToUpdate) {
             const obj = revList.find((x: any) => x && x.id === rId);
             if (obj) {
               bunnyDb.execute({
-                sql: "UPDATE videoReviews SET authorName = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-                args: [normalized, JSON.stringify(obj), rId]
+                sql: "UPDATE videoReviews SET authorName = ?, authorHandle = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                args: [normalized, nextHandle, JSON.stringify(obj), rId]
               }).catch(() => {});
             }
           }
         }
+        if (bunnyDb) {
+          bunnyDb.execute({
+            sql: "UPDATE comments SET userName = ? WHERE userId = ?",
+            args: [normalized, cleanUserId]
+          }).catch(() => {});
+        }
+        if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+        if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
       } catch {}
 
       try {
@@ -23729,6 +23975,187 @@ app.post("/api/videos/save-review", async (req, res) => {
       return res.status(500).json({ error: err.message || "Failed to update username" });
     }
   });
+
+  // Unified Profile Update Endpoint (used by Admin Panel Edit Profile and User Profile edits)
+  const handleUnifiedUserProfileUpdate = async (req: express.Request, res: express.Response) => {
+    try {
+      const body = req.body || {};
+      const cleanId = String(body.id || body.uid || "").trim();
+      const cleanEmail = String(body.email || "").toLowerCase().trim();
+      const rawName = body.name !== undefined ? String(body.name) : (body.username !== undefined ? String(body.username) : "");
+      const cleanName = formatUsernameNormalized(rawName);
+
+      if (!cleanId && !cleanEmail) {
+        return res.status(400).json({ error: "Missing user identifier (id or email)" });
+      }
+
+      const bunnyDb = getBunnyDb();
+      const localUsers = readUsersIndex();
+      let existingIdx = localUsers.findIndex((u: any) => {
+        if (!u) return false;
+        const uid = String(u.id || u.uid || "").trim();
+        const uem = String(u.email || "").toLowerCase().trim();
+        return (cleanId && uid === cleanId) || (cleanEmail && uem === cleanEmail);
+      });
+      let existingUser: any = existingIdx !== -1 ? localUsers[existingIdx] : null;
+
+      if (!existingUser && bunnyDb) {
+        const rs = await bunnyDb.execute({
+          sql: cleanId
+            ? "SELECT * FROM users WHERE id = ? LIMIT 1"
+            : "SELECT * FROM users WHERE LOWER(email) = ? LIMIT 1",
+          args: [cleanId || cleanEmail]
+        }).catch(() => null);
+        if (rs && rs.rows && rs.rows[0]) {
+          const row: any = rs.rows[0];
+          let parsed: any = {};
+          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+          existingUser = { id: row.id, uid: row.id, email: row.email || "", name: row.name || "", bio: row.bio || "", avatar: row.avatar || "", role: row.role || "user", ...parsed };
+        }
+      }
+
+      const targetId = String(existingUser?.id || cleanId || `usr_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "_")}`);
+      const effectiveName = cleanName || existingUser?.name || "User";
+      const nameParts = effectiveName.split(/\s+/).filter(Boolean);
+      const firstName = nameParts[0] || effectiveName;
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
+      let nextHandle = body.handle !== undefined ? String(body.handle).trim() : (existingUser?.handle || "");
+      if (cleanName) {
+        // Recompute handle when name changes unless caller passed a distinct non-stale handle
+        if (!body.handle || body.handle === existingUser?.handle) {
+          nextHandle = buildHandleFromDisplayName(effectiveName);
+        }
+      }
+      if (nextHandle && !nextHandle.startsWith("@")) nextHandle = `@${nextHandle}`;
+      if (!nextHandle) nextHandle = buildHandleFromDisplayName(effectiveName);
+
+      const updatedUser = {
+        ...(existingUser || {}),
+        id: targetId,
+        uid: existingUser?.uid || targetId,
+        email: cleanEmail || existingUser?.email || "",
+        name: effectiveName,
+        username: effectiveName,
+        firstName,
+        lastName,
+        handle: nextHandle,
+        bio: body.bio !== undefined ? String(body.bio) : (existingUser?.bio || ""),
+        avatar: body.avatar !== undefined ? String(body.avatar) : (existingUser?.avatar || ""),
+        role: body.role !== undefined ? String(body.role) : (existingUser?.role || "Creator"),
+        isAnonymous: /^U\/[A-Za-z0-9]{4,}$/i.test(effectiveName),
+        yoouzPhotoUser: true,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO users (id, email, name, firstName, lastName, avatar, bio, role, data, createdAt, updatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                  email = COALESCE(excluded.email, users.email),
+                  name = excluded.name,
+                  firstName = excluded.firstName,
+                  lastName = excluded.lastName,
+                  avatar = excluded.avatar,
+                  bio = excluded.bio,
+                  role = excluded.role,
+                  data = excluded.data,
+                  updatedAt = CURRENT_TIMESTAMP`,
+          args: [
+            targetId,
+            updatedUser.email || null,
+            updatedUser.name,
+            updatedUser.firstName,
+            updatedUser.lastName,
+            updatedUser.avatar || "",
+            updatedUser.bio || "",
+            updatedUser.role || "Creator",
+            JSON.stringify(updatedUser)
+          ]
+        }).catch(() => {});
+      }
+
+      if (existingIdx !== -1) localUsers[existingIdx] = updatedUser;
+      else localUsers.unshift(updatedUser);
+      writeUsersIndex(localUsers);
+
+      // Cascade updates to videoReviews, reviews_index.json, comments, feedCache, and OG caches
+      try {
+        const revList = readReviewsIndex();
+        let revChanged = false;
+        const revIdsToUpdate: string[] = [];
+        const matchUidLower = targetId.toLowerCase();
+        const matchEmailLower = String(updatedUser.email || "").toLowerCase().trim();
+
+        const applyProfileToReview = (r: any) => {
+          if (!r) return false;
+          const rUid = String(r.userId || r.author?.userId || r.author?.id || "").toLowerCase().trim();
+          const rEm = String(r.userEmail || r.author?.email || "").toLowerCase().trim();
+          if ((rUid && rUid === matchUidLower) || (matchEmailLower && rEm === matchEmailLower)) {
+            r.authorName = updatedUser.name;
+            if (updatedUser.avatar) r.authorAvatar = updatedUser.avatar;
+            r.author = {
+              ...(r.author || {}),
+              id: targetId,
+              userId: targetId,
+              name: updatedUser.name,
+              firstName: updatedUser.firstName,
+              lastName: updatedUser.lastName,
+              handle: updatedUser.handle,
+              avatar: updatedUser.avatar || r.author?.avatar || "",
+              bio: updatedUser.bio !== undefined ? updatedUser.bio : r.author?.bio
+            };
+            return true;
+          }
+          return false;
+        };
+
+        revList.forEach((r: any) => {
+          if (applyProfileToReview(r)) {
+            revChanged = true;
+            if (r.id) revIdsToUpdate.push(r.id);
+          }
+        });
+        if (revChanged) writeReviewsIndex(revList);
+        if (Array.isArray(feedCache.videos)) {
+          feedCache.videos.forEach((r: any) => applyProfileToReview(r));
+        }
+        feedCache.lastFetched = 0;
+
+        if (bunnyDb && revIdsToUpdate.length > 0) {
+          for (const rId of revIdsToUpdate) {
+            const obj = revList.find((x: any) => x && x.id === rId);
+            if (obj) {
+              bunnyDb.execute({
+                sql: "UPDATE videoReviews SET authorName = ?, authorHandle = ?, authorAvatar = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                args: [updatedUser.name, updatedUser.handle, updatedUser.avatar || obj.authorAvatar || "", JSON.stringify(obj), rId]
+              }).catch(() => {});
+            }
+          }
+        }
+        if (bunnyDb) {
+          bunnyDb.execute({
+            sql: "UPDATE comments SET userName = ?, userAvatar = ? WHERE userId = ?",
+            args: [updatedUser.name, updatedUser.avatar || "", targetId]
+          }).catch(() => {});
+        }
+        if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+        if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+      } catch {}
+
+      try {
+        broadcastSseEvent({ type: "user_updated", user: updatedUser });
+      } catch {}
+
+      return res.json({ success: true, user: updatedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to update user profile" });
+    }
+  };
+
+  app.post("/api/user/profile", express.json({ limit: "15mb" }), handleUnifiedUserProfileUpdate);
+  app.post("/api/admin/users/update", express.json({ limit: "15mb" }), handleUnifiedUserProfileUpdate);
 
   // Mobile-First Inline Bio Update Endpoint (No email required)
   app.post("/api/user/update-bio", async (req, res) => {
@@ -42804,6 +43231,151 @@ function injectOpenGraphTags(html: string, meta: any) {
       } else {
         console.log("⚡ [Server] Connected to persistent edge database.");
       }
+
+      const syncCommunityNameMixV1 = async () => {
+        const markerPath = path.join(globalUploadsDir, ".community_name_mix_v1_done");
+        if (fs.existsSync(markerPath)) return;
+        try {
+          const { COMMUNITY_REVIEWERS } = await import("./src/utils/communitySeeder.ts");
+          const reviewerById = new Map(COMMUNITY_REVIEWERS.map((r) => [r.id, r]));
+          const reviewerByEmail = new Map(COMMUNITY_REVIEWERS.map((r) => [r.email.toLowerCase(), r]));
+
+          // 1. Update BunnyDB users for the 20 community reviewers
+          if (bunnyDb) {
+            for (const rev of COMMUNITY_REVIEWERS) {
+              try {
+                const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [rev.id] });
+                const row: any = rs?.rows?.[0];
+                let parsed: any = {};
+                if (row && row.data) {
+                  try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+                }
+                const nextAvatar = parsed.avatar || row?.avatar || "";
+                const updatedObj = {
+                  ...parsed,
+                  id: rev.id,
+                  uid: rev.id,
+                  userId: rev.id,
+                  email: rev.email,
+                  name: rev.name,
+                  username: rev.name,
+                  firstName: rev.firstName,
+                  lastName: rev.lastName,
+                  handle: rev.handle,
+                  isAnonymous: /^U\/[A-Za-z0-9]{4,}$/i.test(rev.name),
+                  updatedAt: new Date().toISOString()
+                };
+                await bunnyDb.execute({
+                  sql: `INSERT INTO users (id, email, name, firstName, lastName, avatar, bio, role, data, updatedAt)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT(id) DO UPDATE SET
+                          name = excluded.name,
+                          firstName = excluded.firstName,
+                          lastName = excluded.lastName,
+                          data = excluded.data,
+                          updatedAt = CURRENT_TIMESTAMP`,
+                  args: [
+                    rev.id,
+                    rev.email,
+                    rev.name,
+                    rev.firstName,
+                    rev.lastName,
+                    nextAvatar,
+                    parsed.bio || rev.bio,
+                    parsed.role || "Creator",
+                    JSON.stringify(updatedObj)
+                  ]
+                }).catch(() => {});
+              } catch {}
+            }
+
+            // 2. Update BunnyDB videoReviews authored by those 20 reviewers
+            const revRows = await bunnyDb.execute("SELECT id, userId, data FROM videoReviews").catch(() => null);
+            if (revRows && revRows.rows) {
+              for (const row of revRows.rows as any[]) {
+                let d: any = {};
+                try { d = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+                const uid = String(row.userId || d.userId || d.author?.id || "").trim();
+                const em = String(d.userEmail || d.author?.email || "").toLowerCase().trim();
+                const match = reviewerById.get(uid) || reviewerByEmail.get(em);
+                if (match) {
+                  d.authorName = match.name;
+                  d.author = {
+                    ...(d.author || {}),
+                    id: match.id,
+                    userId: match.id,
+                    name: match.name,
+                    firstName: match.firstName,
+                    lastName: match.lastName,
+                    handle: match.handle
+                  };
+                  await bunnyDb.execute({
+                    sql: "UPDATE videoReviews SET authorName = ?, authorHandle = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                    args: [match.name, match.handle, JSON.stringify(d), row.id]
+                  }).catch(() => {});
+                }
+              }
+            }
+          }
+
+          // 3. Update & deduplicate uploads/users_index.json (and public/users_index.json via writeUsersIndex)
+          try {
+            const localUsers = readUsersIndex();
+            const patchedUsers = localUsers.map((u: any) => {
+              if (!u) return u;
+              const match = reviewerById.get(String(u.id || u.uid || "")) || reviewerByEmail.get(String(u.email || "").toLowerCase().trim());
+              if (!match) return u;
+              return {
+                ...u,
+                name: match.name,
+                username: match.name,
+                firstName: match.firstName,
+                lastName: match.lastName,
+                handle: match.handle,
+                isAnonymous: /^U\/[A-Za-z0-9]{4,}$/i.test(match.name)
+              };
+            });
+            writeUsersIndex(patchedUsers);
+          } catch {}
+
+          // 4. Update uploads/reviews_index.json (also syncs public/reviews_index.json, public/seeds/reviews_index.json, src/data/seedReviews.ts)
+          try {
+            const revs = readReviewsIndex();
+            let revChanged = false;
+            revs.forEach((r: any) => {
+              if (!r) return;
+              const match = reviewerById.get(String(r.userId || r.author?.id || "")) || reviewerByEmail.get(String(r.userEmail || r.author?.email || "").toLowerCase().trim());
+              if (match) {
+                r.authorName = match.name;
+                r.author = {
+                  ...(r.author || {}),
+                  id: match.id,
+                  userId: match.id,
+                  name: match.name,
+                  firstName: match.firstName,
+                  lastName: match.lastName,
+                  handle: match.handle
+                };
+                revChanged = true;
+              }
+            });
+            if (revChanged) writeReviewsIndex(revs);
+          } catch {}
+
+          feedCache.lastFetched = 0;
+          if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+          if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+          try {
+            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
+            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
+          } catch {}
+          console.log("✅ [Server] Synced 10 named + 11 auto-code community profile mix cleanly.");
+        } catch (mixErr: any) {
+          console.warn("Community name mix sync notice:", mixErr?.message || mixErr);
+        }
+      };
+
+      await syncCommunityNameMixV1().catch(() => {});
 
       await reconcileDuplicateUserProfiles().then((res) => {
         if (res.reconciledCount > 0) {

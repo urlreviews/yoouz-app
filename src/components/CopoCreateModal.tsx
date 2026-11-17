@@ -624,9 +624,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUsernameMessage("");
       return;
     }
-    if (clean.length < 3) {
+    if (clean.length < 2) {
       setUsernameStatus("error");
-      setUsernameMessage("At least 3 characters");
+      setUsernameMessage("At least 2 characters");
       return;
     }
 

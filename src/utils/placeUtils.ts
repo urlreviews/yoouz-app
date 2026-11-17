@@ -3395,36 +3395,48 @@ export function updateUserRegistry(users: any[] | any): void {
     const emailPrefix = emailKey.includes("@") ? emailKey.split("@")[0] : "";
     const uidKey = (u.uid || u.userId || u.id || "").toLowerCase().trim();
 
-    const candidateFullName = (
-      (u.firstName && u.lastName)
-        ? `${String(u.firstName).trim()} ${String(u.lastName).trim()}`.trim()
-        : (u.name || "")
+    const candidateName = (
+      u.username ||
+      u.name ||
+      ((u.firstName && u.lastName) ? `${String(u.firstName).trim()} ${String(u.lastName).trim()}`.trim() : "")
     ).trim();
 
     const prevEntry = (emailKey && memoryUserRegistry[emailKey]) || (uidKey && memoryUserRegistry[uidKey]) || null;
     const prevName = String(prevEntry?.name || "").trim();
-    const prevIsFull = prevName.includes(" ") && (!emailPrefix || prevName.toLowerCase() !== emailPrefix);
-    const candIsFull = candidateFullName.includes(" ") && (!emailPrefix || candidateFullName.toLowerCase() !== emailPrefix);
+    const lowerCand = candidateName.toLowerCase();
+    const isGenericCand =
+      !candidateName ||
+      lowerCand === "user" ||
+      lowerCand === "member" ||
+      lowerCand === "reviewer" ||
+      lowerCand === "verified reviewer" ||
+      lowerCand === "registered user" ||
+      lowerCand === "community member" ||
+      lowerCand === "anonymous" ||
+      (emailPrefix && lowerCand === emailPrefix);
 
-    // Never allow an email-prefix or single-word placeholder to overwrite an already-known full First + Last Name
-    const resolvedName = candIsFull
-      ? candidateFullName
-      : (prevIsFull ? prevName : (candidateFullName || prevName));
+    const resolvedName = !isGenericCand ? candidateName : (prevName || candidateName);
+    const nameParts = resolvedName.split(/\s+/).filter(Boolean);
+    const computedFirstName = nameParts[0] || resolvedName;
+    const computedLastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
 
     const nameKey = (resolvedName || u.name || "").toLowerCase().replace(/^@+/, "").trim();
     const handleKey = (u.handle || "").toLowerCase().replace(/^@+/, "").trim();
+    const computedHandle = /^U\/[A-Z0-9]{4,}$/i.test(resolvedName)
+      ? `@${resolvedName.replace(/^U\//i, "u_").toLowerCase()}`
+      : (u.handle || (resolvedName ? `@${resolvedName.toLowerCase().replace(/[^a-z0-9_.-]/g, "")}` : prevEntry?.handle || "@user"));
 
     const entry = {
       name: resolvedName,
-      firstName: u.firstName || prevEntry?.firstName || (resolvedName.includes(" ") ? resolvedName.split(" ")[0] : resolvedName),
-      lastName: u.lastName || prevEntry?.lastName || (resolvedName.includes(" ") ? resolvedName.split(" ").slice(1).join(" ") : ""),
-      handle: (resolvedName.includes(" ") ? `@${resolvedName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "") || u.handle || prevEntry?.handle || (resolvedName ? `@${resolvedName.toLowerCase().replace(/[^a-z0-9]/g, "")}` : "@user"),
+      firstName: computedFirstName,
+      lastName: computedLastName,
+      handle: computedHandle.startsWith("@") ? computedHandle : `@${computedHandle}`,
       avatar: u.avatar || prevEntry?.avatar,
-      bio: u.bio || prevEntry?.bio,
-      banner: u.banner || prevEntry?.banner,
-      location: u.location || prevEntry?.location,
-      city: u.city || prevEntry?.city,
-      country: u.country || prevEntry?.country,
+      bio: u.bio !== undefined ? u.bio : prevEntry?.bio,
+      banner: u.banner !== undefined ? u.banner : prevEntry?.banner,
+      location: u.location !== undefined ? u.location : prevEntry?.location,
+      city: u.city !== undefined ? u.city : prevEntry?.city,
+      country: u.country !== undefined ? u.country : prevEntry?.country,
       email: u.email || prevEntry?.email,
       passkeyProtected: Boolean(u.passkeyProtected ?? prevEntry?.passkeyProtected),
       isVerified: Boolean(u.passkeyProtected ?? prevEntry?.passkeyProtected)
@@ -3592,13 +3604,13 @@ export function resolveSafeAuthor(
     ? `${String((authorObj as any).firstName).trim()} ${String((authorObj as any).lastName).trim()}`.trim()
     : "";
 
-  // 1. Determine raw name candidate
+  // 1. Determine raw name candidate (prefer explicit name over legacy firstName+lastName)
   let rawName = (
-    authorFirstLast ||
     authorObj.name ||
     (video as any)?.authorName ||
     (video as any)?.author_name ||
     (video as any)?.userName ||
+    authorFirstLast ||
     (video?.userId && video.userId.includes("@") ? video.userId.split("@")[0] : video?.userId) ||
     ""
   ).trim();
@@ -3657,17 +3669,32 @@ export function resolveSafeAuthor(
   }
 
   const nameCandidates = [
-    isActiveUserMatch ? activeUser?.name : "",
-    registryMatch?.name,
+    isActiveUserMatch ? (activeUser?.username || activeUser?.name) : "",
+    registryMatch?.username || registryMatch?.name,
     knownMatch?.name,
     authorObj.name,
     (video as any)?.authorName,
     rawName && rawName.toLowerCase() !== "reviewer" ? rawName : ""
   ].filter(Boolean) as string[];
 
+  const isGenericCandidate = (c: string) => {
+    const low = c.trim().toLowerCase();
+    return (
+      !low ||
+      (emailPrefixKey && low === emailPrefixKey) ||
+      low === "verified reviewer" ||
+      low === "yoouz reviewer" ||
+      low === "registered user" ||
+      low === "community member" ||
+      low === "reviewer" ||
+      low === "user" ||
+      low === "member" ||
+      low === "anonymous"
+    );
+  };
+
   const rawResolvedCandidate =
-    nameCandidates.find((c) => /^U\/[A-Z0-9]{4,}$/i.test(c.trim()) || /^@[a-z0-9_.-]+$/i.test(c.trim())) ||
-    nameCandidates.find((c) => c.toLowerCase() !== emailPrefixKey && c.toLowerCase() !== "verified reviewer" && c.toLowerCase() !== "yoouz reviewer") ||
+    nameCandidates.find((c) => !isGenericCandidate(c)) ||
     nameCandidates[0] ||
     "";
 

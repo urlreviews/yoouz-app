@@ -186,8 +186,81 @@ export function App() {
     restoreExistingSessionOnly();
     const onProfileUpdated = (e: any) => {
       const updated = e?.detail;
-      if (updated && (updated.id || updated.uid)) {
-        setCurrentUser((prev) => ({ ...(prev || {}), ...updated }));
+      if (updated && (updated.id || updated.uid || updated.email)) {
+        const uId = String(updated.id || updated.uid || "").trim().toLowerCase();
+        const uEmail = String(updated.email || "").trim().toLowerCase();
+        setCurrentUser((prev) => {
+          if (!prev) return prev;
+          const matchesCur =
+            (uId && (String(prev.id || "").toLowerCase() === uId || String(prev.uid || "").toLowerCase() === uId)) ||
+            (uEmail && String(prev.email || "").toLowerCase() === uEmail);
+          if (!matchesCur) return prev;
+          const merged = { ...prev, ...updated };
+          try {
+            localStorage.setItem("copo_user_profile", JSON.stringify(merged));
+            localStorage.setItem("yoouz_current_user", JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+        updateUserRegistry(updated);
+        setAllRegisteredUsers((prev) =>
+          prev.map((u) => {
+            const m =
+              (uId && (String(u.id || "").toLowerCase() === uId || String(u.uid || "").toLowerCase() === uId)) ||
+              (uEmail && String(u.email || "").toLowerCase() === uEmail);
+            return m ? { ...u, ...updated } : u;
+          })
+        );
+        const matchesVideo = (v: any) => {
+          if (!v) return false;
+          const vId = String(v.userId || v.author?.id || v.author?.userId || "").trim().toLowerCase();
+          const vEm = String(v.userEmail || v.author?.email || "").trim().toLowerCase();
+          return (uId && vId === uId) || (uEmail && vEm === uEmail);
+        };
+        setVideos((prev) =>
+          prev.map((v) =>
+            matchesVideo(v)
+              ? {
+                  ...v,
+                  authorName: updated.name ?? v.authorName,
+                  author: {
+                    ...(v.author || {}),
+                    name: updated.name ?? v.author?.name,
+                    firstName: updated.firstName ?? v.author?.firstName,
+                    lastName: updated.lastName ?? v.author?.lastName,
+                    handle: updated.handle ?? v.author?.handle,
+                    avatar: updated.avatar ?? v.author?.avatar,
+                    bio: updated.bio ?? v.author?.bio
+                  }
+                }
+              : v
+          )
+        );
+        setPlaces((prev) =>
+          prev.map((p) => {
+            if (!p.reviews || !p.reviews.some(matchesVideo)) return p;
+            return {
+              ...p,
+              reviews: p.reviews.map((r: any) =>
+                matchesVideo(r)
+                  ? {
+                      ...r,
+                      authorName: updated.name ?? r.authorName,
+                      author: {
+                        ...(r.author || {}),
+                        name: updated.name ?? r.author?.name,
+                        firstName: updated.firstName ?? r.author?.firstName,
+                        lastName: updated.lastName ?? r.author?.lastName,
+                        handle: updated.handle ?? r.author?.handle,
+                        avatar: updated.avatar ?? r.author?.avatar,
+                        bio: updated.bio ?? r.author?.bio
+                      }
+                    }
+                  : r
+              )
+            };
+          })
+        );
       }
     };
     window.addEventListener("copo-profile-updated", onProfileUpdated);
@@ -594,6 +667,105 @@ export function App() {
               const name = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
               setSavedCreators((prev) => prev.filter(n => n !== name));
             }
+          } else if (payload.type === "user_updated" && payload.user) {
+            const u = payload.user;
+            const uId = String(u.id || u.uid || "").trim().toLowerCase();
+            const uEmail = String(u.email || "").trim().toLowerCase();
+            updateUserRegistry(u);
+            setAllRegisteredUsers((prev) => {
+              const idx = prev.findIndex((item) =>
+                (uId && (String(item.id || "").toLowerCase() === uId || String(item.uid || "").toLowerCase() === uId)) ||
+                (uEmail && String(item.email || "").toLowerCase() === uEmail)
+              );
+              if (idx >= 0) {
+                const copy = [...prev];
+                copy[idx] = { ...copy[idx], ...u };
+                return copy;
+              }
+              return [u, ...prev];
+            });
+            setCurrentUser((prev) => {
+              if (!prev) return prev;
+              const matchesCur =
+                (uId && (String(prev.id || "").toLowerCase() === uId || String(prev.uid || "").toLowerCase() === uId)) ||
+                (uEmail && String(prev.email || "").toLowerCase() === uEmail);
+              if (!matchesCur) return prev;
+              const merged = { ...prev, ...u };
+              try {
+                localStorage.setItem("copo_user_profile", JSON.stringify(merged));
+                localStorage.setItem("yoouz_current_user", JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+            const matchesVideoAuthor = (v: any) => {
+              if (!v) return false;
+              const vId = String(v.userId || v.author?.id || v.author?.userId || "").trim().toLowerCase();
+              const vEm = String(v.userEmail || v.author?.email || "").trim().toLowerCase();
+              return (uId && vId === uId) || (uEmail && vEm === uEmail);
+            };
+            setVideos((prev) => {
+              const next = prev.map((v) =>
+                matchesVideoAuthor(v)
+                  ? {
+                      ...v,
+                      authorName: u.name ?? v.authorName,
+                      authorAvatar: u.avatar ?? v.authorAvatar,
+                      author: {
+                        ...(v.author || {}),
+                        name: u.name ?? v.author?.name,
+                        firstName: u.firstName ?? v.author?.firstName,
+                        lastName: u.lastName ?? v.author?.lastName,
+                        handle: u.handle ?? v.author?.handle,
+                        avatar: u.avatar ?? v.author?.avatar,
+                        bio: u.bio ?? v.author?.bio
+                      }
+                    }
+                  : v
+              );
+              try { localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(next)); } catch {}
+              return next;
+            });
+            setPlaces((prev) =>
+              prev.map((p) => {
+                if (!p.reviews || !p.reviews.some(matchesVideoAuthor)) return p;
+                return {
+                  ...p,
+                  reviews: p.reviews.map((r: any) =>
+                    matchesVideoAuthor(r)
+                      ? {
+                          ...r,
+                          authorName: u.name ?? r.authorName,
+                          authorAvatar: u.avatar ?? r.authorAvatar,
+                          author: {
+                            ...(r.author || {}),
+                            name: u.name ?? r.author?.name,
+                            firstName: u.firstName ?? r.author?.firstName,
+                            lastName: u.lastName ?? r.author?.lastName,
+                            handle: u.handle ?? r.author?.handle,
+                            avatar: u.avatar ?? r.author?.avatar,
+                            bio: u.bio ?? r.author?.bio
+                          }
+                        }
+                      : r
+                  )
+                };
+              })
+            );
+            setSelectedAuthorForDrawer((prev) => {
+              if (!prev) return prev;
+              const prevId = String((prev as any).id || (prev as any).uid || (prev as any).userId || "").trim().toLowerCase();
+              const prevEm = String((prev as any).email || "").trim().toLowerCase();
+              if ((uId && prevId === uId) || (uEmail && prevEm === uEmail)) {
+                return {
+                  ...prev,
+                  name: u.name ?? prev.name,
+                  handle: u.handle ?? prev.handle,
+                  avatar: u.avatar ?? prev.avatar,
+                  bio: u.bio ?? prev.bio
+                };
+              }
+              return prev;
+            });
           }
         } catch (e) {}
       }, 0);
@@ -1965,12 +2137,15 @@ export function App() {
   const handleAdminUpdateUser = (updatedUser: any) => {
     const targetEmail = (updatedUser.email || "").toLowerCase().trim();
     const targetId = (updatedUser.id || updatedUser.uid || "").trim();
+    const targetIdLower = targetId.toLowerCase();
+
+    updateUserRegistry(updatedUser);
 
     setAllRegisteredUsers((prev) =>
       prev.map((u) => {
         const match =
           (targetEmail && u.email && u.email.toLowerCase() === targetEmail) ||
-          (targetId && (u.id === targetId || u.uid === targetId));
+          (targetIdLower && (String(u.id || "").toLowerCase() === targetIdLower || String(u.uid || "").toLowerCase() === targetIdLower));
         return match ? { ...u, ...updatedUser } : u;
       })
     );
@@ -1978,15 +2153,94 @@ export function App() {
     if (
       currentUser &&
       ((targetEmail && currentUser.email && currentUser.email.toLowerCase() === targetEmail) ||
-        (targetId && (currentUser.id === targetId || currentUser.uid === targetId)))
+        (targetIdLower && (String(currentUser.id || "").toLowerCase() === targetIdLower || String(currentUser.uid || "").toLowerCase() === targetIdLower)))
     ) {
-      setCurrentUser((prev: any) => (prev ? { ...prev, ...updatedUser } : prev));
+      setCurrentUser((prev: any) => {
+        if (!prev) return prev;
+        const merged = { ...prev, ...updatedUser };
+        try {
+          localStorage.setItem("copo_user_profile", JSON.stringify(merged));
+          localStorage.setItem("yoouz_current_user", JSON.stringify(merged));
+        } catch {}
+        return merged;
+      });
     }
+
+    const matchesVideo = (v: any) => {
+      if (!v) return false;
+      const vId = String(v.userId || v.author?.id || v.author?.userId || "").trim().toLowerCase();
+      const vEm = String(v.userEmail || v.author?.email || "").trim().toLowerCase();
+      return (targetIdLower && vId === targetIdLower) || (targetEmail && vEm === targetEmail);
+    };
+
+    setVideos((prev) => {
+      const next = prev.map((v) =>
+        matchesVideo(v)
+          ? {
+              ...v,
+              authorName: updatedUser.name ?? v.authorName,
+              authorAvatar: updatedUser.avatar ?? v.authorAvatar,
+              author: {
+                ...(v.author || {}),
+                name: updatedUser.name ?? v.author?.name,
+                handle: updatedUser.handle ?? v.author?.handle,
+                avatar: updatedUser.avatar ?? v.author?.avatar,
+                bio: updatedUser.bio ?? v.author?.bio
+              }
+            }
+          : v
+      );
+      try { localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    setPlaces((prev) =>
+      prev.map((p) => {
+        if (!p.reviews || !p.reviews.some(matchesVideo)) return p;
+        return {
+          ...p,
+          reviews: p.reviews.map((r: any) =>
+            matchesVideo(r)
+              ? {
+                  ...r,
+                  authorName: updatedUser.name ?? r.authorName,
+                  authorAvatar: updatedUser.avatar ?? r.authorAvatar,
+                  author: {
+                    ...(r.author || {}),
+                    name: updatedUser.name ?? r.author?.name,
+                    handle: updatedUser.handle ?? r.author?.handle,
+                    avatar: updatedUser.avatar ?? r.author?.avatar,
+                    bio: updatedUser.bio ?? r.author?.bio
+                  }
+                }
+              : r
+          )
+        };
+      })
+    );
+
+    setSelectedAuthorForDrawer((prev) => {
+      if (!prev) return prev;
+      const prevId = String((prev as any).id || (prev as any).uid || (prev as any).userId || "").trim().toLowerCase();
+      const prevEm = String((prev as any).email || "").trim().toLowerCase();
+      if ((targetIdLower && prevId === targetIdLower) || (targetEmail && prevEm === targetEmail)) {
+        return {
+          ...prev,
+          name: updatedUser.name ?? prev.name,
+          handle: updatedUser.handle ?? prev.handle,
+          avatar: updatedUser.avatar ?? prev.avatar,
+          bio: updatedUser.bio ?? prev.bio
+        };
+      }
+      return prev;
+    });
 
     fetch("/api/user/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        id: targetId,
+        uid: updatedUser.uid || targetId,
         email: updatedUser.email,
         name: updatedUser.name,
         handle: updatedUser.handle,
@@ -1995,7 +2249,15 @@ export function App() {
         role: updatedUser.role,
         isVerified: false
       })
-    }).catch(() => {});
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) {
+          updateUserRegistry(data.user);
+          window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
+        }
+      })
+      .catch(() => {});
   };
 
   // BunnyDB Auth state listener and multi-tab reactive sync
@@ -3091,9 +3353,12 @@ export function App() {
   const handleUpdateProfile = (updated: { name?: string; bio?: string; avatar?: string; banner?: string; location?: string; handle?: string; city?: string; state?: string; country?: string }) => {
     setCurrentUser((prev) => {
       if (!prev) return null;
+      const nameParts = String(updated.name !== undefined ? updated.name : prev.name || "").trim().split(/\s+/);
       const nextProfile: UserProfile = {
         ...prev,
         name: updated.name !== undefined ? updated.name : prev.name,
+        firstName: updated.name !== undefined ? (nameParts[0] || "") : (prev as any).firstName,
+        lastName: updated.name !== undefined ? (nameParts.length > 1 ? nameParts.slice(1).join(" ") : "") : (prev as any).lastName,
         bio: updated.bio !== undefined ? updated.bio : prev.bio,
         avatar: updated.avatar !== undefined ? updated.avatar : prev.avatar,
         banner: updated.banner !== undefined ? updated.banner : (prev as any).banner,
@@ -3103,10 +3368,17 @@ export function App() {
         country: updated.country !== undefined ? updated.country : prev.country,
         handle: updated.handle !== undefined ? updated.handle : (prev as any).handle
       };
+      try {
+        localStorage.setItem("copo_user_profile", JSON.stringify(nextProfile));
+        localStorage.setItem("yoouz_current_user", JSON.stringify(nextProfile));
+      } catch {}
       updateUserRegistry(nextProfile);
       setAllRegisteredUsers((prevUsers) => {
         const index = prevUsers.findIndex((u) => 
-          u.email === nextProfile.email || u.uid === nextProfile.uid || u.name === nextProfile.name
+          (nextProfile.id && (u.id === nextProfile.id || u.uid === nextProfile.id)) ||
+          (nextProfile.uid && (u.uid === nextProfile.uid || u.id === nextProfile.uid)) ||
+          (nextProfile.email && u.email === nextProfile.email) ||
+          u.name === prev.name
         );
         if (index >= 0) {
           const copy = [...prevUsers];
@@ -3116,14 +3388,24 @@ export function App() {
         return [nextProfile, ...prevUsers];
       });
 
-      setVideos((prevVideos) =>
-        prevVideos.map((v) => {
-          if (isAuthorMatch(v, nextProfile)) {
+      const matchesUpdatedAuthor = (v: any) =>
+        isAuthorMatch(v, prev) ||
+        isAuthorMatch(v, nextProfile) ||
+        Boolean(v?.userId && ((nextProfile.id && v.userId === nextProfile.id) || (nextProfile.uid && v.userId === nextProfile.uid)));
+
+      setVideos((prevVideos) => {
+        const nextVideos = prevVideos.map((v) => {
+          if (matchesUpdatedAuthor(v)) {
             return {
               ...v,
+              authorName: nextProfile.name,
+              authorAvatar: nextProfile.avatar,
               author: {
                 ...v.author,
                 name: nextProfile.name,
+                firstName: (nextProfile as any).firstName,
+                lastName: (nextProfile as any).lastName,
+                handle: (nextProfile as any).handle || v.author?.handle,
                 avatar: nextProfile.avatar,
                 location: nextProfile.location,
                 city: nextProfile.city,
@@ -3134,14 +3416,48 @@ export function App() {
             };
           }
           return v;
+        });
+        try { localStorage.setItem(YOOUZ_VIDEOS_CACHE_KEY, JSON.stringify(nextVideos)); } catch {}
+        return nextVideos;
+      });
+
+      setPlaces((prevPlaces) =>
+        prevPlaces.map((p) => {
+          if (!p.reviews || !p.reviews.some(matchesUpdatedAuthor)) return p;
+          return {
+            ...p,
+            reviews: p.reviews.map((r: any) =>
+              matchesUpdatedAuthor(r)
+                ? {
+                    ...r,
+                    authorName: nextProfile.name,
+                    authorAvatar: nextProfile.avatar,
+                    author: {
+                      ...r.author,
+                      name: nextProfile.name,
+                      firstName: (nextProfile as any).firstName,
+                      lastName: (nextProfile as any).lastName,
+                      handle: (nextProfile as any).handle || r.author?.handle,
+                      avatar: nextProfile.avatar,
+                      location: nextProfile.location,
+                      city: nextProfile.city,
+                      country: nextProfile.country,
+                      bio: nextProfile.bio,
+                      banner: (nextProfile as any).banner
+                    }
+                  }
+                : r
+            )
+          };
         })
       );
 
-      setSelectedAuthorForDrawer((prev) => {
-        if (!prev) return prev;
+      setSelectedAuthorForDrawer((prevDrawer) => {
+        if (!prevDrawer) return prevDrawer;
         return {
-          ...prev,
+          ...prevDrawer,
           name: nextProfile.name,
+          handle: (nextProfile as any).handle || prevDrawer.handle,
           avatar: nextProfile.avatar,
           location: nextProfile.location,
           city: nextProfile.city,

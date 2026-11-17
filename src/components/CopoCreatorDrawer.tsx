@@ -302,9 +302,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       setUsernameMessage("");
       return;
     }
-    if (clean.length < 3) {
+    if (clean.length < 2) {
       setUsernameStatus("error");
-      setUsernameMessage("At least 3 characters");
+      setUsernameMessage("At least 2 characters");
       return;
     }
     let cancelled = false;
@@ -361,6 +361,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       if (data.user) {
         setLiveUserProfile((prev) => ({ ...(prev || {}), ...data.user }));
         localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
+        localStorage.setItem("yoouz_current_user", JSON.stringify(data.user));
         window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
         onUpdateProfile?.({ name: data.user.name, handle: data.user.handle } as any);
       }

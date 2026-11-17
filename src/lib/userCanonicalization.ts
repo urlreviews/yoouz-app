@@ -85,18 +85,18 @@ export function isFirstLastHumanName(raw?: string): boolean {
   ) {
     return false;
   }
-  // Two or more alphabetical name tokens like "Steven Akan", "Ben Blue", "Sarah Jenkins"
   const parts = s.split(/\s+/).filter(Boolean);
   if (parts.length >= 2 && parts.length <= 4) {
-    const allAlphaWords = parts.every((p) => /^[a-zA-Z][a-zA-Z'’-]{1,}$/.test(p));
+    const allAlphaWords = parts.every((p) => /^[a-zA-Z][a-zA-Z'’-]*$/.test(p));
     if (allAlphaWords) return true;
   }
   return false;
 }
 
 /**
- * Converts any non-business user still displaying a First + Last human name (or legacy identity)
- * into a clean, deterministic U/XXXXXX anonymous handle.
+ * Formats a user's display name consistently. Preserves intentional display names and usernames
+ * (e.g. "Sofia Rossi", "Marcus", "Jack T", "@handle", "U/XXXXXX"), while converting empty,
+ * email-based, generic, or legacy deleted identities into deterministic U/XXXXXX handles.
  */
 export function formatAnonymousUserDisplayName(
   rawName?: string,
@@ -120,9 +120,21 @@ export function formatAnonymousUserDisplayName(
   }
 
   const effectiveSeed = (seed || s || "anon_yoouz").trim();
+  const lower = s.toLowerCase();
 
-  // If rawName is a First + Last human name, empty, email, or legacy deleted identity -> return U/XXXXXX
-  if (!s || s.includes("@") || isFirstLastHumanName(s) || isLegacyDeletedIdentity(s) || isGenericUsername(s)) {
+  // Only anonymize empty, raw email, legacy deleted identities, or generic placeholders
+  if (
+    !s ||
+    s.includes("@") ||
+    isLegacyDeletedIdentity(s) ||
+    isGenericUsername(s) ||
+    lower === "verified reviewer" ||
+    lower === "yoouz reviewer" ||
+    lower === "yoouz user" ||
+    lower === "anonymous" ||
+    lower === "anonymous user" ||
+    lower === "community member"
+  ) {
     return `U/${hashSeed(effectiveSeed)}`;
   }
 

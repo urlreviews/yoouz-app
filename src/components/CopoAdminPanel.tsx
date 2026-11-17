@@ -1602,12 +1602,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const handleComment = () => {
       fetchLiveStats();
     };
+    const handleProfileUpdated = () => {
+      fetchLiveStats();
+    };
 
     window.addEventListener("copo-video-deleted", handleDeleted);
     window.addEventListener("copo-videos-purged", handlePurged);
     window.addEventListener("copo-video-liked", handleLiked);
     window.addEventListener("copo-video-bookmarked", handleBookmarked);
     window.addEventListener("copo-new-comment", handleComment);
+    window.addEventListener("copo-profile-updated", handleProfileUpdated);
 
     return () => {
       window.removeEventListener("copo-video-deleted", handleDeleted);
@@ -1615,6 +1619,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       window.removeEventListener("copo-video-liked", handleLiked);
       window.removeEventListener("copo-video-bookmarked", handleBookmarked);
       window.removeEventListener("copo-new-comment", handleComment);
+      window.removeEventListener("copo-profile-updated", handleProfileUpdated);
     };
   }, [fetchAdminLikes, fetchAdminBookmarks]);
 
@@ -10299,10 +10304,47 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    const savedUser = {
+                      ...editUserModal,
+                      handle: editUserModal.handle
+                        ? (editUserModal.handle.startsWith("@") ? editUserModal.handle : `@${editUserModal.handle}`)
+                        : `@${String(editUserModal.name || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`
+                    };
+                    const tId = String(savedUser.id || savedUser.uid || "").toLowerCase().trim();
+                    const tEm = String(savedUser.email || "").toLowerCase().trim();
+                    setDbUsers((prev) =>
+                      prev.map((u) => {
+                        const m =
+                          (tId && (String(u.id || "").toLowerCase() === tId || String(u.uid || "").toLowerCase() === tId)) ||
+                          (tEm && String(u.email || "").toLowerCase() === tEm);
+                        return m ? { ...u, ...savedUser } : u;
+                      })
+                    );
+                    setDbVideos((prev) =>
+                      prev.map((v) => {
+                        const vId = String(v.userId || v.author?.id || "").toLowerCase().trim();
+                        const vEm = String(v.userEmail || v.author?.email || "").toLowerCase().trim();
+                        if ((tId && vId === tId) || (tEm && vEm === tEm)) {
+                          return {
+                            ...v,
+                            authorName: savedUser.name,
+                            author: {
+                              ...(v.author || {}),
+                              name: savedUser.name,
+                              handle: savedUser.handle,
+                              avatar: savedUser.avatar || v.author?.avatar,
+                              bio: savedUser.bio !== undefined ? savedUser.bio : v.author?.bio
+                            }
+                          };
+                        }
+                        return v;
+                      })
+                    );
                     if (onUpdateUser) {
-                      onUpdateUser(editUserModal);
+                      onUpdateUser(savedUser);
                     }
-                    showToast(`Saved user @${editUserModal.name || "User"}.`);
+                    setTimeout(fetchLiveStats, 400);
+                    showToast(`Saved user ${savedUser.name || "User"}.`);
                     setEditUserModal(null);
                   }}
                   className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl cursor-pointer shadow-lg"
