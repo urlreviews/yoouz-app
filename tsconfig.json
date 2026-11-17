@@ -23,5 +23,12 @@
     "allowImportingTsExtensions": true,
     "strict": false,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

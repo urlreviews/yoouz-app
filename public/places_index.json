@@ -1,5 +1,508 @@
 [
   {
+    "id": "benchdepot.com",
+    "name": "Bench Depot",
+    "category": "Industrial & Office",
+    "categoryType": "all",
+    "address": "",
+    "city": "Tecate Mission Rd",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fbenchdepot.com%2Fpub%2Fmedia%2Flogo%2Fstores%2F1%2Flogo-workbenches-industrial-office-chairs-benchdepot.com_1.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fbenchdepot.com%2Fpub%2Fmedia%2Flogo%2Fstores%2F1%2Flogo-workbenches-industrial-office-chairs-benchdepot.com_1.png",
+    "brandDomain": "benchdepot.com",
+    "bannerUrl": "/api/brand-banner/benchdepot.com",
+    "ogImage": "/api/brand-banner/benchdepot.com",
+    "photos": [
+      "/api/brand-banner/benchdepot.com"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://benchdepot.com/homepage-m",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Bench Depot · industrial & office · Tecate Mission Rd, United States",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "hotel-julien.com",
+    "name": "Hotel Julien",
+    "category": "Spa & Wellness",
+    "categoryType": "all",
+    "address": "",
+    "city": "Antwerp",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwp-static.assets.sh%2FWXQOBU3GnxJnx57Ac1QkAhsnoqDtTHPvdDzWqKihLME%2Fassets%2Fimages%2Flogo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwp-static.assets.sh%2FWXQOBU3GnxJnx57Ac1QkAhsnoqDtTHPvdDzWqKihLME%2Fassets%2Fimages%2Flogo.svg",
+    "brandDomain": "hotel-julien.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.hotel-julien.com/",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Hotel Julien is a dedicated wellness and therapy center in Antwerp, Belgium, providing restorative treatments, professional care, and personalized wellness services.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "nevadalegalservices.org",
+    "name": "Nevada Legal Services",
+    "category": "Legal Services",
+    "categoryType": "all",
+    "address": "701 E Bridger Ave #400",
+    "city": "Las Vegas, NV",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "brandDomain": "nevadalegalservices.org",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (702) 386-0404",
+    "email": "",
+    "website": "https://nevadalegalservices.org",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Nevada Legal Services is a dedicated law practice in Las Vegas, NV, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "bclaw.au",
+    "name": "Bclaw",
+    "category": "Legal Services",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "Australia",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2292%22%20height%3D%2292%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%221.5%22%20opacity%3D%220.8%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2255%22%20font-family%3D%22Georgia%2C%20serif%22%20font-weight%3D%22bold%22%20font-size%3D%2228%22%20fill%3D%22%23fbbf24%22%20text-anchor%3D%22middle%22%3EBC%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2275%22%20font-family%3D%22-apple-system%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%228%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%221%22%3ELAWYERS%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2292%22%20height%3D%2292%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%221.5%22%20opacity%3D%220.8%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2255%22%20font-family%3D%22Georgia%2C%20serif%22%20font-weight%3D%22bold%22%20font-size%3D%2228%22%20fill%3D%22%23fbbf24%22%20text-anchor%3D%22middle%22%3EBC%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2275%22%20font-family%3D%22-apple-system%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%228%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%221%22%3ELAWYERS%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
+    "brandDomain": "bclaw.au",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://bclaw.au/",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Bclaw is a dedicated law practice in Australia, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "praktijk-nexus.nl",
+    "name": "Praktijk Nexus",
+    "category": "Spa & Wellness",
+    "categoryType": "all",
+    "address": "",
+    "city": "Gent",
+    "country": "Netherlands",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F08%2Fcropped-PraktijkNexus_Logo1-180x180.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F08%2Fcropped-PraktijkNexus_Logo1-180x180.png",
+    "brandDomain": "praktijk-nexus.nl",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://praktijk-nexus.nl/",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Praktijk Nexus is a dedicated wellness and therapy center in Gent, Netherlands, providing restorative treatments, professional care, and personalized wellness services.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "hoteldesgaleries.be",
+    "name": "Hôtel Des Galeries",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=hoteldesgaleries.be",
+    "logoUrl": "/api/favicon?domain=hoteldesgaleries.be",
+    "brandDomain": "hoteldesgaleries.be",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://hoteldesgaleries.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Hôtel Des Galeries is a premier hospitality destination in Brussels, Belgium, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "upperview-regalia.com",
+    "name": "Upper View Regalia Hotel",
+    "category": "Hotel & Hospitality",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "Malaysia",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fthemes%2Fupperview%2Fassets%2Fimages%2FUpperViewLogo_FA-01.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fthemes%2Fupperview%2Fassets%2Fimages%2FUpperViewLogo_FA-01.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.upperview-regalia.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Upper View Regalia Hotel is a premier hospitality destination in Malaysia, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "upperview-regalia.com",
+    "isSavedToProfile": true
+  },
+  {
+    "id": "brightandbeautifulhome.com",
+    "logoUrl": "/api/favicon?domain=brightandbeautifulhome.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp",
+    "name": "Brightandbeautiful Home",
+    "category": "Home Services & Cleaning",
+    "categoryType": "all",
+    "address": "",
+    "city": "Online",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/favicon?domain=brightandbeautifulhome.com",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.brightandbeautifulhome.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Brightandbeautiful Home provides professional, reliable emergency and maintenance services in United Kingdom, dedicated to quality workmanship and prompt client care.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "brightandbeautifulhome.com",
+    "domain": "brightandbeautifulhome.com",
+    "reviewCount": 0,
+    "reviews": [],
+    "isSavedToProfile": true
+  },
+  {
+    "id": "soluxecleaning.co.uk",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2025%2F06%2Fcropped-cropped-home_cleaning_services-removebg-preview-1-180x180.png",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp",
+    "name": "Soluxe Cleaning",
+    "category": "Home Services & Cleaning",
+    "categoryType": "all",
+    "address": "",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2025%2F06%2Fcropped-cropped-home_cleaning_services-removebg-preview-1-180x180.png",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://soluxecleaning.co.uk/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Soluxe Cleaning provides professional, reliable emergency and maintenance services in London, United Kingdom, dedicated to quality workmanship and prompt client care.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "soluxecleaning.co.uk",
+    "domain": "soluxecleaning.co.uk",
+    "reviewCount": 0,
+    "reviews": [],
+    "isSavedToProfile": true
+  },
+  {
+    "id": "makicafe.com",
+    "logoUrl": "https://static.wixstatic.com/media/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png",
+    "bannerUrl": "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
+    "name": "Maki Cafe",
+    "brandDomain": "makicafe.com",
+    "category": "Restaurant & Food",
+    "categoryType": "all",
+    "address": "",
+    "city": "Rockville",
+    "country": "US",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://static.wixstatic.com/media/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png",
+    "ogImage": "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
+    "photos": [
+      "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
+      "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F73e83b_baa1bbdb959c40e1b77ea2743729714b%257Emv2.jpg%2Fv1%2Ffit%2Fw_2500%2Ch_1330%2Cal_c%2F73e83b_baa1bbdb959c40e1b77ea2743729714b%257Emv2.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://www.makicafe.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "description": "Maki Cafe is a popular dining destination in Rockville, US, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "locations": [],
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "isSavedToProfile": true
+  },
+  {
     "id": "hilton.com",
     "name": "Hilton Hotels",
     "category": "Hotel & Hospitality",
@@ -341,12 +844,12 @@
     "name": "Guard Slip Cafe By Lgip",
     "category": "Cafe",
     "categoryType": "all",
-    "address": "Bayombong, Nueva Vizcaya, Philippines",
+    "address": "",
     "city": "Bayombong",
     "country": "Philippines",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
+    "rating": 4,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -378,7 +881,15 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 1
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    }
   },
   {
     "id": "propercoffee.app",
@@ -538,14 +1049,14 @@
   },
   {
     "id": "lernerandrowe.com",
-    "name": "Lerner and Rowe Injury Attorneys",
+    "name": "Lerner And Rowe Injury Attorneys",
     "category": "Legal Services",
     "categoryType": "all",
     "address": "2701 E Camelback Rd #140",
     "city": "Phoenix, AZ",
     "country": "United States",
-    "lat": 33.5092,
-    "lng": -112.0238,
+    "lat": 0,
+    "lng": 0,
     "rating": 5,
     "totalReviews": 1,
     "ratingDistribution": {
@@ -562,16 +1073,21 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Flernerandrowe.com%2Fwp-content%2Fuploads%2F2022%2F06%2FLERNER_ROWE_2560x1440-1.jpg"
     ],
-    "openingHours": "Mo-Su 00:00-24:00",
+    "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "+1 (602) 977-1900",
-    "email": "lrintake@lernerandrowe.com",
+    "email": "",
     "website": "https://lernerandrowe.com",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "People-focused Attorneys. Lerner and Rowe has recovered billions for personal injury and accidents victims. Call for FREE consultation 24/7.",
-    "popularKeywords": [],
+    "description": "Lerner And Rowe Injury Attorneys is a dedicated law practice in Phoenix, AZ, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "lernerandrowe.com",
@@ -583,7 +1099,8 @@
       "3": 0,
       "4": 0,
       "5": 1
-    }
+    },
+    "isSavedToProfile": true
   },
   {
     "id": "linear.app",
@@ -693,8 +1210,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "avatarUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "logoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "photos": [
@@ -748,8 +1265,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=webflow.com",
+    "logoUrl": "/api/favicon?domain=webflow.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -904,8 +1421,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
+    "avatarUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+    "logoUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "photos": [
@@ -1015,8 +1532,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
+    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "photos": [
@@ -1078,8 +1595,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dcalvinklein.com%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=calvinklein.com",
+    "logoUrl": "/api/favicon?domain=calvinklein.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "photos": [
@@ -1134,8 +1651,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fcache.dominos.com%2Fintl%2Fassets%2Fimg-logo-home.png",
+    "avatarUrl": "/api/favicon?domain=dominos.com",
+    "logoUrl": "/api/favicon?domain=dominos.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -1175,12 +1692,12 @@
     "name": "easyHotel",
     "category": "Hotel & Hospitality",
     "categoryType": "all",
-    "address": "3rd Floor, 52 Grosvenor Gardens, SW1W 0AU London",
+    "address": "",
     "city": "Brussels",
     "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 5,
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -1194,7 +1711,8 @@
     "bannerUrl": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
     "ogImage": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
     "photos": [
-      "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg"
+      "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
+      "/api/proxy-image?url=https%3A%2F%2Fstorage.googleapis.com%2Feasyhotel-strapi%2F2_5fefad32df%2F2_5fefad32df.jpg"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1204,8 +1722,13 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Need to get in contact or have a question about your hotel or stay? Find all you need to know or send us a request here.",
-    "popularKeywords": [],
+    "description": "easyHotel is a premier hospitality destination in Brussels, Belgium, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "easyhotel.com",
@@ -1214,10 +1737,11 @@
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
-      "5": 1
-    }
+      "5": 0
+    },
+    "isSavedToProfile": true
   },
   {
     "id": "thestrat.com",
@@ -1427,12 +1951,12 @@
     "name": "Villaggio Abu Dhabi",
     "category": "Hotel & Hospitality",
     "categoryType": "all",
-    "address": "s | Villaggio Abu Dhabi",
+    "address": "",
     "city": "Abu Dhabi",
     "country": "United Arab Emirates",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 5,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
     "totalReviews": 1,
     "ratingCount": 1,
     "videoReviewCount": 1,
@@ -1440,8 +1964,8 @@
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
-      "5": 1
+      "4": 1,
+      "5": 0
     },
     "ratingDistribution": {
       "stars5": 1,
@@ -1465,11 +1989,17 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Contact Villaggio Hotel and Grand Villaggio Hotel in Abu Dhabi. Find hotel addresses, directions, telephone numbers, WhatsApp and email.",
-    "popularKeywords": [],
+    "description": "Villaggio Abu Dhabi is a premier hospitality destination in Abu Dhabi, United Arab Emirates, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "villaggiohotels.ae"
+    "brandDomain": "villaggiohotels.ae",
+    "isSavedToProfile": true
   },
   {
     "id": "delta.com",
@@ -1572,13 +2102,13 @@
   {
     "id": "cellercanroca.com",
     "name": "El Celler De Can Roca",
-    "category": "Marketing & Creative Agency",
+    "category": "Restaurant & Dining",
     "categoryType": "all",
     "address": "",
     "city": "Madrid",
     "country": "Spain",
-    "lat": 40.7128,
-    "lng": -74.006,
+    "lat": 0,
+    "lng": 0,
     "rating": 5,
     "totalReviews": 1,
     "ratingCount": 1,
@@ -1602,21 +2132,28 @@
     "bannerUrl": "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
     "ogImage": "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
     "photos": [
-      "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg"
+      "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
+      "/api/proxy-image?url=https%3A%2F%2Fcellercanroca.com%2Fwp-content%2Fuploads%2F2023%2F03%2Frestaurant-img1.jpg"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "+34 97 228 28 28",
+    "phone": "",
     "email": "",
     "website": "https://cellercanroca.com/en/",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "El Celler de Can Roca is the most definitive—yet, never fully finished—project of the Roca brothers. Its ongoing evolution has continued for more than 35 years, with a formula where repetition is beauty and innovation is cadence.",
-    "popularKeywords": [],
+    "description": "El Celler De Can Roca is a popular dining destination in Madrid, Spain, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "cellercanroca.com"
+    "brandDomain": "cellercanroca.com",
+    "isSavedToProfile": true
   },
   {
     "id": "toureiffel.paris",
@@ -1671,13 +2208,13 @@
   {
     "id": "noma.dk",
     "name": "Noma",
-    "category": "Marketing & Creative Agency",
+    "category": "Restaurant & Dining",
     "categoryType": "all",
-    "address": "Refshalevej 96, 1432 Copenhagen K",
+    "address": "",
     "city": "Copenhagen K",
-    "country": "",
-    "lat": 55.6828303,
-    "lng": 12.6082921,
+    "country": "Denmark",
+    "lat": 0,
+    "lng": 0,
     "rating": 5,
     "totalReviews": 1,
     "ratingCount": 1,
@@ -1701,9 +2238,10 @@
     "bannerUrl": "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
     "ogImage": "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
     "photos": [
-      "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1"
+      "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
+      "/api/proxy-image?url=https%3A%2F%2Fi0.wp.com%2Fnoma.dk%2Fwp-content%2Fuploads%2F2022%2F09%2Fhomepage-header-2-image.png%3Ffit%3D1716%252C963%26ssl%3D1"
     ],
-    "openingHours": "Friday: 12:00 - 15:00 · Saturday: 17:00 – 23:00 · Tuesday: CLOSED",
+    "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
@@ -1711,11 +2249,17 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "noma Restaurant",
-    "popularKeywords": [],
+    "description": "Noma is a popular dining destination in Copenhagen K, Denmark, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "noma.dk"
+    "brandDomain": "noma.dk",
+    "isSavedToProfile": true
   },
   {
     "id": "ritzcarlton.com",
@@ -4166,19 +4710,19 @@
     "brandDomain": "flipper.net",
     "rating": 5,
     "totalReviews": 1,
-    "city": "",
-    "country": "",
+    "city": "Online",
+    "country": "United States",
     "address": "",
     "phone": "",
-    "email": "business@flipper.net",
+    "email": "",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
     ],
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_favicon.png%3Fv%3D1765368570%26width%3D500",
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fcommon_logo_favicon.png%3Fv%3D1765368570%26width%3D500",
-    "category": "Verified Business",
+    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "avatarUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "category": "Tech & Gadgets",
     "categoryType": "all",
     "lat": 0,
     "lng": 0,
@@ -4193,7 +4737,7 @@
     "isOpen": true,
     "priceRange": "N/A",
     "plusCode": "",
-    "description": "Flipper Zero · verified business · flipper.net",
+    "description": "Flipper Zero provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -5419,19 +5963,19 @@
   },
   {
     "id": "batterymart.com",
-    "name": "Battery Mart",
+    "name": "Batterymart",
     "brandDomain": "batterymart.com",
-    "category": "Verified Business",
+    "category": "Auto & Electronics",
     "categoryType": "all",
     "address": "",
     "city": "Online",
-    "country": "",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingDistribution": {
-      "stars5": 0,
+      "stars5": 1,
       "stars4": 0,
       "stars3": 0,
       "stars2": 0,
@@ -5451,24 +5995,30 @@
     "website": "https://batterymart.com",
     "priceRange": "N/A",
     "plusCode": "",
-    "description": "Buy affordable replacement batteries online from trusted experts. Our battery store carries car, motorcycle & marine batteries with fast shipping.",
-    "popularKeywords": [],
+    "description": "Batterymart is a dependable automotive and transportation service provider in United States, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "locations": [],
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
-      "5": 1
+      "4": 1,
+      "5": 0
     },
     "createdAt": "2026-11-07 12:33:35",
     "isClaimed": false,
     "isVerified": false,
-    "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg"
+    "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg",
+    "isSavedToProfile": true
   },
   {
     "id": "maki.vc",
@@ -6801,8 +7351,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "avatarUrl": "/api/favicon?domain=nfx.com",
+    "logoUrl": "/api/favicon?domain=nfx.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -6859,8 +7409,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "avatarUrl": "/api/favicon?domain=2b.vc",
+    "logoUrl": "/api/favicon?domain=2b.vc",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -7193,8 +7743,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
+    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -7861,8 +8411,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
+    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -8386,8 +8936,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=researchgate.net",
+    "logoUrl": "/api/favicon?domain=researchgate.net",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [
@@ -8496,8 +9046,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "avatarUrl": "/api/favicon?domain=cetaphil.com",
+    "logoUrl": "/api/favicon?domain=cetaphil.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "photos": [
@@ -9039,15 +9589,15 @@
   },
   {
     "id": "refalo.legal",
-    "name": "Refalo",
+    "name": "Refalo Legal",
     "category": "Legal Services",
     "categoryType": "all",
     "address": "",
     "city": "Online",
-    "country": "",
+    "country": "Netherlands",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
+    "rating": 4,
     "totalReviews": 1,
     "ratingCount": 1,
     "videoReviewCount": 1,
@@ -9065,13 +9615,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
+    "avatarUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+    "logoUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F07%2FMalta-Global-Residence-Programme-and-Residence-Programme-Refalo-Advocates.png"
+      "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -9081,11 +9630,20 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "If you have an enquiry or would simply like to find out more about us, please complete the contact form below so that we can put you in touch with the right person.",
-    "popularKeywords": [],
+    "description": "Refalo Legal is a dedicated law practice in Netherlands, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "refalo.legal"
+    "brandDomain": "refalo.legal",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "isSavedToProfile": true
   },
   {
     "id": "mamotcv.com",
@@ -10028,7 +10586,7 @@
     "name": "Healis",
     "address": "Winkelom 83B/1",
     "city": "Geel",
-    "category": "Venue & Business",
+    "category": "Pharmacy & Healthcare",
     "rating": 5,
     "totalReviews": 1,
     "brandDomain": "healis.be",
@@ -10038,7 +10596,43 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Farticle_teaser%2Fpublic%2Fmedia%2Fimage%2F2026-06%2Fhealis-apotheeksintjacob-apotheek1.jpg"
     ],
-    "logoUrl": "/api/favicon?domain=healis.be",
-    "avatarUrl": "/api/favicon?domain=healis.be"
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg",
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "categoryType": "all",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 14 86 00 00",
+    "email": "",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Healis is a dependable automotive and transportation service provider in Geel, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": []
   }
 ]

@@ -40,6 +40,7 @@ export interface ReviewComment {
   id: string;
   videoId?: string;
   userId?: string;
+  authorId?: string;
   userEmail?: string;
   uid?: string;
   userName?: string;
@@ -57,8 +58,11 @@ export interface ReviewComment {
   isLiked?: boolean;
   isCreator?: boolean;
   isOwner?: boolean;
+  isVerified?: boolean;
   likedByCreator?: boolean;
   replyToId?: string;
+  parentId?: string;
+  isReply?: boolean;
   replyToHandle?: string;
   attachments?: string[];
   

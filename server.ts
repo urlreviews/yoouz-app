@@ -2290,6 +2290,10 @@ function readReviewsIndex(): any[] {
               r.mediaType = 'photo';
               r.rating = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5)));
             }
+            if (r.photoDataUrl && (r.photoUrl || r.thumbnailUrl)) {
+              delete r.photoDataUrl;
+              dirty = true;
+            }
 
 
             // Ensure Garage As business name is cleanly formatted with proper two-word casing and authoritative metadata
@@ -2429,11 +2433,21 @@ function readReviewsIndex(): any[] {
 
 function writeReviewsIndex(list: any[]): void {
   try {
-    const sanitized = (Array.isArray(list) ? list : []).filter((r: any) => r && r.id && !isDeletedReviewServer(r.id));
+    const sanitized = (Array.isArray(list) ? list : [])
+      .filter((r: any) => r && r.id && !isDeletedReviewServer(r.id))
+      .map((item: any) => {
+        if (!item || typeof item !== "object") return item;
+        if (item.photoDataUrl && (item.photoUrl || item.thumbnailUrl)) {
+          const { photoDataUrl: _omit, ...rest } = item;
+          return rest;
+        }
+        return item;
+      });
     if (!fs.existsSync(globalUploadsDir)) {
       fs.mkdirSync(globalUploadsDir, { recursive: true });
     }
-    fs.writeFileSync(reviewsIndexPath, JSON.stringify(sanitized, null, 2), "utf8");
+    const serialized = JSON.stringify(sanitized, null, 2);
+    fs.writeFileSync(reviewsIndexPath, serialized, "utf8");
 
     // Replace memory feedCache directly with sanitized list so deleted videos are permanently gone
     feedCache.videos = sanitized;
@@ -2447,18 +2461,10 @@ function writeReviewsIndex(list: any[]): void {
     for (const seedPath of seedCandidates) {
       try {
         if (fs.existsSync(seedPath)) {
-          fs.writeFileSync(seedPath, JSON.stringify(sanitized, null, 2), "utf8");
+          fs.writeFileSync(seedPath, serialized, "utf8");
         }
       } catch (seedErr) {}
     }
-
-    try {
-      const seedReviewsPath = path.join(process.cwd(), "src", "data", "seedReviews.ts");
-      if (fs.existsSync(seedReviewsPath)) {
-        const updatedCode = 'import { VideoReview } from "../types";\n\nexport const INITIAL_SEED_VIDEOS: VideoReview[] = ' + JSON.stringify(sanitized, null, 2) + ';\n';
-        fs.writeFileSync(seedReviewsPath, updatedCode, "utf8");
-      }
-    } catch (sErr) {}
   } catch (e) {
     console.warn("Failed to write reviews index:", e);
   }
@@ -43376,6 +43382,138 @@ function injectOpenGraphTags(html: string, meta: any) {
       };
 
       await syncCommunityNameMixV1().catch(() => {});
+
+      const seedWave2CommunityV1 = async () => {
+        const markerPath = path.join(globalUploadsDir, ".wave2_community_v1_done");
+        if (fs.existsSync(markerPath)) return;
+        try {
+          const { seedWave2CommunityOnly } = await import("./src/utils/communitySeeder.ts");
+          const { usersToAdd, reviewsToAdd } = await seedWave2CommunityOnly();
+
+          // 1. Merge 20 new users cleanly without clobbering existing users
+          try {
+            const existingUsers = readUsersIndex();
+            const addIds = new Set(usersToAdd.map((u: any) => String(u.id)));
+            const addEmails = new Set(usersToAdd.map((u: any) => String(u.email || "").toLowerCase()));
+            const retainedUsers = existingUsers.filter(
+              (u: any) => u && !addIds.has(String(u.id || "")) && !addEmails.has(String(u.email || "").toLowerCase())
+            );
+            writeUsersIndex([...retainedUsers, ...usersToAdd]);
+          } catch {}
+
+          // 2. Merge 20 new photo reviews cleanly into local JSON index + seedReviews.ts + feedCache
+          try {
+            const existingReviews = readReviewsIndex();
+            const newRevIds = new Set(reviewsToAdd.map((r: any) => String(r.id)));
+            const retainedReviews = existingReviews.filter((r: any) => r && !newRevIds.has(String(r.id || "")));
+            const mergedReviews = [...reviewsToAdd, ...retainedReviews].sort(
+              (a: any, b: any) => Number(b?.createdAtMs || 0) - Number(a?.createdAtMs || 0)
+            );
+            writeReviewsIndex(mergedReviews);
+          } catch {}
+
+          // 3. Update matching place entries in uploads/places_index.json & public/places_index.json
+          try {
+            const reviewByPlace = new Map<string, any>();
+            for (const r of reviewsToAdd) {
+              if (r && r.placeId) reviewByPlace.set(String(r.placeId), r);
+            }
+            const localPlaces = readPlacesIndex();
+            let placesChanged = false;
+            const updatedPlaces = localPlaces.map((p: any) => {
+              if (!p) return p;
+              const matchRev = reviewByPlace.get(String(p.id || "")) || reviewByPlace.get(String(p.brandDomain || ""));
+              if (!matchRev) return p;
+              placesChanged = true;
+              const starVal = Number(matchRev.rating || 5);
+              return {
+                ...p,
+                category: matchRev.placeCategory || p.category,
+                rating: starVal,
+                totalReviews: 1,
+                videoReviewCount: 1,
+                ratingCount: 1,
+                starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, [starVal]: 1 }
+              };
+            });
+            if (placesChanged) writePlacesIndex(updatedPlaces);
+          } catch {}
+
+          feedCache.lastFetched = 0;
+          if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+          if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+          if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
+          try {
+            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
+            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
+          } catch {}
+          broadcastSseEvent({ type: "feed_refreshed" });
+          console.log(`✅ [Server] Wave 2 seeded ${usersToAdd.length} community profiles and ${reviewsToAdd.length} candid photo reviews.`);
+        } catch (w2Err: any) {
+          console.warn("Wave 2 community seed notice:", w2Err?.message || w2Err);
+        }
+      };
+
+      await seedWave2CommunityV1().catch(() => {});
+
+      const runCommunityEngagementV1 = async () => {
+        const markerPath = path.join(globalUploadsDir, ".community_engagement_v2_done");
+        if (bunnyDb) {
+          await Promise.all([
+            bunnyDb.execute("DELETE FROM comments WHERE id LIKE 'comm_179%' OR videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
+            bunnyDb.execute("DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
+            bunnyDb.execute("DELETE FROM bookmarks WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
+            bunnyDb.execute("DELETE FROM shares WHERE videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {})
+          ]);
+        }
+        if (fs.existsSync(markerPath)) return;
+        try {
+          const { seedCommunityEngagementV1 } = await import("./src/utils/engagementSeeder.ts");
+          const stats = await seedCommunityEngagementV1();
+
+          if (bunnyDb) {
+            try {
+              const vrRows = await bunnyDb.execute("SELECT id, likesCount, bookmarksCount, sharesCount, commentsCount, data FROM videoReviews");
+              const dbMap = new Map<string, any>();
+              for (const r of (vrRows.rows || []) as any[]) {
+                let d: any = {};
+                try { d = typeof r.data === "string" ? JSON.parse(r.data) : (r.data || {}); } catch {}
+                dbMap.set(String(r.id), {
+                  likes: Number(r.likesCount || d.likes || 0),
+                  likesCount: Number(r.likesCount || d.likesCount || 0),
+                  bookmarks: Number(r.bookmarksCount || d.bookmarks || 0),
+                  bookmarksCount: Number(r.bookmarksCount || d.bookmarksCount || 0),
+                  shares: Number(r.sharesCount || d.shares || 0),
+                  sharesCount: Number(r.sharesCount || d.sharesCount || 0),
+                  commentsCount: Number(r.commentsCount || d.commentsCount || 0),
+                  comments: Array.isArray(d.comments) ? d.comments : []
+                });
+              }
+              const localReviews = readReviewsIndex();
+              const syncedReviews = localReviews.map((rev: any) => {
+                if (!rev || !rev.id) return rev;
+                const patch = dbMap.get(String(rev.id));
+                return patch ? { ...rev, ...patch } : rev;
+              });
+              writeReviewsIndex(syncedReviews);
+            } catch {}
+          }
+
+          feedCache.lastFetched = 0;
+          if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+          if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+          try {
+            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
+            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
+          } catch {}
+          broadcastSseEvent({ type: "feed_refreshed" });
+          console.log(`✅ [Server] Community engagement seeded: +${stats.likesAdded} likes, +${stats.bookmarksAdded} saves, +${stats.sharesAdded} shares, +${stats.commentsAdded} comments across ${stats.updatedReviewsCount} reviews.`);
+        } catch (engErr: any) {
+          console.warn("Community engagement seed notice:", engErr?.message || engErr);
+        }
+      };
+
+      await runCommunityEngagementV1().catch(() => {});
 
       await reconcileDuplicateUserProfiles().then((res) => {
         if (res.reconciledCount > 0) {

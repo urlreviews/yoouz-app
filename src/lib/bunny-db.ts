@@ -202,17 +202,38 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errMsg = "Remote
 
 function syncRemoteToLocalBackground(remoteClient: Client, localClient: Client) {
   setTimeout(async () => {
+    const blockedVideoIds = new Set(["rev-1794849576888-eavyc", "rev_kroes_22"]);
     const tables = ["users", "places", "videoReviews", "comments", "likes", "bookmarks", "shares", "chats", "notifications", "businessClaims", "follows", "agencies"];
     for (const tbl of tables) {
       try {
         const rs = await withTimeout(remoteClient.execute(`SELECT * FROM ${tbl}`), 2500, `Sync timeout for ${tbl}`);
         if (rs && rs.rows && rs.rows.length > 0) {
           for (const row of rs.rows) {
-            const r = row as Record<string, any>;
+            const r = { ...(row as Record<string, any>) };
             const cols = Object.keys(r).filter((k) => isNaN(Number(k)));
             if (cols.length === 0) continue;
             // Skip deleted system/duplicate user IDs during background sync
             if (tbl === "users" && ["usr_yoouz_admin", "usr_samet", "usr_steven_akan", "usr_ben_blue", "admin@users.yoouz.com", "4samet@users.yoouz.com", "stevenakan@users.yoouz.com", "benblue@users.yoouz.com"].includes(String(r.id))) {
+              continue;
+            }
+            if (tbl === "videoReviews") {
+              if (blockedVideoIds.has(String(r.id || ""))) continue;
+              if (typeof r.data === "string" && r.data.includes("photoDataUrl")) {
+                try {
+                  const parsed = JSON.parse(r.data);
+                  if (parsed && parsed.photoDataUrl && (parsed.photoUrl || parsed.thumbnailUrl)) {
+                    delete parsed.photoDataUrl;
+                    r.data = JSON.stringify(parsed);
+                  }
+                } catch {}
+              }
+            }
+            if (tbl === "comments") {
+              if (String(r.id || "").startsWith("comm_179") || blockedVideoIds.has(String(r.videoId || ""))) {
+                continue;
+              }
+            }
+            if ((tbl === "likes" || tbl === "bookmarks" || tbl === "shares") && blockedVideoIds.has(String(r.videoId || ""))) {
               continue;
             }
             const placeholders = cols.map(() => "?").join(", ");
