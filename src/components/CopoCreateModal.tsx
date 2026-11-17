@@ -717,8 +717,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   // DESKTOP: Clean QR Code Mobile Handoff Modal
   if (isDesktopViewport && !postSubmitOnboarding) {
     const targetSlug = selectedPlace ? (getPlaceSlug(selectedPlace) || getPlaceSlug(selectedPlace.id) || selectedPlace.id) : "";
-    const placeParam = targetSlug ? `&place=${encodeURIComponent(targetSlug)}` : "";
-    const qrUrl = `${typeof window !== "undefined" ? window.location.origin : "https://yoouz.com"}/?addReview=1${placeParam}`;
+    const qrOrigin = typeof window !== "undefined" ? window.location.origin : "https://www.yoouz.com";
+    const qrUrl = targetSlug
+      ? `${qrOrigin}/reviews/${encodeURIComponent(targetSlug)}`
+      : `${qrOrigin}/?addReview=1`;
 
     return (
       <div

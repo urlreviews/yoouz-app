@@ -994,7 +994,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const qrDirectReviewUrl = useMemo(() => {
     const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://www.yoouz.com';
     const slug = getPlaceSlug(currentPlace);
-    return `${origin}/reviews/${slug}?action=record`;
+    return `${origin}/reviews/${slug}`;
   }, [currentPlace]);
 
   // Embed Customizer & Curation State
@@ -5593,7 +5593,7 @@ ${jsonLd}
 
               <div className="bg-white p-4 rounded-2xl shadow-xl inline-block border border-zinc-200 print:shadow-none print:border-zinc-300">
                 <QRCodeCanvas
-                  value={`https://yoouz.com/?addReview=1&placeId=${selectedPlaceId}`}
+                  value={`https://www.yoouz.com/reviews/${getPlaceSlug(currentPlace) || selectedPlaceId}`}
                   size={180}
                   level="H"
                   includeMargin={true}

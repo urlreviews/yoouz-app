@@ -1213,105 +1213,6 @@ export function App() {
             cleanPlaceId = cleanPlaceId.replace(/-dot-/gi, ".");
           }
 
-          const resolveTargetPlaceImmediately = (rawTarget: string): Place | null => {
-            const targetNorm = rawTarget.trim();
-            const targetLower = targetNorm.toLowerCase();
-            const targetCleanDom = (extractCleanDomain(targetNorm) || "").toLowerCase();
-
-            const matchedInPlaces = (placesRef.current || []).find((p: Place) => {
-              if (!p) return false;
-              const pDom = (extractCleanDomain(p.website || p.brandDomain || p.id || "") || "").toLowerCase();
-              const pSlug = (getPlaceSlug(p) || "").toLowerCase();
-              return (
-                p.id === targetNorm ||
-                (p.id && p.id.toLowerCase() === targetLower) ||
-                (pSlug && pSlug === targetLower) ||
-                (targetCleanDom && (pDom === targetCleanDom || pSlug === targetCleanDom || (p.brandDomain && p.brandDomain.toLowerCase() === targetCleanDom))) ||
-                (p.name && p.name.toLowerCase().trim() === targetLower)
-              );
-            });
-            if (matchedInPlaces) return matchedInPlaces;
-
-            const matchingVideo = (videosRef.current || []).find((v: VideoReview) => {
-              if (!v) return false;
-              const vDom = (extractCleanDomain(v.placeWebsite || v.placeId || v.placeName || "") || "").toLowerCase();
-              return (
-                v.placeId === targetNorm ||
-                (targetCleanDom && vDom === targetCleanDom) ||
-                (v.placeName && v.placeName.toLowerCase().trim() === targetLower)
-              );
-            });
-            if (matchingVideo) {
-              return synthesizePlaceFromReview(matchingVideo, placesRef.current);
-            }
-
-            if (targetNorm === "sample") {
-              return {
-                id: "sample",
-                name: "Colony Clothing (Sample)",
-                brandDomain: "colonyclothing.net",
-                website: "https://colonyclothing.net",
-                category: "Luxury Fashion & Lifestyle",
-                categoryType: "shopping",
-                address: "73 Circular Road, #01-01, Singapore 049427",
-                city: "Singapore",
-                country: "Singapore",
-                rating: 4.9,
-                totalReviews: 8,
-                photos: ["/api/brand-banner/colonyclothing.net"],
-                bannerUrl: "/api/brand-banner/colonyclothing.net",
-                logoUrl: "https://colonyclothing.net/favicon.ico",
-                avatarUrl: "https://colonyclothing.net/favicon.ico",
-                isSynthetic: true
-              } as unknown as Place;
-            }
-
-            const candidateDom = targetCleanDom || (isValidDomainUrl(targetNorm) ? targetNorm.replace(/^www\./i, "").toLowerCase() : "");
-            if (candidateDom && isValidDomainUrl(candidateDom)) {
-              const officialName =
-                KNOWN_OFFICIAL_NAMES[candidateDom] ||
-                KNOWN_OFFICIAL_NAMES[`www.${candidateDom}`] ||
-                formatBusinessName(candidateDom) ||
-                candidateDom;
-              const knownBanner = KNOWN_BRAND_BANNERS[candidateDom] || KNOWN_BRAND_BANNERS[`www.${candidateDom}`] || "";
-              const resolvedLogo = getCleanLogoUrl(null, candidateDom) || `/api/favicon?domain=${encodeURIComponent(candidateDom)}`;
-              return {
-                id: candidateDom,
-                name: officialName,
-                brandDomain: candidateDom,
-                category: "Verified Business",
-                categoryType: "all",
-                address: "",
-                city: "",
-                country: "",
-                rating: 5.0,
-                totalReviews: 0,
-                ratingDistribution: { stars5: 0, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-                photos: knownBanner ? [knownBanner] : [],
-                openingHours: "",
-                phone: "",
-                website: `https://${candidateDom}`,
-                priceRange: "N/A",
-                plusCode: "",
-                description: "",
-                popularKeywords: [],
-                amenities: [],
-                topDishes: [],
-                lat: 0,
-                lng: 0,
-                bannerUrl: knownBanner,
-                ogImage: knownBanner,
-                logoUrl: resolvedLogo,
-                avatarUrl: resolvedLogo,
-                isSavedToProfile: true,
-                isSkeleton: true,
-                isSynthetic: true
-              } as Place;
-            }
-
-            return null;
-          };
-
           // STRICT POLICY: Do not allow opening profiles for unverified slug IDs that aren't in the database.
           // Profiles MUST have an official domain to exist unless they are already registered in the system.
           const isRealDom = isValidDomainUrl(cleanPlaceId);
@@ -1320,15 +1221,6 @@ export function App() {
             (p.id && p.id.toLowerCase() === cleanPlaceId.toLowerCase()) ||
             getPlaceSlug(p) === cleanPlaceId.toLowerCase()
           );
-
-          const shouldTriggerRecord =
-            params.get("action") === "record" ||
-            params.get("record") === "1" ||
-            params.get("record") === "true" ||
-            params.get("addReview") === "1" ||
-            params.get("addReview") === "true" ||
-            hash.includes("record_review") ||
-            pathname.startsWith("/record/");
 
           if (!isRealDom && !inLocalDb && cleanPlaceId !== "sample") {
             // Check server before rejecting, in case places list hasn't hydrated yet on cold QR scan
@@ -1340,9 +1232,6 @@ export function App() {
                   setSelectedPlaceIdForDrawer(fetchedPlace.id);
                   setSelectedAuthorForDrawer(null);
                   if (!videoParam) setCurrentVideoIndex(0);
-                  if (shouldTriggerRecord) {
-                    handleOpenCreateReview(fetchedPlace);
-                  }
                 } else {
                   console.warn("[App] Blocking navigation to unverified placeholder profile:", cleanPlaceId);
                   window.history.replaceState(null, "", buildLocalizedPath("/", language));
@@ -1362,24 +1251,19 @@ export function App() {
             setCurrentVideoIndex(0);
           }
 
-          if (shouldTriggerRecord) {
-            const immediatePlace = resolveTargetPlaceImmediately(cleanPlaceId);
-            if (immediatePlace) {
-              handleOpenCreateReview(immediatePlace);
-            } else {
-              fetch(`/api/nosql/places/${encodeURIComponent(cleanPlaceId)}`)
-                .then((res) => (res.ok ? res.json() : null))
-                .then((fetchedPlace) => {
-                  const fallback = fetchedPlace && fetchedPlace.id ? fetchedPlace : resolveTargetPlaceImmediately(cleanPlaceId);
-                  if (fallback) {
-                    handleOpenCreateReview(fallback);
-                  }
-                })
-                .catch(() => {
-                  const fallback = resolveTargetPlaceImmediately(cleanPlaceId);
-                  if (fallback) handleOpenCreateReview(fallback);
-                });
-            }
+          // Keep scanned/linked business profile clean on open (ensure no intermediate camera overlay blocks the official profile)
+          if (
+            params.get("action") === "record" ||
+            params.get("record") === "1" ||
+            params.get("record") === "true" ||
+            params.get("addReview") === "1" ||
+            params.get("addReview") === "true"
+          ) {
+            setIsCreateModalOpen(false);
+            setPreselectedPlaceForRecording(null);
+            try {
+              window.history.replaceState(null, "", buildLocalizedPath(`/reviews/${cleanPlaceId}`, language));
+            } catch {}
           }
         } else if (creatorParam) {
           const rawParam = decodeURIComponent(creatorParam).replace(/^@+/, "").toLowerCase().trim();

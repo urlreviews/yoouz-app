@@ -2829,8 +2829,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         (() => {
           const placeSlug = getPlaceSlug(place);
           const originUrl = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://www.yoouz.com";
-          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}?action=record`;
-          const displayQrUrl = `www.yoouz.com/reviews/${placeSlug}?action=record`;
+          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}`;
+          const displayQrUrl = `www.yoouz.com/reviews/${placeSlug}`;
           const avgRatingStr = dynamicAvgRating.toFixed(1);
 
           const handleDownloadPlaceQr = () => {
@@ -3186,7 +3186,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         (() => {
           const placeSlug = getPlaceSlug(place);
           const originUrl = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://www.yoouz.com";
-          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}?action=record`;
+          const qrDirectReviewUrl = `${originUrl}/reviews/${placeSlug}`;
           const avgRatingStr = dynamicAvgRating.toFixed(1);
 
           return (
