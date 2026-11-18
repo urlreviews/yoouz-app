@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Search, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
+import { isPurgedItem } from "../hooks/useFeedPagination";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -140,11 +141,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
   }, [autoFocusSearch]);
 
-  // Active trending videos (prioritizing videos with real titles and creators)
+  // Active trending videos (purged items removed, newest-first to match feed ordering)
   const trendingVideos = useMemo(() => {
     if (!Array.isArray(videos)) return [];
-    
-    return videos;
+    return [...videos]
+      .filter((v) => v && v.id && !isPurgedItem(v))
+      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos]);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -1049,8 +1051,17 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 return (
                   <div
                     key={video.id}
+                    role="button"
+                    tabIndex={0}
+                    data-trending-video-id={video.id}
                     onClick={() => onSelectVideo(video.id)}
-                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectVideo(video.id);
+                      }
+                    }}
+                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
                     {/* Video Thumbnail */}
                     {posterUrl ? (

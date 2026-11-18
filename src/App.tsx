@@ -5484,7 +5484,7 @@ export function App() {
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
     previousVideoIndexRef.current = currentVideoIndex; // Save background feed index before going fullscreen
-    if (source === "creator" || isCreatorView) {
+    if (source === "creator" || (isCreatorView && source !== "feed" && source !== "general")) {
       const author = targetVid.author || selectedAuthorForDrawer;
       if (!author) return;
 
@@ -5496,6 +5496,7 @@ export function App() {
       if (isDesktop) {
         // Desktop: keep drawer open, update current video index within author vids
         if (idx !== -1) {
+          setPendingVideoId(null);
           setCurrentVideoIndex(idx);
         } else {
           setPendingVideoId(videoId);
@@ -5513,12 +5514,13 @@ export function App() {
         setActiveSection("home");
 
         if (idx !== -1) {
+          setPendingVideoId(null);
           setCurrentVideoIndex(idx);
         } else {
           setPendingVideoId(videoId);
         }
       }
-    } else if (source === "place" || isPlaceView) {
+    } else if (source === "place" || (isPlaceView && source !== "feed" && source !== "general")) {
       const p = drawerPlace || places.find(pl => pl.id === targetVid.placeId || pl.name === targetVid.placeName);
       const placeId = p?.id || targetVid.placeId;
       const placeName = p?.name || targetVid.placeName;
@@ -5531,6 +5533,7 @@ export function App() {
       if (isDesktop) {
         // Desktop: keep drawer open, update current video index within place vids
         if (idx !== -1) {
+          setPendingVideoId(null);
           setCurrentVideoIndex(idx);
         } else {
           setPendingVideoId(videoId);
@@ -5548,6 +5551,7 @@ export function App() {
         setActiveSection("home");
 
         if (idx !== -1) {
+          setPendingVideoId(null);
           setCurrentVideoIndex(idx);
         } else {
           setPendingVideoId(videoId);
@@ -5564,17 +5568,19 @@ export function App() {
 
       const idx = userVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
+        setPendingVideoId(null);
         setCurrentVideoIndex(idx);
       } else {
         setPendingVideoId(videoId);
       }
     } else {
       // General / Trending Feed / Search video selection:
-      // Play video within the FULL feed so the user can scroll to previous & next videos!
+      // Play video within the FULL discover feed so the index matches activeFeedVideos!
       // Do NOT restrict or lock the feed to a single business.
       setFullscreenFeedContext(null);
       setSelectedPlaceIdForDrawer(null);
       setSelectedAuthorForDrawer(null);
+      setActiveSubTab("discover");
       setActiveSection("home");
 
       const visibleVideos = videos
@@ -5583,6 +5589,7 @@ export function App() {
 
       const idx = visibleVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
+        setPendingVideoId(null);
         setCurrentVideoIndex(idx);
       } else {
         setPendingVideoId(videoId);
@@ -5597,7 +5604,9 @@ export function App() {
     setSelectedPlaceIdForDrawer(null);
     setSelectedAuthorForDrawer(null);
     setFullscreenFeedContext(null);
+    setActiveSubTab("discover");
     setActiveSection("home");
+    setPendingVideoId(null);
 
     const visibleVideos = videos
       .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))

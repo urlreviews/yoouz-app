@@ -152,7 +152,7 @@
     "amenities": [],
     "topDishes": [],
     "videoReviewCount": 0,
-    "createdAt": "2026-10-22 21:38:56",
+    "createdAt": "2026-11-18 09:07:30",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
@@ -439,7 +439,7 @@
     "reviewCount": 0,
     "reviews": [],
     "isSavedToProfile": true,
-    "createdAt": "2026-11-09 09:55:31",
+    "createdAt": "2026-11-18 09:07:30",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -606,7 +606,7 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "createdAt": "2026-11-17 14:50:26"
+    "createdAt": "2026-11-12 11:53:36"
   },
   {
     "id": "havanna.com",
@@ -653,7 +653,7 @@
     "amenities": [],
     "topDishes": [],
     "videoReviewCount": 0,
-    "createdAt": "2026-10-23 16:55:25",
+    "createdAt": "2026-11-18 09:07:31",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -759,7 +759,7 @@
     "name": "Sephora",
     "category": "Beauty & Cosmetics",
     "categoryType": "all",
-    "address": "",
+    "address": "350 Mission St, San Francisco, CA 94105",
     "city": "Online",
     "country": "Japan",
     "lat": 0,
@@ -783,8 +783,8 @@
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
-    "email": "",
+    "phone": "+1 (877) 737-4672",
+    "email": "customerservice@sephora.com",
     "website": "https://sephora.com",
     "priceRange": "N/A",
     "isSavedToProfile": true,
@@ -798,7 +798,16 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 1
+    "videoReviewCount": 1,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
   },
   {
     "id": "zara.comtakes",
@@ -965,7 +974,7 @@
       "4": 1,
       "5": 0
     },
-    "createdAt": "2026-10-19 11:31:25",
+    "createdAt": "2026-11-18 09:07:30",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -1301,8 +1310,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "avatarUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "logoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "photos": [
@@ -1336,7 +1345,7 @@
       "5": 1
     },
     "isSavedToProfile": true,
-    "createdAt": "2026-11-14 08:37:19",
+    "createdAt": "2026-11-18 09:07:30",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -1360,8 +1369,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=webflow.com",
-    "logoUrl": "/api/favicon?domain=webflow.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -1554,7 +1563,11 @@
       "4": 0,
       "5": 1
     },
-    "isSavedToProfile": true
+    "isSavedToProfile": true,
+    "createdAt": "2026-11-13 21:38:30",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "uniqlo.com",
@@ -1614,7 +1627,7 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "createdAt": "2026-11-17 14:50:29"
+    "createdAt": "2026-11-13 21:33:01"
   },
   {
     "id": "mcdonalds.com",
@@ -1737,7 +1750,7 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "createdAt": "2026-11-17 14:50:30"
+    "createdAt": "2026-11-13 21:39:54"
   },
   {
     "id": "dominos.com",
@@ -1957,7 +1970,11 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "fourseasons.com",
-    "isSavedToProfile": true
+    "isSavedToProfile": true,
+    "createdAt": "2026-11-13 12:45:23",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "rotana.com",
@@ -2111,7 +2128,7 @@
     "topDishes": [],
     "brandDomain": "villaggiohotels.ae",
     "isSavedToProfile": true,
-    "createdAt": "2026-11-13 11:36:10",
+    "createdAt": "2026-11-18 09:07:31",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -4570,7 +4587,7 @@
       "5": 1
     },
     "isSavedToProfile": true,
-    "createdAt": "2026-10-23 10:15:16",
+    "createdAt": "2026-11-18 09:07:31",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -5936,7 +5953,7 @@
       "4": 1,
       "5": 0
     },
-    "createdAt": "2026-11-07 12:33:35",
+    "createdAt": "2026-11-18 09:07:30",
     "isClaimed": false,
     "isVerified": false,
     "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg",
@@ -7274,8 +7291,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=nfx.com",
-    "logoUrl": "/api/favicon?domain=nfx.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -7332,8 +7349,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=2b.vc",
-    "logoUrl": "/api/favicon?domain=2b.vc",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -7666,8 +7683,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
-    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -8334,8 +8351,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
-    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -8859,8 +8876,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=researchgate.net",
-    "logoUrl": "/api/favicon?domain=researchgate.net",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [
@@ -8969,8 +8986,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=cetaphil.com",
-    "logoUrl": "/api/favicon?domain=cetaphil.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
     "photos": [
@@ -9117,7 +9134,7 @@
       "4": 0,
       "5": 1
     },
-    "createdAt": "2026-10-23 17:00:45",
+    "createdAt": "2026-11-18 09:07:31",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
@@ -9182,7 +9199,8 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "isSavedToProfile": true
+    "isSavedToProfile": true,
+    "createdAt": "2026-10-22 15:59:00"
   },
   {
     "id": "mamotcv.com",
@@ -9681,7 +9699,7 @@
     "amenities": [],
     "topDishes": [],
     "videoReviewCount": 0,
-    "createdAt": "2026-10-22 15:59:00",
+    "createdAt": "2026-11-18 09:07:31",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false

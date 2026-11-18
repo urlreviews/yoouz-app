@@ -173,11 +173,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }));
   }, [effectiveVideos]);
 
-  const [activeCardIndex, setActiveCardIndex] = useState<number>(() =>
-    Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)))
-  );
+  const initialIdxClamped = Math.max(0, Math.min(currentIndex, Math.max(0, effectiveVideos.length - 1)));
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(initialIdxClamped);
   const activeCardIndexRef = useRef<number>(activeCardIndex);
   activeCardIndexRef.current = activeCardIndex;
+
+  // Pin active video ID so mobile layout resizes / initial scroll-snap settlement / async feed updates never jump to index 0
+  const lockedVideoIdRef = useRef<string | null>(effectiveVideos[initialIdxClamped]?.id || null);
+  const initialMountTargetRef = useRef<number | null>(currentIndex > 0 ? currentIndex : null);
+  const userHasScrolledRef = useRef<boolean>(false);
+  const snapRestoreRafRef = useRef<number | null>(null);
 
   // Edit Rating State (whole numbers 1–5 only)
   const [editingReviewVideo, setEditingReviewVideo] = useState<VideoReview | null>(null);
@@ -187,11 +192,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    const maxIdx = videos.length > 0 ? videos.length - 1 : 0;
+    const maxIdx = effectiveVideos.length > 0 ? effectiveVideos.length - 1 : 0;
     if (currentIndex > maxIdx) {
       onSelectVideoIndex(maxIdx);
     }
-  }, [videos.length, currentIndex, onSelectVideoIndex]);
+  }, [effectiveVideos.length, currentIndex, onSelectVideoIndex]);
 
   const mainRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -199,6 +204,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const isProgrammaticScrollRef = useRef<boolean>(currentIndex > 0);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastObserverIndexRef = useRef<number>(currentIndex);
+
+  const getCardTargetTop = useCallback((container: HTMLDivElement, cardEl: HTMLDivElement) => {
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = cardEl.getBoundingClientRect();
+    if (cardRect.height > 0 && containerRect.height > 0) {
+      return container.scrollTop + (cardRect.top - containerRect.top);
+    }
+    return cardEl.offsetTop - container.offsetTop;
+  }, []);
 
   // Preconnect to CDN for crisp photo loading
   useEffect(() => {
@@ -220,6 +234,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   useEffect(() => {
     if (previousContextKeyRef.current !== contextKey) {
       previousContextKeyRef.current = contextKey;
+      initialMountTargetRef.current = null;
+      userHasScrolledRef.current = false;
+      lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
       activeCardIndexRef.current = 0;
       lastObserverIndexRef.current = 0;
       setActiveCardIndex(0);
@@ -228,35 +245,61 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         containerRef.current.scrollTo({ top: 0, behavior: "instant" });
       }
     }
-  }, [contextKey, onSelectVideoIndex]);
+  }, [contextKey, effectiveVideos, onSelectVideoIndex]);
 
   const scrollToCard = useCallback(
     (targetCardIndex: number, behavior: ScrollBehavior = "smooth") => {
       const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
       if (targetCardIndex < 0 || targetCardIndex > maxIdx) return;
 
-      const isJump = Math.abs(targetCardIndex - activeCardIndexRef.current) > 1;
+      const prevActive = activeCardIndexRef.current;
+      const isJump = behavior !== "smooth" || Math.abs(targetCardIndex - prevActive) > 1;
       activeCardIndexRef.current = targetCardIndex;
       lastObserverIndexRef.current = targetCardIndex;
       setActiveCardIndex(targetCardIndex);
 
-      const realIdx = targetCardIndex % (videos.length || 1);
+      const targetItem = displayItems[targetCardIndex];
+      if (targetItem?.video?.id) {
+        lockedVideoIdRef.current = targetItem.video.id;
+      }
+
+      const realIdx = targetCardIndex % (effectiveVideos.length || 1);
       onSelectVideoIndex(realIdx);
 
       const cardEl = cardRefs.current[targetCardIndex];
       const container = containerRef.current;
       if (cardEl && container) {
         isProgrammaticScrollRef.current = true;
-        const targetTop = cardEl.offsetTop - container.offsetTop;
-        container.scrollTo({ top: targetTop, behavior: isJump ? "auto" : behavior });
+        const targetTop = getCardTargetTop(container, cardEl);
+
+        if (isJump) {
+          // Temporarily disable scroll-snap so mobile browsers jump straight to targetTop instead of snapping back toward 0
+          const savedSnap = container.style.scrollSnapType;
+          container.style.scrollSnapType = "none";
+          container.scrollTop = targetTop;
+          if (snapRestoreRafRef.current !== null) cancelAnimationFrame(snapRestoreRafRef.current);
+          snapRestoreRafRef.current = requestAnimationFrame(() => {
+            if (containerRef.current) {
+              const verifiedTop = cardRefs.current[targetCardIndex]
+                ? getCardTargetTop(containerRef.current, cardRefs.current[targetCardIndex]!)
+                : targetTop;
+              if (Math.abs(containerRef.current.scrollTop - verifiedTop) > 4) {
+                containerRef.current.scrollTop = verifiedTop;
+              }
+              containerRef.current.style.scrollSnapType = savedSnap || (commentsOpen ? "none" : "y mandatory");
+            }
+          });
+        } else {
+          container.scrollTo({ top: targetTop, behavior });
+        }
 
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = setTimeout(() => {
           isProgrammaticScrollRef.current = false;
-        }, 500);
+        }, isJump ? 450 : 500);
       }
     },
-    [displayItems.length, videos.length, onSelectVideoIndex]
+    [displayItems, effectiveVideos.length, onSelectVideoIndex, getCardTargetTop, commentsOpen]
   );
 
   const getLogoForVideo = useCallback(
@@ -407,11 +450,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   );
 
   useEffect(() => {
-    prefetchUpcomingPhotos(videos, currentIndex);
-    if (videos.length >= 10 && currentIndex >= videos.length - 3 && !isLoading) {
+    prefetchUpcomingPhotos(effectiveVideos, currentIndex);
+    if (effectiveVideos.length >= 10 && currentIndex >= effectiveVideos.length - 3 && !isLoading) {
       onLoadMoreRef.current?.();
     }
-  }, [currentIndex, videos, isLoading, prefetchUpcomingPhotos]);
+  }, [currentIndex, effectiveVideos, isLoading, prefetchUpcomingPhotos]);
 
   // IntersectionObserver index detection
   useEffect(() => {
@@ -421,11 +464,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     const observer = new IntersectionObserver(
       (entries) => {
         if (isProgrammaticScrollRef.current) return;
+        if (initialMountTargetRef.current !== null && !userHasScrolledRef.current) return;
 
         if (container.scrollTop <= 20) {
           if (activeCardIndexRef.current !== 0) {
             activeCardIndexRef.current = 0;
             lastObserverIndexRef.current = 0;
+            lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
             setActiveCardIndex(0);
             onSelectVideoIndex(0);
           }
@@ -445,11 +490,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           if (!isNaN(cardIdx) && cardIdx >= 0 && cardIdx <= maxIdx && cardIdx !== activeCardIndexRef.current) {
             activeCardIndexRef.current = cardIdx;
             lastObserverIndexRef.current = cardIdx;
+            lockedVideoIdRef.current = effectiveVideos[cardIdx]?.id || null;
             setActiveCardIndex(cardIdx);
-            const realIdx = cardIdx % (videos.length || 1);
+            const realIdx = cardIdx % (effectiveVideos.length || 1);
             onSelectVideoIndex(realIdx);
-            if (realIdx < videos.length) {
-              prefetchUpcomingPhotos(videos, realIdx);
+            if (realIdx < effectiveVideos.length) {
+              prefetchUpcomingPhotos(effectiveVideos, realIdx);
             }
           }
         }
@@ -473,18 +519,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       mutationObserver.disconnect();
       observer.disconnect();
     };
-  }, [displayItems.length, videos, onSelectVideoIndex, prefetchUpcomingPhotos]);
+  }, [displayItems.length, effectiveVideos, onSelectVideoIndex, prefetchUpcomingPhotos]);
 
   const prevFirstVideoIdRef = useRef<string | null>(null);
   useEffect(() => {
-    const currentFirstId = videos[0]?.id || null;
+    const currentFirstId = effectiveVideos[0]?.id || null;
     if (currentFirstId && currentFirstId !== prevFirstVideoIdRef.current) {
       const isInitialMount = prevFirstVideoIdRef.current === null;
       prevFirstVideoIdRef.current = currentFirstId;
-      const firstVid = videos[0];
+      const firstVid = effectiveVideos[0];
       const isNewSessionPhoto = Boolean((firstVid as any)?.isCurrentSessionBlob || (firstVid as any)?.isLocalUpload);
 
       if (isNewSessionPhoto || (isInitialMount && currentIndex === 0 && activeCardIndexRef.current === 0)) {
+        lockedVideoIdRef.current = currentFirstId;
         lastObserverIndexRef.current = 0;
         activeCardIndexRef.current = 0;
         setActiveCardIndex(0);
@@ -494,29 +541,92 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         }
       }
     }
-  }, [videos, onSelectVideoIndex, currentIndex]);
+  }, [effectiveVideos, onSelectVideoIndex, currentIndex]);
+
+  // Keep player pinned to the locked videoId if effectiveVideos updates or reorders before user scrolls
+  useEffect(() => {
+    const lockedId = lockedVideoIdRef.current;
+    if (!lockedId || userHasScrolledRef.current) return;
+    const pinnedIdx = effectiveVideos.findIndex((v) => v.id === lockedId);
+    if (pinnedIdx !== -1 && pinnedIdx !== activeCardIndexRef.current) {
+      initialMountTargetRef.current = pinnedIdx;
+      scrollToCard(pinnedIdx, "instant");
+    }
+  }, [effectiveVideos, scrollToCard]);
 
   useEffect(() => {
-    if (containerRef.current) {
-      if (currentIndex === 0) {
+    const container = containerRef.current;
+    if (!container) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
+
+    const markUserScrolled = () => {
+      userHasScrolledRef.current = true;
+      initialMountTargetRef.current = null;
+    };
+
+    container.addEventListener("touchstart", markUserScrolled, { passive: true });
+    container.addEventListener("wheel", markUserScrolled, { passive: true });
+
+    const alignToTarget = (idx: number) => {
+      const cardEl = cardRefs.current[idx];
+      if (!cardEl || !containerRef.current) return;
+      const savedSnap = containerRef.current.style.scrollSnapType;
+      containerRef.current.style.scrollSnapType = "none";
+      const targetTop = getCardTargetTop(containerRef.current, cardEl);
+      if (Math.abs(containerRef.current.scrollTop - targetTop) > 4) {
+        containerRef.current.scrollTop = targetTop;
+      }
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.style.scrollSnapType = savedSnap || "y mandatory";
+        }
+      });
+    };
+
+    const startIdx = initialMountTargetRef.current !== null ? initialMountTargetRef.current : currentIndex;
+    let t1: ReturnType<typeof setTimeout> | null = null;
+    let t2: ReturnType<typeof setTimeout> | null = null;
+    let resizeObs: ResizeObserver | null = null;
+
+    if (startIdx <= 0) {
+      isProgrammaticScrollRef.current = false;
+      container.scrollTo({ top: 0, behavior: "instant" });
+    } else if (startIdx < displayItems.length) {
+      scrollToCard(startIdx, "instant");
+      requestAnimationFrame(() => alignToTarget(startIdx));
+      t1 = setTimeout(() => {
+        if (!userHasScrolledRef.current && initialMountTargetRef.current === startIdx) {
+          alignToTarget(startIdx);
+        }
+      }, 120);
+      t2 = setTimeout(() => {
+        if (!userHasScrolledRef.current && initialMountTargetRef.current === startIdx) {
+          alignToTarget(startIdx);
+        }
         isProgrammaticScrollRef.current = false;
-        containerRef.current.scrollTo({ top: 0, behavior: "instant" });
-      } else if (currentIndex > 0 && currentIndex < displayItems.length) {
-        scrollToCard(currentIndex, "instant");
-        requestAnimationFrame(() => {
-          if (cardRefs.current[currentIndex] && containerRef.current) {
-            const targetTop = cardRefs.current[currentIndex]!.offsetTop - containerRef.current.offsetTop;
-            if (Math.abs(containerRef.current.scrollTop - targetTop) > 10) {
-              containerRef.current.scrollTo({ top: targetTop, behavior: "auto" });
-            }
+      }, 320);
+
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObs = new ResizeObserver(() => {
+          if (!userHasScrolledRef.current && initialMountTargetRef.current === startIdx) {
+            alignToTarget(startIdx);
           }
         });
-      } else {
-        isProgrammaticScrollRef.current = false;
+        resizeObs.observe(container);
       }
     } else {
       isProgrammaticScrollRef.current = false;
     }
+
+    return () => {
+      container.removeEventListener("touchstart", markUserScrolled);
+      container.removeEventListener("wheel", markUserScrolled);
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
+      if (resizeObs) resizeObs.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -531,10 +641,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       const containerHeight = container.clientHeight;
       if (!containerHeight) return;
 
+      if (initialMountTargetRef.current !== null && !userHasScrolledRef.current && containerTop <= 20) {
+        return;
+      }
+
       if (containerTop <= 20) {
         if (activeCardIndexRef.current !== 0) {
           activeCardIndexRef.current = 0;
           lastObserverIndexRef.current = 0;
+          lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
           setActiveCardIndex(0);
           onSelectVideoIndex(0);
         }
@@ -548,8 +663,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       let closestIndex = -1;
       let minDistance = Infinity;
 
+      const containerRect = container.getBoundingClientRect();
       cardElements.forEach((el) => {
-        const cardTop = el.offsetTop - container.offsetTop;
+        const elRect = el.getBoundingClientRect();
+        const cardTop = containerRect.height > 0 ? containerTop + (elRect.top - containerRect.top) : el.offsetTop - container.offsetTop;
         const cardCenter = cardTop + el.clientHeight / 2;
         const distance = Math.abs(containerCenter - cardCenter);
         if (distance < minDistance) {
@@ -565,11 +682,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       if (closestIndex >= 0 && closestIndex <= maxIdx && closestIndex !== activeCardIndexRef.current) {
         activeCardIndexRef.current = closestIndex;
         lastObserverIndexRef.current = closestIndex;
+        lockedVideoIdRef.current = effectiveVideos[closestIndex]?.id || null;
         setActiveCardIndex(closestIndex);
-        const realIdx = closestIndex % (videos.length || 1);
+        const realIdx = closestIndex % (effectiveVideos.length || 1);
         onSelectVideoIndex(realIdx);
-        if (realIdx < videos.length) {
-          prefetchUpcomingPhotos(videos, realIdx);
+        if (realIdx < effectiveVideos.length) {
+          prefetchUpcomingPhotos(effectiveVideos, realIdx);
         }
       }
     };
@@ -587,14 +705,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("scrollend", checkActiveCard);
     };
-  }, [displayItems.length, videos, onSelectVideoIndex, prefetchUpcomingPhotos]);
+  }, [displayItems.length, effectiveVideos, onSelectVideoIndex, prefetchUpcomingPhotos]);
 
   useEffect(() => {
-    const currentRealIdx = activeCardIndexRef.current % (videos.length || 1);
-    if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < videos.length) {
-      scrollToCard(currentIndex, currentIndex === 0 ? "instant" : "smooth");
+    const currentRealIdx = activeCardIndexRef.current % (effectiveVideos.length || 1);
+    if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < effectiveVideos.length) {
+      lockedVideoIdRef.current = effectiveVideos[currentIndex]?.id || null;
+      const isLargeJump = Math.abs(currentIndex - currentRealIdx) > 1;
+      scrollToCard(currentIndex, currentIndex === 0 || isLargeJump ? "instant" : "smooth");
     }
-  }, [currentIndex, videos.length, scrollToCard]);
+  }, [currentIndex, effectiveVideos, scrollToCard]);
 
   const handleNext = useCallback(() => {
     const nextIdx = activeCardIndexRef.current + 1;

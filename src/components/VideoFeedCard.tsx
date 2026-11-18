@@ -470,6 +470,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       {/* More Options */}
       <div className="flex flex-col items-center relative z-50 pointer-events-auto">
         <button
+          type="button"
           id={isDesktop ? `btn-more-options-desktop-${video.id}` : `btn-more-options-${video.id}`}
           onClick={(e) => {
             e.stopPropagation();
@@ -477,16 +478,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             onOpenMoreMenu(video);
           }}
           onTouchStart={(e) => e.stopPropagation()}
-          onTouchEnd={(e) => {
-            e.stopPropagation();
-            triggerHaptic("light");
-            onOpenMoreMenu(video);
-          }}
           className={`${
             isDesktop
               ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
               : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
-          } rounded-full backdrop-blur-xl border flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer shadow-xl relative z-50 pointer-events-auto`}
+          } rounded-full backdrop-blur-xl border flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer touch-manipulation shadow-xl relative z-50 pointer-events-auto`}
           title={t("video.moreOptions", "More options")}
         >
           <MoreHorizontal className="w-5 h-5 md:w-5.5 md:h-5.5 stroke-[2] text-white" />
@@ -632,6 +628,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
               {/* Top Business Header Badge */}
               <button
+                type="button"
                 id={`pill-top-place-${video.placeId || video.id}`}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -639,12 +636,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   onOpenPlace(targetPlaceId, video.id);
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
-                  onOpenPlace(targetPlaceId, video.id);
-                }}
-                className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
+                className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
               >
                 {(() => {
                   const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
