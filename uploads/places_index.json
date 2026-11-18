@@ -1310,8 +1310,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "logoUrl": "https://www.multipharma.be/on/demandware.static/Sites-Multipharma-Webshop-BE-Site/-/default/dw4b5246f9/images/Logo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
     "photos": [

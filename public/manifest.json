@@ -1,7 +1,7 @@
 {
-  "name": "Yoouz - Real Video Reviews",
+  "name": "Yoouz - Live Photo Reviews | Real Photos. Real Proof.",
   "short_name": "Yoouz",
-  "description": "Authentic 60-second video reviews for every business, restaurant, and website. Zero fake text reviews.",
+  "description": "A picture is worth a thousand words. Authentic 3-second live camera photo reviews with 1–5 whole-star ratings for every business, restaurant, and website. Zero fake text reviews and zero gallery uploads.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -56,9 +56,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Record Video Review",
-      "short_name": "Record",
-      "description": "Record a 60-second video review for any place or website",
+      "name": "Snap Live Photo Review",
+      "short_name": "Snap Photo",
+      "description": "Snap a 3-second live camera photo review for any place or website",
       "url": "/?action=record",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },

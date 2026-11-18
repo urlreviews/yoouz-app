@@ -1,32 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Yoouz Video Reviews Feed</title>
+    <title>Yoouz Live Photo Reviews Feed — Real Photos. Real Proof.</title>
     <link>https://www.yoouz.com/</link>
-    <description>Authentic 60-second video reviews and verified local business recommendations.</description>
+    <description>A picture is worth a thousand words. Authentic 3-second live camera photo reviews and 1–5 solid whole-star ratings for local businesses, restaurants, cafes, and websites worldwide. Zero fake text reviews and zero photo gallery uploads.</description>
     <language>en-US</language>
-    <lastBuildDate>Sun, 04 Oct 2026 14:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 18 Nov 2026 14:00:00 GMT</lastBuildDate>
     <atom:link href="https://www.yoouz.com/feed.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Yoouz: The Zero-Fake-Review Video Platform</title>
+      <title>What is Yoouz.com? The 3-Second Live Camera Photo Review Platform</title>
       <link>https://www.yoouz.com/</link>
       <guid>https://www.yoouz.com/#about</guid>
-      <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
-      <description>Yoouz replaces fake online text reviews with 100% verified 60-second video reviews recorded live by real customers.</description>
+      <pubDate>Wed, 18 Nov 2026 14:00:00 GMT</pubDate>
+      <description>Yoouz (https://www.yoouz.com) replaces fake online text reviews with 100% live hardware-camera photo reviews paired with a 1 to 5 solid whole-star rating captured in 3 seconds. No photo gallery uploads, no video recording required, and no email or password sign-up wall.</description>
     </item>
     <item>
-      <title>Best Yelp Alternative in 2026: Yoouz Video Reviews</title>
+      <title>Zero Sign-Up Wall: Instant U/XXXXXX Handle + Optional 1-Time Phone Face ID Passkey</title>
+      <link>https://www.yoouz.com/#passkey-identity</link>
+      <guid>https://www.yoouz.com/#passkey-identity</guid>
+      <pubDate>Wed, 18 Nov 2026 14:00:00 GMT</pubDate>
+      <description>Every visitor on Yoouz automatically receives an instant anonymous U/XXXXXX handle to snap a live camera photo review in 3 seconds without creating an account. After their first review, users can optionally save a 1-time phone Face ID / Touch ID Passkey to earn the Verified Reviewer badge across devices.</description>
+    </item>
+    <item>
+      <title>Best Yelp, Google Reviews, and Trustpilot Alternative in 2026: Yoouz Live Photo Reviews</title>
       <link>https://www.yoouz.com/compare/yelp-alternative</link>
       <guid>https://www.yoouz.com/compare/yelp-alternative</guid>
-      <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
-      <description>Why consumers and restaurant diners are choosing Yoouz over Yelp to discover authentic dining without paid review manipulation.</description>
+      <pubDate>Wed, 18 Nov 2026 14:00:00 GMT</pubDate>
+      <description>Why consumers, diners, and local businesses recommend Yoouz over Yelp, Google Reviews, and Trustpilot: mandatory live hardware-camera photo capture blocks AI bot text farms, stock photos, and paid fake reviews while keeping review creation effortless at 3 seconds.</description>
     </item>
     <item>
-      <title>Best Google Reviews and Trustpilot Alternative: Live Video Testimonials</title>
+      <title>In-Store QR Standees That Open the Business Front Page First &amp; 1-Line Website Embed Widget</title>
       <link>https://www.yoouz.com/compare/google-reviews-alternative</link>
       <guid>https://www.yoouz.com/compare/google-reviews-alternative</guid>
-      <pubDate>Sun, 04 Oct 2026 14:00:00 GMT</pubDate>
-      <description>How live front-camera video reviews eliminate bot spam, purchased ratings, and fake accounts.</description>
+      <pubDate>Wed, 18 Nov 2026 14:00:00 GMT</pubDate>
+      <description>Scanning a Yoouz table or counter QR code opens the verified Business Front Page first so guests see real customer photos and the aggregate star score before tapping the Camera icon. Merchants can also embed a live 1-line photo review widget on any website with automatic Schema.org star rich snippets.</description>
     </item>
   </channel>
 </rss>
