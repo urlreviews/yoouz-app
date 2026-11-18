@@ -43,6 +43,7 @@ import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
+import { preloadImage } from "../utils/preloadUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoShareModal } from "./CopoShareModal";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -724,6 +725,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     || (safeCreator?.bio && safeCreator.bio.trim() ? safeCreator.bio : "")
     || (author?.bio && author.bio.trim() ? author.bio : "");
 
+  // Eagerly prewarm and GPU-decode user banner and avatar
+  useEffect(() => {
+    if (effectiveBanner) preloadImage(getProxiedImageUrl(effectiveBanner), "high");
+    if (effectiveAvatar) preloadImage(getProxiedImageUrl(effectiveAvatar), "high");
+  }, [effectiveBanner, effectiveAvatar]);
+
   // Check if profile is business vs consumer user
   const userRole = (isOwner && (currentUser as any)?.role) || (liveUserProfile as any)?.role || (author as any)?.role || 'user';
   const isBusinessProfile = userRole === 'business' || (author as any)?.type === 'place' || (liveUserProfile as any)?.type === 'place';
@@ -1171,17 +1178,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </button>
 
           {effectiveBanner ? (
-            <div className="absolute inset-0 w-full h-full bg-zinc-900 md:bg-zinc-900 relative overflow-hidden flex items-center justify-center group">
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 relative overflow-hidden flex items-center justify-center group">
               <img
                 src={getProxiedImageUrl(effectiveBanner)}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125"
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125 transition-opacity duration-200"
                 referrerPolicy="no-referrer"
               />
               <img
                 src={getProxiedImageUrl(effectiveBanner)}
                 alt="Banner"
-                className="relative z-10 w-full h-full object-cover p-0"
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+                className="relative z-10 w-full h-full object-cover p-0 transition-opacity duration-200"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-black/25 z-20 pointer-events-none" />

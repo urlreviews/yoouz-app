@@ -1385,10 +1385,17 @@ export function prewarmBannerImage(url?: string | null): void {
   
   KNOWN_LOADED_BANNERS.add(proxied);
   const img = new Image();
-  img.src = proxied;
+  img.referrerPolicy = "no-referrer";
+  if ("fetchPriority" in img) {
+    (img as any).fetchPriority = "high";
+  }
   img.onload = () => {
     KNOWN_LOADED_BANNERS.add(proxied);
+    if ("decode" in img && typeof img.decode === "function") {
+      img.decode().catch(() => {});
+    }
   };
+  img.src = proxied;
 }
 
 // Auto-prewarm active banners as needed

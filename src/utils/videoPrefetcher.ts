@@ -35,39 +35,56 @@ export const prefetchVideo = (rawUrl: string, posterUrl?: string) => {
   // is simultaneously trying to load the active stream causes severe network queue starvation, resulting in a 3+ second delay.
 };
 
+import { preloadImage, preloadReviewAssets } from "./preloadUtils";
+
 /**
- * Lightweight lookahead prefetcher for the immediate next video only.
- * Avoids browser connection starvation and decoder blocking.
+ * Universal Mobile & Desktop Review & Photo Prefetch Engine.
+ * Preloads photo review images and decodes them directly into GPU cache,
+ * ensuring zero-black-frame transitions when browsing feeds.
  */
 export const prefetchUpcomingVideos = (videos: any[], currentIndex: number) => {
   if (!videos || videos.length === 0) return;
-  // Lookahead: strictly immediate next video (currentIndex + 1) to conserve connection slots
-  const nextIdx = currentIndex + 1;
-  if (nextIdx < videos.length) {
-    const v = videos[nextIdx];
-    if (v) {
-      const src = resolvePlayableVideoSource(v);
-      const poster = resolveVideoPosterUrl(v);
-      if (src && !src.startsWith("blob:")) {
-        prefetchVideo(src, poster);
+  
+  // Lookahead: Pre-decode photos for upcoming cards (1, 2, and 3 steps ahead)
+  for (let offset = 1; offset <= 3; offset++) {
+    const idx = currentIndex + offset;
+    if (idx < videos.length) {
+      const v = videos[idx];
+      if (v) {
+        // Pre-decode review photo or poster into GPU memory
+        const photo = v.photoUrl || v.photoDataUrl || resolveVideoPosterUrl(v);
+        if (photo) {
+          preloadImage(photo, offset === 1 ? 'high' : 'auto');
+        }
+        // Preload place logo / banner if present
+        if (v.placeLogoUrl) preloadImage(v.placeLogoUrl, 'auto');
+        if (v.placeBannerUrl) preloadImage(v.placeBannerUrl, 'auto');
+        
+        // Video byte prefetch for any video reviews
+        const src = resolvePlayableVideoSource(v);
+        if (src && !src.startsWith("blob:") && !src.startsWith("data:")) {
+          prefetchVideo(src, photo);
+        }
       }
     }
   }
+};
 
-  // Also prefetch poster only for currentIndex + 2 so images are instant
-  const nextNextIdx = currentIndex + 2;
-  if (nextNextIdx < videos.length) {
-    const nextV = videos[nextNextIdx];
-    if (nextV) {
-      const poster = resolveVideoPosterUrl(nextV);
-      if (poster && !preloadedPosters.has(poster)) {
-        preloadedPosters.add(poster);
-        const img = new Image();
-        img.referrerPolicy = "no-referrer";
-        img.src = poster;
-      }
+/**
+ * Eagerly prewarms the initial feed batch on app or page mount.
+ * Prevents any first-second black frames or loading spinners for the user.
+ */
+export const prefetchInitialFeedPhotos = (videos: any[], count: number = 8) => {
+  if (!videos || videos.length === 0) return;
+  const initialBatch = videos.slice(0, count);
+  initialBatch.forEach((v, i) => {
+    const photo = v.photoUrl || v.photoDataUrl || resolveVideoPosterUrl(v);
+    if (photo) {
+      preloadImage(photo, i < 3 ? 'high' : 'auto');
     }
-  }
+    if (v.placeLogoUrl) preloadImage(v.placeLogoUrl, 'auto');
+    if (v.placeBannerUrl) preloadImage(v.placeBannerUrl, 'auto');
+  });
 };
 
 export const getCachedVideoUrl = (rawUrl: string) => {

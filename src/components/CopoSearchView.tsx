@@ -1000,7 +1000,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   ref={carouselRef}
                   className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
                 >
-                  {trendingVideos.map((video) => {
+                  {trendingVideos.map((video, idx) => {
                     const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
                     const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
 
@@ -1020,8 +1020,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                           <img
                             src={posterUrl}
                             alt={`${businessName} review - ${creatorFullName}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 pointer-events-none"
+                            loading={idx < 4 ? "eager" : "lazy"}
+                            decoding={idx < 4 ? "sync" : "async"}
+                            fetchPriority={idx < 4 ? "high" : "auto"}
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {

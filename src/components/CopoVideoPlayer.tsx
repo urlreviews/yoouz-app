@@ -37,6 +37,7 @@ import {
 } from "../utils/placeUtils";
 import { getRoundedRating } from "./CopoStarRating";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
+import { prefetchUpcomingVideos, prefetchInitialFeedPhotos } from "../utils/videoPrefetcher";
 
 interface CopoVideoPlayerProps {
   videos: VideoReview[];
@@ -201,6 +202,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       onSelectVideoIndex(maxIdx);
     }
   }, [effectiveVideos.length, currentIndex, onSelectVideoIndex]);
+
+  // Eagerly pre-decode upcoming photos as the user navigates or scrolls the feed
+  useEffect(() => {
+    if (effectiveVideos && effectiveVideos.length > 0) {
+      prefetchUpcomingVideos(effectiveVideos, activeCardIndex);
+    }
+  }, [effectiveVideos, activeCardIndex]);
+
+  // Pre-decode initial feed items into GPU memory on feed initialization
+  useEffect(() => {
+    if (effectiveVideos && effectiveVideos.length > 0) {
+      prefetchInitialFeedPhotos(effectiveVideos, 8);
+    }
+  }, [effectiveVideos]);
 
   const mainRef = useRef<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);

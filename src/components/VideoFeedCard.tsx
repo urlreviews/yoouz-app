@@ -31,7 +31,7 @@ import { resolveVideoPosterUrl, resolveVideoPosterCascade } from "../utils/video
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
-import { preloadBusinessAssets } from "../utils/preloadUtils";
+import { preloadBusinessAssets, preloadImage } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
 
@@ -254,10 +254,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   };
 
   useEffect(() => {
+    if (photoUrl) {
+      preloadImage(photoUrl, isActive ? "high" : "auto");
+    }
     if (isActive || isNear) {
       preloadBusinessAssets(video.placeLogoUrl, video.placeBannerUrl, safeAuthor.avatar);
     }
-  }, [isActive, isNear, video.placeLogoUrl, video.placeBannerUrl, safeAuthor.avatar]);
+  }, [isActive, isNear, photoUrl, video.placeLogoUrl, video.placeBannerUrl, safeAuthor.avatar]);
 
   const wholeStarScore = getRoundedRating(Number(video.rating) || 5);
 
@@ -550,7 +553,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 fetchPriority={isActive ? "high" : "auto"}
                 referrerPolicy="no-referrer"
                 onError={() => setPosterCandidateIdx((prev) => prev + 1)}
-                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none transition-opacity duration-200"
               />
             ) : null}
           </div>

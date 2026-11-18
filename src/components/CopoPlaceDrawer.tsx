@@ -1081,6 +1081,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
   }, [currentBannerCandidate, photoIndex, allPhotos.length]);
 
+  // Eagerly prewarm and GPU-decode all authentic photos for this place
+  useEffect(() => {
+    if (allPhotos.length > 0) {
+      allPhotos.forEach((p) => {
+        if (p) prewarmBannerImage(p);
+      });
+    }
+  }, [allPhotos]);
+
   const primaryLogoUrl = React.useMemo(() => {
     if (drawerDomain === "yoouz.com" || drawerDomain === "yoouz" || (place.name && place.name.toLowerCase() === "yoouz")) return "/favicon.svg";
     const isOwnerUploadedLogo = Boolean(
@@ -1551,7 +1560,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         )}
 
         {/* Full-Frame Banner Canvas — always edge-to-edge full frame, never a small logo */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden bg-zinc-950 z-10">
+        <div className={`absolute inset-0 w-full h-full overflow-hidden bg-gradient-to-br ${brandGrad} z-10`}>
           {!isEnriching && (!hasAuthenticPhoto || bannerError) && fallbackBrandBannerUrl ? (
             <img
               src={fallbackBrandBannerUrl}
@@ -1559,23 +1568,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
             />
           ) : (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
+            <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${brandGrad} flex items-center justify-center`}>
+              <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white/40 font-black text-3xl">
+                {(displayedPlaceName || "B").charAt(0).toUpperCase()}
+              </div>
+            </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/15 to-black/25 pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
-          <div className="absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-zinc-950 z-10">
+          <div className={`absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-gradient-to-br ${brandGrad} z-10`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
             <img
               ref={bannerImgRef}
-              key={`banner-${place.id}-${allPhotos[photoIndex] || allPhotos[0]}`}
               src={currentBannerCandidate || getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
               alt={displayedPlaceName}
               loading="eager"
-              decoding="async"
+              decoding="sync"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0"
+              className="absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-200"
               referrerPolicy="no-referrer"
               onLoad={(e) => {
                 const img = e.currentTarget;

@@ -9,6 +9,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
 import { isPurgedItem } from "../hooks/useFeedPagination";
+import { preloadImage } from "../utils/preloadUtils";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -148,6 +149,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       .filter((v) => v && v.id && !isPurgedItem(v))
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos]);
+
+  // Eagerly prewarm and GPU-decode initial trending review photos for instant zero-flash display
+  useEffect(() => {
+    if (trendingVideos.length > 0) {
+      trendingVideos.slice(0, 8).forEach((v, i) => {
+        const photo = v.photoUrl || (v as any).photoDataUrl || resolveVideoPosterUrl(v);
+        if (photo) {
+          preloadImage(photo, i < 4 ? "high" : "auto");
+        }
+      });
+    }
+  }, [trendingVideos]);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -1038,7 +1051,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               ref={carouselRef}
               className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
             >
-              {trendingVideos.map((video) => {
+              {trendingVideos.map((video, idx) => {
                 const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
                 const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                 
@@ -1075,8 +1088,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       <img
                         src={posterUrl}
                         alt={`${businessName} review - ${creatorFullName}`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-10 pointer-events-none"
-                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300 z-10 pointer-events-none"
+                        loading={idx < 4 ? "eager" : "lazy"}
+                        decoding={idx < 4 ? "sync" : "async"}
+                        fetchPriority={idx < 4 ? "high" : "auto"}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
                           if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {

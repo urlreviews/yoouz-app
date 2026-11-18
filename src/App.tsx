@@ -47,7 +47,8 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "./utils/placeUtils";
-import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo } from "./utils/logoUtils";
+import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo, prewarmBannerImage } from "./utils/logoUtils";
+import { preloadImage } from "./utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { formatAnonymousUserDisplayName } from "./lib/userCanonicalization";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -5793,6 +5794,21 @@ export function App() {
       .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName) && isPlaceReviewMatch(v, targetPlace))
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
 
+    // Eagerly prewarm banner, logo, and review photos for instant zero-flash display
+    if (typeof targetPlace === "object" && targetPlace) {
+      if (targetPlace.bannerUrl) prewarmBannerImage(targetPlace.bannerUrl);
+      if (targetPlace.logoUrl) prewarmBannerImage(targetPlace.logoUrl);
+      if (Array.isArray(targetPlace.photos)) {
+        targetPlace.photos.slice(0, 3).forEach((p) => prewarmBannerImage(p));
+      }
+    }
+    if (visiblePlaceVids.length > 0) {
+      visiblePlaceVids.slice(0, 4).forEach((v) => {
+        const photo = v.photoUrl || (v as any).photoDataUrl || resolveVideoPosterUrl(v);
+        if (photo) preloadImage(photo, "high");
+      });
+    }
+
     const currentVid = activeFeedVideos[currentVideoIndex];
     const targetVidId = fromVideoId || (currentVid && isPlaceReviewMatch(currentVid, targetPlace) ? currentVid.id : null);
     if (targetVidId) {
@@ -5809,6 +5825,9 @@ export function App() {
     document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
       try { v.pause(); } catch (e) {}
     });
+
+    if (author.avatar) preloadImage(author.avatar, "high");
+    if ((author as any).banner) prewarmBannerImage((author as any).banner);
 
     const authorLower = (author.name || "").toLowerCase().trim();
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
