@@ -526,8 +526,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={slotId || `video-slot-${video.id}`}
             ref={slotRef}
             data-video-slot="true"
-            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-zinc-950 pointer-events-none"
+            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-gradient-to-br from-indigo-950 via-zinc-900 to-black pointer-events-none"
           >
+            {/* Rich Brand Backdrop (Never Black) */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-indigo-950/90 via-zinc-900 to-zinc-950 z-0">
+              <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white font-black text-2xl mb-3 shadow-2xl">
+                {(businessName || video.placeName || "B").charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-extrabold text-white tracking-tight">{businessName || formatBusinessName(video.placeName) || "Business Place"}</span>
+              <span className="text-xs font-medium text-zinc-400 mt-1">Live Photo Review</span>
+            </div>
+
             {hasRealPhoto ? (
               <img
                 src={photoUrl}
@@ -537,16 +546,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 fetchPriority={isActive ? "high" : "auto"}
                 referrerPolicy="no-referrer"
                 onError={() => setPosterCandidateIdx((prev) => prev + 1)}
-                className="w-full h-full object-cover pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
               />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 text-zinc-500 gap-2">
-                <Camera className="w-10 h-10 text-zinc-600" />
-                <span className="text-xs font-semibold text-zinc-400">
-                  {formatBusinessName(video.placeName) || "Live Photo Review"}
-                </span>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Double-Tap Interaction Layer */}

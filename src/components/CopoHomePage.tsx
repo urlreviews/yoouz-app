@@ -1061,27 +1061,33 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                         onSelectVideo(video.id);
                       }
                     }}
-                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
+                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-950 via-zinc-900 to-black border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                   >
+                    {/* Rich Brand Backdrop (Never Black) */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/90 via-zinc-900 to-black flex flex-col items-center justify-center p-3 text-center z-0">
+                      <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white font-black text-sm mb-1.5 shadow-inner">
+                        {businessName.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-[11px] font-bold text-zinc-300 line-clamp-2 px-1">{businessName}</span>
+                    </div>
+
                     {/* Video Thumbnail */}
-                    {posterUrl ? (
+                    {posterUrl && (
                       <img
                         src={posterUrl}
                         alt={`${businessName} review - ${creatorFullName}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-10 pointer-events-none"
                         loading="lazy"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
                           if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
                             target.dataset.triedProxy = "true";
                             target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
+                          } else {
+                            target.style.display = 'none';
                           }
                         }}
                       />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black flex items-center justify-center">
-                        <Building2 className="w-8 h-8 text-zinc-700" />
-                      </div>
                     )}
 
                     {/* Top-Left Star Badge: ⭐ 5 (Whole Number) */}
