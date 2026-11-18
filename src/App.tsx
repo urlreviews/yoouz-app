@@ -5271,6 +5271,7 @@ export function App() {
         }
         return;
       }
+      if (embedTargetId) return;
 
       let path = "/";
       let title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
@@ -5404,7 +5405,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId, embedTargetId, isPitchRoute]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -7938,7 +7939,7 @@ export function App() {
     return (
       <div
         id="copo-app-root"
-        className="w-full h-full min-h-0 bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
+        className="w-full h-[100dvh] min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
       >
         <SEOTags title={`Embedded Photo Review Feed - Yoouz`} description={`Browse authentic live photo reviews for ${embedTargetId}`} url={seoUrl} />
         
@@ -8248,6 +8249,8 @@ export function App() {
   if (isPitchRoute) {
     return (
       <YoouzInvestorPitchView
+        places={places}
+        videos={videos}
         onBackToApp={() => {
           try {
             window.history.pushState(null, "", buildLocalizedPath("/", language));

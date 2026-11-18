@@ -72,7 +72,7 @@ export const es: TranslationSchema = {
     report_video: "Reportar video inapropiado"
   },
   place: {
-    reviews: "Reseñas en Video",
+    reviews: "Reseñas con Fotos",
     about: "Información",
     photos: "Fotos",
     menu: "Menú",
@@ -87,24 +87,24 @@ export const es: TranslationSchema = {
     chat_unavailable: "Mensajes directos no disponibles"
   },
   record: {
-    title: "Grabar reseña en video",
+    title: "Tomar reseña con foto",
     select_place: "Seleccionar lugar o negocio",
-    start_recording: "Grabar reseña",
-    stop_recording: "Detener grabación",
-    re_record: "Volver a grabar",
+    start_recording: "Tomar foto",
+    stop_recording: "Detener captura",
+    re_record: "Repetir foto",
     publish_review: "Publicar reseña",
     publishing: "Publicando...",
-    recording: "Grabando en vivo...",
+    recording: "Cámara en vivo...",
     time_left: "restante",
-    face_not_detected: "No se detecta rostro. Mira a la cámara frontal.",
-    camera_permission: "Permite el acceso a la cámara para grabar.",
+    face_not_detected: "No se detecta imagen. Usa la cámara en vivo.",
+    camera_permission: "Permite el acceso a la cámara para tomar la foto.",
     content_safety_violation: "Violación de seguridad: contenido bloqueado.",
-    front_camera_only: "Cámara frontal obligatoria para reseñas auténticas",
-    one_minute_limit: "Máx. 60 segundos"
+    front_camera_only: "Cámara en vivo obligatoria para reseñas auténticas",
+    one_minute_limit: "Solo foto en vivo"
   },
   share: {
     share_title: "Compartir",
-    share_subtitle: "Comparte esta reseña de video con amigos",
+    share_subtitle: "Comparte esta reseña con foto con amigos",
     whatsapp: "WhatsApp",
     twitter: "X (Twitter)",
     facebook: "Facebook",
@@ -125,7 +125,7 @@ export const es: TranslationSchema = {
     claim_now: "Reclamar perfil comercial",
     manage_profile: "Gestionar negocio",
     dashboard: "Panel de control",
-    analytics: "Estadísticas de video",
+    analytics: "Estadísticas de reseñas",
     upgrade: "Mejorar plan"
   },
   trustCenter: {

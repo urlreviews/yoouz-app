@@ -31,6 +31,7 @@ export interface CopoEmbedViewProps {
   unreadNotifsCount?: number;
   unreadMessagesCount?: number;
   onCloseEmbed?: () => void;
+  forcePreview?: boolean;
 }
 
 export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
@@ -54,7 +55,8 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
   onSelectSection: _onSelectSection,
   unreadNotifsCount: _unreadNotifsCount = 0,
   unreadMessagesCount: _unreadMessagesCount = 0,
-  onCloseEmbed: _onCloseEmbed
+  onCloseEmbed: _onCloseEmbed,
+  forcePreview = false
 }) => {
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
@@ -160,10 +162,11 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
 
   // Check if we are in preview mode inside the dashboard
   const isPreviewMode = useMemo(() => {
+    if (forcePreview) return true;
     if (typeof window === "undefined") return false;
     const params = new URLSearchParams(window.location.search);
     return params.get("preview") === "true";
-  }, []);
+  }, [forcePreview]);
 
   const isPlacePremium = useMemo(() => {
     if (!targetPlace) return false;

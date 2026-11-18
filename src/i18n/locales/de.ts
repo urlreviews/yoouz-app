@@ -72,7 +72,7 @@ export const de: TranslationSchema = {
     report_video: "Unangemessenes Video melden"
   },
   place: {
-    reviews: "Video-Bewertungen",
+    reviews: "Foto-Bewertungen",
     about: "Über uns",
     photos: "Fotos",
     menu: "Speisekarte",
@@ -87,24 +87,24 @@ export const de: TranslationSchema = {
     chat_unavailable: "Direktnachrichten derzeit nicht verfügbar"
   },
   record: {
-    title: "Video-Bewertung aufnehmen",
+    title: "Foto-Bewertung aufnehmen",
     select_place: "Unternehmen oder Ort auswählen",
-    start_recording: "Bewertung aufnehmen",
+    start_recording: "Foto aufnehmen",
     stop_recording: "Aufnahme stoppen",
     re_record: "Neu aufnehmen",
     publish_review: "Bewertung veröffentlichen",
     publishing: "Bewertung wird veröffentlicht...",
-    recording: "Live-Aufnahme läuft...",
+    recording: "Live-Kamera aktiv...",
     time_left: "verbleibend",
-    face_not_detected: "Kein Gesicht erkannt. Bitte in die Frontkamera schauen.",
+    face_not_detected: "Kein Bild erkannt. Bitte Live-Kamera verwenden.",
     camera_permission: "Kamerazugriff für authentische Bewertungen erforderlich.",
     content_safety_violation: "Sicherheitsverstoß: Aufnahme wegen unzulässigen Inhalts blockiert.",
-    front_camera_only: "Frontkamera für verifizierte Bewertungen erforderlich",
-    one_minute_limit: "Max. 60 Sekunden"
+    front_camera_only: "Live-Kamera für verifizierte Bewertungen erforderlich",
+    one_minute_limit: "Nur Live-Foto"
   },
   share: {
     share_title: "Teilen",
-    share_subtitle: "Diese Video-Bewertung mit Freunden teilen",
+    share_subtitle: "Diese Foto-Bewertung mit Freunden teilen",
     whatsapp: "WhatsApp",
     twitter: "X (Twitter)",
     facebook: "Facebook",
@@ -125,7 +125,7 @@ export const de: TranslationSchema = {
     claim_now: "Unternehmensprofil beanspruchen",
     manage_profile: "Unternehmen verwalten",
     dashboard: "Inhaber-Dashboard",
-    analytics: "Video-Analysen",
+    analytics: "Bewertungs-Analysen",
     upgrade: "Plan upgraden"
   },
   trustCenter: {

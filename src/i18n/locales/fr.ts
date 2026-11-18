@@ -72,7 +72,7 @@ export const fr: TranslationSchema = {
     report_video: "Signaler un contenu inapproprié"
   },
   place: {
-    reviews: "Avis Vidéo",
+    reviews: "Avis Photo",
     about: "À propos",
     photos: "Photos",
     menu: "Menu",
@@ -87,24 +87,24 @@ export const fr: TranslationSchema = {
     chat_unavailable: "Messagerie directe non disponible"
   },
   record: {
-    title: "Enregistrer un avis vidéo",
+    title: "Prendre un avis photo",
     select_place: "Sélectionner un lieu ou commerce",
-    start_recording: "Enregistrer l'avis",
-    stop_recording: "Arrêter l'enregistrement",
-    re_record: "Recommencer",
+    start_recording: "Prendre une photo",
+    stop_recording: "Arrêter la capture",
+    re_record: "Reprendre",
     publish_review: "Publier l'avis",
     publishing: "Publication en cours...",
-    recording: "Enregistrement en direct...",
+    recording: "Appareil photo en direct...",
     time_left: "restant",
-    face_not_detected: "Visage non détecté. Regardez la caméra avant.",
+    face_not_detected: "Image non détectée. Utilisez la caméra en direct.",
     camera_permission: "Veuillez autoriser l'accès à la caméra.",
     content_safety_violation: "Violation de sécurité : contenu inapproprié détecté.",
-    front_camera_only: "Caméra avant requise pour les avis certifiés",
-    one_minute_limit: "60 secondes max"
+    front_camera_only: "Caméra en direct requise pour les avis certifiés",
+    one_minute_limit: "Photo en direct uniquement"
   },
   share: {
     share_title: "Partager",
-    share_subtitle: "Partagez cet avis vidéo avec vos proches",
+    share_subtitle: "Partagez cet avis photo avec vos proches",
     whatsapp: "WhatsApp",
     twitter: "X (Twitter)",
     facebook: "Facebook",
@@ -125,7 +125,7 @@ export const fr: TranslationSchema = {
     claim_now: "Revendiquer votre fiche",
     manage_profile: "Gérer l'établissement",
     dashboard: "Tableau de bord",
-    analytics: "Statistiques vidéo",
+    analytics: "Statistiques des avis",
     upgrade: "Mettre à niveau"
   },
   trustCenter: {

@@ -4741,24 +4741,27 @@ async function startServer() {
     next();
   });
 
-  // Dedicated route to stream or download the 8-page Visual Investor Pitch Deck PDF
+  // Dedicated route to stream or download the 15-Chapter Visual Investor Pitch Deck PDF
   app.get(["/api/pitch/raw-pdf", "/Yoouz_Visual_Investor_Pitch_Deck.pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf", "/Yoouz_Institutional_Investor_Memorandum.pdf"], async (req, res) => {
     const disposition = req.query.download === "1" ? "attachment" : "inline";
+    const forceRefresh = req.query.refresh === "1";
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `${disposition}; filename="Yoouz_Visual_Investor_Pitch_Deck.pdf"`);
     res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-    const candidates = [
-      path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
-      path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
-      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"),
-      path.join(process.cwd(), "dist", "Yoouz_Investor_Pitch_Memorandum.pdf"),
-      path.join(_dirname, "public", "Yoouz_Investor_Pitch_Memorandum.pdf")
-    ];
-    for (const p of candidates) {
-      if (fs.existsSync(p)) {
-        return res.sendFile(p);
+    if (!forceRefresh) {
+      const candidates = [
+        path.join(process.cwd(), "public", "Yoouz_Visual_Investor_Pitch_Deck.pdf"),
+        path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
+        path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
+        path.join(process.cwd(), "dist", "Yoouz_Visual_Investor_Pitch_Deck.pdf"),
+        path.join(_dirname, "public", "Yoouz_Visual_Investor_Pitch_Deck.pdf")
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          return res.sendFile(p);
+        }
       }
     }
     try {
