@@ -20,7 +20,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-18T13:02:54.153Z",
-    "updatedAt": "2026-11-18T13:02:58.440Z"
+    "updatedAt": "2026-11-18T13:02:58.440Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwm4i9q7_nt47ix",
@@ -43,7 +45,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-18T12:54:31.642Z",
-    "updatedAt": "2026-11-18T12:54:31.815Z"
+    "updatedAt": "2026-11-18T12:54:31.815Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwm2jia5_zdux5y",

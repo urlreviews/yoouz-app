@@ -101,6 +101,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     subheadline:
       "Text reviews across Google, Yelp, and Trustpilot are overrun by AI-generated spam, fake bots, and recycled stock photos. Yoouz eliminates text-only and gallery-upload reviews completely: every review requires 1 real-time hardware camera photo + 1 to 5 solid whole stars captured in 3 seconds.",
     imagePath: "/pitch-assets/v2/01-home-discovery.png",
+    mobileImagePath: "/pitch-assets/v2/08-mobile-home.png",
     frameMode: "desktop",
     imageCaption: "Live Production Desktop View (yoouz.com) — Universal Search, Trending Photo Proof Feed & Zero Sign-Up Friction",
     callouts: [

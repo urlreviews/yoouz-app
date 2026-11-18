@@ -20,6 +20,8 @@ import {
   Smartphone,
   Globe,
   CheckCircle2,
+  X,
+  Layers,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Place, VideoReview } from "../types";
@@ -31,6 +33,42 @@ import {
 import { CopoEmbedView } from "./CopoEmbedView";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+const toWebp = (p?: string) => (p ? p.replace(/\.png$/, ".webp") : "");
+
+const PitchResponsiveImage: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+  priority?: boolean;
+}> = ({ src, alt, className = "", priority = false }) => {
+  const [loaded, setLoaded] = useState(false);
+  const webpSrc = toWebp(src);
+
+  return (
+    <div className="relative w-full overflow-hidden bg-black flex items-center justify-center min-h-[140px] sm:min-h-[200px]">
+      {!loaded && (
+        <div className="absolute inset-0 bg-zinc-950/80 flex items-center justify-center z-10">
+          <Loader2 className="w-5 h-5 text-zinc-600 animate-spin" />
+        </div>
+      )}
+      <picture className="w-full h-auto block">
+        <source srcSet={webpSrc} type="image/webp" />
+        <img
+          src={src}
+          alt={alt}
+          referrerPolicy="no-referrer"
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          className={`w-full h-auto block object-contain transition-opacity duration-200 ${
+            loaded ? "opacity-100" : "opacity-0"
+          } ${className}`}
+        />
+      </picture>
+    </div>
+  );
+};
 
 interface YoouzInvestorPitchViewProps {
   onBackToApp?: () => void;
@@ -175,10 +213,65 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(false);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
+  const [isMobileChapterSheetOpen, setIsMobileChapterSheetOpen] = useState<boolean>(false);
 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const numPages = PITCH_CHAPTERS.length;
+
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3) {
+      if (deltaX < 0 && currentPage < numPages) {
+        scrollToPage(currentPage + 1);
+      } else if (deltaX > 0 && currentPage > 1) {
+        scrollToPage(currentPage - 1);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  useEffect(() => {
+    // Eagerly preload all pitch deck visual assets in WebP format on mount for instant zero-lag rendering
+    const webpAssets = [
+      "/pitch-assets/v2/01-home-discovery.webp",
+      "/pitch-assets/v2/02-search-autoscraping.webp",
+      "/pitch-assets/v2/03-qr-business-front.webp",
+      "/pitch-assets/v2/04-mobile-camera-flow.webp",
+      "/pitch-assets/v2/05-uhandle-profile.webp",
+      "/pitch-assets/v2/06-business-profile-hub.webp",
+      "/pitch-assets/v2/06-iphone-passkey-prompt.webp",
+      "/pitch-assets/v2/06-passkey-live-app.webp",
+      "/pitch-assets/v2/06-passkey-settings.webp",
+      "/pitch-assets/v2/07-comments-social-rail.webp",
+      "/pitch-assets/v2/08-mobile-home.webp",
+      "/pitch-assets/v2/09-messages-direct-chat.webp",
+      "/pitch-assets/v2/10b-embed-standalone.webp",
+      "/pitch-assets/v2/11-mobile-business-front.webp",
+      "/pitch-assets/v2/12-business-portal.webp",
+      "/pitch-assets/v2/13-seo-localized-page.webp",
+      "/pitch-assets/v2/14-claimed-businesses.webp",
+      "/pitch-assets/v2/15-mobile-pwa-feed.webp",
+    ];
+
+    webpAssets.forEach((url) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+    });
+  }, []);
 
   useEffect(() => {
     const noIndexRule = "noindex, nofollow, noarchive, nosnippet, noimageindex";
@@ -472,10 +565,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   };
 
   const renderChapterVisual = (chapter: PitchChapter) => {
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 640;
     const activeDevice =
-      chapter.mobileImagePath && deviceViewByPage[chapter.page] === "mobile"
-        ? "mobile"
-        : chapter.frameMode;
+      deviceViewByPage[chapter.page] ||
+      (chapter.mobileImagePath && isMobileViewport ? "mobile" : chapter.frameMode);
 
     // Slide 02 — Market Opportunity (TAM / SAM / SOM)
     if (chapter.page === 2) {
@@ -579,6 +672,44 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
 
     // Slide 03 — Competitive Landscape Matrix
     if (chapter.page === 3) {
+      const criteriaList = [
+        {
+          num: "1",
+          title: "AI & Fake Review Immunity",
+          yoouz: "100% Immune — Live OS Hardware Camera Only (0% Gallery Uploads)",
+          google: "Fails — Flooded by AI text bots & old stock uploads",
+          trustpilot: "Fails — Susceptible to bot farms & paid review broker extortion",
+        },
+        {
+          num: "2",
+          title: "3-Second Live Capture",
+          yoouz: "Yes — 1 Live Photo + 1–5 Whole Stars in Under 3 Seconds",
+          google: "No — Requires typing multi-sentence text essays",
+          trustpilot: "No — Tedious text paragraph essays & complaint rants",
+        },
+        {
+          num: "3",
+          title: "Zero Signup / Zero App Download",
+          yoouz: "Yes — Instant U/XXXXXX Handle + Optional 1-Time Passkey",
+          google: "No — Mandatory Google login, email & 2FA prompt walls",
+          trustpilot: "No — High-friction email sign-up forms & verification emails",
+        },
+        {
+          num: "4",
+          title: "In-Store Counter QR Loop",
+          yoouz: "Yes — QR Opens Business Front Page First -> 1-Tap Photo",
+          google: "Broken — Drops mobile scanners at login prompts",
+          trustpilot: "None — Zero physical merchant onboarding flywheel",
+        },
+        {
+          num: "5",
+          title: "Google Page-1 Visual SEO",
+          yoouz: "Yes — Original JPEGs + Schema.org Across 75+ Languages",
+          google: "Generic plain-text snippets; photos buried in tabs",
+          trustpilot: "Walled directories charging businesses to push bad reviews down",
+        },
+      ];
+
       return (
         <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
           <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
@@ -590,7 +721,51 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             </span>
           </div>
 
-          <div className="p-4 sm:p-6 bg-[#070709] overflow-x-auto">
+          {/* Mobile-Native PWA Criterion Stack (< 640px) */}
+          <div className="sm:hidden p-3.5 space-y-3.5 bg-[#070709]">
+            {criteriaList.map((c) => (
+              <div
+                key={c.num}
+                className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-3.5 space-y-2.5"
+              >
+                <div className="text-xs font-black text-white flex items-center justify-between">
+                  <span>
+                    {c.num}. {c.title}
+                  </span>
+                </div>
+
+                {/* Yoouz Winner Highlight */}
+                <div className="rounded-lg bg-zinc-950 border border-amber-400/80 p-2.5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-amber-400">
+                      Yoouz (Live Photo Protocol)
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30 px-1.5 py-0.5 rounded">
+                      Winner
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-white leading-snug">
+                    {c.yoouz}
+                  </p>
+                </div>
+
+                {/* Legacy Platforms */}
+                <div className="space-y-1.5 pt-0.5 text-[11px]">
+                  <div className="p-2 rounded bg-zinc-950/70 border border-zinc-800/80">
+                    <span className="font-bold text-zinc-400">Google Maps: </span>
+                    <span className="text-zinc-300">{c.google}</span>
+                  </div>
+                  <div className="p-2 rounded bg-zinc-950/70 border border-zinc-800/80">
+                    <span className="font-bold text-zinc-400">Trustpilot &amp; Yelp: </span>
+                    <span className="text-zinc-300">{c.trustpilot}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View (>= 640px) */}
+          <div className="hidden sm:block p-4 sm:p-6 bg-[#070709] overflow-x-auto">
             <table className="w-full text-left border-collapse rounded-xl overflow-hidden border border-zinc-800">
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900 text-[11px] font-extrabold uppercase tracking-wider">
@@ -607,76 +782,18 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/90 text-xs bg-zinc-950/90">
-                <tr>
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    1. AI &amp; Fake Review Immunity
-                  </td>
-                  <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
-                    100% Immune — Live OS Hardware Camera Only (0% Gallery Uploads)
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    Fails — Flooded by AI text bots &amp; old stock uploads
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    Fails — Susceptible to bot farms &amp; paid review broker extortion
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    2. 3-Second Live Capture
-                  </td>
-                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
-                    Yes — 1 Live Photo + 1–5 Whole Stars in Under 3 Seconds
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    No — Requires typing multi-sentence text essays
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    No — Tedious text paragraph essays &amp; complaint rants
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    3. Zero Signup / Zero App Download
-                  </td>
-                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
-                    Yes — Instant U/XXXXXX Handle + Optional 1-Time Passkey
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    No — Mandatory Google login, email &amp; 2FA prompt walls
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    No — High-friction email sign-up forms &amp; verification emails
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    4. In-Store Counter QR Loop
-                  </td>
-                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
-                    Yes — QR Opens Business Front Page First -&gt; 1-Tap Photo
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    Broken — Drops mobile scanners at login prompts
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    None — Zero physical merchant onboarding flywheel
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    5. Google Page-1 Visual SEO
-                  </td>
-                  <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
-                    Yes — Original JPEGs + Schema.org Across 75+ Languages
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    Generic plain-text snippets; photos buried in tabs
-                  </td>
-                  <td className="py-3.5 px-4 text-zinc-400">
-                    Walled directories charging businesses to push bad reviews down
-                  </td>
-                </tr>
+                {criteriaList.map((c) => (
+                  <tr key={c.num}>
+                    <td className="py-3.5 px-4 font-bold text-white">
+                      {c.num}. {c.title}
+                    </td>
+                    <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
+                      {c.yoouz}
+                    </td>
+                    <td className="py-3.5 px-4 text-zinc-400">{c.google}</td>
+                    <td className="py-3.5 px-4 text-zinc-400">{c.trustpilot}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -1032,11 +1149,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 <span className="font-semibold text-white">01 · Live Yoouz U/6MRX8X Community Profile</span>
                 <span className="text-zinc-400 font-mono">Save Face ID (1-Time) Button</span>
               </div>
-              <img
+              <PitchResponsiveImage
                 src="/pitch-assets/v2/06-passkey-live-app.png"
                 alt="Live U/XXXXXX Member Profile with 1-Time Face ID Passkey Button"
-                referrerPolicy="no-referrer"
-                className="w-full h-auto block object-contain bg-black"
+                priority={true}
               />
             </div>
 
@@ -1045,11 +1161,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 <span className="font-semibold text-white">02 · Native Phone Passkey Sheet</span>
                 <span className="text-amber-400 font-mono">Passkey for yoouz.com · U/A4B6C8</span>
               </div>
-              <img
+              <PitchResponsiveImage
                 src="/pitch-assets/v2/06-iphone-passkey-prompt.png"
                 alt="Passkey for yoouz.com on iPhone Face ID for U/A4B6C8"
-                referrerPolicy="no-referrer"
-                className="w-full h-auto block object-contain bg-black"
+                priority={true}
               />
             </div>
           </div>
@@ -1183,7 +1298,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
         <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
           {chapter.mobileImagePath && (
             <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between gap-3">
-              <span className="text-xs font-medium text-zinc-300">Live App Viewport Switcher</span>
+              <span className="text-xs font-medium text-zinc-300 font-mono">Live App Viewport Switcher</span>
               <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded-lg p-1">
                 <button
                   type="button"
@@ -1209,13 +1324,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             </div>
           )}
 
-          <div className="p-5 sm:p-8 flex flex-col items-center justify-center bg-[#070709]">
-            <div className="w-full max-w-[360px] rounded-[28px] border-2 border-zinc-700 bg-black overflow-hidden shadow-2xl">
-              <img
+          <div className="p-4 sm:p-8 flex flex-col items-center justify-center bg-[#070709]">
+            <div className="w-full max-w-[340px] sm:max-w-[360px] rounded-[28px] border-2 border-zinc-700 bg-black overflow-hidden shadow-2xl">
+              <PitchResponsiveImage
                 src={mobileSrc}
                 alt={chapter.headline}
-                referrerPolicy="no-referrer"
-                className="w-full h-auto block object-contain bg-black"
+                priority={chapter.page <= 2}
               />
             </div>
           </div>
@@ -1260,12 +1374,11 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
           )}
         </div>
 
-        <div className="bg-black w-full">
-          <img
+        <div className="bg-black w-full overflow-hidden">
+          <PitchResponsiveImage
             src={chapter.imagePath}
             alt={chapter.headline}
-            referrerPolicy="no-referrer"
-            className="w-full h-auto block object-contain bg-black"
+            priority={chapter.page <= 2}
           />
         </div>
 
@@ -1314,9 +1427,60 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
     }
 
     if (chapter.page === 20) {
+      const archPoints = [
+        {
+          label: "Proof Format",
+          legacy: "Plain text spoofable by bots",
+          yoouz: "1 Live Hardware Photo + Whole Stars (3s)",
+        },
+        {
+          label: "Gallery & Stock Spoofing",
+          legacy: "Open file uploads & old galleries",
+          yoouz: "Blocked at OS camera level (0% uploads)",
+        },
+        {
+          label: "Business Onboarding",
+          legacy: "Manual listing setup required",
+          yoouz: "Zero-signup auto-scraped profile, logo & banner",
+        },
+        {
+          label: "Reviewer Friction",
+          legacy: "Mandatory email / password wall",
+          yoouz: "Instant U/XXXXXX handle + 1-Tap Face ID Passkey",
+        },
+        {
+          label: "Unit Infrastructure Cost",
+          legacy: "High spam moderation overhead",
+          yoouz: "~120 KB Sharp JPEG · Bunny.net CDN + Cloud SQL",
+        },
+      ];
+
       return (
         <div className="space-y-5 pt-2">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 overflow-x-auto">
+          {/* Mobile Architecture Card Stack (< 640px) */}
+          <div className="sm:hidden p-3.5 space-y-3 bg-zinc-950/90 rounded-xl border border-zinc-800">
+            {archPoints.map((pt, pIdx) => (
+              <div
+                key={pIdx}
+                className="rounded-lg bg-zinc-900/80 border border-zinc-800 p-3 space-y-2"
+              >
+                <div className="text-xs font-black text-white">{pt.label}</div>
+                <div className="rounded bg-zinc-950 border border-amber-400/80 p-2">
+                  <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                    Yoouz Live Photo Protocol
+                  </div>
+                  <div className="text-xs font-bold text-white mt-0.5">{pt.yoouz}</div>
+                </div>
+                <div className="p-2 rounded bg-zinc-950/60 border border-zinc-800/80 text-[11px]">
+                  <span className="font-bold text-zinc-400">Legacy: </span>
+                  <span className="text-zinc-300">{pt.legacy}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View (>= 640px) */}
+          <div className="hidden sm:block rounded-xl border border-zinc-800 bg-zinc-950/90 overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900/90 text-[11px] font-bold uppercase tracking-wider text-zinc-300">
@@ -1326,41 +1490,15 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/80 text-xs">
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-white">Proof Format</td>
-                  <td className="py-3 px-4 text-zinc-400">Plain text spoofable by bots</td>
-                  <td className="py-3 px-4 font-semibold text-white">
-                    1 Live Hardware Photo + Whole Stars (3s)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-white">Gallery & Stock Spoofing</td>
-                  <td className="py-3 px-4 text-zinc-400">Open file uploads & old galleries</td>
-                  <td className="py-3 px-4 font-semibold text-white">
-                    Blocked at OS camera level (0% uploads)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-white">Business Onboarding</td>
-                  <td className="py-3 px-4 text-zinc-400">Manual listing setup required</td>
-                  <td className="py-3 px-4 font-semibold text-white">
-                    Zero-signup auto-scraped profile, logo & banner
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-white">Reviewer Friction</td>
-                  <td className="py-3 px-4 text-zinc-400">Mandatory email / password wall</td>
-                  <td className="py-3 px-4 font-semibold text-white">
-                    Instant U/XXXXXX handle + 1-Tap Face ID Passkey
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold text-white">Unit Infrastructure Cost</td>
-                  <td className="py-3 px-4 text-zinc-400">High spam moderation overhead</td>
-                  <td className="py-3 px-4 font-semibold text-amber-400 tabular-nums">
-                    ~120 KB Sharp JPEG · Bunny.net CDN + Cloud SQL
-                  </td>
-                </tr>
+                {archPoints.map((pt, pIdx) => (
+                  <tr key={pIdx}>
+                    <td className="py-3 px-4 font-semibold text-white">{pt.label}</td>
+                    <td className="py-3 px-4 text-zinc-400">{pt.legacy}</td>
+                    <td className="py-3 px-4 font-semibold text-amber-400 tabular-nums">
+                      {pt.yoouz}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -1432,12 +1570,12 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       `}</style>
 
       {/* Top Executive Utility Bar */}
-      <header className="w-full h-14 bg-[#09090B] border-b border-zinc-800 px-3 sm:px-5 flex items-center justify-between gap-4 shrink-0 z-40 select-none">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <header className="w-full h-14 bg-[#09090B] border-b border-zinc-800 px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-40 select-none">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <button
             type="button"
             onClick={onBackToApp || (() => (window.location.href = "/"))}
-            className="w-8 h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer shrink-0"
             title="Back to Yoouz"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -1456,18 +1594,21 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             <PanelLeft className="w-4 h-4" />
           </button>
 
-          <div className="hidden sm:flex items-center gap-2 ml-1 truncate">
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-0.5 sm:ml-1 truncate">
             <span className="text-sm font-black tracking-tight text-white whitespace-nowrap">
               Yoouz
             </span>
             <span className="text-zinc-600 text-xs">·</span>
-            <span className="text-xs font-semibold text-zinc-300 truncate hidden lg:inline">
-              Investor Pitch Deck (20 Chapters · Live Photo Proof)
+            <span className="text-xs font-semibold text-zinc-300 truncate">
+              <span className="sm:hidden">Pitch</span>
+              <span className="hidden sm:inline lg:hidden">Pitch Deck</span>
+              <span className="hidden lg:inline">Investor Pitch Deck (20 Chapters · Live Photo Proof)</span>
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Deck / PDF Toggle */}
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
             <button
               type="button"
@@ -1478,7 +1619,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              <span className="sm:hidden">HD Deck</span>
+              <span className="sm:hidden">Deck</span>
               <span className="hidden sm:inline">Interactive HD Deck</span>
             </button>
             <button
@@ -1488,12 +1629,23 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 viewMode === "pdf" ? "bg-white text-zinc-950" : "text-zinc-400 hover:text-white"
               }`}
             >
-              <span className="sm:hidden">PDF</span>
-              <span className="hidden sm:inline">PDF Document View</span>
+              PDF
             </button>
           </div>
 
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-1.5 py-1 gap-1">
+          {/* Quick Chapter Pill on Mobile */}
+          <button
+            type="button"
+            onClick={() => setIsMobileChapterSheetOpen(true)}
+            className="sm:hidden flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 gap-1 text-xs font-bold text-amber-400 tabular-nums cursor-pointer hover:bg-zinc-800 transition-colors"
+            title="Jump to Chapter"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{currentPageStr}/{numPagesStr}</span>
+          </button>
+
+          {/* Stepper on Desktop */}
+          <div className="hidden sm:flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
               onClick={() => scrollToPage(currentPage - 1)}
@@ -1517,6 +1669,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             </button>
           </div>
 
+          {/* Desktop Zoom Controls */}
           <div className="hidden lg:flex items-center bg-zinc-900 border border-zinc-800 rounded-lg px-1.5 py-1 gap-1">
             <button
               type="button"
@@ -1543,15 +1696,15 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+          {/* Download PDF Button */}
           <a
             href="/api/pitch/raw-pdf?download=1&refresh=1"
             download="Yoouz_Visual_Investor_Pitch_Deck.pdf"
-            className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 shadow-md"
+            className="w-9 h-9 sm:w-auto sm:px-3.5 sm:py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap shrink-0 shadow-md"
+            title="Download PDF"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             <span className="hidden sm:inline">Download PDF</span>
           </a>
 
@@ -1618,6 +1771,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
         {/* Scrollable Deck Container */}
         <div
           ref={scrollContainerRef}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="flex-1 h-full overflow-y-auto overflow-x-hidden p-3 sm:p-8 flex flex-col items-center bg-[#09090B]"
         >
           {viewMode === "interactive" ? (
@@ -1626,7 +1781,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 width: "100%",
                 maxWidth: `${Math.round(1140 * (zoomLevel / 100))}px`,
               }}
-              className="space-y-10 pb-16 transition-all duration-150"
+              className="space-y-6 sm:space-y-10 pb-28 sm:pb-16 transition-all duration-150"
             >
               {PITCH_CHAPTERS.map((chapter, idx) => {
                 const pageStr = chapter.page < 10 ? `0${chapter.page}` : `${chapter.page}`;
@@ -1773,6 +1928,105 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* Floating Mobile Bottom Action Pill (Thumb-Zone Ergonomics) */}
+      <div className="sm:hidden fixed bottom-3 inset-x-3 z-40 h-13 bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/90 rounded-2xl shadow-2xl flex items-center justify-between px-2.5">
+        <button
+          type="button"
+          onClick={() => scrollToPage(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="h-9 px-3 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center gap-1 text-xs font-bold text-zinc-300 disabled:opacity-30 active:scale-95 transition-all cursor-pointer"
+        >
+          <ChevronUp className="w-4 h-4 -rotate-90" />
+          <span>Prev</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileChapterSheetOpen(true)}
+          className="flex flex-col items-center justify-center px-3 py-1 rounded-xl hover:bg-zinc-900/60 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-1 text-xs font-black text-white tabular-nums">
+            <span className="text-amber-400 font-extrabold">{currentPageStr}</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400">{numPagesStr}</span>
+          </div>
+          <span className="text-[10px] text-zinc-400 truncate max-w-[130px]">
+            {PITCH_CHAPTERS[currentPage - 1]?.shortTitle || "Chapter"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => scrollToPage(currentPage + 1)}
+          disabled={currentPage >= numPages}
+          className="h-9 px-3 rounded-xl bg-white text-zinc-950 font-bold text-xs flex items-center gap-1 active:scale-95 transition-all shadow-md cursor-pointer"
+        >
+          <span>Next</span>
+          <ChevronDown className="w-4 h-4 -rotate-90" />
+        </button>
+      </div>
+
+      {/* Mobile Chapter Sheet Modal */}
+      {isMobileChapterSheetOpen && (
+        <div className="sm:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
+          <div
+            className="w-full bg-[#111215] border-t border-zinc-800 rounded-t-3xl max-h-[80vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200"
+          >
+            {/* Grab handle */}
+            <div className="w-10 h-1.5 bg-zinc-700 rounded-full mx-auto my-3" />
+
+            <div className="px-5 pb-3 border-b border-zinc-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-white">20-Chapter Deck Navigation</h3>
+                <p className="text-[11px] text-zinc-400">Tap any chapter to jump immediately</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileChapterSheetOpen(false)}
+                className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-4 space-y-2 flex-1">
+              {PITCH_CHAPTERS.map((ch) => {
+                const isSelected = ch.page === currentPage;
+                const pStr = ch.page < 10 ? `0${ch.page}` : `${ch.page}`;
+                return (
+                  <button
+                    key={ch.page}
+                    type="button"
+                    onClick={() => {
+                      scrollToPage(ch.page);
+                      setIsMobileChapterSheetOpen(false);
+                    }}
+                    className={`w-full p-3 rounded-xl flex items-center gap-3 text-left transition-colors cursor-pointer ${
+                      isSelected
+                        ? "bg-zinc-900 border border-amber-400 shadow-md"
+                        : "bg-zinc-950/70 border border-zinc-800/80 hover:bg-zinc-900/60"
+                    }`}
+                  >
+                    <span
+                      className={`w-7 h-7 rounded-lg text-xs font-black flex items-center justify-center shrink-0 ${
+                        isSelected ? "bg-amber-400 text-zinc-950" : "bg-zinc-800 text-zinc-300"
+                      }`}
+                    >
+                      {pStr}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-white truncate">{ch.shortTitle}</div>
+                      <div className="text-[10px] text-zinc-400 truncate">{ch.kicker}</div>
+                    </div>
+                    {isSelected && <Check className="w-4 h-4 text-amber-400 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1107,8 +1107,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Dunkin-donuts-1-logo-png-transparent.png",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
     "photos": [
@@ -1529,8 +1529,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
-    "logoUrl": "https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png?q=90&fm=webp",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
     "photos": [
@@ -1588,8 +1588,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/9/92/UNIQLO_logo.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F9%2F92%2FUNIQLO_logo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F9%2F92%2FUNIQLO_logo.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F09%2FUniqlo_Ginza_2018.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F09%2FUniqlo_Ginza_2018.jpg",
     "photos": [
@@ -1648,8 +1648,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
-    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
     "photos": [
@@ -1711,8 +1711,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://www.google.com/s2/favicons?domain=calvinklein.com&sz=256",
-    "logoUrl": "https://www.google.com/s2/favicons?domain=calvinklein.com&sz=256",
+    "avatarUrl": "/api/favicon?domain=calvinklein.com",
+    "logoUrl": "/api/favicon?domain=calvinklein.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
     "photos": [
@@ -1771,8 +1771,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://cache.dominos.com/intl/assets/img-logo-home.png",
-    "logoUrl": "https://cache.dominos.com/intl/assets/img-logo-home.png",
+    "avatarUrl": "/api/favicon?domain=dominos.com",
+    "logoUrl": "/api/favicon?domain=dominos.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
     "photos": [
@@ -4856,8 +4856,8 @@
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
     ],
-    "logoUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
-    "avatarUrl": "https://flipper.net/cdn/shop/files/common_logo_favicon.png?v=1765368570&width=500",
+    "logoUrl": "/api/favicon?domain=flipper.net",
+    "avatarUrl": "/api/favicon?domain=flipper.net",
     "category": "Tech & Gadgets",
     "categoryType": "all",
     "lat": 0,
@@ -9171,8 +9171,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
-    "logoUrl": "https://refalo.legal/wp-content/uploads/2023/11/logo.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
     "photos": [
