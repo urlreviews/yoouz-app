@@ -586,7 +586,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
               yoouz.com · 5-Criterion Competitive Landscape Matrix
             </span>
             <span className="text-xs text-amber-400 font-semibold">
-              Yoouz vs. Google / Trustpilot / Yelp vs. Video Review Tools
+              Yoouz vs. Google Maps &amp; Local Search vs. Trustpilot &amp; Yelp
             </span>
           </div>
 
@@ -599,26 +599,26 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     Yoouz (Live Photo Protocol)
                   </th>
                   <th className="py-3.5 px-4 text-zinc-400">
-                    Google / Trustpilot / Yelp
+                    Google Maps &amp; Local Reviews
                   </th>
                   <th className="py-3.5 px-4 text-zinc-400">
-                    Video Review Tools
+                    Trustpilot &amp; Yelp
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/90 text-xs bg-zinc-950/90">
                 <tr>
                   <td className="py-3.5 px-4 font-bold text-white">
-                    1. AI & Fake Review Immunity
+                    1. AI &amp; Fake Review Immunity
                   </td>
                   <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
                     100% Immune — Live OS Hardware Camera Only (0% Gallery Uploads)
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    Fails — Flooded by AI text bots & old stock uploads
+                    Fails — Flooded by AI text bots &amp; old stock uploads
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    Partial — Allows staged scripts & file uploads
+                    Fails — Susceptible to bot farms &amp; paid review broker extortion
                   </td>
                 </tr>
                 <tr>
@@ -632,7 +632,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     No — Requires typing multi-sentence text essays
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    No — 99% user drop-off (speaking on camera)
+                    No — Tedious text paragraph essays &amp; complaint rants
                   </td>
                 </tr>
                 <tr>
@@ -643,10 +643,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     Yes — Instant U/XXXXXX Handle + Optional 1-Time Passkey
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    No — Mandatory email, password & 2FA login walls
+                    No — Mandatory Google login, email &amp; 2FA prompt walls
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    No — Multi-step onboarding & microphone permissions
+                    No — High-friction email sign-up forms &amp; verification emails
                   </td>
                 </tr>
                 <tr>
@@ -660,7 +660,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     Broken — Drops mobile scanners at login prompts
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    Fails — Diners refuse to record audio in noisy venues
+                    None — Zero physical merchant onboarding flywheel
                   </td>
                 </tr>
                 <tr>
@@ -671,10 +671,10 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     Yes — Original JPEGs + Schema.org Across 75+ Languages
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    Generic plain-text snippets & walled directories
+                    Generic plain-text snippets; photos buried in tabs
                   </td>
                   <td className="py-3.5 px-4 text-zinc-400">
-                    Heavy video embeds that degrade page load speed
+                    Walled directories charging businesses to push bad reviews down
                   </td>
                 </tr>
               </tbody>
@@ -899,7 +899,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                   ~95%+ Software Gross Margin Architecture
                 </div>
                 <p className="text-xs text-zinc-300 mt-1">
-                  Every live photo is compressed via Sharp to ~120 KB and served from Bunny.net global edge nodes with Cloud SQL PostgreSQL—eliminating heavy video transcoding or AI token costs.
+                  Every live photo is compressed via Sharp to ~120 KB and served from Bunny.net global edge nodes with Cloud SQL PostgreSQL—eliminating expensive compute or AI token costs.
                 </p>
               </div>
               <div className="px-3.5 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono font-bold text-white shrink-0">

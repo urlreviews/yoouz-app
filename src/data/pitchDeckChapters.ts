@@ -189,12 +189,12 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     page: 3,
     shortTitle: "Competitive Landscape Matrix",
     kicker: "03 · COMPETITIVE LANDSCAPE MATRIX",
-    headline: "Why Yoouz Wins: Unspoofable 3-Second Live Photos Without App Downloads or Video Friction.",
+    headline: "Why Yoouz Wins: Unspoofable 3-Second Live Photos Without App Downloads or Friction.",
     subheadline:
-      "Legacy review platforms are flooded with AI-generated fake text and recycled gallery uploads, while video review tools suffer 99% customer drop-off because shoppers refuse to film themselves speaking in public. Yoouz captures the exact sweet spot.",
+      "Legacy review platforms are flooded with AI-generated fake text, recycled stock photos, and painful signup walls. Yoouz solves trust at the point of experience: 1 live hardware camera photo + 1–5 solid whole stars in under 3 seconds.",
     imagePath: "/pitch-assets/v2/01-home-discovery.png",
     frameMode: "desktop",
-    imageCaption: "Competitive Architecture Comparison — Yoouz Live Photo Protocol vs. Legacy Text Platforms (Google / Trustpilot / Yelp) vs. Video Review Tools",
+    imageCaption: "Competitive Architecture Comparison — Yoouz Live Photo Protocol vs. Legacy Review Platforms (Google / Trustpilot / Yelp)",
     callouts: [
       {
         id: "01",
@@ -205,10 +205,10 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
       },
       {
         id: "02",
-        title: "3-Second Live Photo vs. High-Friction Video Recording",
-        tag: "Zero On-Camera Anxiety",
+        title: "3-Second Live Photo vs. High-Friction Text Essays",
+        tag: "Zero Reviewer Fatigue",
         description:
-          "Video review tools fail at scale because everyday diners and shoppers will not record themselves talking in a crowded venue. Anyone will snap 1 photo of their table or bag in 3 seconds.",
+          "Writing paragraph essays on a phone keyboard fails at scale. Anyone will snap 1 photo of their table, meal, or purchase in 3 seconds directly on on-site hardware.",
       },
       {
         id: "03",
@@ -227,7 +227,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
     metrics: [
       { label: "AI & Gallery Spoofing", value: "0% Possible", detail: "Strict live hardware camera protocol" },
-      { label: "Time to Publish Review", value: "3 Seconds", detail: "10x faster than text essays or video" },
+      { label: "Time to Publish Review", value: "3 Seconds", detail: "10x faster than typing text essays" },
       { label: "Upfront Login Drop-Off", value: "0% Friction", detail: "No email, password, or app download" },
     ],
   },

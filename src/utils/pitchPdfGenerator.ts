@@ -200,8 +200,8 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           const headers = [
             "CRITERIA",
             "YOOUZ (LIVE PHOTO)",
-            "GOOGLE / YELP / TP",
-            "VIDEO TOOLS",
+            "GOOGLE MAPS REVIEWS",
+            "TRUSTPILOT & YELP",
           ];
           let cx = tableX;
           headers.forEach((h, hIdx) => {
@@ -216,33 +216,33 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           const rows = [
             [
               "1. AI & Fake Review Immunity",
-              "100% Live OS Camera Only (0% Gallery Uploads)",
+              "100% Live OS Camera Only (0% Gallery)",
               "Fails — AI text bots & stock uploads",
-              "Partial — Staged scripts & uploads",
+              "Fails — Bot spam & broker extortion",
             ],
             [
               "2. 3-Second Live Capture",
               "Yes — 1 Photo + 1–5 Whole Stars in 3s",
               "No — Multi-sentence text essays",
-              "No — 99% drop-off speaking on cam",
+              "No — Tedious paragraph essays",
             ],
             [
               "3. Zero Signup / No App Download",
               "Yes — Auto U/XXXXXX + Optional Passkey",
-              "No — Mandatory email & password wall",
-              "No — Multi-step forms & mic prompts",
+              "No — Mandatory Google login wall",
+              "No — High-friction email forms",
             ],
             [
               "4. In-Store Counter QR Loop",
               "Yes — Opens Business Front Page -> 1-Tap",
               "Broken — Drops users at login walls",
-              "Fails — Guests won't film in public",
+              "None — Zero physical merchant loop",
             ],
             [
               "5. Google Page-1 Visual SEO",
               "Yes — Original JPEGs + 75+ Lang Schema",
               "Generic text snippets / walled garden",
-              "Heavy video embeds slow page load",
+              "Walled gardens selling ad placement",
             ],
           ];
 
