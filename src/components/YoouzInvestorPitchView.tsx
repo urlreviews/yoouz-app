@@ -112,7 +112,7 @@ const PdfPageCanvas: React.FC<{
         }
       } catch (err: any) {
         if (err?.name !== "RenderingCancelledException") {
-          console.error(`Error rendering PDF page ${pageNum}:`, err);
+          // Suppress transient render cancellation noise
         }
       }
     };
@@ -134,6 +134,9 @@ const PdfPageCanvas: React.FC<{
     };
   }, [pdfDoc, pageNum, zoomLevel]);
 
+  const pageStr = pageNum < 10 ? `0${pageNum}` : `${pageNum}`;
+  const totalStr = totalPages < 10 ? `0${totalPages}` : `${totalPages}`;
+
   return (
     <div
       ref={onPageRef}
@@ -145,7 +148,7 @@ const PdfPageCanvas: React.FC<{
         <div ref={textLayerRef} className="pdf-text-layer absolute inset-0 select-text" />
       </div>
       <span className="text-[11px] text-zinc-500 mt-2 font-medium tabular-nums select-none">
-        Page {pageNum} of {totalPages}
+        {pageStr} / {totalStr}
       </span>
     </div>
   );
@@ -165,7 +168,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   // Per-chapter desktop/mobile screen switcher for chapters that supply both captures
   const [deviceViewByPage, setDeviceViewByPage] = useState<Record<number, "desktop" | "mobile">>({});
 
-  // Chapter 10 live interactive embed domain switcher + JSON-LD copy state
+  // Chapter 15 (Interactive Website Embed) domain switcher + JSON-LD copy state
   const [embedMerchant, setEmbedMerchant] = useState<string>("wolt.com");
   const [copiedEmbedCode, setCopiedEmbedCode] = useState<boolean>(false);
 
@@ -213,13 +216,40 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
     setIsLoadingPdf(true);
     setPdfLoadError(null);
 
+    const fetchPdfWithRetry = async (): Promise<ArrayBuffer> => {
+      const urls = [
+        "/Yoouz_Visual_Investor_Pitch_Deck.pdf?v=20261118-20ch",
+        "/api/pitch/raw-pdf?v=20261118-20ch",
+        "/Yoouz_Investor_Pitch_Memorandum.pdf?v=20261118-20ch",
+      ];
+      const delays = [600, 1200, 2000, 3000];
+
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        const targetUrl = urls[attempt % urls.length];
+        try {
+          const response = await fetch(targetUrl, {
+            cache: "default",
+          });
+          if (response.ok) {
+            return await response.arrayBuffer();
+          }
+          if (response.status !== 429 && response.status < 500 && attempt >= urls.length - 1) {
+            break;
+          }
+        } catch {
+          // Transient fetch error; proceed to backoff retry
+        }
+        if (attempt < delays.length && isMounted) {
+          await new Promise((r) => setTimeout(r, delays[attempt]));
+        }
+      }
+      throw new Error("PDF temporarily rate-limited");
+    };
+
     const loadPdf = async () => {
       try {
-        const response = await fetch(`/api/pitch/raw-pdf?refresh=1&v=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (!response.ok) throw new Error(`Failed to fetch pitch PDF: ${response.status}`);
-        const arrayBuffer = await response.arrayBuffer();
+        const arrayBuffer = await fetchPdfWithRetry();
+        if (!isMounted) return;
         const loadingTask = pdfjsLib.getDocument({
           data: new Uint8Array(arrayBuffer),
           standardFontDataUrl: "/standard_fonts/",
@@ -231,10 +261,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
           setPdfDoc(doc);
           setIsLoadingPdf(false);
         }
-      } catch (err: any) {
-        console.error("Error loading pitch PDF:", err);
+      } catch {
         if (isMounted) {
-          setPdfLoadError("Unable to render PDF document. Use Interactive HD Deck or Download PDF.");
+          setPdfLoadError("Unable to render PDF document right now. Use Interactive HD Deck or Download PDF.");
           setIsLoadingPdf(false);
         }
       }
@@ -359,7 +388,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       );
     }
 
-    if (chapter.page === 3) {
+    if (chapter.page === 8) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/90 border border-zinc-800 rounded-xl p-4">
           <div className="flex items-start gap-3">
@@ -399,7 +428,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       );
     }
 
-    if (chapter.page === 6) {
+    if (chapter.page === 11) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/90 border border-zinc-800 rounded-xl p-4">
           <div className="flex items-start gap-3">
@@ -448,7 +477,544 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
         ? "mobile"
         : chapter.frameMode;
 
+    // Slide 02 — Market Opportunity (TAM / SAM / SOM)
+    if (chapter.page === 2) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com · Global Market Sizing & Initial Pre-Seed Wedge (TAM / SAM / SOM)
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              Multi-Billion-Dollar Visual Trust Replacement Cycle
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-7 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#070709]">
+            {/* TAM Card */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold tracking-wider text-zinc-400 uppercase">
+                    01 · Total Addressable Market (TAM)
+                  </span>
+                  <span className="text-[11px] font-bold text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded">
+                    Global Scope
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-white tabular-nums mt-3">
+                  $15.8B+
+                </div>
+                <div className="text-xs font-bold text-amber-400 mt-1">
+                  Global Online Review & Local Discovery Market
+                </div>
+                <p className="text-xs text-zinc-300 mt-2.5 leading-relaxed">
+                  Encompasses global consumer review platforms, enterprise reputation software, local search discovery, and e-commerce social proof widgets across 75+ languages.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                CAGR ~14.2% · Driven by AI text trust collapse
+              </div>
+            </div>
+
+            {/* SAM Card */}
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/90 p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold tracking-wider text-zinc-300 uppercase">
+                    02 · Serviceable Market (SAM)
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400 bg-zinc-800 px-2 py-0.5 rounded">
+                    85M+ Venues
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-white tabular-nums mt-3">
+                  $4.2B+
+                </div>
+                <div className="text-xs font-bold text-amber-400 mt-1">
+                  Addressable SMB & Multi-Location Venues Worldwide
+                </div>
+                <p className="text-xs text-zinc-300 mt-2.5 leading-relaxed">
+                  Hospitality, restaurants, cafés, boutique hotels, clinics, salons, legal practices, and D2C storefronts actively acquiring visual reviews & website conversion widgets.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                $49/mo Pro – $149/mo Growth SaaS ACV
+              </div>
+            </div>
+
+            {/* SOM Card */}
+            <div className="rounded-xl border-2 border-white bg-zinc-900 p-5 flex flex-col justify-between space-y-4 shadow-xl">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-extrabold tracking-wider text-white uppercase">
+                    03 · Pre-Seed Target (SOM)
+                  </span>
+                  <span className="text-[11px] font-extrabold text-zinc-950 bg-white px-2 py-0.5 rounded">
+                    Immediate Wedge
+                  </span>
+                </div>
+                <div className="text-3xl sm:text-4xl font-black text-white tabular-nums mt-3">
+                  1,000 Venues
+                </div>
+                <div className="text-xs font-bold text-amber-400 mt-1">
+                  Initial 1,000-Venue Pre-Seed Target (~$1.2M+ ARR)
+                </div>
+                <p className="text-xs text-zinc-200 mt-2.5 leading-relaxed">
+                  High-frequency restaurants, cafés, hospitality groups, and digital merchants onboarded via free counter QR standees and self-serve profile claiming.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-zinc-800 text-[11px] text-amber-400 font-mono font-semibold">
+                194+ Profiles Already Auto-Indexed in Beta
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
+
+    // Slide 03 — Competitive Landscape Matrix
+    if (chapter.page === 3) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com · 5-Criterion Competitive Landscape Matrix
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              Yoouz vs. Google / Trustpilot / Yelp vs. Video Review Tools
+            </span>
+          </div>
+
+          <div className="p-4 sm:p-6 bg-[#070709] overflow-x-auto">
+            <table className="w-full text-left border-collapse rounded-xl overflow-hidden border border-zinc-800">
+              <thead>
+                <tr className="border-b border-zinc-800 bg-zinc-900 text-[11px] font-extrabold uppercase tracking-wider">
+                  <th className="py-3.5 px-4 text-zinc-300">Evaluation Criteria</th>
+                  <th className="py-3.5 px-4 text-white bg-zinc-800/80 border-x border-zinc-700">
+                    Yoouz (Live Photo Protocol)
+                  </th>
+                  <th className="py-3.5 px-4 text-zinc-400">
+                    Google / Trustpilot / Yelp
+                  </th>
+                  <th className="py-3.5 px-4 text-zinc-400">
+                    Video Review Tools
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/90 text-xs bg-zinc-950/90">
+                <tr>
+                  <td className="py-3.5 px-4 font-bold text-white">
+                    1. AI & Fake Review Immunity
+                  </td>
+                  <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
+                    100% Immune — Live OS Hardware Camera Only (0% Gallery Uploads)
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Fails — Flooded by AI text bots & old stock uploads
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Partial — Allows staged scripts & file uploads
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-bold text-white">
+                    2. 3-Second Live Capture
+                  </td>
+                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
+                    Yes — 1 Live Photo + 1–5 Whole Stars in Under 3 Seconds
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    No — Requires typing multi-sentence text essays
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    No — 99% user drop-off (speaking on camera)
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-bold text-white">
+                    3. Zero Signup / Zero App Download
+                  </td>
+                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
+                    Yes — Instant U/XXXXXX Handle + Optional 1-Time Passkey
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    No — Mandatory email, password & 2FA login walls
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    No — Multi-step onboarding & microphone permissions
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-bold text-white">
+                    4. In-Store Counter QR Loop
+                  </td>
+                  <td className="py-3.5 px-4 font-extrabold text-white bg-zinc-900/80 border-x border-zinc-800">
+                    Yes — QR Opens Business Front Page First -&gt; 1-Tap Photo
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Broken — Drops mobile scanners at login prompts
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Fails — Diners refuse to record audio in noisy venues
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-3.5 px-4 font-bold text-white">
+                    5. Google Page-1 Visual SEO
+                  </td>
+                  <td className="py-3.5 px-4 font-extrabold text-amber-400 bg-zinc-900/80 border-x border-zinc-800">
+                    Yes — Original JPEGs + Schema.org Across 75+ Languages
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Generic plain-text snippets & walled directories
+                  </td>
+                  <td className="py-3.5 px-4 text-zinc-400">
+                    Heavy video embeds that degrade page load speed
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
+
+    // Slide 04 — Go-To-Market & $0 CAC Distribution Playbook
+    if (chapter.page === 4) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com · Self-Reinforcing $0 CAC Viral & SEO Growth Playbook
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              Zero Paid Ads Required to Scale Supply & Demand
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-[#070709]">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="w-7 h-7 rounded-lg bg-white text-zinc-950 text-xs font-black flex items-center justify-center">
+                    01
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400">Offline Loop</span>
+                </div>
+                <div className="text-sm font-extrabold text-white mt-3">
+                  Free Print-Ready Counter QR Standees
+                </div>
+                <p className="text-xs text-zinc-300 mt-1.5 leading-relaxed">
+                  Local shops, cafés, clinics, and hotels display Yoouz QR cards on tables and counters. Every guest scan lands on the business front page and converts into a 3-second photo review.
+                </p>
+              </div>
+              <div className="pt-2.5 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                CAC: $0 · Merchant-Funded Display
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="w-7 h-7 rounded-lg bg-white text-zinc-950 text-xs font-black flex items-center justify-center">
+                    02
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400">Supply Engine</span>
+                </div>
+                <div className="text-sm font-extrabold text-white mt-3">
+                  Autonomous Global Brand & Venue Indexing
+                </div>
+                <p className="text-xs text-zinc-300 mt-1.5 leading-relaxed">
+                  Any searched domain or street venue is auto-scraped on the fly—populating official logos, banners, and review-ready pages without waiting for merchant onboarding.
+                </p>
+              </div>
+              <div className="pt-2.5 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                194+ Profiles Live in Production
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="w-7 h-7 rounded-lg bg-white text-zinc-950 text-xs font-black flex items-center justify-center">
+                    03
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-400">Organic Search</span>
+                </div>
+                <div className="text-sm font-extrabold text-white mt-3">
+                  Google Page-1 SEO Across 75+ Languages
+                </div>
+                <p className="text-xs text-zinc-300 mt-1.5 leading-relaxed">
+                  Google prioritizes original customer photos + Schema.org AggregateRating JSON-LD. Every profile auto-publishes in 75+ localized routes to capture global search traffic.
+                </p>
+              </div>
+              <div className="pt-2.5 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                75+ Native Hreflang Routes
+              </div>
+            </div>
+
+            <div className="rounded-xl border-2 border-white bg-zinc-900 p-4 flex flex-col justify-between space-y-3 shadow-xl">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="w-7 h-7 rounded-lg bg-amber-400 text-zinc-950 text-xs font-black flex items-center justify-center">
+                    04
+                  </span>
+                  <span className="text-[11px] font-extrabold text-white">B2B SaaS Conversion</span>
+                </div>
+                <div className="text-sm font-extrabold text-white mt-3">
+                  Self-Serve Claiming Into Paid SaaS
+                </div>
+                <p className="text-xs text-zinc-200 mt-1.5 leading-relaxed">
+                  Merchants discover their active Yoouz profile ranking on Google with real customer photos, then claim ownership at yoouz.com/business and upgrade to $49–$149/mo tiers.
+                </p>
+              </div>
+              <div className="pt-2.5 border-t border-zinc-800 text-[11px] text-amber-400 font-mono font-semibold">
+                Inbound Self-Serve Upgrade Loop
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
+
+    // Slide 05 — Business Model & SaaS Economics
+    if (chapter.page === 5) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com/business · B2B SaaS Tiers & Unit Economics
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              ~95%+ Software Gross Margin · ~120 KB Bunny.net CDN
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-7 space-y-5 bg-[#070709]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* $0 Free Tier */}
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-zinc-400 uppercase">
+                      Tier 01 · Discovery
+                    </span>
+                    <span className="text-[11px] font-semibold text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded">
+                      Auto-Indexed
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-white tabular-nums mt-2">
+                    $0 <span className="text-sm font-semibold text-zinc-400">/ forever</span>
+                  </div>
+                  <div className="text-xs font-bold text-white mt-1">
+                    Free Auto-Indexed Discovery
+                  </div>
+                  <ul className="text-xs text-zinc-300 mt-3 space-y-1.5 leading-relaxed">
+                    <li>· Autonomous profile, logo & cover banner</li>
+                    <li>· Unlimited customer 3-second photo reviews</li>
+                    <li>· 1 to 5 solid whole-star rating aggregation</li>
+                    <li>· 75+ language Google SEO public indexing</li>
+                  </ul>
+                </div>
+                <div className="pt-3 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                  Goal: Maximum Global Supply & SEO Moat
+                </div>
+              </div>
+
+              {/* $49/mo Pro Tier */}
+              <div className="rounded-xl border-2 border-white bg-zinc-900 p-5 flex flex-col justify-between space-y-4 shadow-xl">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-white uppercase">
+                      Tier 02 · Claimed Pro
+                    </span>
+                    <span className="text-[11px] font-extrabold text-zinc-950 bg-white px-2 py-0.5 rounded">
+                      Most Popular
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-white tabular-nums mt-2">
+                    $49 <span className="text-sm font-semibold text-zinc-300">/ month</span>
+                  </div>
+                  <div className="text-xs font-bold text-amber-400 mt-1">
+                    Claimed Business Pro
+                  </div>
+                  <ul className="text-xs text-zinc-200 mt-3 space-y-1.5 leading-relaxed">
+                    <li>· Anonymous Verified Business Claimed badge</li>
+                    <li>· Official pinned owner replies in comment threads</li>
+                    <li>· Direct customer chat inbox & instant notifications</li>
+                    <li>· Print-ready counter & table QR standee kit + analytics</li>
+                  </ul>
+                </div>
+                <div className="pt-3 border-t border-zinc-800 text-[11px] text-amber-400 font-mono font-semibold">
+                  Core SMB Recurring Revenue Engine
+                </div>
+              </div>
+
+              {/* $149/mo Growth Tier */}
+              <div className="rounded-xl border border-zinc-700 bg-zinc-900/90 p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-amber-400 uppercase">
+                      Tier 03 · Growth & Embed
+                    </span>
+                    <span className="text-[11px] font-bold text-amber-400 bg-zinc-800 px-2 py-0.5 rounded">
+                      High ARPU
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-white tabular-nums mt-2">
+                    $149 <span className="text-sm font-semibold text-zinc-400">/ month</span>
+                  </div>
+                  <div className="text-xs font-bold text-white mt-1">
+                    Growth & Website Widget
+                  </div>
+                  <ul className="text-xs text-zinc-300 mt-3 space-y-1.5 leading-relaxed">
+                    <li>· Unlimited 1-line embeddable website photo carousels</li>
+                    <li>· Automated Schema.org AggregateRating JSON-LD sync</li>
+                    <li>· Multi-location & franchise brand hub management</li>
+                    <li>· Priority placement in local & category discovery feeds</li>
+                  </ul>
+                </div>
+                <div className="pt-3 border-t border-zinc-800 text-[11px] text-zinc-300 font-mono">
+                  Built for E-Commerce, Chains & High-Ticket Brands
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-4 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-extrabold text-amber-400 uppercase tracking-wider">
+                  ~95%+ Software Gross Margin Architecture
+                </div>
+                <p className="text-xs text-zinc-300 mt-1">
+                  Every live photo is compressed via Sharp to ~120 KB and served from Bunny.net global edge nodes with Cloud SQL PostgreSQL—eliminating heavy video transcoding or AI token costs.
+                </p>
+              </div>
+              <div className="px-3.5 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono font-bold text-white shrink-0">
+                ~120 KB / Photo · &lt;$0.01 / 1,000 Views
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
+
+    // Slide 06 — Founder Edge, Live Production Status & Pre-Seed Ask
     if (chapter.page === 6) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com · Founder Execution, Active Production Beta & Pre-Seed Use of Funds
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              15 Yrs Luxury Hospitality + Solo Full-Stack Execution
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-7 grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#070709]">
+            {/* Pillar 1: Founder Edge */}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <div className="text-xs font-extrabold text-amber-400 uppercase tracking-wider">
+                  01 · Founder Domain & Technical Edge
+                </div>
+                <div className="text-lg font-black text-white mt-2">
+                  15 Years Luxury Hospitality + Solo Full-Stack Builder
+                </div>
+                <p className="text-xs text-zinc-300 mt-2.5 leading-relaxed">
+                  15 years managing luxury hospitality venues provided direct insight into why guests abandon text surveys and how venues win local trust—paired with solo full-stack engineering that built Yoouz end-to-end with zero outside agency burn.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-zinc-800 text-[11px] text-zinc-400 font-mono">
+                100% In-House Codebase · Zero Agency Debt
+              </div>
+            </div>
+
+            {/* Pillar 2: Live Production Status */}
+            <div className="rounded-xl border border-zinc-700 bg-zinc-900/90 p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <div className="text-xs font-extrabold text-white uppercase tracking-wider">
+                  02 · Transparent Live Production Status
+                </div>
+                <div className="text-lg font-black text-white mt-2">
+                  Active Production Beta With Early Pilot Venues
+                </div>
+                <p className="text-xs text-zinc-300 mt-2.5 leading-relaxed">
+                  The 194+ indexed business profiles and 40+ live photo reviews on yoouz.com represent our live production beta and initial pilot venues—validating end-to-end QR scanning, hardware camera capture, Passkey login, and website embeds.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-zinc-800 text-[11px] text-amber-400 font-mono font-semibold">
+                Live Today at https://www.yoouz.com
+              </div>
+            </div>
+
+            {/* Pillar 3: Pre-Seed Ask & Use of Funds */}
+            <div className="rounded-xl border-2 border-white bg-zinc-900 p-5 flex flex-col justify-between space-y-4 shadow-xl">
+              <div>
+                <div className="text-xs font-extrabold text-amber-400 uppercase tracking-wider">
+                  03 · Pre-Seed Raise & Use of Funds
+                </div>
+                <div className="text-lg font-black text-white mt-2">
+                  Capital Allocation to Reach First 500 Venues
+                </div>
+                <div className="mt-3 space-y-2.5 text-xs">
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
+                    <div className="flex justify-between font-bold text-white">
+                      <span>Onboarding First 500 Venues</span>
+                      <span className="text-amber-400 tabular-nums">45%</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      Physical counter QR standee deployment & merchant activation
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
+                    <div className="flex justify-between font-bold text-white">
+                      <span>Global SEO & Indexing Scale</span>
+                      <span className="text-amber-400 tabular-nums">35%</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      Autonomous directory expansion across 75+ languages
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800">
+                    <div className="flex justify-between font-bold text-white">
+                      <span>Core Product Growth</span>
+                      <span className="text-amber-400 tabular-nums">20%</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                      Self-serve SaaS claiming & 1-click e-commerce embed integrations
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
+
+    if (chapter.page === 11) {
       return (
         <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
           <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
@@ -711,7 +1277,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   };
 
   const renderChapterExtrasBottom = (chapter: PitchChapter) => {
-    if (chapter.page === 14) {
+    if (chapter.page === 19) {
       return (
         <div className="space-y-3 pt-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -747,7 +1313,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       );
     }
 
-    if (chapter.page === 15) {
+    if (chapter.page === 20) {
       return (
         <div className="space-y-5 pt-2">
           <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 overflow-x-auto">
@@ -836,6 +1402,9 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
     return null;
   };
 
+  const currentPageStr = currentPage < 10 ? `0${currentPage}` : `${currentPage}`;
+  const numPagesStr = numPages < 10 ? `0${numPages}` : `${numPages}`;
+
   return (
     <div className="fixed inset-0 z-[9999] bg-[#09090B] text-white flex flex-col font-sans overflow-hidden">
       <style>{`
@@ -882,7 +1451,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 ? "bg-white text-zinc-950 border-white"
                 : "bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300 hover:text-white"
             }`}
-            title="Toggle 15-Chapter Navigator"
+            title="Toggle 20-Chapter Navigator"
           >
             <PanelLeft className="w-4 h-4" />
           </button>
@@ -893,7 +1462,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             </span>
             <span className="text-zinc-600 text-xs">·</span>
             <span className="text-xs font-semibold text-zinc-300 truncate hidden lg:inline">
-              Investor Pitch Deck (15 Chapters · Live Photo Proof)
+              Investor Pitch Deck (20 Chapters · Live Photo Proof)
             </span>
           </div>
         </div>
@@ -935,7 +1504,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
               <ChevronUp className="w-3.5 h-3.5" />
             </button>
             <span className="text-xs font-bold text-white px-1.5 tabular-nums whitespace-nowrap">
-              {currentPage} <span className="text-zinc-500">/</span> {numPages}
+              {currentPageStr} <span className="text-zinc-500">/</span> {numPagesStr}
             </span>
             <button
               type="button"
@@ -1006,8 +1575,8 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
         {isSidebarOpen && (
           <aside className="hidden md:flex w-72 bg-[#09090B] border-r border-zinc-800 flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-1.5 select-none">
             <div className="text-[11px] font-bold tracking-wider text-zinc-400 px-1 pb-2 border-b border-zinc-800 flex items-center justify-between">
-              <span>15-Chapter Investor Deck</span>
-              <span className="text-white font-extrabold">Photo Proof</span>
+              <span>20-Chapter Investor Deck</span>
+              <span className="text-white font-extrabold">01 / {numPagesStr}</span>
             </div>
 
             {PITCH_CHAPTERS.map((chapter) => {
@@ -1075,28 +1644,24 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                       <span className="text-xs font-extrabold tracking-wider text-zinc-200">
                         {chapter.kicker}
                       </span>
-                      <span className="text-xs font-bold text-zinc-400 tabular-nums whitespace-nowrap">
-                        Page {pageStr} of {numPages}
+                      <span className="text-xs font-bold text-zinc-300 tabular-nums whitespace-nowrap">
+                        {pageStr} / {numPagesStr}
                       </span>
                     </div>
 
-                    <div className="p-4 sm:p-8 space-y-6">
-                      {/* Editorial Headline & Subheadline */}
-                      <div className="max-w-4xl">
-                        <h2
-                          style={{ textWrap: "balance" } as React.CSSProperties}
-                          className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight"
-                        >
+                    {/* Chapter Body */}
+                    <div className="p-5 sm:p-8 space-y-6">
+                      <div>
+                        <h2 className="text-xl sm:text-3xl font-black tracking-tight text-white leading-tight">
                           {chapter.headline}
                         </h2>
-                        <p className="text-sm sm:text-base text-zinc-300 mt-3 leading-relaxed">
+                        <p className="text-sm sm:text-base text-zinc-300 mt-2.5 leading-relaxed max-w-4xl">
                           {chapter.subheadline}
                         </p>
                       </div>
 
                       {renderChapterExtrasTop(chapter)}
 
-                      {/* Uncropped 2x Retina Visual Proof Stage */}
                       {renderChapterVisual(chapter)}
 
                       {/* 4 Numbered Annotations */}
@@ -1164,7 +1729,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 <div className="flex flex-col items-center justify-center py-24 gap-3 text-zinc-400">
                   <Loader2 className="w-8 h-8 animate-spin text-white" />
                   <span className="text-sm font-semibold text-white">
-                    Rendering 15-Page Investor Pitch PDF...
+                    Rendering 20-Page Investor Pitch PDF...
                   </span>
                 </div>
               )}

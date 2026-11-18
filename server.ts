@@ -4742,15 +4742,19 @@ async function startServer() {
   });
 
   // Dedicated route to stream or download the 15-Chapter Visual Investor Pitch Deck PDF
+  let cachedPitchPdfBuffer: Buffer | null = null;
   app.get(["/api/pitch/raw-pdf", "/Yoouz_Visual_Investor_Pitch_Deck.pdf", "/Yoouz_Investor_Pitch_Memorandum.pdf", "/Yoouz_Institutional_Investor_Memorandum.pdf"], async (req, res) => {
     const disposition = req.query.download === "1" ? "attachment" : "inline";
     const forceRefresh = req.query.refresh === "1";
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `${disposition}; filename="Yoouz_Visual_Investor_Pitch_Deck.pdf"`);
     res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Cache-Control", forceRefresh ? "no-cache, no-store, must-revalidate" : "public, max-age=300");
 
     if (!forceRefresh) {
+      if (cachedPitchPdfBuffer && cachedPitchPdfBuffer.length > 10000) {
+        return res.send(cachedPitchPdfBuffer);
+      }
       const candidates = [
         path.join(process.cwd(), "public", "Yoouz_Visual_Investor_Pitch_Deck.pdf"),
         path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
@@ -4760,13 +4764,19 @@ async function startServer() {
       ];
       for (const p of candidates) {
         if (fs.existsSync(p)) {
-          return res.sendFile(p);
+          try {
+            cachedPitchPdfBuffer = fs.readFileSync(p);
+            return res.send(cachedPitchPdfBuffer);
+          } catch {
+            return res.sendFile(p);
+          }
         }
       }
     }
     try {
       const { writeVisualPitchPdfFiles } = await import("./src/utils/pitchPdfGenerator.ts");
       const buf = await writeVisualPitchPdfFiles();
+      cachedPitchPdfBuffer = buf;
       return res.send(buf);
     } catch (e: any) {
       return res.status(500).send("Error generating pitch PDF");

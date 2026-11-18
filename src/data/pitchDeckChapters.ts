@@ -141,8 +141,238 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
   },
   {
     page: 2,
+    shortTitle: "Market Opportunity (TAM / SAM / SOM)",
+    kicker: "02 · MARKET OPPORTUNITY (TAM / SAM / SOM)",
+    headline: "Rebuilding the Multi-Billion-Dollar Global Online Review & Local Discovery Economy.",
+    subheadline:
+      "Generative AI has broken consumer trust in legacy text reviews overnight—creating an urgent, multi-billion-dollar market shift toward unspoofable, hardware-captured visual proof across global e-commerce and local venues.",
+    imagePath: "/pitch-assets/v2/01-home-discovery.png",
+    frameMode: "desktop",
+    imageCaption: "Yoouz Market Opportunity Breakdown — Global Online Review & Local Discovery TAM, Addressable SMB & Multi-Location SAM, and Initial 1,000-Venue Pre-Seed SOM",
+    callouts: [
+      {
+        id: "01",
+        title: "The AI Trust Collapse Creates an Immediate Replacement Cycle",
+        tag: "$15.8B+ Global TAM",
+        description:
+          "Consumers and search engines no longer trust anonymous text stars. Every business paying for reputation software or review widgets needs verifiable visual proof.",
+      },
+      {
+        id: "02",
+        title: "85M+ Physical & Digital Storefronts Competing on Visual Proof",
+        tag: "$4.2B+ Addressable SAM",
+        description:
+          "Restaurants, cafés, hotels, clinics, salons, legal practices, and D2C brands rely on authentic customer photos to win local discovery and checkout conversion.",
+      },
+      {
+        id: "03",
+        title: "Focused Pre-Seed Wedge: First 1,000 High-Frequency Venues",
+        tag: "1,000-Venue SOM Target",
+        description:
+          "Capturing our initial 1,000 hospitality, dining, and retail venues via counter QR standees and self-serve claiming establishes dense local network effects and ~$1.2M+ ARR.",
+      },
+      {
+        id: "04",
+        title: "Zero Geographic Ceiling From Day One",
+        tag: "75+ Languages · Global URLs",
+        description:
+          "Because Yoouz auto-indexes any domain or street venue worldwide across 75+ languages, our addressable market scales across North America, Europe, MENA, and APAC simultaneously.",
+      },
+    ],
+    metrics: [
+      { label: "Total Addressable Market (TAM)", value: "$15.8B+", detail: "Global online review & local discovery market" },
+      { label: "Serviceable Market (SAM)", value: "$4.2B+", detail: "Addressable SMB & multi-location venues worldwide" },
+      { label: "Pre-Seed Target (SOM)", value: "1,000 Venues", detail: "Initial high-velocity merchant cohort (~$1.2M+ ARR)" },
+    ],
+  },
+  {
+    page: 3,
+    shortTitle: "Competitive Landscape Matrix",
+    kicker: "03 · COMPETITIVE LANDSCAPE MATRIX",
+    headline: "Why Yoouz Wins: Unspoofable 3-Second Live Photos Without App Downloads or Video Friction.",
+    subheadline:
+      "Legacy review platforms are flooded with AI-generated fake text and recycled gallery uploads, while video review tools suffer 99% customer drop-off because shoppers refuse to film themselves speaking in public. Yoouz captures the exact sweet spot.",
+    imagePath: "/pitch-assets/v2/01-home-discovery.png",
+    frameMode: "desktop",
+    imageCaption: "Competitive Architecture Comparison — Yoouz Live Photo Protocol vs. Legacy Text Platforms (Google / Trustpilot / Yelp) vs. Video Review Tools",
+    callouts: [
+      {
+        id: "01",
+        title: "100% Immune to AI Text Bots & Recycled Gallery Uploads",
+        tag: "Hardware Shutter Only",
+        description:
+          "While Google, Trustpilot, and Yelp permit paste-able AI text and old camera-roll images, Yoouz enforces live OS hardware camera capture on every single review.",
+      },
+      {
+        id: "02",
+        title: "3-Second Live Photo vs. High-Friction Video Recording",
+        tag: "Zero On-Camera Anxiety",
+        description:
+          "Video review tools fail at scale because everyday diners and shoppers will not record themselves talking in a crowded venue. Anyone will snap 1 photo of their table or bag in 3 seconds.",
+      },
+      {
+        id: "03",
+        title: "Zero Signup & Zero App Download Required",
+        tag: "Instant U/XXXXXX + Passkey",
+        description:
+          "Competitors force reviewers through email/password walls that kill 70%+ of mobile traffic. Yoouz publishes in 3 seconds with an automatic U/XXXXXX handle and optional 1-time Face ID Passkey.",
+      },
+      {
+        id: "04",
+        title: "In-Store Counter QR Loop + Google Page-1 Visual SEO",
+        tag: "Offline-to-Online Moat",
+        description:
+          "Scanning a Yoouz counter QR code opens the Business Front Page first for instant social proof, while every published photo fuels Google Page-1 rich snippets across 75+ languages.",
+      },
+    ],
+    metrics: [
+      { label: "AI & Gallery Spoofing", value: "0% Possible", detail: "Strict live hardware camera protocol" },
+      { label: "Time to Publish Review", value: "3 Seconds", detail: "10x faster than text essays or video" },
+      { label: "Upfront Login Drop-Off", value: "0% Friction", detail: "No email, password, or app download" },
+    ],
+  },
+  {
+    page: 4,
+    shortTitle: "Go-To-Market & $0 CAC Distribution Playbook",
+    kicker: "04 · GO-TO-MARKET & $0 CAC DISTRIBUTION PLAYBOOK",
+    headline: "How Yoouz Scales Globally With $0 Paid Ads Through Four Compounding Organic Loops.",
+    subheadline:
+      "Instead of burning capital on paid user acquisition, Yoouz turns physical merchant foot traffic, autonomous web indexing, and multilingual Google Image & SERP rankings into a self-reinforcing B2B2C growth engine.",
+    imagePath: "/pitch-assets/v2/03-qr-business-front.png",
+    frameMode: "desktop",
+    imageCaption: "Yoouz $0 CAC Distribution Flywheel — Counter QR Standees -> Auto-Indexed Profiles -> 75+ Language Google Page-1 SEO -> Self-Serve SaaS Claiming",
+    callouts: [
+      {
+        id: "01",
+        title: "Free Print-Ready Counter & Table QR Standees for Local Shops",
+        tag: "Loop 01 · Physical Foot Traffic",
+        description:
+          "Cafes, restaurants, clinics, and boutiques place free print-ready Yoouz QR standees at tables and checkout counters—turning daily walk-in guests into live photo contributors at $0 CAC.",
+      },
+      {
+        id: "02",
+        title: "Autonomous Indexing of Global Brands & Physical Venues",
+        tag: "Loop 02 · Zero Cold-Start",
+        description:
+          "Our scraping engine builds rich profiles, logos, and banners on demand for any searched URL or street venue worldwide—creating review-ready supply before merchants ever sign up.",
+      },
+      {
+        id: "03",
+        title: "Google Page-1 Visual SEO Across 75+ Languages",
+        tag: "Loop 03 · Organic Search Capture",
+        description:
+          "Fresh, original customer JPEGs paired with Schema.org AggregateRating markup and 75+ localized language routes (/es, /fr, /de, /ar, /ja) rank organically for high-intent '[Brand] reviews' searches.",
+      },
+      {
+        id: "04",
+        title: "Self-Serve Merchant Claiming Converting Free Traffic Into Paid SaaS",
+        tag: "Loop 04 · B2B Monetization",
+        description:
+          "As customer photos and Google traffic accumulate on a free auto-indexed page, business owners claim their profile at yoouz.com/business and upgrade to $49–$149/mo SaaS plans.",
+      },
+    ],
+    metrics: [
+      { label: "Paid Ad Dependency", value: "$0 CAC", detail: "100% organic QR + SEO distribution loops" },
+      { label: "Global SEO Reach", value: "75+ Languages", detail: "Automated hreflang & Schema.org routes" },
+      { label: "B2B Conversion Trigger", value: "Inbound Claim", detail: "Merchants upgrade to manage live traffic" },
+    ],
+  },
+  {
+    page: 5,
+    shortTitle: "Business Model & SaaS Economics",
+    kicker: "05 · BUSINESS MODEL & SAAS ECONOMICS",
+    headline: "Predictable B2B Recurring SaaS With ~95%+ Software Gross Margins.",
+    subheadline:
+      "Every business worldwide starts on our $0 Free Auto-Indexed tier to maximize directory density and SEO reach, then upgrades self-serve to $49/mo Claimed Business Pro or $149/mo Growth & Website Widget—powered by ultra-lean ~120 KB photo delivery on Bunny.net CDN.",
+    imagePath: "/pitch-assets/v2/12-business-portal.png",
+    frameMode: "desktop",
+    imageCaption: "Yoouz B2B SaaS Pricing Architecture — $0 Free Auto-Indexed Discovery, $49/mo Claimed Business Pro & $149/mo Growth & Website Widget (~95%+ Gross Margin)",
+    callouts: [
+      {
+        id: "01",
+        title: "$0 / mo — Free Auto-Indexed Discovery Tier",
+        tag: "Top-of-Funnel Supply Moat",
+        description:
+          "Every company receives an auto-generated public profile, logo, banner, whole-star score, and unlimited customer live photo reviews to compound organic search traffic.",
+      },
+      {
+        id: "02",
+        title: "$49 / mo — Claimed Business Pro Tier",
+        tag: "Core SMB Subscription",
+        description:
+          "Unlocks the Verified Claimed Badge, Official Pinned Owner Replies, Direct Customer Chat Inbox, Profile Analytics, and Print-Ready Counter QR Standee Kits.",
+      },
+      {
+        id: "03",
+        title: "$149 / mo — Growth & Website Widget Tier",
+        tag: "High-Converting Storefront Widget",
+        description:
+          "Includes Unlimited 1-Line Website Photo Review Carousels, automatic Google AggregateRating JSON-LD rich snippets, multi-location management, and priority category placement.",
+      },
+      {
+        id: "04",
+        title: "~95%+ Software Gross Margins via ~120 KB Photo Architecture",
+        tag: "Bunny.net CDN + Cloud SQL",
+        description:
+          "Because Yoouz compresses each live photo to ~120 KB on Bunny.net global edge storage with Cloud SQL PostgreSQL metadata, bandwidth and storage cost fractions of a cent per merchant.",
+      },
+    ],
+    metrics: [
+      { label: "SaaS Pricing Tiers", value: "$0 / $49 / $149", detail: "Free Discovery · Claimed Pro · Growth Widget" },
+      { label: "Software Gross Margin", value: "~95%+", detail: "~120 KB Bunny.net CDN + Cloud SQL stack" },
+      { label: "Payback Period", value: "Immediate", detail: "$0 CAC organic inbound merchant claiming" },
+    ],
+  },
+  {
+    page: 6,
+    shortTitle: "Founder Edge, Production Status & Pre-Seed Ask",
+    kicker: "06 · FOUNDER EDGE, LIVE PRODUCTION STATUS & PRE-SEED ASK",
+    headline: "15 Years Luxury Hospitality Domain Mastery + Solo Full-Stack Execution. Live in Production Today.",
+    subheadline:
+      "Built 100% in-house by a founder combining 15 years of frontline luxury hospitality management with end-to-end full-stack engineering. Yoouz is not a prototype—our production beta is already live at yoouz.com with 194+ indexed profiles, 40+ live photo reviews, and early pilot venues.",
+    imagePath: "/pitch-assets/v2/14-claimed-businesses.png",
+    frameMode: "desktop",
+    imageCaption: "Founder-Led Execution & Pre-Seed Capital Allocation — Active Production Beta (194+ Indexed Profiles · 40+ Live Photo Reviews) Scaling to First 500 Venues",
+    callouts: [
+      {
+        id: "01",
+        title: "Founder Edge: 15 Years Luxury Hospitality + Solo Full-Stack Engineer",
+        tag: "Insider Operational DNA",
+        description:
+          "Deep firsthand knowledge of how restaurants, hotels, and service venues win guest trust—combined with solo full-stack engineering execution that shipped the entire platform with zero agency burn.",
+      },
+      {
+        id: "02",
+        title: "Live Production Beta Status: 194+ Profiles & 40+ Live Reviews",
+        tag: "Active Pilot Venues",
+        description:
+          "Our 194+ indexed profiles and 40+ live photo reviews represent an active production beta at yoouz.com with early pilot venues testing QR standees, Passkeys, and website embeds in the wild.",
+      },
+      {
+        id: "03",
+        title: "Use of Funds #1 & #2: First 500 Venues (45%) + Global SEO Scale (35%)",
+        tag: "80% Growth & Distribution",
+        description:
+          "Capital goes directly into deploying physical counter QR kits to onboard our first 500 active venues (45%) and scaling autonomous indexing & Google Page-1 SEO across 75+ languages (35%).",
+      },
+      {
+        id: "04",
+        title: "Use of Funds #3: Core Product & Merchant SaaS Velocity (20%)",
+        tag: "High-Leverage Runway",
+        description:
+          "Expands self-serve merchant claiming automation, Shopify/Webflow 1-click embed plugins, and Bunny.net + Cloud SQL edge performance to convert pilot traction into recurring ARR.",
+      },
+    ],
+    metrics: [
+      { label: "Founder Background", value: "15 Yrs + Dev", detail: "Luxury hospitality ops + solo full-stack builder" },
+      { label: "Current Stage", value: "Production Beta", detail: "194+ indexed profiles · 40+ live reviews · early pilots" },
+      { label: "Pre-Seed Milestone", value: "First 500 Venues", detail: "QR rollout, global SEO scale & SaaS conversion" },
+    ],
+  },
+  {
+    page: 7,
     shortTitle: "Universal Search & Zero-Signup Auto-Scraping",
-    kicker: "02 · AUTONOMOUS INDEXING ENGINE",
+    kicker: "07 · AUTONOMOUS INDEXING ENGINE",
     headline: "Search Any Street Venue or Global URL—Profiles Build Automatically Without Sign-Up.",
     subheadline:
       "Businesses do not need to register or fill out onboarding forms to exist on Yoouz. Our autonomous scraping infrastructure resolves any searched website URL or physical business on demand—extracting logos, cover banners, category metadata, and clean slugs in seconds.",
@@ -186,9 +416,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 3,
+    page: 8,
     shortTitle: "QR Scan Flow -> Business Profile Front Page",
-    kicker: "03 · PHYSICAL-TO-DIGITAL QR JOURNEY",
+    kicker: "08 · PHYSICAL-TO-DIGITAL QR JOURNEY",
     headline: "Scan Any Yoouz QR Code -> Land Straight on the Business Profile Front Page.",
     subheadline:
       "Never ambushing visitors with a cold camera shutter. When a customer scans a Yoouz QR code on a table tent, receipt, or desktop modal, their phone opens the full Business Profile front page first (yoouz.com/reviews/wolt.com) so they see real photos and trust signals before tapping Add Review.",
@@ -233,9 +463,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 4,
+    page: 9,
     shortTitle: "Native Hardware Camera Capture (Zero Gallery Uploads)",
-    kicker: "04 · ANTI-SPOOFING HARDWARE PROTOCOL",
+    kicker: "09 · ANTI-SPOOFING HARDWARE PROTOCOL",
     headline: "Hardware Camera Only. Zero Gallery Uploads. Published in Under 3 Seconds.",
     subheadline:
       "Once the reviewer taps Add Review on the business profile, mobile enforces capture='environment' to invoke the phone's real hardware camera directly—completely blocking old camera-roll screenshots, stolen web images, and AI uploads.",
@@ -279,9 +509,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 5,
+    page: 10,
     shortTitle: "Auto U/XXXXXX Profile & Persistent Handle",
-    kicker: "05 · ZERO-FRICTION IDENTITY ARCHITECTURE",
+    kicker: "10 · ZERO-FRICTION IDENTITY ARCHITECTURE",
     headline: "No Account Creation Needed: Snap & Publish in 3 Seconds, Get an Instant U/XXXXXX Handle.",
     subheadline:
       "Legacy review sites lose over 70% of mobile reviewers at email, password, and OTP verification walls. On Yoouz, users never create an account upfront—they simply snap a live photo and rate 1–5 stars in a couple of seconds, and Yoouz automatically provisions their persistent U/XXXXXX profile on the spot.",
@@ -325,9 +555,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 6,
+    page: 11,
     shortTitle: "1-Tap Face ID / WebAuthn Passkey Lock",
-    kicker: "06 · 1-TIME OPTIONAL PHONE PASSKEY & VERIFIED BADGE",
+    kicker: "11 · 1-TIME OPTIONAL PHONE PASSKEY & VERIFIED BADGE",
     headline: "No Email, No Password—Ever. Optional 1-Time Face ID Passkey on Phone Locks Your Handle Forever.",
     subheadline:
       "After a user publishes their first photo review in seconds without creating an account, Yoouz offers a 1-time optional Face ID / Touch ID Passkey prompt right on their phone ('Passkey for yoouz.com · U/A4B6C8'). One glance binds their handle to their device's Secure Enclave and unlocks the Verified checkmark.",
@@ -371,9 +601,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 7,
+    page: 12,
     shortTitle: "Business Profile Hub & 5 Conversion Actions",
-    kicker: "07 · COMPLETE BUSINESS STOREFRONT",
+    kicker: "12 · COMPLETE BUSINESS STOREFRONT",
     headline: "One Unified Hub Turning Customer Photo Proof Into Calls, Directions, Saves & Chat.",
     subheadline:
       "Every local business and online brand receives an institutional-grade conversion hub—featuring a wide cover banner, squircle logo, aggregate star rating, structured tabs, and five immediate customer action buttons.",
@@ -417,9 +647,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 8,
+    page: 13,
     shortTitle: "Community Photo Canvas, Comments & Action Rail",
-    kicker: "08 · ENGAGEMENT & REAL-TIME DIALOGUE",
+    kicker: "13 · ENGAGEMENT & REAL-TIME DIALOGUE",
     headline: "Threaded Comments, Helpful Likes, Bookmarks & Cross-Platform Sharing Built Around Every Photo.",
     subheadline:
       "Yoouz transforms solitary star ratings into living community proof. Shoppers inspect the full-bleed photo, ask questions inside threaded comment drawers, read official business replies, and bookmark places for later.",
@@ -464,9 +694,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 9,
+    page: 14,
     shortTitle: "Direct Messages & Real-Time Notifications",
-    kicker: "09 · CUSTOMER RETENTION & CHAT INBOX",
+    kicker: "14 · CUSTOMER RETENTION & CHAT INBOX",
     headline: "Built-In Direct Messaging Connecting Shoppers With Reviewers and Verified Businesses.",
     subheadline:
       "Closing the loop between discovery and transaction. Shoppers message merchants directly before booking or ordering, while contributors receive instant notifications on replies, likes, and new followers.",
@@ -510,9 +740,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 10,
+    page: 15,
     shortTitle: "Interactive Website Embed Widget & Schema.org SEO",
-    kicker: "10 · MERCHANT WEBSITE EMBED ENGINE",
+    kicker: "15 · MERCHANT WEBSITE EMBED ENGINE",
     headline: "1-Line Interactive Photo Widget That Lives Right on Any Merchant Website.",
     subheadline:
       "Businesses embed Yoouz's live verified photo carousel directly on their homepage, checkout, or Shopify store—boosting buyer trust on-site while injecting rich Schema.org AggregateRating JSON-LD metadata for Google search stars. Test the live widget right below.",
@@ -556,9 +786,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 11,
+    page: 16,
     shortTitle: "Physical POS QR Stands & Offline Growth Flywheel",
-    kicker: "11 · $0 CAC PHYSICAL DISTRIBUTION",
+    kicker: "16 · $0 CAC PHYSICAL DISTRIBUTION",
     headline: "Table Tents, Receipt Slips & QR Standees: Offline Foot Traffic Feeds Online Proof Daily.",
     subheadline:
       "Restaurants, cafes, clinics, salons, and hotels place custom Yoouz QR displays at checkout counters and dining tables. Happy guests scan once, land on the live business front page, tap Add Review, and generate fresh authentic photos every single day.",
@@ -602,9 +832,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 12,
+    page: 17,
     shortTitle: "Business Claiming Portal & Owner Privacy",
-    kicker: "12 · B2B MERCHANT PORTAL",
+    kicker: "17 · B2B MERCHANT PORTAL",
     headline: "Verify Your Business in Minutes: Unlock Analytics, Official Replies & Strict Privacy Controls.",
     subheadline:
       "At yoouz.com/business, domain owners and venue operators claim their pre-indexed page to take command of their brand presence—responding to reviews, launching website embeds, and monitoring engagement while personal owner emails remain 100% hidden from public view.",
@@ -648,9 +878,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 13,
+    page: 18,
     shortTitle: "Google Page-1 Photo SEO Across 75+ Languages",
-    kicker: "13 · ORGANIC SEARCH & GLOBAL DISTRIBUTION ENGINE",
+    kicker: "18 · ORGANIC SEARCH & GLOBAL DISTRIBUTION ENGINE",
     headline: "Built for Google Page 1: Native Photo Indexing & Full Localization Across 75+ Languages.",
     subheadline:
       "Search engines reward original, fresh visual evidence paired with structured Schema.org markup. Every claimed and auto-scraped business page on Yoouz publishes clean canonical routes in 75+ languages—putting real customer photos on Page 1 when buyers search a brand.",
@@ -694,9 +924,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 14,
+    page: 19,
     shortTitle: "Live Traction & Claimed Businesses Showcase",
-    kicker: "14 · REAL MARKET TRACTION & PORTFOLIO PROOF",
+    kicker: "19 · REAL MARKET TRACTION & PORTFOLIO PROOF",
     headline: "Real Businesses Already Claimed, Indexed & Collecting Live Customer Proof Today.",
     subheadline:
       "This is not a slideware concept. Yoouz already runs in full production with claimed merchant accounts (such as yoouz.com and anythingvirtual.net) alongside 194+ auto-indexed companies across legal, dining, hospitality, beauty, and technology—all strictly privacy-protected.",
@@ -740,9 +970,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     ],
   },
   {
-    page: 15,
+    page: 20,
     shortTitle: "B2B SaaS Model & Bunny.net Unit Economics",
-    kicker: "15 · MONETIZATION, COMPETITIVE MOAT & ECONOMICS",
+    kicker: "20 · MONETIZATION, COMPETITIVE MOAT & ECONOMICS",
     headline: "High-Margin B2B SaaS With Ultra-Lightweight ~120 KB Photo Economics on Bunny.net.",
     subheadline:
       "Every business profile starts free to maximize global supply and Google SEO reach, then converts cleanly into $49/month Claimed Pro and $149/month Growth & Website Embed subscriptions—backed by sub-penny ~120 KB JPEG storage on Bunny.net CDN and Cloud SQL PostgreSQL.",
