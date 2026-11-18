@@ -215,7 +215,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
 
     const loadPdf = async () => {
       try {
-        const response = await fetch(`/api/pitch/raw-pdf?v=${Date.now()}`, {
+        const response = await fetch(`/api/pitch/raw-pdf?refresh=1&v=${Date.now()}`, {
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Failed to fetch pitch PDF: ${response.status}`);

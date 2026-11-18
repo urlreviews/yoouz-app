@@ -175,37 +175,39 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           if (chapter.page === 3) {
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.8)
+              .fontSize(7.4)
               .fillColor("#F59E0B")
-              .text("QR FLOW: 1. Scan Standee  ->  2. Business Front Page Opens  ->  3. Tap Add Review", rightX + 10, curY + 10, {
+              .text("QR FLOW: 1. Scan Standee  ->  2. Business Front Page Opens  ->  3. Tap Add Review", rightX + 10, curY + 9, {
                 width: rightW - 20,
               });
+            const subY = Math.max(curY + 23, doc.y + 4);
             doc
               .font("Helvetica")
-              .fontSize(7.3)
+              .fontSize(7.2)
               .fillColor("#D4D4D8")
               .text(
                 "Shoppers inspect real photos and whole-star scores before opening the hardware camera—driving peak review completion.",
                 rightX + 10,
-                curY + 24,
+                subY,
                 { width: rightW - 20, lineGap: 1.2 }
               );
           } else if (chapter.page === 6) {
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.8)
+              .fontSize(7.3)
               .fillColor("#F59E0B")
-              .text("ZERO SIGN-UP FLOW: 1. Snap 3s Photo  ->  2. Auto U/A4B6C8 Account  ->  3. Optional 1-Time Passkey", rightX + 10, curY + 10, {
+              .text("ZERO SIGN-UP: 1. Snap 3s Photo -> 2. Auto U/A4B6C8 -> 3. Optional 1-Time Passkey", rightX + 10, curY + 9, {
                 width: rightW - 20,
               });
+            const subY = Math.max(curY + 23, doc.y + 4);
             doc
               .font("Helvetica")
-              .fontSize(7.3)
+              .fontSize(7.2)
               .fillColor("#D4D4D8")
               .text(
                 "Users never create an account, email, or password upfront—after their first review, 1 optional Face ID tap locks their handle forever.",
                 rightX + 10,
-                curY + 24,
+                subY,
                 { width: rightW - 20, lineGap: 1.2 }
               );
           } else if (chapter.page === 14) {
@@ -214,24 +216,26 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .join("  ·  ");
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.8)
+              .fontSize(7.5)
               .fillColor("#FFFFFF")
               .text("ACTIVE PORTFOLIO (100% ANONYMOUS OWNER BADGES)", rightX + 10, curY + 9, {
                 width: rightW - 20,
               });
+            const subY = Math.max(curY + 23, doc.y + 4);
             doc
               .font("Helvetica")
-              .fontSize(7.4)
+              .fontSize(7.3)
               .fillColor("#D4D4D8")
-              .text(domains, rightX + 10, curY + 23, { width: rightW - 20, lineGap: 1.2 });
+              .text(domains, rightX + 10, subY, { width: rightW - 20, lineGap: 1.2 });
           } else if (chapter.page === 15) {
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.5)
+              .fontSize(7.3)
               .fillColor("#FFFFFF")
-              .text("SAAS PRICING:  $0 Free Profile  |  $49/mo Claimed Pro  |  $149/mo Growth & Embed", rightX + 10, curY + 9, {
+              .text("SAAS PRICING:  $0 Free  |  $49/mo Claimed Pro  |  $149/mo Growth & Embed", rightX + 10, curY + 10, {
                 width: rightW - 20,
               });
+            const subY = Math.max(curY + 25, doc.y + 5);
             doc
               .font("Helvetica")
               .fontSize(7.2)
@@ -239,7 +243,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .text(
                 "~95%+ Gross Margin via Bunny.net CDN (~120 KB photos) & Cloud SQL PostgreSQL.",
                 rightX + 10,
-                curY + 23,
+                subY,
                 { width: rightW - 20, lineGap: 1.2 }
               );
           }
@@ -258,9 +262,9 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             .text(m.label.toUpperCase(), mx + 10, metricY + 7, { width: metricW - 20 });
           doc
             .font("Helvetica-Bold")
-            .fontSize(9.2)
+            .fontSize(8.4)
             .fillColor("#FFFFFF")
-            .text(`${m.value}  ·  ${m.detail}`, mx + 10, metricY + 19, {
+            .text(`${m.value}  ·  ${m.detail}`, mx + 10, metricY + 20, {
               width: metricW - 20,
               lineBreak: false,
               ellipsis: true,
