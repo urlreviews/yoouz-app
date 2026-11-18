@@ -5,6 +5,38 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import './index.css';
 
+// Safari Mobile Anti-Cache & Version Enforcement
+const CURRENT_APP_VERSION = "v20261118_safari_fix_v2";
+if (typeof localStorage !== 'undefined') {
+  try {
+    const savedVer = localStorage.getItem("yoouz_app_version");
+    if (savedVer !== CURRENT_APP_VERSION) {
+      localStorage.setItem("yoouz_app_version", CURRENT_APP_VERSION);
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => caches.delete(name));
+        }).catch(() => {});
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((reg) => reg.unregister().catch(() => {}));
+        }).catch(() => {});
+      }
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key !== "yoouz_app_version" && !key.includes("auth") && !key.includes("user")) {
+          localStorage.removeItem(key);
+        }
+      }
+      // Force hard reload once if not already reloaded for this version
+      if (!sessionStorage.getItem("yoouz_reloaded_" + CURRENT_APP_VERSION)) {
+        sessionStorage.setItem("yoouz_reloaded_" + CURRENT_APP_VERSION, "true");
+        window.location.reload();
+      }
+    }
+  } catch (e) {}
+}
+
 // Purge any stale client-side caches synchronously before initial render
 if (typeof localStorage !== 'undefined') {
   try {
