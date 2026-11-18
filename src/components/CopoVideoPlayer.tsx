@@ -93,6 +93,8 @@ interface CopoVideoPlayerProps {
   onOpenOwnerReply?: (video: VideoReview) => void;
   onCloseEmbed?: () => void;
   commentsOpen?: boolean;
+  feedContextType?: "place" | "creator" | "feed";
+  isOwnGuestPreview?: boolean;
 }
 
 export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
@@ -132,7 +134,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   isBusinessOwnerView = false,
   onOpenOwnerReply,
   onCloseEmbed,
-  commentsOpen = false
+  commentsOpen = false,
+  feedContextType = "feed",
+  isOwnGuestPreview = false
 }) => {
   const { t } = useLanguage();
 
@@ -851,6 +855,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       );
     }
 
+    const isUserProfileEmpty = feedContextType === "creator";
+
     return (
       <main
         id="copo-empty-feed-container"
@@ -858,10 +864,20 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       >
         <div className="relative w-full max-w-[360px] sm:max-w-[400px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-[40px] px-6 sm:px-10 py-10 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white overflow-hidden">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[28px] sm:rounded-[32px] bg-zinc-800/50 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6 sm:mb-8 shrink-0">
-            <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+            {isUserProfileEmpty ? (
+              <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+            ) : (
+              <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+            )}
           </div>
           <h2 className="w-full max-w-full text-xl sm:text-2xl font-black text-white mb-3 tracking-tight leading-snug break-words">
-            {feedContextTitle ? (
+            {isUserProfileEmpty ? (
+              isOwnGuestPreview ? (
+                t("profile.guestMemberTitle", "Your Community Profile")
+              ) : (
+                `${feedContextTitle || "Member"} · Community Profile`
+              )
+            ) : feedContextTitle ? (
               <>
                 No Photo Reviews for{" "}
                 <span className="inline font-black text-white break-words max-w-full">
@@ -873,21 +889,45 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             )}
           </h2>
           <p className="w-full max-w-[320px] text-xs sm:text-sm text-zinc-400 mb-8 sm:mb-10 leading-relaxed font-medium break-words">
-            {feedContextTitle ? (
+            {isUserProfileEmpty ? (
+              isOwnGuestPreview ? (
+                t(
+                  "profile.guestMemberDesc",
+                  "Your permanent U/XXXXXX handle is created automatically when you comment, like, or post a photo review on a business page."
+                )
+              ) : (
+                t(
+                  "profile.memberOnlyActivityDesc",
+                  "This is a community member profile, not a business listing. Photo reviews and star ratings can only be published on business profiles."
+                )
+              )
+            ) : feedContextTitle ? (
               "A picture is worth a thousand words. Snap 1 live photo and rate in 2 seconds, no signup, no typing."
             ) : (
               "Snap a real-time photo review and select 1–5 stars for any business or place!"
             )}
           </p>
-          {onOpenCreateModal && (
-            <button
-              id="copo-empty-state-record-btn"
-              onClick={onOpenCreateModal}
-              className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
-            >
-              <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
-              Add Review
-            </button>
+          {isUserProfileEmpty ? (
+            onGoHome && (
+              <button
+                id="copo-empty-state-explore-btn"
+                onClick={onGoHome}
+                className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
+              >
+                {t("profile.exploreBusinesses", "Explore Businesses")}
+              </button>
+            )
+          ) : (
+            onOpenCreateModal && (
+              <button
+                id="copo-empty-state-record-btn"
+                onClick={onOpenCreateModal}
+                className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
+              >
+                <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
+                Add Review
+              </button>
+            )
           )}
         </div>
       </main>
@@ -900,15 +940,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[440px] md:pr-[56px]" : "md:mr-0"
+        commentsOpen ? "md:mr-[440px] md:px-3" : "md:mr-0"
       } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"}`}
-      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none", containerType: "size" }}
     >
       <div
         className={`w-full h-full flex items-center justify-center relative ${
           isEmbed
             ? "p-0"
-            : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 md:max-h-[95vh] md:p-3"
+            : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 lg:gap-6 md:max-h-[95vh] md:p-3"
         }`}
       >
         {/* Scroll Snap Feed Container */}
@@ -980,6 +1020,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isBusinessOwnerView={isBusinessOwnerView}
                 onOpenOwnerReply={onOpenOwnerReply}
                 onCloseEmbed={onCloseEmbed}
+                commentsOpen={commentsOpen}
               />
             );
           })}
@@ -992,8 +1033,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return (
             <div
               id="copo-floating-nav-buttons"
-              className={`hidden md:flex flex-col gap-2.5 z-50 select-none fixed top-1/2 -translate-y-1/2 md:transition-all md:duration-200 ${
-                commentsOpen ? "right-[452px]" : "right-4 lg:right-8"
+              className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 ${
+                commentsOpen
+                  ? "relative z-30 self-center"
+                  : "z-50 fixed top-1/2 -translate-y-1/2 right-4 lg:right-8 md:transition-all md:duration-200"
               }`}
             >
               <button

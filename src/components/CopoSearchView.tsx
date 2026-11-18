@@ -941,12 +941,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           )}
 
           {/* 4. Trending Photo Reviews Carousel */}
-          {!query.trim() && (
-            <section className="w-full relative mt-1.5 xs:mt-3 sm:mt-4">
-              <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
-                <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-                  Trending Photo Reviews
-                </h2>
+          <section className={`w-full relative mt-1.5 xs:mt-3 sm:mt-4 transition-opacity duration-200 ${query.trim() ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
+            <div className="flex items-center justify-between w-full mb-2.5 sm:mb-4 px-1">
+              <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
+                Trending Photo Reviews
+              </h2>
                 <button
                   type="button"
                   onClick={() => {
@@ -1066,7 +1065,6 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 </div>
               </div>
             </section>
-          )}
         </main>
       ) : (
         <div className="w-full max-w-4xl flex flex-col items-center animate-in slide-in-from-bottom-8 duration-500">

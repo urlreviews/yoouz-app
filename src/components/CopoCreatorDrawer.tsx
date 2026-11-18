@@ -1631,8 +1631,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 </div>
 
                 {authorVideos.length === 0 ? (
-                  <div className="bg-zinc-900/60 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-200 text-xs">
-                    {t("profile.noPhotosYet", "No photo reviews published yet.")}
+                  <div className="bg-zinc-900/60 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-300 text-xs">
+                    {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -1690,8 +1690,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {authorVideos.length === 0 ? (
-                <div className="bg-zinc-900/60 rounded-2xl p-8 text-center border border-zinc-800 text-zinc-200 text-xs">
-                  {t("profile.noPhotosYet", "No photo reviews published yet.")}
+                <div className="bg-zinc-900/60 rounded-2xl p-8 text-center border border-zinc-800 text-zinc-300 text-xs">
+                  {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">

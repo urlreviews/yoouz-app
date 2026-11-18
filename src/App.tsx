@@ -1490,12 +1490,14 @@ export function App() {
               window.history.replaceState(null, "", buildLocalizedPath(`/reviews/${getPlaceSlug(targetPlaceId)}`, language));
             } catch (e) {}
           } else {
-            // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
+            // STRICT POLICY 31: Fake/mock "reviewer" or generic "guest" pages are strictly banned
             const isDisallowedSlug = !rawParam || 
+              rawParam === "guest" ||
               rawParam === "reviewer" || 
               rawParam === "user" || 
               rawParam === "registered-user" || 
               rawParam === "verified-reviewer" || 
+              rawParam === "community-member" ||
               rawParam === "community-creator";
 
             if (isDisallowedSlug) {
@@ -5299,26 +5301,25 @@ export function App() {
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
         title = place ? `${displayedDrawerPlaceName || place.name} - Real Photo Reviews & Ratings | Yoouz` : `${formatBusinessName(slug, slug)} - Business Profile | Yoouz`;
-      } else if (isCreatorView && selectedAuthorForDrawer) {
-        const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
-          .toLowerCase()
-          .trim()
-          .replace(/^@+/, "")
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9_-]/g, "")
-          .replace(/-+/g, "-");
-        path = `/@${cleanSlug}`;
-        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
-      } else if (selectedAuthorForDrawer) {
-        const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
-          .toLowerCase()
-          .trim()
-          .replace(/^@+/, "")
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9_-]/g, "")
-          .replace(/-+/g, "-");
-        path = `/@${cleanSlug}`;
-        title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
+      } else if ((isCreatorView || selectedAuthorForDrawer) && selectedAuthorForDrawer) {
+        const isOwnGuestPreview =
+          selectedAuthorForDrawer.id === "guest_preview" ||
+          selectedAuthorForDrawer.userId === "guest_preview";
+        if (isOwnGuestPreview) {
+          path = "/";
+          title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
+        } else {
+          const cleanSlug = (selectedAuthorForDrawer.name || "reviewer")
+            .toLowerCase()
+            .trim()
+            .replace(/^@+/, "")
+            .replace(/^u\//i, "u_")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9_-]/g, "")
+            .replace(/-+/g, "-");
+          path = `/@${cleanSlug}`;
+          title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
+        }
       } else if (activeSection === "home") {
         path = "/";
         title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
@@ -5676,32 +5677,25 @@ export function App() {
   }, [activeSection, currentUser]);
 
   const handleGoToProfile = async () => {
-    const activeUser = currentUser || (await restoreExistingSessionOnly());
+    const activeUser = currentUser || (await ensureAnonymousUser(false));
     if (!activeUser) {
-      // Open Profile Drawer in Guest / Restore Mode without creating a database account yet
-      handleOpenCreatorDrawer({
-        id: "guest_preview",
-        userId: "guest_preview",
-        email: "",
-        handle: "@guest",
-        name: "Guest",
-        avatar: "",
-        isVerified: false,
-        isFollowed: false,
-        bio: "",
-        location: ""
-      });
       setActiveSection("home");
       return;
     }
-    const handle = activeUser?.username || activeUser?.name || activeUser?.email?.split("@")[0] || "me";
-    window.history.pushState(null, "", buildLocalizedPath("/@" + handle, language));
+    const rawHandle = activeUser?.username || activeUser?.name || activeUser?.email?.split("@")[0] || "me";
+    const cleanHandleSlug = rawHandle
+      .replace(/^@+/, "")
+      .replace(/^U\//i, "u_")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9_-]/g, "") || "me";
+    window.history.pushState(null, "", buildLocalizedPath("/@" + cleanHandleSlug, language));
     handleOpenCreatorDrawer({
       id: activeUser?.id || (activeUser as any)?.uid,
       userId: activeUser?.id || (activeUser as any)?.uid,
       email: activeUser?.email,
-      handle: activeUser?.handle || `@${handle.replace(/^@+/, "")}`,
-      name: activeUser?.name || handle,
+      handle: activeUser?.handle || `@${cleanHandleSlug}`,
+      name: activeUser?.name || rawHandle,
       avatar: activeUser?.avatar || "",
       isVerified: false,
       isFollowed: false,
@@ -5819,8 +5813,20 @@ export function App() {
     const authorLower = (author.name || "").toLowerCase().trim();
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();
 
-    // STRICT POLICY 31: Fake/mock "reviewer" pages are strictly banned
-    if (!authorLower || authorLower === "reviewer" || authorLower === "user" || authorLower === "registered user" || authorLower === "verified reviewer") {
+    const isGuestPreviewSelf = author.id === "guest_preview" || author.userId === "guest_preview";
+
+    // STRICT POLICY 31: Fake/mock "reviewer" or generic "guest" pages are strictly banned from visiting
+    if (
+      !isGuestPreviewSelf &&
+      (!authorLower ||
+        authorLower === "guest" ||
+        authorLower === "@guest" ||
+        authorLower === "community member" ||
+        authorLower === "reviewer" ||
+        authorLower === "user" ||
+        authorLower === "registered user" ||
+        authorLower === "verified reviewer")
+    ) {
       const matchedRealUser = allRegisteredUsers?.find((u: any) => {
         const uEmail = (u.email || "").toLowerCase().trim();
         const aEmail = (author.email || "").toLowerCase().trim();
@@ -8449,11 +8455,21 @@ export function App() {
                 (typeof window !== 'undefined' && window.innerWidth < 768 && (isPlaceView || isCreatorView))
               )}
               contextKey={currentFeedContextKey}
-              onOpenCreateModal={() => {
-                const targetPlaceForReview = isPlaceView ? (activeDrawerPlace || drawerPlace) : null;
-                setPreselectedPlaceForRecording(targetPlaceForReview);
-                setIsCreateModalOpen(true);
-              }}
+              feedContextType={isCreatorView ? "creator" : isPlaceView ? "place" : "feed"}
+              isOwnGuestPreview={Boolean(
+                isCreatorView &&
+                (selectedAuthorForDrawer?.id === "guest_preview" ||
+                  selectedAuthorForDrawer?.userId === "guest_preview")
+              )}
+              onOpenCreateModal={
+                isCreatorView
+                  ? undefined
+                  : () => {
+                      const targetPlaceForReview = isPlaceView ? (activeDrawerPlace || drawerPlace) : null;
+                      setPreselectedPlaceForRecording(targetPlaceForReview);
+                      setIsCreateModalOpen(true);
+                    }
+              }
               onLoadMore={loadMoreVideos}
               videos={activeFeedVideos}
               isLoading={isLoadingVideos}

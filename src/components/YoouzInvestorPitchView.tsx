@@ -399,6 +399,46 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       );
     }
 
+    if (chapter.page === 6) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/90 border border-zinc-800 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0 text-white font-black text-xs">
+              01
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white">1. Snap Photo in Seconds (No Account)</div>
+              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                Users never create an account, enter an email, or invent a password upfront—they just snap 1 live photo and rate 1–5 stars.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0 text-amber-400 font-black text-xs">
+              02
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white">2. Instant U/A4B6C8 Handle Created</div>
+              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                Yoouz automatically provisions their persistent U/XXXXXX account on the spot so their photo review goes live immediately.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-white text-zinc-950 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white">3. Optional 1-Time Phone Passkey</div>
+              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                After publishing (for the first time only), they can optionally tap Continue with Face ID on their phone to lock their handle forever.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -407,6 +447,53 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
       chapter.mobileImagePath && deviceViewByPage[chapter.page] === "mobile"
         ? "mobile"
         : chapter.frameMode;
+
+    if (chapter.page === 6) {
+      return (
+        <div className="rounded-2xl border border-zinc-800 bg-[#09090B] overflow-hidden">
+          <div className="px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-medium text-zinc-300 font-mono">
+              yoouz.com · Dual Proof Stage: Live U/XXXXXX Profile + Native iPhone Face ID Passkey
+            </span>
+            <span className="text-xs text-amber-400 font-semibold">
+              No Email · No Password · 1-Time Optional Face ID
+            </span>
+          </div>
+
+          <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-[#070709]">
+            <div className="lg:col-span-7 rounded-xl border border-zinc-800 bg-black overflow-hidden shadow-2xl">
+              <div className="px-3.5 py-2 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between text-[11px] text-zinc-300">
+                <span className="font-semibold text-white">01 · Live Yoouz U/6MRX8X Community Profile</span>
+                <span className="text-zinc-400 font-mono">Save Face ID (1-Time) Button</span>
+              </div>
+              <img
+                src="/pitch-assets/v2/06-passkey-live-app.png"
+                alt="Live U/XXXXXX Member Profile with 1-Time Face ID Passkey Button"
+                referrerPolicy="no-referrer"
+                className="w-full h-auto block object-contain bg-black"
+              />
+            </div>
+
+            <div className="lg:col-span-5 rounded-xl border border-zinc-700 bg-black overflow-hidden shadow-2xl">
+              <div className="px-3.5 py-2 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between text-[11px] text-zinc-300">
+                <span className="font-semibold text-white">02 · Native Phone Passkey Sheet</span>
+                <span className="text-amber-400 font-mono">Passkey for yoouz.com · U/A4B6C8</span>
+              </div>
+              <img
+                src="/pitch-assets/v2/06-iphone-passkey-prompt.png"
+                alt="Passkey for yoouz.com on iPhone Face ID for U/A4B6C8"
+                referrerPolicy="no-referrer"
+                className="w-full h-auto block object-contain bg-black"
+              />
+            </div>
+          </div>
+
+          <div className="px-5 py-2.5 bg-zinc-950 border-t border-zinc-800 text-xs text-zinc-400">
+            {chapter.imageCaption}
+          </div>
+        </div>
+      );
+    }
 
     if (chapter.frameMode === "embed") {
       return (

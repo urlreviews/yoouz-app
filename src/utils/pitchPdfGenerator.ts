@@ -135,7 +135,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
         // Right Column: 4 Numbered Explanation Cards (plus compact extras on Chapters 3, 14, 15)
         let curY = bodyTop;
         const gapY = 7;
-        const hasExtraBox = chapter.page === 3 || chapter.page === 14 || chapter.page === 15;
+        const hasExtraBox = chapter.page === 3 || chapter.page === 6 || chapter.page === 14 || chapter.page === 15;
         const extraH = hasExtraBox ? 54 : 0;
         const calloutAreaH = bodyH - (hasExtraBox ? extraH + gapY : 0);
         const cardH = Math.floor((calloutAreaH - gapY * 3) / 4);
@@ -186,6 +186,24 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .fillColor("#D4D4D8")
               .text(
                 "Shoppers inspect real photos and whole-star scores before opening the hardware camera—driving peak review completion.",
+                rightX + 10,
+                curY + 24,
+                { width: rightW - 20, lineGap: 1.2 }
+              );
+          } else if (chapter.page === 6) {
+            doc
+              .font("Helvetica-Bold")
+              .fontSize(7.8)
+              .fillColor("#F59E0B")
+              .text("ZERO SIGN-UP FLOW: 1. Snap 3s Photo  ->  2. Auto U/A4B6C8 Account  ->  3. Optional 1-Time Passkey", rightX + 10, curY + 10, {
+                width: rightW - 20,
+              });
+            doc
+              .font("Helvetica")
+              .fontSize(7.3)
+              .fillColor("#D4D4D8")
+              .text(
+                "Users never create an account, email, or password upfront—after their first review, 1 optional Face ID tap locks their handle forever.",
                 rightX + 10,
                 curY + 24,
                 { width: rightW - 20, lineGap: 1.2 }

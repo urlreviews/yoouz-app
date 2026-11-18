@@ -70,7 +70,7 @@ const STARTER_PROMPTS = [
   "How were the prices? 💰",
   "Is parking easy to find? 🚗",
   "Adding this to my bucket list! ⭐️",
-  "Great video quality! 🎥"
+  "Great live photo quality! 📸"
 ];
 
 // Helper to clean legacy author names containing outdated labels
@@ -1342,31 +1342,57 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   >
                     <div className="flex items-start gap-3">
                       {/* Commenter Avatar */}
-                      <img
-                        src={authorAvatarUrl}
-                        alt={displayName}
-                        className={`w-9 h-9 rounded-full object-cover border border-zinc-800 shadow-2xs shrink-0 ${(!comment.isOwner && onSelectAuthor && authorHandleToUse) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          if (comment.isOwner) {
-                            target.src = "/favicon.svg";
-                          } else {
-                            target.src = generateGoogleLetterAvatarSvg(
-                              displayName,
-                              128,
-                              authorHandleToUse
-                            );
-                          }
-                        }}
-                        onClick={() => !comment.isOwner && onSelectAuthor && authorHandleToUse && onSelectAuthor(authorHandleToUse, displayName, authorAvatarUrl)}
-                      />
+                      {(() => {
+                        const isClickableCommentAuthor = Boolean(
+                          !comment.isOwner &&
+                          onSelectAuthor &&
+                          authorHandleToUse &&
+                          displayName !== "Community Member" &&
+                          displayName !== "Guest" &&
+                          authorHandleToUse.replace(/^@+/, "").toLowerCase() !== "guest" &&
+                          authorHandleToUse.replace(/^@+/, "").toLowerCase() !== "communitymember"
+                        );
+                        return (
+                          <img
+                            src={authorAvatarUrl}
+                            alt={displayName}
+                            className={`w-9 h-9 rounded-full object-cover border border-zinc-800 shadow-2xs shrink-0 ${isClickableCommentAuthor ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (comment.isOwner) {
+                                target.src = "/favicon.svg";
+                              } else {
+                                target.src = generateGoogleLetterAvatarSvg(
+                                  displayName,
+                                  128,
+                                  authorHandleToUse
+                                );
+                              }
+                            }}
+                            onClick={() => isClickableCommentAuthor && onSelectAuthor?.(authorHandleToUse, displayName, authorAvatarUrl)}
+                          />
+                        );
+                      })()}
 
                       {/* Comment Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`font-bold text-zinc-100 text-xs break-all sm:break-words leading-tight no-underline outline-none select-none [-webkit-tap-highlight-color:transparent] ${(!comment.isOwner && onSelectAuthor && authorHandleToUse) ? "cursor-pointer hover:text-white active:opacity-80 transition-colors" : ""}`} onClick={() => !comment.isOwner && onSelectAuthor && authorHandleToUse && onSelectAuthor(authorHandleToUse, displayName, authorAvatarUrl)}>
-                            {displayName}
-                          </span>
+                          {(() => {
+                            const isClickableCommentAuthor = Boolean(
+                              !comment.isOwner &&
+                              onSelectAuthor &&
+                              authorHandleToUse &&
+                              displayName !== "Community Member" &&
+                              displayName !== "Guest" &&
+                              authorHandleToUse.replace(/^@+/, "").toLowerCase() !== "guest" &&
+                              authorHandleToUse.replace(/^@+/, "").toLowerCase() !== "communitymember"
+                            );
+                            return (
+                              <span className={`font-bold text-zinc-100 text-xs break-all sm:break-words leading-tight no-underline outline-none select-none [-webkit-tap-highlight-color:transparent] ${isClickableCommentAuthor ? "cursor-pointer hover:text-white active:opacity-80 transition-colors" : ""}`} onClick={() => isClickableCommentAuthor && onSelectAuthor?.(authorHandleToUse, displayName, authorAvatarUrl)}>
+                                {displayName}
+                              </span>
+                            );
+                          })()}
 
                           {/* Reviewer / Creator Badge */}
                           {isCommentAuthorCreator && (
@@ -1499,6 +1525,16 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                               const replyAvatarUrl = replyUserMeta.avatar;
                               const replyHandleToUse = replyUserMeta.handle;
 
+                              const isClickableReplyAuthor = Boolean(
+                                !reply.isOwner &&
+                                onSelectAuthor &&
+                                replyHandleToUse &&
+                                replyDisplayName !== "Community Member" &&
+                                replyDisplayName !== "Guest" &&
+                                replyHandleToUse.replace(/^@+/, "").toLowerCase() !== "guest" &&
+                                replyHandleToUse.replace(/^@+/, "").toLowerCase() !== "communitymember"
+                              );
+
                               return (
                                 <div
                                   key={reply.id}
@@ -1507,7 +1543,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                   <img
                                     src={replyAvatarUrl}
                                     alt={replyDisplayName}
-                                    className={`w-7 h-7 rounded-full object-cover border border-zinc-800 shrink-0 ${(!reply.isOwner && onSelectAuthor && replyHandleToUse) ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                                    className={`w-7 h-7 rounded-full object-cover border border-zinc-800 shrink-0 ${isClickableReplyAuthor ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                                     onError={(e) => {
                                       const target = e.currentTarget as HTMLImageElement;
                                       if (reply.isOwner) {
@@ -1520,11 +1556,11 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                         );
                                       }
                                     }}
-                                    onClick={() => !reply.isOwner && onSelectAuthor && replyHandleToUse && onSelectAuthor(replyHandleToUse, replyDisplayName, replyAvatarUrl)}
+                                    onClick={() => isClickableReplyAuthor && onSelectAuthor?.(replyHandleToUse, replyDisplayName, replyAvatarUrl)}
                                   />
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className={`font-bold text-zinc-100 text-[11px] break-all sm:break-words leading-tight no-underline outline-none select-none [-webkit-tap-highlight-color:transparent] ${(!reply.isOwner && onSelectAuthor && replyHandleToUse) ? "cursor-pointer hover:text-white active:opacity-80 transition-colors" : ""}`} onClick={() => !reply.isOwner && onSelectAuthor && replyHandleToUse && onSelectAuthor(replyHandleToUse, replyDisplayName, replyAvatarUrl)}>
+                                      <span className={`font-bold text-zinc-100 text-[11px] break-all sm:break-words leading-tight no-underline outline-none select-none [-webkit-tap-highlight-color:transparent] ${isClickableReplyAuthor ? "cursor-pointer hover:text-white active:opacity-80 transition-colors" : ""}`} onClick={() => isClickableReplyAuthor && onSelectAuthor?.(replyHandleToUse, replyDisplayName, replyAvatarUrl)}>
                                         {replyDisplayName}
                                       </span>
 

@@ -99,7 +99,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     kicker: "01 · EXECUTIVE SUMMARY & CORE THESIS",
     headline: "A Picture Is Worth 1,000 Words. One Live Photo Replaces Fake Text Reviews.",
     subheadline:
-      "Text reviews across Google, Yelp, and Trustpilot are overrun by AI-generated spam and anonymous copy-paste bots. Asking everyday shoppers to speak on camera fails at scale. Yoouz captures undeniable proof in 3 seconds: 1 real-time hardware camera photo + 1 to 5 solid whole stars.",
+      "Text reviews across Google, Yelp, and Trustpilot are overrun by AI-generated spam, fake bots, and recycled stock photos. Yoouz eliminates text-only and gallery-upload reviews completely: every review requires 1 real-time hardware camera photo + 1 to 5 solid whole stars captured in 3 seconds.",
     imagePath: "/pitch-assets/v2/01-home-discovery.png",
     frameMode: "desktop",
     imageCaption: "Live Production Desktop View (yoouz.com) — Universal Search, Trending Photo Proof Feed & Zero Sign-Up Friction",
@@ -282,33 +282,33 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     page: 5,
     shortTitle: "Auto U/XXXXXX Profile & Persistent Handle",
     kicker: "05 · ZERO-FRICTION IDENTITY ARCHITECTURE",
-    headline: "Zero Registration Walls: Instant U/XXXXXX Handle With Custom @Username Persistence.",
+    headline: "No Account Creation Needed: Snap & Publish in 3 Seconds, Get an Instant U/XXXXXX Handle.",
     subheadline:
-      "Most review platforms lose over 70% of mobile contributors at email verification and password walls. Yoouz auto-provisions a cryptographic U/XXXXXX community profile the moment a user publishes, likes, saves, or comments—editable anytime with zero lost history.",
+      "Legacy review sites lose over 70% of mobile reviewers at email, password, and OTP verification walls. On Yoouz, users never create an account upfront—they simply snap a live photo and rate 1–5 stars in a couple of seconds, and Yoouz automatically provisions their persistent U/XXXXXX profile on the spot.",
     imagePath: "/pitch-assets/v2/05-uhandle-profile.png",
     frameMode: "desktop",
-    imageCaption: "Live Member Profile (U/FCC8RS on jollibee.com.ph) — Provisioned Automatically Without Email or Password",
+    imageCaption: "Live Member Profile (U/FCC8RS on jollibee.com.ph) — Provisioned Automatically on First Photo Review With Zero Email or Password",
     callouts: [
       {
         id: "01",
-        title: "On-Action Automatic Handle Provisioning",
-        tag: "U/FCC8RS Auto-Created",
+        title: "Publish First in 3 Seconds—Zero Account Wall",
+        tag: "No Email · No Password",
         description:
-          "First contribution instantly generates a clean community handle (such as U/FCC8RS or U/FSQUT7) stored securely so momentum never stalls.",
+          "Customers never fill out registration forms before contributing. They snap 1 live photo, tap 1–5 whole stars, and their review is live immediately under an auto-assigned handle like U/FCC8RS or U/A4B6C8.",
       },
       {
         id: "02",
-        title: "Rename to Any Custom @Username Anytime",
-        tag: "History Follows You",
+        title: "1-Time Optional Passkey Prompt After First Action",
+        tag: "Optional Face ID Lock",
         description:
-          "Contributors can replace U/XXXXXX with their real name or public alias anytime—every prior photo review, follower, and like updates automatically.",
+          "Right after their first photo review—for the first time only—users get a non-intrusive option to save a Face ID / Touch ID Passkey on their phone to keep that account forever.",
       },
       {
         id: "03",
-        title: "Complete Community Showcase Tabs",
-        tag: "Overview · Reviews · About",
+        title: "Rename to Any Custom @Username Anytime",
+        tag: "History Follows You",
         description:
-          "Each member earns a structured portfolio showing average rating given, total live photo reviews, follower graph, and saved activity.",
+          "Contributors can keep their anonymous U/XXXXXX handle or switch to a custom @username anytime—every prior photo review, follower, and like updates automatically.",
       },
       {
         id: "04",
@@ -319,54 +319,54 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
       },
     ],
     metrics: [
-      { label: "Sign-Up Wall Drop-Off", value: "Eliminated", detail: "Zero email or OTP delay to contribute" },
-      { label: "Identity Continuity", value: "100% Synced", detail: "Custom @username updates past reviews" },
+      { label: "Upfront Sign-Up Friction", value: "0 Seconds", detail: "Snap & publish immediately without login" },
+      { label: "Identity Continuity", value: "100% Synced", detail: "Auto U/XXXXXX or custom @username" },
       { label: "Privacy Default", value: "Anonymous Start", detail: "No personal email ever shown publicly" },
     ],
   },
   {
     page: 6,
     shortTitle: "1-Tap Face ID / WebAuthn Passkey Lock",
-    kicker: "06 · BIOMETRIC PASSKEY SECURITY & VERIFIED BADGE",
-    headline: "1-Tap Face ID Passkey Protection: Own Your Handle Forever & Unlock the Verified Checkmark.",
+    kicker: "06 · 1-TIME OPTIONAL PHONE PASSKEY & VERIFIED BADGE",
+    headline: "No Email, No Password—Ever. Optional 1-Time Face ID Passkey on Phone Locks Your Handle Forever.",
     subheadline:
-      "Once a user builds reputation on their U/XXXXXX or custom profile, they upgrade to hardware-backed WebAuthn Passkey login in one tap. No passwords to forget, no phishing risk, full cross-device recovery, and instant white Verified badge eligibility.",
+      "After a user publishes their first photo review in seconds without creating an account, Yoouz offers a 1-time optional Face ID / Touch ID Passkey prompt right on their phone ('Passkey for yoouz.com · U/A4B6C8'). One glance binds their handle to their device's Secure Enclave and unlocks the Verified checkmark.",
     imagePath: "/pitch-assets/v2/06-passkey-settings.png",
     frameMode: "desktop",
-    imageCaption: "Account Security & Passkey Settings (yoouz.com/more) — Hardware-Backed WebAuthn Face ID & Touch ID",
+    imageCaption: "Dual Proof Stage — Live U/XXXXXX Community Profile ('Save Face ID 1-Time') + Native iOS 'Passkey for yoouz.com (U/A4B6C8)' Sheet",
     callouts: [
       {
         id: "01",
-        title: "FIDO2 / WebAuthn Hardware Passkey Flow",
-        tag: "Face ID · Touch ID",
+        title: "Native Phone Passkey Sheet ('Passkey for yoouz.com')",
+        tag: "U/A4B6C8 · Face ID Continue",
         description:
-          "Pairs directly with Apple Face ID, Touch ID, Windows Hello, or Android biometrics—eliminating credential stuffing and bot account farms.",
+          "Uses native iOS Face ID and Android Biometric WebAuthn directly in Safari/Chrome. Users tap 'Continue' once with Face ID—zero passwords to invent, type, or reset.",
       },
       {
         id: "02",
-        title: "Permanent Verified Reviewer Checkmark",
-        tag: "Trusted Identity Badge",
+        title: "1-Time Optional Upgrade After Instant Review",
+        tag: "Save Face ID (1-Time)",
         description:
-          "Biometrically secured reviewers earn the crisp white Verified checkmark next to their handle across trending feeds and search cards.",
+          "Passkey enrollment is never a blocker before taking a photo. It appears as a 1-time optional upgrade after contribution or inside the user's U/XXXXXX profile drawer.",
       },
       {
         id: "03",
-        title: "Instant Cross-Device Session Sync",
-        tag: "iCloud / Google Passkey",
+        title: "Permanent Verified Reviewer Checkmark",
+        tag: "Hardware-Bound Trust",
         description:
-          "Sign in seamlessly across iPhone Safari, desktop Chrome, and the installed Yoouz PWA with a single biometric glance.",
+          "Securing a U/XXXXXX or custom profile with a hardware Passkey awards the white Verified checkmark next to the user's name across all reviews and comments.",
       },
       {
         id: "04",
-        title: "Full User Control & Privacy Settings",
-        tag: "75+ Languages & Controls",
+        title: "Community Member vs. Business Profile Separation",
+        tag: "Commenters & Reviewers",
         description:
-          "From one unified preferences panel, users manage Passkeys, notification controls, language switcher, and account portability.",
+          "Visiting any community member (even comment-only users) opens their real member profile—never a generic guest page and never allowing photo reviews about a person.",
       },
     ],
     metrics: [
-      { label: "Password Reliance", value: "Zero Passwords", detail: "Cryptographic FIDO2 hardware keys" },
-      { label: "Login Latency", value: "< 1 Second", detail: "Single biometric Face ID / Touch ID tap" },
+      { label: "Email / Password Fields", value: "0 Required", detail: "100% passwordless FIDO2 / WebAuthn" },
+      { label: "Passkey Setup Time", value: "1 Glance (1x)", detail: "Optional 1-time Face ID tap after review" },
       { label: "Sybil Bot Defense", value: "Hardware Bound", detail: "Stops scripted fake reviewer farms" },
     ],
   },
@@ -656,7 +656,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
       "Search engines reward original, fresh visual evidence paired with structured Schema.org markup. Every claimed and auto-scraped business page on Yoouz publishes clean canonical routes in 75+ languages—putting real customer photos on Page 1 when buyers search a brand.",
     imagePath: "/pitch-assets/v2/13-seo-localized-page.png",
     frameMode: "desktop",
-    imageCaption: "Live Localized Business Page (/es/reviews/wolt.com) — 'Reseñas con Fotos' With Structured Photo Metadata",
+    imageCaption: "Live Localized Business Page (/es/reviews/sephora.com) — 'Descripción general · Reseñas con Fotos · Información' With Structured SEO Metadata",
     callouts: [
       {
         id: "01",
@@ -702,7 +702,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
       "This is not a slideware concept. Yoouz already runs in full production with claimed merchant accounts (such as yoouz.com and anythingvirtual.net) alongside 194+ auto-indexed companies across legal, dining, hospitality, beauty, and technology—all strictly privacy-protected.",
     imagePath: "/pitch-assets/v2/14-claimed-businesses.png",
     frameMode: "desktop",
-    imageCaption: "Verified Business Showcase (yoouz.com/reviews/sephora.com) — Real Customer Proof & Anonymous Business Shield",
+    imageCaption: "Live Production Showcase (yoouz.com/reviews/booksandbeans.co.uk) — Verified 5.0-Star Customer Photo Proof by U/FSQUT7",
     callouts: [
       {
         id: "01",

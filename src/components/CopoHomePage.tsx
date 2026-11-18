@@ -952,12 +952,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </div>
 
-        {/* 4. Trending Photo Reviews Grid / Carousel - Hidden while typing so search results sit on a clean canvas */}
-        {!query.trim() && (
-          <section className="w-full relative mt-0 md:mt-2 animate-in fade-in duration-200">
-            <div className="flex items-center justify-between w-full mb-2.5 sm:mb-3 px-1">
-              <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-                Trending Photo Reviews
+        {/* 4. Trending Photo Reviews Grid / Carousel - Remains visible in soft focus while typing */}
+        <section className={`w-full relative mt-0 md:mt-2 transition-opacity duration-200 ${query.trim() ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
+          <div className="flex items-center justify-between w-full mb-2.5 sm:mb-3 px-1">
+            <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
+              Trending Photo Reviews
               </h2>
               {trendingVideos.length > 0 && (
                 <button
@@ -1120,7 +1119,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
           )}
         </section>
-        )}
       </main>
     </div>
   );
