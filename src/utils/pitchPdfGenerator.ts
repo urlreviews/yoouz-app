@@ -136,7 +136,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
         let curY = bodyTop;
         const gapY = 7;
         const hasExtraBox = chapter.page === 3 || chapter.page === 6 || chapter.page === 14 || chapter.page === 15;
-        const extraH = hasExtraBox ? 54 : 0;
+        const extraH = chapter.page === 15 ? 62 : (hasExtraBox ? 54 : 0);
         const calloutAreaH = bodyH - (hasExtraBox ? extraH + gapY : 0);
         const cardH = Math.floor((calloutAreaH - gapY * 3) / 4);
 
@@ -227,19 +227,19 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           } else if (chapter.page === 15) {
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.8)
+              .fontSize(7.5)
               .fillColor("#FFFFFF")
               .text("SAAS PRICING:  $0 Free Profile  |  $49/mo Claimed Pro  |  $149/mo Growth & Embed", rightX + 10, curY + 9, {
                 width: rightW - 20,
               });
             doc
               .font("Helvetica")
-              .fontSize(7.4)
+              .fontSize(7.2)
               .fillColor("#F59E0B")
               .text(
                 "~95%+ Gross Margin via Bunny.net CDN (~120 KB photos) & Cloud SQL PostgreSQL.",
                 rightX + 10,
-                curY + 24,
+                curY + 23,
                 { width: rightW - 20, lineGap: 1.2 }
               );
           }
