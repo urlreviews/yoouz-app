@@ -221,16 +221,33 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isProgrammaticScrollRef = useRef<boolean>(currentIndex > 0);
+  const programmaticTargetIndexRef = useRef<number | null>(currentIndex > 0 ? currentIndex : null);
+  const programmaticStartTimeRef = useRef<number>(0);
+  const isUserTouchingRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastObserverIndexRef = useRef<number>(currentIndex);
+  const scrollSettleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastReportedIndexToParentRef = useRef<number>(initialIdxClamped);
 
-  const getCardTargetTop = useCallback((container: HTMLDivElement, cardEl: HTMLDivElement) => {
-    const containerRect = container.getBoundingClientRect();
-    const cardRect = cardEl.getBoundingClientRect();
-    if (cardRect.height > 0 && containerRect.height > 0) {
-      return container.scrollTop + (cardRect.top - containerRect.top);
+  // Keep latest props/callbacks in refs so background feed updates (e.g. view count increments)
+  // NEVER tear down scroll listeners or trigger boomerang snap-backs.
+  const effectiveVideosRef = useRef<VideoReview[]>(effectiveVideos);
+  effectiveVideosRef.current = effectiveVideos;
+  const displayItemsLengthRef = useRef<number>(displayItems.length);
+  displayItemsLengthRef.current = displayItems.length;
+  const onSelectVideoIndexRef = useRef(onSelectVideoIndex);
+  onSelectVideoIndexRef.current = onSelectVideoIndex;
+  const commentsOpenRef = useRef<boolean>(commentsOpen);
+  commentsOpenRef.current = commentsOpen;
+
+  const getCardTargetTop = useCallback((container: HTMLDivElement, cardIndex: number, cardEl?: HTMLDivElement | null) => {
+    const h = container.clientHeight;
+    if (h > 0) {
+      return cardIndex * h;
     }
-    return cardEl.offsetTop - container.offsetTop;
+    if (cardEl) {
+      return cardEl.offsetTop - container.offsetTop;
+    }
+    return 0;
   }, []);
 
   // Preconnect to CDN for crisp photo loading
@@ -255,70 +272,72 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       previousContextKeyRef.current = contextKey;
       initialMountTargetRef.current = null;
       userHasScrolledRef.current = false;
-      lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
+      isProgrammaticScrollRef.current = false;
+      lockedVideoIdRef.current = effectiveVideosRef.current[0]?.id || null;
       activeCardIndexRef.current = 0;
-      lastObserverIndexRef.current = 0;
+      lastReportedIndexToParentRef.current = 0;
       setActiveCardIndex(0);
-      onSelectVideoIndex(0);
+      onSelectVideoIndexRef.current(0);
       if (containerRef.current) {
         containerRef.current.scrollTo({ top: 0, behavior: "instant" });
       }
     }
-  }, [contextKey, effectiveVideos, onSelectVideoIndex]);
+  }, [contextKey]);
 
   const scrollToCard = useCallback(
     (targetCardIndex: number, behavior: ScrollBehavior = "smooth") => {
-      const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
-      if (targetCardIndex < 0 || targetCardIndex > maxIdx) return;
+      const len = displayItemsLengthRef.current;
+      const maxIdx = len > 0 ? len - 1 : 0;
+      const clampedTarget = Math.max(0, Math.min(targetCardIndex, maxIdx));
+      if (clampedTarget < 0 || clampedTarget > maxIdx) return;
 
       const prevActive = activeCardIndexRef.current;
-      const isJump = behavior !== "smooth" || Math.abs(targetCardIndex - prevActive) > 1;
-      activeCardIndexRef.current = targetCardIndex;
-      lastObserverIndexRef.current = targetCardIndex;
-      setActiveCardIndex(targetCardIndex);
+      const isJump = behavior !== "smooth" || Math.abs(clampedTarget - prevActive) > 1;
+      activeCardIndexRef.current = clampedTarget;
+      lastReportedIndexToParentRef.current = clampedTarget;
+      setActiveCardIndex(clampedTarget);
 
-      const targetItem = displayItems[targetCardIndex];
-      if (targetItem?.video?.id) {
-        lockedVideoIdRef.current = targetItem.video.id;
+      const vids = effectiveVideosRef.current;
+      if (vids[clampedTarget]?.id) {
+        lockedVideoIdRef.current = vids[clampedTarget].id;
       }
 
-      const realIdx = targetCardIndex % (effectiveVideos.length || 1);
-      onSelectVideoIndex(realIdx);
+      const realIdx = clampedTarget % (vids.length || 1);
+      onSelectVideoIndexRef.current(realIdx);
 
-      const cardEl = cardRefs.current[targetCardIndex];
       const container = containerRef.current;
-      if (cardEl && container) {
+      if (container) {
         isProgrammaticScrollRef.current = true;
-        const targetTop = getCardTargetTop(container, cardEl);
+        programmaticTargetIndexRef.current = clampedTarget;
+        programmaticStartTimeRef.current = Date.now();
+        const targetTop = getCardTargetTop(container, clampedTarget, cardRefs.current[clampedTarget]);
 
         if (isJump) {
-          // Temporarily disable scroll-snap so mobile browsers jump straight to targetTop instead of snapping back toward 0
           const savedSnap = container.style.scrollSnapType;
           container.style.scrollSnapType = "none";
           container.scrollTop = targetTop;
           if (snapRestoreRafRef.current !== null) cancelAnimationFrame(snapRestoreRafRef.current);
           snapRestoreRafRef.current = requestAnimationFrame(() => {
             if (containerRef.current) {
-              const verifiedTop = cardRefs.current[targetCardIndex]
-                ? getCardTargetTop(containerRef.current, cardRefs.current[targetCardIndex]!)
-                : targetTop;
-              if (Math.abs(containerRef.current.scrollTop - verifiedTop) > 4) {
+              const verifiedTop = getCardTargetTop(containerRef.current, clampedTarget, cardRefs.current[clampedTarget]);
+              if (Math.abs(containerRef.current.scrollTop - verifiedTop) > 2) {
                 containerRef.current.scrollTop = verifiedTop;
               }
-              containerRef.current.style.scrollSnapType = savedSnap || (commentsOpen ? "none" : "y mandatory");
+              containerRef.current.style.scrollSnapType = savedSnap || (commentsOpenRef.current ? "none" : "y mandatory");
             }
           });
         } else {
-          container.scrollTo({ top: targetTop, behavior });
+          container.scrollTo({ top: targetTop, behavior: "smooth" });
         }
 
         if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = setTimeout(() => {
           isProgrammaticScrollRef.current = false;
-        }, isJump ? 450 : 500);
+          programmaticTargetIndexRef.current = null;
+        }, isJump ? 250 : 650);
       }
     },
-    [displayItems, effectiveVideos.length, onSelectVideoIndex, getCardTargetTop, commentsOpen]
+    [getCardTargetTop]
   );
 
   const getLogoForVideo = useCallback(
@@ -475,71 +494,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [currentIndex, effectiveVideos, isLoading, prefetchUpcomingPhotos]);
 
-  // IntersectionObserver index detection
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (isProgrammaticScrollRef.current) return;
-        if (initialMountTargetRef.current !== null && !userHasScrolledRef.current) return;
-
-        if (container.scrollTop <= 20) {
-          if (activeCardIndexRef.current !== 0) {
-            activeCardIndexRef.current = 0;
-            lastObserverIndexRef.current = 0;
-            lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
-            setActiveCardIndex(0);
-            onSelectVideoIndex(0);
-          }
-          return;
-        }
-
-        const visibleEntries = entries.filter((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.25);
-        if (visibleEntries.length === 0) return;
-
-        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const bestEntry = visibleEntries[0];
-
-        const idxAttr = bestEntry.target.getAttribute("data-video-index");
-        if (idxAttr !== null) {
-          const cardIdx = parseInt(idxAttr, 10);
-          const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
-          if (!isNaN(cardIdx) && cardIdx >= 0 && cardIdx <= maxIdx && cardIdx !== activeCardIndexRef.current) {
-            activeCardIndexRef.current = cardIdx;
-            lastObserverIndexRef.current = cardIdx;
-            lockedVideoIdRef.current = effectiveVideos[cardIdx]?.id || null;
-            setActiveCardIndex(cardIdx);
-            const realIdx = cardIdx % (effectiveVideos.length || 1);
-            onSelectVideoIndex(realIdx);
-            if (realIdx < effectiveVideos.length) {
-              prefetchUpcomingPhotos(effectiveVideos, realIdx);
-            }
-          }
-        }
-      },
-      {
-        root: container,
-        threshold: [0.15, 0.3, 0.45, 0.75]
-      }
-    );
-
-    const attachObservers = () => {
-      const cardElements = container.querySelectorAll("[data-video-index]");
-      cardElements.forEach((el) => observer.observe(el));
-    };
-
-    attachObservers();
-    const mutationObserver = new MutationObserver(() => attachObservers());
-    mutationObserver.observe(container, { childList: true, subtree: true });
-
-    return () => {
-      mutationObserver.disconnect();
-      observer.disconnect();
-    };
-  }, [displayItems.length, effectiveVideos, onSelectVideoIndex, prefetchUpcomingPhotos]);
-
+  // Handle brand-new photo just uploaded in this session (jump cleanly to top)
   const prevFirstVideoIdRef = useRef<string | null>(null);
   useEffect(() => {
     const currentFirstId = effectiveVideos[0]?.id || null;
@@ -551,21 +506,21 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
       if (isNewSessionPhoto || (isInitialMount && currentIndex === 0 && activeCardIndexRef.current === 0)) {
         lockedVideoIdRef.current = currentFirstId;
-        lastObserverIndexRef.current = 0;
+        lastReportedIndexToParentRef.current = 0;
         activeCardIndexRef.current = 0;
         setActiveCardIndex(0);
-        onSelectVideoIndex(0);
+        onSelectVideoIndexRef.current(0);
         if (containerRef.current) {
           containerRef.current.scrollTo({ top: 0, behavior: "instant" });
         }
       }
     }
-  }, [effectiveVideos, onSelectVideoIndex, currentIndex]);
+  }, [effectiveVideos, currentIndex]);
 
-  // Keep player pinned to the locked videoId if effectiveVideos updates or reorders before user scrolls
+  // Keep player pinned to the initial deep-linked videoId ONLY before the user scrolls
   useEffect(() => {
     const lockedId = lockedVideoIdRef.current;
-    if (!lockedId || userHasScrolledRef.current) return;
+    if (!lockedId || userHasScrolledRef.current || isUserTouchingRef.current) return;
     const pinnedIdx = effectiveVideos.findIndex((v) => v.id === lockedId);
     if (pinnedIdx !== -1 && pinnedIdx !== activeCardIndexRef.current) {
       initialMountTargetRef.current = pinnedIdx;
@@ -573,6 +528,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
   }, [effectiveVideos, scrollToCard]);
 
+  // Initial mount alignment & touch lifecycle tracking
   useEffect(() => {
     const container = containerRef.current;
     if (!container) {
@@ -580,26 +536,45 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       return;
     }
 
-    const markUserScrolled = () => {
+    const handleTouchStart = () => {
+      isUserTouchingRef.current = true;
+      userHasScrolledRef.current = true;
+      initialMountTargetRef.current = null;
+      // User touch immediately overrides any in-flight programmatic scroll
+      isProgrammaticScrollRef.current = false;
+      programmaticTargetIndexRef.current = null;
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isUserTouchingRef.current = false;
+    };
+
+    const handleUserWheel = () => {
       userHasScrolledRef.current = true;
       initialMountTargetRef.current = null;
     };
 
-    container.addEventListener("touchstart", markUserScrolled, { passive: true });
-    container.addEventListener("wheel", markUserScrolled, { passive: true });
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+    container.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    container.addEventListener("wheel", handleUserWheel, { passive: true });
 
     const alignToTarget = (idx: number) => {
-      const cardEl = cardRefs.current[idx];
-      if (!cardEl || !containerRef.current) return;
-      const savedSnap = containerRef.current.style.scrollSnapType;
-      containerRef.current.style.scrollSnapType = "none";
-      const targetTop = getCardTargetTop(containerRef.current, cardEl);
-      if (Math.abs(containerRef.current.scrollTop - targetTop) > 4) {
-        containerRef.current.scrollTop = targetTop;
+      const c = containerRef.current;
+      if (!c) return;
+      const savedSnap = c.style.scrollSnapType;
+      c.style.scrollSnapType = "none";
+      const targetTop = getCardTargetTop(c, idx, cardRefs.current[idx]);
+      if (Math.abs(c.scrollTop - targetTop) > 2) {
+        c.scrollTop = targetTop;
       }
       requestAnimationFrame(() => {
         if (containerRef.current) {
-          containerRef.current.style.scrollSnapType = savedSnap || "y mandatory";
+          containerRef.current.style.scrollSnapType = savedSnap || (commentsOpenRef.current ? "none" : "y mandatory");
         }
       });
     };
@@ -612,7 +587,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     if (startIdx <= 0) {
       isProgrammaticScrollRef.current = false;
       container.scrollTo({ top: 0, behavior: "instant" });
-    } else if (startIdx < displayItems.length) {
+    } else if (startIdx < displayItemsLengthRef.current) {
       scrollToCard(startIdx, "instant");
       requestAnimationFrame(() => alignToTarget(startIdx));
       t1 = setTimeout(() => {
@@ -625,7 +600,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           alignToTarget(startIdx);
         }
         isProgrammaticScrollRef.current = false;
-      }, 320);
+      }, 300);
 
       if (typeof ResizeObserver !== "undefined") {
         resizeObs = new ResizeObserver(() => {
@@ -640,179 +615,265 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     }
 
     return () => {
-      container.removeEventListener("touchstart", markUserScrolled);
-      container.removeEventListener("wheel", markUserScrolled);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchend", handleTouchEnd);
+      container.removeEventListener("touchcancel", handleTouchEnd);
+      container.removeEventListener("wheel", handleUserWheel);
       if (t1) clearTimeout(t1);
       if (t2) clearTimeout(t2);
       if (resizeObs) resizeObs.disconnect();
     };
-  }, []);
+  }, [getCardTargetTop, scrollToCard]);
 
+  // Single-source-of-truth settled scroll index detector (ZERO partial IntersectionObserver misfires,
+  // ZERO mid-swipe App.tsx re-renders, ZERO boomerang snap-backs)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let rafId: number | null = null;
+    const commitSettledSlide = () => {
+      const h = container.clientHeight;
+      if (!h) return;
 
-    const checkActiveCard = () => {
-      if (isProgrammaticScrollRef.current) return;
-      const containerTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
-      if (!containerHeight) return;
-
-      if (initialMountTargetRef.current !== null && !userHasScrolledRef.current && containerTop <= 20) {
+      if (initialMountTargetRef.current !== null && !userHasScrolledRef.current && container.scrollTop <= 20) {
         return;
       }
 
-      if (containerTop <= 20) {
-        if (activeCardIndexRef.current !== 0) {
-          activeCardIndexRef.current = 0;
-          lastObserverIndexRef.current = 0;
-          lockedVideoIdRef.current = effectiveVideos[0]?.id || null;
-          setActiveCardIndex(0);
-          onSelectVideoIndex(0);
-        }
-        return;
-      }
+      const len = displayItemsLengthRef.current;
+      const maxIdx = len > 0 ? len - 1 : 0;
+      const computedIdx = Math.max(0, Math.min(maxIdx, Math.round(container.scrollTop / h)));
 
-      const containerCenter = containerTop + containerHeight / 2;
-      const cardElements = container.querySelectorAll<HTMLElement>("[data-video-index]");
-      if (cardElements.length === 0) return;
-
-      let closestIndex = -1;
-      let minDistance = Infinity;
-
-      const containerRect = container.getBoundingClientRect();
-      cardElements.forEach((el) => {
-        const elRect = el.getBoundingClientRect();
-        const cardTop = containerRect.height > 0 ? containerTop + (elRect.top - containerRect.top) : el.offsetTop - container.offsetTop;
-        const cardCenter = cardTop + el.clientHeight / 2;
-        const distance = Math.abs(containerCenter - cardCenter);
-        if (distance < minDistance) {
-          minDistance = distance;
-          const idxAttr = el.getAttribute("data-video-index");
-          if (idxAttr !== null) {
-            closestIndex = parseInt(idxAttr, 10);
-          }
-        }
-      });
-
-      const maxIdx = displayItems.length > 0 ? displayItems.length - 1 : 0;
-      if (closestIndex >= 0 && closestIndex <= maxIdx && closestIndex !== activeCardIndexRef.current) {
-        activeCardIndexRef.current = closestIndex;
-        lastObserverIndexRef.current = closestIndex;
-        lockedVideoIdRef.current = effectiveVideos[closestIndex]?.id || null;
-        setActiveCardIndex(closestIndex);
-        const realIdx = closestIndex % (effectiveVideos.length || 1);
-        onSelectVideoIndex(realIdx);
-        if (realIdx < effectiveVideos.length) {
-          prefetchUpcomingPhotos(effectiveVideos, realIdx);
+      if (computedIdx !== activeCardIndexRef.current) {
+        activeCardIndexRef.current = computedIdx;
+        lastReportedIndexToParentRef.current = computedIdx;
+        const vids = effectiveVideosRef.current;
+        lockedVideoIdRef.current = vids[computedIdx]?.id || null;
+        setActiveCardIndex(computedIdx);
+        const realIdx = computedIdx % (vids.length || 1);
+        onSelectVideoIndexRef.current(realIdx);
+        if (realIdx < vids.length) {
+          prefetchUpcomingPhotos(vids, realIdx);
         }
       }
     };
-
-    const handleScroll = () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(checkActiveCard);
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    container.addEventListener("scrollend", checkActiveCard, { passive: true });
-
-    return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      container.removeEventListener("scroll", handleScroll);
-      container.removeEventListener("scrollend", checkActiveCard);
-    };
-  }, [displayItems.length, effectiveVideos, onSelectVideoIndex, prefetchUpcomingPhotos]);
-
-  useEffect(() => {
-    const currentRealIdx = activeCardIndexRef.current % (effectiveVideos.length || 1);
-    if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < effectiveVideos.length) {
-      lockedVideoIdRef.current = effectiveVideos[currentIndex]?.id || null;
-      const isLargeJump = Math.abs(currentIndex - currentRealIdx) > 1;
-      scrollToCard(currentIndex, currentIndex === 0 || isLargeJump ? "instant" : "smooth");
-    }
-  }, [currentIndex, effectiveVideos, scrollToCard]);
-
-  const handleNext = useCallback(() => {
-    const nextIdx = activeCardIndexRef.current + 1;
-    if (nextIdx < displayItems.length) {
-      scrollToCard(nextIdx, "smooth");
-    }
-  }, [displayItems.length, scrollToCard]);
-
-  const handlePrev = useCallback(() => {
-    if (activeCardIndexRef.current > 0) {
-      scrollToCard(activeCardIndexRef.current - 1, "smooth");
-    } else if (displayItems.length > 1) {
-      scrollToCard(displayItems.length - 1, "smooth");
-    } else {
-      scrollToCard(0, "smooth");
-    }
-  }, [displayItems.length, scrollToCard]);
-
-  // Desktop Mouse Wheel & Trackpad Navigation
-  useEffect(() => {
-    const mainEl = mainRef.current || containerRef.current;
-    if (!mainEl) return;
-
-    let wheelTimeout: NodeJS.Timeout | null = null;
-    let isWheeling = false;
-
-    const handleWheel = (e: WheelEvent) => {
-      const targetEl = e.target as HTMLElement | null;
-      if (
-        moreMenuVideo !== null ||
-        targetEl?.closest?.(
-          "#yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, #copo-create-review-modal, #copo-auth-modal, textarea, input, select, [contenteditable='true']"
-        ) !== null
-      ) {
-        return;
-      }
-
-      if (isWheeling) return;
-
-      if (Math.abs(e.deltaY) >= 18) {
-        if (e.deltaY > 0) {
-          isWheeling = true;
-          handleNext();
-        } else if (activeCardIndexRef.current > 0) {
-          isWheeling = true;
-          handlePrev();
-        } else {
-          if (containerRef.current && containerRef.current.scrollTop < 0) {
-            containerRef.current.scrollTop = 0;
-          }
-        }
-
-        if (wheelTimeout) clearTimeout(wheelTimeout);
-        wheelTimeout = setTimeout(() => {
-          isWheeling = false;
-        }, 400);
-      }
-    };
-
-    mainEl.addEventListener("wheel", handleWheel, { passive: true });
-    return () => {
-      mainEl.removeEventListener("wheel", handleWheel);
-      if (wheelTimeout) clearTimeout(wheelTimeout);
-    };
-  }, [videos.length, moreMenuVideo, handleNext, handlePrev]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
 
     const handleScroll = () => {
       if (activeCardIndexRef.current === 0 && container.scrollTop < 0) {
         container.scrollTop = 0;
       }
+
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+
+      // If programmatic scroll is running, let scrollend or fallback clear it cleanly
+      if (isProgrammaticScrollRef.current) {
+        scrollSettleTimerRef.current = setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+          programmaticTargetIndexRef.current = null;
+          commitSettledSlide();
+        }, 180);
+        return;
+      }
+
+      // Wait until touch ends & momentum settles so React NEVER re-renders mid-swipe
+      scrollSettleTimerRef.current = setTimeout(() => {
+        if (!isUserTouchingRef.current) {
+          commitSettledSlide();
+        }
+      }, 130);
+    };
+
+    const handleScrollEnd = () => {
+      // Ignore stale scrollend emitted when a new programmatic smooth scroll aborts an older one mid-flight
+      if (isProgrammaticScrollRef.current && programmaticTargetIndexRef.current !== null) {
+        const h = container.clientHeight;
+        const expectedTop = programmaticTargetIndexRef.current * h;
+        const elapsed = Date.now() - programmaticStartTimeRef.current;
+        if (h > 0 && Math.abs(container.scrollTop - expectedTop) > 12 && elapsed < 450) {
+          return;
+        }
+      }
+
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+        scrollSettleTimerRef.current = null;
+      }
+      isProgrammaticScrollRef.current = false;
+      programmaticTargetIndexRef.current = null;
+      if (!isUserTouchingRef.current) {
+        commitSettledSlide();
+      }
+    };
+
+    // Fallback for slow drag-and-hold mobile releases with zero post-release momentum
+    const handleTouchEndSettle = () => {
+      if (scrollSettleTimerRef.current) {
+        clearTimeout(scrollSettleTimerRef.current);
+      }
+      scrollSettleTimerRef.current = setTimeout(() => {
+        if (!isUserTouchingRef.current && !isProgrammaticScrollRef.current) {
+          commitSettledSlide();
+        }
+      }, 160);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
+    container.addEventListener("scrollend", handleScrollEnd, { passive: true });
+    container.addEventListener("touchend", handleTouchEndSettle, { passive: true });
+    container.addEventListener("touchcancel", handleTouchEndSettle, { passive: true });
+
+    return () => {
+      if (scrollSettleTimerRef.current) clearTimeout(scrollSettleTimerRef.current);
+      container.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("scrollend", handleScrollEnd);
+      container.removeEventListener("touchend", handleTouchEndSettle);
+      container.removeEventListener("touchcancel", handleTouchEndSettle);
+    };
+  }, [prefetchUpcomingPhotos]);
+
+  // External prop sync ONLY: scroll programmatically ONLY when the parent explicitly selects
+  // a different video index (e.g. clicking a review card from Home/Business/Profile),
+  // NEVER boomeranging back to a stale currentIndex during/after user scrolling.
+  useEffect(() => {
+    if (isUserTouchingRef.current) return;
+    if (currentIndex === lastReportedIndexToParentRef.current) return;
+    const vids = effectiveVideosRef.current;
+    const currentRealIdx = activeCardIndexRef.current % (vids.length || 1);
+    if (currentIndex !== currentRealIdx && currentIndex >= 0 && currentIndex < vids.length) {
+      lockedVideoIdRef.current = vids[currentIndex]?.id || null;
+      const isLargeJump = Math.abs(currentIndex - currentRealIdx) > 1;
+      scrollToCard(currentIndex, currentIndex === 0 || isLargeJump ? "instant" : "smooth");
+    } else {
+      lastReportedIndexToParentRef.current = currentIndex;
+    }
+  }, [currentIndex, scrollToCard]);
+
+  const handleNext = useCallback(() => {
+    const nextIdx = activeCardIndexRef.current + 1;
+    if (nextIdx < displayItemsLengthRef.current) {
+      scrollToCard(nextIdx, "smooth");
+    }
+  }, [scrollToCard]);
+
+  const handlePrev = useCallback(() => {
+    if (activeCardIndexRef.current > 0) {
+      scrollToCard(activeCardIndexRef.current - 1, "smooth");
+    }
+  }, [scrollToCard]);
+
+  // Desktop Mouse Wheel & Trackpad Navigation (non-passive so native scroll NEVER fights smooth step snap;
+  // momentum-aware gesture lock so 1 mouse notch or 1 trackpad swipe moves cleanly by exactly 1 photo)
+  useEffect(() => {
+    const mainEl = mainRef.current || containerRef.current;
+    if (!mainEl) return;
+
+    let wheelLocked = false;
+    let accumulatedDelta = 0;
+    let lastWheelTime = 0;
+    let lastAbsDelta = 0;
+    let lastDirection = 0;
+    let gestureReleaseTimer: ReturnType<typeof setTimeout> | null = null;
+    let lockFloorTimer: ReturnType<typeof setTimeout> | null = null;
+    let canAccelerateBreak = false;
+
+    const resetGesture = () => {
+      wheelLocked = false;
+      accumulatedDelta = 0;
+      lastAbsDelta = 0;
+      lastDirection = 0;
+      canAccelerateBreak = false;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const targetEl = e.target as HTMLElement | null;
+      if (
+        commentsOpenRef.current ||
+        moreMenuVideo !== null ||
+        targetEl?.closest?.(
+          "#copo-comments-modal-root, #copo-comments-panel, #yoouz-report-modal-overlay, #yoouz-report-modal-dialog, #yoouz-share-modal-overlay, #yoouz-share-modal-dialog, #copo-create-review-modal, #copo-auth-modal, textarea, input, select, [contenteditable='true']"
+        ) !== null
+      ) {
+        return;
+      }
+
+      // Ignore horizontal-dominant trackpad swipes
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+      // Prevent native scroll from fighting our single-step smooth slide transition
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+
+      const now = Date.now();
+      // Normalize line/page wheel modes (Firefox / Windows mice) to pixel-equivalent delta
+      const rawDeltaY = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+      const absDelta = Math.abs(rawDeltaY);
+      if (absDelta < 2) return;
+
+      const direction = rawDeltaY > 0 ? 1 : -1;
+      const timeSinceLast = now - lastWheelTime;
+
+      // Refresh silence detector: when trackpad inertia stops for 150ms, unlock for next swipe
+      if (gestureReleaseTimer) clearTimeout(gestureReleaseTimer);
+      gestureReleaseTimer = setTimeout(resetGesture, 150);
+
+      // If user explicitly reverses scroll direction, unlock immediately for responsive back-navigation
+      if (lastDirection !== 0 && direction !== lastDirection && absDelta >= 12) {
+        wheelLocked = false;
+        accumulatedDelta = 0;
+        canAccelerateBreak = false;
+      }
+
+      // Allow deliberate second rapid flick on trackpad if delta spikes sharply after floor delay
+      if (wheelLocked && canAccelerateBreak && absDelta > Math.max(30, lastAbsDelta * 1.75) && timeSinceLast < 120) {
+        wheelLocked = false;
+        accumulatedDelta = 0;
+        canAccelerateBreak = false;
+      }
+
+      lastWheelTime = now;
+      lastAbsDelta = absDelta;
+      lastDirection = direction;
+
+      if (wheelLocked) return;
+
+      // Reset stale accumulation if pause > 160ms
+      if (timeSinceLast > 160) {
+        accumulatedDelta = 0;
+      }
+      accumulatedDelta += rawDeltaY;
+
+      // Discrete mouse wheel notch (~100px) triggers immediately; smooth trackpad triggers at 38px cumulative delta
+      if (Math.abs(accumulatedDelta) >= 38) {
+        wheelLocked = true;
+        accumulatedDelta = 0;
+        canAccelerateBreak = false;
+        userHasScrolledRef.current = true;
+        initialMountTargetRef.current = null;
+
+        if (direction > 0) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
+
+        if (lockFloorTimer) clearTimeout(lockFloorTimer);
+        lockFloorTimer = setTimeout(() => {
+          canAccelerateBreak = true;
+        }, 320);
+      }
+    };
+
+    mainEl.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      mainEl.removeEventListener("wheel", handleWheel);
+      if (gestureReleaseTimer) clearTimeout(gestureReleaseTimer);
+      if (lockFloorTimer) clearTimeout(lockFloorTimer);
+    };
+  }, [moreMenuVideo, handleNext, handlePrev]);
+
+
 
   // Desktop Keyboard navigation
   useEffect(() => {
@@ -960,23 +1021,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       style={{ scrollbarWidth: "none", msOverflowStyle: "none", containerType: "size" }}
     >
       <div
-        className={`w-full h-full flex items-center justify-center relative ${
-          isEmbed
-            ? "p-0"
-            : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-auto md:justify-center gap-4 lg:gap-6 md:max-h-[95vh] md:p-3"
-        }`}
+        className="w-full h-full min-h-full max-h-full flex items-center justify-center relative"
       >
-        {/* Scroll Snap Feed Container */}
+        {/* Scroll Snap Feed Container (100% height slides on both mobile & desktop) */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full ${
+          className={`w-full h-full min-h-full max-h-full ${
             commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-auto touch-pan-y"
-          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0 ${
-            isEmbed
-              ? "gap-3 p-1 justify-center"
-              : "min-h-full max-h-full md:min-h-0 md:max-h-none md:h-[min(93vh,860px)] md:w-auto md:gap-4"
-          }`}
+          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0`}
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: commentsOpen ? "none" : "y mandatory",
@@ -1043,6 +1096,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
         {/* Floating Up/Down Navigation Buttons (Desktop Only) */}
         {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
+          const isAtFirstPhoto = activeCardIndex <= 0;
           const isAtLastPhoto = activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
 
           return (
@@ -1057,8 +1111,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <button
                 id="btn-scroll-prev-video"
                 onClick={handlePrev}
-                className="w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border border-zinc-700/80 bg-zinc-800/90 hover:bg-zinc-700/90 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-2xl shadow-black/80 flex items-center justify-center transition-all"
-                title="Previous Review (Up Arrow)"
+                disabled={isAtFirstPhoto}
+                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
+                  isAtFirstPhoto
+                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
+                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                }`}
+                title={isAtFirstPhoto ? "First Review" : "Previous Review (Up Arrow)"}
                 aria-label="Previous Review"
               >
                 <ChevronUp className="w-6 h-6 stroke-[2.5]" />

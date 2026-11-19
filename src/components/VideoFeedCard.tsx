@@ -511,12 +511,17 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         ref={cardRef}
         data-video-index={index}
         id={`copo-feed-item-${video.id}`}
-        className={`snap-start snap-always shrink-0 relative select-none flex flex-row items-end justify-center ${
-          isEmbed
-            ? "w-auto h-full max-h-full"
-            : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:w-auto md:h-auto"
+        className={`snap-start snap-always shrink-0 relative select-none w-full h-full min-h-full max-h-full flex items-center justify-center ${
+          isEmbed ? "p-1" : "md:py-3"
         }`}
       >
+        <div
+          className={`flex flex-row items-end justify-center ${
+            isEmbed
+              ? "w-auto h-full max-h-full"
+              : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-full md:w-auto md:h-auto"
+          }`}
+        >
         {/* 1. Main 9:16 Live Photo Frame */}
         <div
           id={`copo-video-card-${video.id}`}
@@ -814,6 +819,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             {renderActionButtons(true)}
           </aside>
         )}
+        </div>
       </div>
     </>
   );
