@@ -4879,7 +4879,69 @@ async function startServer() {
     }
   });
   app.use((req: any, res: any, next: any) => {
-    const cleanPath = (req.path || '').toLowerCase();
+    const rawReqPath = req.path || '/';
+    const cleanPath = rawReqPath.toLowerCase();
+
+    // Prevent Google Search Console 404 / duplicate-canonical / redirect-error issues with clean, single-hop, loop-proof 301 redirects on GET page aliases
+    if (req.method === 'GET' && !cleanPath.startsWith('/api/') && !cleanPath.startsWith('/assets/') && !cleanPath.startsWith('/uploads/')) {
+      const safeRedirect301 = (targetPath: string) => {
+        const normTarget = targetPath.replace(/\/{2,}/g, '/');
+        if (normTarget && normTarget !== rawReqPath && normTarget.toLowerCase() !== rawReqPath) {
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.redirect(301, normTarget);
+        }
+        return null;
+      };
+
+      // 1. Legacy /trade category URLs -> 301 to /discover (eliminates GSC 404 errors)
+      if (cleanPath === '/trade' || cleanPath.startsWith('/trade/')) {
+        return safeRedirect301('/discover') || next();
+      }
+      // 2. Legacy /place/<slug> -> 301 to canonical /reviews/<lowercase-clean-slug>
+      const placeAlias = rawReqPath.match(/^\/place\/([^\/]+)\/?$/i);
+      if (placeAlias && placeAlias[1]) {
+        const rawSlug = decodeURIComponent(placeAlias[1]).trim();
+        const canonicalSlug = (cleanDomainName(rawSlug) || rawSlug).toLowerCase().replace(/^www\./, '').trim();
+        if (canonicalSlug) return safeRedirect301(`/reviews/${encodeURIComponent(canonicalSlug)}`) || next();
+      }
+      // 3. Legacy singular /review/<slug> or /review/<slug>/<id> -> 301 to canonical /reviews/...
+      const reviewAlias = rawReqPath.match(/^\/review\/([^\/]+)(?:\/([^\/]+))?\/?$/i);
+      if (reviewAlias && reviewAlias[1]) {
+        const rawSlug = decodeURIComponent(reviewAlias[1]).trim();
+        if (!/^rev[-_]/i.test(rawSlug)) {
+          const canonicalSlug = (cleanDomainName(rawSlug) || rawSlug).toLowerCase().replace(/^www\./, '').trim();
+          const revIdPart = reviewAlias[2] ? `/${encodeURIComponent(decodeURIComponent(reviewAlias[2]).trim())}` : '';
+          if (canonicalSlug) return safeRedirect301(`/reviews/${encodeURIComponent(canonicalSlug)}${revIdPart}`) || next();
+        }
+      }
+      // 4. Normalize /reviews/www.<domain> or glued typo slugs (e.g. zara.comtakes) -> 301 to clean lowercase /reviews/<domain>
+      const reviewsNorm = rawReqPath.match(/^\/reviews\/([^\/]+)(?:\/([^\/]+))?\/?$/);
+      if (reviewsNorm && reviewsNorm[1]) {
+        const rawSlug = decodeURIComponent(reviewsNorm[1]).trim();
+        const cleaned = cleanDomainName(rawSlug);
+        const targetSlug = (cleaned || rawSlug).toLowerCase().replace(/^www\./, '').trim();
+        const revPart = reviewsNorm[2] ? `/${encodeURIComponent(decodeURIComponent(reviewsNorm[2]).trim())}` : '';
+        if (targetSlug && (rawSlug !== targetSlug || rawReqPath.endsWith('/'))) {
+          return safeRedirect301(`/reviews/${encodeURIComponent(targetSlug)}${revPart}`) || next();
+        }
+      }
+      // 5. Legacy creator aliases /profile/<h>, /creator/<h>, /user/<h> -> 301 to /@<h>
+      const creatorAlias = rawReqPath.match(/^\/(?:profile|creator|user)\/([^\/]+)\/?$/i);
+      if (creatorAlias && creatorAlias[1]) {
+        const cleanH = decodeURIComponent(creatorAlias[1]).replace(/^@+/, '').trim().toLowerCase();
+        if (cleanH) return safeRedirect301(`/@${encodeURIComponent(cleanH)}`) || next();
+      }
+      // 6. Collapse duplicate slashes (e.g. //reviews/...) into single clean path
+      if (rawReqPath.includes('//')) {
+        return safeRedirect301(rawReqPath.replace(/\/{2,}/g, '/')) || next();
+      }
+    }
+
+    // Mark binary /download/* endpoints noindex so missing optional download files never count as GSC page 404s
+    if (cleanPath.startsWith('/download/')) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
     const isPrivatePitchOrAdmin =
       cleanPath === '/pitch' || cleanPath.startsWith('/pitch/') ||
       cleanPath === '/investors' || cleanPath.startsWith('/investors/') ||
@@ -5206,7 +5268,7 @@ async function startServer() {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       return res.sendFile(brandPath);
     }
-    res.redirect("/");
+    res.redirect(301, "/about");
   });
 
   app.get(["/yoouz-logo-email.svg", "/yoouz-logo-full.svg", "/yoouz-team-signature-dark.svg", "/yoouz-team-signature-light.svg"], (req, res) => {
@@ -5511,7 +5573,7 @@ async function startServer() {
 
     const data = comparisons[slug];
     if (!data) {
-      return res.redirect("/compare");
+      return res.redirect(301, "/compare");
     }
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -6139,7 +6201,10 @@ ${reviewItemsXml}
     ];
 
     const liveProof = buildLiveEntityProofSummary();
-    const dynamicPlacePaths = liveProof.samplePlaces.map(p => `/reviews/${encodeURIComponent(p.domain)}`);
+    // Submit all reviewed company profiles (real live photo proof) + all individual live photo reviews so search engines prioritize high-value pages instead of empty stubs
+    const dynamicPlacePaths = liveProof.samplePlaces
+      .filter(p => p.reviewCount > 0 && p.domain && !p.domain.endsWith('takes') && p.domain !== 'com.eg')
+      .map(p => `/reviews/${encodeURIComponent(p.domain)}`);
     const dynamicReviewPaths = liveProof.recentReviews.map(r => `/reviews/${encodeURIComponent(r.domain)}/${encodeURIComponent(r.id)}`);
     const allPaths = Array.from(new Set([...corePaths, ...dynamicPlacePaths, ...dynamicReviewPaths]));
 
@@ -15281,24 +15346,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>${baseUrl}/llms.txt</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/llms-full.txt</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.95</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/ai.txt</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
     <loc>${baseUrl}/about</loc>
     <lastmod>${now}</lastmod>
     <changefreq>weekly</changefreq>
@@ -15330,18 +15377,19 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
   </url>
 `;
 
-      // Group real live customer photo reviews by business slug so every company profile in sitemap.xml surfaces its real customer photos FIRST for Google Images & Search
+      // Group real live customer photo reviews by business slug so sitemap.xml focuses 100% of Googlebot's crawl budget on high-value businesses that HAVE real customer photos
+      // (Unreviewed business profiles remain live 200 OK & indexable on demand, and automatically promote into sitemap.xml the instant they receive their first photo review!)
       const reviewsByPlaceSlug = new Map<string, any[]>();
       allVideos.forEach((v) => {
         if (!v || !v.id || isDeletedReviewServer(v.id)) return;
         const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
-        const slug = (getPlaceSlug(rawDomain) || '').toLowerCase().trim();
-        if (!slug) return;
+        const slug = (getPlaceSlug(rawDomain) || '').toLowerCase().replace(/^www\./, '').trim();
+        if (!slug || slug === 'com.eg' || slug.endsWith('takes')) return;
         if (!reviewsByPlaceSlug.has(slug)) reviewsByPlaceSlug.set(slug, []);
         reviewsByPlaceSlug.get(slug)!.push(v);
       });
 
-      // Ensure every business that has photo reviews is also present in allPlaces
+      // Ensure every business that has photo reviews is present in allPlaces
       reviewsByPlaceSlug.forEach((revs, slug) => {
         if (!placeMap.has(slug)) {
           const first = revs[0];
@@ -15355,22 +15403,28 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
         }
       });
 
-      // Sort businesses WITH real live photo reviews to the very top of the sitemap
-      allPlaces.sort((a, b) => {
-        const aSlug = (getPlaceSlug(a.id) || a.id || '').toLowerCase().trim();
-        const bSlug = (getPlaceSlug(b.id) || b.id || '').toLowerCase().trim();
-        return (reviewsByPlaceSlug.get(bSlug)?.length || 0) - (reviewsByPlaceSlug.get(aSlug)?.length || 0);
-      });
+      // Keep ONLY businesses that have ≥ 1 real live photo review (eliminates 147 thin 0-review stubs that caused GSC "Discovered - currently not indexed")
+      const indexedPlaces = allPlaces
+        .filter((p) => {
+          if (!p || !p.id) return false;
+          const slug = (getPlaceSlug(p.id) || p.id || '').toLowerCase().replace(/^www\./, '').trim();
+          return (reviewsByPlaceSlug.get(slug)?.length || 0) > 0;
+        })
+        .sort((a, b) => {
+          const aSlug = (getPlaceSlug(a.id) || a.id || '').toLowerCase().replace(/^www\./, '').trim();
+          const bSlug = (getPlaceSlug(b.id) || b.id || '').toLowerCase().replace(/^www\./, '').trim();
+          return (reviewsByPlaceSlug.get(bSlug)?.length || 0) - (reviewsByPlaceSlug.get(aSlug)?.length || 0);
+        });
 
-      // Places / Local Businesses (with real customer review photos attached for instant Google Images & visual SERP indexing)
-      allPlaces.forEach((p) => {
-        if (!p || !p.id) return;
-        const slug = (getPlaceSlug(p.id) || p.id).toLowerCase().trim();
+      const emittedPlaceSlugs = new Set<string>();
+      indexedPlaces.forEach((p) => {
+        const slug = (getPlaceSlug(p.id) || p.id).toLowerCase().replace(/^www\./, '').trim();
+        if (!slug || emittedPlaceSlugs.has(slug)) return;
+        emittedPlaceSlugs.add(slug);
         const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(slug)}`;
         const pName = KNOWN_OFFICIAL_NAMES[slug] || p.name || formatBusinessName(slug, slug);
         const hasRealDom = slug.includes('.') && !slug.includes(' ');
         const companyRevs = reviewsByPlaceSlug.get(slug) || [];
-        const hasPhotos = companyRevs.length > 0;
         let fallbackPhoto = p.bannerUrl || p.logoUrl || p.avatarUrl || (p.photos && p.photos[0]) || '';
         if (fallbackPhoto && fallbackPhoto.startsWith('data:')) fallbackPhoto = '';
         if (fallbackPhoto && fallbackPhoto.startsWith('/')) fallbackPhoto = `${baseUrl}${fallbackPhoto}`;
@@ -15403,7 +15457,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     <loc>${escapeXml(placeUrl)}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>${hasPhotos ? '0.95' : '0.8'}</priority>
+    <priority>0.95</priority>
 ${imageEntries.join('\n')}
   </url>\n`;
       });
@@ -15471,22 +15525,10 @@ ${imageEntries.join('\n')}
     }
   });
 
-  // Explicitly return HTTP 404 + noindex for legacy trade category URLs (e.g. /trade/auto-repair) to force Googlebot de-indexing
+  // Permanently 301-redirect legacy /trade category URLs to /discover so Google Search Console clears 404 errors cleanly
   app.use(['/trade', '/trade/*'], (_req: any, res: any) => {
-    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    return res.status(404).send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="robots" content="noindex, nofollow">
-  <title>404 Page Not Found - Yoouz</title>
-</head>
-<body>
-  <h1>404 - Category Page Not Found</h1>
-  <p>Yoouz uses direct business and domain search. Category trade URLs are no longer active.</p>
-  <a href="/">Return to Homepage</a>
-</body>
-</html>`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.redirect(301, '/discover');
   });
 
   // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers
@@ -42273,7 +42315,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       }
     } catch (e) {}
 
-    const { locale: detectedLocale } = parseLocaleFromPath(currentPath);
+    const { locale: detectedLocale, pathWithoutLocale } = parseLocaleFromPath(currentPath);
     const htmlLang = detectedLocale ? getStandardHreflangCode(detectedLocale) : "en";
     const ogLocaleMap: Record<string, string> = {
       en: "en_US", es: "es_ES", fr: "fr_FR", de: "de_DE", nl: "nl_NL",
@@ -42284,10 +42326,13 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     const ogLocaleValue = htmlLang.includes("-")
       ? htmlLang.replace("-", "_")
       : (ogLocaleMap[htmlLang.toLowerCase()] || "en_US");
-    const alternates = getHreflangAlternates(currentPath, baseUrl);
-    const hreflangTags = alternates
-      .map(alt => `<link rel="alternate" hreflang="${escapeHtml(alt.hreflang)}" href="${escapeHtml(alt.href)}" />`)
-      .join("\n    ");
+    // Prevent GSC "Duplicate, Google chose different canonical than user" & 75x crawl-budget explosion:
+    // Emit clean x-default & en pointing to the single canonical URL instead of 75 un-translated English duplicate URLs
+    const cleanCanonicalHref = `${baseUrl}${pathWithoutLocale || "/"}`;
+    const hreflangTags = [
+      `<link rel="alternate" hreflang="x-default" href="${escapeHtml(cleanCanonicalHref)}" />`,
+      `<link rel="alternate" hreflang="en" href="${escapeHtml(cleanCanonicalHref)}" />`
+    ].join("\n    ");
 
     const isNoIndexPage = Boolean(meta.robots && meta.robots.toLowerCase().includes("noindex"));
 
@@ -42398,14 +42443,28 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       updatedHtml = updatedHtml.replace(/<html(?:\s+[^>]*?)?\s+lang=["'][^"']*["']/i, `<html lang="${htmlLang}"`);
     }
 
-    // Build live verified business directory snippet so ChatGPT, Claude, Gemini, Perplexity & Readability see live active businesses operating on yoouz.com
+    // Build full internal-link directory (ALL reviewed businesses + ALL live photo reviews + core pages) so ZERO sitemap pages are orphaned and Googlebot discovers every page in 1 click
     const liveProof = buildLiveEntityProofSummary();
-    const liveDirectoryHtml = liveProof.samplePlaces.length > 0
+    const reviewedOnlyPlaces = liveProof.samplePlaces.filter(sp => sp.reviewCount > 0);
+    const liveDirectoryHtml = reviewedOnlyPlaces.length > 0
       ? `<section aria-label="Live Verified Businesses and Customer Photo Reviews Active on Yoouz.com">
-            <h2>Live Verified Businesses &amp; Domains Currently Active on Yoouz.com (${liveProof.placesCount}+ Indexed Profiles, ${liveProof.reviewsCount}+ Live Photo Reviews)</h2>
+            <h2>Live Verified Businesses &amp; Domains with Real Customer Photo Reviews on Yoouz.com (${reviewedOnlyPlaces.length} Reviewed Businesses, ${liveProof.reviewsCount} Live Photo Reviews)</h2>
             <ul>
-              ${liveProof.samplePlaces.map(sp => `<li><a href="${escapeHtml(sp.url)}"><strong>${escapeHtml(sp.name)}</strong> (${escapeHtml(sp.domain)})</a> — ${escapeHtml(sp.category)} · ★ ${sp.rating.toFixed(1)}/5 Live Camera Photo Reviews</li>`).join("\n              ")}
+              ${reviewedOnlyPlaces.map(sp => `<li><a href="${escapeHtml(sp.url)}"><strong>${escapeHtml(sp.name)}</strong> (${escapeHtml(sp.domain)})</a> — ${escapeHtml(sp.category)} · ★ ${sp.rating.toFixed(1)}/5 (${sp.reviewCount} live photo ${sp.reviewCount === 1 ? 'review' : 'reviews'})</li>`).join("\n              ")}
             </ul>
+            ${liveProof.recentReviews.length > 0 ? `<h3>Recent Verified Live Camera Photo Reviews</h3>
+            <ul>
+              ${liveProof.recentReviews.slice(0, 60).map(rv => `<li><a href="${escapeHtml(rv.url)}">${escapeHtml(rv.placeName)} (${escapeHtml(rv.domain)}) — ★ ${rv.rating}/5 Photo Review by ${escapeHtml(rv.authorName)}</a></li>`).join("\n              ")}
+            </ul>` : ""}
+            <nav aria-label="Yoouz Core Pages">
+              <a href="https://www.yoouz.com/discover">Discover</a> ·
+              <a href="https://www.yoouz.com/about">About Yoouz</a> ·
+              <a href="https://www.yoouz.com/how-it-works">How It Works</a> ·
+              <a href="https://www.yoouz.com/what-is-yoouz">What Is Yoouz</a> ·
+              <a href="https://www.yoouz.com/faq">FAQ</a> ·
+              <a href="https://www.yoouz.com/business">Yoouz for Business</a> ·
+              <a href="https://www.yoouz.com/compare">Compare vs Yelp, Google &amp; Trustpilot</a>
+            </nav>
           </section>`
       : "";
 
@@ -42617,7 +42676,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     const langPrefixMatch = rawLangPrefixMatch && !NON_LOCALE_SHORT_ROUTES.has(rawLangPrefixMatch[1].toLowerCase()) ? rawLangPrefixMatch : null;
     const cleanPathname = langPrefixMatch ? (pathname.replace(/^\/[a-zA-Z]{2,3}(?:-[a-zA-Z]{2,4})?/, '') || '/') : pathname;
 
-    // Strip Facebook/Google/UTM tracking params and trailing slashes so og:url is always clean and exact
+    // Strip Facebook/Google/UTM tracking params, trailing slashes, AND duplicate locale prefixes so canonical URL is always clean, singular, and consistent
     const canonicalUrlObj = new URL(urlObj.toString());
     const trackingParams = ["fbclid", "gclid", "dclid", "msclkid", "mc_cid", "mc_eid", "igshid", "si", "mibextid", "sfnsn", "_ga", "_gl", "ref", "ref_src", "ref_url", "feature", "app", "share_source"];
     trackingParams.forEach(p => canonicalUrlObj.searchParams.delete(p));
@@ -42626,6 +42685,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         canonicalUrlObj.searchParams.delete(key);
       }
     }
+    canonicalUrlObj.pathname = cleanPathname || "/";
     if (canonicalUrlObj.pathname.length > 1 && canonicalUrlObj.pathname.endsWith("/")) {
       canonicalUrlObj.pathname = canonicalUrlObj.pathname.replace(/\/+$/, "");
     }
@@ -42663,7 +42723,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         embedUrl: "",
         type: "website",
         twitterCard: "summary",
-        url: fullUrl,
+        url: canonicalRequestUrl,
         keywords: "",
         robots: "noindex, nofollow, noarchive, nosnippet, noimageindex",
         canonicalVideoUrl: "",
@@ -42683,7 +42743,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         embedUrl: "",
         type: "website",
         twitterCard: "summary_large_image",
-        url: fullUrl,
+        url: `${baseUrl}/`,
         keywords,
         robots: "",
         canonicalVideoUrl: `${baseUrl}/`,
@@ -42943,10 +43003,9 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           } catch(e) {}
         }
 
-        // Preserve the exact requested /reviews/... or /review/... path as og:url so Facebook & Reddit never perform a secondary og:url redirect scrape on post publish
-        canonicalVideoUrl = ((cleanPathname.startsWith('/reviews/') || cleanPathname.startsWith('/review/')) && cleanPathname.includes(videoId))
-          ? `${baseUrl}${cleanPathname}`
-          : `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
+        // Always enforce single canonical /reviews/<lowercase-domain>/<reviewId> so Google never flags duplicate canonicals on /review/, /video/, or uppercase variants
+        const canonicalDomainSlug = (domainSlug || 'yoouz.com').toLowerCase().replace(/^www\./, '').trim();
+        canonicalVideoUrl = `${baseUrl}/reviews/${encodeURIComponent(canonicalDomainSlug)}/${encodeURIComponent(videoId)}`;
 
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
         const hasRealWebsiteDom = cleanPlaceDomForOg.includes(".") && !cleanPlaceDomForOg.includes(" ");
@@ -43159,10 +43218,9 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           avgRating = Number(placeObj.rating);
         }
 
-        // Preserve exact canonical path (/reviews/<domain> or /place/<id>) with zero tracking query bloat
-        canonicalPlaceUrl = (cleanPathname.startsWith('/reviews/') || cleanPathname.startsWith('/place/'))
-          ? canonicalRequestUrl
-          : `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}`;
+        // Always enforce single canonical /reviews/<lowercase-clean-domain> so /place/, /review/, www., uppercase, and locale variants consolidate 100% of SEO equity
+        const canonicalPlaceSlug = (cleanDomainLookup || effectiveDomain).toLowerCase().replace(/^www\./, '').trim();
+        canonicalPlaceUrl = `${baseUrl}/reviews/${encodeURIComponent(canonicalPlaceSlug)}`;
 
         const hasRealWebsiteDomain = Boolean(cleanDomainLookup && cleanDomainLookup.includes(".") && !cleanDomainLookup.includes(" "));
         const domainInTitle = hasRealWebsiteDomain && !placeName.toLowerCase().includes(cleanDomainLookup)
@@ -43503,13 +43561,34 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           ? `Discover live-camera customer photo reviews for "${queryTerm}" on Yoouz.`
           : "Search authentic live-camera photo reviews captured in real time by customers for local businesses and places.";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent(queryTerm ? `Search: ${queryTerm}` : "Search Photo Reviews")}&subtitle=${encodeURIComponent("Explore Live Photo Testimonials")}&path=${encodeURIComponent("yoouz.com/search")}&v=26`;
+    } else if (cleanPathname === '/discover' || cleanPathname === '/categories') {
+        const isCat = cleanPathname === '/categories';
+        title = isCat
+          ? "Browse Verified Business Categories & Live Photo Reviews | Yoouz"
+          : "Discover Trending Local Businesses & Real Customer Photo Reviews | Yoouz";
+        description = "Explore verified restaurants, cafes, hotels, clinics, shops, and global websites with real 3-second live camera customer photo reviews on Yoouz.";
+        imageUrl = `${publicBase}/og-banner.png`;
+        keywords = "discover local businesses, trending photo reviews, verified restaurant photos, hotel photo reviews, real customer reviews, Yoouz";
+        structuredData = {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "CollectionPage",
+              "name": title,
+              "description": description,
+              "url": `${publicBase}${cleanPathname}`
+            }
+          ]
+        };
     } else if (cleanPathname === '/following' || cleanPathname.startsWith('/following')) {
         title = "Following & Community Feed | Yoouz";
         description = "Stay up to date with live photo reviews from reviewers and businesses you follow on Yoouz.";
+        robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Following Feed")}&subtitle=${encodeURIComponent("Live Photo Updates from Reviewers You Follow")}&path=${encodeURIComponent("yoouz.com/following")}&v=26`;
     } else if (cleanPathname === '/messages' || cleanPathname.startsWith('/messages') || cleanPathname.startsWith('/chat')) {
         title = "Messages & Direct Chat | Yoouz";
         description = "Connect directly with photo reviewers, local business owners, and community members on Yoouz.";
+        robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Direct Messages")}&subtitle=${encodeURIComponent("Connect with Reviewers & Merchants")}&path=${encodeURIComponent("yoouz.com/messages")}&v=26`;
     } else if (cleanPathname === '/map' || cleanPathname.startsWith('/map')) {
         title = "Interactive Photo Review Map | Yoouz";
@@ -43518,10 +43597,12 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     } else if (cleanPathname === '/notifications' || cleanPathname.startsWith('/notifications')) {
         title = "Notifications & Activity | Yoouz";
         description = "Check your latest photo review reactions, comments, followers, and business updates on Yoouz.";
+        robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Notifications")}&subtitle=${encodeURIComponent("Reactions, Comments & Verified Updates")}&path=${encodeURIComponent("yoouz.com/notifications")}&v=26`;
     } else if (cleanPathname === '/bookmarks' || cleanPathname.startsWith('/bookmarks') || cleanPathname.startsWith('/saved')) {
         title = "Saved Photo Reviews & Bookmarks | Yoouz";
         description = "View your saved live photo reviews and bookmarked local places on Yoouz.";
+        robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=26`;
     } else if (cleanPathname === '/about') {
         title = "About Yoouz (yoouz.com) – Live Camera Photo Reviews & Local Discovery";
@@ -43573,6 +43654,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     } else if (cleanPathname === '/more' || cleanPathname.startsWith('/more') || cleanPathname === '/settings') {
         title = "Settings & Community | Yoouz";
         description = "Discover Yoouz platform settings, Knowledge Center FAQs, community guidelines, and language options.";
+        robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Settings & Community")}&subtitle=${encodeURIComponent("Authentic Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/more")}&v=26`;
     } else if (cleanPathname === '/privacy' || cleanPathname === '/terms' || cleanPathname === '/community-guidelines') {
         const pageName = cleanPathname.replace('/', '').replace(/[-_]/g, ' ').toUpperCase();
