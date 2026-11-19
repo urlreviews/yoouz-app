@@ -51,7 +51,7 @@ import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "./utils/placeUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo, prewarmBannerImage } from "./utils/logoUtils";
-import { preloadImage } from "./utils/preloadUtils";
+import { preloadImage, preloadAllReviewPhotos } from "./utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
 import { formatAnonymousUserDisplayName } from "./lib/userCanonicalization";
 import { derivePlaceFromEmailOrDomain } from "./utils/businessDomainUtils";
@@ -799,6 +799,14 @@ export function App() {
   }, [places]);
 
   const { videos, setVideos, isLoading: isLoadingVideos, loadMore: loadMoreVideos, hasMore } = useFeedPagination();
+
+  // Globally warm and pin ALL review photos into decoded browser RAM so navigating to
+  // Homepage, Feed, Business Profiles, User Profiles, or Bookmarks paints on frame 0
+  useEffect(() => {
+    if (Array.isArray(videos) && videos.length > 0) {
+      preloadAllReviewPhotos(videos, 12);
+    }
+  }, [videos]);
   const [notifications, setNotifications] = useState<CopoNotification[]>([]);
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
     try {
@@ -5880,7 +5888,7 @@ export function App() {
       }
     }
     if (visiblePlaceVids.length > 0) {
-      visiblePlaceVids.slice(0, 4).forEach((v) => {
+      visiblePlaceVids.forEach((v) => {
         const photo = v.photoUrl || (v as any).photoDataUrl || resolveVideoPosterUrl(v);
         if (photo) preloadImage(photo, "high");
       });
@@ -5905,6 +5913,13 @@ export function App() {
 
     if (author.avatar) preloadImage(author.avatar, "high");
     if ((author as any).banner) prewarmBannerImage((author as any).banner);
+    // Eagerly prewarm ALL review photos authored by this user for 0ms profile grid display
+    videos
+      .filter((v) => v && !hiddenVideoIds.includes(v.id) && isAuthorMatch(v, author))
+      .forEach((v) => {
+        const photo = v.photoUrl || (v as any).photoDataUrl || resolveVideoPosterUrl(v);
+        if (photo) preloadImage(photo, "high");
+      });
 
     const authorLower = (author.name || "").toLowerCase().trim();
     const authorIdentifier = (author.name || "").replace(/^@+/, "").trim().toLowerCase();

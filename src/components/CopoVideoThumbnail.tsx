@@ -43,16 +43,18 @@ export const CopoVideoThumbnail: React.FC<CopoVideoThumbnailProps> = ({
 
   const activeSrc = candidateIdx < candidates.length ? candidates[candidateIdx] : FALLBACK_PHOTO_SVG;
 
+  const isExternal = /^https?:\/\//i.test(activeSrc);
+
   return (
-    <div className="relative w-full h-full overflow-hidden bg-zinc-950 flex items-center justify-center">
+    <div className="relative w-full h-full overflow-hidden bg-zinc-900 flex items-center justify-center">
       <img
         src={activeSrc}
         alt={alt || video.placeName || "Photo review preview"}
-        className={`${className} transition-opacity duration-300`}
+        className={className}
         loading="eager"
-        decoding="async"
+        decoding="sync"
         fetchPriority="high"
-        referrerPolicy="no-referrer"
+        referrerPolicy={isExternal ? "no-referrer" : undefined}
         onError={() => {
           if (candidateIdx < candidates.length) {
             setCandidateIdx((prev) => prev + 1);

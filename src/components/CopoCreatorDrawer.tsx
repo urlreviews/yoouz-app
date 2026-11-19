@@ -1209,24 +1209,32 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
           {effectiveBanner ? (
             <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 relative overflow-hidden flex items-center justify-center group">
-              <img
-                src={getProxiedImageUrl(effectiveBanner)}
-                alt=""
-                loading="eager"
-                decoding="sync"
-                fetchPriority="high"
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125 transition-opacity duration-200"
-                referrerPolicy="no-referrer"
-              />
-              <img
-                src={getProxiedImageUrl(effectiveBanner)}
-                alt="Banner"
-                loading="eager"
-                decoding="sync"
-                fetchPriority="high"
-                className="relative z-10 w-full h-full object-cover p-0 transition-opacity duration-200"
-                referrerPolicy="no-referrer"
-              />
+              {(() => {
+                const resolvedBanner = getProxiedImageUrl(effectiveBanner);
+                const extRef = /^https?:\/\//i.test(resolvedBanner) ? "no-referrer" : undefined;
+                return (
+                  <>
+                    <img
+                      src={resolvedBanner}
+                      alt=""
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125"
+                      referrerPolicy={extRef}
+                    />
+                    <img
+                      src={resolvedBanner}
+                      alt="Banner"
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
+                      className="relative z-10 w-full h-full object-cover p-0"
+                      referrerPolicy={extRef}
+                    />
+                  </>
+                );
+              })()}
               <div className="absolute inset-0 bg-black/25 z-20 pointer-events-none" />
             </div>
           ) : (

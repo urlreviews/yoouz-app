@@ -1379,21 +1379,40 @@ export const KNOWN_BRAND_BANNERS: Record<string, string> = Object.fromEntries(
  * Pre-warms image memory cache so banners load instantly without visual delay.
  */
 export function prewarmBannerImage(url?: string | null): void {
-  if (!url || typeof url !== "string") return;
+  if (!url || typeof url !== "string" || typeof window === "undefined") return;
   const proxied = getProxiedImageUrl(url);
-  if (!proxied || KNOWN_LOADED_BANNERS.has(proxied)) return;
-  
+  if (!proxied) return;
+
+  const w = window as any;
+  if (!(w.__YOOUZ_IMAGE_CACHE__ instanceof Map)) {
+    w.__YOOUZ_IMAGE_CACHE__ = new Map<string, HTMLImageElement>();
+  }
+  const cache: Map<string, HTMLImageElement> = w.__YOOUZ_IMAGE_CACHE__;
+  if (cache.has(proxied) && KNOWN_LOADED_BANNERS.has(proxied)) return;
+
   KNOWN_LOADED_BANNERS.add(proxied);
   const img = new Image();
-  img.referrerPolicy = "no-referrer";
+  if (/^https?:\/\//i.test(proxied) && !proxied.startsWith(window.location.origin)) {
+    img.referrerPolicy = "no-referrer";
+  }
   if ("fetchPriority" in img) {
     (img as any).fetchPriority = "high";
   }
+  img.decoding = "sync";
+  if (cache.size >= 180 && !cache.has(proxied)) {
+    const oldest = cache.keys().next().value;
+    if (oldest) cache.delete(oldest);
+  }
+  cache.set(proxied, img);
   img.onload = () => {
     KNOWN_LOADED_BANNERS.add(proxied);
     if ("decode" in img && typeof img.decode === "function") {
       img.decode().catch(() => {});
     }
+  };
+  img.onerror = () => {
+    cache.delete(proxied);
+    KNOWN_LOADED_BANNERS.delete(proxied);
   };
   img.src = proxied;
 }

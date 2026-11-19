@@ -1,36 +1,96 @@
-// In-memory cache of pre-decoded images to prevent duplicate network fetches or decode overhead
-const PRELOADED_ASSETS_SET = new Set<string>();
+// Persistent in-memory decoded image cache shared with pre-hydration SSR bootstrap.
+// Pinning HTMLImageElement references in a bounded Map prevents Chrome/Safari GC
+// from evicting decoded GPU bitmaps across route/drawer transitions.
+const MAX_PINNED_IMAGES = 180;
+
+const getGlobalImageCache = (): Map<string, HTMLImageElement> => {
+  if (typeof window === 'undefined') return new Map();
+  const w = window as any;
+  if (!(w.__YOOUZ_IMAGE_CACHE__ instanceof Map)) {
+    w.__YOOUZ_IMAGE_CACHE__ = new Map<string, HTMLImageElement>();
+  }
+  return w.__YOOUZ_IMAGE_CACHE__;
+};
+
+const getGlobalReadySet = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  const w = window as any;
+  if (!(w.__YOOUZ_IMAGE_READY__ instanceof Set)) {
+    w.__YOOUZ_IMAGE_READY__ = new Set<string>();
+  }
+  return w.__YOOUZ_IMAGE_READY__;
+};
+
+const IN_FLIGHT_PRELOADS = new Map<string, Promise<boolean>>();
+
+/**
+ * Determines whether a URL is external (cross-origin) and therefore benefits from
+ * referrerPolicy="no-referrer". Same-origin URLs (like /uploads/photos/*) MUST NOT
+ * set mismatched referrerPolicy so Blink & WebKit achieve 100% Memory Cache hits.
+ */
+export const isExternalCrossOriginUrl = (url: string): boolean => {
+  if (!url || !/^https?:\/\//i.test(url)) return false;
+  if (typeof window === 'undefined') return true;
+  try {
+    return new URL(url).origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+};
 
 /**
  * Universal Zero-Warning & Instant-Decode Image Preloader.
- * Uses browser image decoding API (img.decode) directly into GPU raster memory.
- * Never uses <link rel="preload"> in DOM, preventing Chrome "was preloaded using link preload but not used" warnings.
+ * Uses browser image decoding API (img.decode) and pins the decoded HTMLImageElement
+ * in memory so mounting <img> on ANY page paints synchronously on frame 0.
+ * Never injects <link rel="preload"> in DOM, avoiding Chrome unused-preload warnings.
  */
 export const preloadImage = (url: string | null | undefined, priority: 'high' | 'auto' = 'auto'): Promise<boolean> => {
   if (!url || typeof window === 'undefined') return Promise.resolve(false);
   const clean = url.trim();
   if (!clean || clean === 'data:;' || clean.startsWith('data:;')) return Promise.resolve(false);
-  
-  if (PRELOADED_ASSETS_SET.has(clean)) {
-    return Promise.resolve(true);
-  }
-  
-  PRELOADED_ASSETS_SET.add(clean);
 
   // Data URIs are already resident in memory
   if (clean.startsWith('data:')) {
     return Promise.resolve(true);
   }
 
-  return new Promise((resolve) => {
+  const cache = getGlobalImageCache();
+  const readySet = getGlobalReadySet();
+
+  const existingImg = cache.get(clean);
+  if (existingImg) {
+    if (readySet.has(clean) || (existingImg.complete && existingImg.naturalWidth > 0)) {
+      readySet.add(clean);
+      return Promise.resolve(true);
+    }
+    const inFlight = IN_FLIGHT_PRELOADS.get(clean);
+    if (inFlight) return inFlight;
+  }
+
+  const promise = new Promise<boolean>((resolve) => {
     try {
       const img = new window.Image();
-      img.referrerPolicy = 'no-referrer';
+      if (isExternalCrossOriginUrl(clean)) {
+        img.referrerPolicy = 'no-referrer';
+      }
       if ('fetchPriority' in img) {
         (img as any).fetchPriority = priority;
       }
-      
+      img.decoding = 'sync';
+
+      // Enforce bounded LRU-style cache size
+      if (cache.size >= MAX_PINNED_IMAGES && !cache.has(clean)) {
+        const oldestKey = cache.keys().next().value;
+        if (oldestKey) {
+          cache.delete(oldestKey);
+          readySet.delete(oldestKey);
+        }
+      }
+      cache.set(clean, img);
+
       img.onload = () => {
+        readySet.add(clean);
+        IN_FLIGHT_PRELOADS.delete(clean);
         if ('decode' in img && typeof img.decode === 'function') {
           img.decode()
             .then(() => resolve(true))
@@ -39,24 +99,51 @@ export const preloadImage = (url: string | null | undefined, priority: 'high' | 
           resolve(true);
         }
       };
-      
+
       img.onerror = () => {
+        cache.delete(clean);
+        readySet.delete(clean);
+        IN_FLIGHT_PRELOADS.delete(clean);
         resolve(false);
       };
-      
+
       img.src = clean;
+
+      // Handle synchronous cache hit (already complete right after setting .src)
+      if (img.complete && img.naturalWidth > 0) {
+        readySet.add(clean);
+        IN_FLIGHT_PRELOADS.delete(clean);
+        if ('decode' in img && typeof img.decode === 'function') {
+          img.decode().catch(() => {});
+        }
+        resolve(true);
+      }
     } catch {
+      IN_FLIGHT_PRELOADS.delete(clean);
       resolve(false);
     }
   });
+
+  IN_FLIGHT_PRELOADS.set(clean, promise);
+  return promise;
 };
 
 /**
- * Check if an image URL has already been prewarmed and decoded in memory.
+ * Check synchronously if an image URL has already been prewarmed and decoded in memory.
  */
 export const isImagePreloaded = (url: string | null | undefined): boolean => {
-  if (!url) return false;
-  return PRELOADED_ASSETS_SET.has(url.trim());
+  if (!url || typeof window === 'undefined') return false;
+  const clean = url.trim();
+  if (!clean) return false;
+  if (clean.startsWith('data:')) return true;
+  const readySet = getGlobalReadySet();
+  if (readySet.has(clean)) return true;
+  const cached = getGlobalImageCache().get(clean);
+  if (cached && cached.complete && cached.naturalWidth > 0) {
+    readySet.add(clean);
+    return true;
+  }
+  return false;
 };
 
 /**
@@ -81,17 +168,53 @@ export const preloadReviewAssets = (review: any) => {
 };
 
 /**
- * Batch preload an array of image URLs sequentially or in micro-batches
+ * Batch preload an array of image URLs smoothly in parallel waves
  * without starving network sockets.
  */
-export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto') => {
-  const valid = urls.filter((u): u is string => Boolean(u && typeof u === 'string' && u.trim().length > 0));
-  valid.forEach((url, i) => {
-    // Eagerly prewarm first 4, stagger remainder slightly
-    if (i < 4) {
-      preloadImage(url, priority);
-    } else {
-      setTimeout(() => preloadImage(url, 'auto'), (i - 3) * 60);
+export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto', immediateCount = 12) => {
+  const valid = Array.from(
+    new Set(
+      urls
+        .filter((u): u is string => Boolean(u && typeof u === 'string' && u.trim().length > 0))
+        .map((u) => u.trim())
+    )
+  );
+  if (valid.length === 0) return;
+
+  // Immediately decode first wave at high priority
+  const firstWave = valid.slice(0, immediateCount);
+  firstWave.forEach((url) => preloadImage(url, priority));
+
+  // Pump remaining images in smooth micro-waves of 6 so every business/user profile photo is warm
+  let cursor = immediateCount;
+  const pump = () => {
+    const end = Math.min(cursor + 6, valid.length);
+    for (; cursor < end; cursor++) {
+      preloadImage(valid[cursor], 'auto');
     }
-  });
+    if (cursor < valid.length) {
+      setTimeout(pump, 70);
+    }
+  };
+  if (valid.length > immediateCount) {
+    setTimeout(pump, 90);
+  }
+};
+
+/**
+ * Preload EVERY review photo in the feed (prioritizing top visible cards first)
+ * so navigating to Homepage, Feed, Business Profiles, User Profiles, or Bookmarks
+ * renders every single photo instantaneously on frame 0 with zero loading flash.
+ */
+export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 12) => {
+  if (!Array.isArray(reviews) || reviews.length === 0 || typeof window === 'undefined') return;
+  const photoUrls: string[] = [];
+  for (const r of reviews) {
+    if (!r) continue;
+    const p = r.photoUrl || r.photoDataUrl || r.thumbnailUrl;
+    if (p && typeof p === 'string' && p.trim()) {
+      photoUrls.push(p.trim());
+    }
+  }
+  preloadImageBatch(photoUrls, 'high', priorityCount);
 };

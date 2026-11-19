@@ -548,12 +548,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               <img
                 src={photoUrl}
                 alt={`${formatBusinessName(video.placeName) || "Business"} live photo review by ${safeAuthor.name}`}
-                loading={isActive || isNear ? "eager" : "lazy"}
-                decoding={isActive || isNear ? "sync" : "async"}
-                fetchPriority={isActive ? "high" : "auto"}
-                referrerPolicy="no-referrer"
+                loading="eager"
+                decoding="sync"
+                fetchPriority={isActive || isNear ? "high" : "auto"}
+                referrerPolicy={/^https?:\/\//i.test(photoUrl) ? "no-referrer" : undefined}
                 onError={() => setPosterCandidateIdx((prev) => prev + 1)}
-                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none transition-opacity duration-200"
+                className="absolute inset-0 w-full h-full object-cover z-10 pointer-events-none"
               />
             ) : null}
           </div>

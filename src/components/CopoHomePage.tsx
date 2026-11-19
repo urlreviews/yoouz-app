@@ -10,7 +10,7 @@ import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
 import { isPurgedItem } from "../hooks/useFeedPagination";
-import { preloadImage } from "../utils/preloadUtils";
+import { preloadImage, preloadAllReviewPhotos, preloadBusinessAssets } from "../utils/preloadUtils";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -170,15 +170,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos]);
 
-  // Eagerly prewarm and GPU-decode initial trending review photos for instant zero-flash display
+  // Eagerly prewarm and GPU-decode ALL trending review photos for instant zero-flash display
   useEffect(() => {
     if (trendingVideos.length > 0) {
-      trendingVideos.slice(0, 8).forEach((v, i) => {
-        const photo = v.photoUrl || (v as any).photoDataUrl || resolveVideoPosterUrl(v);
-        if (photo) {
-          preloadImage(photo, i < 4 ? "high" : "auto");
-        }
-      });
+      preloadAllReviewPhotos(trendingVideos, 12);
     }
   }, [trendingVideos]);
 
@@ -1120,6 +1115,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     tabIndex={0}
                     data-trending-video-id={video.id}
                     onClick={() => onSelectVideo(video.id)}
+                    onPointerEnter={() => {
+                      if (posterUrl) preloadImage(posterUrl, "high");
+                      if (matchedPlace) {
+                        preloadBusinessAssets(matchedPlace.logoUrl, matchedPlace.bannerUrl, author?.avatar);
+                      }
+                    }}
+                    onTouchStart={() => {
+                      if (posterUrl) preloadImage(posterUrl, "high");
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -1136,15 +1140,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       <span className="text-[11px] font-bold text-zinc-300 line-clamp-2 px-1">{businessName}</span>
                     </div>
 
-                    {/* Video Thumbnail */}
+                    {/* Photo Review Thumbnail */}
                     {posterUrl && (
                       <img
                         src={posterUrl}
                         alt={`${businessName} review - ${creatorFullName}`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-300 z-10 pointer-events-none"
-                        loading={idx < 4 ? "eager" : "lazy"}
-                        decoding={idx < 4 ? "sync" : "async"}
-                        fetchPriority={idx < 4 ? "high" : "auto"}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-10 pointer-events-none"
+                        loading="eager"
+                        decoding="sync"
+                        fetchPriority={idx < 8 ? "high" : "auto"}
+                        referrerPolicy={/^https?:\/\//i.test(posterUrl) ? "no-referrer" : undefined}
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
                           if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {

@@ -1565,6 +1565,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             <img
               src={fallbackBrandBannerUrl}
               alt={displayedPlaceName}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
+              referrerPolicy={/^https?:\/\//i.test(fallbackBrandBannerUrl) ? "no-referrer" : undefined}
               className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
             />
           ) : (
@@ -1580,15 +1584,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
           <div className={`absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-gradient-to-br ${brandGrad} z-10`}>
             {/* Full Widescreen Edge-to-Edge Banner Image */}
+            {(() => {
+              const resolvedBannerSrc = currentBannerCandidate || getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
+              return (
             <img
               ref={bannerImgRef}
-              src={currentBannerCandidate || getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0])}
+              src={resolvedBannerSrc}
               alt={displayedPlaceName}
               loading="eager"
               decoding="sync"
               fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0 transition-opacity duration-200"
-              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full object-cover p-0"
+              referrerPolicy={/^https?:\/\//i.test(resolvedBannerSrc) ? "no-referrer" : undefined}
               onLoad={(e) => {
                 const img = e.currentTarget;
                 if (img.naturalWidth < 160 || img.naturalHeight < 70 || img.naturalWidth * img.naturalHeight < 15000) {
@@ -1618,6 +1625,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 }
               }}
             />
+              );
+            })()}
             {/* Subtle dark gradient overlay once banner photo is visibly loaded */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
           </div>
