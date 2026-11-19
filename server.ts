@@ -6202,14 +6202,6 @@ async function purgeVideoFromAllStores(videoId: string) {
           args: [`%${existingVideoObj.bunnyVideoId}%`]
         });
       }
-      await bunnyClient.execute({
-        sql: `DELETE FROM video_reviews WHERE id = ? OR LOWER(id) = ? OR data LIKE ?`,
-        args: [cleanVidStr, lowerVidStr, `%${cleanVidStr}%`]
-      });
-      await bunnyClient.execute({
-        sql: `DELETE FROM videos WHERE id = ? OR LOWER(id) = ? OR data LIKE ?`,
-        args: [cleanVidStr, lowerVidStr, `%${cleanVidStr}%`]
-      });
       // Cascade delete comments, likes, bookmarks, and shares for this video
       try {
         await bunnyClient.execute({
@@ -6815,21 +6807,6 @@ async function purgeUserFromAllStores(targetId?: string, targetEmail?: string, t
           });
           if (bRows && bRows.rows) {
             for (const row of bRows.rows as any[]) {
-              if (row.id) {
-                await purgeVideoFromAllStores(String(row.id));
-                purgedVideosCount++;
-              }
-            }
-          }
-        } catch (e) {}
-
-        try {
-          const bRows2 = await bunnyDb.execute({
-            sql: `SELECT id FROM video_reviews WHERE userId = ? OR authorName = ? OR data LIKE ?`,
-            args: [uidStr, uidStr, `%"${uidStr}"%`]
-          });
-          if (bRows2 && bRows2.rows) {
-            for (const row of bRows2.rows as any[]) {
               if (row.id) {
                 await purgeVideoFromAllStores(String(row.id));
                 purgedVideosCount++;
@@ -21245,17 +21222,25 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
 
         try {
           const videoRows = await bunnyDb.execute({
-            sql: `SELECT data FROM video_reviews`
+            sql: `SELECT id, userId, authorName, data FROM videoReviews`
           });
           if (videoRows && videoRows.rows) {
             videoRows.rows.forEach((r: any) => {
+              if (r.id && isDeletedReviewServer(String(r.id))) return;
               let vData: any = {};
               try { vData = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {}); } catch(e) {}
-              const authorName = vData.authorName || vData.author?.name || vData.author;
-              if (authorName && typeof authorName === 'string') {
-                const k = authorName.toLowerCase().trim();
-                videoCountsMap.set(k, (videoCountsMap.get(k) || 0) + 1);
-              }
+              const countedKeys = new Set<string>();
+              const addKey = (val: any) => {
+                if (!val || typeof val !== 'string') return;
+                const k = val.toLowerCase().trim().replace(/^@+/, '');
+                if (k && !countedKeys.has(k)) {
+                  countedKeys.add(k);
+                  videoCountsMap.set(k, (videoCountsMap.get(k) || 0) + 1);
+                }
+              };
+              addKey(r.userId || vData.userId);
+              addKey(r.authorName || vData.authorName || vData.author?.name || (typeof vData.author === 'string' ? vData.author : ''));
+              addKey(vData.authorHandle || vData.author?.handle);
             });
           }
         } catch (e) {
@@ -21307,7 +21292,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
               const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followerAvatar || "");
               const location = enriched?.location || fData.location || "Community Member";
               const isVerified = false;
-              const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+              const videoReviewCount = videoCountsMap.get(String(fUserId || "").toLowerCase().trim()) || videoCountsMap.get(name.toLowerCase().trim()) || videoCountsMap.get(handle.toLowerCase().trim().replace(/^@+/, '')) || 0;
 
               if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
                 followersList.push({
@@ -21353,7 +21338,7 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
                 const avatar = (enriched?.avatar && !enriched.avatar.includes('dicebear')) ? enriched.avatar : (fData.followingAvatar || "");
                 const location = enriched?.location || fData.location || "Community Member";
                 const isVerified = false;
-                const videoReviewCount = videoCountsMap.get(name.toLowerCase()) || videoCountsMap.get(handle.toLowerCase().replace(/^@+/, '')) || 0;
+                const videoReviewCount = videoCountsMap.get(String(targetId || "").toLowerCase().trim()) || videoCountsMap.get(name.toLowerCase().trim()) || videoCountsMap.get(handle.toLowerCase().trim().replace(/^@+/, '')) || 0;
 
                 if (name && name.toLowerCase() !== (targetMatched?.name || "").toLowerCase()) {
                   followingList.push({
@@ -26777,16 +26762,12 @@ Timestamp: ${new Date(timestamp).toUTCString()}
 
       // 2. Clear tables in Bunny Database (libSQL)
       if (bunnyClient) {
-        try {
-          await bunnyClient.execute("DELETE FROM videoReviews");
-          await bunnyClient.execute("DELETE FROM video_reviews");
-          await bunnyClient.execute("DELETE FROM videos");
-          await bunnyClient.execute("DELETE FROM comments");
-          await bunnyClient.execute("DELETE FROM likes");
-          await bunnyClient.execute("DELETE FROM bookmarks");
-          await bunnyClient.execute("DELETE FROM shares");
-        } catch (bErr) {
-          console.warn("BunnyDB purge notice:", bErr);
+        for (const tableName of ["videoReviews", "comments", "likes", "bookmarks", "shares"]) {
+          try {
+            await bunnyClient.execute(`DELETE FROM ${tableName}`);
+          } catch (bErr) {
+            console.warn(`BunnyDB purge notice (${tableName}):`, bErr);
+          }
         }
       }
 
