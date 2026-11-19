@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Search, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
@@ -74,8 +75,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
   const [isResolvingPlace, setIsResolvingPlace] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(autoFocusSearch || false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(Boolean(autoFocusSearch));
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 1024 : false));
   const [isFocused, setIsFocused] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -125,22 +126,41 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Auto-focus search input when requested (e.g. tapping Search or Review in mobile bottom nav)
-  useEffect(() => {
+  // Auto-focus search input synchronously when requested (e.g. tapping Search or Review on mobile, tablet, or desktop)
+  useLayoutEffect(() => {
     if (autoFocusSearch) {
       setQuery("");
       setSuggestions([]);
       setShowDropdown(false);
       setIsMobileSearchOpen(true);
       setSelectedIndex(-1);
-      const timer = setTimeout(() => {
-        if (searchInputRef.current) {
+      if (!isMobile && searchInputRef.current) {
+        try {
+          searchInputRef.current.focus({ preventScroll: true });
+        } catch {
           searchInputRef.current.focus();
         }
-      }, 100);
+        if (document.activeElement === searchInputRef.current) {
+          setIsFocused(true);
+        }
+      }
+    }
+  }, [autoFocusSearch, isMobile]);
+
+  useEffect(() => {
+    if (autoFocusSearch && !isMobile) {
+      const timer = setTimeout(() => {
+        if (searchInputRef.current && document.activeElement !== searchInputRef.current) {
+          try {
+            searchInputRef.current.focus({ preventScroll: true });
+          } catch {
+            searchInputRef.current.focus();
+          }
+        }
+      }, 60);
       return () => clearTimeout(timer);
     }
-  }, [autoFocusSearch]);
+  }, [autoFocusSearch, isMobile]);
 
   // Active trending videos (purged items removed, newest-first to match feed ordering)
   const trendingVideos = useMemo(() => {
@@ -835,37 +855,70 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 3. Search Component - Anchored cleanly below headline & subtitle on all screen sizes */}
         <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-4 xs:mt-5 sm:mt-7 mb-6 sm:mb-8 md:mt-1 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
           <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
-            <div className="relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10 rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out">
-              <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
-              <input
-                ref={searchInputRef}
-                id="copo-main-search-input"
-                name="yoouz_search_q_disabled"
-                type="text"
-                dir="auto"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-lpignore="true"
-                data-form-type="other"
-                aria-autocomplete="none"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => {
-                  setIsFocused(true);
-                  if (isMobile) setIsMobileSearchOpen(true);
-                  if (suggestions.length > 0) setShowDropdown(true);
-                }}
-                onBlur={() => setIsFocused(false)}
-                placeholder={
-                  searchMode === "review"
-                    ? t("search.placeholder", "Search any business, place, or URL...")
-                    : t("search.placeholder", "Search any business, place, or URL...")
+            <div
+              onClick={() => {
+                if (isMobile) {
+                  flushSync(() => {
+                    setIsMobileSearchOpen(true);
+                  });
+                  const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
+                  overlayInput?.focus();
+                } else {
+                  searchInputRef.current?.focus();
                 }
-                className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate"
-              />
+              }}
+              className={`relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out cursor-text ${
+                autoFocusSearch || isFocused
+                  ? "border-white/40 ring-4 ring-white/10"
+                  : "border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10"
+              }`}
+            >
+              <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
+              <div className="relative flex-1 min-w-0 flex items-center">
+                {autoFocusSearch && !isFocused && query.length === 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[20px] rounded-full bg-white"
+                  />
+                )}
+                <input
+                  ref={searchInputRef}
+                  id="copo-main-search-input"
+                  name="yoouz_search_q_disabled"
+                  type="text"
+                  autoFocus={autoFocusSearch && !isMobile}
+                  dir="auto"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-form-type="other"
+                  aria-autocomplete="none"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  onFocus={() => {
+                    setIsFocused(true);
+                    if (isMobile && !isMobileSearchOpen) {
+                      flushSync(() => {
+                        setIsMobileSearchOpen(true);
+                      });
+                      const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+                      const overlayInput = mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null;
+                      overlayInput?.focus();
+                    }
+                    if (suggestions.length > 0) setShowDropdown(true);
+                  }}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder={
+                    searchMode === "review"
+                      ? t("search.placeholder", "Search any business, place, or URL...")
+                      : t("search.placeholder", "Search any business, place, or URL...")
+                  }
+                  className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate caret-white select-text"
+                />
+              </div>
 
               {/* Right Side: Subtle Spinner / Clear Button */}
               <div className="flex items-center gap-1.5 shrink-0 ml-1">

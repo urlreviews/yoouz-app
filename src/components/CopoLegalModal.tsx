@@ -162,11 +162,11 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
               <section className="space-y-2">
                 <h3 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                   <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-black shrink-0">2</span>
-                  {t("legal.sec2Title", "On-Action Anonymous Identity & Biometric Passkeys")}
+                  {t("legal.sec2Title", "Anonymous Handles & Passkeys")}
                 </h3>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
-                  <li>{t("legal.sec2Item1", "Browsing Yoouz never creates an account. An anonymous handle (U/XXXXXX) is automatically provisioned only when you publish a photo review or interact (such as liking, bookmarking, commenting, following, or messaging).")}</li>
-                  <li>{t("legal.sec2Item2", "You can optionally save a 1-time Biometric Passkey (Apple Face ID / iCloud Keychain or Android Google Password Manager) so your phone automatically remembers and restores your U/XXXXXX account on any new device without emails, passwords, or remembering your username.")}</li>
+                  <li>{t("legal.sec2Item1", "Browsing Yoouz never creates an account. An anonymous handle (U/XXXXXX) is automatically created only when you publish a photo review or interact.")}</li>
+                  <li>{t("legal.sec2Item2", "You can optionally save a Passkey so your device automatically restores your account on any new phone — no email or password needed.")}</li>
                 </ul>
               </section>
 
@@ -301,9 +301,9 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 </p>
                 <div className="space-y-2.5">
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <p className="font-bold text-white">{t("legal.accountInfoTitle", "On-Action Anonymous Handles & Biometric Passkeys")}</p>
+                    <p className="font-bold text-white">{t("legal.accountInfoTitle", "Anonymous Handles & Passkeys")}</p>
                     <p className="text-zinc-200">
-                      {t("legal.accountInfoBody", "We do not collect personal emails or passwords for reviewer accounts. Your anonymous U/XXXXXX handle is created only when you publish a review or interact. If you tap 'Save Face ID (1-Time)', we store only a cryptographic WebAuthn public key so your phone's Face ID or biometric sensor can restore your U/XXXXXX account across devices.")}
+                      {t("legal.accountInfoBody", "We do not collect personal emails or passwords for reviewer accounts. Your anonymous U/XXXXXX handle is created only when you publish or interact. If you tap 'Save Passkey', we store only a public key so you can restore your account on another device.")}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
@@ -327,7 +327,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
                 <p className="text-zinc-200">{t("legal.privSec2Subtitle", "We use the information we collect to:")}</p>
                 <ul className="list-disc pl-5 space-y-1 text-zinc-200">
                   <li>{t("legal.privSec2Item1", "Provision and manage your on-action anonymous U/XXXXXX reviewer profile and custom bio.")}</li>
-                  <li>{t("legal.privSec2Item2", "Verify your cryptographic Face ID / Biometric Passkey so you can restore your U/XXXXXX account when switching phones without needing to remember your username.")}</li>
+                  <li>{t("legal.privSec2Item2", "Verify your Passkey so you can restore your account when switching devices.")}</li>
                   <li>{t("legal.privSec2Item3", "Process, host, and display your live-captured photo reviews on the platform.")}</li>
                   <li>{t("legal.privSec2Item4", "Maintain platform security and prevent fraudulent activity.")}</li>
                 </ul>

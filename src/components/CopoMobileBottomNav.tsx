@@ -77,9 +77,17 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             } else {
               onSelectSection("search");
             }
-            const input = document.getElementById("copo-main-search-input") as HTMLInputElement | null;
+            const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+            const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
+            const input =
+              (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
+              (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
             if (input) {
-              input.focus();
+              try {
+                input.focus({ preventScroll: true });
+              } catch {
+                input.focus();
+              }
             }
           }}
           className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
@@ -116,6 +124,18 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               onOpenCreateModal();
             } else {
               onSelectSection("record_review");
+            }
+            const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+            const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
+            const input =
+              (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
+              (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
+            if (input) {
+              try {
+                input.focus({ preventScroll: true });
+              } catch {
+                input.focus();
+              }
             }
           }}
           aria-label="Add Live Photo Review"
@@ -189,7 +209,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           }`}
           title={
             currentUser && !(currentUser as any).passkeyProtected
-              ? "Tap to save your account with Face ID (1-time setup)"
+              ? "Save your passkey"
               : undefined
           }
         >
@@ -224,7 +244,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             {currentUser && !(currentUser as any).passkeyProtected && (
               <span
                 className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
-                title="1-Time Face ID Passkey not saved yet"
+                title="Passkey not saved yet"
               />
             )}
           </div>

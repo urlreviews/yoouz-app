@@ -36,7 +36,7 @@ import {
   UserMinus,
   User,
   Calendar,
-  ScanFace
+  KeyRound
 } from "lucide-react";
 import { registerFaceIdPasskey, restoreAccountWithPasskey } from "../lib/passkeyAuth";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
@@ -441,13 +441,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           avatar: result.user.avatar,
           bio: result.user.bio
         } as any);
-        setLinkStatusMsg("Face ID / Passkey active! Your phone now remembers your face automatically.");
+        setLinkStatusMsg("Passkey saved! Your account is now backed up.");
         triggerHaptic("success");
       } else if (!result.cancelled) {
-        setLinkStatusMsg(result.error || "Could not set up Passkey right now.");
+        setLinkStatusMsg(result.error || "Could not save passkey right now.");
       }
     } catch {
-      setLinkStatusMsg("Could not set up Passkey right now.");
+      setLinkStatusMsg("Could not save passkey right now.");
     } finally {
       setIsLinkingAccount(false);
     }
@@ -469,13 +469,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           avatar: result.user.avatar,
           bio: result.user.bio
         } as any);
-        setLinkStatusMsg(`Restored account ${result.user.name} via Face ID / Passkey!`);
+        setLinkStatusMsg(`Restored account ${result.user.name}.`);
         triggerHaptic("success");
       } else if (!result.cancelled) {
-        setLinkStatusMsg(result.error || "No matching Passkey account found on this device.");
+        setLinkStatusMsg(result.error || "No passkey found on this device.");
       }
     } catch {
-      setLinkStatusMsg("Could not restore account with Passkey.");
+      setLinkStatusMsg("Could not restore account.");
     } finally {
       setIsRestoringPasskey(false);
     }
@@ -1384,11 +1384,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   <button
                     type="button"
                     onClick={handleRegisterPasskeyInline}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
-                    title="Tap once to get your Verified Badge & remember your account with Face ID if you switch phones"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
+                    title="Save a passkey to back up your account"
                   >
-                    <ScanFace className="w-3.5 h-3.5 text-white shrink-0" />
-                    <span>Save Face ID (1-Time)</span>
+                    <KeyRound className="w-3 h-3 text-white shrink-0" />
+                    <span>Save Passkey</span>
                   </button>
                 )}
               </h2>
@@ -2148,18 +2148,18 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 <button type="submit" className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-sm font-bold hover:bg-zinc-200 transition-colors cursor-pointer">{t("common.save", "Save Changes")}</button>
               </div>
 
-              {/* Account Settings: Face ID Passkey & Request Deletion */}
+              {/* Account Settings: Passkey & Request Deletion */}
               <div className="pt-3 border-t border-zinc-800 space-y-2.5">
                 <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
                   {t("profile.accountSettings", "Account Settings")}
                 </span>
 
-                {/* Face ID & Biometric Passkey inside Edit Profile */}
+                {/* Passkey inside Edit Profile */}
                 <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <ScanFace className="w-4 h-4 text-zinc-200 shrink-0" />
-                      <p className="text-xs font-bold text-zinc-200">Face ID & Biometric Passkey</p>
+                      <KeyRound className="w-4 h-4 text-zinc-200 shrink-0" />
+                      <p className="text-xs font-bold text-zinc-200">Passkey</p>
                     </div>
                     {isPasskeyProtected && (
                       <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-200">
@@ -2168,7 +2168,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     )}
                   </div>
                   <p className="text-[11px] text-zinc-400 leading-snug">
-                    Save once so your phone remembers your account automatically via Face ID or Android Biometrics if you switch phones.
+                    Keep your account across devices with one tap.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
@@ -2181,13 +2181,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           : "bg-white hover:bg-zinc-200 border-white text-zinc-950"
                       }`}
                     >
-                      <ScanFace className="w-3.5 h-3.5 shrink-0" />
+                      <KeyRound className="w-3.5 h-3.5 shrink-0" />
                       <span>
                         {isLinkingAccount
-                          ? "Verifying..."
+                          ? "Saving..."
                           : isPasskeyProtected
-                          ? "Update Face ID Passkey"
-                          : "Save Face ID (1-Time)"}
+                          ? "Update Passkey"
+                          : "Save Passkey"}
                       </span>
                     </button>
                     <button
@@ -2198,7 +2198,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     >
                       <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isRestoringPasskey ? "animate-spin" : ""}`} />
                       <span>
-                        {isRestoringPasskey ? "Checking..." : "Restore with Face ID"}
+                        {isRestoringPasskey ? "Checking..." : "Restore Account"}
                       </span>
                     </button>
                   </div>

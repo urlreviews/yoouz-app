@@ -14,7 +14,7 @@ import {
   Sparkles,
   AtSign,
   ShieldCheck,
-  ScanFace
+  KeyRound
 } from "lucide-react";
 import { registerFaceIdPasskey } from "../lib/passkeyAuth";
 import { Place, UserProfile, VideoReview } from "../types";
@@ -69,11 +69,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const [isSearchingMetadata, setIsSearchingMetadata] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Desktop QR handoff detection
+  // Desktop QR handoff detection (exclude mobile phones and touch tablets including iPadOS)
   const [isDesktopViewport, setIsDesktopViewport] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
-    return window.innerWidth >= 768 && !isMobileUA;
+    const ua = navigator.userAgent || "";
+    const isMobileOrTabletUA =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+      (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    return window.innerWidth >= 768 && !isMobileOrTabletUA;
   });
   const [qrCopied, setQrCopied] = useState(false);
 
@@ -102,8 +105,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   // Track viewport size cleanly
   useEffect(() => {
     const updateDevice = () => {
-      const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
-      setIsDesktopViewport(window.innerWidth >= 768 && !isMobileUA);
+      const ua = navigator.userAgent || "";
+      const isMobileOrTabletUA =
+        /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+        (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+      setIsDesktopViewport(window.innerWidth >= 768 && !isMobileOrTabletUA);
     };
     window.addEventListener("resize", updateDevice);
     return () => window.removeEventListener("resize", updateDevice);
@@ -700,13 +706,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       });
       if (result.success && result.user) {
         onUpdateUserProfile?.(result.user);
-        setLinkStatusMsg("Face ID / Passkey saved! Your phone & cloud keychain now remember your account automatically.");
+        setLinkStatusMsg("Passkey saved! Your account is now backed up.");
         triggerHaptic("success");
       } else if (!result.cancelled) {
-        setLinkStatusMsg(result.error || "Could not save Passkey right now.");
+        setLinkStatusMsg(result.error || "Could not save passkey right now.");
       }
     } catch {
-      setLinkStatusMsg("Could not save Passkey right now.");
+      setLinkStatusMsg("Could not save passkey right now.");
     } finally {
       setIsLinkingAccount(false);
     }
@@ -861,7 +867,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 </div>
                 <h2 className="text-xl font-black text-white tracking-tight">Claim Your Reviewer Handle</h2>
                 <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your anonymous ID"}</span>. Choose a custom handle or save Face ID, or tap Done to keep browsing.
+                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your account"}</span>. Pick a handle, save a passkey, or tap Done.
                 </p>
               </div>
 
@@ -902,14 +908,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 )}
               </div>
 
-              {/* 1-Tap Biometric Face ID / Passkey Account Lock */}
+              {/* 1-Tap Passkey Account Backup */}
               <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-200" />
-                  <span>Remember My Face Across Phones (Passkey)</span>
+                  <KeyRound className="w-3.5 h-3.5 text-zinc-200" />
+                  <span>Passkey</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  No email, links, or passwords. Your phone uses Face ID or Android Biometrics to keep your account even if you switch phones.
+                  Keep your account across devices — no email or password needed.
                 </p>
                 <button
                   type="button"
@@ -917,13 +923,13 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   onClick={handleRegisterPasskey}
                   className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-300 disabled:border-zinc-700 border border-white text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
-                  <ScanFace className="w-4 h-4" />
+                  <KeyRound className="w-4 h-4" />
                   <span>
                     {(currentUser as any)?.passkeyProtected
-                      ? "Face ID / Passkey Saved"
+                      ? "Passkey Saved"
                       : isLinkingAccount
-                      ? "Verifying Face / Biometrics..."
-                      : "Save Account with Face ID / Passkey"}
+                      ? "Saving..."
+                      : "Save Passkey"}
                   </span>
                 </button>
                 {linkStatusMsg && (

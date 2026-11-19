@@ -170,7 +170,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                       {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected && (
                         <span
                           className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
-                          title="Tap to save your account with Face ID (1-time setup)"
+                          title="Save your passkey"
                         />
                       )}
                     </div>

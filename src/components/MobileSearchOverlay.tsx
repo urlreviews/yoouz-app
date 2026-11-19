@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Search, X, Loader2, Building2, User, CheckCircle } from "lucide-react";
 import { SuggestionItem } from "./CopoHomePage";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -25,38 +25,93 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
   isLoading
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+  // Synchronous focus on layout so iOS/iPadOS Safari keeps the active tap gesture
+  useLayoutEffect(() => {
+    if (isOpen && inputRef.current) {
+      try {
+        inputRef.current.focus({ preventScroll: true });
+      } catch {
+        inputRef.current.focus();
+      }
+      if (document.activeElement === inputRef.current) {
+        setIsFocused(true);
+      }
     }
+  }, [isOpen]);
+
+  // Fallback focus for slower layout frames / Android keyboards
+  useEffect(() => {
+    if (!isOpen) return;
+    const raf = requestAnimationFrame(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        try {
+          inputRef.current.focus({ preventScroll: true });
+        } catch {
+          inputRef.current.focus();
+        }
+      }
+    });
+    const timer = setTimeout(() => {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
+        try {
+          inputRef.current.focus({ preventScroll: true });
+        } catch {
+          inputRef.current.focus();
+        }
+      }
+    }, 60);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[500] bg-zinc-950 flex flex-col h-[100dvh] safe-area-bottom select-none">
+    <div className="fixed inset-0 z-[500] bg-zinc-950 flex flex-col h-[100dvh] safe-area-bottom">
       {/* Standard High-End Search Header */}
       <div className="flex items-center gap-3 px-4 pt-3.5 pb-3 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-2xl sticky top-0">
         <form onSubmit={onSubmit} className="flex-1">
-          <div className="relative flex items-center w-full bg-zinc-900 rounded-full px-4 py-2.5 border border-zinc-700/80 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10 transition-all shadow-inner">
+          <div
+            onClick={() => inputRef.current?.focus()}
+            className={`relative flex items-center w-full bg-zinc-900 rounded-full px-4 py-2.5 border transition-all shadow-inner cursor-text ${
+              isFocused || query.length === 0
+                ? "border-white/40 ring-2 ring-white/10"
+                : "border-zinc-700/80 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10"
+            }`}
+          >
             <Search className="w-4.5 h-4.5 text-zinc-400 mr-3 shrink-0" />
-            <input
-              ref={inputRef}
-              name="yoouz_mobile_q_disabled"
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search any business, place, or URL..."
-              className="w-full bg-transparent text-white text-[15px] font-medium focus:outline-none placeholder:text-zinc-500 caret-[#007aff]"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              data-lpignore="true"
-              data-form-type="other"
-              aria-autocomplete="none"
-            />
+            <div className="relative flex-1 min-w-0 flex items-center">
+              {!isFocused && query.length === 0 && (
+                <span
+                  aria-hidden="true"
+                  className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-full bg-[#007aff]"
+                />
+              )}
+              <input
+                ref={inputRef}
+                id="yoouz-mobile-search-input"
+                name="yoouz_mobile_q_disabled"
+                type="text"
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder="Search any business, place, or URL..."
+                className="w-full bg-transparent text-white text-[15px] font-medium focus:outline-none placeholder:text-zinc-500 caret-[#007aff] select-text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-form-type="other"
+                aria-autocomplete="none"
+              />
+            </div>
             {isLoading && <Loader2 className="w-4 h-4 text-zinc-400 animate-spin ml-2 shrink-0" />}
             {query.length > 0 && !isLoading && (
               <button
@@ -65,7 +120,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   e.preventDefault();
                   e.stopPropagation();
                   setQuery("");
-                  setTimeout(() => inputRef.current?.focus(), 10);
+                  inputRef.current?.focus();
                 }}
                 className="p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white ml-2 shrink-0 cursor-pointer active:scale-90"
                 aria-label="Clear search"

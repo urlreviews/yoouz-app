@@ -2,6 +2,7 @@
 import { forceMute } from "./hooks/useGlobalMute";
 import { useFeedPagination, normalizeReview } from "./hooks/useFeedPagination";
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
 import { CopoSidebar } from "./components/CopoSidebar";
@@ -1007,20 +1008,40 @@ export function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [activeReportTarget, setActiveReportTarget] = useState<ReportTarget | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
-  const handleOpenSearchModal = () => {
-    setIsSearchModalOpen(false);
-    setSelectedPlaceIdForDrawer(null);
-    setSelectedAuthorForDrawer(null);
-    setIsWatchingVideo(false);
-    setFullscreenFeedContext(null);
-    setActiveSection("search");
-    setSearchResetKey((prev) => prev + 1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    const input = document.getElementById("copo-main-search-input") as HTMLInputElement | null;
+  const focusActiveSearchInput = () => {
+    const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+    const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
+    const input =
+      (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
+      (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
     if (input) {
       input.value = "";
-      input.focus();
+      try {
+        input.focus({ preventScroll: true });
+      } catch {
+        input.focus();
+      }
     }
+  };
+  const handleOpenSearchModal = () => {
+    flushSync(() => {
+      setIsSearchModalOpen(false);
+      setSelectedPlaceIdForDrawer(null);
+      setSelectedAuthorForDrawer(null);
+      setIsWatchingVideo(false);
+      setFullscreenFeedContext(null);
+      setActiveSection("search");
+      setSearchResetKey((prev) => prev + 1);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    focusActiveSearchInput();
+  };
+  const handleOpenReviewPicker = () => {
+    flushSync(() => {
+      setPreselectedPlaceForRecording(null);
+      setIsCreateModalOpen(true);
+    });
+    focusActiveSearchInput();
   };
   const handleOpenNotifications = () => {
     setIsSearchModalOpen(false);
@@ -8367,14 +8388,28 @@ export function App() {
           onOpenLegal={handleOpenLegal}
           onSelectSection={(section) => {
             if (section === "search") {
-              setSearchResetKey((prev) => prev + 1);
-              setIsWatchingVideo(false);
-              setFullscreenFeedContext(null);
+              flushSync(() => {
+                setSelectedPlaceIdForDrawer(null);
+                setSelectedAuthorForDrawer(null);
+                setSearchResetKey((prev) => prev + 1);
+                setIsWatchingVideo(false);
+                setFullscreenFeedContext(null);
+                setActiveSection("search");
+              });
+              focusActiveSearchInput();
+              return;
             }
             if (section === "record_review") {
-              setRecordReviewResetKey((prev) => prev + 1);
-              setIsWatchingVideo(false);
-              setFullscreenFeedContext(null);
+              flushSync(() => {
+                setSelectedPlaceIdForDrawer(null);
+                setSelectedAuthorForDrawer(null);
+                setRecordReviewResetKey((prev) => prev + 1);
+                setIsWatchingVideo(false);
+                setFullscreenFeedContext(null);
+                setActiveSection("record_review");
+              });
+              focusActiveSearchInput();
+              return;
             }
              if (section === "home" || section === "more") {
               setSelectedPlaceIdForDrawer(null);
@@ -8453,10 +8488,7 @@ export function App() {
           unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
           onOpenSearch={handleOpenSearchModal}
-          onOpenCreateModal={() => {
-            setPreselectedPlaceForRecording(null);
-            setIsCreateModalOpen(true);
-          }}
+          onOpenCreateModal={handleOpenReviewPicker}
         />
       )}
 
@@ -9305,10 +9337,7 @@ export function App() {
         currentUser={currentUser}
         unreadNotifsCount={effectiveUnreadNotifsCount}
         unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
-        onOpenCreateModal={() => {
-          setPreselectedPlaceForRecording(null);
-          setIsCreateModalOpen(true);
-        }}
+        onOpenCreateModal={handleOpenReviewPicker}
         onOpenSearch={handleOpenSearchModal}
         onOpenAuth={(intent) => {
           setAuthIntent((intent as AuthIntent) || 'general');
@@ -9359,10 +9388,7 @@ export function App() {
           onOpenSearch={() => {
             handleOpenSearchModal();
           }}
-          onOpenCreateModal={() => {
-            setPreselectedPlaceForRecording(null);
-            setIsCreateModalOpen(true);
-          }}
+          onOpenCreateModal={handleOpenReviewPicker}
         />
       )}
 

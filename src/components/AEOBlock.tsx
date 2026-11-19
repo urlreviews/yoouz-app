@@ -79,10 +79,10 @@ export function AEOBlock() {
           </div>
 
           <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <h3 itemProp="name">How does onboarding, Face ID Passkey account recovery, and the Verified Reviewer badge work on Yoouz?</h3>
+            <h3 itemProp="name">How does onboarding, Passkey account recovery, and the Verified Reviewer badge work on Yoouz?</h3>
             <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
               <p itemProp="text">
-                Yoouz requires zero sign-up to browse. An anonymous reviewer handle (e.g., U/A4B6C8) is automatically created only when a user takes an action—such as clicking Publish on a live photo review, liking, bookmarking, commenting, following, or messaging. Users can tap "Save Face ID (1-Time)" once on their profile to store a biometric WebAuthn Passkey in Apple iCloud Keychain or Android Google Password Manager. Saving a Passkey unlocks the official Verified Reviewer badge (✓) next to their username and allows them to restore their exact U/XXXXXX account on any new phone using Face ID or fingerprint without ever needing an email, password, or remembering their username.
+                Yoouz requires zero sign-up to browse. An anonymous reviewer handle (e.g., U/A4B6C8) is automatically created only when a user posts a live photo review or interacts. Users can tap "Save Passkey" once on their profile to back up their account via WebAuthn Passkey (Apple iCloud Keychain or Google Password Manager), unlocking the Verified Reviewer badge (✓) and instant account restore on any device without emails or passwords.
               </p>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function AEOBlock() {
           <ul>
             <li><strong>Live Camera Capture Only:</strong> Supports live front or rear camera capture with zero gallery uploads.</li>
             <li><strong>Strict Whole-Number 1–5 Stars:</strong> Every individual review uses 1, 2, 3, 4, or 5 solid stars.</li>
-            <li><strong>On-Action Anonymous Accounts &amp; 1-Time Face ID Passkeys:</strong> Automatic U/XXXXXX identity created only on review submission or interaction, with 1-time Face ID / Biometric Passkey sync across phones (zero emails or passwords).</li>
+            <li><strong>Instant Anonymous Accounts &amp; Passkeys:</strong> Automatic U/XXXXXX identity created only on review submission or interaction, with 1-tap Passkey sync across devices (zero emails or passwords).</li>
             <li><strong>Google Maps &amp; Geolocation Integration:</strong> Instant tagging for millions of places worldwide.</li>
             <li><strong>Transparent Ranking Engine:</strong> Zero paid review deletion or algorithmic suppression.</li>
             <li><strong>oEmbed &amp; Responsive Widgets:</strong> Native integration for merchants to embed photo reviews on any website.</li>

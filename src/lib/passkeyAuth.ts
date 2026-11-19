@@ -11,13 +11,13 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function detectDeviceBiometricLabel(): string {
-  if (typeof navigator === "undefined") return "Face ID / Biometrics";
+function detectDevicePasskeyLabel(): string {
+  if (typeof navigator === "undefined") return "Device Passkey";
   const ua = navigator.userAgent || "";
-  if (/iPhone|iPad|iPod/i.test(ua)) return "iPhone Face ID (iCloud Keychain)";
-  if (/Android/i.test(ua)) return "Android Biometrics (Google Passkey)";
-  if (/Mac/i.test(ua)) return "Apple Passkey (Face ID / Touch ID)";
-  return "Device Face ID / Passkey";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS Passkey";
+  if (/Android/i.test(ua)) return "Android Passkey";
+  if (/Mac/i.test(ua)) return "Mac Passkey";
+  return "Device Passkey";
 }
 
 export interface PasskeyResult {
@@ -41,7 +41,7 @@ export async function registerFaceIdPasskey(user: {
   }
 
   const displayHandle = String(user?.name || userId).trim();
-  const deviceName = detectDeviceBiometricLabel();
+  const deviceName = detectDevicePasskeyLabel();
   let credentialId = "";
   let publicKey = "";
 
@@ -86,7 +86,7 @@ export async function registerFaceIdPasskey(user: {
       })) as PublicKeyCredential | null;
 
       if (!credential) {
-        return { success: false, cancelled: true, error: "Face ID / Passkey setup was cancelled." };
+        return { success: false, cancelled: true, error: "Passkey setup was cancelled." };
       }
 
       credentialId = bufferToBase64Url(credential.rawId);
@@ -121,12 +121,12 @@ export async function registerFaceIdPasskey(user: {
       return {
         success: false,
         cancelled: true,
-        error: "Face ID / Biometric verification was cancelled."
+        error: "Passkey setup was cancelled."
       };
     } else {
       return {
         success: false,
-        error: "Could not complete Face ID / Passkey verification on this device."
+        error: "Could not save passkey on this device."
       };
     }
   }
@@ -195,7 +195,7 @@ export async function restoreAccountWithPasskey(
       })) as PublicKeyCredential | null;
 
       if (!assertion) {
-        return { success: false, cancelled: true, error: "Face ID / Passkey sign-in was cancelled." };
+        return { success: false, cancelled: true, error: "Passkey sign-in was cancelled." };
       }
 
       credentialId = bufferToBase64Url(assertion.rawId);
@@ -219,12 +219,12 @@ export async function restoreAccountWithPasskey(
       return {
         success: false,
         cancelled: true,
-        error: "Face ID / Biometric verification was cancelled."
+        error: "Passkey sign-in was cancelled."
       };
     } else {
       return {
         success: false,
-        error: "No synced Face ID / Passkey found on this device."
+        error: "No saved passkey found on this device."
       };
     }
   }
@@ -232,7 +232,7 @@ export async function restoreAccountWithPasskey(
   if (!credentialId) {
     return {
       success: false,
-      error: "No saved Face ID / Passkey found on this device yet."
+      error: "No saved passkey found on this device."
     };
   }
 
