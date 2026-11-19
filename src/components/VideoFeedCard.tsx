@@ -534,7 +534,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             isEmbed
               ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto"
               : commentsOpen
-              ? "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-148px))] md:aspect-[9/16] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+              ? "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-204px))] md:aspect-[9/16] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
               : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(480px,calc(min(93cqh,860px)*9/16),calc(100cqw-136px))] md:aspect-[9/16] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
           }`}
         >

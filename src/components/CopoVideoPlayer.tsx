@@ -1034,20 +1034,22 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[440px] md:px-3" : "md:mr-0"
+        commentsOpen ? "md:mr-[440px] md:pl-3 md:pr-6 lg:pl-4 lg:pr-8" : "md:mr-0"
       } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none", containerType: "size" }}
     >
       <div
-        className="w-full h-full min-h-full max-h-full flex items-center justify-center relative"
+        className={`w-full h-full min-h-full max-h-full flex items-center justify-center relative ${
+          commentsOpen ? "md:gap-3 lg:gap-4" : ""
+        }`}
       >
         {/* Scroll Snap Feed Container (100% height slides on both mobile & desktop) */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`w-full h-full min-h-full max-h-full ${
+          className={`flex-1 min-w-0 h-full min-h-full max-h-full ${
             commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-auto touch-pan-y"
-          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center shrink-0`}
+          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center`}
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: commentsOpen ? "none" : "y mandatory",
@@ -1122,7 +1124,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               id="copo-floating-nav-buttons"
               className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 ${
                 commentsOpen
-                  ? "relative z-30 self-center"
+                  ? "relative z-30 self-center mr-1 lg:mr-2"
                   : "z-50 fixed top-1/2 -translate-y-1/2 right-4 lg:right-8 md:transition-all md:duration-200"
               }`}
             >
