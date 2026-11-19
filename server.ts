@@ -43831,6 +43831,80 @@ function injectOpenGraphTags(html: string, meta: any) {
 
       await seedWave2CommunityV1().catch(() => {});
 
+      const seedWave3MultiReviewsV1 = async () => {
+        const markerPath = path.join(globalUploadsDir, ".wave3_multi_reviews_v1_done");
+        if (fs.existsSync(markerPath)) return;
+        try {
+          const { seedWave3MultiUserReviewsOnly } = await import("./src/utils/wave3ReviewsSeeder.ts");
+          const { reviewsToAdd, updatedPlacesMap } = await seedWave3MultiUserReviewsOnly();
+
+          if (reviewsToAdd.length > 0) {
+            // 1. Merge 15 new photo reviews into local JSON index + seedReviews.ts + feedCache
+            try {
+              const existingReviews = readReviewsIndex();
+              const newRevIds = new Set(reviewsToAdd.map((r: any) => String(r.id)));
+              const retainedReviews = existingReviews.filter((r: any) => r && !newRevIds.has(String(r.id || "")));
+              const mergedReviews = [...reviewsToAdd, ...retainedReviews].sort(
+                (a: any, b: any) => Number(b?.createdAtMs || 0) - Number(a?.createdAtMs || 0)
+              );
+              writeReviewsIndex(mergedReviews);
+            } catch {}
+
+            // 2. Update aggregate place ratings & counts in local places index
+            try {
+              const localPlaces = readPlacesIndex();
+              let placesChanged = false;
+              const updatedPlaces = localPlaces.map((p: any) => {
+                if (!p) return p;
+                const updated = updatedPlacesMap.get(String(p.id || "")) || updatedPlacesMap.get(String(p.brandDomain || ""));
+                if (!updated) return p;
+                placesChanged = true;
+                return { ...p, ...updated };
+              });
+              if (placesChanged) writePlacesIndex(updatedPlaces);
+            } catch {}
+
+            // 3. Refresh existing user review counts in local users index
+            try {
+              const existingUsers = readUsersIndex();
+              const allReviews = readReviewsIndex();
+              const countsByUid = new Map<string, number>();
+              for (const r of allReviews) {
+                const uid = String(r?.userId || r?.author?.id || "").trim();
+                if (uid) countsByUid.set(uid, (countsByUid.get(uid) || 0) + 1);
+              }
+              let usersChanged = false;
+              const updatedUsers = existingUsers.map((u: any) => {
+                if (!u) return u;
+                const uid = String(u.id || u.uid || "");
+                const cnt = countsByUid.get(uid);
+                if (cnt && cnt !== u.photosCount) {
+                  usersChanged = true;
+                  return { ...u, photosCount: cnt, videoReviewCount: cnt };
+                }
+                return u;
+              });
+              if (usersChanged) writeUsersIndex(updatedUsers);
+            } catch {}
+
+            feedCache.lastFetched = 0;
+            if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
+            if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
+            if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
+            try {
+              if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
+              fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
+            } catch {}
+            broadcastSseEvent({ type: "feed_refreshed" });
+            console.log(`✅ [Server] Wave 3 seeded ${reviewsToAdd.length} candid multi-user photo reviews for 10 existing profiles.`);
+          }
+        } catch (w3Err: any) {
+          console.warn("Wave 3 multi-review seed notice:", w3Err?.message || w3Err);
+        }
+      };
+
+      await seedWave3MultiReviewsV1().catch(() => {});
+
       const runCommunityEngagementV1 = async () => {
         const markerPath = path.join(globalUploadsDir, ".community_engagement_v3_done");
         if (bunnyDb) {
