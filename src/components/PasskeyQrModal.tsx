@@ -37,8 +37,19 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
   const [completedHandle, setCompletedHandle] = useState<string>("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef<number>(0);
 
-  const clearTimers = () => {
+  // Keep latest props in refs so parent re-renders never reset or blink the QR code
+  const currentUserRef = useRef(currentUser);
+  currentUserRef.current = currentUser;
+  const ensureProvisionedRef = useRef(onEnsureAccountProvisioned);
+  ensureProvisionedRef.current = onEnsureAccountProvisioned;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
+  const clearTimers = useCallback(() => {
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
@@ -47,7 +58,7 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -57,17 +68,20 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
 
   const createSession = useCallback(
     async (targetMode: PasskeyModalMode) => {
+      const reqId = ++requestIdRef.current;
       clearTimers();
       setStatus("loading");
       setErrorMsg(null);
       setCopied(false);
 
       try {
-        let userId = String(currentUser?.id || (currentUser as any)?.uid || "").trim();
-        let handle = String((currentUser as any)?.handle || currentUser?.name || "").trim();
+        const latestUser = currentUserRef.current;
+        let userId = String(latestUser?.id || (latestUser as any)?.uid || "").trim();
+        let handle = String((latestUser as any)?.handle || latestUser?.name || "").trim();
 
-        if (!userId && onEnsureAccountProvisioned) {
-          const provisioned = await onEnsureAccountProvisioned();
+        if (!userId && ensureProvisionedRef.current) {
+          const provisioned = await ensureProvisionedRef.current();
+          if (reqId !== requestIdRef.current) return;
           if (provisioned?.id) {
             userId = provisioned.id;
             handle = provisioned.name || handle;
@@ -75,6 +89,7 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
         }
 
         if (targetMode === "save" && !userId) {
+          if (reqId !== requestIdRef.current) return;
           setStatus("error");
           setErrorMsg("Could not initialize your account. Please try again.");
           return;
@@ -90,6 +105,7 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
           })
         });
         const data = await res.json();
+        if (reqId !== requestIdRef.current) return;
         if (!res.ok || !data?.token) {
           setStatus("error");
           setErrorMsg(data?.error || "Could not generate QR code right now.");
@@ -99,24 +115,29 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
         setToken(data.token);
         setStatus("ready");
       } catch {
+        if (reqId !== requestIdRef.current) return;
         setStatus("error");
         setErrorMsg("Network error while creating QR code.");
       }
     },
-    [currentUser, onEnsureAccountProvisioned]
+    [clearTimers]
   );
 
-  // Create a fresh QR handoff session whenever modal opens or user switches Save/Restore tab
+  // Create a fresh QR handoff session strictly when modal opens or Save/Restore tab changes
   useEffect(() => {
     if (!isOpen) {
+      requestIdRef.current++;
       clearTimers();
       setToken("");
       setErrorMsg(null);
       return;
     }
     createSession(mode);
-    return () => clearTimers();
-  }, [isOpen, mode, createSession]);
+    return () => {
+      requestIdRef.current++;
+      clearTimers();
+    };
+  }, [isOpen, mode, createSession, clearTimers]);
 
   // Poll server every 2s while QR is active to sync desktop instantaneously when phone finishes
   useEffect(() => {
@@ -151,9 +172,9 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
           setCompletedHandle(data.user.handle || data.user.name || "");
           setStatus("completed");
           triggerHaptic("success");
-          onSuccess(data.user, mode);
+          onSuccessRef.current(data.user, mode);
           closeTimerRef.current = setTimeout(() => {
-            onClose();
+            onCloseRef.current();
           }, 1250);
         }
       } catch {
@@ -169,17 +190,17 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
         pollRef.current = null;
       }
     };
-  }, [isOpen, status, token, mode, onSuccess, onClose]);
+  }, [isOpen, status, token, mode, clearTimers]);
 
   // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const handleUseThisComputer = async () => {
     if (isRunningLocal) return;
