@@ -4783,6 +4783,160 @@ async function startServer() {
     }
   });
 
+  // Dedicated Investor Pitch Video streaming route (/api/pitch/video)
+  // Automatically syncs to Bunny Storage CDN when BUNNY_STORAGE_API_KEY is configured in production,
+  // and streams with full HTTP 206 Partial Content byte-range support for instant scrubbing on desktop & mobile.
+  let cachedPitchVideoBunnyUrl: string | null = null;
+  let pitchVideoBunnySyncStarted = false;
+
+  const resolveLocalPitchVideoPath = (): string | null => {
+    const candidates = [
+      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
+      path.join(process.cwd(), "dist", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
+      path.join(_dirname, "public", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
+      path.join(_dirname, "dist", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
+    ];
+    for (const p of candidates) {
+      if (fs.existsSync(p)) return p;
+    }
+    return null;
+  };
+
+  const ensurePitchVideoOnBunnyCdn = async (): Promise<string | null> => {
+    if (cachedPitchVideoBunnyUrl) return cachedPitchVideoBunnyUrl;
+    if (pitchVideoBunnySyncStarted) return null;
+    pitchVideoBunnySyncStarted = true;
+
+    const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+    const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+    const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+    const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, "");
+    const remotePath = "pitch/yoouz-investor-pitch-2026.mp4";
+    const cdnUrl = `${pullZoneDomain}/${remotePath}`;
+
+    try {
+      const localPath = resolveLocalPitchVideoPath();
+      const localSize = localPath ? fs.statSync(localPath).size : 0;
+
+      // 1. Check if already live on Bunny CDN with matching size
+      const headRes = await fetch(cdnUrl, { method: "HEAD" }).catch(() => null);
+      if (headRes && headRes.ok) {
+        const remoteSize = Number(headRes.headers.get("content-length") || 0);
+        if (!localSize || remoteSize === localSize) {
+          cachedPitchVideoBunnyUrl = cdnUrl;
+          console.log(`🐰 [Bunny CDN] Investor pitch video verified live: ${cdnUrl}`);
+          return cdnUrl;
+        }
+      }
+
+      // 2. Auto-upload to Bunny Storage when key is present in production
+      if (bunnyAccessKey && bunnyStorageZone && localPath) {
+        const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+        const uploadUrl = `https://${hostname}/${bunnyStorageZone}/${remotePath}`;
+        const fileBuffer = fs.readFileSync(localPath);
+        const putRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            AccessKey: bunnyAccessKey,
+            "Content-Type": "video/mp4",
+          },
+          body: fileBuffer,
+        });
+        if (putRes.ok || putRes.status === 201) {
+          cachedPitchVideoBunnyUrl = cdnUrl;
+          console.log(`🐰 [Bunny Storage] Uploaded investor pitch video to CDN: ${cdnUrl}`);
+          return cdnUrl;
+        } else {
+          console.warn(`Bunny Storage pitch video upload status ${putRes.status}`);
+        }
+      }
+    } catch (err: any) {
+      console.warn("Bunny CDN pitch video sync warning:", err?.message || err);
+    } finally {
+      if (!cachedPitchVideoBunnyUrl) {
+        pitchVideoBunnySyncStarted = false;
+      }
+    }
+    return null;
+  };
+
+  // Kick off non-blocking Bunny CDN verification/upload on server boot
+  setTimeout(() => {
+    void ensurePitchVideoOnBunnyCdn();
+  }, 4000);
+
+  app.get(["/api/pitch/video", "/Yoouz_Investor_Pitch_Video.mp4"], async (req, res) => {
+    const isDownload = req.query.download === "1";
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
+
+    // If synced on Bunny CDN and streaming inline, redirect straight to Bunny edge for zero-latency global delivery
+    if (!isDownload && cachedPitchVideoBunnyUrl) {
+      res.setHeader("Cache-Control", "private, max-age=300");
+      return res.redirect(302, cachedPitchVideoBunnyUrl);
+    }
+
+    // Trigger background Bunny sync if not yet synced
+    if (!cachedPitchVideoBunnyUrl) {
+      void ensurePitchVideoOnBunnyCdn();
+    }
+
+    const localPath = resolveLocalPitchVideoPath();
+    if (!localPath) {
+      if (cachedPitchVideoBunnyUrl) {
+        return res.redirect(302, cachedPitchVideoBunnyUrl);
+      }
+      return res.status(404).send("Investor pitch video not found");
+    }
+
+    try {
+      const stat = fs.statSync(localPath);
+      const fileSize = stat.size;
+      const range = req.headers.range;
+
+      res.setHeader("Content-Type", "video/mp4");
+      res.setHeader("Accept-Ranges", "bytes");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      if (isDownload) {
+        res.setHeader("Content-Disposition", 'attachment; filename="Yoouz_Investor_Pitch_Walkthrough.mp4"');
+      } else {
+        res.setHeader("Content-Disposition", 'inline; filename="Yoouz_Investor_Pitch_Walkthrough.mp4"');
+      }
+
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(String(range).trim());
+        if (!match) {
+          res.status(416).setHeader("Content-Range", `bytes */${fileSize}`);
+          return res.end();
+        }
+        const start = match[1] ? parseInt(match[1], 10) : 0;
+        const end = match[2] ? Math.min(parseInt(match[2], 10), fileSize - 1) : fileSize - 1;
+        if (isNaN(start) || isNaN(end) || start > end || start >= fileSize) {
+          res.status(416).setHeader("Content-Range", `bytes */${fileSize}`);
+          return res.end();
+        }
+        const chunkSize = end - start + 1;
+        res.status(206);
+        res.setHeader("Content-Range", `bytes ${start}-${end}/${fileSize}`);
+        res.setHeader("Content-Length", String(chunkSize));
+        const stream = fs.createReadStream(localPath, { start, end });
+        stream.on("error", () => {
+          if (!res.headersSent) res.status(500).end();
+        });
+        return stream.pipe(res);
+      }
+
+      res.status(200);
+      res.setHeader("Content-Length", String(fileSize));
+      const stream = fs.createReadStream(localPath);
+      stream.on("error", () => {
+        if (!res.headersSent) res.status(500).end();
+      });
+      return stream.pipe(res);
+    } catch (err: any) {
+      return res.status(500).send("Error streaming pitch video");
+    }
+  });
+
   // Serve PDF.js worker, standard_fonts, and cmaps locally to guarantee 100% original PDF font & vector quality
   app.get(["/pdf.worker.min.mjs", "/assets/pdf.worker.min.mjs"], (_req, res) => {
     const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "build", "pdf.worker.min.mjs");
@@ -15532,7 +15686,7 @@ ${imageEntries.join('\n')}
   });
 
   // Confidential Investor Pitch Memorandum routes - enforce strict noindex HTTP response headers
-  app.use(['/pitch', '/pitch/*', '/investors', '/investors/*', '/deck', '/deck/*', '/memorandum', '/memorandum/*', '/Yoouz_Investor_Pitch_Memorandum.pdf'], (_req: any, res: any, next: any) => {
+  app.use(['/pitch', '/pitch/*', '/investors', '/investors/*', '/deck', '/deck/*', '/memorandum', '/memorandum/*', '/Yoouz_Investor_Pitch_Memorandum.pdf', '/Yoouz_Investor_Pitch_Video.mp4', '/api/pitch/video', '/assets/aistudio/Yoouz_vid__2bf6b810.mp4'], (_req: any, res: any, next: any) => {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
     res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     next();

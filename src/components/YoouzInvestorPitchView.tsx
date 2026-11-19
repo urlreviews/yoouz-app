@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   X,
   Layers,
+  Play,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Place, VideoReview } from "../types";
@@ -35,6 +36,29 @@ import { CopoEmbedView } from "./CopoEmbedView";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 const toWebp = (p?: string) => (p ? p.replace(/\.png$/, ".webp") : "");
+
+const PITCH_VIDEO_CHAPTERS: { time: number; label: string; title: string }[] = [
+  { time: 0, label: "0:00", title: "Executive Summary" },
+  { time: 34, label: "0:34", title: "Market Opportunity ($15.8B+)" },
+  { time: 65, label: "1:05", title: "Competitive Landscape" },
+  { time: 94, label: "1:34", title: "Go-To-Market Strategy" },
+  { time: 124, label: "2:04", title: "Business Model" },
+  { time: 158, label: "2:38", title: "Founder Edge & Live Status" },
+  { time: 188, label: "3:08", title: "Autonomous Indexing Engine" },
+  { time: 215, label: "3:35", title: "Physical-to-Digital QR Journey" },
+  { time: 241, label: "4:01", title: "Anti-Spoofing Camera Protocol" },
+  { time: 262, label: "4:22", title: "Zero-Friction Identity" },
+  { time: 287, label: "4:47", title: "Verified Badge & Passkey" },
+  { time: 308, label: "5:08", title: "Complete Business Storefront" },
+  { time: 327, label: "5:27", title: "Engagement & Dialogue" },
+  { time: 347, label: "5:47", title: "Customer Retention & Chat" },
+  { time: 367, label: "6:07", title: "Merchant Website Embed" },
+  { time: 387, label: "6:27", title: "$0 CAC Physical Distribution" },
+  { time: 407, label: "6:47", title: "B2B Merchant Portal" },
+  { time: 433, label: "7:13", title: "Organic Search & SEO" },
+  { time: 460, label: "7:40", title: "Real Market Traction" },
+  { time: 484, label: "8:04", title: "Monetization & Moat" },
+];
 
 const PitchResponsiveImage: React.FC<{
   src: string;
@@ -214,6 +238,88 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   const [isLoadingPdf, setIsLoadingPdf] = useState<boolean>(false);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [isMobileChapterSheetOpen, setIsMobileChapterSheetOpen] = useState<boolean>(false);
+
+  // Executive Pitch Video Cinema Modal state
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
+  const [videoStartTime, setVideoStartTime] = useState<number>(0);
+  const [videoCurrentTime, setVideoCurrentTime] = useState<number>(0);
+  const [videoPlaybackRate, setVideoPlaybackRate] = useState<number>(1);
+  const [isVideoBuffering, setIsVideoBuffering] = useState<boolean>(false);
+  const pitchVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const openPitchVideo = (startSeconds = 0) => {
+    setVideoStartTime(startSeconds);
+    setVideoCurrentTime(startSeconds);
+    setIsMobileChapterSheetOpen(false);
+    setIsVideoModalOpen(true);
+  };
+
+  const closePitchVideo = () => {
+    if (pitchVideoRef.current) {
+      try {
+        pitchVideoRef.current.pause();
+      } catch {}
+    }
+    setIsVideoModalOpen(false);
+  };
+
+  const seekPitchVideo = (seconds: number) => {
+    setVideoStartTime(seconds);
+    setVideoCurrentTime(seconds);
+    const el = pitchVideoRef.current;
+    if (el) {
+      try {
+        el.currentTime = seconds;
+        const playPromise = el.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {});
+        }
+      } catch {}
+    }
+  };
+
+  const cycleVideoPlaybackRate = () => {
+    const speeds = [1, 1.25, 1.5, 2];
+    const next = speeds[(speeds.indexOf(videoPlaybackRate) + 1) % speeds.length];
+    setVideoPlaybackRate(next);
+    if (pitchVideoRef.current) {
+      pitchVideoRef.current.playbackRate = next;
+    }
+  };
+
+  useEffect(() => {
+    if (!isVideoModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closePitchVideo();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isVideoModalOpen]);
+
+  useEffect(() => {
+    if (!isVideoModalOpen) return;
+    const el = pitchVideoRef.current;
+    if (!el) return;
+    el.playbackRate = videoPlaybackRate;
+    const applyStartAndPlay = () => {
+      try {
+        if (videoStartTime > 0 && Math.abs(el.currentTime - videoStartTime) > 1) {
+          el.currentTime = videoStartTime;
+        }
+        const p = el.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      } catch {}
+    };
+    if (el.readyState >= 1) {
+      applyStartAndPlay();
+    } else {
+      el.addEventListener("loadedmetadata", applyStartAndPlay, { once: true });
+      return () => el.removeEventListener("loadedmetadata", applyStartAndPlay);
+    }
+  }, [isVideoModalOpen]);
 
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -1598,23 +1704,22 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             <span className="text-sm font-black tracking-tight text-white whitespace-nowrap">
               Yoouz
             </span>
-            <span className="text-zinc-600 text-xs">·</span>
-            <span className="text-xs font-semibold text-zinc-300 truncate">
-              <span className="sm:hidden">Pitch</span>
-              <span className="hidden sm:inline lg:hidden">Pitch Deck</span>
+            <span className="hidden sm:inline text-zinc-600 text-xs">·</span>
+            <span className="hidden sm:inline text-xs font-semibold text-zinc-300 truncate">
+              <span className="lg:hidden">Pitch Deck</span>
               <span className="hidden lg:inline">Investor Pitch Deck (20 Chapters · Live Photo Proof)</span>
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Deck / PDF Toggle */}
+          {/* Deck / PDF / Video Switcher */}
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
             <button
               type="button"
               onClick={() => setViewMode("interactive")}
-              className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                viewMode === "interactive"
+              className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                viewMode === "interactive" && !isVideoModalOpen
                   ? "bg-white text-zinc-950"
                   : "text-zinc-400 hover:text-white"
               }`}
@@ -1625,11 +1730,27 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             <button
               type="button"
               onClick={() => setViewMode("pdf")}
-              className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
-                viewMode === "pdf" ? "bg-white text-zinc-950" : "text-zinc-400 hover:text-white"
+              className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                viewMode === "pdf" && !isVideoModalOpen
+                  ? "bg-white text-zinc-950"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => openPitchVideo(0)}
+              className={`px-2 sm:px-3 py-1 rounded-md text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                isVideoModalOpen
+                  ? "bg-white text-zinc-950"
+                  : "text-amber-400 hover:text-white hover:bg-zinc-800/80"
+              }`}
+              title="Watch 8:29 Narrated Investor Pitch Video"
+            >
+              <Play className="w-3 h-3 fill-current shrink-0" />
+              <span className="sm:hidden">Video</span>
+              <span className="hidden sm:inline">Pitch Video</span>
             </button>
           </div>
 
@@ -1729,8 +1850,27 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
           <aside className="hidden md:flex w-72 bg-[#09090B] border-r border-zinc-800 flex-col shrink-0 z-30 overflow-y-auto p-3 space-y-1.5 select-none">
             <div className="text-[11px] font-bold tracking-wider text-zinc-400 px-1 pb-2 border-b border-zinc-800 flex items-center justify-between">
               <span>20-Chapter Investor Deck</span>
-              <span className="text-white font-extrabold">01 / {numPagesStr}</span>
+              <span className="text-white font-extrabold tabular-nums">01 / {numPagesStr}</span>
             </div>
+
+            {/* Quick Launch Pitch Video in Sidebar */}
+            <button
+              type="button"
+              onClick={() => openPitchVideo(0)}
+              className="w-full p-2.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 hover:border-amber-400/60 flex items-center gap-2.5 text-left transition-all cursor-pointer group"
+            >
+              <span className="w-7 h-7 rounded-lg bg-white text-zinc-950 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-extrabold text-white leading-snug truncate">
+                  Watch Pitch Video
+                </div>
+                <div className="text-[11px] text-zinc-400 tabular-nums">
+                  08:29 · Narrated Walkthrough
+                </div>
+              </div>
+            </button>
 
             {PITCH_CHAPTERS.map((chapter) => {
               const isActive = currentPage === chapter.page;
@@ -1783,6 +1923,115 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
               }}
               className="space-y-6 sm:space-y-10 pb-28 sm:pb-16 transition-all duration-150"
             >
+              {/* Executive Video Walkthrough Showcase (Desktop 2-Column Split / Mobile Stacked Card) */}
+              <section
+                aria-label="Executive Video Briefing"
+                className="rounded-2xl bg-[#111215] border border-zinc-800 shadow-2xl overflow-hidden"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
+                  {/* Interactive Widescreen Video Poster Preview (Top on Mobile, Right on Desktop) */}
+                  <button
+                    type="button"
+                    onClick={() => openPitchVideo(0)}
+                    className="order-1 lg:order-2 lg:col-span-7 relative aspect-video lg:aspect-auto lg:min-h-[300px] w-full bg-black overflow-hidden group cursor-pointer text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                    aria-label="Play Yoouz Investor Pitch Walkthrough Video"
+                  >
+                    <picture className="absolute inset-0 w-full h-full">
+                      <source srcSet="/pitch-assets/v2/01-home-discovery.webp" type="image/webp" />
+                      <img
+                        src="/pitch-assets/v2/01-home-discovery.png"
+                        alt="Yoouz Executive Pitch Walkthrough Preview"
+                        referrerPolicy="no-referrer"
+                        loading="eager"
+                        className="w-full h-full object-cover object-center opacity-80 group-hover:opacity-95 group-hover:scale-[1.02] transition-all duration-300"
+                      />
+                    </picture>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
+
+                    {/* Center Cinema Play Button */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                      <span className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white text-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.65)] flex items-center justify-center group-hover:scale-105 active:scale-95 transition-transform">
+                        <Play className="w-7 h-7 fill-current ml-1" />
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white tracking-tight drop-shadow">
+                        Play Investor Presentation · 08:29
+                      </span>
+                    </div>
+
+                    {/* Subtle Bottom Caption Bar */}
+                    <div className="absolute inset-x-0 bottom-0 px-4 sm:px-5 py-3 flex items-center justify-between text-[11px] sm:text-xs text-zinc-200 font-medium">
+                      <span className="truncate">Full Narrated Walkthrough · 20 Chapters</span>
+                      <span className="tabular-nums text-zinc-300 shrink-0 ml-3">HD 16:9</span>
+                    </div>
+                  </button>
+
+                  {/* Editorial Summary & Direct Video Actions (Bottom on Mobile, Left on Desktop) */}
+                  <div className="order-2 lg:order-1 lg:col-span-5 p-5 sm:p-7 flex flex-col justify-between gap-5 border-t lg:border-t-0 lg:border-r border-zinc-800/90">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-400">
+                        <span className="text-amber-400">Executive Video Briefing</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="tabular-nums">08:29</span>
+                        <span aria-hidden="true">·</span>
+                        <span>Audio + Slides</span>
+                      </div>
+                      <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight [text-wrap:balance]">
+                        Watch the Yoouz Investor Pitch Walkthrough
+                      </h1>
+                      <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                        Prefer to listen and watch before reading all 20 chapters? Open the narrated presentation covering live camera proof, $0 CAC distribution, B2B SaaS margins, and live traction.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Primary & Secondary Actions */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => openPitchVideo(0)}
+                          className="flex-1 sm:flex-initial min-h-[44px] px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg whitespace-nowrap"
+                        >
+                          <Play className="w-4 h-4 fill-current shrink-0" />
+                          <span>Watch Pitch Video</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setViewMode("pdf")}
+                          className="min-h-[44px] px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          <FileText className="w-3.5 h-3.5 shrink-0" />
+                          <span>View PDF</span>
+                        </button>
+                      </div>
+
+                      {/* Quick Timestamp Jumps */}
+                      <div className="pt-3 border-t border-zinc-800/80">
+                        <div className="text-[11px] font-semibold text-zinc-400 mb-2">
+                          Jump straight to a topic:
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { time: 34, label: "0:34 Market" },
+                            { time: 124, label: "2:04 Business Model" },
+                            { time: 241, label: "4:01 Camera Proof" },
+                            { time: 460, label: "7:40 Traction" },
+                          ].map((jump) => (
+                            <button
+                              key={jump.time}
+                              type="button"
+                              onClick={() => openPitchVideo(jump.time)}
+                              className="px-2.5 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-semibold text-zinc-300 hover:text-white tabular-nums transition-colors cursor-pointer whitespace-nowrap"
+                            >
+                              {jump.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {PITCH_CHAPTERS.map((chapter, idx) => {
                 const pageStr = chapter.page < 10 ? `0${chapter.page}` : `${chapter.page}`;
                 return (
@@ -1991,6 +2240,24 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
             </div>
 
             <div className="overflow-y-auto p-4 space-y-2 flex-1">
+              {/* Mobile Quick-Launch Video Walkthrough */}
+              <button
+                type="button"
+                onClick={() => openPitchVideo(0)}
+                className="w-full p-3.5 rounded-xl bg-white text-zinc-950 flex items-center gap-3 text-left transition-transform active:scale-[0.98] cursor-pointer shadow-lg mb-2"
+              >
+                <span className="w-8 h-8 rounded-lg bg-zinc-950 text-white flex items-center justify-center shrink-0">
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-black truncate">Watch Investor Pitch Video</div>
+                  <div className="text-[11px] text-zinc-600 font-semibold tabular-nums">
+                    08:29 · Full Narrated Presentation
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-700 shrink-0" />
+              </button>
+
               {PITCH_CHAPTERS.map((ch) => {
                 const isSelected = ch.page === currentPage;
                 const pStr = ch.page < 10 ? `0${ch.page}` : `${ch.page}`;
@@ -2023,6 +2290,128 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cinema Investor Pitch Video Modal (Desktop & Mobile) */}
+      {isVideoModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Yoouz Investor Pitch Walkthrough Video"
+          onClick={closePitchVideo}
+          className="fixed inset-0 z-[10050] bg-black/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-6 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-5xl bg-[#0D0E11] sm:rounded-2xl border-0 sm:border border-zinc-800 shadow-2xl flex flex-col overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="px-4 sm:px-5 py-3 bg-[#111215] border-b border-zinc-800 flex items-center justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-black text-white truncate">
+                  <span>Yoouz Investor Pitch Video</span>
+                </div>
+                <div className="text-[11px] text-zinc-400 font-medium tabular-nums truncate">
+                  08:29 · Narrated Executive Walkthrough · Confidential
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={cycleVideoPlaybackRate}
+                  className="h-9 sm:h-8 px-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold text-zinc-200 hover:text-white tabular-nums transition-colors cursor-pointer whitespace-nowrap"
+                  title="Change Playback Speed"
+                >
+                  {videoPlaybackRate}x
+                </button>
+
+                <a
+                  href="/api/pitch/video?download=1"
+                  download="Yoouz_Investor_Pitch_Walkthrough.mp4"
+                  className="h-9 w-9 sm:h-8 sm:w-auto sm:px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
+                  title="Download MP4"
+                >
+                  <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                  <span className="hidden sm:inline">Download MP4</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={closePitchVideo}
+                  className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                  title="Close Video (Esc)"
+                  aria-label="Close Pitch Video"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Widescreen 16:9 Video Stage */}
+            <div className="relative w-full bg-black flex items-center justify-center shrink-0 aspect-video max-h-[58vh] sm:max-h-[65vh]">
+              {isVideoBuffering && (
+                <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-black/30">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
+              <video
+                ref={pitchVideoRef}
+                controls
+                playsInline
+                preload="metadata"
+                poster="/pitch-assets/v2/01-home-discovery.webp"
+                onWaiting={() => setIsVideoBuffering(true)}
+                onPlaying={() => setIsVideoBuffering(false)}
+                onCanPlay={() => setIsVideoBuffering(false)}
+                onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
+                className="w-full h-full object-contain bg-black focus:outline-none"
+              >
+                <source src="/api/pitch/video" type="video/mp4" />
+                <source src="/assets/aistudio/Yoouz_vid__2bf6b810.mp4" type="video/mp4" />
+              </video>
+            </div>
+
+            {/* Interactive Video Chapter Jump Strip */}
+            <div className="p-3.5 sm:p-4 bg-[#111215] border-t border-zinc-800 flex-1 min-h-0 overflow-y-auto">
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <span className="text-[11px] font-bold tracking-wider uppercase text-zinc-400">
+                  Video Chapters
+                </span>
+                <span className="text-[11px] text-zinc-500 font-medium">
+                  Tap any timestamp to jump
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
+                {PITCH_VIDEO_CHAPTERS.map((ch, idx) => {
+                  const nextTime = PITCH_VIDEO_CHAPTERS[idx + 1]?.time ?? Infinity;
+                  const isActiveChapter = videoCurrentTime >= ch.time && videoCurrentTime < nextTime;
+                  return (
+                    <button
+                      key={ch.time}
+                      type="button"
+                      onClick={() => seekPitchVideo(ch.time)}
+                      className={`px-2.5 py-2 rounded-lg border text-left flex items-center gap-2 transition-colors cursor-pointer min-w-0 ${
+                        isActiveChapter
+                          ? "bg-white text-zinc-950 border-white font-bold"
+                          : "bg-zinc-950/80 hover:bg-zinc-900 border-zinc-800/90 text-zinc-300 hover:text-white"
+                      }`}
+                    >
+                      <span
+                        className={`text-[11px] font-bold tabular-nums shrink-0 ${
+                          isActiveChapter ? "text-zinc-900" : "text-amber-400"
+                        }`}
+                      >
+                        {ch.label}
+                      </span>
+                      <span className="text-xs truncate">{ch.title}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
