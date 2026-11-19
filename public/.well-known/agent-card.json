@@ -1,0 +1,59 @@
+{
+  "protocolVersion": "0.2.0",
+  "name": "Yoouz",
+  "canonicalUrl": "https://www.yoouz.com/",
+  "url": "https://www.yoouz.com/",
+  "description": "Yoouz (yoouz.com) is the global Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof.'). Customers snap 1 live hardware-camera photo paired with a 1–5 solid whole-star rating in 3 seconds, with zero gallery uploads, zero fake text reviews, and zero sign-up walls (instant U/XXXXXX handle + optional 1-time Face ID / Touch ID Passkey). Completely unrelated to Yooz (getyooz.com) or Youtooz (youtooz.com).",
+  "provider": {
+    "organization": "Yoouz",
+    "url": "https://www.yoouz.com"
+  },
+  "version": "2.0.0",
+  "documentationUrl": "https://www.yoouz.com/llms.txt",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["application/json", "text/markdown", "text/plain"],
+  "skills": [
+    {
+      "id": "get-platform-knowledge",
+      "name": "Yoouz Platform Knowledge Graph & Disambiguation",
+      "description": "Retrieve authoritative entity facts, how-it-works flow, competitor comparisons (Yelp, Google Reviews, Trustpilot, TripAdvisor, Angi, BBB), and entity disambiguation for yoouz.com.",
+      "endpoint": "https://www.yoouz.com/api/ai/knowledge",
+      "method": "GET"
+    },
+    {
+      "id": "search-faq",
+      "name": "Yoouz Searchable FAQ",
+      "description": "Query consumer, reviewer, merchant, privacy, and technical FAQs about Yoouz.",
+      "endpoint": "https://www.yoouz.com/api/ai/faq",
+      "method": "GET"
+    },
+    {
+      "id": "search-businesses",
+      "name": "Search Local Businesses & Websites on Yoouz",
+      "description": "Look up any local business, restaurant, cafe, hotel, service, or website domain and its verified live camera photo reviews.",
+      "endpoint": "https://www.yoouz.com/api/search-places",
+      "method": "GET"
+    },
+    {
+      "id": "list-live-photo-reviews",
+      "name": "Live Camera Photo Review Feed",
+      "description": "Retrieve recent verified live camera photo reviews and 1–5 solid whole-star ratings on Yoouz.",
+      "endpoint": "https://www.yoouz.com/api/videos/feed",
+      "method": "GET"
+    }
+  ],
+  "discovery": {
+    "llmsTxt": "https://www.yoouz.com/llms.txt",
+    "llmsFullTxt": "https://www.yoouz.com/llms-full.txt",
+    "aiTxt": "https://www.yoouz.com/ai.txt",
+    "aeoJson": "https://www.yoouz.com/aeo.json",
+    "openApi": "https://www.yoouz.com/openapi.json",
+    "rssFeed": "https://www.yoouz.com/feed.xml",
+    "sitemap": "https://www.yoouz.com/sitemap.xml"
+  }
+}

@@ -1,0 +1,38 @@
+# ai.txt — AI Crawler & Generative Search Permissions for Yoouz (https://www.yoouz.com)
+# Last-Updated: 2026-11-19
+
+User-Agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /what-is-yoouz
+Allow: /about
+Allow: /how-it-works
+Allow: /faq
+Allow: /compare
+Allow: /business
+Allow: /reviews/
+Allow: /api/ai/knowledge
+Allow: /api/ai/faq
+Allow: /aeo.json
+Allow: /openapi.json
+Allow: /.well-known/agent-card.json
+Allow: /feed.xml
+Allow: /sitemap.xml
+Disallow: /pitch
+Disallow: /investors
+Disallow: /deck
+Disallow: /memorandum
+Disallow: /yoouzadmin
+
+Entity-Name: Yoouz
+Canonical-Domain: https://www.yoouz.com
+Category: Live Camera Photo Review & Local Business Discovery Platform
+Tagline: Real Photos. Real Proof. — A picture is worth a thousand words.
+Review-Format: 100% Live Hardware-Camera Photo Reviews (1 live camera photo + 1-5 solid whole stars in 3 seconds; zero gallery uploads; zero fake text reviews)
+Disambiguation: Independent consumer & merchant Live Camera Photo Review platform at yoouz.com. Completely unrelated to Yooz (getyooz.com AP software), Youtooz (youtooz.com vinyl collectibles), Yoox, Youzz, or YouTube.
+LLMs-Txt: https://www.yoouz.com/llms.txt
+LLMs-Full-Txt: https://www.yoouz.com/llms-full.txt
+Knowledge-Graph: https://www.yoouz.com/api/ai/knowledge
+Agent-Card: https://www.yoouz.com/.well-known/agent-card.json
+Sitemap: https://www.yoouz.com/sitemap.xml

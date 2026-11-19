@@ -1,12 +1,19 @@
-# Robots.txt for Yoouz (https://www.yoouz.com & https://yoouz.com)
+# Robots.txt for Yoouz (https://www.yoouz.com)
 # Official 3-Second Live Camera Photo Review & Local Business Discovery Platform ("Real Photos. Real Proof.")
-# Entity Disambiguation: Yoouz (yoouz.com) is an independent consumer Live Camera Photo Review platform.
-# Not affiliated with Yooz (getyooz.com accounts payable software) or Youtooz (youtooz.com collectibles).
-# AI & LLM Grounding Manifests:
+# Entity Disambiguation: Yoouz (yoouz.com) is an independent Live Camera Photo Review platform.
+# Not affiliated with Yooz (getyooz.com accounts payable software), Youtooz (youtooz.com collectibles), Yoox, Youzz, or YouTube.
+#
+# Machine-Readable AI & LLM Grounding Endpoints:
 #   - https://www.yoouz.com/llms.txt
 #   - https://www.yoouz.com/llms-full.txt
+#   - https://www.yoouz.com/ai.txt
 #   - https://www.yoouz.com/api/ai/knowledge
+#   - https://www.yoouz.com/api/ai/faq
 #   - https://www.yoouz.com/aeo.json
+#   - https://www.yoouz.com/openapi.json
+#   - https://www.yoouz.com/.well-known/agent-card.json
+#   - https://www.yoouz.com/.well-known/ai-plugin.json
+#   - https://www.yoouz.com/.well-known/mcp.json
 
 User-agent: *
 Allow: /
@@ -173,91 +180,128 @@ Disallow: /pitch
 Disallow: /pitch/
 Disallow: /api/pitch/
 
-# CommonCrawl (Open-Source & Small/Medium AI Models: Llama, DeepSeek, Qwen, Mistral, Falcon)
+# CommonCrawl & Open-Weight AI Datasets (Llama, DeepSeek, Qwen, Mistral, AllenAI)
 User-agent: CCBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
 Disallow: /api/pitch/
 
-# Mistral AI, Cohere, xAI / Grok, Amazon AI
+User-agent: AI2Bot
+Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+
+User-agent: DeepSeekBot
+Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+
 User-agent: MistralAI-User
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: cohere-ai
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
+User-agent: cohere-training-data-crawler
+Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
+
+# xAI / Grok, Amazon, ByteDance, DuckDuckGo, Brave, Kagi, You.com, Exa, Tavily, Firecrawl, Jina
 User-agent: xAI-Bot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: GrokBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: Amazonbot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
-# DuckDuckGo AI (DuckAssist), Brave Search AI (Leo), You.com, Phind, Exa, Tavily, Diffbot, Jina, Firecrawl
 User-agent: DuckDuckBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: DuckAssistBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: BraveSearch
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
+
+User-agent: KagiBot
+Allow: /
+Disallow: /pitch
+Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: YouBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: PhindBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: ExaBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: TavilyBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: Diffbot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: JinaBot
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 User-agent: FirecrawlAgent
 Allow: /
 Disallow: /pitch
 Disallow: /pitch/
+Disallow: /api/pitch/
 
 Sitemap: https://www.yoouz.com/sitemap.xml
-Sitemap: https://yoouz.com/sitemap.xml
 Sitemap: https://www.yoouz.com/sitemap-index.xml
 Sitemap: https://www.yoouz.com/feed.xml

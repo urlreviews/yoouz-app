@@ -1,0 +1,40 @@
+{
+  "schema": "https://modelcontextprotocol.io/discovery/v1",
+  "name": "yoouz-live-photo-reviews",
+  "title": "Yoouz Live Camera Photo Reviews (yoouz.com)",
+  "description": "Public read-only discovery endpoints for Yoouz (https://www.yoouz.com), the 3-second Live Camera Photo Review & Local Business Discovery Platform.",
+  "homepage": "https://www.yoouz.com/",
+  "documentation": "https://www.yoouz.com/llms.txt",
+  "resources": [
+    {
+      "uri": "https://www.yoouz.com/llms.txt",
+      "name": "Yoouz LLM Summary",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "https://www.yoouz.com/llms-full.txt",
+      "name": "Yoouz Full Knowledge Base & Live Directory",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "https://www.yoouz.com/api/ai/knowledge",
+      "name": "Yoouz Structured AI Knowledge Graph",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "https://www.yoouz.com/api/ai/faq",
+      "name": "Yoouz Searchable FAQ API",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "https://www.yoouz.com/aeo.json",
+      "name": "Yoouz AEO Graph",
+      "mimeType": "application/json"
+    },
+    {
+      "uri": "https://www.yoouz.com/openapi.json",
+      "name": "Yoouz OpenAPI Schema",
+      "mimeType": "application/json"
+    }
+  ]
+}
