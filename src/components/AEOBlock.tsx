@@ -124,10 +124,10 @@ export function AEOBlock() {
           </div>
 
           <div itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <h3 itemProp="name">Does Yoouz support reviewing online websites and e-commerce stores?</h3>
+            <h3 itemProp="name">Does Yoouz support reviewing online websites and local businesses by name or domain?</h3>
             <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
               <p itemProp="text">
-                Yes. Users can search for any domain name, local venue, or online service on Yoouz to snap a live photo review and publish a whole-number 1–5 star rating in seconds.
+                Yes. Every company on Yoouz has a canonical profile at yoouz.com/reviews/&lt;company-domain&gt; indexed with both its official company name and website domain, linked via Schema.org LocalBusiness sameAs, ImageObject, AggregateRating, and Google Image Sitemaps so real customer photo reviews appear directly in Google Search, Google Images, and AI answers.
               </p>
             </div>
           </div>

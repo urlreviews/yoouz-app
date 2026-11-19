@@ -303,5 +303,6 @@ Disallow: /pitch/
 Disallow: /api/pitch/
 
 Sitemap: https://www.yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/image-sitemap.xml
 Sitemap: https://www.yoouz.com/sitemap-index.xml
 Sitemap: https://www.yoouz.com/feed.xml

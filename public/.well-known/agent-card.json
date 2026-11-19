@@ -40,6 +40,13 @@
       "method": "GET"
     },
     {
+      "id": "lookup-company-reviews",
+      "name": "Look Up Company by Name or Website Domain",
+      "description": "Query any business name or website domain (e.g. ?q=kroesadvocaten.nl) to get its verified Yoouz star rating, live camera customer photo review URLs, and direct company profile link.",
+      "endpoint": "https://www.yoouz.com/api/ai/company",
+      "method": "GET"
+    },
+    {
       "id": "list-live-photo-reviews",
       "name": "Live Camera Photo Review Feed",
       "description": "Retrieve recent verified live camera photo reviews and 1–5 solid whole-star ratings on Yoouz.",
@@ -54,6 +61,7 @@
     "aeoJson": "https://www.yoouz.com/aeo.json",
     "openApi": "https://www.yoouz.com/openapi.json",
     "rssFeed": "https://www.yoouz.com/feed.xml",
-    "sitemap": "https://www.yoouz.com/sitemap.xml"
+    "sitemap": "https://www.yoouz.com/sitemap.xml",
+    "imageSitemap": "https://www.yoouz.com/image-sitemap.xml"
   }
 }

@@ -1134,5 +1134,30 @@
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-19T06:52:23.261Z",
     "updatedAt": "2026-11-19T08:41:32.790Z"
+  },
+  {
+    "id": "anon_mwnkhdph_pgbdiu",
+    "uid": "anon_mwnkhdph_pgbdiu",
+    "email": "",
+    "name": "U/46EG73",
+    "role": "user",
+    "status": "verified",
+    "isVerified": false,
+    "isRegisteredAccount": true,
+    "userId": "anon_mwnkhdph_pgbdiu",
+    "username": "U/46EG73",
+    "handle": "@U/46EG73",
+    "avatar": "",
+    "banner": "",
+    "bio": "",
+    "isAnonymous": true,
+    "passkeyProtected": false,
+    "yoouzPhotoUser": true,
+    "scratchVersion": 6,
+    "linkedProviders": [],
+    "isNewUser": false,
+    "memberSince": "Nov 2026",
+    "createdAt": "2026-11-19T13:09:30.170Z",
+    "updatedAt": "2026-11-19T13:09:30.203Z"
   }
 ]

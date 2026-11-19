@@ -5370,23 +5370,49 @@ export function App() {
         return;
       }
 
+      let metaDesc = "A picture is worth a thousand words. Live camera photo reviews and 1–5 whole-star ratings with zero fake uploads on Yoouz.";
+
       // Hierarchy of URL synchronization:
       if (isWatchingVideo && !isPlaceView && !isCreatorView && currentVid) {
         const domainSlug = getPlaceSlug(currentVid.placeWebsite || currentVid.placeId || currentVid.placeName || currentVid);
         path = `/reviews/${domainSlug}/${currentVid.id}`;
         const authorName = currentVid.author?.name || (currentVid as any)?.authorName || "Community Member";
         const placeName = formatBusinessName(currentVid.placeName || domainSlug, domainSlug, undefined, { fromWebsite: Boolean(currentVid.placeName) });
-        title = `${authorName}'s Photo Review of ${placeName} | Yoouz`;
+        const hasRealDom = domainSlug.includes(".") && !domainSlug.includes(" ");
+        const domSuffix = hasRealDom && !placeName.toLowerCase().includes(domainSlug.toLowerCase()) ? ` (${domainSlug})` : "";
+        const starVal = Math.min(5, Math.max(1, Math.round(Number(currentVid.rating || 5))));
+        title = `${placeName}${domSuffix} – ${starVal}★ Real Photo Review by ${authorName} | Yoouz`;
+        metaDesc = `See ${authorName}'s verified ${starVal}/5 live camera photo review of ${placeName}${domSuffix} on Yoouz. Real customer photo proof — zero fake uploads.`;
       } else if (isPlaceView && (activeDrawerPlace || drawerPlace)) {
         const p = activeDrawerPlace || drawerPlace;
         const slug = getPlaceSlug(p || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = `${displayedDrawerPlaceName || p?.name || "Business"} - Real Photo Reviews & Ratings | Yoouz`;
+        const pName = displayedDrawerPlaceName || p?.name || "Business";
+        const hasRealDom = slug.includes(".") && !slug.includes(" ");
+        const domSuffix = hasRealDom && !pName.toLowerCase().includes(slug.toLowerCase()) ? ` (${slug})` : "";
+        const placeRevs = (videos || []).filter((v) => {
+          const vSlug = getPlaceSlug(v.placeWebsite || v.placeId || v.placeName || v);
+          return vSlug.toLowerCase() === slug.toLowerCase();
+        });
+        const revCount = placeRevs.length;
+        const avgStr = revCount > 0
+          ? (placeRevs.reduce((acc, r) => acc + Math.min(5, Math.max(1, Math.round(Number(r.rating || 5)))), 0) / revCount).toFixed(1)
+          : "";
+        title = revCount > 0
+          ? `${pName}${domSuffix} – ${avgStr}★ Real Photo Reviews (${revCount}) | Yoouz`
+          : `${pName}${domSuffix} – Real Customer Photo Reviews & Rating | Yoouz`;
+        metaDesc = revCount > 0
+          ? `See ${revCount} verified live camera customer photo ${revCount === 1 ? "review" : "reviews"} for ${pName}${domSuffix} (${avgStr}/5 stars) on Yoouz.`
+          : `Browse or post the first 3-second live camera photo review for ${pName}${domSuffix} on Yoouz.`;
       } else if (selectedPlaceIdForDrawer) {
         const place = places.find(p => p.id === selectedPlaceIdForDrawer || extractCleanDomain(p.id) === extractCleanDomain(selectedPlaceIdForDrawer) || p.brandDomain === selectedPlaceIdForDrawer);
         const slug = getPlaceSlug(place || selectedPlaceIdForDrawer);
         path = `/reviews/${slug}`;
-        title = place ? `${displayedDrawerPlaceName || place.name} - Real Photo Reviews & Ratings | Yoouz` : `${formatBusinessName(slug, slug)} - Business Profile | Yoouz`;
+        const pName = place ? (displayedDrawerPlaceName || place.name) : formatBusinessName(slug, slug);
+        const hasRealDom = slug.includes(".") && !slug.includes(" ");
+        const domSuffix = hasRealDom && !pName.toLowerCase().includes(slug.toLowerCase()) ? ` (${slug})` : "";
+        title = `${pName}${domSuffix} – Real Customer Photo Reviews & Rating | Yoouz`;
+        metaDesc = `Discover verified live camera photo reviews and honest ratings for ${pName}${domSuffix} on Yoouz.`;
       } else if ((isCreatorView || selectedAuthorForDrawer) && selectedAuthorForDrawer) {
         const isOwnGuestPreview =
           selectedAuthorForDrawer.id === "guest_preview" ||
@@ -5462,11 +5488,26 @@ export function App() {
         title = `${activeSection.charAt(0).toUpperCase() + activeSection.slice(1)} | Yoouz`;
       }
 
-      // Update Document Meta Title for SEO
+      // Update Document Meta Title, Description & Canonical URL for SEO / AEO / GEO
       document.title = title;
+      try {
+        const descEl = document.querySelector('meta[name="description"]');
+        if (descEl) descEl.setAttribute("content", metaDesc);
+        const ogTitleEl = document.querySelector('meta[property="og:title"]');
+        if (ogTitleEl) ogTitleEl.setAttribute("content", title);
+        const ogDescEl = document.querySelector('meta[property="og:description"]');
+        if (ogDescEl) ogDescEl.setAttribute("content", metaDesc);
+      } catch {}
 
       // Localize path with active language prefix
       const localizedPath = buildLocalizedPath(path, language);
+      try {
+        const canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (canonicalEl) {
+          const origin = window.location.hostname.includes("yoouz.com") ? "https://www.yoouz.com" : window.location.origin;
+          canonicalEl.setAttribute("href", `${origin}${localizedPath}`);
+        }
+      } catch {}
 
       // Update URL if it differs from current pathname
       if (window.location.pathname !== localizedPath) {

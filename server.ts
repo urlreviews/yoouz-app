@@ -4899,18 +4899,76 @@ async function startServer() {
       }
     }
 
-    // "Markdown for Agents" Content Negotiation: if an AI agent explicitly requests text/markdown on core informational routes, serve clean Markdown directly
+    // "Markdown for Agents" Content Negotiation: if an AI agent explicitly requests text/markdown on core informational routes OR any company/review profile, serve clean Markdown directly
     const acceptHdr = String(req.headers['accept'] || '').toLowerCase();
     const wantsMarkdown = (acceptHdr.includes('text/markdown') && !acceptHdr.includes('text/html')) || req.query?.format === 'markdown';
-    if (wantsMarkdown && !isPrivatePitchOrAdmin && ['/', '/about', '/what-is-yoouz', '/how-it-works', '/faq', '/compare', '/business'].includes(cleanPath)) {
-      try {
-        const mdPath = path.join(process.cwd(), 'public', cleanPath === '/' ? 'llms.txt' : 'llms-full.txt');
-        const mdContent = fs.existsSync(mdPath) ? fs.readFileSync(mdPath, 'utf8') : '# Yoouz (https://www.yoouz.com) — Live Camera Photo Reviews';
-        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=1800');
-        res.setHeader('Vary', 'Accept');
-        return res.send(mdContent);
-      } catch {}
+    if (wantsMarkdown && !isPrivatePitchOrAdmin) {
+      if (['/', '/about', '/what-is-yoouz', '/how-it-works', '/faq', '/compare', '/business'].includes(cleanPath)) {
+        try {
+          const mdPath = path.join(process.cwd(), 'public', cleanPath === '/' ? 'llms.txt' : 'llms-full.txt');
+          const mdContent = fs.existsSync(mdPath) ? fs.readFileSync(mdPath, 'utf8') : '# Yoouz (https://www.yoouz.com) — Live Camera Photo Reviews';
+          res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          res.setHeader('Cache-Control', 'public, max-age=1800');
+          res.setHeader('Vary', 'Accept');
+          return res.send(mdContent);
+        } catch {}
+      } else if (cleanPath.startsWith('/reviews/') || cleanPath.startsWith('/place/')) {
+        try {
+          const parts = cleanPath.split('/').filter(Boolean);
+          const rawTarget = decodeURIComponent(parts[1] || '').trim();
+          const targetReviewId = parts.length >= 3 ? decodeURIComponent(parts[2] || '').trim() : '';
+          if (rawTarget) {
+            const cleanDom = cleanDomainName(rawTarget).toLowerCase().replace(/^www\./, '').trim();
+            const hasRealDom = cleanDom.includes('.') && !cleanDom.includes(' ');
+            const pName = KNOWN_OFFICIAL_NAMES[cleanDom] || KNOWN_OFFICIAL_NAMES[`www.${cleanDom}`] || formatBusinessName(rawTarget, cleanDom) || rawTarget;
+            const sourceRevs = (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0)
+              ? feedCache.videos
+              : (typeof readReviewsIndex === 'function' ? readReviewsIndex() : []);
+            const matchingRevs = (sourceRevs || []).filter((v: any) => {
+              if (!v || !v.id || isDeletedReviewServer(v.id)) return false;
+              const vDom = cleanDomainName(v.placeDomain || v.brandDomain || v.placeWebsite || v.website || v.placeId || '').toLowerCase().replace(/^www\./, '');
+              return vDom === cleanDom || String(v.placeId || '').toLowerCase() === rawTarget.toLowerCase();
+            });
+            const avg = matchingRevs.length > 0
+              ? Number((matchingRevs.reduce((s: number, r: any) => s + Math.min(5, Math.max(1, Math.round(Number(r.rating || 5)))), 0) / matchingRevs.length).toFixed(1))
+              : null;
+            const focusedRev = targetReviewId ? matchingRevs.find((r: any) => String(r.id) === targetReviewId) : null;
+            const revLines = (focusedRev ? [focusedRev, ...matchingRevs.filter((r: any) => r.id !== focusedRev.id)] : matchingRevs)
+              .slice(0, 15)
+              .map((r: any) => {
+                const rAuthor = r.author?.name || r.authorName || 'Verified Reviewer';
+                const rStars = Math.min(5, Math.max(1, Math.round(Number(r.rating || 5))));
+                const rRawPhoto = r.photoUrl || r.thumbnailUrl || '';
+                const rPhoto = rRawPhoto.startsWith('http') ? rRawPhoto : (rRawPhoto ? `https://www.yoouz.com${rRawPhoto.startsWith('/') ? rRawPhoto : '/' + rRawPhoto}` : '');
+                const rUrl = `https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom || rawTarget)}/${encodeURIComponent(String(r.id))}`;
+                return `- **${rStars}/5 stars** by ${rAuthor} — [View Live Photo Review](${rUrl})${rPhoto ? `\n  ![${pName} live customer photo review (${rStars}/5 stars) by ${rAuthor} on Yoouz](${rPhoto})` : ''}`;
+              }).join('\n');
+            const mdDoc = [
+              `# ${pName}${hasRealDom ? ` (${cleanDom})` : ''} — Verified Live Camera Photo Reviews on Yoouz`,
+              ``,
+              `- **Business Name:** ${pName}`,
+              ...(hasRealDom ? [`- **Official Website:** https://${cleanDom}`] : []),
+              `- **Yoouz Profile URL:** https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom || rawTarget)}`,
+              `- **Verified Customer Rating:** ${avg !== null ? `${avg.toFixed(1)} / 5.0 stars (${matchingRevs.length} live camera photo ${matchingRevs.length === 1 ? 'review' : 'reviews'})` : 'No live photo reviews published yet — be the first to snap a 3-second camera photo review on Yoouz.'}`,
+              `- **Proof Standard:** 100% live hardware-camera photos + 1–5 solid whole stars. Zero gallery uploads, zero AI text reviews, zero paid deletion.`,
+              ``,
+              `## Real Customer Photo Reviews`,
+              revLines || `No customer photos yet. Visit https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom || rawTarget)} to capture the first live photo review.`,
+              ``,
+              `## Quick Answers (AEO)`,
+              `### Is ${pName}${hasRealDom ? ` (${cleanDom})` : ''} legit?`,
+              avg !== null
+                ? `${pName}${hasRealDom ? ` (${cleanDom})` : ''} has a verified ${avg.toFixed(1)}/5 star rating across ${matchingRevs.length} real customer live-camera photo ${matchingRevs.length === 1 ? 'review' : 'reviews'} on Yoouz (https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom || rawTarget)}).`
+                : `You can inspect or add the first verified live-camera photo review for ${pName}${hasRealDom ? ` (${cleanDom})` : ''} at https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom || rawTarget)}.`,
+              ``
+            ].join('\n');
+            res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=600');
+            res.setHeader('Vary', 'Accept');
+            return res.send(mdDoc);
+          }
+        } catch {}
+      }
     }
 
     next();
@@ -5578,11 +5636,11 @@ async function startServer() {
     return res.send(requestedKey || INDEXNOW_PRIMARY_KEY);
   });
 
-  // Helper to build live verified businesses & photo reviews snapshot for AI crawlers
+  // Helper to build live verified businesses & photo reviews snapshot for AI crawlers (prioritizing businesses with real live camera photos first)
   function buildLiveEntityProofSummary(): {
     placesCount: number;
     reviewsCount: number;
-    samplePlaces: Array<{ name: string; domain: string; category: string; rating: number; url: string; logoUrl?: string; bannerUrl?: string }>;
+    samplePlaces: Array<{ name: string; domain: string; officialWebsite?: string; category: string; rating: number; reviewCount: number; topPhotoUrl?: string; url: string; logoUrl?: string; bannerUrl?: string }>;
     recentReviews: Array<{ id: string; placeName: string; domain: string; authorName: string; rating: number; photoUrl: string; url: string; createdAt: string }>;
   } {
     try {
@@ -5592,23 +5650,32 @@ async function startServer() {
         : (typeof readReviewsIndex === "function" ? readReviewsIndex() : []);
       const activeRevs = (localRevs || []).filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
 
-      // Prioritize businesses that have real live photo reviews first
-      const reviewedSlugSet = new Set<string>();
+      // Aggregate real live photo reviews per business slug so companies WITH photo reviews always rank first in SEO/AEO/GEO
+      const revStatsBySlug = new Map<string, { count: number; sum: number; topPhotoUrl: string; placeName: string }>();
       const recentReviews: Array<{ id: string; placeName: string; domain: string; authorName: string; rating: number; photoUrl: string; url: string; createdAt: string }> = [];
       for (const r of activeRevs) {
         const rawDom = r.placeWebsite || r.website || r.placeId || r.placeName || "";
-        const slug = getPlaceSlug(rawDom) || String(r.placeId || "yoouz.com");
-        reviewedSlugSet.add(slug.toLowerCase());
+        const slug = (getPlaceSlug(rawDom) || String(r.placeId || "yoouz.com")).toLowerCase().trim();
         const rawPhoto = r.photoUrl || r.thumbnailUrl || "";
         const absPhoto = rawPhoto
           ? (rawPhoto.startsWith("http") ? rawPhoto : `https://www.yoouz.com${rawPhoto.startsWith("/") ? rawPhoto : "/" + rawPhoto}`)
           : "https://www.yoouz.com/og-banner.png";
+        const rRating = Math.min(5, Math.max(1, Math.round(Number(r.rating || 5))));
+        const rPlaceName = formatBusinessName(r.placeName || cleanDomainName(rawDom)) || slug;
+        const prev = revStatsBySlug.get(slug);
+        if (prev) {
+          prev.count += 1;
+          prev.sum += rRating;
+          if (!prev.topPhotoUrl && rawPhoto) prev.topPhotoUrl = absPhoto;
+        } else {
+          revStatsBySlug.set(slug, { count: 1, sum: rRating, topPhotoUrl: rawPhoto ? absPhoto : "", placeName: rPlaceName });
+        }
         recentReviews.push({
           id: String(r.id),
-          placeName: formatBusinessName(r.placeName || cleanDomainName(rawDom)) || slug,
+          placeName: rPlaceName,
           domain: slug,
           authorName: r.author?.name || r.authorName || "Verified Reviewer",
-          rating: Math.min(5, Math.max(1, Math.round(Number(r.rating || 5)))),
+          rating: rRating,
           photoUrl: absPhoto,
           url: `https://www.yoouz.com/reviews/${encodeURIComponent(slug)}/${encodeURIComponent(String(r.id))}`,
           createdAt: r.createdAt ? (typeof r.createdAt === "number" ? new Date(r.createdAt).toISOString() : String(r.createdAt)) : new Date().toISOString()
@@ -5616,37 +5683,146 @@ async function startServer() {
       }
 
       const validPlaces = (localPlaces || []).filter((p: any) => p && p.id && p.name && !String(p.name).toLowerCase().includes("unnamed"));
-      const prioritizedPlaces = [...validPlaces].sort((a: any, b: any) => {
-        const aSlug = (getPlaceSlug(a.brandDomain || a.id || a.name) || String(a.id)).toLowerCase();
-        const bSlug = (getPlaceSlug(b.brandDomain || b.id || b.name) || String(b.id)).toLowerCase();
-        const aHasRev = reviewedSlugSet.has(aSlug) ? 1 : 0;
-        const bHasRev = reviewedSlugSet.has(bSlug) ? 1 : 0;
-        return bHasRev - aHasRev;
-      });
+      const placeBySlug = new Map<string, any>();
+      for (const p of validPlaces) {
+        const slug = (getPlaceSlug(p.brandDomain || p.id || p.name) || String(p.id)).toLowerCase().trim();
+        if (!placeBySlug.has(slug)) placeBySlug.set(slug, p);
+      }
+      // Also ensure every business that has live photo reviews appears in the directory even if not yet in places_index
+      for (const [slug, stats] of revStatsBySlug.entries()) {
+        if (!placeBySlug.has(slug)) {
+          placeBySlug.set(slug, {
+            id: slug,
+            brandDomain: slug,
+            name: stats.placeName,
+            category: "Verified Business",
+            rating: Number((stats.sum / stats.count).toFixed(1))
+          });
+        }
+      }
 
-      const samplePlaces = prioritizedPlaces.slice(0, 30).map((p: any) => {
-        const slug = getPlaceSlug(p.brandDomain || p.id || p.name) || String(p.id);
+      const mergedPlaces = Array.from(placeBySlug.entries()).map(([slug, p]) => {
+        const stats = revStatsBySlug.get(slug);
+        const revCount = stats ? stats.count : 0;
+        const rating = stats ? Number((stats.sum / stats.count).toFixed(1)) : Number(p.rating || 5);
+        const hasRealDom = slug.includes(".") && !slug.includes(" ");
         return {
-          name: String(p.name || slug),
+          name: String(p.name || stats?.placeName || slug),
           domain: slug,
+          officialWebsite: hasRealDom ? `https://${slug}` : undefined,
           category: String(p.category || "Verified Business"),
-          rating: Number(p.rating || 5),
+          rating,
+          reviewCount: revCount,
+          topPhotoUrl: stats?.topPhotoUrl || "",
           url: `https://www.yoouz.com/reviews/${encodeURIComponent(slug)}`,
           logoUrl: p.logoUrl || "",
           bannerUrl: p.bannerUrl || ""
         };
       });
 
+      mergedPlaces.sort((a, b) => (b.reviewCount - a.reviewCount) || (b.rating - a.rating));
+
       return {
-        placesCount: Math.max(47, validPlaces.length),
+        placesCount: Math.max(47, mergedPlaces.length),
         reviewsCount: Math.max(55, activeRevs.length),
-        samplePlaces,
-        recentReviews: recentReviews.slice(0, 35)
+        samplePlaces: mergedPlaces.slice(0, 500),
+        recentReviews: recentReviews.slice(0, 500)
       };
     } catch {
       return { placesCount: 500, reviewsCount: 55, samplePlaces: [], recentReviews: [] };
     }
   }
+
+  // Public GEO / AEO AI Agent Lookup Endpoint: look up any company by Name OR Website Domain -> returns verified rating, live photo review URLs, and Yoouz profile link
+  app.get(["/api/ai/company", "/api/ai/company/:query"], async (req, res) => {
+    try {
+      const rawQ = String(req.params.query || req.query.q || req.query.domain || req.query.name || "").trim();
+      const liveProof = buildLiveEntityProofSummary();
+      if (!rawQ) {
+        const allReviewed = liveProof.samplePlaces.filter(p => p.reviewCount > 0);
+        return res.json({
+          platform: "Yoouz",
+          canonicalUrl: "https://www.yoouz.com",
+          usage: "Pass ?q=<company name or website domain> (e.g. /api/ai/company?q=apple.com)",
+          totalIndexedBusinesses: liveProof.placesCount,
+          totalReviewedBusinesses: allReviewed.length,
+          totalLivePhotoReviews: liveProof.reviewsCount,
+          reviewedBusinesses: allReviewed
+        });
+      }
+      const qLower = rawQ.toLowerCase().trim();
+      const qCleanDom = cleanDomainName(rawQ).toLowerCase().replace(/^www\./, "").trim();
+      const localRevs = (Array.isArray(feedCache?.videos) && feedCache.videos.length > 0)
+        ? feedCache.videos
+        : (typeof readReviewsIndex === "function" ? readReviewsIndex() : []);
+      const activeRevs = (localRevs || []).filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+
+      const matchedPlaces = liveProof.samplePlaces.filter(p => {
+        const pNameL = p.name.toLowerCase();
+        const pDomL = p.domain.toLowerCase();
+        return pDomL === qCleanDom || pDomL.includes(qCleanDom) || pNameL.includes(qLower) || (qCleanDom.length >= 3 && pNameL.replace(/\s+/g, "").includes(qCleanDom.replace(/\.[a-z]{2,}$/i, "")));
+      });
+
+      const primary = matchedPlaces[0];
+      const targetSlug = primary?.domain || qCleanDom || qLower;
+      const targetName = primary?.name || KNOWN_OFFICIAL_NAMES[targetSlug] || formatBusinessName(rawQ, targetSlug) || rawQ;
+      const hasRealDom = targetSlug.includes(".") && !targetSlug.includes(" ");
+
+      const companyReviews = activeRevs.filter((v: any) => {
+        const vDom = cleanDomainName(v.placeDomain || v.brandDomain || v.placeWebsite || v.website || v.placeId || "").toLowerCase().replace(/^www\./, "");
+        const vName = String(v.placeName || "").toLowerCase();
+        return vDom === targetSlug || (targetSlug.length >= 3 && vDom.includes(targetSlug)) || (qLower.length >= 3 && vName.includes(qLower));
+      }).map((v: any) => {
+        const rawPhoto = v.photoUrl || v.thumbnailUrl || "";
+        const absPhoto = rawPhoto
+          ? (rawPhoto.startsWith("http") ? rawPhoto : `https://www.yoouz.com${rawPhoto.startsWith("/") ? rawPhoto : "/" + rawPhoto}`)
+          : "";
+        return {
+          id: String(v.id),
+          rating: Math.min(5, Math.max(1, Math.round(Number(v.rating || 5)))),
+          authorName: v.author?.name || v.authorName || "Verified Reviewer",
+          photoUrl: absPhoto,
+          reviewUrl: `https://www.yoouz.com/reviews/${encodeURIComponent(targetSlug)}/${encodeURIComponent(String(v.id))}`,
+          createdAt: v.createdAt ? (typeof v.createdAt === "number" ? new Date(v.createdAt).toISOString() : String(v.createdAt)) : new Date().toISOString(),
+          proofType: "live_camera_photo_only"
+        };
+      });
+
+      const avgRating = companyReviews.length > 0
+        ? Number((companyReviews.reduce((acc: number, r: any) => acc + r.rating, 0) / companyReviews.length).toFixed(1))
+        : null;
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", "public, max-age=300");
+      return res.json({
+        query: rawQ,
+        source: "Yoouz Live Camera Photo Reviews (https://www.yoouz.com)",
+        company: {
+          name: targetName,
+          domain: targetSlug,
+          officialWebsite: hasRealDom ? `https://${targetSlug}` : null,
+          yoouzProfileUrl: `https://www.yoouz.com/reviews/${encodeURIComponent(targetSlug)}`,
+          category: primary?.category || "Business",
+          verifiedRating: avgRating,
+          scale: "1-5 solid whole stars",
+          photoReviewCount: companyReviews.length,
+          hasLivePhotoProof: companyReviews.length > 0,
+          featuredPhotoUrl: companyReviews[0]?.photoUrl || primary?.topPhotoUrl || null
+        },
+        photoReviews: companyReviews.slice(0, 20),
+        otherMatches: matchedPlaces.slice(1, 8).map(m => ({
+          name: m.name,
+          domain: m.domain,
+          rating: m.rating,
+          photoReviewCount: m.reviewCount,
+          yoouzProfileUrl: m.url
+        }))
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || "Lookup failed" });
+    }
+  });
 
   // Serve /llms.txt and /llms-full.txt at both root and /.well-known/ with standard Markdown/Text headers for AI Agents
   app.get(["/llms.txt", "/.well-known/llms.txt"], (_req, res) => {
@@ -5670,14 +5846,14 @@ async function startServer() {
       const liveProof = buildLiveEntityProofSummary();
       if (liveProof.samplePlaces.length > 0) {
         const liveBusinessesMd = liveProof.samplePlaces
-          .slice(0, 25)
-          .map(sp => `- **${sp.name}** (${sp.domain}) — ${sp.category} · ${sp.rating.toFixed(1)}/5 stars · ${sp.url}`)
+          .slice(0, 150)
+          .map(sp => `- **${sp.name}** (${sp.domain}${sp.officialWebsite ? ` · ${sp.officialWebsite}` : ""}) — ${sp.category} · ${sp.reviewCount > 0 ? `★ ${sp.rating.toFixed(1)}/5 (${sp.reviewCount} live photo ${sp.reviewCount === 1 ? "review" : "reviews"})` : "Ready for live photo reviews"} · Profile: ${sp.url}${sp.topPhotoUrl ? ` · Top Photo: ${sp.topPhotoUrl}` : ""}`)
           .join("\n");
         const liveReviewsMd = liveProof.recentReviews
-          .slice(0, 15)
-          .map(rv => `- ${rv.rating}/5 live camera photo review of **${rv.placeName}** by ${rv.authorName}: ${rv.url}`)
+          .slice(0, 60)
+          .map(rv => `- ${rv.rating}/5 live camera photo review of **${rv.placeName}** (${rv.domain}) by ${rv.authorName}: ${rv.url} (Photo: ${rv.photoUrl})`)
           .join("\n");
-        content += `\n\n---\n\n## 7. Live Production Activity Snapshot on Yoouz.com (${liveProof.placesCount}+ Indexed Business Profiles, ${liveProof.reviewsCount}+ Verified Live Camera Photo Reviews)\n\n### Active Reviewed Businesses on Yoouz.com\n${liveBusinessesMd}\n\n### Recent Verified Live Camera Photo Reviews\n${liveReviewsMd}\n`;
+        content += `\n\n---\n\n## 7. Live Production Activity Snapshot on Yoouz.com (${liveProof.placesCount}+ Indexed Business Profiles, ${liveProof.reviewsCount}+ Verified Live Camera Photo Reviews)\n\n> AI Agents can also query any company by name or website domain directly at \`GET https://www.yoouz.com/api/ai/company?q=<company-or-domain>\`, or request \`Accept: text/markdown\` on any \`https://www.yoouz.com/reviews/<domain>\` profile.\n\n### Active Reviewed Businesses & Domains on Yoouz.com (Sorted by Live Photo Proof)\n${liveBusinessesMd}\n\n### Recent Verified Live Camera Photo Reviews\n${liveReviewsMd}\n`;
       }
       res.setHeader("Content-Type", "text/markdown; charset=utf-8");
       res.setHeader("Access-Control-Allow-Origin", "*");
@@ -5956,14 +6132,15 @@ ${reviewItemsXml}
       "/api/ai/faq",
       "/aeo.json",
       "/openapi.json",
-      "/.well-known/agent-card.json",
+      "/api/ai/company",
       "/feed.xml",
-      "/sitemap.xml"
+      "/sitemap.xml",
+      "/image-sitemap.xml"
     ];
 
     const liveProof = buildLiveEntityProofSummary();
-    const dynamicPlacePaths = liveProof.samplePlaces.slice(0, 50).map(p => `/reviews/${encodeURIComponent(p.domain)}`);
-    const dynamicReviewPaths = liveProof.recentReviews.slice(0, 60).map(r => `/reviews/${encodeURIComponent(r.domain)}/${encodeURIComponent(r.id)}`);
+    const dynamicPlacePaths = liveProof.samplePlaces.map(p => `/reviews/${encodeURIComponent(p.domain)}`);
+    const dynamicReviewPaths = liveProof.recentReviews.map(r => `/reviews/${encodeURIComponent(r.domain)}/${encodeURIComponent(r.id)}`);
     const allPaths = Array.from(new Set([...corePaths, ...dynamicPlacePaths, ...dynamicReviewPaths]));
 
     const payloadObj = {
@@ -10501,6 +10678,12 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
       data
     });
 
+    // Auto-notify search engines & AI crawlers whenever a new/updated business profile is saved
+    if (colName === 'places' && id && typeof triggerPlaceSearchEngineIndexing === 'function') {
+      const targetPlaceDomain = (data && (data.brandDomain || data.website || data.domain)) || id;
+      triggerPlaceSearchEngineIndexing(String(targetPlaceDomain)).catch(() => {});
+    }
+
     res.json({ success: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 };
@@ -14788,6 +14971,7 @@ Disallow: /memorandum
 Disallow: /api/pitch/
 
 Sitemap: https://www.yoouz.com/sitemap.xml
+Sitemap: https://www.yoouz.com/image-sitemap.xml
 Sitemap: https://www.yoouz.com/sitemap-index.xml
 Sitemap: https://www.yoouz.com/feed.xml
 `;
@@ -14805,10 +14989,65 @@ Sitemap: https://www.yoouz.com/feed.xml
     <loc>https://www.yoouz.com/sitemap.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>
+  <sitemap>
+    <loc>https://www.yoouz.com/image-sitemap.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>
 </sitemapindex>`;
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=1800');
     return res.send(xml);
+  });
+
+  // Dedicated Google Images & Visual Search Sitemap (/image-sitemap.xml)
+  // Maps every real live customer photo review directly to its company name, official website domain, and Yoouz profile URL
+  app.get(['/image-sitemap.xml', '/sitemap-images.xml'], async (_req: any, res: any) => {
+    try {
+      const baseUrl = 'https://www.yoouz.com';
+      const now = new Date().toISOString().split('T')[0];
+      const allRevs = ((Array.isArray(feedCache?.videos) && feedCache.videos.length > 0)
+        ? feedCache.videos
+        : (typeof readReviewsIndex === 'function' ? readReviewsIndex() : [])
+      ).filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+
+      const escXml = (s: string) => String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
+      // Group real photo reviews by company slug so Google Images associates every customer photo with BOTH the company profile page AND the individual review page
+      const byCompany = new Map<string, { name: string; domain: string; revs: any[] }>();
+      for (const v of allRevs) {
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const slug = (getPlaceSlug(rawDomain) || 'yoouz.com').toLowerCase().trim();
+        const pName = KNOWN_OFFICIAL_NAMES[slug] || formatBusinessName(v.placeName || cleanDomainName(rawDomain), slug) || slug;
+        if (!byCompany.has(slug)) byCompany.set(slug, { name: pName, domain: slug, revs: [] });
+        byCompany.get(slug)!.revs.push(v);
+      }
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+      for (const [slug, group] of byCompany.entries()) {
+        const hasRealDom = slug.includes('.') && !slug.includes(' ');
+        const profileUrl = `${baseUrl}/reviews/${encodeURIComponent(slug)}`;
+        const imgsXml = group.revs.slice(0, 20).map((v: any) => {
+          const rawPhoto = v.photoUrl || v.thumbnailUrl || '';
+          const absPhoto = rawPhoto
+            ? (rawPhoto.startsWith('http') ? rawPhoto : `${baseUrl}${rawPhoto.startsWith('/') ? rawPhoto : '/' + rawPhoto}`)
+            : `${baseUrl}/api/og-card/v18/${encodeURIComponent(v.id)}.png`;
+          const rStars = Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))));
+          const author = v.author?.name || v.authorName || 'Verified Reviewer';
+          const imgTitle = `${group.name}${hasRealDom ? ` (${slug})` : ''} — ${rStars} Star Real Customer Photo Review`;
+          const imgCaption = `Verified ${rStars}/5 live camera photo review of ${group.name}${hasRealDom ? ` (${slug})` : ''} taken by ${author} on Yoouz. Real customer photo proof.`;
+          return `    <image:image>\n      <image:loc>${escXml(absPhoto)}</image:loc>\n      <image:title>${escXml(imgTitle)}</image:title>\n      <image:caption>${escXml(imgCaption)}</image:caption>\n    </image:image>`;
+        }).join('\n');
+        xml += `  <url>\n    <loc>${escXml(profileUrl)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.95</priority>\n${imgsXml}\n  </url>\n`;
+      }
+      xml += `</urlset>`;
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=1800');
+      return res.send(xml);
+    } catch (e: any) {
+      return res.status(500).send(e?.message || 'Image sitemap error');
+    }
   });
 
 function formatW3cDate(d: any): { iso: string; dateOnly: string } {
@@ -15091,27 +15330,81 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
   </url>
 `;
 
-      // Places / Local Businesses
+      // Group real live customer photo reviews by business slug so every company profile in sitemap.xml surfaces its real customer photos FIRST for Google Images & Search
+      const reviewsByPlaceSlug = new Map<string, any[]>();
+      allVideos.forEach((v) => {
+        if (!v || !v.id || isDeletedReviewServer(v.id)) return;
+        const rawDomain = v.placeWebsite || v.website || v.placeId || v.placeName || '';
+        const slug = (getPlaceSlug(rawDomain) || '').toLowerCase().trim();
+        if (!slug) return;
+        if (!reviewsByPlaceSlug.has(slug)) reviewsByPlaceSlug.set(slug, []);
+        reviewsByPlaceSlug.get(slug)!.push(v);
+      });
+
+      // Ensure every business that has photo reviews is also present in allPlaces
+      reviewsByPlaceSlug.forEach((revs, slug) => {
+        if (!placeMap.has(slug)) {
+          const first = revs[0];
+          const synthPlace = {
+            id: slug,
+            name: first?.placeName || formatBusinessName(slug, slug),
+            description: `Verified live camera photo reviews for ${first?.placeName || formatBusinessName(slug, slug)} (${slug}) on Yoouz.`
+          };
+          placeMap.set(slug, synthPlace);
+          allPlaces.push(synthPlace);
+        }
+      });
+
+      // Sort businesses WITH real live photo reviews to the very top of the sitemap
+      allPlaces.sort((a, b) => {
+        const aSlug = (getPlaceSlug(a.id) || a.id || '').toLowerCase().trim();
+        const bSlug = (getPlaceSlug(b.id) || b.id || '').toLowerCase().trim();
+        return (reviewsByPlaceSlug.get(bSlug)?.length || 0) - (reviewsByPlaceSlug.get(aSlug)?.length || 0);
+      });
+
+      // Places / Local Businesses (with real customer review photos attached for instant Google Images & visual SERP indexing)
       allPlaces.forEach((p) => {
         if (!p || !p.id) return;
-        const slug = getPlaceSlug(p.id) || p.id;
+        const slug = (getPlaceSlug(p.id) || p.id).toLowerCase().trim();
         const placeUrl = `${baseUrl}/reviews/${encodeURIComponent(slug)}`;
-        let photo = p.bannerUrl || p.logoUrl || p.avatarUrl || (p.photos && p.photos[0]) || '';
-        if (photo && photo.startsWith('data:')) photo = '';
-        if (photo && photo.startsWith('/')) {
-          photo = `${baseUrl}${photo}`;
-        }
+        const pName = KNOWN_OFFICIAL_NAMES[slug] || p.name || formatBusinessName(slug, slug);
+        const hasRealDom = slug.includes('.') && !slug.includes(' ');
+        const companyRevs = reviewsByPlaceSlug.get(slug) || [];
+        const hasPhotos = companyRevs.length > 0;
+        let fallbackPhoto = p.bannerUrl || p.logoUrl || p.avatarUrl || (p.photos && p.photos[0]) || '';
+        if (fallbackPhoto && fallbackPhoto.startsWith('data:')) fallbackPhoto = '';
+        if (fallbackPhoto && fallbackPhoto.startsWith('/')) fallbackPhoto = `${baseUrl}${fallbackPhoto}`;
         const safePlaceDesc = (p.description || '').replace(/60-second video reviews?/gi, 'live camera photo reviews').replace(/video reviews?/gi, 'live camera photo reviews');
+
+        const imageEntries: string[] = [];
+        companyRevs.slice(0, 10).forEach((v: any) => {
+          const rawVPhoto = v.photoUrl || v.thumbnailUrl || '';
+          const absVPhoto = rawVPhoto
+            ? (rawVPhoto.startsWith('http') ? rawVPhoto : `${baseUrl}${rawVPhoto.startsWith('/') ? rawVPhoto : '/' + rawVPhoto}`)
+            : '';
+          if (!absVPhoto) return;
+          const rStars = Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))));
+          const rAuthor = v.author?.name || v.authorName || 'Verified Reviewer';
+          imageEntries.push(`    <image:image>
+      <image:loc>${escapeXml(absVPhoto)}</image:loc>
+      <image:title>${escapeXml(`${pName}${hasRealDom ? ` (${slug})` : ''} — ${rStars}★ Real Customer Photo Review`)}</image:title>
+      <image:caption>${escapeXml(`Verified ${rStars}/5 live camera photo review of ${pName}${hasRealDom ? ` (${slug})` : ''} by ${rAuthor} on Yoouz.`)}</image:caption>
+    </image:image>`);
+        });
+        if (fallbackPhoto && !fallbackPhoto.includes('/api/favicon')) {
+          imageEntries.push(`    <image:image>
+      <image:loc>${escapeXml(fallbackPhoto)}</image:loc>
+      <image:title>${escapeXml(`${pName}${hasRealDom ? ` (${slug})` : ''} Official Profile on Yoouz`)}</image:title>
+      <image:caption>${escapeXml(safePlaceDesc || `Real customer live camera photo reviews for ${pName}${hasRealDom ? ` (${slug})` : ''} on Yoouz.`)}</image:caption>
+    </image:image>`);
+        }
+
         xml += `  <url>
     <loc>${escapeXml(placeUrl)}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    ${photo ? `<image:image>
-      <image:loc>${escapeXml(photo)}</image:loc>
-      <image:title>${escapeXml(p.name || formatBusinessName(slug))}</image:title>
-      <image:caption>${escapeXml(safePlaceDesc || `Live camera photo reviews for ${p.name || formatBusinessName(slug)} on Yoouz`)}</image:caption>
-    </image:image>` : ''}
+    <priority>${hasPhotos ? '0.95' : '0.8'}</priority>
+${imageEntries.join('\n')}
   </url>\n`;
       });
 
@@ -22241,18 +22534,54 @@ app.delete("/api/videos/owner-response", async (req, res) => {
 });
 
 // Automated Search Engine & AI Discovery Notification (Multi-Hub IndexNow using verified key yoouz-indexnow-key-2026)
+const _recentPlaceIndexPings = new Map<string, number>();
+async function triggerPlaceSearchEngineIndexing(placeDomain: string) {
+  try {
+    const cleanDom = placeDomain ? (getPlaceSlug(placeDomain) || placeDomain).toLowerCase().trim() : '';
+    if (!cleanDom) return;
+    const now = Date.now();
+    const lastPing = _recentPlaceIndexPings.get(cleanDom) || 0;
+    if (now - lastPing < 5 * 60 * 1000) return; // debounce per company (5 min)
+    _recentPlaceIndexPings.set(cleanDom, now);
+
+    const placeUrl = `https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom)}`;
+    const urls = [placeUrl, `https://www.yoouz.com/sitemap.xml`, `https://www.yoouz.com/image-sitemap.xml`, `https://www.yoouz.com/llms-full.txt`];
+    for (const hub of ['https://api.indexnow.org/indexnow', 'https://www.bing.com/indexnow', 'https://yandex.com/indexnow', 'https://search.seznam.cz/indexnow', 'https://searchadvisor.naver.com/indexnow']) {
+      fetch(hub, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          host: 'www.yoouz.com',
+          key: 'yoouz-indexnow-key-2026',
+          keyLocation: 'https://www.yoouz.com/yoouz-indexnow-key-2026.txt',
+          urlList: urls
+        }),
+        signal: AbortSignal.timeout(5000)
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
 async function triggerSearchEngineIndexing(reviewId: string, placeDomain?: string) {
   try {
-    const cleanDom = placeDomain ? (getPlaceSlug(placeDomain) || placeDomain) : '';
+    const cleanDom = placeDomain ? (getPlaceSlug(placeDomain) || placeDomain).toLowerCase().trim() : '';
     const reviewUrl = cleanDom
       ? `https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom)}/${encodeURIComponent(reviewId)}`
       : `https://www.yoouz.com/reviews/yoouz.com/${encodeURIComponent(reviewId)}`;
     const placeUrl = cleanDom ? `https://www.yoouz.com/reviews/${encodeURIComponent(cleanDom)}` : '';
-    const urls = [reviewUrl, ...(placeUrl ? [placeUrl] : []), `https://www.yoouz.com/`, `https://www.yoouz.com/feed.xml`, `https://www.yoouz.com/sitemap.xml`];
+    const urls = [
+      reviewUrl,
+      ...(placeUrl ? [placeUrl] : []),
+      `https://www.yoouz.com/`,
+      `https://www.yoouz.com/feed.xml`,
+      `https://www.yoouz.com/sitemap.xml`,
+      `https://www.yoouz.com/image-sitemap.xml`,
+      `https://www.yoouz.com/llms-full.txt`
+    ];
 
-    console.log(`📡 [SEO & AI Discovery] Pushing live photo review to IndexNow / Bing / ChatGPT Search hubs: ${reviewUrl}`);
+    console.log(`📡 [SEO & AI Discovery] Pushing live photo review & company profile to all 5 IndexNow / Bing / ChatGPT Search hubs: ${reviewUrl}`);
 
-    for (const hub of ['https://api.indexnow.org/indexnow', 'https://www.bing.com/indexnow', 'https://yandex.com/indexnow', 'https://search.seznam.cz/indexnow']) {
+    for (const hub of ['https://api.indexnow.org/indexnow', 'https://www.bing.com/indexnow', 'https://yandex.com/indexnow', 'https://search.seznam.cz/indexnow', 'https://searchadvisor.naver.com/indexnow']) {
       fetch(hub, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -22731,9 +23060,10 @@ app.post("/api/videos/save-review", async (req, res) => {
         }
       }
 
-      // Trigger Automated Search Engine Indexing Notification (Google & Bing/IndexNow)
+      // Trigger Automated Search Engine & AI Discovery Indexing Notification (passing exact company domain so BOTH the review URL and company profile URL are pushed immediately!)
       if (review?.id) {
-        triggerSearchEngineIndexing(review.id).catch(() => {});
+        const revPlaceDomain = review.placeWebsite || review.website || review.brandDomain || review.placeId || review.placeName || '';
+        triggerSearchEngineIndexing(review.id, revPlaceDomain).catch(() => {});
       }
         } catch (bgDbErr) {
           console.warn("Background BunnyDB/SQL save notice:", bgDbErr);
@@ -42079,20 +42409,61 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           </section>`
       : "";
 
-    // On dynamic sub-routes (where meta.structuredData is set), prepend route-specific visible Readability-compliant article above the platform knowledge base
+    // On dynamic sub-routes (where meta.structuredData is set), prepend rich route-specific semantic HTML (company profile, ALL real customer photo reviews with SEO alt/figcaption, and visible AEO FAQ answers)
     if (!isNoIndexPage && meta.structuredData && meta.title && meta.description) {
-      const imgObj = meta.structuredData?.["@graph"]?.find((item: any) => item["@type"] === "ImageObject") || 
-                     (meta.structuredData?.["@type"] === "ImageObject" ? meta.structuredData : null);
-      const locBusObj = meta.structuredData?.["@graph"]?.find((item: any) => item["@type"] === "LocalBusiness");
-      const safePhotoUrl = escapeHtml(imgObj?.contentUrl || meta.imageUrl || '');
+      const graphArr = Array.isArray(meta.structuredData?.["@graph"]) ? meta.structuredData["@graph"] : [meta.structuredData];
+      const imgObjs = graphArr.filter((item: any) => item && item["@type"] === "ImageObject" && item.contentUrl);
+      const locBusObj = graphArr.find((item: any) => item && item["@type"] === "LocalBusiness");
+      const faqObj = graphArr.find((item: any) => item && item["@type"] === "FAQPage" && Array.isArray(item.mainEntity));
+      const officialWebsite = Array.isArray(locBusObj?.sameAs) ? locBusObj.sameAs[0] : (typeof locBusObj?.sameAs === "string" ? locBusObj.sameAs : "");
+      const altDomain = Array.isArray(locBusObj?.alternateName) ? locBusObj.alternateName[0] : "";
+
+      const photoGalleryHtml = imgObjs.length > 0
+        ? `<section aria-label="Verified Real Customer Photo Reviews">
+            <h2>Verified Live Camera Customer Photos (${imgObjs.length})</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
+              ${imgObjs.slice(0, 12).map((img: any) => {
+                const src = escapeHtml(img.contentUrl || '');
+                const caption = escapeHtml(img.caption || img.name || safeTitle);
+                const alt = escapeHtml(img.description || img.name || safeTitle);
+                const reviewHref = escapeHtml(String(img["@id"] || safeUrl).replace(/#photo$/, ''));
+                return `<figure style="margin:0;border:1px solid #27272a;border-radius:12px;overflow:hidden;background:#18181b;">
+                  <a href="${reviewHref}"><img src="${src}" alt="${alt}" title="${caption}" loading="eager" style="width:100%;height:auto;display:block;" /></a>
+                  <figcaption style="padding:10px 12px;font-size:14px;color:#e4e4e7;">${caption}</figcaption>
+                </figure>`;
+              }).join("\n              ")}
+            </div>
+          </section>`
+        : (meta.imageUrl ? `<figure><img src="${escapeHtml(meta.imageUrl)}" alt="${safeTitle}" style="max-width:100%;border-radius:12px;" /><figcaption>${safeTitle}</figcaption></figure>` : '');
+
+      const companyFactsHtml = locBusObj
+        ? `<section aria-label="Verified Company Profile Summary" style="margin:20px 0;padding:16px;border:1px solid #27272a;border-radius:12px;background:#18181b;">
+            <h2>${escapeHtml(locBusObj.name || 'Verified Business')}${altDomain ? ` (${escapeHtml(altDomain)})` : ''}</h2>
+            <ul>
+              ${officialWebsite ? `<li><strong>Official Website:</strong> <a href="${escapeHtml(officialWebsite)}" rel="nofollow noopener">${escapeHtml(officialWebsite)}</a></li>` : ''}
+              ${locBusObj.aggregateRating ? `<li><strong>Verified Customer Rating:</strong> ★ ${escapeHtml(locBusObj.aggregateRating.ratingValue)} / 5.0 based on ${escapeHtml(locBusObj.aggregateRating.ratingCount)} live camera photo reviews</li>` : `<li><strong>Review Status:</strong> Ready for its first 3-second live camera photo review on Yoouz</li>`}
+              ${locBusObj.address?.streetAddress || locBusObj.address?.addressLocality ? `<li><strong>Location:</strong> ${escapeHtml([locBusObj.address?.streetAddress, locBusObj.address?.addressLocality, locBusObj.address?.addressCountry].filter(Boolean).join(', '))}</li>` : ''}
+              ${locBusObj.telephone ? `<li><strong>Phone:</strong> ${escapeHtml(locBusObj.telephone)}</li>` : ''}
+              <li><strong>Yoouz Profile:</strong> <a href="${safeUrl}">${safeUrl}</a></li>
+            </ul>
+          </section>`
+        : '';
+
+      const visibleFaqHtml = faqObj
+        ? `<section aria-label="Frequently Asked Questions">
+            <h2>Frequently Asked Questions</h2>
+            ${faqObj.mainEntity.slice(0, 6).map((q: any) => `<div><h3>${escapeHtml(q.name || '')}</h3><p>${escapeHtml(q.acceptedAnswer?.text || '')}</p></div>`).join("\n            ")}
+          </section>`
+        : '';
 
       const dynamicGrounding = `
-      <main id="yoouz-knowledge-grounding" aria-label="Yoouz Live Camera Photo Reviews and AI Search Knowledge Base" style="max-width:920px;margin:0 auto;padding:32px 20px;color:#f4f4f5;background:#09090b;font-family:'Google Sans',Roboto,Arial,sans-serif;line-height:1.65;">
+      <main id="yoouz-knowledge-grounding" aria-label="Yoouz Live Camera Photo Reviews and AI Search Knowledge Base" style="max-width:960px;margin:0 auto;padding:32px 20px;color:#f4f4f5;background:#09090b;font-family:'Google Sans',Roboto,Arial,sans-serif;line-height:1.65;">
         <article>
           <h1>${safeTitle}</h1>
           <p>${safeDesc}</p>
-          ${safePhotoUrl ? `<figure><img src="${safePhotoUrl}" alt="${safeTitle}" style="max-width:100%;border-radius:12px;" /><figcaption>${safeTitle}</figcaption></figure>` : ''}
-          ${locBusObj ? `<div><h2>${escapeHtml(locBusObj.name || 'Verified Business')}</h2><p>Verified Rating: ${escapeHtml(locBusObj.aggregateRating?.ratingValue || '5.0')} / 5 (${escapeHtml(locBusObj.aggregateRating?.ratingCount || '1')} live camera photo reviews)</p></div>` : ''}
+          ${companyFactsHtml}
+          ${photoGalleryHtml}
+          ${visibleFaqHtml}
           <h2>About Yoouz (https://www.yoouz.com)</h2>
           <p>Yoouz (yoouz.com) is the global 3-second live camera photo review and local business discovery platform ("Real Photos. Real Proof. — A picture is worth a thousand words."). Every review on Yoouz is 1 live hardware-camera photo paired with a 1-to-5 solid whole-star rating captured in 3 seconds, blocking all photo gallery uploads and anonymous text-only spam.</p>
           <p><strong>Entity Disambiguation:</strong> Yoouz (yoouz.com) is an independent consumer and merchant live camera photo review platform, completely unrelated to Yooz (getyooz.com accounts payable software), Youtooz (youtooz.com collectibles), Yoox, Youzz, YouTube, or Yelp.</p>
@@ -42577,11 +42948,14 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           ? `${baseUrl}${cleanPathname}`
           : `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}/${encodeURIComponent(videoId)}`;
 
-        title = `${authorName}'s Photo Review of ${placeName} | Yoouz`;
-        description = `Verified ${rating}/5 live photo review by ${authorName} for ${placeName} on Yoouz. Real Photos. Real Reviews.`;
-        keywords = `${placeName}, ${domainSlug}, ${authorName}, photo review, ${placeName} customer review, live photo review, authentic customer review, Yoouz`;
-        
         const cleanPlaceDomForOg = cleanDomainName(rawDomain || placeName || "").replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+        const hasRealWebsiteDom = cleanPlaceDomForOg.includes(".") && !cleanPlaceDomForOg.includes(" ");
+        const domSuffix = hasRealWebsiteDom && !placeName.toLowerCase().includes(cleanPlaceDomForOg) ? ` (${cleanPlaceDomForOg})` : "";
+
+        title = `${placeName}${domSuffix} – ${rating}★ Real Photo Review by ${authorName} | Yoouz`;
+        description = `See ${authorName}'s verified ${rating}/5 live camera photo review of ${placeName}${domSuffix} on Yoouz. Authentic customer photo proof — zero gallery uploads or fake text reviews.`;
+        keywords = `${placeName}, ${placeName} reviews, ${placeName} photos, ${cleanPlaceDomForOg}, ${cleanPlaceDomForOg} reviews, ${cleanPlaceDomForOg} legit, ${authorName}, live photo review, real customer photo review, Yoouz`;
+        
         imageUrl = `${baseUrl}/api/og-card/v18/${encodeURIComponent(videoId)}.png`;
         touchIcon = `${baseUrl}/api/touch-icon/v18/video/${encodeURIComponent(videoId)}.png`;
         await Promise.race([
@@ -42599,6 +42973,8 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         const cleanAuthorHandle = (authorHandle || '').replace(/^@+/, "");
         const rawPhotoAsset = foundVideo?.photoUrl || foundVideo?.thumbnailUrl || imageUrl;
         const photoAssetUrl = rawPhotoAsset && rawPhotoAsset.startsWith('/') ? `${baseUrl}${rawPhotoAsset}` : rawPhotoAsset;
+        const reviewPublishedIso = foundVideo?.createdAt ? (typeof foundVideo.createdAt === 'number' ? new Date(foundVideo.createdAt).toISOString() : String(foundVideo.createdAt)) : new Date().toISOString();
+        const placeProfileUrl = `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}`;
 
         structuredData = {
           "@context": "https://schema.org",
@@ -42606,11 +42982,17 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
             {
               "@type": "ImageObject",
               "@id": `${canonicalVideoUrl}#photo`,
-              "name": title,
+              "name": `${placeName}${domSuffix} – ${rating}★ Real Customer Photo Review by ${authorName}`,
+              "caption": `Verified ${rating}/5 star live camera photo review of ${placeName}${domSuffix} taken by ${authorName} on Yoouz.`,
               "description": description,
               "contentUrl": photoAssetUrl,
+              "url": canonicalVideoUrl,
               "thumbnailUrl": imageUrl,
-              "uploadDate": foundVideo?.createdAt ? (typeof foundVideo.createdAt === 'number' ? new Date(foundVideo.createdAt).toISOString() : String(foundVideo.createdAt)) : new Date().toISOString(),
+              "representativeOfPage": true,
+              "creditText": "Live camera photo review on Yoouz (yoouz.com)",
+              "keywords": `${placeName}, ${cleanPlaceDomForOg}, customer photo review, ${rating} stars, Yoouz`,
+              "uploadDate": reviewPublishedIso,
+              "about": { "@id": `${placeProfileUrl}#business` },
               "author": {
                 "@type": "Person",
                 "name": authorName,
@@ -42627,12 +43009,28 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
               }
             },
             {
+              "@type": "LocalBusiness",
+              "@id": `${placeProfileUrl}#business`,
+              "name": foundVideo?.placeName || placeName,
+              ...(hasRealWebsiteDom ? { "alternateName": [cleanPlaceDomForOg, `www.${cleanPlaceDomForOg}`], "sameAs": [`https://${cleanPlaceDomForOg}`] } : {}),
+              "url": placeProfileUrl,
+              "image": [photoAssetUrl, imageUrl],
+              ...(placeReviewsCount > 0 ? {
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": placeAvgRating.toFixed(1),
+                  "bestRating": "5",
+                  "worstRating": "1",
+                  "ratingCount": String(placeReviewsCount)
+                }
+              } : {})
+            },
+            {
               "@type": "Review",
-              "itemReviewed": {
-                "@type": "LocalBusiness",
-                "name": foundVideo?.placeName || placeName,
-                "url": `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}`
-              },
+              "url": canonicalVideoUrl,
+              "datePublished": reviewPublishedIso,
+              "itemReviewed": { "@id": `${placeProfileUrl}#business` },
+              "associatedMedia": { "@id": `${canonicalVideoUrl}#photo` },
               "reviewRating": {
                 "@type": "Rating",
                 "ratingValue": String(rating),
@@ -42643,14 +43041,14 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
                 "@type": "Person",
                 "name": authorName
               },
-              "reviewBody": `Verified ${rating}-star live camera photo review of ${foundVideo?.placeName || placeName} on Yoouz.`
+              "reviewBody": `Verified ${rating}-star live camera photo review of ${foundVideo?.placeName || placeName}${domSuffix} captured live on Yoouz.`
             },
             {
               "@type": "BreadcrumbList",
               "itemListElement": [
                 { "@type": "ListItem", "position": 1, "name": "Yoouz", "item": `${baseUrl}/` },
-                { "@type": "ListItem", "position": 2, "name": placeName, "item": `${baseUrl}/reviews/${encodeURIComponent(domainSlug)}` },
-                { "@type": "ListItem", "position": 3, "name": title, "item": canonicalVideoUrl }
+                { "@type": "ListItem", "position": 2, "name": `${placeName}${domSuffix} Reviews`, "item": placeProfileUrl },
+                { "@type": "ListItem", "position": 3, "name": `${rating}★ Photo Review by ${authorName}`, "item": canonicalVideoUrl }
               ]
             }
           ]
@@ -42766,11 +43164,37 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           ? canonicalRequestUrl
           : `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}`;
 
-        // Keep og:image URL strictly short, fixed-length & canonical (zero dynamic query bloat so social scrapers never reject or mismatch post-publish)
-        title = `Live Photo Reviews for ${placeName} | Yoouz`;
+        const hasRealWebsiteDomain = Boolean(cleanDomainLookup && cleanDomainLookup.includes(".") && !cleanDomainLookup.includes(" "));
+        const domainInTitle = hasRealWebsiteDomain && !placeName.toLowerCase().includes(cleanDomainLookup)
+          ? ` (${cleanDomainLookup})`
+          : "";
+        const entityLoc = KNOWN_ENTITY_LOCATIONS[cleanDomainLookup] || KNOWN_ENTITY_LOCATIONS[effectiveDomain] || null;
+        const placeCity = placeObj?.city || entityLoc?.city || "";
+        const placeCountry = placeObj?.country || entityLoc?.country || "";
+        const placeAddress = placeObj?.address || entityLoc?.address || "";
+        const placePhone = placeObj?.phone || entityLoc?.phone || "";
+        const placeCategory = placeObj?.category || entityLoc?.category || "Business";
+
+        // SEO + AEO + GEO Title, Description & Keywords matching BOTH Company Name AND Company Website/Domain
+        title = effectiveReviewCount > 0
+          ? `${placeName}${domainInTitle} – ${avgRating.toFixed(1)}★ Real Photo Reviews (${effectiveReviewCount}) | Yoouz`
+          : `${placeName}${domainInTitle} – Real Customer Photo Reviews & Rating | Yoouz`;
         description = effectiveReviewCount > 0
-          ? `Browse ${effectiveReviewCount} live camera photo ${effectiveReviewCount === 1 ? 'review' : 'reviews'} for ${placeName} (${avgRating.toFixed(1)}/5 stars) on Yoouz. Real Photos. Real Reviews.`
-          : `Discover genuine live photo reviews for ${placeName} on Yoouz. Real Photos. Real Reviews.`;
+          ? `See ${effectiveReviewCount} verified live camera customer photo ${effectiveReviewCount === 1 ? 'review' : 'reviews'} for ${placeName}${domainInTitle}${placeCity ? ` in ${placeCity}` : ''} (${avgRating.toFixed(1)}/5 stars) on Yoouz. Real customer photos — zero gallery uploads or fake text reviews.`
+          : `Browse or post the first 3-second live camera customer photo review for ${placeName}${domainInTitle}${placeCity ? ` in ${placeCity}` : ''} on Yoouz. Real Photos. Real Proof.`;
+        keywords = [
+          placeName,
+          `${placeName} reviews`,
+          `${placeName} photos`,
+          `${placeName} customer photos`,
+          ...(hasRealWebsiteDomain ? [cleanDomainLookup, `${cleanDomainLookup} reviews`, `is ${cleanDomainLookup} legit`, `${cleanDomainLookup} photos`] : []),
+          ...(placeCity ? [`${placeName} ${placeCity}`] : []),
+          placeCategory,
+          "live camera photo reviews",
+          "real customer reviews",
+          "Yoouz"
+        ].filter(Boolean).join(", ");
+
         imageUrl = `${baseUrl}/api/og-image/v18/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         touchIcon = `${baseUrl}/api/touch-icon/v18/reviews/${encodeURIComponent(effectiveDomain.replace(/\./g, '-dot-'))}.png`;
         twitterCard = "summary_large_image";
@@ -42783,21 +43207,34 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           new Promise((resolve) => setTimeout(resolve, 120))
         ]).catch(() => {});
 
-        const absPlaceImage = (foundLogo && !foundLogo.startsWith('data:'))
+        const absPlaceImage = (foundLogo && !foundLogo.startsWith('data:') && !foundLogo.includes('/api/favicon'))
           ? (foundLogo.startsWith('/') ? `${baseUrl}${foundLogo}` : foundLogo)
           : imageUrl;
-        const topLevelPhotoObjects = placeVideos.slice(0, 10).map((v: any) => {
-          const vAuthor = v.author?.name || v.authorName || "Anonymous";
+        const absBannerImage = (foundBanner && !foundBanner.startsWith('data:'))
+          ? (foundBanner.startsWith('/') ? `${baseUrl}${foundBanner}` : foundBanner)
+          : "";
+
+        const topLevelPhotoObjects = placeVideos.slice(0, 12).map((v: any, idx: number) => {
+          const vAuthor = v.author?.name || v.authorName || "Verified Reviewer";
+          const vStars = Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))));
           const rawVThumb = v.photoUrl || v.thumbnailUrl || imageUrl;
           const vThumb = rawVThumb && rawVThumb.startsWith('/') ? `${baseUrl}${rawVThumb}` : rawVThumb;
           const vDate = v.createdAt ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt)) : new Date().toISOString();
+          const vReviewUrl = `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}/${encodeURIComponent(v.id)}`;
           return {
             "@type": "ImageObject",
-            "@id": `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}/${encodeURIComponent(v.id)}#photo`,
-            "name": `${vAuthor}'s Photo Review of ${placeName}`,
+            "@id": `${vReviewUrl}#photo`,
+            "url": vReviewUrl,
+            "name": `${placeName}${domainInTitle} – ${vStars}★ Real Customer Photo Review by ${vAuthor}`,
+            "caption": `Verified ${vStars}/5 star live camera photo review of ${placeName}${domainInTitle} taken by ${vAuthor} on Yoouz.`,
+            "description": `Real customer live camera photo of ${placeName}${domainInTitle}${placeCity ? ` (${placeCity})` : ''} rated ${vStars} out of 5 stars on Yoouz.`,
             "contentUrl": vThumb,
             "thumbnailUrl": vThumb,
+            "representativeOfPage": idx === 0,
+            "creditText": "Live camera photo review on Yoouz (yoouz.com)",
+            "keywords": `${placeName}, ${cleanDomainLookup}, customer photo review, ${vStars} stars, Yoouz`,
             "uploadDate": vDate,
+            "about": { "@id": `${canonicalPlaceUrl}#business` },
             "author": { "@type": "Person", "name": vAuthor },
             "publisher": {
               "@type": "Organization",
@@ -42808,41 +43245,85 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           };
         });
 
+        // Put real live customer photo review URLs FIRST in LocalBusiness.image so Google Search & Google Images surface authentic customer photos immediately
+        const realPhotoUrls = topLevelPhotoObjects.map((o: any) => o.contentUrl).filter(Boolean);
+        const businessImages = Array.from(new Set([
+          ...realPhotoUrls,
+          ...(absBannerImage ? [absBannerImage] : []),
+          absPlaceImage,
+          imageUrl
+        ].filter(Boolean)));
+
+        const localBusinessNode: Record<string, any> = {
+          "@type": "LocalBusiness",
+          "@id": `${canonicalPlaceUrl}#business`,
+          "name": placeName,
+          "description": description,
+          "image": businessImages,
+          "url": canonicalPlaceUrl,
+          "mainEntityOfPage": canonicalPlaceUrl,
+          ...(hasRealWebsiteDomain ? {
+            "alternateName": Array.from(new Set([cleanDomainLookup, `www.${cleanDomainLookup}`])),
+            "sameAs": [`https://${cleanDomainLookup}`]
+          } : {}),
+          ...(placeAddress || placeCity || placeCountry ? {
+            "address": {
+              "@type": "PostalAddress",
+              ...(placeAddress ? { "streetAddress": placeAddress } : {}),
+              ...(placeCity ? { "addressLocality": placeCity } : {}),
+              ...(placeCountry ? { "addressCountry": placeCountry } : {})
+            }
+          } : {}),
+          ...(placePhone ? { "telephone": placePhone } : {}),
+          ...(topLevelPhotoObjects.length > 0 ? {
+            "photo": topLevelPhotoObjects.map((o: any) => ({ "@id": o["@id"] }))
+          } : {})
+        };
+
+        // Strict Google Rich Results compliance: only include AggregateRating & Review list when genuine reviews exist
+        if (effectiveReviewCount > 0) {
+          localBusinessNode.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": avgRating.toFixed(1),
+            "bestRating": "5",
+            "worstRating": "1",
+            "ratingCount": String(effectiveReviewCount)
+          };
+        }
+        if (placeVideos.length > 0) {
+          localBusinessNode.review = placeVideos.slice(0, 12).map((v: any) => {
+            const vStars = Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))));
+            const vDate = v.createdAt ? (typeof v.createdAt === 'number' ? new Date(v.createdAt).toISOString() : String(v.createdAt)) : new Date().toISOString();
+            const vReviewUrl = `${baseUrl}/reviews/${encodeURIComponent(effectiveDomain)}/${encodeURIComponent(v.id)}`;
+            return {
+              "@type": "Review",
+              "url": vReviewUrl,
+              "datePublished": vDate,
+              "associatedMedia": { "@id": `${vReviewUrl}#photo` },
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": String(vStars),
+                "bestRating": "5",
+                "worstRating": "1"
+              },
+              "author": {
+                "@type": "Person",
+                "name": v.author?.name || v.authorName || "Verified Reviewer"
+              },
+              "reviewBody": `Verified ${vStars}-star live camera photo review for ${placeName}${domainInTitle} on Yoouz.`
+            };
+          });
+        }
+
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
-            {
-              "@type": "LocalBusiness",
-              "name": placeName,
-              "image": absPlaceImage,
-              "url": canonicalPlaceUrl,
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": avgRating.toFixed(1),
-                "bestRating": "5",
-                "worstRating": "1",
-                "ratingCount": String(Math.max(1, placeVideos.length))
-              },
-              "review": placeVideos.slice(0, 10).map((v: any) => ({
-                "@type": "Review",
-                "reviewRating": {
-                  "@type": "Rating",
-                  "ratingValue": String(Math.min(5, Math.max(1, Math.round(Number(v.rating || 5))))),
-                  "bestRating": "5",
-                  "worstRating": "1"
-                },
-                "author": {
-                  "@type": "Person",
-                  "name": v.author?.name || v.authorName || "Anonymous"
-                },
-                "reviewBody": `Live camera photo review for ${placeName}.`
-              }))
-            },
+            localBusinessNode,
             {
               "@type": "BreadcrumbList",
               "itemListElement": [
                 { "@type": "ListItem", "position": 1, "name": "Yoouz", "item": `${baseUrl}/` },
-                { "@type": "ListItem", "position": 2, "name": `${placeName} Reviews`, "item": canonicalPlaceUrl }
+                { "@type": "ListItem", "position": 2, "name": `${placeName}${domainInTitle} Reviews`, "item": canonicalPlaceUrl }
               ]
             },
             ...topLevelPhotoObjects,
@@ -42851,42 +43332,36 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
               "mainEntity": [
                 {
                   "@type": "Question",
-                  "name": `What is the verified customer rating for ${placeName}?`,
+                  "name": `Is ${placeName}${domainInTitle} legit? What is its verified customer rating?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `${placeName} has a verified average rating of ${avgRating.toFixed(1)} out of 5 stars based on ${Math.max(1, placeVideos.length)} authentic live camera photo reviews on Yoouz.`
+                    "text": effectiveReviewCount > 0
+                      ? `${placeName}${domainInTitle} has a verified customer rating of ${avgRating.toFixed(1)} out of 5 stars based on ${effectiveReviewCount} authentic live camera photo ${effectiveReviewCount === 1 ? 'review' : 'reviews'} on Yoouz (${canonicalPlaceUrl}).`
+                      : `${placeName}${domainInTitle} has an open Yoouz profile (${canonicalPlaceUrl}) ready for real customers to publish the first 3-second live camera photo review.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `Where can I see real photo reviews of ${placeName}?`,
+                  "name": `Where can I see real customer photos of ${placeName}${domainInTitle}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `You can browse verified live-camera photo reviews of ${placeName} at ${fullUrl} or through the Yoouz iOS/Android and Web app.`
+                    "text": `You can view unedited live-camera customer photo reviews of ${placeName}${domainInTitle} directly on Yoouz at ${canonicalPlaceUrl}. Every photo on Yoouz is snapped live through the device camera with zero gallery uploads allowed.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `How do I embed ${placeName} photo reviews on my website?`,
+                  "name": `Are ${placeName} reviews on Yoouz verified and fake-free?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `You can embed photo reviews for ${placeName} using the Yoouz oEmbed API or standard iframe code. Adding verified live photo reviews increases website conversion rates.`
+                    "text": `Yes. 100% of reviews for ${placeName}${domainInTitle} on Yoouz require a live hardware-camera photo and a 1–5 solid whole-star rating. Gallery uploads, stock photos, anonymous text-only spam, and paid review removal are strictly blocked.`
                   }
                 },
                 {
                   "@type": "Question",
-                  "name": `Are reviews for ${placeName} verified on Yoouz?`,
+                  "name": `How do I leave a live photo review for ${placeName}${domainInTitle}?`,
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": `Yes. 100% of reviews on Yoouz are captured live through the device camera with zero gallery uploads allowed. No bot accounts or fake AI text are permitted.`
-                  }
-                },
-                {
-                  "@type": "Question",
-                  "name": `Why are Yoouz photo reviews for ${placeName} better than Yelp or Google Reviews?`,
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": `Unlike Yelp or Google Reviews where bots can write fake text rants, Yoouz features real live-camera photo proof and honest whole-star ratings of ${placeName}.`
+                    "text": `Open ${canonicalPlaceUrl} on Yoouz, tap the camera button, snap 1 live photo in 3 seconds, and choose 1 to 5 solid stars. No email, password, or app download is required.`
                   }
                 }
               ]

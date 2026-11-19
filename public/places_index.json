@@ -1,5 +1,66 @@
 [
   {
+    "id": "nike.com",
+    "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
+    "name": "Nike",
+    "domain": "nike.com",
+    "avatarUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "rating": 5,
+    "reviewCount": 0,
+    "reviews": [],
+    "ogImage": "/uploads/brand-assets/banners/nike.com.webp",
+    "website": "https://www.nike.com/nl/en/",
+    "brandDomain": "nike.com",
+    "photos": [
+      "/uploads/brand-assets/banners/nike.com.webp"
+    ],
+    "description": "Nike · sportswear & footwear · Beaverton, OR, United States",
+    "address": "One Bowerman Dr",
+    "city": "Beaverton, OR",
+    "country": "United States",
+    "phone": "+1 (800) 806-6453",
+    "email": "support@nike.com",
+    "category": "Sportswear & Footwear",
+    "openingHours": "Available 24/7",
+    "locations": [],
+    "lat": 0,
+    "lng": 0,
+    "categoryType": "all",
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "isOpen": true,
+    "priceRange": "N/A",
+    "plusCode": "",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "postalCode": "97005",
+    "zipCode": "97005",
+    "zip": "97005",
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "isSavedToProfile": true
+  },
+  {
     "id": "benchdepot.com",
     "name": "Bench Depot",
     "category": "Industrial & Office",
@@ -18,13 +79,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fbenchdepot.com%2Fpub%2Fmedia%2Flogo%2Fstores%2F1%2Flogo-workbenches-industrial-office-chairs-benchdepot.com_1.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fbenchdepot.com%2Fpub%2Fmedia%2Flogo%2Fstores%2F1%2Flogo-workbenches-industrial-office-chairs-benchdepot.com_1.png",
+    "avatarUrl": "/uploads/brand-assets/logos/benchdepot.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/benchdepot.com.webp",
     "brandDomain": "benchdepot.com",
-    "bannerUrl": "/api/brand-banner/benchdepot.com",
-    "ogImage": "/api/brand-banner/benchdepot.com",
+    "bannerUrl": "/uploads/brand-assets/banners/benchdepot.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/benchdepot.com.webp",
     "photos": [
-      "/api/brand-banner/benchdepot.com"
+      "/uploads/brand-assets/banners/benchdepot.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -72,13 +133,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwp-static.assets.sh%2FWXQOBU3GnxJnx57Ac1QkAhsnoqDtTHPvdDzWqKihLME%2Fassets%2Fimages%2Flogo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwp-static.assets.sh%2FWXQOBU3GnxJnx57Ac1QkAhsnoqDtTHPvdDzWqKihLME%2Fassets%2Fimages%2Flogo.svg",
+    "avatarUrl": "/uploads/brand-assets/logos/hotel-julien.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/hotel-julien.com.svg",
     "brandDomain": "hotel-julien.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy",
+    "bannerUrl": "/uploads/brand-assets/banners/hotel-julien.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/hotel-julien.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwp-assets-sh.imgix.net%2Fsites%2F22506%2F2025%2F09%2Fog-default.png%3Fw%3D1200%26h%3D630%26auto%3Dformat%252Ccompress%26fit%3Dcrop%26crop%3Dfaces%252Centropy"
+      "/uploads/brand-assets/banners/hotel-julien.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -115,10 +176,10 @@
     "address": "701 E Bridger Ave #400",
     "city": "Las Vegas, NV",
     "country": "United States",
-    "lat": 36.1685,
-    "lng": -115.1408,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -129,10 +190,10 @@
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
     "brandDomain": "nevadalegalservices.org",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
+    "ogImage": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fnevadalegalservices.org%2Fwp-content%2Fuploads%2F2021%2F01%2Fweathered-hands-of-african-woman-1024x819-1.jpg"
+      "/uploads/brand-assets/banners/nevadalegalservices.org.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -151,7 +212,7 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "createdAt": "2026-10-22 21:38:56",
     "isClaimed": false,
     "isVerified": false,
@@ -163,11 +224,12 @@
       "3": 0,
       "4": 1,
       "5": 0
-    }
+    },
+    "reviews": []
   },
   {
     "id": "bclaw.au",
-    "name": "Bclaw",
+    "name": "Belperio Connell",
     "category": "Legal Services",
     "categoryType": "all",
     "address": "",
@@ -187,10 +249,10 @@
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2292%22%20height%3D%2292%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%221.5%22%20opacity%3D%220.8%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2255%22%20font-family%3D%22Georgia%2C%20serif%22%20font-weight%3D%22bold%22%20font-size%3D%2228%22%20fill%3D%22%23fbbf24%22%20text-anchor%3D%22middle%22%3EBC%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2275%22%20font-family%3D%22-apple-system%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%228%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%221%22%3ELAWYERS%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%2309090b%22%2F%3E%0A%20%20%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2292%22%20height%3D%2292%22%20rx%3D%2218%22%20fill%3D%22none%22%20stroke%3D%22%23fbbf24%22%20stroke-width%3D%221.5%22%20opacity%3D%220.8%22%2F%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2255%22%20font-family%3D%22Georgia%2C%20serif%22%20font-weight%3D%22bold%22%20font-size%3D%2228%22%20fill%3D%22%23fbbf24%22%20text-anchor%3D%22middle%22%3EBC%3C%2Ftext%3E%0A%20%20%3Ctext%20x%3D%2250%22%20y%3D%2275%22%20font-family%3D%22-apple-system%2C%20sans-serif%22%20font-weight%3D%22600%22%20font-size%3D%228%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%221%22%3ELAWYERS%3C%2Ftext%3E%0A%3C%2Fsvg%3E",
     "brandDomain": "bclaw.au",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png",
+    "bannerUrl": "/uploads/brand-assets/banners/bclaw.au.webp",
+    "ogImage": "/uploads/brand-assets/banners/bclaw.au.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fbclaw.au%2Fwp-content%2Fuploads%2F2023%2F06%2Fyoast-opengraph-belperio.png"
+      "/uploads/brand-assets/banners/bclaw.au.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -200,7 +262,7 @@
     "priceRange": "N/A",
     "isSavedToProfile": true,
     "plusCode": "",
-    "description": "Bclaw is a dedicated law practice in Australia, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "description": "Belperio Connell is a dedicated law practice in Australia, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -217,7 +279,8 @@
       "3": 0,
       "4": 0,
       "5": 1
-    }
+    },
+    "locations": []
   },
   {
     "id": "praktijk-nexus.nl",
@@ -238,13 +301,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F08%2Fcropped-PraktijkNexus_Logo1-180x180.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F08%2Fcropped-PraktijkNexus_Logo1-180x180.png",
+    "avatarUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
+    "logoUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
     "brandDomain": "praktijk-nexus.nl",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
+    "ogImage": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fpraktijk-nexus.nl%2Fwp-content%2Fuploads%2F2024%2F09%2FMassage1-scaled.jpg"
+      "/uploads/brand-assets/banners/praktijk-nexus.nl.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -292,13 +355,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=hoteldesgaleries.be",
-    "logoUrl": "/api/favicon?domain=hoteldesgaleries.be",
+    "avatarUrl": "/uploads/brand-assets/logos/hoteldesgaleries.be.webp",
+    "logoUrl": "/uploads/brand-assets/logos/hoteldesgaleries.be.webp",
     "brandDomain": "hoteldesgaleries.be",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png",
+    "bannerUrl": "/uploads/brand-assets/banners/hoteldesgaleries.be.webp",
+    "ogImage": "/uploads/brand-assets/banners/hoteldesgaleries.be.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fhoteldesgaleries.be%2Fwp-content%2Fuploads%2F2026%2F10%2FRoyal-Gallery-View-Brussels-Hotel-des-Galeries-Brussels-centre.png"
+      "/uploads/brand-assets/banners/hoteldesgaleries.be.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -325,7 +388,17 @@
       "3": 0,
       "4": 1,
       "5": 0
-    }
+    },
+    "locations": [
+      {
+        "city": "Brussels",
+        "postalCode": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "openingHours": ""
+      }
+    ]
   },
   {
     "id": "upperview-regalia.com",
@@ -355,12 +428,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fthemes%2Fupperview%2Fassets%2Fimages%2FUpperViewLogo_FA-01.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fthemes%2Fupperview%2Fassets%2Fimages%2FUpperViewLogo_FA-01.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.upperview-regalia.com%2Fwp-content%2Fuploads%2F2018%2F12%2Fbanner-02.jpg"
+      "/uploads/brand-assets/banners/upperview-regalia.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -384,20 +457,20 @@
   },
   {
     "id": "brightandbeautifulhome.com",
-    "logoUrl": "/api/favicon?domain=brightandbeautifulhome.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp",
-    "name": "Brightandbeautiful Home",
+    "logoUrl": "/uploads/brand-assets/logos/brightandbeautifulhome.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/brightandbeautifulhome.com.webp",
+    "name": "Bright & Beautiful",
     "category": "Home Services & Cleaning",
     "categoryType": "all",
     "address": "",
     "city": "Online",
     "country": "United Kingdom",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -412,10 +485,10 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=brightandbeautifulhome.com",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/brightandbeautifulhome.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/brightandbeautifulhome.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.brightandbeautifulhome.com%2Fapp%2Fthemes%2FTrunk%2Fpublic%2Fbuild%2Fassets%2Fhero-poster-BI0jxczf.webp"
+      "/uploads/brand-assets/banners/brightandbeautifulhome.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -425,7 +498,7 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Brightandbeautiful Home provides professional, reliable emergency and maintenance services in United Kingdom, dedicated to quality workmanship and prompt client care.",
+    "description": "Bright & Beautiful provides professional, reliable emergency and maintenance services in United Kingdom, dedicated to quality workmanship and prompt client care.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -446,8 +519,8 @@
   },
   {
     "id": "soluxecleaning.co.uk",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2025%2F06%2Fcropped-cropped-home_cleaning_services-removebg-preview-1-180x180.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp",
+    "logoUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
     "name": "Soluxe Cleaning",
     "category": "Home Services & Cleaning",
     "categoryType": "all",
@@ -474,10 +547,10 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2025%2F06%2Fcropped-cropped-home_cleaning_services-removebg-preview-1-180x180.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
+    "ogImage": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fsoluxecleaning.co.uk%2Fwp-content%2Fuploads%2F2026%2F02%2Fdomestic-cleaning-london-1.webp"
+      "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -504,8 +577,8 @@
   },
   {
     "id": "makicafe.com",
-    "logoUrl": "https://static.wixstatic.com/media/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png",
-    "bannerUrl": "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
+    "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/makicafe.com.webp",
     "name": "Maki Cafe",
     "brandDomain": "makicafe.com",
     "category": "Restaurant & Food",
@@ -524,11 +597,10 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://static.wixstatic.com/media/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/73e83b_297743a1658949cb847005819fdf634c%7Emv2.png",
-    "ogImage": "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
     "photos": [
-      "https://static.wixstatic.com/media/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg/v1/fit/w_2500,h_1330,al_c/73e83b_baa1bbdb959c40e1b77ea2743729714b%7Emv2.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Fstatic.wixstatic.com%2Fmedia%2F73e83b_baa1bbdb959c40e1b77ea2743729714b%257Emv2.jpg%2Fv1%2Ffit%2Fw_2500%2Ch_1330%2Cal_c%2F73e83b_baa1bbdb959c40e1b77ea2743729714b%257Emv2.jpg"
+      "/uploads/brand-assets/banners/makicafe.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -577,13 +649,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F04%2FBrand_Bar_April-2024.png%3Fw%3D1024",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F04%2FBrand_Bar_April-2024.png%3Fw%3D1024",
+    "avatarUrl": "/uploads/brand-assets/logos/hilton.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/hilton.com.webp",
     "brandDomain": "hilton.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F01%2FHiltonxPTPA-Hero.jpg%3Fw%3D1920%26h%3D1351%26crop%3D1%26q%3D75",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F01%2FHiltonxPTPA-Hero.jpg%3Fw%3D1920%26h%3D1351%26crop%3D1%26q%3D75",
+    "bannerUrl": "/uploads/brand-assets/banners/hilton.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/hilton.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F01%2FHiltonxPTPA-Hero.jpg%3Fw%3D1920%26h%3D1351%26crop%3D1%26q%3D75"
+      "/uploads/brand-assets/banners/hilton.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -616,10 +688,10 @@
     "address": "",
     "city": "Online",
     "country": "Argentina",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -627,13 +699,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fhavannausa.com%2Fwp-content%2Fuploads%2F2019%2F12%2FHavanna_pouch_alfajores_chocolate_EEUU_Frente_RENDER-scaled.jpeg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fhavannausa.com%2Fwp-content%2Fuploads%2F2019%2F12%2FHavanna_pouch_alfajores_chocolate_EEUU_Frente_RENDER-scaled.jpeg",
+    "avatarUrl": "/uploads/brand-assets/logos/havanna.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/havanna.com.webp",
     "brandDomain": "havanna.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fsejafranqueado.havanna.com.br%2Fwp-content%2Fuploads%2F2026%2F04%2Ffestiva-pistache.jpg.jpeg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fsejafranqueado.havanna.com.br%2Fwp-content%2Fuploads%2F2026%2F04%2Ffestiva-pistache.jpg.jpeg",
+    "bannerUrl": "/uploads/brand-assets/banners/havanna.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/havanna.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fsejafranqueado.havanna.com.br%2Fwp-content%2Fuploads%2F2026%2F04%2Ffestiva-pistache.jpg.jpeg"
+      "/uploads/brand-assets/banners/havanna.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -652,11 +724,21 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "createdAt": "2026-10-23 16:55:25",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "locations": [],
+    "reviews": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
   },
   {
     "id": "pintoartmuseum.ph",
@@ -677,13 +759,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2Fimages%2Flogo_main_3.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2Fimages%2Flogo_main_3.png",
+    "avatarUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
+    "logoUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
     "brandDomain": "pintoartmuseum.ph",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+    "ogImage": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg"
+      "/uploads/brand-assets/banners/pintoartmuseum.ph.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -702,7 +784,11 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 1
+    "videoReviewCount": 1,
+    "createdAt": "2026-10-23 15:23:20",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "booksandbeans.co.uk",
@@ -723,13 +809,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2025%2F10%2Fcropped-BB-logo-05-180x180.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2025%2F10%2Fcropped-BB-logo-05-180x180.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
+    "logoUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
     "brandDomain": "booksandbeans.co.uk",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2026%2F06%2FCakes-and-Drinks-Sum-Up-Menu-New-Update-31_Page_1-3-scaled.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2026%2F06%2FCakes-and-Drinks-Sum-Up-Menu-New-Update-31_Page_1-3-scaled.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
+    "ogImage": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2026%2F06%2FCakes-and-Drinks-Sum-Up-Menu-New-Update-31_Page_1-3-scaled.jpg"
+      "/uploads/brand-assets/banners/booksandbeans.co.uk.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -764,8 +850,8 @@
     "country": "Japan",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 4,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -773,13 +859,13 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fplay-lh.googleusercontent.com%2Fnk7tte8LNfR0PmALr2rFNovCr_ftOL6YRXwpzfFoB1d08dElj9BtEfO0Y48y41tLnw",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fplay-lh.googleusercontent.com%2Fnk7tte8LNfR0PmALr2rFNovCr_ftOL6YRXwpzfFoB1d08dElj9BtEfO0Y48y41tLnw",
+    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
     "brandDomain": "sephora.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fs1.r29static.com%2Fbin%2Fentry%2F6a0%2F0%2C0%2C2000%2C1050%2Fx%2C80%2F1885347%2Fimage.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fs1.r29static.com%2Fbin%2Fentry%2F6a0%2F0%2C0%2C2000%2C1050%2Fx%2C80%2F1885347%2Fimage.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fs1.r29static.com%2Fbin%2Fentry%2F6a0%2F0%2C0%2C2000%2C1050%2Fx%2C80%2F1885347%2Fimage.jpg"
+      "/uploads/brand-assets/banners/sephora.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -798,13 +884,13 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 1,
+    "videoReviewCount": 2,
     "locations": [],
-    "ratingCount": 1,
+    "ratingCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
       "5": 1
     }
@@ -851,10 +937,11 @@
     "topDishes": [],
     "brandDomain": "zara.comtakes",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/uploads/brand-assets/banners/zara.com.webp",
     "photos": [
+      "/uploads/brand-assets/banners/zara.com.webp",
       "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
     ],
     "isSavedToProfile": true
@@ -862,7 +949,7 @@
   {
     "id": "zara.com",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
     "name": "Zara",
     "category": "Fashion & Apparel",
     "categoryType": "all",
@@ -882,9 +969,9 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
     "brandDomain": "zara.com",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "ogImage": "/uploads/brand-assets/banners/zara.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
+      "/uploads/brand-assets/banners/zara.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -924,17 +1011,17 @@
   {
     "id": "guard-slip-cafe-by-lgip.bayombong",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "bannerUrl": "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong",
+    "bannerUrl": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
     "name": "Guard Slip Cafe By Lgip",
     "category": "Cafe",
     "categoryType": "all",
     "address": "",
     "city": "Bayombong",
     "country": "Philippines",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -944,13 +1031,13 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
     "brandDomain": "guard-slip-cafe-by-lgip.bayombong",
-    "ogImage": "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong",
+    "ogImage": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
     "photos": [
-      "/api/brand-banner/guard-slip-cafe-by-lgip.bayombong"
+      "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
+    "phone": "17 17 219 219",
     "email": "",
     "website": "https://guard-slip-cafe-by-lgip.bayombong",
     "priceRange": "N/A",
@@ -965,7 +1052,7 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "ratingCount": 1,
     "starCounts": {
       "1": 0,
@@ -977,12 +1064,14 @@
     "createdAt": "2026-10-19 11:31:25",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "locations": [],
+    "reviews": []
   },
   {
     "id": "propercoffee.app",
-    "logoUrl": "/api/favicon?domain=propercoffee.app",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png",
+    "logoUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/propercoffee.app.webp",
     "name": "Art Coffee Gallery Aberdeen",
     "category": "Restaurant & Cafe",
     "categoryType": "all",
@@ -1000,11 +1089,11 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=propercoffee.app",
+    "avatarUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
     "brandDomain": "propercoffee.app",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png",
+    "ogImage": "/uploads/brand-assets/banners/propercoffee.app.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
+      "/uploads/brand-assets/banners/propercoffee.app.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1027,12 +1116,30 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "createdAt": "2026-10-23 09:11:16"
+    "createdAt": "2026-10-23 09:11:16",
+    "locations": [
+      {
+        "city": "London",
+        "postalCode": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "openingHours": ""
+      }
+    ],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
   },
   {
     "id": "jollibee.com.ph",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/jollibee.com.ph.webp",
     "name": "Jollibee",
     "category": "Fast Food Restaurant",
     "categoryType": "all",
@@ -1060,9 +1167,9 @@
       "stars1": 0
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg",
+    "ogImage": "/uploads/brand-assets/banners/jollibee.com.ph.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fcdn.manilastandard.net%2Fwp-content%2Fuploads%2F2023%2F10%2Fjollibee.jpg"
+      "/uploads/brand-assets/banners/jollibee.com.ph.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1098,8 +1205,8 @@
     "country": "United States",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 3.5,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1107,11 +1214,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fcc%2FDunkin-donuts-1-logo-png-transparent.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg",
+    "avatarUrl": "/uploads/brand-assets/logos/dunkindonuts.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/dunkindonuts.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/dunkindonuts.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/dunkindonuts.com.webp",
     "photos": [
+      "/uploads/brand-assets/banners/dunkindonuts.com.webp",
       "/api/proxy-image?url=https%3A%2F%2Foffloadmedia.feverup.com%2Flyonsecret.com%2Fwp-content%2Fuploads%2F2024%2F07%2F31111435%2Fc9252e6c6cd289c588c3381bc77b1dfc-1024x819.jpeg"
     ],
     "openingHours": "Available 24/7",
@@ -1132,7 +1240,7 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "dunkindonuts.com",
-    "videoReviewCount": 1,
+    "videoReviewCount": 2,
     "ratingCount": 1,
     "starCounts": {
       "1": 0,
@@ -1145,7 +1253,7 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
-    "createdAt": "2026-11-17 14:50:28"
+    "createdAt": "2026-11-14 10:25:34"
   },
   {
     "id": "lernerandrowe.com",
@@ -1168,10 +1276,10 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Flernerandrowe.com%2Fwp-content%2Fuploads%2F2022%2F06%2FLERNER_ROWE_2560x1440-1.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Flernerandrowe.com%2Fwp-content%2Fuploads%2F2022%2F06%2FLERNER_ROWE_2560x1440-1.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Flernerandrowe.com%2Fwp-content%2Fuploads%2F2022%2F06%2FLERNER_ROWE_2560x1440-1.jpg"
+      "/uploads/brand-assets/banners/lernerandrowe.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1299,10 +1407,10 @@
     "address": "Rue du Marché aux Poulets 37",
     "city": "Brussels",
     "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1310,12 +1418,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fon%2Fdemandware.static%2FSites-Multipharma-Webshop-BE-Site%2F-%2Fdefault%2Fdw4b5246f9%2Fimages%2FLogo_Multipharma_Fond_Blanc_RVB_no_whiteroom.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng",
+    "avatarUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/multipharma.be.webp",
+    "ogImage": "/uploads/brand-assets/banners/multipharma.be.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng"
+      "/uploads/brand-assets/banners/multipharma.be.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1336,7 +1444,7 @@
     "topDishes": [],
     "brandDomain": "multipharma.be",
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -1348,7 +1456,8 @@
     "createdAt": "2026-11-14 08:37:19",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "reviews": []
   },
   {
     "id": "webflow.com",
@@ -1460,8 +1569,8 @@
     "country": "United States",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 4.5,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1469,13 +1578,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=apple.com",
-    "logoUrl": "/api/favicon?domain=apple.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F5%2F5a%2FAerial_view_of_Apple_Park_dllu.jpg%2F1280px-Aerial_view_of_Apple_Park_dllu.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F5%2F5a%2FAerial_view_of_Apple_Park_dllu.jpg%2F1280px-Aerial_view_of_Apple_Park_dllu.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/apple.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F5%2F5a%2FAerial_view_of_Apple_Park_dllu.jpg%2F1280px-Aerial_view_of_Apple_Park_dllu.jpg",
-      "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Aerial_view_of_Apple_Park_dllu.jpg/1280px-Aerial_view_of_Apple_Park_dllu.jpg"
+      "/uploads/brand-assets/banners/apple.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1495,13 +1603,13 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "apple.com",
-    "ratingCount": 1,
-    "videoReviewCount": 1,
+    "ratingCount": 2,
+    "videoReviewCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
+      "4": 1,
       "5": 1
     },
     "isSavedToProfile": true,
@@ -1529,12 +1637,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F2djO9HWVlB8lG3mzwmNMiX%2Fca7dcf7d95dcffb1868d5594cd01c447%2FWolt__pill_logo.png%3Fq%3D90%26fm%3Dwebp",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg",
+    "avatarUrl": "/uploads/brand-assets/logos/wolt.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/wolt.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/wolt.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/wolt.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fimages.ctfassets.net%2F23u853certza%2F6tLKZH6rIYc2iGygoTmbvQ%2F6db1aeb9a7386c127560281931764b0d%2Fog_image_mall_web__1_.jpeg"
+      "/uploads/brand-assets/banners/wolt.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1579,8 +1687,8 @@
     "country": "Belgium",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 4,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1588,13 +1696,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F9%2F92%2FUNIQLO_logo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F9%2F92%2FUNIQLO_logo.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F09%2FUniqlo_Ginza_2018.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F09%2FUniqlo_Ginza_2018.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F0%2F09%2FUniqlo_Ginza_2018.jpg",
-      "https://upload.wikimedia.org/wikipedia/commons/0/09/Uniqlo_Ginza_2018.jpg"
+      "/uploads/brand-assets/banners/uniqlo.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1614,12 +1721,12 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "uniqlo.com",
-    "ratingCount": 1,
-    "videoReviewCount": 1,
+    "ratingCount": 2,
+    "videoReviewCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
       "5": 1
     },
@@ -1639,8 +1746,8 @@
     "country": "United States",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 3.5,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1648,13 +1755,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2F3%2F36%2FMcDonald%2527s_Golden_Arches.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/mcdonalds.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/mcdonalds.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/mcdonalds.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/mcdonalds.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fc%2Fc0%2FMcDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg%2F1280px-McDonald%2527s_restaurant_in_Blairsville%252C_Georgia.jpg",
-      "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg/1280px-McDonald%27s_restaurant_in_Blairsville%2C_Georgia.jpg"
+      "/uploads/brand-assets/banners/mcdonalds.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1674,14 +1780,14 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "mcdonalds.com",
-    "videoReviewCount": 1,
+    "videoReviewCount": 2,
     "postalCode": "60607",
     "zipCode": "60607",
     "zip": "60607",
-    "ratingCount": 1,
+    "ratingCount": 2,
     "starCounts": {
       "1": 0,
-      "2": 0,
+      "2": 1,
       "3": 0,
       "4": 0,
       "5": 1
@@ -1711,13 +1817,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=calvinklein.com",
-    "logoUrl": "/api/favicon?domain=calvinklein.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/calvinklein.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/calvinklein.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Fa%2Fad%2FCalvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg%2F1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg",
-      "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg"
+      "/uploads/brand-assets/banners/calvinklein.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1762,8 +1867,8 @@
     "country": "Italy",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
+    "rating": 4,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1771,12 +1876,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=dominos.com",
-    "logoUrl": "/api/favicon?domain=dominos.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378",
+    "avatarUrl": "/uploads/brand-assets/logos/dominos.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/dominos.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/dominos.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/dominos.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.dominos.com.au%2FManagedAssets%2FAU%2Fproduct%2FM006D%2FAU_M006D_en_hero_12070.jpg%3Fv-157310378"
+      "/uploads/brand-assets/banners/dominos.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1796,12 +1901,12 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "dominos.com",
-    "ratingCount": 1,
-    "videoReviewCount": 1,
+    "ratingCount": 2,
+    "videoReviewCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
       "5": 1
     },
@@ -1821,8 +1926,8 @@
     "country": "Belgium",
     "lat": 0,
     "lng": 0,
-    "rating": 3,
-    "totalReviews": 1,
+    "rating": 2.5,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1830,13 +1935,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/EasyHotel%20Logo%20New.svg",
-    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/EasyHotel%20Logo%20New.svg",
-    "bannerUrl": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
-    "ogImage": "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/easyhotel.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/easyhotel.com.webp",
     "photos": [
-      "https://careers.easyhotel.com/Content/skins/easyHotel/images/Oxford.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Fcareers.easyhotel.com%2FContent%2Fskins%2FeasyHotel%2Fimages%2FOxford.jpg"
+      "/uploads/brand-assets/banners/easyhotel.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -1856,11 +1960,11 @@
     "amenities": [],
     "topDishes": [],
     "brandDomain": "easyhotel.com",
-    "ratingCount": 1,
-    "videoReviewCount": 1,
+    "ratingCount": 2,
+    "videoReviewCount": 2,
     "starCounts": {
       "1": 0,
-      "2": 0,
+      "2": 1,
       "3": 1,
       "4": 0,
       "5": 0
@@ -1944,13 +2048,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=fourseasons.com",
-    "logoUrl": "/api/favicon?domain=fourseasons.com",
-    "bannerUrl": "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg",
-    "ogImage": "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg",
+    "avatarUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/fourseasons.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/fourseasons.com.webp",
     "photos": [
-      "https://press.fourseasons.com/content/dam/fourseasons/images/web/HIS/HIS_004_aspect16x9.jpg/jcr:content/renditions/cq5dam.web.press.722.keepaspectratio.jpeg",
-      "/api/proxy-image?url=https%3A%2F%2Fpress.fourseasons.com%2Fcontent%2Fdam%2Ffourseasons%2Fimages%2Fweb%2FHIS%2FHIS_004_aspect16x9.jpg%2Fjcr%3Acontent%2Frenditions%2Fcq5dam.web.press.722.keepaspectratio.jpeg"
+      "/uploads/brand-assets/banners/fourseasons.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -2079,15 +2182,15 @@
     "name": "Villaggio Abu Dhabi",
     "category": "Hotel & Hospitality",
     "categoryType": "all",
-    "address": "",
+    "address": "Check-in20 Nov 2026",
     "city": "Abu Dhabi",
     "country": "United Arab Emirates",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -2102,21 +2205,30 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=villaggiohotels.ae",
-    "logoUrl": "/api/favicon?domain=villaggiohotels.ae",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fdynamic-media-cdn.tripadvisor.com%2Fmedia%2Fphoto-o%2F1a%2F59%2F2b%2F40%2Fvillaggio-hotel-abu-dhabi.jpg%3Fw%3D1200%26h%3D-1%26s%3D1",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fdynamic-media-cdn.tripadvisor.com%2Fmedia%2Fphoto-o%2F1a%2F59%2F2b%2F40%2Fvillaggio-hotel-abu-dhabi.jpg%3Fw%3D1200%26h%3D-1%26s%3D1",
+    "avatarUrl": "/uploads/brand-assets/logos/villaggiohotels.ae.webp",
+    "logoUrl": "/uploads/brand-assets/logos/villaggiohotels.ae.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/villaggiohotels.ae.webp",
+    "ogImage": "/uploads/brand-assets/banners/villaggiohotels.ae.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fdynamic-media-cdn.tripadvisor.com%2Fmedia%2Fphoto-o%2F1a%2F59%2F2b%2F40%2Fvillaggio-hotel-abu-dhabi.jpg%3Fw%3D1200%26h%3D-1%26s%3D1"
+      "/uploads/brand-assets/banners/villaggiohotels.ae.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "",
-    "email": "",
+    "phone": "+971 2 499 2000",
+    "email": "info.vh@villaggiohotels.ae",
     "website": "https://villaggiohotels.ae",
     "priceRange": "N/A",
     "plusCode": "",
-    "locations": [],
+    "locations": [
+      {
+        "city": "Abu dhabi",
+        "postalCode": "",
+        "address": "Check-in20 Nov 2026",
+        "phone": "",
+        "email": "",
+        "openingHours": ""
+      }
+    ],
     "description": "Villaggio Abu Dhabi is a premier hospitality destination in Abu Dhabi, United Arab Emirates, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
     "popularKeywords": [
       {
@@ -2131,19 +2243,20 @@
     "createdAt": "2026-11-13 11:36:10",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "reviews": []
   },
   {
     "id": "delta.com",
     "name": "Delta Air Lines",
-    "category": "Hotel & Hospitality",
+    "category": "Airlines & Travel",
     "categoryType": "all",
     "address": "",
     "city": "Online",
-    "country": "",
+    "country": "Switzerland",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
+    "rating": 4,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -2152,14 +2265,14 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=delta.com",
-    "logoUrl": "/api/favicon?domain=delta.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fnews.delta.com%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fschema_share_1200x800%2Fpublic%2F2025-01%2Fces2025_keynote_deltapeople.jpg%3Fitok%3DyKD4PZtC",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fnews.delta.com%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fschema_share_1200x800%2Fpublic%2F2025-01%2Fces2025_keynote_deltapeople.jpg%3Fitok%3DyKD4PZtC",
+    "avatarUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/delta.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fnews.delta.com%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fschema_share_1200x800%2Fpublic%2F2025-01%2Fces2025_keynote_deltapeople.jpg%3Fitok%3DyKD4PZtC"
+      "/uploads/brand-assets/banners/delta.com.webp"
     ],
-    "openingHours": "",
+    "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
@@ -2167,8 +2280,13 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Delta Air Lines, a leader in domestic and international travel, offers plane tickets and vacation packages to over 300 destinations in 60 countries.",
-    "popularKeywords": [],
+    "description": "Delta Air Lines · airlines & travel · Switzerland",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "delta.com",
@@ -2178,9 +2296,10 @@
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
-      "5": 1
-    }
+      "4": 1,
+      "5": 0
+    },
+    "isSavedToProfile": true
   },
   {
     "id": "aa.com",
@@ -2259,13 +2378,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "https://cellercanroca.com/wp-content/themes/celler/resources/v7/img/celler-can-roca-new.svg",
-    "logoUrl": "https://cellercanroca.com/wp-content/themes/celler/resources/v7/img/celler-can-roca-new.svg",
-    "bannerUrl": "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
-    "ogImage": "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/cellercanroca.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/cellercanroca.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/cellercanroca.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/cellercanroca.com.webp",
     "photos": [
-      "https://cellercanroca.com/wp-content/uploads/2023/03/restaurant-img1.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Fcellercanroca.com%2Fwp-content%2Fuploads%2F2023%2F03%2Frestaurant-img1.jpg"
+      "/uploads/brand-assets/banners/cellercanroca.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -2342,7 +2460,7 @@
     "name": "Noma",
     "category": "Restaurant & Dining",
     "categoryType": "all",
-    "address": "",
+    "address": "Refshalevej 96, 1432 Copenhagen K",
     "city": "Copenhagen K",
     "country": "Denmark",
     "lat": 0,
@@ -2365,13 +2483,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=noma.dk",
-    "logoUrl": "/api/favicon?domain=noma.dk",
-    "bannerUrl": "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
-    "ogImage": "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
+    "avatarUrl": "/uploads/brand-assets/logos/noma.dk.webp",
+    "logoUrl": "/uploads/brand-assets/logos/noma.dk.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/noma.dk.webp",
+    "ogImage": "/uploads/brand-assets/banners/noma.dk.webp",
     "photos": [
-      "https://i0.wp.com/noma.dk/wp-content/uploads/2022/09/homepage-header-2-image.png?fit=1716%2C963&ssl=1",
-      "/api/proxy-image?url=https%3A%2F%2Fi0.wp.com%2Fnoma.dk%2Fwp-content%2Fuploads%2F2022%2F09%2Fhomepage-header-2-image.png%3Ffit%3D1716%252C963%26ssl%3D1"
+      "/uploads/brand-assets/banners/noma.dk.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -2935,14 +3052,14 @@
   {
     "id": "doordash.com",
     "name": "DoorDash",
-    "category": "Restaurant & Cafe",
+    "category": "Food & Delivery",
     "categoryType": "all",
     "address": ", Phone Numbers, and Emails",
     "city": "New York",
-    "country": "",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 5,
+    "country": "Finland",
+    "lat": 0,
+    "lng": 0,
+    "rating": 2,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -2951,12 +3068,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=doordash.com",
-    "logoUrl": "/api/favicon?domain=doordash.com",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimg.cdn4dd.com%2Fcdn-cgi%2Fimage%2Ffit%3Dcover%2Cformat%3Dauto%2Cquality%3D60%2Fhttps%3A%2F%2Fcdn.doordash.com%2Fmanaged%2Fconsumer%2Fseo%2Fhome%2Fhero_v3%2Fhero_desktop.png",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimg.cdn4dd.com%2Fcdn-cgi%2Fimage%2Ffit%3Dcover%2Cformat%3Dauto%2Cquality%3D60%2Fhttps%3A%2F%2Fcdn.doordash.com%2Fmanaged%2Fconsumer%2Fseo%2Fhome%2Fhero_v3%2Fhero_desktop.png",
+    "avatarUrl": "/uploads/brand-assets/logos/doordash.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/doordash.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/doordash.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/doordash.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fimg.cdn4dd.com%2Fcdn-cgi%2Fimage%2Ffit%3Dcover%2Cformat%3Dauto%2Cquality%3D60%2Fhttps%3A%2F%2Fcdn.doordash.com%2Fmanaged%2Fconsumer%2Fseo%2Fhome%2Fhero_v3%2Fhero_desktop.png"
+      "/uploads/brand-assets/banners/doordash.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -2966,8 +3083,13 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Get food, grocery, and retail essentials delivered fast. Shop same-day delivery from local stores and restaurants near you.",
-    "popularKeywords": [],
+    "description": "DoorDash is a popular dining destination in New York, Finland, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "doordash.com",
@@ -2979,7 +3101,8 @@
       "3": 0,
       "4": 0,
       "5": 1
-    }
+    },
+    "isSavedToProfile": true
   },
   {
     "id": "barrelvc.com",
@@ -4536,13 +4659,13 @@
     "name": "7-Eleven",
     "category": "Convenience Store",
     "categoryType": "all",
-    "address": "",
+    "address": "to find stores",
     "city": "Online",
     "country": "Japan",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 2,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -4550,12 +4673,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.7-eleven.com%2Fassets%2Fimg%2Fheader%2F7e-logo-color.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.7-eleven.com%2Fassets%2Fimg%2Fheader%2F7e-logo-color.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.contentstack.io%2Fv3%2Fassets%2Fbltbb619fd5c667ba2d%2Fblt299f79e07f9ae268%2F60a7e86acc7ff369bd7921b2%2Ftake_it_to_eleven_homepage_thumbnail.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.contentstack.io%2Fv3%2Fassets%2Fbltbb619fd5c667ba2d%2Fblt299f79e07f9ae268%2F60a7e86acc7ff369bd7921b2%2Ftake_it_to_eleven_homepage_thumbnail.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/7-eleven.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/7-eleven.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fimages.contentstack.io%2Fv3%2Fassets%2Fbltbb619fd5c667ba2d%2Fblt299f79e07f9ae268%2F60a7e86acc7ff369bd7921b2%2Ftake_it_to_eleven_homepage_thumbnail.jpg"
+      "/uploads/brand-assets/banners/7-eleven.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -4577,12 +4700,12 @@
     "brandDomain": "7-eleven.com",
     "selectedName": "7-11",
     "hours": "Available 24/7",
-    "videoReviewCount": 0,
-    "ratingCount": 1,
+    "videoReviewCount": 2,
+    "ratingCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
       "5": 1
     },
@@ -4590,7 +4713,8 @@
     "createdAt": "2026-10-23 10:15:16",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "reviews": []
   },
   {
     "id": "gamanetworks.com",
@@ -4851,13 +4975,14 @@
     "address": "",
     "phone": "",
     "email": "",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028",
+    "bannerUrl": "/uploads/brand-assets/banners/flipper.net.webp",
+    "ogImage": "/uploads/brand-assets/banners/flipper.net.webp",
     "photos": [
+      "/uploads/brand-assets/banners/flipper.net.webp",
       "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
     ],
-    "logoUrl": "/api/favicon?domain=flipper.net",
-    "avatarUrl": "/api/favicon?domain=flipper.net",
+    "logoUrl": "/uploads/brand-assets/logos/flipper.net.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/flipper.net.webp",
     "category": "Tech & Gadgets",
     "categoryType": "all",
     "lat": 0,
@@ -5909,10 +6034,10 @@
     "address": "",
     "city": "Online",
     "country": "United States",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -5920,12 +6045,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fbatterymart.com.au%2Fpub%2Fmedia%2Fcodazon_cache%2Fbrand%2F220x150%2Fwysiwyg%2F1.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fbatterymart.com.au%2Fpub%2Fmedia%2Fcodazon_cache%2Fbrand%2F220x150%2Fwysiwyg%2F1.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fbatterymart.com.au%2Fpub%2Fmedia%2Fwysiwyg%2Fcodazon%2Fmain-content-13%2Fbattery_mart.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fbatterymart.com.au%2Fpub%2Fmedia%2Fwysiwyg%2Fcodazon%2Fmain-content-13%2Fbattery_mart.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/batterymart.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/batterymart.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/batterymart.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/batterymart.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fbatterymart.com.au%2Fpub%2Fmedia%2Fwysiwyg%2Fcodazon%2Fmain-content-13%2Fbattery_mart.jpg"
+      "/uploads/brand-assets/banners/batterymart.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -5945,7 +6070,7 @@
     "topDishes": [],
     "locations": [],
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -5958,7 +6083,8 @@
     "isVerified": false,
     "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg",
     "isSavedToProfile": true,
-    "isFollowed": false
+    "isFollowed": false,
+    "reviews": []
   },
   {
     "id": "maki.vc",
@@ -8388,56 +8514,63 @@
   {
     "id": "amazon.com",
     "name": "Amazon",
-    "category": "Verified Business",
+    "category": "E-Commerce & Retail",
     "categoryType": "all",
     "address": "",
     "city": "Online",
-    "country": "",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
+    "totalReviews": 1,
     "ratingDistribution": {
-      "stars5": 0,
+      "stars5": 1,
       "stars4": 0,
       "stars3": 0,
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fa%2Fa9%2FAmazon_logo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fa%2Fa9%2FAmazon_logo.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fb%2Fbc%2FAmazon_Tower_I_topped_out%252C_June_2015.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fb%2Fbc%2FAmazon_Tower_I_topped_out%252C_June_2015.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/amazon.com.svg",
+    "logoUrl": "/uploads/brand-assets/logos/amazon.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/amazon.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/amazon.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fb%2Fbc%2FAmazon_Tower_I_topped_out%252C_June_2015.jpg",
-      "/api/proxy-image?url=https%3A%2F%2Fm.media-amazon.com%2Fimages%2FI%2F51IiESUZAaL.png"
+      "/uploads/brand-assets/banners/amazon.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://www.amazon.com/",
+    "website": "https://amazon.com",
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "Visit the Amazon Customer Service site to find answers to common problems, use online chat, or call customer service phone number at 1-888-280-4331 for support.",
-    "popularKeywords": [],
+    "description": "Amazon · e-commerce & retail · United States",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "amazon.com",
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
-      "3": 0,
+      "3": 1,
       "4": 0,
-      "5": 1
+      "5": 0
     },
     "createdAt": "2026-10-24 20:04:31",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "isSavedToProfile": true,
+    "isSkeleton": true,
+    "isSynthetic": true
   },
   {
     "id": "offline.vc",
@@ -8977,7 +9110,7 @@
     "country": "Belgium",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
+    "rating": 4,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -8986,12 +9119,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fon%2Fdemandware.static%2FSites-Galderma-US-Site%2F-%2Fdefault%2Fdw93baec63%2Fimages%2Flogo_small.png",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200",
+    "avatarUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/cetaphil.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/cetaphil.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.cetaphil.com%2Fdw%2Fimage%2Fv2%2Fbggn_prd%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-RefArchSharedLibrary%2Fdefault%2Fdw1fe4b889%2FHomepage%2FNourishing-Allure-Banner.jpg%3Fsw%3D1200"
+      "/uploads/brand-assets/banners/cetaphil.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -9020,8 +9153,8 @@
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
-      "5": 1
+      "4": 1,
+      "5": 0
     }
   },
   {
@@ -9045,9 +9178,10 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/bk.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/bk.com.webp",
     "photos": [
+      "/uploads/brand-assets/banners/bk.com.webp",
       "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg"
     ],
     "openingHours": "Available 24/7",
@@ -9088,10 +9222,10 @@
     "address": "",
     "city": "Online",
     "country": "United States",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -9101,11 +9235,10 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/bk.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/bk.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fc%2Fc8%2FWhopper.jpg",
-      "https://upload.wikimedia.org/wikipedia/commons/c/c8/Whopper.jpg"
+      "/uploads/brand-assets/banners/bk.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -9126,7 +9259,7 @@
     "topDishes": [],
     "brandDomain": "bk.com",
     "ratingCount": 1,
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -9171,12 +9304,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2Flogo.svg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
+    "logoUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/refalo.legal.webp",
+    "ogImage": "/uploads/brand-assets/banners/refalo.legal.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Frefalo.legal%2Fwp-content%2Fuploads%2F2023%2F11%2FCommercial-Law-scaled.jpg"
+      "/uploads/brand-assets/banners/refalo.legal.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -9204,15 +9337,15 @@
   },
   {
     "id": "mamotcv.com",
-    "name": "Mamo Tcv Advocates",
+    "name": "Mamo TCV",
     "category": "Legal Services",
     "categoryType": "all",
     "address": "Mamo TCV Advocates",
     "city": "Valletta",
     "country": "Malta",
-    "lat": 35.9000743,
-    "lng": 14.5119843,
-    "rating": 5,
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -9221,12 +9354,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.mamotcv.com%2Fapp%2Fuploads%2F2024%2F02%2FLinkedIn_231009.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.mamotcv.com%2Fapp%2Fuploads%2F2024%2F02%2FLinkedIn_231009.jpg",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.mamotcv.com%2Fapp%2Fuploads%2F2022%2F01%2Ffbshare.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.mamotcv.com%2Fapp%2Fuploads%2F2022%2F01%2Ffbshare.jpg",
+    "avatarUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/mamotcv.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/mamotcv.com.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.mamotcv.com%2Fapp%2Fuploads%2F2022%2F01%2Ffbshare.jpg"
+      "/uploads/brand-assets/banners/mamotcv.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
@@ -9236,8 +9369,13 @@
     "priceRange": "N/A",
     "plusCode": "",
     "locations": [],
-    "description": "At Mamo TCV We work tirelessly to guide our clients and support them through the complexity and dynamic landscape they operate in.",
-    "popularKeywords": [],
+    "description": "Mamo TCV is a dedicated law practice in Valletta, Malta, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
     "amenities": [],
     "topDishes": [],
     "brandDomain": "mamotcv.com",
@@ -9247,9 +9385,16 @@
       "1": 0,
       "2": 0,
       "3": 0,
-      "4": 0,
-      "5": 1
-    }
+      "4": 1,
+      "5": 0
+    },
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "postalCode": "Mamo TCV",
+    "zipCode": "Mamo TCV",
+    "zip": "Mamo TCV",
+    "isSavedToProfile": true
   },
   {
     "id": "zara.com",
@@ -9272,8 +9417,8 @@
     },
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/zara.com.webp",
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
     ],
@@ -9641,18 +9786,68 @@
     "name": "Bosch Car Service Izci",
     "address": "2 maanden geleden",
     "city": "Online",
-    "category": "Venue & Business",
+    "category": "Auto Repair & Garage",
     "rating": 5,
     "totalReviews": 1,
     "brandDomain": "izci.be",
     "website": "https://izci.be",
-    "bannerUrl": "/api/brand-banner/izci.be",
-    "ogImage": "/api/brand-banner/izci.be",
+    "bannerUrl": "/uploads/brand-assets/banners/izci.be.webp",
+    "ogImage": "/uploads/brand-assets/banners/izci.be.webp",
     "photos": [
-      "/api/brand-banner/izci.be"
+      "/uploads/brand-assets/banners/izci.be.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fbosch-cdn-prod.s3.eu-central-1.amazonaws.com%2Fs3fs-public%2Fstyles%2Fheader_small%2Fpublic%2Fdefault%2F2026-03%2FBCS_JustRight_KeyVisual_MOT_Landscape_2025_CMYK-Screen.jpg.webp%3FVersionId%3Dbhr32wI5p01hSMSswvywzTt3LrYFRG3Y%26h%3D800%26itok%3DTT-I9Ynq"
     ],
-    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg",
-    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.izci.be%2Fthemes%2Fcustom%2Fbosch%2Flogo.svg"
+    "logoUrl": "/uploads/brand-assets/logos/izci.be.svg",
+    "avatarUrl": "/uploads/brand-assets/logos/izci.be.svg",
+    "categoryType": "all",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Bosch Car Service Izci is a dependable automotive and transportation service provider in Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "videoReviewCount": 1,
+    "createdAt": "2026-10-22 15:59:00",
+    "reviews": [],
+    "isSavedToProfile": true,
+    "domain": "izci.be",
+    "reviewCount": 4,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "postalCode": "maanden",
+    "zipCode": "maanden",
+    "zip": "maanden",
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
   },
   {
     "id": "autowerkplaatsbrugge.be",
@@ -9660,21 +9855,21 @@
     "address": "Maalsesteenweg 359A",
     "city": "St-Kruis (Brugge)",
     "category": "Auto Repair & Garage",
-    "rating": 0,
-    "totalReviews": 0,
+    "rating": 5,
+    "totalReviews": 1,
     "brandDomain": "autowerkplaatsbrugge.be",
     "website": "https://autowerkplaatsbrugge.be",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+    "ogImage": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg"
+      "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp"
     ],
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fautowerkplaatsbrugge.be%2Fassets%2Fimg%2FAutoWerkplaatsBrugge_Garage.png",
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fautowerkplaatsbrugge.be%2Fassets%2Fimg%2FAutoWerkplaatsBrugge_Garage.png",
+    "logoUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
     "categoryType": "all",
     "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
+    "lat": 0,
+    "lng": 0,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -9698,11 +9893,15 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "videoReviewCount": 0,
+    "videoReviewCount": 1,
     "createdAt": "2026-10-22 15:59:00",
     "isClaimed": false,
     "isVerified": false,
-    "isFollowed": false
+    "isFollowed": false,
+    "reviews": [],
+    "isSkeleton": true,
+    "isSynthetic": true,
+    "locations": []
   },
   {
     "id": "healis.be",
@@ -9714,13 +9913,13 @@
     "totalReviews": 1,
     "brandDomain": "healis.be",
     "website": "https://healis.be",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Farticle_teaser%2Fpublic%2Fmedia%2Fimage%2F2026-06%2Fhealis-apotheeksintjacob-apotheek1.jpg",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Farticle_teaser%2Fpublic%2Fmedia%2Fimage%2F2026-06%2Fhealis-apotheeksintjacob-apotheek1.jpg",
+    "bannerUrl": "/uploads/brand-assets/banners/healis.be.webp",
+    "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
     "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Farticle_teaser%2Fpublic%2Fmedia%2Fimage%2F2026-06%2Fhealis-apotheeksintjacob-apotheek1.jpg"
+      "/uploads/brand-assets/banners/healis.be.webp"
     ],
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg",
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.healis.be%2Fthemes%2Fcustom%2Felaba%2Flogo.svg",
+    "logoUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
     "videoReviewCount": 1,
     "ratingCount": 1,
     "starCounts": {
