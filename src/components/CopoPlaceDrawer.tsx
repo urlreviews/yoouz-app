@@ -989,7 +989,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     (drawerDomain && KNOWN_BRAND_BANNERS[`www.${drawerDomain}`]) ||
     getPlaceBannerUrl(place);
 
+  const isLocalInstantBanner = (u?: string | null) => Boolean(u && (u.startsWith("/uploads/brand-assets/") || u.startsWith("/uploads/")));
+  const localPriorityBanner =
+    (isLocalInstantBanner(cleanBannerUrl) ? cleanBannerUrl : "") ||
+    (isLocalInstantBanner(cleanReviewBanner) ? cleanReviewBanner : "");
+
   const effectiveBanner =
+    localPriorityBanner ||
     knownDomainBanner ||
     cleanBannerUrl ||
     cleanOgImage ||
@@ -1025,8 +1031,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const cleanDomainKey = (drawerDomain || place.brandDomain || place.id || "").toLowerCase().replace(/^www\./, "").trim();
     const domainDirectBanner = cleanDomainKey ? (KNOWN_BRAND_BANNERS[cleanDomainKey] || KNOWN_BRAND_BANNERS[`www.${cleanDomainKey}`] || "") : "";
     const authenticPlaceBanner = isAuthentic(place.bannerUrl) ? place.bannerUrl : "";
+    const localBannerFirst = isLocalInstantBanner(authenticPlaceBanner)
+      ? authenticPlaceBanner
+      : (isLocalInstantBanner(cleanReviewBanner) ? cleanReviewBanner : "");
 
     const photoCandidates = [
+      localBannerFirst,
       domainDirectBanner,
       authenticPlaceBanner,
       knownDomainBanner,

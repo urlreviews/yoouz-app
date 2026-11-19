@@ -344,11 +344,29 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     (vid: VideoReview | undefined): string | null => {
       if (!vid) return null;
 
+      // Priority 0: Instant local RAM-cached brand asset or owner-uploaded logo
+      if (vid.placeLogoUrl && (vid.placeLogoUrl.startsWith("/uploads/brand-assets/") || vid.placeLogoUrl.startsWith("/uploads/"))) {
+        return vid.placeLogoUrl;
+      }
+
       const vidCleanId = extractCleanDomain(vid.placeId || "");
       const vidCleanWeb = extractCleanDomain(vid.placeWebsite || "");
       const vidCleanName = extractCleanDomain(vid.placeName || "");
       const vidDomain = vidCleanWeb || vidCleanId || (vidCleanName?.includes(".") ? vidCleanName : "");
       const strippedDomain = vidDomain ? vidDomain.replace(/^www\./, "") : "";
+
+      if (places && places.length > 0) {
+        const pLocal = places.find((place) => {
+          if (!place) return false;
+          if (vid.placeId && (place.id === vid.placeId || place.id === vidCleanId)) return true;
+          const pDomain = extractCleanDomain(place.id || place.website || place.brandDomain || "");
+          if (pDomain && pDomain !== "home" && (pDomain === vidCleanId || pDomain === vidCleanWeb || pDomain === vidCleanName)) return true;
+          return false;
+        });
+        if (pLocal?.logoUrl && (pLocal.logoUrl.startsWith("/uploads/brand-assets/") || pLocal.logoUrl.startsWith("/uploads/"))) {
+          return pLocal.logoUrl;
+        }
+      }
 
       if (vidDomain && KNOWN_BRAND_LOGOS[vidDomain]) return KNOWN_BRAND_LOGOS[vidDomain];
       if (strippedDomain && KNOWN_BRAND_LOGOS[strippedDomain]) return KNOWN_BRAND_LOGOS[strippedDomain];

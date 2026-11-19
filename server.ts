@@ -15181,6 +15181,88 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     }
   });
 
+  // Dedicated RAM-backed cache for localized brand logos & banners (<1ms, zero disk I/O)
+  interface BrandAssetRamEntry {
+    buf: Buffer;
+    contentType: string;
+    etag: string;
+  }
+  const brandAssetRamCache = new Map<string, BrandAssetRamEntry>();
+  const getBrandAssetMime = (filename: string): string => {
+    const low = filename.toLowerCase();
+    if (low.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
+    if (low.endsWith(".webp")) return "image/webp";
+    if (low.endsWith(".png")) return "image/png";
+    if (low.endsWith(".avif")) return "image/avif";
+    return "image/jpeg";
+  };
+  const loadBrandAssetIntoRam = (kind: "logos" | "banners", filename: string): BrandAssetRamEntry | null => {
+    const safeName = path.basename(filename);
+    const cacheKey = `${kind}/${safeName}`;
+    const existing = brandAssetRamCache.get(cacheKey);
+    if (existing) return existing;
+    const candidates = [
+      path.join(process.cwd(), "public", "uploads", "brand-assets", kind, safeName),
+      path.join(serverUploadsDir, "brand-assets", kind, safeName)
+    ];
+    for (const fullPath of candidates) {
+      if (fs.existsSync(fullPath)) {
+        try {
+          const buf = fs.readFileSync(fullPath);
+          if (buf.length > 0) {
+            const entry: BrandAssetRamEntry = {
+              buf,
+              contentType: getBrandAssetMime(safeName),
+              etag: `"yz-ba-${buf.length}-${safeName}"`
+            };
+            brandAssetRamCache.set(cacheKey, entry);
+            return entry;
+          }
+        } catch {}
+      }
+    }
+    return null;
+  };
+  setImmediate(() => {
+    try {
+      for (const kind of ["logos", "banners"] as const) {
+        const dirs = [
+          path.join(process.cwd(), "public", "uploads", "brand-assets", kind),
+          path.join(serverUploadsDir, "brand-assets", kind)
+        ];
+        for (const dir of dirs) {
+          if (!fs.existsSync(dir)) continue;
+          for (const f of fs.readdirSync(dir)) {
+            if (!f.startsWith(".")) {
+              loadBrandAssetIntoRam(kind, f);
+            }
+          }
+        }
+      }
+    } catch {}
+  });
+
+  app.get("/uploads/brand-assets/:kind/:filename", (req, res) => {
+    const rawKind = req.params.kind;
+    if (rawKind !== "logos" && rawKind !== "banners") {
+      return res.status(404).type("text/plain").send("Not found");
+    }
+    const entry = loadBrandAssetIntoRam(rawKind, req.params.filename);
+    if (!entry) {
+      return res.status(404).type("text/plain").send("Brand asset not found");
+    }
+    res.setHeader("Content-Type", entry.contentType);
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("ETag", entry.etag);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    if (req.headers["if-none-match"] === entry.etag) {
+      return res.status(304).end();
+    }
+    res.setHeader("Content-Length", String(entry.buf.length));
+    return res.status(200).send(entry.buf);
+  });
+
   // Serve static public assets with CORS, immutable caching for all images/media, and byte-range support
   app.use(express.static(path.join(process.cwd(), "public"), {
     index: false,
@@ -36508,6 +36590,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     return "";
   }
 
+  const faviconRamCache = new Map<string, { buf: Buffer; contentType: string; etag: string; cachedAt: number }>();
+  const faviconDiskCacheDir = path.join(serverUploadsDir, "brand-cache", "favicons");
+  try { fs.mkdirSync(faviconDiskCacheDir, { recursive: true }); } catch {}
+
   app.get("/api/favicon", async (req, res) => {
     const rawDomain = req.query.domain ? req.query.domain.toString() : "";
     const cleanDomain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].trim().toLowerCase();
@@ -36523,6 +36609,55 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (!cleanDomain) {
       return sendDefaultFavicon("B");
     }
+
+    // 0. Instant <1ms RAM hit from pre-localized brand assets (zero redirects, zero external fetches)
+    const slug = cleanDomain.replace(/[^a-z0-9.-]/g, "_");
+    const preLocalizedLogo =
+      loadBrandAssetIntoRam("logos", `${slug}.svg`) ||
+      loadBrandAssetIntoRam("logos", `${slug}.webp`);
+    if (preLocalizedLogo) {
+      res.setHeader("Content-Type", preLocalizedLogo.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("ETag", preLocalizedLogo.etag);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      if (req.headers["if-none-match"] === preLocalizedLogo.etag) {
+        return res.status(304).end();
+      }
+      return res.status(200).send(preLocalizedLogo.buf);
+    }
+
+    // 0b. Instant <1ms RAM/disk cache hit for previously fetched domains
+    const favRamHit = faviconRamCache.get(cleanDomain);
+    if (favRamHit && Date.now() - favRamHit.cachedAt < 24 * 60 * 60 * 1000) {
+      res.setHeader("Content-Type", favRamHit.contentType);
+      res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+      res.setHeader("ETag", favRamHit.etag);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      if (req.headers["if-none-match"] === favRamHit.etag) {
+        return res.status(304).end();
+      }
+      return res.status(200).send(favRamHit.buf);
+    }
+    try {
+      const diskPath = path.join(faviconDiskCacheDir, `${slug}.bin`);
+      const metaPath = path.join(faviconDiskCacheDir, `${slug}.meta`);
+      if (fs.existsSync(diskPath) && fs.existsSync(metaPath)) {
+        const buf = fs.readFileSync(diskPath);
+        const contentType = fs.readFileSync(metaPath, "utf8").trim() || "image/png";
+        if (buf.length > 64) {
+          const etag = `"yz-fv-${buf.length}-${slug}"`;
+          faviconRamCache.set(cleanDomain, { buf, contentType, etag, cachedAt: Date.now() });
+          res.setHeader("Content-Type", contentType);
+          res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+          res.setHeader("ETag", etag);
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+          return res.status(200).send(buf);
+        }
+      }
+    } catch {}
 
     if (cleanDomain === "yoouz.com" || cleanDomain === "yoouz" || cleanDomain.includes("yoouz")) {
       const yoouzSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 24 24" fill="none">
@@ -36714,9 +36849,22 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   continue;
                 }
               }
-              res.setHeader("Content-Type", cType.includes('image') ? cType : "image/png");
-              res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+              const outType = cType.includes('image') ? cType : "image/png";
+              const etag = `"yz-fv-${favBuf.length}-${slug}"`;
+              if (faviconRamCache.size >= 300) {
+                const oldest = faviconRamCache.keys().next().value;
+                if (oldest) faviconRamCache.delete(oldest);
+              }
+              faviconRamCache.set(cleanDomain, { buf: favBuf, contentType: outType, etag, cachedAt: Date.now() });
+              try {
+                fs.writeFileSync(path.join(faviconDiskCacheDir, `${slug}.bin`), favBuf);
+                fs.writeFileSync(path.join(faviconDiskCacheDir, `${slug}.meta`), outType);
+              } catch {}
+              res.setHeader("Content-Type", outType);
+              res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+              res.setHeader("ETag", etag);
               res.setHeader("Access-Control-Allow-Origin", "*");
+              res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
               return res.status(200).send(favBuf);
             }
           }
@@ -41687,8 +41835,8 @@ function injectOpenGraphTags(html: string, meta: any) {
       const liveVideos = validSource.slice(0, 65);
 
       if (targetUrlOrVideoId) {
-        const revMatch = String(targetUrlOrVideoId).match(/(rev-[a-zA-Z0-9_\-]+)/i);
-        const targetId = revMatch ? revMatch[1] : (String(targetUrlOrVideoId).startsWith("rev-") ? String(targetUrlOrVideoId) : "");
+        const revMatch = String(targetUrlOrVideoId).match(/(rev[-_][a-zA-Z0-9_\-]+)/i);
+        const targetId = revMatch ? revMatch[1] : (/^rev[-_]/i.test(String(targetUrlOrVideoId)) ? String(targetUrlOrVideoId) : "");
         if (targetId && !liveVideos.some((v: any) => String(v.id) === targetId)) {
           const targetVid = validSource.find((v: any) => String(v.id) === targetId);
           if (targetVid) {
@@ -41697,19 +41845,19 @@ function injectOpenGraphTags(html: string, meta: any) {
         }
       }
 
-      // Collect prioritized photo URLs to decode in browser GPU memory BEFORE React even hydrates
+      // Collect prioritized photo, logo, banner & avatar URLs to decode in browser GPU memory BEFORE React hydrates
       // (Uses JS Image + img.decode pinned in window.__YOOUZ_IMAGE_CACHE__, never <link rel="preload">, so zero Chrome warnings)
-      const preloadPhotos: string[] = [];
+      const preloadAssets: string[] = [];
       const seenPreload = new Set<string>();
-      const pushPhoto = (u?: string) => {
+      const pushAsset = (u?: string) => {
         if (!u || typeof u !== 'string') return;
         const clean = u.trim();
-        if (!clean || clean.startsWith('data:') || seenPreload.has(clean)) return;
+        if (!clean || clean.startsWith('data:') || clean.startsWith('blob:') || seenPreload.has(clean)) return;
         seenPreload.add(clean);
-        preloadPhotos.push(clean);
+        preloadAssets.push(clean);
       };
 
-      // Prioritize route-targeted business/user/review photos first if deep-linking
+      // Prioritize route-targeted review/business/user photo + logo + banner + avatar FIRST (index 0..5 -> high priority)
       if (targetUrlOrVideoId) {
         const cleanTarget = String(targetUrlOrVideoId).toLowerCase();
         for (const v of liveVideos) {
@@ -41724,17 +41872,42 @@ function injectOpenGraphTags(html: string, meta: any) {
             (ahandle && ahandle.length > 2 && cleanTarget.includes(ahandle)) ||
             (uid && uid.length > 3 && cleanTarget.includes(uid))
           ) {
-            pushPhoto(v.photoUrl || v.thumbnailUrl);
+            pushAsset(v.photoUrl || v.thumbnailUrl);
+            pushAsset(v.placeLogoUrl);
+            pushAsset(v.placeBannerUrl);
+            pushAsset(v.author?.avatar || v.author?.avatarUrl);
           }
         }
+        // Also prewarm target business logo & banner directly from places index if visiting a business profile URL
+        try {
+          const allPlaces = readPlacesIndex();
+          for (const p of allPlaces) {
+            const pid = String(p?.id || '').toLowerCase().replace(/^www\./, '');
+            if (pid && pid.length > 2 && cleanTarget.includes(pid)) {
+              pushAsset(p.logoUrl);
+              pushAsset(p.bannerUrl || p.ogImage);
+              break;
+            }
+          }
+        } catch {}
       }
+
+      // First wave: top visible photos + their business logos
+      for (const v of liveVideos.slice(0, 12)) {
+        pushAsset(v.photoUrl || v.thumbnailUrl);
+        pushAsset(v.placeLogoUrl);
+      }
+      // Second wave: remaining feed photos, all business logos, all business banners, and custom avatars
       for (const v of liveVideos) {
-        pushPhoto(v.photoUrl || v.thumbnailUrl);
+        pushAsset(v.photoUrl || v.thumbnailUrl);
+        pushAsset(v.placeLogoUrl);
+        pushAsset(v.placeBannerUrl);
+        pushAsset(v.author?.avatar || v.author?.avatarUrl);
       }
 
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
-      const safePreloadJson = JSON.stringify(preloadPhotos.slice(0, 60)).replace(/</g, '\\u003c');
-      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u,hi){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}if('fetchPriority' in img){img.fetchPriority=hi?'high':'auto';}img.decoding='sync';cache.set(u,img);img.onload=function(){ready.add(u);if(img.decode){img.decode().catch(function(){});}};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<Math.min(12,urls.length);i++){warm(urls[i],true);}var idx=12;var pump=function(){var end=Math.min(idx+6,urls.length);for(;idx<end;idx++){warm(urls[idx],false);}if(idx<urls.length){setTimeout(pump,80);}};if(urls.length>12){setTimeout(pump,120);}}catch(e){}})();`;
+      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 160)).replace(/</g, '\\u003c');
+      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u,hi){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}if('fetchPriority' in img){img.fetchPriority=hi?'high':'auto';}img.decoding='sync';cache.set(u,img);img.onload=function(){ready.add(u);if(img.decode){img.decode().catch(function(){});}};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<Math.min(16,urls.length);i++){warm(urls[i],true);}var idx=16;var pump=function(){var end=Math.min(idx+8,urls.length);for(;idx<end;idx++){warm(urls[idx],false);}if(idx<urls.length){setTimeout(pump,65);}};if(urls.length>16){setTimeout(pump,85);}}catch(e){}})();`;
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};${prewarmBootstrap}</script>`;
       if (/<\/head>/i.test(html)) {
         return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);

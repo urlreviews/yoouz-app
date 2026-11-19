@@ -312,22 +312,27 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           } rounded-full p-0.5 border border-white/30 hover:border-white/70 active:scale-95 overflow-hidden bg-black transition-all cursor-pointer shadow-xl outline-none select-none`}
           title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
         >
-          <img
-            src={getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle)}
-            alt={safeAuthor.name}
-            loading={isActive || isNear ? "eager" : "lazy"}
-            decoding="async"
-            fetchPriority={isActive ? "high" : "auto"}
-            className="w-full h-full object-cover rounded-full"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              const target = e.currentTarget as HTMLImageElement;
-              const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
-              if (target.src !== fallback) {
-                target.src = fallback;
-              }
-            }}
-          />
+          {(() => {
+            const avatarSrc = getSafeAvatarUrl(safeAuthor.avatar, safeAuthor.name, safeAuthor.handle);
+            return (
+              <img
+                src={avatarSrc}
+                alt={safeAuthor.name}
+                loading="eager"
+                decoding="sync"
+                fetchPriority={isActive || isNear ? "high" : "auto"}
+                className="w-full h-full object-cover rounded-full"
+                referrerPolicy={/^https?:\/\//i.test(avatarSrc) ? "no-referrer" : undefined}
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  const fallback = generateGoogleLetterAvatarSvg(safeAuthor.name || "User", 128, safeAuthor.handle || safeAuthor.name);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                  }
+                }}
+              />
+            );
+          })()}
         </button>
 
         {!safeAuthor.isFollowed && (
@@ -666,8 +671,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                         website={video.placeWebsite}
                         logoUrl={businessLogoUrl || video?.placeLogoUrl}
                         bannerUrl={businessBannerUrl || video.placeBannerUrl}
-                        loading={isActive || isNear ? "eager" : "lazy"}
-                        fetchPriority={isActive ? "high" : "auto"}
+                        loading="eager"
+                        fetchPriority={isActive || isNear ? "high" : "auto"}
                         className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
                         imageClassName="w-full h-full object-contain rounded-lg sm:rounded-xl"
                         fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"

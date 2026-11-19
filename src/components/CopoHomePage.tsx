@@ -976,7 +976,14 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   {item.isCreator ? (
                     <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
                       {item.logoUrl ? (
-                        <img src={item.logoUrl} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img
+                          src={item.logoUrl}
+                          alt={item.title}
+                          loading="eager"
+                          decoding="sync"
+                          className="w-full h-full object-cover"
+                          referrerPolicy={/^https?:\/\//i.test(item.logoUrl) ? "no-referrer" : undefined}
+                        />
                       ) : (
                         <User className="w-4 h-4 text-zinc-400" />
                       )}
@@ -1117,12 +1124,19 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     onClick={() => onSelectVideo(video.id)}
                     onPointerEnter={() => {
                       if (posterUrl) preloadImage(posterUrl, "high");
-                      if (matchedPlace) {
-                        preloadBusinessAssets(matchedPlace.logoUrl, matchedPlace.bannerUrl, author?.avatar);
-                      }
+                      preloadBusinessAssets(
+                        matchedPlace?.logoUrl || video.placeLogoUrl,
+                        matchedPlace?.bannerUrl || video.placeBannerUrl,
+                        author?.avatar
+                      );
                     }}
                     onTouchStart={() => {
                       if (posterUrl) preloadImage(posterUrl, "high");
+                      preloadBusinessAssets(
+                        matchedPlace?.logoUrl || video.placeLogoUrl,
+                        matchedPlace?.bannerUrl || video.placeBannerUrl,
+                        author?.avatar
+                      );
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {

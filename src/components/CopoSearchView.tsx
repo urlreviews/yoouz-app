@@ -1093,7 +1093,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 !isBadBanner(rawBanner) &&
                 !rawBanner.startsWith("data:image/svg")
               );
-              const targetBannerSrc = knownOverride || (hasRealBanner ? getProxiedImageUrl(rawBanner!) : "") || fallbackBrandBanner;
+              const isLocalBanner = Boolean(hasRealBanner && rawBanner && (rawBanner.startsWith("/uploads/brand-assets/") || rawBanner.startsWith("/uploads/")));
+              const targetBannerSrc = (isLocalBanner ? rawBanner! : "") || knownOverride || (hasRealBanner ? getProxiedImageUrl(rawBanner!) : "") || fallbackBrandBanner;
 
               return (
                 <div className="w-full h-52 sm:h-72 relative overflow-hidden bg-zinc-950 flex items-center justify-center">
@@ -1101,8 +1102,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     <img
                       src={targetBannerSrc}
                       alt={searchedPlace.name}
+                      loading="eager"
+                      decoding="sync"
+                      fetchPriority="high"
                       className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
+                      referrerPolicy={/^https?:\/\//i.test(targetBannerSrc) ? "no-referrer" : undefined}
                       onLoad={(e) => {
                         const img = e.currentTarget;
                         if (img.naturalWidth < 160 || img.naturalHeight < 70) {

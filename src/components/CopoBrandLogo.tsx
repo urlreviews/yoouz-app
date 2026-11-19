@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Building2 } from "lucide-react";
-import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isBadBanner, isWhiteOrInvertedLogo, isCrossBrandPortfolioLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
-import { isValidDomainUrl, formatBusinessName } from "../utils/placeUtils";
+import { extractDomain, KNOWN_BRAND_LOGOS, getProxiedImageUrl, isFaviconUrl, isGenericOrPlaceholderLogo, isWhiteOrInvertedLogo, isCrossBrandPortfolioLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
+import { isValidDomainUrl } from "../utils/placeUtils";
+import { isImagePreloaded } from "../utils/preloadUtils";
 
 interface CopoBrandLogoProps {
   domain?: string | null;
@@ -21,6 +21,18 @@ interface CopoBrandLogoProps {
 // Global in-memory cache to lock verified brand logos across browser transitions
 const KNOWN_LOADED_LOGOS = new Set<string>();
 const LOCKED_DOMAIN_LOGOS = new Map<string, string>();
+
+const isInstantLogoSrc = (src: string | null | undefined): boolean => {
+  if (!src) return false;
+  return (
+    src.startsWith("data:") ||
+    src.startsWith("/uploads/brand-assets/") ||
+    src.startsWith("/uploads/") ||
+    src === "/favicon.svg" ||
+    KNOWN_LOADED_LOGOS.has(src) ||
+    isImagePreloaded(src)
+  );
+};
 
 export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   domain,
@@ -97,10 +109,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       return u === bannerUrl || u === proxiedBannerUrl || getProxiedImageUrl(u) === proxiedBannerUrl;
     };
 
-    // -1. Explicit owner-uploaded custom logo (b-cdn.net / /uploads/) always takes top priority if updated by business
+    // -1. Explicit local RAM-cached brand asset or owner-uploaded custom logo ALWAYS takes top priority (0ms)
     if (
       logoUrl &&
-      (logoUrl.includes("b-cdn.net") || logoUrl.startsWith("/uploads/")) &&
+      (logoUrl.startsWith("/uploads/brand-assets/") || logoUrl.startsWith("/uploads/") || logoUrl.includes("b-cdn.net")) &&
       !isSameAsBanner(logoUrl) &&
       !isGenericOrPlaceholderLogo(logoUrl) &&
       !isBrokenSvg(logoUrl)
@@ -110,7 +122,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       if (logoUrl !== proxiedCustom) candidates.push(logoUrl);
     }
 
-    // 0. Direct match for verified high-resolution vector brand logos
+    // 0. Direct match for verified high-resolution local/vector brand logos
     if (cleanDomain) {
       const strippedDomain = cleanDomain.replace(/^www\./, "");
       if (KNOWN_BRAND_LOGOS[cleanDomain] && !isGenericOrPlaceholderLogo(KNOWN_BRAND_LOGOS[cleanDomain])) {
@@ -148,7 +160,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
       }
     }
 
-    // 3. Live website official logo & favicon extractor (/api/favicon scrapes the official website logo first, and falls back to the website's clean favicon — NEVER the banner)
+    // 3. Live website official logo & favicon extractor (/api/favicon)
     if (cleanDomain && cleanDomain.includes(".")) {
       candidates.push(`/api/favicon?domain=${encodeURIComponent(cleanDomain)}`);
     }
@@ -180,6 +192,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
 
   // Current src candidate
   const currentSrc = candidateUrls[candidateIdx] || candidateUrls[0] || null;
+  const instantVisible = isInstantLogoSrc(currentSrc);
 
   // Always render the full-frame logo with object-contain so logos look bold, prestigious, and fill the container cleanly
   const activeImageClass = imageClassName;
@@ -192,6 +205,9 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
     if (locked && !failedUrlsRef.current.has(locked)) {
       setLoadedSrc(locked);
       setImgLoaded(true);
+    } else if (candidateUrls[0] && isInstantLogoSrc(candidateUrls[0])) {
+      setLoadedSrc(candidateUrls[0]);
+      setImgLoaded(true);
     } else {
       setLoadedSrc(null);
       setImgLoaded(false);
@@ -202,14 +218,14 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const primaryCandidate = candidateUrls[0] || null;
   useEffect(() => {
     if (!primaryCandidate) return;
-    if (primaryCandidate === loadedSrc) {
+    if (primaryCandidate === loadedSrc || isInstantLogoSrc(primaryCandidate)) {
       setCandidateIdx(0);
+      setLoadedSrc(primaryCandidate);
       setImgLoaded(true);
       return;
     }
     if (!failedUrlsRef.current.has(primaryCandidate)) {
       setCandidateIdx(0);
-      // Only clear imgLoaded if we don't already have a verified loadedSrc to display
       if (!loadedSrc) {
         setImgLoaded(false);
       }
@@ -272,7 +288,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   // Display Name / Domain Title for wordmark fallback
   const displayName = (name || cleanDomain || "Business").trim();
   const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
-  const hasVisibleLogo = Boolean(imgLoaded || loadedSrc);
+  const hasVisibleLogo = Boolean(instantVisible || imgLoaded || loadedSrc);
   const contrastFilterClass = needsDarkContrast ? "brightness-[0.08]" : "";
 
   return (
@@ -282,8 +298,10 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
         <img
           src={loadedSrc}
           alt={displayName}
+          loading="eager"
+          decoding="sync"
           className={`${loadedImageClass} ${contrastFilterClass} absolute inset-0 z-10 w-full h-full opacity-100 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]`}
-          referrerPolicy="no-referrer"
+          referrerPolicy={/^https?:\/\//i.test(loadedSrc) ? "no-referrer" : undefined}
         />
       ) : null}
       {currentSrc && candidateIdx < candidateUrls.length ? (
@@ -292,13 +310,13 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           key={currentSrc}
           src={currentSrc}
           alt={displayName}
-          loading={loading}
+          loading={loading === "lazy" ? "eager" : loading}
           fetchPriority={fetchPriority}
-          decoding="async"
-          className={`${activeImageClass} ${contrastFilterClass} relative z-20 w-full h-full transition-opacity duration-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
-            currentSrc === loadedSrc || (imgLoaded && !loadedSrc) ? "opacity-100" : "opacity-0"
+          decoding="sync"
+          className={`${activeImageClass} ${contrastFilterClass} relative z-20 w-full h-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+            instantVisible || currentSrc === loadedSrc || (imgLoaded && !loadedSrc) ? "opacity-100" : "opacity-0"
           }`}
-          referrerPolicy="no-referrer"
+          referrerPolicy={/^https?:\/\//i.test(currentSrc) ? "no-referrer" : undefined}
           onLoad={(e) => {
             const img = e.currentTarget;
             if (!currentSrc || !isAcceptableLogoDimensions(img.naturalWidth, img.naturalHeight, currentSrc)) {
@@ -332,16 +350,12 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : null}
-      {/* Fallback skeleton or initial - never flash fake black B while image is loading */}
+      {/* Crisp brand initial fallback only when no logo candidate is available */}
       {!hasVisibleLogo && (
-        <div className={`absolute inset-0 flex items-center justify-center ${currentSrc && candidateIdx < candidateUrls.length ? "z-0" : "z-10"}`}>
-          {currentSrc && candidateIdx < candidateUrls.length ? (
-            <div className="w-full h-full bg-zinc-800/20 animate-pulse rounded-xl" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-zinc-800/40 text-zinc-400 font-bold select-none">
-              <span className={fallbackTextClassName || "text-zinc-300 tracking-wider"}>{brandInitial}</span>
-            </div>
-          )}
+        <div className="absolute inset-0 flex items-center justify-center z-0">
+          <div className="w-full h-full flex items-center justify-center bg-zinc-100 text-zinc-900 font-black select-none">
+            <span className={fallbackTextClassName || "text-zinc-900 tracking-wider"}>{brandInitial}</span>
+          </div>
         </div>
       )}
     </div>

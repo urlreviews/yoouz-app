@@ -1,7 +1,7 @@
 // Persistent in-memory decoded image cache shared with pre-hydration SSR bootstrap.
 // Pinning HTMLImageElement references in a bounded Map prevents Chrome/Safari GC
 // from evicting decoded GPU bitmaps across route/drawer transitions.
-const MAX_PINNED_IMAGES = 180;
+const MAX_PINNED_IMAGES = 360;
 
 const getGlobalImageCache = (): Map<string, HTMLImageElement> => {
   if (typeof window === 'undefined') return new Map();
@@ -162,7 +162,7 @@ export const preloadReviewAssets = (review: any) => {
   if (!review) return;
   const photo = review.photoUrl || review.photoDataUrl || review.thumbnailUrl;
   if (photo) preloadImage(photo, 'high');
-  if (review.placeLogoUrl) preloadImage(review.placeLogoUrl, 'auto');
+  if (review.placeLogoUrl) preloadImage(review.placeLogoUrl, 'high');
   if (review.placeBannerUrl) preloadImage(review.placeBannerUrl, 'auto');
   if (review.author?.avatar) preloadImage(review.author.avatar, 'auto');
 };
@@ -171,11 +171,11 @@ export const preloadReviewAssets = (review: any) => {
  * Batch preload an array of image URLs smoothly in parallel waves
  * without starving network sockets.
  */
-export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto', immediateCount = 12) => {
+export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto', immediateCount = 14) => {
   const valid = Array.from(
     new Set(
       urls
-        .filter((u): u is string => Boolean(u && typeof u === 'string' && u.trim().length > 0))
+        .filter((u): u is string => Boolean(u && typeof u === 'string' && u.trim().length > 0 && !u.trim().startsWith('data:')))
         .map((u) => u.trim())
     )
   );
@@ -185,36 +185,49 @@ export const preloadImageBatch = (urls: (string | null | undefined)[], priority:
   const firstWave = valid.slice(0, immediateCount);
   firstWave.forEach((url) => preloadImage(url, priority));
 
-  // Pump remaining images in smooth micro-waves of 6 so every business/user profile photo is warm
+  // Pump remaining images in smooth micro-waves of 8 so every business/user profile photo, logo & banner is warm
   let cursor = immediateCount;
   const pump = () => {
-    const end = Math.min(cursor + 6, valid.length);
+    const end = Math.min(cursor + 8, valid.length);
     for (; cursor < end; cursor++) {
       preloadImage(valid[cursor], 'auto');
     }
     if (cursor < valid.length) {
-      setTimeout(pump, 70);
+      setTimeout(pump, 60);
     }
   };
   if (valid.length > immediateCount) {
-    setTimeout(pump, 90);
+    setTimeout(pump, 75);
   }
 };
 
 /**
- * Preload EVERY review photo in the feed (prioritizing top visible cards first)
+ * Preload EVERY review photo, business logo, business banner, and reviewer avatar in the feed
  * so navigating to Homepage, Feed, Business Profiles, User Profiles, or Bookmarks
- * renders every single photo instantaneously on frame 0 with zero loading flash.
+ * renders every single image instantaneously on frame 0 with zero loading flash.
  */
-export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 12) => {
+export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 16) => {
   if (!Array.isArray(reviews) || reviews.length === 0 || typeof window === 'undefined') return;
-  const photoUrls: string[] = [];
-  for (const r of reviews) {
+  const highUrls: string[] = [];
+  const bgUrls: string[] = [];
+  for (let i = 0; i < reviews.length; i++) {
+    const r = reviews[i];
     if (!r) continue;
     const p = r.photoUrl || r.photoDataUrl || r.thumbnailUrl;
-    if (p && typeof p === 'string' && p.trim()) {
-      photoUrls.push(p.trim());
+    const logo = r.placeLogoUrl;
+    const banner = r.placeBannerUrl;
+    const avatar = r.author?.avatar || r.author?.avatarUrl;
+    if (i < 8) {
+      if (p && typeof p === 'string' && p.trim()) highUrls.push(p.trim());
+      if (logo && typeof logo === 'string' && logo.trim()) highUrls.push(logo.trim());
+      if (banner && typeof banner === 'string' && banner.trim()) bgUrls.push(banner.trim());
+      if (avatar && typeof avatar === 'string' && avatar.trim()) bgUrls.push(avatar.trim());
+    } else {
+      if (p && typeof p === 'string' && p.trim()) bgUrls.push(p.trim());
+      if (logo && typeof logo === 'string' && logo.trim()) bgUrls.push(logo.trim());
+      if (banner && typeof banner === 'string' && banner.trim()) bgUrls.push(banner.trim());
+      if (avatar && typeof avatar === 'string' && avatar.trim()) bgUrls.push(avatar.trim());
     }
   }
-  preloadImageBatch(photoUrls, 'high', priorityCount);
+  preloadImageBatch([...highUrls, ...bgUrls], 'high', priorityCount);
 };
