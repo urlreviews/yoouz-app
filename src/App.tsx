@@ -21,6 +21,8 @@ import { CopoCreatorDrawer } from "./components/CopoCreatorDrawer";
 import { CopoCommentsDrawer } from "./components/CopoCommentsDrawer";
 import { CopoShareModal } from "./components/CopoShareModal";
 import { CopoCreateModal } from "./components/CopoCreateModal";
+import { PasskeyQrModal, PasskeyModalMode } from "./components/PasskeyQrModal";
+import { MobilePasskeyHandoffModal } from "./components/MobilePasskeyHandoffModal";
 import { CopoBusinessDashboardView } from "./components/CopoBusinessDashboardView";
 import { CopoMoreView } from "./components/CopoMoreView";
 import { CopoBookmarksView } from "./components/CopoBookmarksView";
@@ -1036,6 +1038,60 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     focusActiveSearchInput();
   };
+  const [passkeyQrModalMode, setPasskeyQrModalMode] = useState<PasskeyModalMode | null>(null);
+  const [mobilePasskeyHandoffToken, setMobilePasskeyHandoffToken] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("passkeyLink");
+      return token && token.trim().length > 8 ? token.trim() : null;
+    } catch {
+      return null;
+    }
+  });
+  const handleCloseMobilePasskeyHandoff = useCallback(() => {
+    setMobilePasskeyHandoffToken(null);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("passkeyLink")) {
+        url.searchParams.delete("passkeyLink");
+        window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      }
+    } catch {}
+  }, []);
+  const handlePasskeySyncSuccess = useCallback((updatedUser: any) => {
+    if (!updatedUser) return;
+    setCurrentUser(updatedUser);
+    setAllRegisteredUsers((prev) => {
+      const uid = updatedUser.id || updatedUser.uid;
+      if (!uid) return prev;
+      const exists = prev.some((u: any) => u && (u.id === uid || u.uid === uid));
+      if (exists) {
+        return prev.map((u: any) => (u && (u.id === uid || u.uid === uid) ? { ...u, ...updatedUser } : u));
+      }
+      return [updatedUser, ...prev];
+    });
+    setSelectedAuthorForDrawer((prev) => {
+      if (!prev) return prev;
+      const isViewingSelf =
+        prev.id === "guest_preview" ||
+        prev.userId === "guest_preview" ||
+        (currentUser && (prev.id === currentUser.id || prev.userId === currentUser.id)) ||
+        prev.id === updatedUser.id;
+      if (!isViewingSelf) return prev;
+      return {
+        ...prev,
+        id: updatedUser.id || prev.id,
+        userId: updatedUser.id || prev.userId,
+        name: updatedUser.name || prev.name,
+        handle: updatedUser.handle || `@${String(updatedUser.name || "").replace(/^@+/, "")}`,
+        avatar: updatedUser.avatar || prev.avatar,
+        bio: updatedUser.bio ?? prev.bio,
+        passkeyProtected: Boolean(updatedUser.passkeyProtected),
+        isVerified: Boolean(updatedUser.isVerified || updatedUser.passkeyProtected)
+      } as any;
+    });
+  }, [currentUser]);
   const handleOpenReviewPicker = () => {
     flushSync(() => {
       setPreselectedPlaceForRecording(null);
@@ -8120,6 +8176,7 @@ export function App() {
             }}
             onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
             onOpenPlace={handleOpenPlaceDrawer}
+            onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
           />
         )}
 
@@ -8380,12 +8437,14 @@ export function App() {
           }}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
           onOpenPlace={handleOpenPlaceDrawer}
+          onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
         />
        ) : (activeSection === "business" || activeSection === "admin") ? null : (
         <CopoSidebar
           activeSection={activeSection}
           currentUser={currentUser}
           onOpenLegal={handleOpenLegal}
+          onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
           onSelectSection={(section) => {
             if (section === "search") {
               flushSync(() => {
@@ -9622,6 +9681,30 @@ export function App() {
         }}
         onCompleteBackgroundUpload={() => {
           setBackgroundUpload(null);
+        }}
+      />
+
+      <PasskeyQrModal
+        isOpen={Boolean(passkeyQrModalMode)}
+        initialMode={passkeyQrModalMode || "save"}
+        currentUser={currentUser}
+        onEnsureAccountProvisioned={async () => {
+          const ensured = await ensureAnonymousUser(false);
+          if (!ensured) return null;
+          return { id: ensured.id || (ensured as any).uid, name: ensured.name };
+        }}
+        onClose={() => setPasskeyQrModalMode(null)}
+        onSuccess={(user) => {
+          handlePasskeySyncSuccess(user);
+        }}
+      />
+
+      <MobilePasskeyHandoffModal
+        token={mobilePasskeyHandoffToken}
+        currentPhoneUserId={currentUser?.id || (currentUser as any)?.uid || ""}
+        onClose={handleCloseMobilePasskeyHandoff}
+        onSuccess={(user) => {
+          handlePasskeySyncSuccess(user);
         }}
       />
 

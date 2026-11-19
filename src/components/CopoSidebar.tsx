@@ -35,6 +35,7 @@ interface CopoSidebarProps {
   onOpenSearch?: () => void;
   onOpenCreateModal?: () => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
+  onOpenPasskeyModal?: (mode: "save" | "restore") => void;
 }
 
 export const CopoSidebar: React.FC<CopoSidebarProps> = ({
@@ -45,7 +46,8 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
   unreadMessagesCount = 0,
   onOpenSearch,
   onOpenCreateModal,
-  onOpenLegal
+  onOpenLegal,
+  onOpenPasskeyModal
 }) => {
   const { t, currentLanguageMeta, isRTL } = useLanguage();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
@@ -179,7 +181,24 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                     </span>
 
                     {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected ? (
-                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          if (onOpenPasskeyModal) {
+                            e.stopPropagation();
+                            onOpenPasskeyModal("save");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (onOpenPasskeyModal && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onOpenPasskeyModal("save");
+                          }
+                        }}
+                        className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border border-amber-400/30 transition-colors"
+                      >
                         Save Key
                       </span>
                     ) : item.badge && item.badge > 0 ? (

@@ -1,5 +1,5 @@
-// WebAuthn Biometric Passkey Authentication (Face ID / Touch ID / Android Biometrics)
-// Syncs automatically across devices via iCloud Keychain (iOS) & Google Password Manager (Android)
+// WebAuthn Passkey Authentication (Cross-Device & Platform Sync)
+// Syncs automatically across devices via iCloud Keychain & Google Password Manager
 // Zero emails, zero magic links, zero passwords.
 
 function bufferToBase64Url(buffer: ArrayBuffer): string {
@@ -11,13 +11,45 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function detectDevicePasskeyLabel(): string {
+export function detectDevicePasskeyLabel(): string {
   if (typeof navigator === "undefined") return "Device Passkey";
   const ua = navigator.userAgent || "";
   if (/iPhone|iPad|iPod/i.test(ua)) return "iOS Passkey";
   if (/Android/i.test(ua)) return "Android Passkey";
   if (/Mac/i.test(ua)) return "Mac Passkey";
+  if (/Win/i.test(ua)) return "Windows Passkey";
   return "Device Passkey";
+}
+
+/**
+ * Returns true on non-touch desktop computers (width >= 768px and not a phone/iPad/tablet)
+ * so desktop users get the Yoouz QR Passkey handoff modal instead of hardware-locked errors.
+ */
+export function isDesktopPasskeyViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const isMobileOrTabletUA =
+    /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+    (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  return window.innerWidth >= 768 && !isMobileOrTabletUA;
+}
+
+export function applyPasskeyUserToLocalSession(user: any, credentialId?: string): void {
+  if (!user) return;
+  try {
+    if (credentialId) {
+      localStorage.setItem("yoouz_device_passkey_id", credentialId);
+    } else if (user.passkeyCredentialId) {
+      localStorage.setItem("yoouz_device_passkey_id", String(user.passkeyCredentialId));
+    }
+    localStorage.setItem("copo_user_profile", JSON.stringify(user));
+    localStorage.setItem("yoouz_current_user", JSON.stringify(user));
+    const resolvedUid = user.id || user.uid;
+    if (resolvedUid) {
+      localStorage.setItem("copo_user_uid", String(resolvedUid));
+    }
+    window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: user }));
+  } catch {}
 }
 
 export interface PasskeyResult {
@@ -27,14 +59,24 @@ export interface PasskeyResult {
   cancelled?: boolean;
 }
 
+export interface PasskeyCredentialResult {
+  success: boolean;
+  credentialId?: string;
+  publicKey?: string;
+  deviceName?: string;
+  error?: string;
+  cancelled?: boolean;
+}
+
 /**
- * Registers a platform biometric Passkey (Face ID / Android Face & Fingerprint) for the current user
- * so their account is permanently remembered and synced across phones without email or passwords.
+ * Creates a WebAuthn Passkey credential on the current device without calling /register directly.
+ * Omits restrictive authenticatorAttachment so both mobile devices and desktops (with or without
+ * built-in sensors) work cleanly without triggering Chrome's "Your device can't be used" error.
  */
-export async function registerFaceIdPasskey(user: {
+export async function createPasskeyCredentialOnly(user: {
   id: string;
   name?: string;
-}): Promise<PasskeyResult> {
+}): Promise<PasskeyCredentialResult> {
   const userId = String(user?.id || "").trim();
   if (!userId) {
     return { success: false, error: "Missing user session ID." };
@@ -55,7 +97,6 @@ export async function registerFaceIdPasskey(user: {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
       const userIdBytes = new TextEncoder().encode(userId);
-
       const rpId = window.location.hostname || "localhost";
 
       const credential = (await navigator.credentials.create({
@@ -71,14 +112,13 @@ export async function registerFaceIdPasskey(user: {
             displayName: `${displayHandle} (Yoouz)`
           },
           pubKeyCredParams: [
-            { alg: -7, type: "public-key" }, // ES256 (Apple Face ID / Android Biometrics)
-            { alg: -257, type: "public-key" } // RS256 fallback
+            { alg: -7, type: "public-key" },
+            { alg: -257, type: "public-key" }
           ],
           authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            residentKey: "required",
-            requireResidentKey: true,
-            userVerification: "required"
+            residentKey: "preferred",
+            requireResidentKey: false,
+            userVerification: "preferred"
           },
           timeout: 60000,
           attestation: "none"
@@ -96,7 +136,6 @@ export async function registerFaceIdPasskey(user: {
         if (pkBuf) publicKey = bufferToBase64Url(pkBuf);
       }
     } else {
-      // Fallback for embedded webviews without WebAuthn API exposed
       const storedKey = localStorage.getItem("yoouz_device_passkey_id");
       credentialId = storedKey || `pk_${userId}_${Date.now().toString(36)}`;
       localStorage.setItem("yoouz_device_passkey_id", credentialId);
@@ -104,7 +143,6 @@ export async function registerFaceIdPasskey(user: {
   } catch (err: any) {
     const msg = String(err?.message || "");
     const name = String(err?.name || "");
-    // Check if blocked by iframe permissions policy in preview environment
     const isIframePolicyBlock =
       name === "SecurityError" ||
       name === "NotSupportedError" ||
@@ -135,43 +173,13 @@ export async function registerFaceIdPasskey(user: {
     localStorage.setItem("yoouz_device_passkey_id", credentialId);
   } catch {}
 
-  try {
-    const res = await fetch("/api/auth/passkey/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        credentialId,
-        publicKey,
-        deviceName
-      })
-    });
-    const data = await res.json();
-    if (!res.ok || !data?.user) {
-      return {
-        success: false,
-        error: data?.error || "Failed to register passkey with server."
-      };
-    }
-
-    try {
-      localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
-      localStorage.setItem("yoouz_current_user", JSON.stringify(data.user));
-      window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
-    } catch {}
-
-    return { success: true, user: data.user };
-  } catch {
-    return { success: false, error: "Network error while saving passkey." };
-  }
+  return { success: true, credentialId, publicKey, deviceName };
 }
 
 /**
- * Restores an existing passkey-protected account on a new phone using Face ID / Android Biometrics.
+ * Prompts the current device for an existing saved Passkey credential without calling /authenticate directly.
  */
-export async function restoreAccountWithPasskey(
-  currentAnonymousUserId?: string
-): Promise<PasskeyResult> {
+export async function assertPasskeyCredentialOnly(): Promise<PasskeyCredentialResult> {
   let credentialId = "";
 
   try {
@@ -189,7 +197,7 @@ export async function restoreAccountWithPasskey(
         publicKey: {
           challenge,
           rpId,
-          userVerification: "required",
+          userVerification: "preferred",
           timeout: 60000
         }
       })) as PublicKeyCredential | null;
@@ -236,12 +244,78 @@ export async function restoreAccountWithPasskey(
     };
   }
 
+  return { success: true, credentialId };
+}
+
+/**
+ * Registers a Passkey for the current user so their account is permanently remembered
+ * and synced across devices without email or passwords.
+ */
+export async function registerFaceIdPasskey(user: {
+  id: string;
+  name?: string;
+}): Promise<PasskeyResult> {
+  const userId = String(user?.id || "").trim();
+  if (!userId) {
+    return { success: false, error: "Missing user session ID." };
+  }
+
+  const credResult = await createPasskeyCredentialOnly(user);
+  if (!credResult.success || !credResult.credentialId) {
+    return {
+      success: false,
+      cancelled: credResult.cancelled,
+      error: credResult.error || "Could not save passkey on this device."
+    };
+  }
+
+  try {
+    const res = await fetch("/api/auth/passkey/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        credentialId: credResult.credentialId,
+        publicKey: credResult.publicKey || "",
+        deviceName: credResult.deviceName || detectDevicePasskeyLabel()
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.user) {
+      return {
+        success: false,
+        error: data?.error || "Failed to register passkey with server."
+      };
+    }
+
+    applyPasskeyUserToLocalSession(data.user, credResult.credentialId);
+    return { success: true, user: data.user };
+  } catch {
+    return { success: false, error: "Network error while saving passkey." };
+  }
+}
+
+/**
+ * Restores an existing passkey-protected account using a saved Passkey.
+ */
+export async function restoreAccountWithPasskey(
+  currentAnonymousUserId?: string
+): Promise<PasskeyResult> {
+  const assertResult = await assertPasskeyCredentialOnly();
+  if (!assertResult.success || !assertResult.credentialId) {
+    return {
+      success: false,
+      cancelled: assertResult.cancelled,
+      error: assertResult.error || "No saved passkey found on this device."
+    };
+  }
+
   try {
     const res = await fetch("/api/auth/passkey/authenticate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        credentialId,
+        credentialId: assertResult.credentialId,
         currentAnonymousUserId: currentAnonymousUserId || ""
       })
     });
@@ -253,16 +327,7 @@ export async function restoreAccountWithPasskey(
       };
     }
 
-    try {
-      localStorage.setItem("yoouz_device_passkey_id", credentialId);
-      localStorage.setItem("copo_user_profile", JSON.stringify(data.user));
-      localStorage.setItem("yoouz_current_user", JSON.stringify(data.user));
-      if (data.user.id || data.user.uid) {
-        localStorage.setItem("copo_user_uid", data.user.id || data.user.uid);
-      }
-      window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: data.user }));
-    } catch {}
-
+    applyPasskeyUserToLocalSession(data.user, assertResult.credentialId);
     return { success: true, user: data.user };
   } catch {
     return { success: false, error: "Network error while restoring account." };

@@ -24391,83 +24391,107 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
-  // WebAuthn Biometric Passkey Registration (Face ID / Touch ID / Android Biometrics)
-  app.post("/api/auth/passkey/register", async (req, res) => {
-    try {
-      const { userId, credentialId, publicKey, deviceName } = req.body || {};
-      const cleanUserId = String(userId || "").trim();
-      const cleanCredId = String(credentialId || "").trim();
+  // Shared Passkey Registration Helper (used by direct registration and desktop-to-phone QR handoff)
+  const persistPasskeyRegistration = async (params: {
+    userId: string;
+    credentialId: string;
+    publicKey?: string;
+    deviceName?: string;
+  }) => {
+    const cleanUserId = String(params.userId || "").trim();
+    const cleanCredId = String(params.credentialId || "").trim();
+    const bunnyDb = getBunnyDb();
+    const localUsers = readUsersIndex();
+    let userRecord = localUsers.find((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId)) || null;
 
-      if (!cleanUserId || !cleanCredId) {
-        return res.status(400).json({ error: "Missing userId or passkey credentialId." });
+    if (!userRecord && bunnyDb) {
+      const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [cleanUserId] }).catch(() => null);
+      if (rs && rs.rows && rs.rows[0]) {
+        const row: any = rs.rows[0];
+        let parsed: any = {};
+        try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+        userRecord = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
       }
+    }
 
-      const bunnyDb = getBunnyDb();
-      const localUsers = readUsersIndex();
-      let userRecord = localUsers.find((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId)) || null;
+    const handle = userRecord?.username || userRecord?.name || await generateUniqueAnonymousHandle();
+    const updatedUser = {
+      ...(userRecord || {}),
+      id: cleanUserId,
+      uid: cleanUserId,
+      userId: cleanUserId,
+      email: "",
+      name: handle,
+      username: handle,
+      handle: `@${String(handle).replace(/^@+/, "")}`,
+      isAnonymous: false,
+      passkeyProtected: true,
+      passkeyCredentialId: cleanCredId,
+      passkeyPublicKey: String(params.publicKey || ""),
+      passkeyDeviceName: String(params.deviceName || "Device Passkey"),
+      passkeyRegisteredAt: new Date().toISOString(),
+      authProvider: "passkey",
+      linkedProviders: ["passkey"],
+      isVerified: true,
+      verified: true,
+      yoouzPhotoUser: true,
+      scratchVersion: 6,
+      updatedAt: new Date().toISOString()
+    };
 
-      if (!userRecord && bunnyDb) {
-        const rs = await bunnyDb.execute({ sql: "SELECT * FROM users WHERE id = ? LIMIT 1", args: [cleanUserId] }).catch(() => null);
-        if (rs && rs.rows && rs.rows[0]) {
-          const row: any = rs.rows[0];
-          let parsed: any = {};
-          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
-          userRecord = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
+    if (bunnyDb) {
+      await bunnyDb.execute({
+        sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
+              VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+              ON CONFLICT(id) DO UPDATE SET name = excluded.name, bio = excluded.bio, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+        args: [
+          cleanUserId,
+          updatedUser.name,
+          updatedUser.avatar || "",
+          updatedUser.bio || "",
+          updatedUser.role || "user",
+          JSON.stringify(updatedUser)
+        ]
+      }).catch(() => {});
+    }
+
+    const idx = localUsers.findIndex((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId));
+    if (idx !== -1) localUsers[idx] = updatedUser;
+    else localUsers.unshift(updatedUser);
+    writeUsersIndex(localUsers);
+
+    // Cascade passkeyProtected & verified status to all reviews authored by this user
+    try {
+      const localReviews = readReviewsIndex();
+      let reviewsChanged = false;
+      const cleanHandleNoAt = String(updatedUser.handle || "").replace(/^@+/, "").toLowerCase();
+      for (const rev of localReviews) {
+        if (!rev) continue;
+        const revAuthorId = String(rev.userId || rev.author?.id || "").trim();
+        const revHandle = String(rev.author?.handle || "").replace(/^@+/, "").toLowerCase();
+        if (revAuthorId === cleanUserId || (cleanHandleNoAt && revHandle === cleanHandleNoAt)) {
+          rev.author = {
+            ...(rev.author || {}),
+            id: cleanUserId,
+            name: updatedUser.name,
+            handle: updatedUser.handle,
+            passkeyProtected: true,
+            isVerified: true
+          };
+          reviewsChanged = true;
+          if (bunnyDb && rev.id) {
+            bunnyDb.execute({
+              sql: `UPDATE videoReviews SET data = ? WHERE id = ?`,
+              args: [JSON.stringify(rev), String(rev.id)]
+            }).catch(() => {});
+          }
         }
       }
-
-      const handle = userRecord?.username || userRecord?.name || await generateUniqueAnonymousHandle();
-      const updatedUser = {
-        ...(userRecord || {}),
-        id: cleanUserId,
-        uid: cleanUserId,
-        userId: cleanUserId,
-        email: "",
-        name: handle,
-        username: handle,
-        handle: `@${String(handle).replace(/^@+/, "")}`,
-        isAnonymous: false,
-        passkeyProtected: true,
-        passkeyCredentialId: cleanCredId,
-        passkeyPublicKey: String(publicKey || ""),
-        passkeyDeviceName: String(deviceName || "Face ID / Biometrics"),
-        passkeyRegisteredAt: new Date().toISOString(),
-        authProvider: "passkey",
-        linkedProviders: ["passkey"],
-        isVerified: true,
-        verified: true,
-        yoouzPhotoUser: true,
-        scratchVersion: 6,
-        updatedAt: new Date().toISOString()
-      };
-
-      if (bunnyDb) {
-        await bunnyDb.execute({
-          sql: `INSERT INTO users (id, email, name, avatar, bio, role, data, createdAt, updatedAt)
-                VALUES (?, NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET name = excluded.name, bio = excluded.bio, data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
-          args: [
-            cleanUserId,
-            updatedUser.name,
-            updatedUser.avatar || "",
-            updatedUser.bio || "",
-            updatedUser.role || "user",
-            JSON.stringify(updatedUser)
-          ]
-        }).catch(() => {});
+      if (reviewsChanged) {
+        writeReviewsIndex(localReviews);
       }
-
-      const idx = localUsers.findIndex((u: any) => u && (u.id === cleanUserId || u.uid === cleanUserId));
-      if (idx !== -1) localUsers[idx] = updatedUser;
-      else localUsers.unshift(updatedUser);
-      writeUsersIndex(localUsers);
-
-      // Cascade passkeyProtected & verified status to all reviews authored by this user
-      try {
-        const localReviews = readReviewsIndex();
-        let reviewsChanged = false;
-        const cleanHandleNoAt = String(updatedUser.handle || "").replace(/^@+/, "").toLowerCase();
-        for (const rev of localReviews) {
+      if (Array.isArray(feedCache?.videos)) {
+        for (const rev of feedCache.videos) {
           if (!rev) continue;
           const revAuthorId = String(rev.userId || rev.author?.id || "").trim();
           const revHandle = String(rev.author?.handle || "").replace(/^@+/, "").toLowerCase();
@@ -24480,97 +24504,65 @@ app.post("/api/videos/save-review", async (req, res) => {
               passkeyProtected: true,
               isVerified: true
             };
-            reviewsChanged = true;
-            if (bunnyDb && rev.id) {
-              bunnyDb.execute({
-                sql: `UPDATE videoReviews SET data = ? WHERE id = ?`,
-                args: [JSON.stringify(rev), String(rev.id)]
-              }).catch(() => {});
-            }
           }
         }
-        if (reviewsChanged) {
-          writeReviewsIndex(localReviews);
-        }
-        if (Array.isArray(feedCache?.videos)) {
-          for (const rev of feedCache.videos) {
-            if (!rev) continue;
-            const revAuthorId = String(rev.userId || rev.author?.id || "").trim();
-            const revHandle = String(rev.author?.handle || "").replace(/^@+/, "").toLowerCase();
-            if (revAuthorId === cleanUserId || (cleanHandleNoAt && revHandle === cleanHandleNoAt)) {
-              rev.author = {
-                ...(rev.author || {}),
-                id: cleanUserId,
-                name: updatedUser.name,
-                handle: updatedUser.handle,
-                passkeyProtected: true,
-                isVerified: true
-              };
-            }
-          }
-        }
-        ogVideoCardCache.clear();
-        ogCreatorCardCache.clear();
-      } catch {}
+      }
+      ogVideoCardCache.clear();
+      ogCreatorCardCache.clear();
+    } catch {}
 
-      res.cookie("yoouz_anon_uid", cleanUserId, {
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 365 * 24 * 60 * 60 * 1000,
-        path: "/"
-      });
-
-      try {
-        broadcastSseEvent({ type: "user_updated", user: updatedUser });
-      } catch {}
-
-      return res.json({ success: true, user: updatedUser });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message || "Failed to register passkey" });
-    }
-  });
-
-  // WebAuthn Biometric Passkey Authentication / Cross-Phone Account Recovery
-  app.post("/api/auth/passkey/authenticate", async (req, res) => {
     try {
-      const { credentialId, currentAnonymousUserId } = req.body || {};
-      const cleanCredId = String(credentialId || "").trim();
-      const cleanAnonId = String(currentAnonymousUserId || "").trim();
+      broadcastSseEvent({ type: "user_updated", user: updatedUser });
+    } catch {}
 
-      if (!cleanCredId) {
-        return res.status(400).json({ error: "Missing passkey credentialId." });
+    return updatedUser;
+  };
+
+  // Shared Passkey Authentication & Session Merge Helper
+  const authenticatePasskeyCredential = async (params: {
+    credentialId: string;
+    mergeAnonymousUserIds?: string[];
+  }) => {
+    const cleanCredId = String(params.credentialId || "").trim();
+    const bunnyDb = getBunnyDb();
+    const localUsers = readUsersIndex();
+    let restoredUser: any = localUsers.find(
+      (u: any) => u && String(u.passkeyCredentialId || "") === cleanCredId
+    ) || null;
+
+    if (!restoredUser && bunnyDb) {
+      const rs = await bunnyDb.execute({
+        sql: "SELECT * FROM users WHERE data LIKE ? LIMIT 1",
+        args: [`%"passkeyCredentialId":"${cleanCredId}"%`]
+      }).catch(() => null);
+      if (rs && rs.rows && rs.rows[0]) {
+        const row: any = rs.rows[0];
+        let parsed: any = {};
+        try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+        restoredUser = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
       }
+    }
 
-      const bunnyDb = getBunnyDb();
-      const localUsers = readUsersIndex();
-      let restoredUser: any = localUsers.find(
-        (u: any) => u && String(u.passkeyCredentialId || "") === cleanCredId
-      ) || null;
+    if (!restoredUser) {
+      return null;
+    }
 
-      if (!restoredUser && bunnyDb) {
-        const rs = await bunnyDb.execute({
-          sql: "SELECT * FROM users WHERE data LIKE ? LIMIT 1",
-          args: [`%"passkeyCredentialId":"${cleanCredId}"%`]
-        }).catch(() => null);
-        if (rs && rs.rows && rs.rows[0]) {
-          const row: any = rs.rows[0];
-          let parsed: any = {};
-          try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
-          restoredUser = { id: row.id, uid: row.id, email: "", name: row.name, bio: row.bio || "", avatar: row.avatar || "", ...parsed };
-        }
-      }
+    const targetId = String(restoredUser.id || restoredUser.uid);
+    const preferredUsername = String(restoredUser.username || restoredUser.name || "Reviewer");
+    const idsToMerge = Array.from(
+      new Set(
+        (params.mergeAnonymousUserIds || [])
+          .map((id) => String(id || "").trim())
+          .filter((id) => Boolean(id) && id !== targetId)
+      )
+    );
 
-      if (!restoredUser) {
-        return res.status(404).json({
-          error: "No Yoouz account found for this Passkey. Lock your current account with Face ID first."
-        });
-      }
+    if (idsToMerge.length > 0) {
+      const revList = readReviewsIndex();
+      let mutated = false;
+      let nextLocalUsers = localUsers;
 
-      const targetId = String(restoredUser.id || restoredUser.uid);
-      const preferredUsername = String(restoredUser.username || restoredUser.name || "Reviewer");
-
-      // Merge any reviews/likes/bookmarks captured on the temporary anonymous session before restoring
-      if (cleanAnonId && cleanAnonId !== targetId) {
+      for (const cleanAnonId of idsToMerge) {
         if (bunnyDb) {
           await bunnyDb.execute({
             sql: "UPDATE videoReviews SET userId = ?, authorName = ? WHERE userId = ?",
@@ -24593,8 +24585,6 @@ app.post("/api/videos/save-review", async (req, res) => {
             args: [cleanAnonId]
           }).catch(() => {});
         }
-        const revList = readReviewsIndex();
-        let mutated = false;
         revList.forEach((r: any) => {
           if (r && r.userId === cleanAnonId) {
             r.userId = targetId;
@@ -24603,11 +24593,70 @@ app.post("/api/videos/save-review", async (req, res) => {
             mutated = true;
           }
         });
-        if (mutated) writeReviewsIndex(revList);
-
-        const filteredUsers = localUsers.filter((u: any) => u && u.id !== cleanAnonId);
-        writeUsersIndex(filteredUsers);
+        nextLocalUsers = nextLocalUsers.filter((u: any) => u && u.id !== cleanAnonId);
       }
+
+      if (mutated) writeReviewsIndex(revList);
+      writeUsersIndex(nextLocalUsers);
+    }
+
+    return restoredUser;
+  };
+
+  // WebAuthn Passkey Registration
+  app.post("/api/auth/passkey/register", async (req, res) => {
+    try {
+      const { userId, credentialId, publicKey, deviceName } = req.body || {};
+      const cleanUserId = String(userId || "").trim();
+      const cleanCredId = String(credentialId || "").trim();
+
+      if (!cleanUserId || !cleanCredId) {
+        return res.status(400).json({ error: "Missing userId or passkey credentialId." });
+      }
+
+      const updatedUser = await persistPasskeyRegistration({
+        userId: cleanUserId,
+        credentialId: cleanCredId,
+        publicKey,
+        deviceName
+      });
+
+      res.cookie("yoouz_anon_uid", cleanUserId, {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      return res.json({ success: true, user: updatedUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to register passkey" });
+    }
+  });
+
+  // WebAuthn Passkey Authentication / Cross-Device Account Recovery
+  app.post("/api/auth/passkey/authenticate", async (req, res) => {
+    try {
+      const { credentialId, currentAnonymousUserId } = req.body || {};
+      const cleanCredId = String(credentialId || "").trim();
+      const cleanAnonId = String(currentAnonymousUserId || "").trim();
+
+      if (!cleanCredId) {
+        return res.status(400).json({ error: "Missing passkey credentialId." });
+      }
+
+      const restoredUser = await authenticatePasskeyCredential({
+        credentialId: cleanCredId,
+        mergeAnonymousUserIds: cleanAnonId ? [cleanAnonId] : []
+      });
+
+      if (!restoredUser) {
+        return res.status(404).json({
+          error: "No Yoouz account found for this Passkey. Save a Passkey on your account first."
+        });
+      }
+
+      const targetId = String(restoredUser.id || restoredUser.uid);
 
       res.cookie("yoouz_anon_uid", targetId, {
         httpOnly: true,
@@ -24619,6 +24668,211 @@ app.post("/api/videos/save-review", async (req, res) => {
       return res.json({ success: true, user: restoredUser });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || "Failed to authenticate with passkey" });
+    }
+  });
+
+  // Ephemeral Desktop-to-Phone QR Passkey Handoff Sessions (5-min TTL, single-use)
+  interface PasskeyHandoffSession {
+    token: string;
+    mode: "save" | "restore";
+    desktopUserId: string;
+    desktopHandle: string;
+    status: "pending" | "completed" | "expired";
+    resolvedUser: any | null;
+    credentialId: string;
+    createdAt: number;
+    expiresAt: number;
+    claimedAt?: number;
+  }
+  const passkeyHandoffSessions = new Map<string, PasskeyHandoffSession>();
+  const PASSKEY_HANDOFF_TTL_MS = 5 * 60 * 1000;
+
+  const prunePasskeyHandoffs = () => {
+    const now = Date.now();
+    for (const [key, session] of passkeyHandoffSessions.entries()) {
+      const cleanupDeadline = session.claimedAt
+        ? session.claimedAt + 30_000
+        : session.expiresAt + 60_000;
+      if (now > cleanupDeadline) {
+        passkeyHandoffSessions.delete(key);
+      }
+    }
+  };
+
+  // 1. Desktop creates a 5-minute pairing token for QR code
+  app.post("/api/auth/passkey/handoff", async (req, res) => {
+    try {
+      prunePasskeyHandoffs();
+      const rawMode = String(req.body?.mode || "save").toLowerCase();
+      const mode: "save" | "restore" = rawMode === "restore" ? "restore" : "save";
+      const desktopUserId = String(req.body?.userId || "").trim();
+      const desktopHandle = String(req.body?.handle || "").trim();
+
+      if (mode === "save" && !desktopUserId) {
+        return res.status(400).json({ error: "Missing userId for Passkey handoff." });
+      }
+
+      const token = crypto.randomBytes(24).toString("base64url");
+      const now = Date.now();
+      const session: PasskeyHandoffSession = {
+        token,
+        mode,
+        desktopUserId,
+        desktopHandle: desktopHandle || (desktopUserId ? `@${desktopUserId}` : ""),
+        status: "pending",
+        resolvedUser: null,
+        credentialId: "",
+        createdAt: now,
+        expiresAt: now + PASSKEY_HANDOFF_TTL_MS
+      };
+      passkeyHandoffSessions.set(token, session);
+
+      return res.json({
+        success: true,
+        token,
+        mode,
+        expiresAt: session.expiresAt
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to create passkey handoff session" });
+    }
+  });
+
+  // 2. Phone reads handoff metadata OR Desktop polls/claims completed session
+  app.get("/api/auth/passkey/handoff/:token", (req, res) => {
+    try {
+      prunePasskeyHandoffs();
+      const token = String(req.params.token || "").trim();
+      const session = passkeyHandoffSessions.get(token);
+
+      if (!session) {
+        return res.status(404).json({ status: "expired", error: "This QR code has expired." });
+      }
+
+      if (session.status === "pending" && Date.now() > session.expiresAt) {
+        session.status = "expired";
+        return res.json({
+          status: "expired",
+          mode: session.mode,
+          error: "This QR code has expired."
+        });
+      }
+
+      if (session.status === "completed" && session.resolvedUser) {
+        const shouldClaim = req.query.claim === "1" || req.query.claim === "true";
+        if (shouldClaim) {
+          const targetId = String(session.resolvedUser.id || session.resolvedUser.uid || "");
+          if (targetId) {
+            res.cookie("yoouz_anon_uid", targetId, {
+              httpOnly: true,
+              sameSite: "lax",
+              maxAge: 365 * 24 * 60 * 60 * 1000,
+              path: "/"
+            });
+          }
+          if (!session.claimedAt) {
+            session.claimedAt = Date.now();
+          }
+        }
+        return res.json({
+          status: "completed",
+          mode: session.mode,
+          user: session.resolvedUser,
+          credentialId: session.credentialId
+        });
+      }
+
+      return res.json({
+        status: session.status,
+        mode: session.mode,
+        desktopUserId: session.desktopUserId,
+        desktopHandle: session.desktopHandle,
+        expiresAt: session.expiresAt
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to check handoff status" });
+    }
+  });
+
+  // 3. Phone completes the pairing session after native WebAuthn succeeds
+  app.post("/api/auth/passkey/handoff/complete", async (req, res) => {
+    try {
+      prunePasskeyHandoffs();
+      const token = String(req.body?.token || "").trim();
+      const credentialId = String(req.body?.credentialId || "").trim();
+      const publicKey = String(req.body?.publicKey || "");
+      const deviceName = String(req.body?.deviceName || "Phone Passkey");
+      const phoneAnonymousUserId = String(req.body?.phoneAnonymousUserId || "").trim();
+
+      if (!token || !credentialId) {
+        return res.status(400).json({ error: "Missing handoff token or passkey credential." });
+      }
+
+      const session = passkeyHandoffSessions.get(token);
+      if (!session) {
+        return res.status(404).json({ error: "This QR code has expired. Please generate a new one on your computer." });
+      }
+
+      if (session.status === "expired" || Date.now() > session.expiresAt) {
+        session.status = "expired";
+        return res.status(410).json({ error: "This QR code has expired. Please generate a new one on your computer." });
+      }
+
+      if (session.status === "completed") {
+        return res.status(409).json({ error: "This QR code was already used." });
+      }
+
+      if (session.mode === "save") {
+        if (!session.desktopUserId) {
+          return res.status(400).json({ error: "Missing target account for Passkey save." });
+        }
+        const updatedUser = await persistPasskeyRegistration({
+          userId: session.desktopUserId,
+          credentialId,
+          publicKey,
+          deviceName
+        });
+
+        session.status = "completed";
+        session.resolvedUser = updatedUser;
+        session.credentialId = credentialId;
+
+        res.cookie("yoouz_anon_uid", String(updatedUser.id || updatedUser.uid), {
+          httpOnly: true,
+          sameSite: "lax",
+          maxAge: 365 * 24 * 60 * 60 * 1000,
+          path: "/"
+        });
+
+        return res.json({ success: true, mode: "save", user: updatedUser });
+      }
+
+      // Restore mode: authenticate existing phone Passkey and merge temporary anonymous desktop/phone IDs
+      const restoredUser = await authenticatePasskeyCredential({
+        credentialId,
+        mergeAnonymousUserIds: [session.desktopUserId, phoneAnonymousUserId].filter(Boolean)
+      });
+
+      if (!restoredUser) {
+        return res.status(404).json({
+          error: "No Yoouz account found for this Passkey. Save a Passkey on your account first."
+        });
+      }
+
+      session.status = "completed";
+      session.resolvedUser = restoredUser;
+      session.credentialId = credentialId;
+
+      res.cookie("yoouz_anon_uid", String(restoredUser.id || restoredUser.uid), {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+        path: "/"
+      });
+
+      return res.json({ success: true, mode: "restore", user: restoredUser });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to complete passkey handoff" });
     }
   });
 

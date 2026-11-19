@@ -38,7 +38,7 @@ import {
   Calendar,
   KeyRound
 } from "lucide-react";
-import { registerFaceIdPasskey, restoreAccountWithPasskey } from "../lib/passkeyAuth";
+import { registerFaceIdPasskey, restoreAccountWithPasskey, isDesktopPasskeyViewport } from "../lib/passkeyAuth";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
 import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -84,6 +84,7 @@ interface CopoCreatorDrawerProps {
   onOpenCreator?: (author: VideoAuthor) => void;
   places?: any[];
   onToggleFollowPlace?: (placeId: string) => void;
+  onOpenPasskeyModal?: (mode: "save" | "restore") => void;
 }
 
 export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
@@ -109,7 +110,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   onOpenPlace,
   onOpenCreator,
   places = [],
-  onToggleFollowPlace
+  onToggleFollowPlace,
+  onOpenPasskeyModal
 }) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -418,7 +420,31 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     }
   };
 
+  // Live-sync open profile drawer when desktop Passkey QR handoff completes
+  useEffect(() => {
+    if (!isOwner) return;
+    const handleProfileUpdated = (e: Event) => {
+      const updated = (e as CustomEvent)?.detail;
+      if (updated && typeof updated === "object") {
+        setLiveUserProfile((prev) => ({ ...(prev || {}), ...updated }));
+        if (typeof updated.bio === "string") {
+          setInlineBioInput(updated.bio);
+          setEditBio(updated.bio);
+        }
+        if (updated.passkeyProtected) {
+          setLinkStatusMsg("Passkey saved! Your account is now backed up.");
+        }
+      }
+    };
+    window.addEventListener("copo-profile-updated", handleProfileUpdated as EventListener);
+    return () => window.removeEventListener("copo-profile-updated", handleProfileUpdated as EventListener);
+  }, [isOwner]);
+
   const handleRegisterPasskeyInline = async () => {
+    if (isDesktopPasskeyViewport() && onOpenPasskeyModal) {
+      onOpenPasskeyModal("save");
+      return;
+    }
     if (isLinkingAccount) return;
     setIsLinkingAccount(true);
     setLinkStatusMsg(null);
@@ -454,6 +480,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   const handleRestorePasskeyInline = async () => {
+    if (isDesktopPasskeyViewport() && onOpenPasskeyModal) {
+      onOpenPasskeyModal("restore");
+      return;
+    }
     if (isRestoringPasskey) return;
     const uid = currentUser?.id || (currentUser as any)?.uid || "";
     setIsRestoringPasskey(true);
