@@ -516,15 +516,16 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         ref={cardRef}
         data-video-index={index}
         id={`copo-feed-item-${video.id}`}
-        className={`snap-start snap-always shrink-0 relative select-none w-full h-full min-h-full max-h-full flex items-center justify-center ${
+        className={`snap-start snap-always relative select-none w-full h-full flex items-center justify-center overflow-hidden ${
           isEmbed ? "p-1" : "md:py-3"
         }`}
+        style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
       >
         <div
           className={`flex flex-row items-end justify-center ${
             isEmbed
               ? "w-auto h-full max-h-full"
-              : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-full md:w-auto md:h-auto"
+              : "w-full h-full md:w-auto md:h-auto md:max-h-full"
           }`}
         >
         {/* 1. Main 9:16 Live Photo Frame */}
@@ -534,8 +535,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             isEmbed
               ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-[0_24px_80px_rgba(0,0,0,0.85)] border border-white/[0.1] mx-auto"
               : commentsOpen
-              ? "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-204px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
-              : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(480px,calc(min(93cqh,860px)*9/16),calc(100cqw-136px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
+              ? "w-full h-full md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-204px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
+              : "w-full h-full md:h-auto md:w-[min(480px,calc(min(93cqh,860px)*9/16),calc(100cqw-136px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
           }`}
         >
           {/* Full-Frame Live Photo */}
@@ -543,14 +544,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={slotId || `video-slot-${video.id}`}
             ref={slotRef}
             data-video-slot="true"
-            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-gradient-to-br from-indigo-950 via-zinc-900 to-black pointer-events-none"
+            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-gradient-to-br from-zinc-900 via-[#0a0a0d] to-black pointer-events-none"
           >
             {/* Rich Brand Backdrop (Never Black) */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-indigo-950/90 via-zinc-900 to-zinc-950 z-0">
-              <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white font-black text-2xl mb-3 shadow-2xl">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-zinc-900 via-[#0a0a0d] to-zinc-950 z-0">
+              <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white font-semibold text-2xl mb-3 shadow-2xl">
                 {(businessName || video.placeName || "B").charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-extrabold text-white tracking-tight">{businessName || formatBusinessName(video.placeName) || "Business Place"}</span>
+              <span className="text-sm font-semibold text-white tracking-tight">{businessName || formatBusinessName(video.placeName) || "Business Place"}</span>
               <span className="text-xs font-medium text-zinc-400 mt-1">Live Photo Review</span>
             </div>
 
@@ -571,7 +572,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           {/* Double-Tap Interaction Layer */}
           <div
             id={`copo-card-tap-overlay-${video.id}`}
-            className="absolute inset-0 z-20 cursor-pointer touch-manipulation select-none"
+            className="absolute inset-0 z-20 cursor-pointer touch-pan-y select-none"
             onClick={handleCardClick}
             onDoubleClick={handleDoubleTapLike}
             aria-label="Double tap to like photo review"

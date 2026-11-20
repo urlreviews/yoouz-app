@@ -5086,7 +5086,7 @@ ${jsonLd}
           id="business-official-player-portal"
           className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center animate-in fade-in select-none"
         >
-          <div className="copo-has-bottom-nav flex-1 w-full h-full relative bg-zinc-950 flex flex-col overflow-hidden z-10">
+          <div className="copo-has-bottom-nav flex-1 min-h-0 w-full h-full relative bg-[#050506] flex flex-col overflow-hidden z-10">
             <CopoVideoPlayer
               commentsOpen={Boolean(activeCommentVideo)}
               videos={placeVideos}

@@ -313,7 +313,6 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const targetTop = getCardTargetTop(container, clampedTarget, cardRefs.current[clampedTarget]);
 
         if (isJump) {
-          const savedSnap = container.style.scrollSnapType;
           container.style.scrollSnapType = "none";
           container.scrollTop = targetTop;
           if (snapRestoreRafRef.current !== null) cancelAnimationFrame(snapRestoreRafRef.current);
@@ -323,10 +322,11 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               if (Math.abs(containerRef.current.scrollTop - verifiedTop) > 2) {
                 containerRef.current.scrollTop = verifiedTop;
               }
-              containerRef.current.style.scrollSnapType = savedSnap || (commentsOpenRef.current ? "none" : "y mandatory");
+              containerRef.current.style.scrollSnapType = commentsOpenRef.current ? "none" : "y mandatory";
             }
           });
         } else {
+          container.style.scrollSnapType = commentsOpenRef.current ? "none" : "y mandatory";
           container.scrollTo({ top: targetTop, behavior: "smooth" });
         }
 
@@ -558,9 +558,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       isUserTouchingRef.current = true;
       userHasScrolledRef.current = true;
       initialMountTargetRef.current = null;
-      // User touch immediately overrides any in-flight programmatic scroll
+      // User touch immediately overrides any in-flight programmatic scroll and guarantees crisp native snap
       isProgrammaticScrollRef.current = false;
       programmaticTargetIndexRef.current = null;
+      if (snapRestoreRafRef.current !== null) {
+        cancelAnimationFrame(snapRestoreRafRef.current);
+        snapRestoreRafRef.current = null;
+      }
+      if (containerRef.current) {
+        containerRef.current.style.scrollSnapType = commentsOpenRef.current ? "none" : "y mandatory";
+      }
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
         scrollTimeoutRef.current = null;
@@ -583,16 +590,16 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     const alignToTarget = (idx: number) => {
       const c = containerRef.current;
-      if (!c) return;
-      const savedSnap = c.style.scrollSnapType;
+      if (!c || userHasScrolledRef.current || isUserTouchingRef.current) return;
       c.style.scrollSnapType = "none";
       const targetTop = getCardTargetTop(c, idx, cardRefs.current[idx]);
       if (Math.abs(c.scrollTop - targetTop) > 2) {
         c.scrollTop = targetTop;
       }
-      requestAnimationFrame(() => {
+      if (snapRestoreRafRef.current !== null) cancelAnimationFrame(snapRestoreRafRef.current);
+      snapRestoreRafRef.current = requestAnimationFrame(() => {
         if (containerRef.current) {
-          containerRef.current.style.scrollSnapType = savedSnap || (commentsOpenRef.current ? "none" : "y mandatory");
+          containerRef.current.style.scrollSnapType = commentsOpenRef.current ? "none" : "y mandatory";
         }
       });
     };
@@ -604,6 +611,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
 
     if (startIdx <= 0) {
       isProgrammaticScrollRef.current = false;
+      container.style.scrollSnapType = commentsOpenRef.current ? "none" : "y mandatory";
       container.scrollTo({ top: 0, behavior: "instant" });
     } else if (startIdx < displayItemsLengthRef.current) {
       scrollToCard(startIdx, "instant");
@@ -749,6 +757,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       container.removeEventListener("touchcancel", handleTouchEndSettle);
     };
   }, [prefetchUpcomingPhotos]);
+
+  // Keep scroll-snap state strictly synced when comments drawer opens/closes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.style.scrollSnapType = commentsOpen ? "none" : "y mandatory";
+    }
+  }, [commentsOpen]);
 
   // External prop sync ONLY: scroll programmatically ONLY when the parent explicitly selects
   // a different video index (e.g. clicking a review card from Home/Business/Profile),
@@ -1033,23 +1048,23 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ref={mainRef}
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
-      className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
+      className={`w-full flex-1 min-h-0 h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:[container-type:size] md:transition-all md:duration-200 ${
         commentsOpen ? "md:mr-[420px] md:pl-3 md:pr-6 lg:pl-4 lg:pr-8" : "md:mr-0"
       } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-[#050506]"}`}
-      style={{ scrollbarWidth: "none", msOverflowStyle: "none", containerType: "size" }}
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
       <div
-        className={`w-full h-full min-h-full max-h-full flex items-center justify-center relative ${
+        className={`w-full h-full min-h-0 flex items-center justify-center relative ${
           commentsOpen ? "md:gap-3 lg:gap-4" : ""
         }`}
       >
-        {/* Scroll Snap Feed Container (100% height slides on both mobile & desktop) */}
+        {/* Scroll Snap Feed Container (Strict 100% height slides on both mobile & desktop) */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`flex-1 min-w-0 h-full min-h-full max-h-full ${
-            commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-auto touch-pan-y"
-          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none] flex flex-col items-center`}
+          className={`block w-full flex-1 min-w-0 min-h-0 h-full ${
+            commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-scroll touch-pan-y"
+          } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]`}
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: commentsOpen ? "none" : "y mandatory",
