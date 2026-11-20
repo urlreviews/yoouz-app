@@ -1136,7 +1136,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
             <div className="flex items-center gap-2 min-w-0">
               <h2 className="text-white font-semibold text-base tracking-[-0.02em] flex items-center gap-2">
                 <span>{t("comments.commentsTitle", "Comments")}</span>
-                <span className="text-xs font-medium text-zinc-500">
+                <span className="text-xs font-medium text-zinc-500 tabular-nums">
                   {totalCommentsCount}
                 </span>
               </h2>
@@ -1150,7 +1150,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   onClick={() => setSortBy("top")}
                   className={`px-3 py-1 rounded-full text-xs transition-all cursor-pointer ${
                     sortBy === "top"
-                      ? "bg-white/[0.12] text-white font-semibold"
+                      ? "bg-white text-zinc-950 font-semibold shadow-sm"
                       : "text-zinc-400 hover:text-white font-medium"
                   }`}
                 >
@@ -1161,7 +1161,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   onClick={() => setSortBy("newest")}
                   className={`px-3 py-1 rounded-full text-xs transition-all cursor-pointer ${
                     sortBy === "newest"
-                      ? "bg-white/[0.12] text-white font-semibold"
+                      ? "bg-white text-zinc-950 font-semibold shadow-sm"
                       : "text-zinc-400 hover:text-white font-medium"
                   }`}
                 >
@@ -1194,10 +1194,10 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         >
           {/* 1. Official Verified Business Owner Response (Pinned Banner - Google Maps Standard) */}
           {video.ownerResponse && (
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-2.5 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-250">
+            <div className="p-4 bg-white/[0.035] border border-white/[0.09] rounded-2xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-250">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-zinc-200/60 flex items-center justify-center shrink-0 p-0.5 ring-1 ring-white/10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-white/15 flex items-center justify-center shrink-0 p-0.5">
                     <CopoBrandLogo
                       domain={video.placeWebsite}
                       name={video.placeName}
@@ -1206,31 +1206,31 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                       bannerUrl={video.placeBannerUrl}
                       className="w-full h-full flex items-center justify-center overflow-hidden"
                       imageClassName="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-                      fallbackTextClassName="text-[10px] font-black text-zinc-950"
+                      fallbackTextClassName="text-[10px] font-bold text-zinc-950"
                     />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-extrabold text-white text-xs truncate">
+                      <span className="font-semibold text-white text-xs truncate">
                         {t("comments.responseOwner", "Response from the owner")}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[10px] font-bold tracking-tight">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 border border-white/[0.1] text-[10px] font-medium tracking-tight">
                         <ShieldCheck className="w-2.5 h-2.5 text-white" />
                         {t("business.owner", "Business Owner")}
                       </span>
                     </div>
-                    <span className="text-[10px] text-zinc-200 font-medium truncate block">
+                    <span className="text-[11px] text-zinc-400 font-normal truncate block">
                       {video.placeName}
                     </span>
                   </div>
                 </div>
 
-                <span className="text-[11px] text-zinc-200 font-medium shrink-0">
+                <span className="text-[11px] text-zinc-500 font-normal shrink-0 tabular-nums">
                   {formatRecordedDate(video.ownerResponse.respondedAt, video.ownerResponse.respondedAtMs)}
                 </span>
               </div>
 
-              <div className="pl-3 py-1 border-l-2 border-zinc-500 text-zinc-200 text-[13px] leading-relaxed font-medium bg-zinc-850 rounded-r-xl p-2.5">
+              <div className="pl-3 py-2 border-l-2 border-white/25 text-zinc-200 text-[13px] leading-relaxed font-normal bg-white/[0.025] rounded-r-xl pr-3">
                 "{video.ownerResponse.text}"
               </div>
 
@@ -1400,7 +1400,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                           {/* Reviewer / Creator Badge */}
                           {isCommentAuthorCreator && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-200 border border-white/[0.1] text-[10px] font-medium">
                               <Camera className="w-2.5 h-2.5 text-white" />
                               {t("profile.reviewer", "Reviewer")}
                             </span>
@@ -1408,20 +1408,20 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                           {/* Verified Business Owner Badge */}
                           {comment.isOwner && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-zinc-800 text-zinc-100 border border-zinc-700 text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.07] text-zinc-100 border border-white/[0.1] text-[10px] font-medium">
                               <ShieldCheck className="w-2.5 h-2.5 text-white" />
                               {t("business.owner", "Business Owner")}
                             </span>
                           )}
 
-                          <span className="text-[10px] text-zinc-200 font-medium ml-auto">
+                          <span className="text-[11px] text-zinc-500 font-normal ml-auto tabular-nums">
                             {formatRecordedDate(comment.createdAt, comment.createdAtMs)}
                           </span>
                         </div>
 
                         {/* Comment Text */}
                         {comment.text && (
-                          <p className="text-zinc-200 mt-1 text-[13px] leading-relaxed whitespace-pre-wrap font-normal">
+                          <p className="text-zinc-200 mt-1 text-[13.5px] leading-relaxed whitespace-pre-wrap font-normal">
                             {comment.text}
                           </p>
                         )}
@@ -1430,28 +1430,28 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         {renderAttachmentGrid(comment.attachments, displayName, false)}
 
                         {/* Badges & Actions Row (Likes, Reply, Creator Heart, Delete) */}
-                        <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-zinc-200">
+                        <div className="flex items-center gap-4 mt-2 text-xs font-medium text-zinc-400">
                           {/* Like Button */}
                           <button
                             type="button"
                             onClick={() => handleCommentLikeClick(comment.id)}
-                            className={`flex items-center gap-1 transition-colors hover:text-red-500 cursor-pointer ${
-                              comment.isLiked ? "text-red-500 font-bold" : "text-zinc-200"
+                            className={`flex items-center gap-1.5 transition-colors hover:text-rose-400 cursor-pointer ${
+                              comment.isLiked ? "text-rose-500 font-semibold" : "text-zinc-400"
                             }`}
                           >
                             <Heart
                               className={`w-3.5 h-3.5 transition-transform active:scale-125 ${
-                                comment.isLiked ? "fill-red-500 text-red-500 scale-110" : ""
+                                comment.isLiked ? "fill-rose-500 text-rose-500 scale-110" : ""
                               }`}
                             />
-                            <span className="text-[11px] font-bold">{comment.likesCount || 0}</span>
+                            <span className="text-[11.5px] font-medium tabular-nums">{comment.likesCount || 0}</span>
                           </button>
 
                           {/* Reply Button */}
                           <button
                             type="button"
                             onClick={() => handleStartReply(comment)}
-                            className="text-zinc-200 hover:text-white transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                            className="text-zinc-400 hover:text-white transition-colors text-[11.5px] font-medium flex items-center gap-1 cursor-pointer"
                           >
                             <CornerDownRight className="w-3 h-3" />
                             <span>{t("comments.reply", "Reply")}</span>
@@ -1463,7 +1463,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleDeleteCommentAction(video.id, comment.id)}
-                                className="text-zinc-400 hover:text-red-400 transition-colors ml-auto opacity-90 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 cursor-pointer flex items-center gap-1"
+                                className="text-zinc-500 hover:text-red-400 transition-colors ml-auto opacity-90 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 cursor-pointer flex items-center gap-1"
                                 title="Delete comment"
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-red-400" />
@@ -1479,9 +1479,9 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                         {/* Toggle Replies button */}
                         <button
                           onClick={() => handleToggleReplies(comment.id)}
-                          className="flex items-center gap-1.5 text-xs font-bold text-zinc-200 hover:text-white transition-colors cursor-pointer py-1"
+                          className="flex items-center gap-1.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer py-0.5"
                         >
-                          <div className="w-4 h-0.5 bg-zinc-500 rounded" />
+                          <div className="w-4 h-px bg-white/25 rounded" />
                           <span>
                             {isExpanded
                               ? `${t("common.hide", "Hide")} ${comment.replies?.length} ${comment.replies?.length === 1 ? t("comments.reply", "reply") : t("comments.replies", "replies")}`
@@ -1496,7 +1496,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
 
                         {/* Collapsible replies list */}
                         {isExpanded && (
-                          <div className="space-y-3 border-l-2 border-zinc-800 pl-3 pt-1">
+                          <div className="space-y-3 border-l border-white/[0.1] pl-3 pt-1">
                             {comment.replies?.map((reply) => {
                               const isReplyAuthorCreator =
                                 Boolean(reply.isCreator) ||
@@ -1581,44 +1581,44 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                                         </span>
                                       )}
 
-                                      <span className="text-[10px] text-zinc-200 ml-auto">
-                                        {formatRecordedDate(reply.createdAt, reply.createdAtMs)}
-                                      </span>
-                                    </div>
+                                        <span className="text-[10.5px] text-zinc-500 ml-auto tabular-nums">
+                                          {formatRecordedDate(reply.createdAt, reply.createdAtMs)}
+                                        </span>
+                                      </div>
 
-                                    {/* Reply text with optional replyTo tag */}
-                                    {reply.text && (
-                                      <p className="text-zinc-200 mt-0.5 text-xs leading-relaxed font-normal">
-                                        {reply.text}
-                                      </p>
-                                    )}
+                                      {/* Reply text with optional replyTo tag */}
+                                      {reply.text && (
+                                        <p className="text-zinc-200 mt-0.5 text-xs leading-relaxed font-normal">
+                                          {reply.text}
+                                        </p>
+                                      )}
 
-                                    {/* Reply Attachments / Proof */}
-                                    {renderAttachmentGrid(reply.attachments, replyDisplayName, true)}
+                                      {/* Reply Attachments / Proof */}
+                                      {renderAttachmentGrid(reply.attachments, replyDisplayName, true)}
 
-                                    {/* Reply Actions (Like & Delete) */}
-                                    <div className="flex items-center gap-3 mt-1.5 text-[10px] font-semibold text-zinc-200">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCommentLikeClick(comment.id, reply.id)}
-                                        className={`flex items-center gap-1 hover:text-red-500 transition-colors cursor-pointer ${
-                                          reply.isLiked ? "text-red-500 font-bold" : "text-zinc-200"
-                                        }`}
-                                      >
-                                        <Heart
-                                          className={`w-3 h-3 transition-transform active:scale-125 ${
-                                            reply.isLiked ? "fill-red-500 text-red-500" : ""
+                                      {/* Reply Actions (Like & Delete) */}
+                                      <div className="flex items-center gap-3.5 mt-1.5 text-[11px] font-medium text-zinc-400">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCommentLikeClick(comment.id, reply.id)}
+                                          className={`flex items-center gap-1 hover:text-rose-400 transition-colors cursor-pointer ${
+                                            reply.isLiked ? "text-rose-500 font-semibold" : "text-zinc-400"
                                           }`}
-                                        />
-                                        <span>{reply.likesCount || 0}</span>
-                                      </button>
+                                        >
+                                          <Heart
+                                            className={`w-3 h-3 transition-transform active:scale-125 ${
+                                              reply.isLiked ? "fill-rose-500 text-rose-500" : ""
+                                            }`}
+                                          />
+                                          <span className="tabular-nums">{reply.likesCount || 0}</span>
+                                        </button>
 
-                                      <button
-                                        onClick={() => handleStartReply(comment)}
-                                        className="hover:text-white font-bold transition-colors cursor-pointer"
-                                      >
-                                        {t("comments.reply", "Reply")}
-                                      </button>
+                                        <button
+                                          onClick={() => handleStartReply(comment)}
+                                          className="hover:text-white font-medium transition-colors cursor-pointer"
+                                        >
+                                          {t("comments.reply", "Reply")}
+                                        </button>
 
                                       {(isCurrentReplyUser || isUserOwner || isUserCreator) &&
                                         onDeleteComment && (
@@ -1663,75 +1663,75 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   {t("comments.addCommentPlaceholder", "Add a comment...")}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRequireAuth?.();
-                }}
-                className="px-3.5 py-1.5 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-xs font-bold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
-              >
-                <LogIn className="w-3 h-3 text-zinc-950 stroke-[2.25]" />
-                <span>{t("nav.login", "Sign In")}</span>
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Replying context banner */}
-              {replyingTo && (
-                <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-xl text-xs text-zinc-200 animate-in slide-in-from-bottom-1 duration-150">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <CornerDownRight className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                    <span className="font-medium text-zinc-200">{t("comments.replyingTo", "Replying to")}</span>
-                    <span className="font-bold text-white truncate">{replyingTo.name}</span>
-                  </div>
-                  <button
-                    onClick={handleCancelReply}
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-zinc-800 cursor-pointer"
-                    title={t("comments.cancelReply", "Cancel reply")}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-
-              {/* Verified Business Owner Identity Badge */}
-              {isUserOwner && (
-                <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative shrink-0 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center p-0.5">
-                      <CopoBrandLogo
-                        domain={video?.placeWebsite}
-                        name={placeName || video?.placeName}
-                        website={video?.placeWebsite}
-                        logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
-                        className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                        imageClassName="w-full h-full object-contain"
-                        fallbackTextClassName="text-[9px] font-black text-zinc-950"
-                      />
-                      <ShieldCheck className="w-3.5 h-3.5 text-white absolute -bottom-1 -right-1 bg-zinc-950 rounded-full" />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRequireAuth?.();
+                  }}
+                  className="px-3.5 py-1.5 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-xs font-semibold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
+                >
+                  <LogIn className="w-3 h-3 text-zinc-950 stroke-[2.2]" />
+                  <span>{t("nav.login", "Sign In")}</span>
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Replying context banner */}
+                {replyingTo && (
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-white/[0.05] border border-white/[0.1] rounded-xl text-xs text-zinc-200 animate-in slide-in-from-bottom-1 duration-150">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <CornerDownRight className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <span className="font-normal text-zinc-400">{t("comments.replyingTo", "Replying to")}</span>
+                      <span className="font-semibold text-white truncate">{replyingTo.name}</span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-white truncate flex items-center gap-1.5">
-                        <span>{placeName || video.placeName}</span>
-                        <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-bold border border-zinc-700 tracking-wide">
-                          <ShieldCheck className="w-2.5 h-2.5 text-white" />
-                          {t("business.owner", "Business Owner")}
-                        </span>
-                      </p>
-                      <p className="text-[10px] text-zinc-400 truncate">
-                        {editingOwnerResponse
-                          ? t("comments.editingPinnedResponseBanner", "Updating official pinned response card")
-                          : t("comments.respondingAsOfficialBusiness", "Posting comments as business owner")}
-                      </p>
+                    <button
+                      onClick={handleCancelReply}
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                      title={t("comments.cancelReply", "Cancel reply")}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Verified Business Owner Identity Badge */}
+                {isUserOwner && (
+                  <div className="flex items-center justify-between bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative shrink-0 w-7 h-7 rounded-lg overflow-hidden bg-white shadow-xs border border-white/20 flex items-center justify-center p-0.5">
+                        <CopoBrandLogo
+                          domain={video?.placeWebsite}
+                          name={placeName || video?.placeName}
+                          website={video?.placeWebsite}
+                          logoUrl={placeLogoUrlProp || video?.placeLogoUrl}
+                          className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                          imageClassName="w-full h-full object-contain"
+                          fallbackTextClassName="text-[9px] font-bold text-zinc-950"
+                        />
+                        <ShieldCheck className="w-3.5 h-3.5 text-white absolute -bottom-1 -right-1 bg-[#08080b] rounded-full" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-white truncate flex items-center gap-1.5">
+                          <span>{placeName || video.placeName}</span>
+                          <span className="inline-flex items-center gap-1 text-[9.5px] px-1.5 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 font-medium border border-white/[0.1]">
+                            <ShieldCheck className="w-2.5 h-2.5 text-white" />
+                            {t("business.owner", "Business Owner")}
+                          </span>
+                        </p>
+                        <p className="text-[10.5px] text-zinc-400 truncate">
+                          {editingOwnerResponse
+                            ? t("comments.editingPinnedResponseBanner", "Updating official pinned response card")
+                            : t("comments.respondingAsOfficialBusiness", "Posting comments as business owner")}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Attachment Preview Tray (Photos selected before posting) */}
-              {(attachedImages.length > 0 || isUploadingAttachments) && (
-                <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-2 bg-zinc-900 border border-zinc-800 rounded-2xl animate-in slide-in-from-bottom-2 duration-150 scrollbar-none">
+                {/* Attachment Preview Tray (Photos selected before posting) */}
+                {(attachedImages.length > 0 || isUploadingAttachments) && (
+                  <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-2 bg-white/[0.03] border border-white/[0.09] rounded-2xl animate-in slide-in-from-bottom-2 duration-150 scrollbar-none">
                   {attachedImages.map((imgUrl, idx) => (
                     <div key={idx} className="relative group shrink-0 w-14 h-14 rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950 shadow-xs">
                       <img src={imgUrl} alt={`Attachment ${idx + 1}`} className="w-full h-full object-cover" />

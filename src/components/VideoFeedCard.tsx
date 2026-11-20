@@ -446,7 +446,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }`}
           />
         </button>
-        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight tabular-nums ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {typeof video.bookmarksCount === "number"
             ? video.bookmarksCount
             : typeof (video as any).bookmarks === "number"
@@ -472,7 +472,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
         >
           <Share2 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[1.9]" />
         </button>
-        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight tabular-nums ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {video.sharesCount || video.shares || 0}
         </span>
       </div>
@@ -639,7 +639,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                 >
                   <Menu className="w-5 h-5 text-white stroke-[2.2]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white font-black text-[10px] flex items-center justify-center border-2 border-black shadow-lg animate-pulse">
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white font-semibold text-[10px] tabular-nums flex items-center justify-center border-2 border-[#050506] shadow-lg">
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
@@ -656,7 +656,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   onOpenPlace(targetPlaceId, video.id);
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-2xl sm:rounded-3xl bg-black/60 hover:bg-black/78 backdrop-blur-2xl border border-white/[0.14] hover:border-white/[0.28] text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
+                className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-[#0a0a0d]/65 hover:bg-[#0a0a0d]/82 backdrop-blur-2xl border border-white/[0.13] hover:border-white/[0.24] text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-[0_12px_32px_rgba(0,0,0,0.55)] active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
               >
                 {(() => {
                   const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
@@ -674,12 +674,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                         bannerUrl={businessBannerUrl || video.placeBannerUrl}
                         loading="eager"
                         fetchPriority={isActive || isNear ? "high" : "auto"}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
-                        imageClassName="w-full h-full object-contain rounded-lg sm:rounded-xl"
+                        className="w-9 h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
+                        imageClassName="w-full h-full object-contain rounded-lg"
                         fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                       />
                       <div className="min-w-0 flex-1 py-0.5">
-                        <span className="leading-snug font-semibold text-[13px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
+                        <span className="leading-snug font-semibold text-[13px] sm:text-[13.5px] text-white tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
                           {(() => {
                             const fullName = (cardName || "").trim();
                             const words = fullName.split(/\s+/);
@@ -697,7 +697,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                           })()}
                         </span>
                         {!isEmbed && (
-                          <div className="flex items-center gap-1 text-[10.5px] text-[#E8C78A] font-semibold leading-none mt-0.5">
+                          <div className="flex items-center gap-1 text-[10.5px] text-[#E8C78A] font-semibold leading-none mt-0.5 tabular-nums">
                             <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />
                             <span>{effectiveRating}</span>
                             <span className="text-zinc-300 font-normal">
@@ -743,7 +743,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             <footer
               id={`copo-video-bottom-info-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl sm:rounded-3xl bg-black/60 hover:bg-black/75 backdrop-blur-2xl border border-white/[0.14] text-white shadow-2xl transition-all"
+              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl bg-[#0a0a0d]/65 hover:bg-[#0a0a0d]/82 backdrop-blur-2xl border border-white/[0.13] text-white shadow-[0_12px_32px_rgba(0,0,0,0.55)] transition-all"
             >
               <div className="flex flex-col gap-1 min-w-0">
                 {/* Line 1: Reviewer Anonymous ID / Username + Verified Badge + Timestamp */}

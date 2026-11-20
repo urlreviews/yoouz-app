@@ -1137,10 +1137,10 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
           return (
             <div
               id="copo-floating-nav-buttons"
-              className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 ${
+              className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 z-50 fixed top-1/2 -translate-y-1/2 transition-all duration-200 ${
                 commentsOpen
-                  ? "relative z-30 self-center mr-1 lg:mr-2"
-                  : "z-50 fixed top-1/2 -translate-y-1/2 right-4 lg:right-8 md:transition-all md:duration-200"
+                  ? "right-[440px] lg:right-[452px]"
+                  : "right-4 lg:right-8"
               }`}
             >
               <button

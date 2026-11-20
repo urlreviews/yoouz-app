@@ -1159,7 +1159,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         id="google-maps-creator-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[360px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform"
+        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform"
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1192,7 +1192,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
+          className="relative h-36 sm:h-40 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Top-Left Back Button (Both Desktop & Mobile) */}
           <button
@@ -1208,7 +1208,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </button>
 
           {effectiveBanner ? (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 relative overflow-hidden flex items-center justify-center group">
+            <div className="absolute inset-0 w-full h-full bg-[#0a0a0d] relative overflow-hidden flex items-center justify-center group">
               {(() => {
                 const resolvedBanner = getProxiedImageUrl(effectiveBanner);
                 const extRef = /^https?:\/\//i.test(resolvedBanner) ? "no-referrer" : undefined;
@@ -1235,17 +1235,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   </>
                 );
               })()}
-              <div className="absolute inset-0 bg-black/25 z-20 pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_38%,rgba(0,0,0,0.22)_100%)] z-20 pointer-events-none" />
             </div>
           ) : (
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.15),transparent_70%)]" />
-              <div className="px-3.5 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm z-10 shadow-sm">
-                <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase select-none">
-                  {t("profile.communityMember", "Community Member")}
-                </span>
-              </div>
+            <div className="absolute inset-0 w-full h-full bg-[#0a0a0e] overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.08),transparent_68%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(232,199,138,0.06),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.55)_45%,transparent_100%)]" />
             </div>
           )}
 
@@ -1282,9 +1278,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           setIsSettingsMenuOpen(false);
                           setIsEditModalOpen(true);
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <Edit3 className="w-4 h-4 text-zinc-200" />
+                        <Edit3 className="w-4 h-4 text-zinc-300" />
                         <span>{t("profile.editProfile", "Edit Profile")}</span>
                       </button>
 
@@ -1293,9 +1289,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           setIsSettingsMenuOpen(false);
                           handleShare();
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4 text-zinc-200" />
+                        <Share2 className="w-4 h-4 text-zinc-300" />
                         <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
                       </button>
 
@@ -1306,9 +1302,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             setIsSettingsMenuOpen(false);
                             onOpenNotificationSettings();
                           }}
-                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                          className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                         >
-                          <Bell className="w-4 h-4 text-zinc-200" />
+                          <Bell className="w-4 h-4 text-zinc-300" />
                           <span>{t("profile.notificationPreferences", "Notification Preferences")}</span>
                         </button>
                       )}
@@ -1321,9 +1317,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           setIsSettingsMenuOpen(false);
                           handleShare();
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4 text-zinc-200" />
+                        <Share2 className="w-4 h-4 text-zinc-300" />
                         <span>{t("profile.shareProfileLink", "Share Profile Link")}</span>
                       </button>
 
@@ -1332,16 +1328,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           setIsSettingsMenuOpen(false);
                           handleToggleSaveCreator();
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-zinc-200 hover:bg-zinc-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                       >
                         {isSaved ? (
                           <>
-                            <BookmarkCheck className="w-4 h-4 text-zinc-200" />
+                            <BookmarkCheck className="w-4 h-4 text-[#E8C78A]" />
                             <span>{t("profile.savedReviewer", "Remove from Saved")}</span>
                           </>
                         ) : (
                           <>
-                            <Bookmark className="w-4 h-4 text-zinc-200" />
+                            <Bookmark className="w-4 h-4 text-zinc-300" />
                             <span>{t("profile.saveReviewer", "Save Reviewer")}</span>
                           </>
                         )}
@@ -1355,7 +1351,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             triggerHaptic("medium");
                             if (author) onOpenReport(author);
                           }}
-                          className="w-full px-4 py-2.5 text-left text-xs font-bold text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-zinc-800/80"
+                          className="w-full px-4 py-2.5 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-white/[0.08]"
                         >
                           <Flag className="w-4 h-4 text-red-400" />
                           <span>{t("profile.reportReviewer", "Report or Block Reviewer")}</span>
@@ -1369,13 +1365,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
 
           {copiedNotification && (
-            <div className="absolute top-14 right-3 bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-md shadow-lg z-40 animate-in fade-in border border-zinc-800">
+            <div className="absolute top-14 right-3 bg-[#141418] text-white text-xs px-3 py-1.5 rounded-full shadow-lg z-40 animate-in fade-in border border-white/[0.12]">
               {copiedNotification}
             </div>
           )}
 
-          {/* Overlapping Creator Avatar - Exact squircle shape and styling matching Business Profile Logo */}
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-[#050506] bg-[#121216] shadow-2xl flex items-center justify-center z-20 p-1.5 sm:p-2 ring-1 ring-white/[0.12] overflow-hidden group">
+          {/* Overlapping Circular User Avatar (Clearly differentiates People = circle vs Brands = rounded square) */}
+          <div className="absolute -bottom-9 left-5 w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-full border-[4px] border-[#050506] bg-[#121216] shadow-[0_12px_32px_rgba(0,0,0,0.65)] flex items-center justify-center z-20 ring-1 ring-white/[0.14] overflow-hidden group">
             {!avatarImgError ? (() => {
               const creatorAvatarSrc = getSafeAvatarUrl(effectiveAvatar, displayName, author.handle);
               return (
@@ -1385,17 +1381,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   loading="eager"
                   decoding="sync"
                   fetchPriority="high"
-                  className="w-full h-full object-cover rounded-[16px] sm:rounded-[18px] [image-rendering:-webkit-optimize-contrast]"
+                  className="w-full h-full object-cover rounded-full [image-rendering:-webkit-optimize-contrast]"
                   referrerPolicy={/^https?:\/\//i.test(creatorAvatarSrc) ? "no-referrer" : undefined}
                   onError={() => setAvatarImgError(true)}
                 />
               );
             })() : (
               <div
-                className="w-full h-full rounded-[16px] sm:rounded-[18px] flex items-center justify-center shadow-inner select-none"
+                className="w-full h-full rounded-full flex items-center justify-center shadow-inner select-none"
                 style={{ backgroundColor: getAvatarColor(displayName || author.name || "User", author.handle).bg }}
               >
-                <span className="font-black text-3xl sm:text-5xl text-white drop-shadow-md font-sans">
+                <span className="font-bold text-3xl text-white drop-shadow-md font-sans">
                   {getFirstLetter(displayName || author.name || "User")}
                 </span>
               </div>
@@ -1404,17 +1400,17 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             {isOwner && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-[24px] sm:rounded-[28px]"
+                className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full"
                 title={t("profile.changePhoto", "Change Photo")}
               >
-                <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Camera className="w-5 h-5" />
               </button>
             )}
           </div>
         </div>
 
         {/* Creator Details Header */}
-        <div className="px-6 pt-14 pb-3 bg-[#050506]">
+        <div className="px-5 pt-11 sm:pt-12 pb-2 bg-[#050506]">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="min-w-0 flex-1 pr-2">
               <h2 className="text-2xl font-semibold text-white tracking-[-0.03em] leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap font-['Google_Sans',sans-serif]" dir="auto">
@@ -1465,10 +1461,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
           <div className="space-y-2">
             {/* Clean Stats Row */}
-            <div className="flex items-center gap-3 text-sm flex-wrap text-zinc-300">
+            <div className="flex items-center gap-3.5 text-sm flex-wrap text-zinc-300 tabular-nums">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-white text-base">{authorVideos.length}</span>
-                <span className="text-zinc-400 text-xs font-medium">
+                <span className="font-semibold text-white text-[15px]">{authorVideos.length}</span>
+                <span className="text-zinc-400 text-xs font-normal">
                   {authorVideos.length === 1 ? t("common.photoReview", "Photo Review") : t("common.photoReviews", "Photo Reviews")}
                 </span>
               </div>
@@ -1477,16 +1473,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
                 className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition cursor-pointer group"
               >
-                <span className="font-extrabold text-white text-base group-hover:underline">{effectiveFollowersCount}</span>
-                <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.followers", "followers")}</span>
+                <span className="font-semibold text-white text-[15px] group-hover:underline">{effectiveFollowersCount}</span>
+                <span className="text-zinc-400 text-xs font-normal group-hover:underline">{t("profile.followers", "Followers")}</span>
               </button>
               <button
                 type="button"
                 onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
                 className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition cursor-pointer group"
               >
-                <span className="font-extrabold text-white text-base group-hover:underline">{effectiveFollowingCount}</span>
-                <span className="text-zinc-400 text-xs font-medium group-hover:underline">{t("profile.following", "following")}</span>
+                <span className="font-semibold text-white text-[15px] group-hover:underline">{effectiveFollowingCount}</span>
+                <span className="text-zinc-400 text-xs font-normal group-hover:underline">{t("profile.following", "Following")}</span>
               </button>
             </div>
 
@@ -1499,15 +1495,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
             {/* Premium Metadata Bar: Location & Joined Date */}
             {(displayLocation || (!isBusinessProfile && memberSinceStr)) && (
-              <div className="flex items-center gap-3 text-xs text-zinc-400 font-medium flex-wrap pt-2.5 mt-2 border-t border-zinc-800/60">
+              <div className="flex items-center gap-3.5 text-xs text-zinc-400 font-normal flex-wrap pt-2 mt-1.5 border-t border-white/[0.06]">
                 {displayLocation ? (
                   <div className="flex items-center gap-1.5 text-zinc-300">
-                    <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     <span className="truncate">{displayLocation}</span>
                   </div>
                 ) : null}
-
-
 
                 {!isBusinessProfile && memberSinceStr ? (
                   <div className="flex items-center gap-1.5 text-zinc-400">
@@ -1522,55 +1516,64 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
         </div>
 
-        {/* Tabs: Overview | Reviews | About */}
-        <div className="flex items-center border-b border-white/[0.07] bg-[#050506] px-5 text-sm font-medium text-zinc-400 shrink-0">
-          <button
-            onClick={() => handleTabClick("overview")}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
-              activeTab === "overview"
-                ? "border-white text-white font-semibold"
-                : "border-transparent hover:text-zinc-200"
-            }`}
-          >
-            {t("profile.overviewTab", "Overview")}
-          </button>
-          <button
-            onClick={() => handleTabClick("reviews")}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "reviews"
-                ? "border-white text-white font-semibold"
-                : "border-transparent hover:text-zinc-200"
-            }`}
-          >
-            <span>{t("common.photoReviews", "Reviews")}</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
-              {authorVideos.length}
-            </span>
-          </button>
-          <button
-            onClick={() => handleTabClick("about")}
-            className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
-              activeTab === "about"
-                ? "border-white text-white font-semibold"
-                : "border-transparent hover:text-zinc-200"
-            }`}
-          >
-            {t("profile.aboutTab", "About")}
-          </button>
+        {/* Flagship Liquid-Glass Segmented Control: Overview | Reviews | About */}
+        <div className="px-5 py-2.5 bg-[#050506] shrink-0">
+          <div className="grid grid-cols-3 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+            <button
+              type="button"
+              onClick={() => handleTabClick("overview")}
+              className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
+                activeTab === "overview"
+                  ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-white font-medium"
+              }`}
+            >
+              {t("profile.overviewTab", "Overview")}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabClick("reviews")}
+              className={`py-1.5 rounded-full text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "reviews"
+                  ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-white font-medium"
+              }`}
+            >
+              <span>{t("common.photoReviews", "Reviews")}</span>
+              <span
+                className={`text-[11px] tabular-nums ${
+                  activeTab === "reviews" ? "text-zinc-600 font-semibold" : "text-zinc-500"
+                }`}
+              >
+                {authorVideos.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabClick("about")}
+              className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
+                activeTab === "about"
+                  ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-white font-medium"
+              }`}
+            >
+              {t("profile.aboutTab", "About")}
+            </button>
+          </div>
         </div>
 
         {/* Main Content Area */}
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-white/[0.06] bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="divide-y divide-white/[0.06]">
+            <div className="px-5 py-3 space-y-5">
               {/* Action Buttons Row */}
-              <div className="px-3 sm:px-5 py-4 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+              <div className="py-1 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}
@@ -1578,10 +1581,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors border ${
                       isSaved
                         ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
-                        : "bg-white/[0.05] text-zinc-100 border-white/[0.09] group-hover:bg-white/[0.11]"
+                        : "bg-white/[0.05] text-zinc-100 border-white/[0.09] group-hover:bg-white/[0.11] group-hover:border-white/[0.18]"
                     }`}
                   >
                     {isSaved ? (
@@ -1604,7 +1607,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.viewPhotoReviews", "View Photo Reviews")}
                 >
-                  <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
                     <Camera className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
                   <span className="font-medium text-[11px]">{t("place.reviews", "Reviews")}</span>
@@ -1619,7 +1622,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.shareProfile", "Share Profile")}
                 >
-                  <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
                     <Share2 className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
                   <span className="font-medium text-[11px]">{t("common.share", "Share")}</span>
@@ -1635,7 +1638,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                     title={t("common.chat", "Message")}
                   >
-                    <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                    <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
                       <MessageSquare className="w-[18px] h-[18px] stroke-[1.9]" />
                     </div>
                     <span className="font-medium text-[11px]">{t("common.chat", "Message")}</span>
@@ -1644,36 +1647,34 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {/* Badges & Status Section */}
-              <div className="p-5 space-y-3">
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[10.5px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Average Rating")}</span>
-                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
-                      {avgRating !== "—" ? (
-                        <>
-                          <Star className="w-4 h-4 fill-[#E8C78A] text-[#E8C78A]" />
-                          <span>{avgRating}</span>
-                          <span className="text-zinc-500 text-xs font-normal">/ 5.0</span>
-                        </>
-                      ) : (
-                        <span className="text-zinc-400 font-semibold">—</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[10.5px] font-medium text-zinc-400 block mb-1">{t("profile.totalReviews", "Total Reviews")}</span>
-                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
-                      <Camera className="w-4 h-4 text-zinc-400" />
-                      <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.photo", "Photo") : t("feed.photos", "Photos")}</span>
-                    </span>
-                  </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                  <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Average Rating")}</span>
+                  <span className="text-sm font-semibold text-white flex items-center gap-1.5 tabular-nums">
+                    {avgRating !== "—" ? (
+                      <>
+                        <Star className="w-4 h-4 fill-[#E8C78A] text-[#E8C78A]" />
+                        <span>{avgRating}</span>
+                        <span className="text-zinc-500 text-xs font-normal">/ 5.0</span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-400 font-semibold">—</span>
+                    )}
+                  </span>
+                </div>
+                <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                  <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalReviews", "Total Reviews")}</span>
+                  <span className="text-sm font-semibold text-white flex items-center gap-1.5 tabular-nums">
+                    <Camera className="w-4 h-4 text-zinc-400" />
+                    <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.photo", "Photo") : t("feed.photos", "Photos")}</span>
+                  </span>
                 </div>
               </div>
 
               {/* Photo Reviews Preview Section */}
-              <div className="p-5 space-y-3">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <h3 className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5 tabular-nums">
                     <Camera className="w-3.5 h-3.5 text-zinc-400" />
                     <span>{t("place.reviews", "Photo Reviews")} ({authorVideos.length})</span>
                   </h3>
@@ -1739,15 +1740,15 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
           {/* Tab 2: REVIEWS */}
           {activeTab === "reviews" && (
-            <div className="p-5 space-y-4">
+            <div className="px-5 py-3 space-y-3.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-zinc-300 tabular-nums">
                   {t("profile.allPhotoReviews", "All Photo Reviews")} ({authorVideos.length})
                 </h3>
               </div>
 
               {authorVideos.length === 0 ? (
-                <div className="bg-zinc-900/60 rounded-2xl p-8 text-center border border-zinc-800 text-zinc-300 text-xs">
+                <div className="bg-white/[0.025] rounded-2xl p-8 text-center border border-white/[0.08] text-zinc-400 text-xs">
                   {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
                 </div>
               ) : (
@@ -1761,10 +1762,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       <div
                         key={v.id}
                         onClick={() => onSelectVideo(v.id)}
-                        className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
+                        className={`relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg ring-1 ring-white/[0.08] ${
                           isCurrentActive
                             ? "ring-2 ring-white"
-                            : "hover:opacity-90"
+                            : "hover:opacity-95 hover:ring-white/[0.2]"
                         }`}
                       >
                         <CopoVideoThumbnail
@@ -1772,8 +1773,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           alt={v.placeName}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12] tabular-nums">
                           <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                           <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
@@ -1792,10 +1793,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         )}
                         {/* Bottom Meta Info - Business Name & Views */}
                         <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                          <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
+                          <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
                             {v.placeName || formatBusinessName(v.placeId) || "Business"}
                           </span>
-                          <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
+                          <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium drop-shadow-md tabular-nums">
                             <Eye className="w-2.5 h-2.5 shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
@@ -1810,51 +1811,51 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
           {/* Tab 3: ABOUT */}
           {activeTab === "about" && (
-            <div className="p-5 space-y-5">
+            <div className="px-5 py-3 space-y-5">
               {displayBio ? (
-                <div>
-                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
+                  <h3 className="text-xs font-semibold text-zinc-300 mb-2 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-zinc-400" />
                     <span>{t("profile.aboutUser", `About ${displayName || "User"}`, { name: displayName || "User" })}</span>
                   </h3>
-                  <p className="text-zinc-200 text-sm leading-relaxed font-normal">
+                  <p className="text-zinc-300 text-[13px] leading-relaxed font-normal">
                     {displayBio}
                   </p>
                 </div>
               ) : null}
 
-              <div className={displayBio ? "pt-4 border-t border-zinc-800 space-y-3" : "space-y-3"}>
-                <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider">
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-zinc-300">
                   {t("profile.communityStats", "Community Stats")}
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5 tabular-nums">
                   <button
                     type="button"
                     onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
-                    className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
+                    className="bg-white/[0.03] hover:bg-white/[0.06] p-3.5 rounded-2xl border border-white/[0.08] transition text-left cursor-pointer group"
                   >
-                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-black text-white">{effectiveFollowersCount}</span>
+                    <span className="text-[11px] font-medium text-zinc-400 group-hover:text-zinc-200 block mb-1">{t("profile.followers", "Followers")}</span>
+                    <span className="text-base font-semibold text-white">{effectiveFollowersCount}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
-                    className="bg-zinc-900/80 hover:bg-zinc-800 p-3 rounded-2xl border border-zinc-800 transition text-left cursor-pointer group"
+                    className="bg-white/[0.03] hover:bg-white/[0.06] p-3.5 rounded-2xl border border-white/[0.08] transition text-left cursor-pointer group"
                   >
-                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-zinc-200 uppercase block mb-1">{t("profile.following", "Following")}</span>
-                    <span className="text-base font-black text-white">{effectiveFollowingCount}</span>
+                    <span className="text-[11px] font-medium text-zinc-400 group-hover:text-zinc-200 block mb-1">{t("profile.following", "Following")}</span>
+                    <span className="text-base font-semibold text-white">{effectiveFollowingCount}</span>
                   </button>
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
-                    <span className="text-base font-black text-white">{totalLikes}</span>
+                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
+                    <span className="text-base font-semibold text-white">{totalLikes}</span>
                   </div>
-                  <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[10.5px] font-semibold text-zinc-400 block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
-                    <span className="text-base font-black text-white">{authorVideos.length}</span>
+                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
+                    <span className="text-base font-semibold text-white">{authorVideos.length}</span>
                   </div>
-                  <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[10.5px] font-semibold text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
-                    <span className="text-base font-black text-white inline-flex items-center gap-1.5">
+                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
+                    <span className="text-base font-semibold text-white inline-flex items-center gap-1.5">
                       {avgRating !== "—" ? (
                         <>
                           <Star className="w-3.5 h-3.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />

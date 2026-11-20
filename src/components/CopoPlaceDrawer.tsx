@@ -1474,7 +1474,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         id="google-maps-business-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[360px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1500,7 +1500,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
+          className="relative h-40 sm:h-44 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Mobile Pull Handle Indicator Overlay */}
           <div 
@@ -1588,7 +1588,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-black/15 to-black/25 pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.72)_38%,rgba(0,0,0,0.22)_100%)] pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
@@ -1637,13 +1637,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             />
               );
             })()}
-            {/* Subtle dark gradient overlay once banner photo is visibly loaded */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-black/20 to-black/30 z-20 pointer-events-none" />
+            {/* Seamless Obsidian bottom melt over banner photo */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.72)_38%,rgba(0,0,0,0.22)_100%)] z-20 pointer-events-none" />
           </div>
         ) : null}
 
-        {/* Overlapping Business Logo - Always render signature brand logo box */}
-        <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-white bg-white flex items-center justify-center z-20 p-0 ring-1 ring-black/15 overflow-hidden group transition-all duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        {/* Overlapping Business Logo - Refined Apple-proportioned Brand Tile */}
+        <div className="absolute -bottom-9 left-5 w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-[20px] sm:rounded-[22px] border-[3px] border-[#050506] bg-white flex items-center justify-center z-20 p-0 ring-1 ring-white/20 overflow-hidden group transition-all duration-300 shadow-[0_12px_32px_rgba(0,0,0,0.65)]">
           <CopoBrandLogo
             key={`logo-${drawerDomain || place.id}`}
             domain={drawerDomain || undefined}
@@ -1652,8 +1652,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             logoUrl={primaryLogoUrl || place.logoUrl}
             bannerUrl={effectiveBanner || place.bannerUrl || place.ogImage}
             className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-            imageClassName="w-full h-full object-contain p-1 sm:p-1.5 rounded-[18px] sm:rounded-[22px]"
-            fallbackTextClassName="font-black text-3xl sm:text-5xl text-zinc-950"
+            imageClassName="w-full h-full object-contain p-1.5 rounded-[16px]"
+            fallbackTextClassName="font-bold text-2xl sm:text-3xl text-zinc-950"
             onLoad={() => {
               setLogoLoaded(true);
               setLogoError(false);
@@ -1663,7 +1663,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className="px-6 pb-3 bg-[#050506] border-b border-white/[0.07] pt-12 sm:pt-16">
+      <div className="px-5 pb-2 bg-[#050506] pt-11 sm:pt-12">
         {/* Title & Follow Action Bar */}
         <div className="flex items-start justify-between gap-3 w-full mb-2">
           <div className="min-w-0 flex-1">
@@ -1699,18 +1699,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             )}
           </div>
 
-          {/* Business Follow Button */}
+          {/* Business Follow Button (Secondary Obsidian Glass Pill — Add Review stays sole pure-white Focal CTA) */}
           {onToggleFollowPlace && (
             <button
               onClick={() => onToggleFollowPlace(place.id)}
               onMouseEnter={() => setIsHoveredUnfollow(true)}
               onMouseLeave={() => setIsHoveredUnfollow(false)}
-              className={`px-4 py-1.5 rounded-full font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 mt-1 ${
+              className={`px-3.5 py-1.5 rounded-full font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 mt-0.5 ${
                 place.isFollowed
                   ? isHoveredUnfollow
                     ? "bg-red-500/15 text-red-400 border-red-500/30"
-                    : "bg-white/[0.06] text-zinc-100 border-white/[0.12] hover:bg-white/[0.11]"
-                  : "bg-white text-zinc-950 hover:bg-zinc-200 border-white shadow-[0_4px_16px_rgba(255,255,255,0.12)]"
+                    : "bg-white/[0.05] text-zinc-200 border-white/[0.1] hover:bg-white/[0.1]"
+                  : "bg-white/[0.09] text-white hover:bg-white/[0.16] border-white/[0.16]"
               }`}
               title={place.isFollowed ? (isHoveredUnfollow ? t("business.unfollowTitle", "Unfollow this business") : t("business.followingTitle", "You are following this business")) : t("business.followTitle", "Follow this business")}
             >
@@ -1737,41 +1737,41 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
 
         {/* Rating & Action Hero Showcase Header Box (Flagship Obsidian Glass) */}
-        <div className="mb-1 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex flex-col items-center gap-3.5 backdrop-blur-xl">
+        <div className="mt-3 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex flex-col items-center gap-3 backdrop-blur-xl">
           {/* Star Rating Row */}
           <div className="flex items-center justify-center gap-4 w-full">
             {dynamicReviewCount > 0 ? (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-semibold text-white text-2xl leading-none tracking-[-0.03em]">
+                  <span className="font-semibold text-white text-2xl leading-none tracking-[-0.03em] tabular-nums">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
                   <CopoStarRating
                     rating={dynamicAvgRating}
-                    starClassName="w-5 h-5"
+                    starClassName="w-4.5 h-4.5"
                     filledColorClass="fill-[#E8C78A] text-[#E8C78A]"
                     emptyColorClass="fill-white/10 text-white/20"
                   />
                 </div>
-                <div className="h-5 w-px bg-white/[0.1]" />
-                <span className="text-zinc-400 font-medium text-xs whitespace-nowrap">
+                <div className="h-4 w-px bg-white/[0.1]" />
+                <span className="text-zinc-400 font-medium text-xs whitespace-nowrap tabular-nums">
                   {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
                 </span>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-semibold text-zinc-500 text-2xl leading-none tracking-[-0.03em]">0.0</span>
+                  <span className="font-semibold text-zinc-500 text-2xl leading-none tracking-[-0.03em] tabular-nums">0.0</span>
                   <div className="flex items-center text-zinc-700 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-5 h-5 fill-none text-zinc-700 stroke-[2]"
+                        className="w-4.5 h-4.5 fill-none text-zinc-700 stroke-[2]"
                       />
                     ))}
                   </div>
                 </div>
-                <div className="h-5 w-px bg-white/[0.1]" />
+                <div className="h-4 w-px bg-white/[0.1]" />
                 <span className="text-zinc-500 font-medium text-xs">
                   {t("place.noReviews", "No Reviews")}
                 </span>
@@ -1779,7 +1779,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             )}
           </div>
 
-          {/* Signature Pure-White Sentence-Case Add Review Pill */}
+          {/* Signature Pure-White Sentence-Case Add Review Pill (Sole Primary Focal CTA) */}
           <button
             id="btn-record-video-review-main"
             type="button"
@@ -1787,49 +1787,58 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="w-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-semibold text-sm py-3 rounded-full shadow-[0_6px_24px_rgba(255,255,255,0.14)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shrink-0 cursor-pointer group"
+            className="w-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-semibold text-sm py-2.5 rounded-full shadow-[0_6px_24px_rgba(255,255,255,0.14)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer group"
           >
-            <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.2]" />
+            <Camera className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.2]" />
             <span>{t("place.addReview", "Add Review")}</span>
           </button>
         </div>
       </div>
 
-      {/* Tabs: Overview | Reviews | About */}
-      <div className="flex items-center border-b border-white/[0.07] bg-[#050506] px-5 text-sm font-medium text-zinc-400">
-        <button
-          onClick={() => handleTabClick("overview")}
-          className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
-            activeTab === "overview"
-              ? "border-white text-white font-semibold"
-              : "border-transparent hover:text-zinc-200 text-zinc-400"
-          }`}
-        >
-          {t("place.overview", "Overview")}
-        </button>
-        <button
-          onClick={() => handleTabClick("reviews")}
-          className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "reviews"
-              ? "border-white text-white font-semibold"
-              : "border-transparent hover:text-zinc-200 text-zinc-400"
-          }`}
-        >
-          <span>{t("place.reviews", "Reviews")}</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
-            {rawPlaceVideos.length}
-          </span>
-        </button>
-        <button
-          onClick={() => handleTabClick("about")}
-          className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
-            activeTab === "about"
-              ? "border-white text-white font-semibold"
-              : "border-transparent hover:text-zinc-200 text-zinc-400"
-          }`}
-        >
-          {t("place.about", "About")}
-        </button>
+      {/* Flagship Liquid-Glass Segmented Control: Overview | Reviews | About */}
+      <div className="px-5 py-2.5 bg-[#050506] shrink-0">
+        <div className="grid grid-cols-3 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+          <button
+            type="button"
+            onClick={() => handleTabClick("overview")}
+            className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
+              activeTab === "overview"
+                ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-white font-medium"
+            }`}
+          >
+            {t("place.overview", "Overview")}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabClick("reviews")}
+            className={`py-1.5 rounded-full text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeTab === "reviews"
+                ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-white font-medium"
+            }`}
+          >
+            <span>{t("place.reviews", "Reviews")}</span>
+            <span
+              className={`text-[11px] tabular-nums ${
+                activeTab === "reviews" ? "text-zinc-600 font-semibold" : "text-zinc-500"
+              }`}
+            >
+              {rawPlaceVideos.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabClick("about")}
+            className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
+              activeTab === "about"
+                ? "bg-white text-zinc-950 font-semibold shadow-sm"
+                : "text-zinc-400 hover:text-white font-medium"
+            }`}
+          >
+            {t("place.about", "About")}
+          </button>
+        </div>
       </div>
 
         {/* Main Content Area */}
@@ -2060,22 +2069,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
           {/* TAB 2: VIDEO REVIEWS - Clean, Content-First Grid */}
           {activeTab === "reviews" && (
-            <div className="p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Only show Sort & Star Filter if there are multiple reviews (2+) */}
               {rawPlaceVideos.length > 1 && (
                 <div className="space-y-2.5 pb-1">
                   {/* Full-Width Balanced Segmented Sort Control */}
-                  <div className="grid grid-cols-3 gap-1 bg-zinc-900/90 border border-zinc-800/90 rounded-xl p-1 shadow-inner">
+                  <div className="grid grid-cols-3 gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-1">
                     <button
                       type="button"
                       onClick={() => {
                         triggerHaptic("light");
                         setReviewSort("latest");
                       }}
-                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      className={`py-1.5 rounded-full text-xs transition-all text-center cursor-pointer ${
                         reviewSort === "latest"
-                          ? "bg-white text-zinc-950 shadow-sm font-black"
-                          : "text-zinc-400 hover:text-white"
+                          ? "bg-white text-zinc-950 shadow-sm font-semibold"
+                          : "text-zinc-400 hover:text-white font-medium"
                       }`}
                     >
                       {t("place.latest", "Latest")}
@@ -2086,10 +2095,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         triggerHaptic("light");
                         setReviewSort("highest");
                       }}
-                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      className={`py-1.5 rounded-full text-xs transition-all text-center cursor-pointer ${
                         reviewSort === "highest"
-                          ? "bg-white text-zinc-950 shadow-sm font-black"
-                          : "text-zinc-400 hover:text-white"
+                          ? "bg-white text-zinc-950 shadow-sm font-semibold"
+                          : "text-zinc-400 hover:text-white font-medium"
                       }`}
                     >
                       {t("place.highestRated", "Highest")}
@@ -2100,17 +2109,17 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         triggerHaptic("light");
                         setReviewSort("lowest");
                       }}
-                      className={`py-1.5 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
+                      className={`py-1.5 rounded-full text-xs transition-all text-center cursor-pointer ${
                         reviewSort === "lowest"
-                          ? "bg-white text-zinc-950 shadow-sm font-black"
-                          : "text-zinc-400 hover:text-white"
+                          ? "bg-white text-zinc-950 shadow-sm font-semibold"
+                          : "text-zinc-400 hover:text-white font-medium"
                       }`}
                     >
                       {t("place.lowestRated", "Lowest")}
                     </button>
                   </div>
 
-                  {/* Single-Line Horizontal Star Filter Chips (Never wraps to awkward extra lines) */}
+                  {/* Single-Line Horizontal Star Filter Chips */}
                   {Object.values(starCounts).filter(c => c > 0).length > 1 && (
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
                       <button
@@ -2119,10 +2128,10 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           triggerHaptic("light");
                           setStarFilter("all");
                         }}
-                        className={`px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all shrink-0 cursor-pointer border ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-medium transition-all shrink-0 cursor-pointer border tabular-nums ${
                           starFilter === "all"
-                            ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                            : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700"
+                            ? "bg-white text-zinc-950 border-white shadow-sm font-semibold"
+                            : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:text-white hover:border-white/[0.16]"
                         }`}
                       >
                         {t("place.allStars", "All")} ({rawPlaceVideos.length})
@@ -2138,7 +2147,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               triggerHaptic("light");
                               setStarFilter(isSelected ? "all" : stars);
                             }}
-                            className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all shrink-0 cursor-pointer border ${
+                            className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all shrink-0 cursor-pointer border tabular-nums ${
                               isSelected
                                 ? "bg-[#E8C78A] text-zinc-950 border-[#E8C78A] font-semibold"
                                 : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:text-white hover:border-white/[0.16]"
@@ -2157,12 +2166,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* 3-Column Photo Reviews Grid */}
               {rawPlaceVideos.length === 0 ? (
-                <div className="flex flex-col items-center gap-6 py-12 px-6 bg-zinc-900/50 rounded-2xl border border-zinc-800 text-center">
-                  <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center mb-1">
-                    <Camera className="w-7 h-7 text-zinc-400" />
+                <div className="flex flex-col items-center gap-5 py-12 px-6 bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.1] text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-zinc-400" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-bold text-white">{t("place.noReviewsYetFor", `No photo reviews yet for ${displayedPlaceName}`)}</h3>
+                    <h3 className="text-sm font-semibold text-white">{t("place.noReviewsYetFor", `No photo reviews yet for ${displayedPlaceName}`)}</h3>
                     <p className="text-xs text-zinc-400 max-w-[260px] mx-auto leading-relaxed">
                       {t("place.beTheFirstForBusiness", `Be the first to share your experience with a live photo review for ${displayedPlaceName}.`)}
                     </p>
@@ -2172,19 +2181,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       triggerHaptic("medium");
                       onRecordForPlace(place);
                     }}
-                    className="w-full max-w-[220px] bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full max-w-[210px] bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs py-2.5 rounded-full shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <Camera className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
-                    <span className="uppercase tracking-wider">{t("place.addReview", "Add Review")}</span>
+                    <Camera className="w-4 h-4 text-zinc-950 stroke-[2.2]" />
+                    <span>{t("place.addReview", "Add Review")}</span>
                   </button>
                 </div>
               ) : placeVideos.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-10 px-6 bg-zinc-900/40 rounded-2xl border border-zinc-800 text-center">
-                  <div className="w-12 h-12 rounded-full bg-zinc-800/80 flex items-center justify-center">
-                    <Star className="w-6 h-6 text-zinc-500" />
+                <div className="flex flex-col items-center gap-4 py-10 px-6 bg-white/[0.025] rounded-2xl border border-white/[0.08] text-center">
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                    <Star className="w-5 h-5 text-zinc-500" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-white">
+                    <h4 className="text-xs font-semibold text-white">
                       No {starFilter}★ reviews found
                     </h4>
                     <p className="text-[11px] text-zinc-400">
@@ -2197,7 +2206,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       triggerHaptic("light");
                       setStarFilter("all");
                     }}
-                    className="px-4 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold border border-zinc-700 transition-colors cursor-pointer"
+                    className="px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium border border-white/[0.1] transition-colors cursor-pointer"
                   >
                     Show all ({rawPlaceVideos.length}) reviews
                   </button>
@@ -2214,7 +2223,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         onClick={() => {
                           onSelectVideo(v.id);
                         }}
-                        className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md hover:opacity-90 ring-1 ring-zinc-800 hover:ring-zinc-600"
+                        className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-white/[0.08] hover:border-white/[0.2]"
                       >
                         {/* Video Thumbnail */}
                         <CopoVideoThumbnail
@@ -2224,20 +2233,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         />
 
                         {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
 
                         {/* Whole-Number Rating Badge */}
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12] tabular-nums">
                           <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                           <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
 
                         {/* Bottom Meta Info - Business Name & Views */}
                         <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                          <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
+                          <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
                             {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
                           </span>
-                          <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
+                          <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium drop-shadow-md tabular-nums">
                             <Eye className="w-2.5 h-2.5 shrink-0" />
                             <span>{formattedViews}</span>
                           </div>
@@ -2250,12 +2259,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 3: ABOUT - Premium Comprehensive Business Profile */}
+          {/* TAB 3: ABOUT - Flagship Obsidian Business Profile */}
           {activeTab === "about" && (
-            <div className="p-4 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              {/* Story / Description Section - High quality typography */}
-              <div className="p-6 rounded-[2.5rem] bg-zinc-900/40 border border-zinc-800/60 shadow-2xl backdrop-blur-3xl relative">
-                <p className="text-sm md:text-sm text-zinc-200 leading-[1.7] font-medium tracking-tight">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Story / Description Section */}
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
+                <p className="text-[13px] text-zinc-300 leading-relaxed font-normal">
                   {getEffectivePlaceDescription(place)}
                 </p>
               </div>
@@ -2268,14 +2277,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     href={effectiveWebsite}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                      <Globe className="w-5 h-5 text-zinc-400" />
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Globe className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.website", "Website")}</span>
-                      <span className="text-xs font-bold text-white truncate block">{displayWebsiteClean}</span>
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.website", "Website")}</span>
+                      <span className="text-xs font-semibold text-white truncate block">{displayWebsiteClean}</span>
                     </div>
                   </a>
                 )}
@@ -2284,14 +2293,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {hasGenuinePhone && (
                   <a
                     href={`tel:${effectivePhone}`}
-                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                      <Phone className="w-5 h-5 text-zinc-400" />
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.call", "Contact")}</span>
-                      <span className="text-xs font-bold text-white truncate block">
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.call", "Contact")}</span>
+                      <span className="text-xs font-semibold text-white truncate block tabular-nums">
                         {formatPhoneNumber(effectivePhone)}
                       </span>
                     </div>
@@ -2302,26 +2311,26 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 {effectiveEmail && (
                   <a
                     href={`mailto:${effectiveEmail}`}
-                    className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4 hover:bg-zinc-800 transition-all group"
+                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
                   >
-                    <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                      <Mail className="w-5 h-5 text-zinc-400" />
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <Mail className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.email", "Email")}</span>
-                      <span className="text-xs font-bold text-white truncate block">{effectiveEmail}</span>
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.email", "Email")}</span>
+                      <span className="text-xs font-semibold text-white truncate block">{effectiveEmail}</span>
                     </div>
                   </a>
                 )}
 
                 {/* Hours Summary Card */}
-                <div className="p-3 rounded-3xl bg-zinc-900/50 border border-zinc-800/80 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5 text-zinc-400" />
+                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-zinc-300" />
                   </div>
                   <div>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block mb-0.5">{t("place.hours", "Hours")}</span>
-                    <span className={`text-xs font-bold block ${hasGenuineHours ? "text-zinc-200" : "text-zinc-400"}`}>
+                    <span className="text-[11px] font-medium text-zinc-500 block">{t("place.hours", "Hours")}</span>
+                    <span className={`text-xs font-semibold block ${hasGenuineHours ? "text-zinc-200" : "text-zinc-400"}`}>
                       {hasGenuineHours ? t("place.openNow", "Open Now") : t("place.closed", "Closed")}
                     </span>
                   </div>
@@ -2329,12 +2338,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
 
               {/* Detailed Location & Map Section */}
-              <div className="space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-semibold text-zinc-300 px-1">
                   {t("place.locationExperience", "Location")}
                 </h4>
                 
-                <div className="rounded-3xl bg-zinc-900/40 border border-zinc-800/80 overflow-hidden">
+                <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] overflow-hidden">
                   <div className="h-40 w-full relative">
                     <iframe
                       width="100%"
@@ -2345,19 +2354,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
                       title="Google Maps Location Preview"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-transparent to-transparent pointer-events-none" />
                   </div>
                   
-                  <div className="p-3 space-y-2">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="p-3.5 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-xs text-white font-bold leading-relaxed">
+                        <p className="text-xs text-zinc-200 font-medium leading-relaxed">
                           {currentDisplayAddress || displayAddress}
                         </p>
                       </div>
                       <button 
                         onClick={handleOpenDirections}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 text-white font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-zinc-700 transition-all shrink-0"
+                        className="px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] text-white font-medium text-xs transition-all shrink-0 cursor-pointer"
                       >
                         {t("place.getDirections", "Directions")}
                       </button>
@@ -2368,11 +2377,11 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* Multi-Branch Directory */}
               {availableLocations.length > 1 && (
-                <div className="space-y-3 pt-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">
-                    {t("place.globalNetwork", "Global Network")} ({availableLocations.length})
+                <div className="space-y-2.5 pt-1">
+                  <h4 className="text-xs font-semibold text-zinc-300 px-1">
+                    {t("place.globalNetwork", "Locations")} ({availableLocations.length})
                   </h4>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-2">
                     {availableLocations.map((loc: any, idx: number) => {
                       const isSelected = selectedLocationIndex === idx;
                       const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
@@ -2383,18 +2392,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                             setSelectedLocationIndex(idx);
                             triggerHaptic();
                           }}
-                          className={`p-5 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                             isSelected
-                              ? "bg-blue-600/10 border-blue-500/50 shadow-lg shadow-blue-500/5 ring-1 ring-blue-500/20"
-                              : "bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/60"
+                              ? "bg-white/[0.07] border-white/[0.22]"
+                              : "bg-white/[0.025] border-white/[0.08] hover:bg-white/[0.05]"
                           }`}
                         >
-                          <div className="min-w-0 space-y-1">
-                            <span className="text-xs font-black text-white block truncate uppercase tracking-tight">{branchLabel}</span>
-                            <span className="text-[11px] text-zinc-400 block truncate font-medium">{loc.address || loc.city}</span>
+                          <div className="min-w-0 space-y-0.5">
+                            <span className="text-xs font-semibold text-white block truncate">{branchLabel}</span>
+                            <span className="text-[11px] text-zinc-400 block truncate font-normal">{loc.address || loc.city}</span>
                           </div>
                           <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
-                            isSelected ? "bg-blue-500 border-blue-400 text-white" : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                            isSelected ? "bg-white text-zinc-950 border-white" : "bg-white/[0.05] border-white/[0.08] text-zinc-400"
                           }`}>
                             <MapPin className="w-4 h-4" />
                           </div>
@@ -2406,24 +2415,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               )}
 
               {/* Claim Business Status & Ownership Card */}
-              <div className="p-5 rounded-[2.5rem] bg-zinc-900/60 border border-zinc-800/80 shadow-xl backdrop-blur-3xl space-y-3 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 shadow-md text-white">
-                    {isClaimed ? <ShieldCheck className="w-6 h-6 text-white" /> : <Building2 className="w-6 h-6 text-white" />}
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3 relative overflow-hidden">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center shrink-0 text-white">
+                    {isClaimed ? <ShieldCheck className="w-5 h-5 text-white" /> : <Building2 className="w-5 h-5 text-white" />}
                   </div>
                   <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                        {isClaimed ? t("place.businessClaimedTitle", "Business Claimed & Secured") : t("place.ownThisBusiness", "Own This Business? Claim Page")}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-xs font-semibold text-white">
+                        {isClaimed ? t("place.businessClaimedTitle", "Business Claimed & Secured") : t("place.ownThisBusiness", "Own This Business?")}
                       </h4>
                       {isClaimed && (
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[9px] font-extrabold uppercase tracking-widest border border-zinc-700">
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-medium border border-white/[0.12]">
                           {t("place.claimedStatus", "Claimed")}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-medium">
+                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
                       {isClaimed 
                         ? t("place.businessClaimedDesc", "This business profile is officially claimed and managed through the secure Yoouz business portal. All management rights are reserved.") 
                         : t("place.claimBusinessDesc", "Claim this business profile to unlock full administrative access, manage customer photo reviews, update business details, and connect directly with patrons.")}
@@ -2432,20 +2440,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
 
                 {(!isClaimed || isUserOwner) && (
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <button
                       onClick={() => {
                         triggerHaptic("medium");
                         handleClaimOrEditClick();
                       }}
-                      className={`w-full py-3 px-5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2 shadow-lg ${
+                      className={`w-full py-2.5 px-5 rounded-full font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
                         isClaimed
-                          ? "bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
-                          : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10"
+                          ? "bg-white/[0.07] hover:bg-white/[0.13] text-white border border-white/[0.12]"
+                          : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-[0_6px_20px_rgba(255,255,255,0.12)]"
                       }`}
                     >
-                      <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim & Access Business Portal")}</span>
-                      <ArrowRight className="w-4 h-4 text-white" />
+                      <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim Business Page")}</span>
+                      <ArrowRight className={`w-3.5 h-3.5 ${isClaimed ? "text-white" : "text-zinc-950"}`} />
                     </button>
                   </div>
                 )}

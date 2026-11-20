@@ -388,7 +388,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {notifications.length > 0 && unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="px-3 py-1.5 md:px-2.5 md:py-1 rounded-full md:rounded-lg text-xs md:text-[11px] font-bold text-white bg-zinc-800/90 hover:bg-zinc-700 transition-all cursor-pointer border border-zinc-700/80 active:scale-95 shadow-xs whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white bg-white/[0.07] hover:bg-white/[0.13] transition-all cursor-pointer border border-white/[0.12] active:scale-95 whitespace-nowrap"
               >
                 {t("notifications.markRead", "Mark read")}
               </button>
@@ -397,7 +397,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {notifications.length > 0 && (
               <button
                 onClick={handleClearAll}
-                className="px-3 py-1.5 md:px-2.5 md:py-1 rounded-full md:rounded-lg text-xs md:text-[11px] font-semibold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.09] transition-all cursor-pointer border border-white/[0.08] active:scale-95 whitespace-nowrap"
               >
                 {t("notifications.clearAll", "Clear all")}
               </button>
@@ -407,11 +407,11 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <button
                 id="btn-notifications-settings"
                 onClick={onOpenSettings}
-                className="w-10 h-10 md:w-8 md:h-8 rounded-full md:rounded-lg text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-800 transition-all cursor-pointer border border-zinc-800 active:scale-95 shadow-xs flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-full text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.1] transition-all cursor-pointer border border-white/[0.08] active:scale-95 flex items-center justify-center shrink-0"
                 title={t("notifications.preferences", "Notification Preferences")}
                 aria-label={t("notifications.preferences", "Notification Preferences")}
               >
-                <Settings className="w-5 h-5 md:w-4 md:h-4" />
+                <Settings className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -419,9 +419,9 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
         {/* Paused Notifications Notice Banner */}
         {currentUser?.notificationSettings?.enabled === false && (
-          <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-zinc-300 text-xs shadow-md">
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-zinc-300 text-xs">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
                 <BellOff className="w-3.5 h-3.5 text-zinc-400" />
               </div>
               <span className="truncate font-medium">{t("notifications.pausedNotice", "In-app notifications are paused in your preferences.")}</span>
@@ -429,7 +429,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {onOpenSettings && (
               <button
                 onClick={onOpenSettings}
-                className="px-3 py-1.5 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 font-bold shrink-0 transition-all active:scale-95 text-xs shadow-sm"
+                className="px-3.5 py-1.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 font-semibold shrink-0 transition-all active:scale-95 text-xs"
               >
                 {t("common.settings", "Settings")}
               </button>
@@ -438,25 +438,25 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-2.5 md:gap-1.5 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
           {filterPills.map((pill) => {
             const isActive = activeFilter === pill.value;
             return (
               <button
                 key={pill.value}
                 onClick={() => setActiveFilter(pill.value)}
-                className={`px-5 py-3 md:px-3.5 md:py-1.5 rounded-full md:rounded-xl text-[13px] md:text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2.5 md:gap-1.5 active:scale-95 border ${
+                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 active:scale-95 border ${
                   isActive
-                    ? "bg-white text-zinc-950 border-white shadow-md font-black"
-                    : "bg-zinc-900/90 text-zinc-300 border-zinc-800 shadow-2xs hover:bg-zinc-800 hover:text-white"
+                    ? "bg-white text-zinc-950 border-white shadow-sm font-semibold"
+                    : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                 }`}
               >
                 {pill.icon}
                 <span>{pill.label}</span>
                 {pill.count !== undefined && (
                   <span
-                    className={`inline-flex items-center justify-center min-w-[20px] md:min-w-[18px] h-[20px] md:h-[18px] px-1.5 md:px-1 rounded-full text-[10px] md:text-[9px] font-extrabold ${
-                      isActive ? "bg-zinc-900 text-white" : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-semibold tabular-nums ${
+                      isActive ? "bg-zinc-950 text-white" : "bg-white/[0.08] text-zinc-300"
                     }`}
                   >
                     {pill.count}
@@ -469,7 +469,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
         {/* Notification Feed Card List */}
         {filteredNotifications.length > 0 ? (
-          <motion.div layout className="bg-zinc-900/70 rounded-2xl border border-zinc-800/80 divide-y divide-zinc-800/50 overflow-hidden shadow-2xs backdrop-blur-md">
+          <motion.div layout className="bg-white/[0.025] rounded-2xl border border-white/[0.08] divide-y divide-white/[0.06] overflow-hidden backdrop-blur-md">
             <AnimatePresence initial={false} mode="popLayout">
             {filteredNotifications.map((notif) => {
               // Sleek, unified dark mode monochromatic badge styles for notification avatar overlays
@@ -589,10 +589,10 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                         onSelectNotificationVideo(notif.videoId);
                       }
                     }}
-                    className={`relative z-10 p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-colors ${
+                    className={`relative z-10 p-3.5 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer transition-colors ${
                       !notif.isRead 
-                        ? "bg-zinc-900 hover:bg-zinc-850 active:bg-zinc-800" 
-                        : "bg-zinc-950 hover:bg-zinc-900 active:bg-zinc-850"
+                        ? "bg-white/[0.04] hover:bg-white/[0.07]" 
+                        : "bg-[#050506] hover:bg-white/[0.03]"
                     }`}
                   >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
@@ -795,14 +795,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
           </motion.div>
         ) : (
           /* Empty State */
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/80 rounded-3xl border border-zinc-800 shadow-2xs">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-800 text-white border border-zinc-700 flex items-center justify-center mb-3">
-              <BellOff className="w-7 h-7 stroke-[2]" />
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white/[0.025] rounded-3xl border border-white/[0.08]">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] text-zinc-300 border border-white/[0.08] flex items-center justify-center mb-3.5">
+              <BellOff className="w-5 h-5 stroke-[1.7]" />
             </div>
-            <h3 className="font-black text-white text-base mb-1">
+            <h3 className="font-semibold text-white text-base tracking-[-0.02em] mb-1">
               {userPrefs?.enabled === false ? t("notifications.paused", "Notifications are paused") : t("notifications.noNotifications", "No notifications")}
             </h3>
-            <p className="text-xs text-zinc-200 max-w-xs leading-relaxed font-medium">
+            <p className="text-xs text-zinc-400 max-w-xs leading-relaxed font-normal">
               {userPrefs?.enabled === false
                 ? t("notifications.pausedNotice", "You have paused in-app notifications in your preferences. Turn them on to see new alerts.")
                 : activeFilter === "all"

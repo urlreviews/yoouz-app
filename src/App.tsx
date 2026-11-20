@@ -8423,79 +8423,13 @@ export function App() {
   return (
     <div
       id="copo-app-root"
-      className={`flex ${isPlaceView || isCreatorView ? "flex-row" : "flex-col"} w-screen h-[100dvh] overflow-hidden bg-[#050506] text-white font-sans select-none antialiased relative`}
+      className="flex flex-col w-screen h-[100dvh] overflow-hidden bg-[#050506] text-white font-sans select-none antialiased relative"
     >
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
-      
 
-      
-      {/* 1. Left Section: Business/Place Details Panel OR Creator Profile Panel OR Standard Navigation Sidebar */}
-       {isPlaceView ? (
-        <CopoPlaceDrawer
-          key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
-          place={activeDrawerPlace || drawerPlace}
-          allVideos={videos}
-          onClose={handleCloseDrawers}
-          onSelectVideo={(videoId) => handleSelectVideoById(videoId, "place")}
-          onToggleGrabPlace={handleToggleGrabPlace}
-          onUpdatePlace={handleUpdatePlace}
-          onToggleFollowPlace={handleToggleFollowPlace}
-          onOpenReport={handleOpenReport}
-          isSaved={isPlaceSaved(activeDrawerPlace || drawerPlace)}
-          reviewSort={placeReviewSort}
-          onSortChange={(sort) => {
-            setPlaceReviewSort(sort);
-            setCurrentVideoIndex(0);
-          }}
-          starFilter={placeStarFilter}
-          onStarFilterChange={(stars) => {
-            setPlaceStarFilter(stars);
-            setCurrentVideoIndex(0);
-          }}
-          currentUser={currentUser}
-          onRecordForPlace={handleOpenCreateReview}
-          onStartChat={handleStartChat}
-          onClaimBusiness={(place) => {
-            setBusinessClaimTargetPlace(place);
-            setBusinessInitialMode('claim');
-            handleCloseDrawers();
-            setActiveSection('business');
-          }}
-        />
-      ) : isCreatorView ? (
-        <CopoCreatorDrawer
-          author={selectedAuthorForDrawer}
-          allVideos={videos}
-          places={places}
-          currentUser={currentUser}
-          allUsers={allRegisteredUsers}
-          activeVideoId={activeFeedVideos[currentVideoIndex]?.id}
-          onClose={handleCloseDrawers}
-          onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
-          onToggleFollow={handleToggleFollow}
-          onToggleFollowPlace={handleToggleFollowPlace}
-          onStartChat={handleStartChat}
-          onUpdateProfile={handleUpdateProfile}
-          onOpenReport={(author) => handleOpenReport({ type: "user", author })}
-          onRecordReview={handleOpenCreateReview}
-          onDeleteVideo={handleDeleteUserVideo}
-          isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
-          onToggleSaveCreator={handleToggleSaveCreator}
-          onOpenCreator={handleOpenCreatorDrawer}
-          onDeactivateProfile={async () => {
-            await handleDeactivateProfile();
-            handleCloseDrawers();
-          }}
-          onDeleteProfile={async () => {
-            await handleDeleteProfile();
-            handleCloseDrawers();
-          }}
-          onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
-          onOpenPlace={handleOpenPlaceDrawer}
-          onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
-        />
-       ) : (activeSection === "business" || activeSection === "admin") ? null : (
+      {/* 1. Persistent Flagship Top Navigation Bar (Desktop) & Bottom Bar (Mobile) */}
+      {(activeSection === "business" || activeSection === "admin") ? null : (
         <CopoSidebar
           activeSection={activeSection}
           currentUser={currentUser}
@@ -8607,7 +8541,75 @@ export function App() {
         />
       )}
 
-      {/* 2. Main Stage Content Switcher */}
+      {/* 2. Workspace Stage: Optional Left Business/Creator Profile Panel + Main Stage */}
+      <div className="flex-1 min-h-0 w-full flex flex-row relative overflow-hidden">
+        {isPlaceView ? (
+          <CopoPlaceDrawer
+            key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
+            place={activeDrawerPlace || drawerPlace}
+            allVideos={videos}
+            onClose={handleCloseDrawers}
+            onSelectVideo={(videoId) => handleSelectVideoById(videoId, "place")}
+            onToggleGrabPlace={handleToggleGrabPlace}
+            onUpdatePlace={handleUpdatePlace}
+            onToggleFollowPlace={handleToggleFollowPlace}
+            onOpenReport={handleOpenReport}
+            isSaved={isPlaceSaved(activeDrawerPlace || drawerPlace)}
+            reviewSort={placeReviewSort}
+            onSortChange={(sort) => {
+              setPlaceReviewSort(sort);
+              setCurrentVideoIndex(0);
+            }}
+            starFilter={placeStarFilter}
+            onStarFilterChange={(stars) => {
+              setPlaceStarFilter(stars);
+              setCurrentVideoIndex(0);
+            }}
+            currentUser={currentUser}
+            onRecordForPlace={handleOpenCreateReview}
+            onStartChat={handleStartChat}
+            onClaimBusiness={(place) => {
+              setBusinessClaimTargetPlace(place);
+              setBusinessInitialMode('claim');
+              handleCloseDrawers();
+              setActiveSection('business');
+            }}
+          />
+        ) : isCreatorView ? (
+          <CopoCreatorDrawer
+            author={selectedAuthorForDrawer}
+            allVideos={videos}
+            places={places}
+            currentUser={currentUser}
+            allUsers={allRegisteredUsers}
+            activeVideoId={activeFeedVideos[currentVideoIndex]?.id}
+            onClose={handleCloseDrawers}
+            onSelectVideo={(videoId) => handleSelectVideoById(videoId, "creator")}
+            onToggleFollow={handleToggleFollow}
+            onToggleFollowPlace={handleToggleFollowPlace}
+            onStartChat={handleStartChat}
+            onUpdateProfile={handleUpdateProfile}
+            onOpenReport={(author) => handleOpenReport({ type: "user", author })}
+            onRecordReview={handleOpenCreateReview}
+            onDeleteVideo={handleDeleteUserVideo}
+            isSaved={selectedAuthorForDrawer ? savedCreators.includes(selectedAuthorForDrawer.name.toLowerCase()) : false}
+            onToggleSaveCreator={handleToggleSaveCreator}
+            onOpenCreator={handleOpenCreatorDrawer}
+            onDeactivateProfile={async () => {
+              await handleDeactivateProfile();
+              handleCloseDrawers();
+            }}
+            onDeleteProfile={async () => {
+              await handleDeleteProfile();
+              handleCloseDrawers();
+            }}
+            onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
+            onOpenPlace={handleOpenPlaceDrawer}
+            onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
+          />
+        ) : null}
+
+      {/* Main Stage Content Switcher */}
       <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 flex flex-col relative overflow-hidden bg-[#050506]">
         {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
@@ -9332,6 +9334,7 @@ export function App() {
           </>
         )}
       </div>
+      </div>
 
       {/* Video Comments Drawer */}
       {activeCommentVideo && (
@@ -9340,7 +9343,7 @@ export function App() {
           videos={videos}
           currentUser={currentUser}
           allUsers={allRegisteredUsers}
-          hasTopBar={!isPlaceView && !isCreatorView}
+          hasTopBar={activeSection !== "business" && activeSection !== "admin"}
           onClose={() => setActiveCommentVideo(null)}
           onRequireAuth={() => {
             setAuthIntent("general");
