@@ -26,7 +26,6 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
   activeSection,
   onSelectSection,
   currentUser,
-  unreadNotifsCount = 0,
   unreadMessagesCount = 0,
   onOpenCreateModal,
   onOpenSearch,
@@ -34,178 +33,164 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
 }) => {
   const { t } = useLanguage();
 
+  const focusActiveSearch = () => {
+    const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+    const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
+    const input =
+      (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
+      (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
+    if (input) {
+      try {
+        input.focus({ preventScroll: true });
+      } catch {
+        input.focus();
+      }
+    }
+  };
+
+  const isHomeActive = activeSection === "home";
+  const isSearchActive = activeSection === "search" || activeSection === "discover";
+  const isReviewActive = activeSection === "record_review";
+  const isMessagesActive = activeSection === "messages";
+  const isProfileActive = activeSection === "profile" || activeSection === "more";
+
   return (
-    <nav
+    <div
       id="copo-mobile-bottom-nav"
-      aria-label="Mobile Navigation"
-      className={`${className} z-50 bg-zinc-950/95 backdrop-blur-2xl border-t border-zinc-800/90 text-white shadow-[0_-8px_30px_rgba(0,0,0,0.8)]`}
-      style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom, 10px))" }}
+      className={`${className} z-50 px-3.5 pt-2 pointer-events-none select-none`}
+      style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))" }}
     >
-      <div className="flex items-center justify-around px-2 pt-2 pb-1 w-full max-w-lg mx-auto relative">
+      {/* Floating iOS Liquid-Glass Dock Capsule */}
+      <nav
+        aria-label="Mobile Navigation"
+        className="pointer-events-auto relative flex items-center justify-between max-w-[430px] mx-auto rounded-[28px] bg-[#111114]/88 backdrop-blur-2xl border border-white/[0.12] px-2 py-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.08)] text-white"
+      >
         {/* 1. Home */}
         <button
           id="mobile-nav-home-btn"
+          type="button"
           onClick={() => onSelectSection("home")}
-          className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "home"
-              ? "text-white"
-              : "text-zinc-200 hover:text-white"
+          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+            isHomeActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <Home
-            className={`w-[22px] h-[22px] transition-transform duration-200 ${
-              activeSection === "home"
-                ? "scale-105 stroke-[2.4] text-white"
-                : "stroke-[2] text-zinc-200"
-            }`}
-          />
+          <div className="relative flex items-center justify-center">
+            <Home
+              className={`w-[20px] h-[20px] transition-all duration-200 ${
+                isHomeActive ? "stroke-[2.3] text-white" : "stroke-[1.85] text-zinc-400"
+              }`}
+            />
+          </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "home" ? "font-bold text-white" : "font-medium text-zinc-200"
+            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+              isHomeActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.home", "Home")}
           </span>
+          {isHomeActive && (
+            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
+          )}
         </button>
 
-        {/* 2. Search / Discover */}
+        {/* 2. Search */}
         <button
           id="mobile-nav-search-btn"
+          type="button"
           onClick={() => {
             if (onOpenSearch) {
               onOpenSearch();
             } else {
               onSelectSection("search");
             }
-            const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
-            const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
-            const input =
-              (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
-              (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
-            if (input) {
-              try {
-                input.focus({ preventScroll: true });
-              } catch {
-                input.focus();
-              }
-            }
+            focusActiveSearch();
           }}
-          className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "search" || activeSection === "discover"
-              ? "text-white"
-              : "text-zinc-200 hover:text-white"
+          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+            isSearchActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             <Search
-              className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                activeSection === "search" || activeSection === "discover"
-                  ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[2] text-zinc-200"
+              className={`w-[20px] h-[20px] transition-all duration-200 ${
+                isSearchActive ? "stroke-[2.3] text-white" : "stroke-[1.85] text-zinc-400"
               }`}
             />
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "search" || activeSection === "discover"
-                ? "font-bold text-white"
-                : "font-medium text-zinc-200"
+            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+              isSearchActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.search", "Search")}
           </span>
+          {isSearchActive && (
+            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
+          )}
         </button>
 
-        {/* 3. CENTER ACTION: Add Live Photo Review */}
-        <button
-          id="mobile-nav-record-btn"
-          onClick={() => {
-            if (onOpenCreateModal) {
-              onOpenCreateModal();
-            } else {
-              onSelectSection("record_review");
-            }
-            const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
-            const mainInputs = document.querySelectorAll<HTMLInputElement>("#copo-main-search-input");
-            const input =
-              (mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null) ||
-              (mainInputs.length > 0 ? mainInputs[mainInputs.length - 1] : null);
-            if (input) {
-              try {
-                input.focus({ preventScroll: true });
-              } catch {
-                input.focus();
+        {/* 3. CENTER HERO ACTION: Signature Tactile White Camera Shutter */}
+        <div className="flex items-center justify-center px-1 shrink-0">
+          <button
+            id="mobile-nav-record-btn"
+            type="button"
+            onClick={() => {
+              if (onOpenCreateModal) {
+                onOpenCreateModal();
+              } else {
+                onSelectSection("record_review");
               }
-            }
-          }}
-          aria-label="Add Live Photo Review"
-          className={`flex flex-col items-center justify-center py-1 px-2 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "record_review"
-              ? "text-white"
-              : "text-zinc-200 hover:text-white"
-          }`}
-        >
-          <div className="relative">
-            <Camera
-              className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                activeSection === "record_review"
-                  ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[2] text-zinc-200"
-              }`}
-            />
-          </div>
-          <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "record_review" ? "font-bold text-white" : "font-medium text-zinc-200"
+              focusActiveSearch();
+            }}
+            aria-label={t("nav.add_review", "Add Live Photo Review")}
+            title={t("nav.add_review", "Add Review")}
+            className={`relative w-[48px] h-[48px] -my-0.5 rounded-full bg-white hover:bg-zinc-100 text-zinc-950 flex items-center justify-center shadow-[0_6px_22px_rgba(255,255,255,0.28)] ring-[3px] transition-all duration-200 active:scale-90 cursor-pointer ${
+              isReviewActive ? "ring-white/45 scale-105" : "ring-white/15"
             }`}
           >
-            {t("nav.review", "Review")}
-          </span>
-        </button>
+            <Camera className="w-[22px] h-[22px] stroke-[2.25] text-zinc-950" />
+          </button>
+        </div>
 
-        {/* 4. Inbox / Messages */}
+        {/* 4. Messages (Unmistakable Envelope Icon + Unread Pill) */}
         <button
           id="mobile-nav-inbox-btn"
+          type="button"
           onClick={() => onSelectSection("messages")}
-          className={`relative flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "messages"
-              ? "text-white"
-              : "text-zinc-200 hover:text-white"
+          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+            isMessagesActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             <Mail
-              className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                activeSection === "messages"
-                  ? "scale-105 stroke-[2.4] text-white"
-                  : "stroke-[2] text-zinc-200"
+              className={`w-[20px] h-[20px] transition-all duration-200 ${
+                isMessagesActive ? "stroke-[2.3] text-white" : "stroke-[1.85] text-zinc-400"
               }`}
             />
             {unreadMessagesCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[17px] h-[17px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-red-500 text-white border-2 border-zinc-950 shadow-md">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-white text-zinc-950 border border-[#111114] shadow-md">
                 {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
               </span>
             )}
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors ${
-              activeSection === "messages"
-                ? "font-bold text-white"
-                : "font-medium text-zinc-200"
+            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+              isMessagesActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
-            {t("nav.messages", "Inbox")}
+            {t("nav.messages", "Messages")}
           </span>
+          {isMessagesActive && (
+            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
+          )}
         </button>
 
         {/* 5. Profile */}
         <button
           id="mobile-nav-profile-btn"
+          type="button"
           onClick={() => onSelectSection("profile")}
-          className={`flex flex-col items-center justify-center py-1 px-3 flex-1 rounded-xl active:scale-90 transition-all duration-200 cursor-pointer ${
-            activeSection === "profile" || activeSection === "more"
-              ? "text-white"
-              : "text-zinc-200 hover:text-white"
+          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+            isProfileActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
           title={
             currentUser && !(currentUser as any).passkeyProtected
@@ -213,15 +198,15 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               : undefined
           }
         >
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             {currentUser?.avatar ? (
               <img
                 src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, currentUser.handle || currentUser.email)}
                 alt={currentUser.name || "Profile"}
-                className={`w-[22px] h-[22px] rounded-full object-cover ring-1 transition-all ${
-                  activeSection === "profile" || activeSection === "more"
+                className={`w-[21px] h-[21px] rounded-full object-cover transition-all ${
+                  isProfileActive
                     ? "ring-2 ring-white scale-105 opacity-100"
-                    : "ring-zinc-600/80 opacity-90"
+                    : "ring-1 ring-white/25 opacity-90"
                 }`}
                 referrerPolicy="no-referrer"
                 onError={(e) => {
@@ -234,29 +219,30 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               />
             ) : (
               <User
-                className={`w-[22px] h-[22px] transition-transform duration-200 ${
-                  activeSection === "profile" || activeSection === "more"
-                    ? "scale-105 stroke-[2.4] text-white"
-                    : "stroke-[2] text-zinc-200"
+                className={`w-[20px] h-[20px] transition-all duration-200 ${
+                  isProfileActive ? "stroke-[2.3] text-white" : "stroke-[1.85] text-zinc-400"
                 }`}
               />
             )}
             {currentUser && !(currentUser as any).passkeyProtected && (
               <span
-                className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
+                className="absolute -top-0.5 -right-1 w-2.5 h-2.5 rounded-full bg-[#E8C78A] ring-2 ring-[#111114]"
                 title="Passkey not saved yet"
               />
             )}
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-1 transition-colors flex items-center gap-1 ${
-              activeSection === "profile" || activeSection === "more" ? "font-bold text-white" : "font-medium text-zinc-200"
+            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors max-w-[60px] truncate ${
+              isProfileActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
-            <span>{currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}</span>
+            {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
           </span>
+          {isProfileActive && (
+            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
+          )}
         </button>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 };

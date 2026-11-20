@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
 html, body, #root {
-  background-color: #09090b;
-  color: #ffffff;
+  background-color: #050506;
+  color: #f5f5f7;
   color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -39,9 +42,9 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #111114 inset !important;
   -webkit-text-fill-color: #ffffff !important;
-  caret-color: #007aff !important;
+  caret-color: #ffffff !important;
   background-color: transparent !important;
   transition: background-color 5000s ease-in-out 0s;
 }
@@ -55,25 +58,25 @@ input[type="search"]::-webkit-search-results-decoration {
   display: none;
 }
 
-/* Global Dark Theme Scrollbar for general desktop overflow */
+/* Global Flagship Obsidian Scrollbar for general desktop overflow */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 #09090b;
+  scrollbar-color: #27272a #050506;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #050506;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #27272a;
-  border-radius: 4px;
-  border: 2px solid #09090b;
+  border-radius: 9999px;
+  border: 2px solid #050506;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -113,7 +116,7 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 :root {
-  --mobile-nav-height: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
+  --mobile-nav-height: calc(84px + max(10px, env(safe-area-inset-bottom, 10px)));
 }
 
 .copo-video-scrubber-position {
@@ -124,14 +127,14 @@ input[type="search"]::-webkit-search-results-decoration {
   padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) + 12px));
 }
 
-/* Mobile screens (< 768px): Apply bottom nav offset */
+/* Mobile screens (< 768px): Apply bottom nav offset for floating glass dock */
 @media (max-width: 767px) {
   .copo-has-bottom-nav .copo-video-scrubber-position {
-    bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .copo-has-bottom-nav .copo-video-bottom-metadata {
-    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -154,7 +157,7 @@ input[type="search"]::-webkit-search-results-decoration {
     padding-top: env(safe-area-inset-top, 16px);
   }
   .pb-mobile-nav {
-    padding-bottom: calc(71px + max(10px, env(safe-area-inset-bottom, 10px)));
+    padding-bottom: calc(84px + max(10px, env(safe-area-inset-bottom, 10px)));
   }
   @media (min-width: 768px) {
     .pb-mobile-nav {

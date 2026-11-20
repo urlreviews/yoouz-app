@@ -615,10 +615,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   return (
     <div
       id="yoouz-more-view-container"
-      className="flex-1 w-full h-full bg-zinc-950 overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+88px)] md:pb-24 select-none selection:bg-zinc-700 selection:text-white"
+      className="flex-1 w-full h-full bg-[#050506] overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-zinc-700 selection:text-white"
     >
-      {/* Top Banner / Google-grade Header */}
-      <header className="sticky top-0 z-40 w-full bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50">
+      {/* Top Banner / Flagship Header */}
+      <header className="sticky top-0 z-40 w-full bg-[#050506]/90 backdrop-blur-2xl border-b border-white/[0.07]">
         <div className="h-14 px-4 flex items-center justify-between">
           <button
             onClick={() => {
@@ -628,12 +628,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 onNavigate("home");
               }
             }}
-            className="w-10 h-10 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            className="w-10 h-10 -ml-2 rounded-full hover:bg-white/[0.08] text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
             title={isBusinessSuiteEmbedded ? "Back to Dashboard" : "Back to Feed"}
           >
             <ChevronLeft className="w-6 h-6 stroke-[2]" />
           </button>
-          <h1 className="text-base font-bold text-white tracking-tight absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-base font-semibold text-white tracking-[-0.02em] absolute left-1/2 -translate-x-1/2">
             {t("trustCenter.title", "Knowledge & Trust Center")}
           </h1>
           <div className="w-10 h-10" /> {/* Spacer */}

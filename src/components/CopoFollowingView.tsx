@@ -467,9 +467,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   const totalFollowingCount = followedAuthors.length + followedPlacesList.length;
 
   return (
-    <div id="following-directory-container" className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-3.5 sm:p-6 select-none">
-      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-32 md:pb-12">
-        {/* Sleek Native-Style Header */}
+    <div id="following-directory-container" className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-3.5 sm:p-6 select-none">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-36 md:pb-12">
+        {/* Sleek Flagship Header */}
         <div id="following-header-card" className="space-y-3.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -477,18 +477,18 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 <button
                   id="following-back-button"
                   onClick={onNavigateHome}
-                  className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                  className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                   title="Back to Feed"
                 >
-                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                  <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
               )}
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2 truncate">
+                <h1 className="text-lg sm:text-xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2 truncate">
                   <Users className="w-5 h-5 text-zinc-300 shrink-0" />
                   <span className="truncate">{t("following.title", "Following & Followers")}</span>
                 </h1>
-                <p className="text-xs text-zinc-300 font-medium truncate mt-0.5">
+                <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
                   {t("following.subtitle", "Manage businesses and reviewers you follow on Yoouz")}
                 </p>
               </div>
@@ -496,7 +496,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
           </div>
 
           {/* Clean Segmented Tab Switcher */}
-          <div id="following-segmented-tabs" className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 shadow-inner">
+          <div id="following-segmented-tabs" className="grid grid-cols-2 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.08]">
             <button
               id="tab-btn-following"
               onClick={() => {

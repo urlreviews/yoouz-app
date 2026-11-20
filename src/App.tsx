@@ -8423,7 +8423,7 @@ export function App() {
   return (
     <div
       id="copo-app-root"
-      className="flex w-screen h-[100dvh] overflow-hidden bg-zinc-950 text-white font-sans select-none antialiased relative"
+      className={`flex ${isPlaceView || isCreatorView ? "flex-row" : "flex-col"} w-screen h-[100dvh] overflow-hidden bg-[#050506] text-white font-sans select-none antialiased relative`}
     >
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
@@ -8608,7 +8608,7 @@ export function App() {
       )}
 
       {/* 2. Main Stage Content Switcher */}
-      <div className="copo-has-bottom-nav flex-1 h-[100dvh] flex flex-col relative overflow-hidden bg-zinc-950">
+      <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 flex flex-col relative overflow-hidden bg-[#050506]">
         {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
             <CopoVideoPlayer
@@ -8750,6 +8750,8 @@ export function App() {
               setIsCreateModalOpen(true);
             }}
             onOpenLegal={handleOpenLegal}
+            onOpenMore={() => setActiveSection("more")}
+            onOpenBusiness={() => setActiveSection("business")}
             currentUser={currentUser}
             onOpenNotifications={handleOpenNotifications}
             unreadNotifsCount={effectiveUnreadNotifsCount}
@@ -8796,6 +8798,8 @@ export function App() {
                   setIsCreateModalOpen(true);
                 }}
                 onOpenLegal={handleOpenLegal}
+                onOpenMore={() => setActiveSection("more")}
+                onOpenBusiness={() => setActiveSection("business")}
                 currentUser={currentUser}
                 onOpenNotifications={handleOpenNotifications}
                 unreadNotifsCount={effectiveUnreadNotifsCount}

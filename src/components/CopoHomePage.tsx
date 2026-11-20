@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { Search, Star, ChevronLeft, ChevronRight, Menu, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
+import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
@@ -26,6 +26,8 @@ interface CopoHomePageProps {
   onViewAll?: () => void;
   onRecordReview?: (place?: Place | null) => void;
   onOpenLegal?: (tab: "terms" | "privacy") => void;
+  onOpenMore?: () => void;
+  onOpenBusiness?: () => void;
   currentUser?: UserProfile | null;
   autoFocusSearch?: boolean;
   searchMode?: "general" | "review";
@@ -61,6 +63,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   onViewAll,
   onRecordReview,
   onOpenLegal,
+  onOpenMore,
+  onOpenBusiness,
   currentUser,
   autoFocusSearch = false,
   searchMode = "general",
@@ -169,6 +173,48 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       .filter((v) => v && v.id && !isPurgedItem(v))
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos]);
+
+  // Tactile domain hint chips (prioritize real trending brand domains, fallback to iconic examples)
+  const suggestedDomains = useMemo(() => {
+    const fallback = ["nike.com", "sephora.com", "wolt.com", "hilton.com"];
+    const found: string[] = [];
+    const seen = new Set<string>();
+    for (const v of trendingVideos) {
+      const matched = places.find((p) => isPlaceReviewMatch(v, p));
+      const dom = extractCleanDomain(matched?.brandDomain || matched?.website || v.placeWebsite || v.placeId || "");
+      if (dom && dom.includes(".") && !dom.includes("yoouz") && !seen.has(dom.toLowerCase())) {
+        seen.add(dom.toLowerCase());
+        found.push(dom.toLowerCase());
+      }
+      if (found.length >= 4) break;
+    }
+    for (const d of fallback) {
+      if (found.length >= 4) break;
+      if (!seen.has(d)) {
+        seen.add(d);
+        found.push(d);
+      }
+    }
+    return found.slice(0, 4);
+  }, [trendingVideos, places]);
+
+  const formatCompactRecency = useCallback((video: VideoReview): string => {
+    const ts = getReviewTime(video);
+    if (!ts || !Number.isFinite(ts) || ts <= 0) return "Live";
+    const diffMs = Math.max(0, Date.now() - ts);
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 2) return "Now";
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `${weeks}w`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo`;
+    return `${Math.max(1, Math.floor(days / 365))}y`;
+  }, []);
 
   // Eagerly prewarm and GPU-decode ALL trending review photos for instant zero-flash display
   useEffect(() => {
@@ -742,113 +788,126 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+64px)] md:pb-12 scroll-smooth">
-      {/* 1. Header (Mobile Only) - Hamburger on Left, Official Dark Mode Icon & 'Yoouz' Wordmark, Balanced Right Spacer */}
-      <header className="w-full flex md:hidden items-center justify-between px-4 pt-3.5 pb-2.5 shrink-0 select-none z-20 border-b border-zinc-900/60 bg-zinc-950/80 backdrop-blur-md sticky top-0">
-        <button
-          type="button"
-          onClick={onClose || onOpenMenu}
-          className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
-          aria-label={onClose ? t("common.close", "Close") : t("nav.openMenu", "Open menu")}
-        >
-          {onClose ? (
-            <X className="w-6 h-6 stroke-[2.2]" />
-          ) : (
-            <Menu className="w-6 h-6 stroke-[2.2]" />
-          )}
-        </button>
-
-        {/* Official Dark Mode Yoouz Brand Logo or Review Mode Title */}
+    <div className="flex-1 h-full w-full relative overflow-y-auto bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-8 scroll-smooth">
+      {/* 1. Mobile Frameless Obsidian Header (md:hidden) — Brand Left, Bell + Minimal Menu Right */}
+      <header className="w-full flex md:hidden items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top,12px))] pb-2.5 shrink-0 select-none z-20 border-b border-white/[0.06] bg-[#050506]/88 backdrop-blur-2xl sticky top-0">
         {searchMode === "review" ? (
-          <div className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-[32px] h-[32px] rounded-[11px] bg-zinc-900 border border-zinc-800 text-white shadow-md shrink-0">
-              <Camera className="w-4 h-4 stroke-[2.2] text-white" />
+          <div className="flex items-center gap-2.5">
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
+                aria-label={t("common.close", "Close")}
+              >
+                <X className="w-5 h-5 stroke-[2]" />
+              </button>
+            )}
+            <div className="relative flex items-center justify-center w-[32px] h-[32px] rounded-[10px] bg-[#121216] border border-white/[0.12] text-white shrink-0">
+              <Camera className="w-4 h-4 stroke-[2.1] text-white" />
             </div>
-            <span className="text-white text-[17px] font-bold tracking-tight">
-              {headerTitle || "Search Business"}
+            <span className="text-white text-[17px] font-semibold tracking-[-0.02em]">
+              {headerTitle || "Find Business"}
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[11px] bg-zinc-900 shadow-md shrink-0 border border-zinc-800">
-              <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-white">
+          <div className="flex items-center gap-2.5">
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
+                aria-label={t("common.close", "Close")}
+              >
+                <X className="w-5 h-5 stroke-[2]" />
+              </button>
+            )}
+            <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[10px] bg-[#121216] border border-white/[0.12] shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0">
+              <svg viewBox="0 0 24 24" className="w-[17px] h-[17px] fill-white">
                 <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
               </svg>
             </div>
-            <span className="text-white text-[20px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+            <span className="text-white text-[20px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif]">
               Yoouz
             </span>
           </div>
         )}
 
-        {/* Right Action: Notifications or Balanced Spacer */}
-        {onClose ? (
-          <div className="w-10 h-10 -mr-1" aria-hidden="true" />
-        ) : (
-          <button
-            type="button"
-            onClick={onOpenNotifications}
-            className="relative w-10 h-10 -mr-1 rounded-full flex items-center justify-center text-zinc-100 hover:text-white hover:bg-zinc-900 active:scale-95 transition-all cursor-pointer shrink-0"
-            aria-label={t("nav.notifications", "Notifications")}
-            title={t("nav.notifications", "Notifications")}
-          >
-            <Bell className="w-5.5 h-5.5 stroke-[2.1]" />
-            {unreadNotifsCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-zinc-950" />
-              </span>
-            )}
-          </button>
-        )}
+        {/* Right Actions: Notifications Bell + Minimalist 2-Line Menu */}
+        <div className="flex items-center gap-1 shrink-0">
+          {!onClose && (
+            <button
+              type="button"
+              onClick={onOpenNotifications}
+              className="relative w-9 h-9 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
+              aria-label={t("nav.notifications", "Notifications")}
+              title={t("nav.notifications", "Notifications")}
+            >
+              <Bell className="w-[20px] h-[20px] stroke-[1.9]" />
+              {unreadNotifsCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white border border-[#050506]" />
+                </span>
+              )}
+            </button>
+          )}
+          {!onClose && onOpenMenu && (
+            <button
+              type="button"
+              onClick={onOpenMenu}
+              className="w-9 h-9 -mr-1 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
+              aria-label={t("nav.openMenu", "Open menu")}
+              title={t("nav.openMenu", "Open menu")}
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5 stroke-current" fill="none" strokeWidth="1.9" strokeLinecap="round">
+                <line x1="4" y1="8.5" x2="20" y2="8.5" />
+                <line x1="4" y1="15.5" x2="20" y2="15.5" />
+              </svg>
+            </button>
+          )}
+        </div>
       </header>
 
-      {/* Main Content Area - Mobile centers search bar cleanly in middle, anchors videos to bottom, desktop locked */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-4 sm:pt-8 md:pt-6 lg:pt-8 flex flex-col justify-start items-center pb-2 md:pb-12 relative">
-        {/* Subtle OLED ambient glow behind masthead for depth on mobile */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-b from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none md:hidden" aria-hidden="true" />
-        
-        {/* 2. Hero Copy - Luxury 3-tier editorial typography hierarchy for mobile & desktop */}
-        <div className="w-full text-center max-w-2xl mx-auto mb-2 sm:mb-8 md:mb-7 animate-in fade-in duration-300 relative z-10 px-1">
-          <h1 className="text-[34px] xs:text-[38px] sm:text-5xl md:text-[52px] lg:text-[56px] font-black text-white tracking-[-0.035em] leading-[1.04] sm:leading-[1.05]">
+      {/* Main Content Stage — Widescreen 1360px Gallery Canvas */}
+      <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 xs:pt-7 sm:pt-10 md:pt-11 lg:pt-12 flex flex-col justify-start items-center relative">
+        {/* Subtle Editorial Radial Top Depth */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-gradient-to-b from-white/[0.035] via-white/[0.015] to-transparent rounded-full blur-3xl pointer-events-none"
+          aria-hidden="true"
+        />
+
+        {/* 2. Sculpted Sentence-Case Editorial Hero */}
+        <div className="w-full text-center max-w-3xl mx-auto mb-5 sm:mb-7 relative z-10 px-1 animate-in fade-in duration-300">
+          <h1 className="text-[32px] xs:text-[36px] sm:text-[46px] md:text-[52px] lg:text-[56px] font-bold text-white tracking-[-0.038em] leading-[1.05]">
             {searchMode === "review" ? (
-              <>
-                <span className="block">Find a Business</span>
-                <span className="block mt-0.5 sm:mt-1">To Review</span>
-              </>
+              <>Find a business to review.</>
             ) : (
-              <>
-                <span className="block">See the Truth</span>
-                <span className="block mt-0.5 sm:mt-1">Before You Decide</span>
-              </>
+              <>See the truth before you decide.</>
             )}
           </h1>
 
-          <p className="text-white/95 text-[15px] xs:text-[16px] sm:text-[19px] md:text-[20px] font-semibold tracking-[-0.015em] leading-snug mt-3 sm:mt-4">
-            A picture is worth a thousand words.
-          </p>
-
-          <p className="text-zinc-400 text-[12.5px] xs:text-[13.5px] sm:text-[15.5px] md:text-[16px] mt-1.5 sm:mt-2 leading-[1.48] sm:leading-[1.55] mx-auto font-normal tracking-[-0.01em]">
-            {searchMode === "review" ? (
-              headerSubtitle ? (
-                <span className="block max-w-md mx-auto text-balance">{headerSubtitle}</span>
-              ) : (
-                <>
-                  <span className="block">Search any business, place, or URL below</span>
-                  <span className="block">to snap a live camera photo review in seconds.</span>
-                </>
-              )
-            ) : (
-              <>
-                <span className="block">Search any place or brand to see live photo reviews</span>
-                <span className="block">and star ratings, or snap your own in seconds.</span>
-              </>
-            )}
-          </p>
+          {searchMode === "review" ? (
+            <p className="text-zinc-400 text-[13.5px] sm:text-[15.5px] mt-2.5 sm:mt-3 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
+              {headerSubtitle || "Pick any brand, place, or website URL to snap a live camera photo review in seconds."}
+            </p>
+          ) : (
+            <>
+              <p className="hidden sm:block text-zinc-400 text-[15.5px] md:text-[16.5px] mt-3 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
+                Unedited live camera photo reviews — captured in 3 seconds, zero fake text.
+              </p>
+              <p className="sm:hidden text-zinc-400 text-[14px] mt-2 leading-snug max-w-xs mx-auto font-normal tracking-[-0.01em]">
+                Live camera photo reviews in 3 seconds.
+              </p>
+            </>
+          )}
         </div>
 
-        {/* 3. Search Component - Anchored cleanly below headline & subtitle on all screen sizes */}
-        <div className={`w-full max-w-2xl relative mx-auto ${query.trim() ? "mt-4 mb-2" : "mt-4 xs:mt-5 sm:mt-7 mb-6 sm:mb-8 md:mt-1 md:mb-8 lg:mb-10"} relative z-30`} ref={dropdownRef}>
+        {/* 3. Spotlight-Grade Elevated Glass Search Bar + Tactile Domain Hint Chips */}
+        <div
+          className={`w-full max-w-[660px] relative mx-auto ${query.trim() ? "mb-3" : "mb-7 sm:mb-9 md:mb-10"} z-30`}
+          ref={dropdownRef}
+        >
           <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
             <div
               onClick={() => {
@@ -862,13 +921,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   searchInputRef.current?.focus();
                 }
               }}
-              className={`relative flex items-center w-full bg-zinc-900/75 hover:bg-zinc-900/90 backdrop-blur-2xl border rounded-full px-5 sm:px-6 py-3.5 xs:py-4 shadow-[0_16px_40px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out cursor-text ${
+              className={`relative flex items-center w-full bg-white/[0.045] hover:bg-white/[0.065] backdrop-blur-2xl border rounded-full pl-4 sm:pl-5 pr-1.5 sm:pr-2 py-1.5 sm:py-2 shadow-[0_20px_54px_rgba(0,0,0,0.72),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-200 cursor-text ${
                 autoFocusSearch || isFocused
-                  ? "border-white/40 ring-4 ring-white/10"
-                  : "border-white/12 hover:border-white/20 focus-within:border-white/40 focus-within:ring-4 focus-within:ring-white/10"
+                  ? "border-white/35 ring-4 ring-white/[0.07]"
+                  : "border-white/[0.11] hover:border-white/[0.2] focus-within:border-white/35 focus-within:ring-4 focus-within:ring-white/[0.07]"
               }`}
             >
-              <Search className="w-5.5 h-5.5 text-zinc-400 shrink-0 ml-0.5 mr-3 sm:mr-3.5 pointer-events-none transition-colors group-focus-within:text-white" />
+              <Search className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-zinc-400 shrink-0 mr-3 pointer-events-none" />
               <div className="relative flex-1 min-w-0 flex items-center">
                 {autoFocusSearch && !isFocused && query.length === 0 && (
                   <span
@@ -907,40 +966,77 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   }}
                   onBlur={() => setIsFocused(false)}
                   placeholder={
-                    searchMode === "review"
-                      ? t("search.placeholder", "Search any business, place, or URL...")
-                      : t("search.placeholder", "Search any business, place, or URL...")
+                    isMobile
+                      ? "Search brand, place, or URL..."
+                      : "Search any brand, place, or paste a website URL..."
                   }
-                  className="w-full min-w-0 bg-transparent text-white text-[14px] xs:text-[15px] sm:text-base placeholder:text-zinc-400 placeholder:truncate focus:outline-none font-medium pr-2 truncate caret-white select-text"
+                  className="w-full min-w-0 bg-transparent text-white text-[14.5px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
                 />
               </div>
 
-              {/* Right Side: Subtle Spinner / Clear Button */}
-              <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              {/* Right Side: Spinner / Clear + Pure-White Submit Arrow */}
+              <div className="flex items-center gap-1.5 shrink-0">
                 {(isLoadingSuggest || isResolvingPlace) && (
-                  <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-zinc-400 animate-spin mr-1" />
                 )}
                 {query.trim() && (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setQuery("");
                       setSuggestions([]);
                       setShowDropdown(false);
                       setSelectedIndex(-1);
                       searchInputRef.current?.focus();
                     }}
-                    className="p-1 text-zinc-400 hover:text-white rounded-full hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-white/[0.08] transition-colors cursor-pointer"
                     title={t("common.clear", "Clear")}
                   >
                     <X className="w-4 h-4" />
                   </button>
                 )}
+                <button
+                  type="submit"
+                  onClick={(e) => {
+                    if (!query.trim()) {
+                      e.preventDefault();
+                      if (isMobile) {
+                        flushSync(() => setIsMobileSearchOpen(true));
+                        const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
+                        overlayInput?.focus();
+                      } else {
+                        searchInputRef.current?.focus();
+                      }
+                    }
+                  }}
+                  aria-label="Search"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(255,255,255,0.16)]"
+                >
+                  <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                </button>
               </div>
             </div>
           </form>
 
-          {/* Mobile Overlay */}
+          {/* Tactile Hairline Domain Chips (No 2005 underlines) */}
+          {!query.trim() && (
+            <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mt-3.5 px-1">
+              <span className="text-[12px] text-zinc-500 font-medium mr-0.5">Try</span>
+              {suggestedDomains.map((dom, i) => (
+                <button
+                  key={dom}
+                  type="button"
+                  onClick={() => resolveAndOpenBusiness(dom)}
+                  className={`${i === 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] hover:border-white/[0.18] text-[12px] text-zinc-300 hover:text-white font-medium tracking-[-0.01em] transition-all active:scale-95 cursor-pointer`}
+                >
+                  {dom}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile Search Overlay */}
           {isMobile && isMobileSearchOpen && (
             <MobileSearchOverlay
               query={query}
@@ -960,9 +1056,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             />
           )}
 
-          {/* Autocomplete Dropdown: No scrollbar on mobile PWA, smooth custom thin scrollbar on desktop */}
+          {/* Desktop Autocomplete Dropdown */}
           {!isMobile && showDropdown && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2.5 bg-zinc-900/98 backdrop-blur-2xl border border-zinc-800/90 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.9)] overflow-hidden z-50 divide-y divide-zinc-800/60 max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin md:[scrollbar-width:thin] md:scrollbar-thumb-zinc-700/60 hover:md:scrollbar-thumb-zinc-500 md:scrollbar-track-transparent animate-in fade-in duration-150 overscroll-contain">
+            <div className="absolute top-full left-0 right-0 mt-2.5 bg-[#101013]/96 backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.92)] overflow-hidden z-50 divide-y divide-white/[0.06] max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin animate-in fade-in duration-150 overscroll-contain">
               {suggestions.map((item, idx) => (
                 <button
                   key={idx}
@@ -970,11 +1066,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   type="button"
                   onClick={() => handleSelectSuggestion(item)}
                   className={`w-full px-4 py-3 flex items-center gap-3.5 transition-colors text-left cursor-pointer group ${
-                    selectedIndex === idx ? "bg-zinc-800/90 text-white" : "hover:bg-zinc-800/60"
+                    selectedIndex === idx ? "bg-white/[0.08] text-white" : "hover:bg-white/[0.05]"
                   }`}
                 >
                   {item.isCreator ? (
-                    <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
+                    <div className="w-9 h-9 rounded-full bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
                       {item.logoUrl ? (
                         <img
                           src={item.logoUrl}
@@ -993,23 +1089,23 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       domain={item.domain || item.id}
                       name={item.title}
                       logoUrl={item.logoUrl}
-                      className="w-9 h-9 rounded-xl bg-white border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
+                      className="w-9 h-9 rounded-xl bg-white border border-white/[0.12] flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
                       imageClassName="w-full h-full object-contain"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700/80 flex items-center justify-center shrink-0 overflow-hidden text-zinc-300 shadow-xs">
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
                       <Building2 className="w-4 h-4 text-zinc-400" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 font-bold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
+                    <div className="flex items-center gap-1.5 font-semibold text-sm text-white group-hover:text-white transition-colors truncate">
                       <span>{item.title}</span>
                       {!item.isCreator && (
                         <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
                       )}
                     </div>
                     {item.domain && (
-                      <div className="text-xs text-zinc-400 truncate font-medium mt-0.5">
+                      <div className="text-xs text-zinc-400 truncate font-normal mt-0.5">
                         {item.domain}
                       </div>
                     )}
@@ -1020,12 +1116,50 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </div>
 
-        {/* 4. Trending Photo Reviews Grid / Carousel - Remains visible in soft focus while typing */}
-        <section className={`w-full relative mt-0 md:mt-2 transition-opacity duration-200 ${query.trim() ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
-          <div className="flex items-center justify-between w-full mb-2.5 sm:mb-3 px-1">
-            <h2 className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 uppercase">
-              Trending Photo Reviews
+        {/* 4. Live Photo Proof Widescreen Gallery */}
+        <section className={`w-full relative transition-opacity duration-200 ${query.trim() ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
+          <div className="flex items-center justify-between w-full mb-3.5 sm:mb-4 px-0.5">
+            <div className="flex items-baseline gap-2 min-w-0">
+              <h2 className="text-[17px] sm:text-[19px] font-semibold tracking-[-0.02em] text-white truncate">
+                Live Photo Proof
               </h2>
+              <span className="hidden sm:inline text-[14px] text-zinc-500 font-normal">
+                · Trending right now
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              {trendingVideos.length > 4 && (
+                <div className="hidden md:flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { if (canScrollLeft) scrollCarousel("left"); }}
+                    disabled={!canScrollLeft}
+                    aria-label="Previous photo reviews"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                      canScrollLeft
+                        ? "bg-white/[0.04] hover:bg-white/[0.1] border-white/[0.12] text-white cursor-pointer active:scale-95"
+                        : "bg-transparent border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { if (canScrollRight) scrollCarousel("right"); }}
+                    disabled={!canScrollRight}
+                    aria-label="Next photo reviews"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                      canScrollRight
+                        ? "bg-white/[0.04] hover:bg-white/[0.1] border-white/[0.12] text-white cursor-pointer active:scale-95"
+                        : "bg-transparent border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                    }`}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
               {trendingVideos.length > 0 && (
                 <button
                   type="button"
@@ -1033,20 +1167,22 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     if (onViewAll) onViewAll();
                     else if (trendingVideos.length > 0) onSelectVideo(trendingVideos[0].id);
                   }}
-                  className="text-xs sm:text-sm font-bold tracking-wider text-zinc-400 hover:text-white uppercase transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-[13px] sm:text-[14px] font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 >
-                  View All
+                  <span>Explore all</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
+          </div>
 
           {trendingVideos.length === 0 ? (
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-zinc-900/60 border border-zinc-800/80 px-5 py-8 sm:py-10 text-center flex flex-col items-center justify-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center">
+            <div className="w-full rounded-3xl bg-white/[0.03] border border-white/[0.08] px-5 py-10 text-center flex flex-col items-center justify-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#111114] border border-white/[0.1] flex items-center justify-center">
                 <Camera className="w-5 h-5 text-zinc-300" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-white">No live photo reviews yet</p>
+                <p className="text-sm font-semibold text-white">No live photo reviews yet</p>
                 <p className="text-xs text-zinc-400 max-w-xs mx-auto">
                   Snap a live camera photo and pick 1 to 5 stars to share the first real review.
                 </p>
@@ -1055,7 +1191,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 <button
                   type="button"
                   onClick={() => onRecordReview(null)}
-                  className="mt-1 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-black text-xs tracking-wide flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg"
+                  className="mt-1 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-tight flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   <span>Add Review</span>
@@ -1063,149 +1199,171 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               )}
             </div>
           ) : (
-          /* Cards Container: Responsive Horizontal Carousel on Mobile, 4-Column Grid on Desktop */
-          <div className="relative group/carousel">
-            {/* Desktop Carousel Navigation Arrows */}
-            {trendingVideos.length > 4 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (canScrollLeft) scrollCarousel("left");
-                  }}
-                  disabled={!canScrollLeft}
-                  className={`hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full items-center justify-center transition-all duration-300 z-20 ${
-                    canScrollLeft
-                      ? "bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 text-white shadow-2xl opacity-90 hover:opacity-100 cursor-pointer active:scale-95"
-                      : "bg-zinc-800/40 border border-zinc-700/40 text-zinc-400 opacity-30 cursor-not-allowed shadow-none"
-                  }`}
-                  aria-label="Previous photo reviews"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (canScrollRight) scrollCarousel("right");
-                  }}
-                  disabled={!canScrollRight}
-                  className={`hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full items-center justify-center transition-all duration-300 z-20 ${
-                    canScrollRight
-                      ? "bg-zinc-900/95 hover:bg-zinc-800 border border-zinc-700 text-white shadow-2xl opacity-90 hover:opacity-100 cursor-pointer active:scale-95"
-                      : "bg-zinc-800/40 border border-zinc-700/40 text-zinc-400 opacity-30 cursor-not-allowed shadow-none"
-                  }`}
-                  aria-label="Next photo reviews"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
+            <div className="relative">
+              {/* Widescreen 5-Card Row on Desktop, 2+Peek Full-Height Row on Mobile */}
+              <div
+                ref={carouselRef}
+                className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
+              >
+                {trendingVideos.map((video, idx) => {
+                  const matchedPlace = places.find((p) => isPlaceReviewMatch(video, p));
+                  const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
+                  const brandDomain = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || "") || "";
+                  const brandLogoUrl = matchedPlace?.logoUrl || video.placeLogoUrl || "";
 
-            {/* Carousel Wrapper: Single horizontal row on desktop and mobile */}
-            <div
-              ref={carouselRef}
-              className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory px-0.5 scroll-smooth"
-            >
-              {trendingVideos.map((video, idx) => {
-                const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
-                const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
-                
-                const author = resolveSafeAuthor(video, currentUser);
-                const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
-                const rating = typeof video.rating === "number" ? video.rating : 5.0;
-                const posterUrl = resolveVideoPosterUrl(video);
+                  const author = resolveSafeAuthor(video, currentUser);
+                  const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
+                  const rating = typeof video.rating === "number" ? video.rating : 5;
+                  const posterUrl = resolveVideoPosterUrl(video);
+                  const recency = formatCompactRecency(video);
 
-                return (
-                  <div
-                    key={video.id}
-                    role="button"
-                    tabIndex={0}
-                    data-trending-video-id={video.id}
-                    onClick={() => onSelectVideo(video.id)}
-                    onPointerEnter={() => {
-                      if (posterUrl) preloadImage(posterUrl, "high");
-                      preloadBusinessAssets(
-                        matchedPlace?.logoUrl || video.placeLogoUrl,
-                        matchedPlace?.bannerUrl || video.placeBannerUrl,
-                        author?.avatar
-                      );
-                    }}
-                    onTouchStart={() => {
-                      if (posterUrl) preloadImage(posterUrl, "high");
-                      preloadBusinessAssets(
-                        matchedPlace?.logoUrl || video.placeLogoUrl,
-                        matchedPlace?.bannerUrl || video.placeBannerUrl,
-                        author?.avatar
-                      );
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onSelectVideo(video.id);
-                      }
-                    }}
-                    className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-950 via-zinc-900 to-black border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
-                  >
-                    {/* Rich Brand Backdrop (Never Black) */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/90 via-zinc-900 to-black flex flex-col items-center justify-center p-3 text-center z-0">
-                      <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white font-black text-sm mb-1.5 shadow-inner">
-                        {businessName.charAt(0).toUpperCase()}
+                  return (
+                    <div
+                      key={video.id}
+                      role="button"
+                      tabIndex={0}
+                      data-trending-video-id={video.id}
+                      onClick={() => onSelectVideo(video.id)}
+                      onPointerEnter={() => {
+                        if (posterUrl) preloadImage(posterUrl, "high");
+                        preloadBusinessAssets(
+                          brandLogoUrl,
+                          matchedPlace?.bannerUrl || video.placeBannerUrl,
+                          author?.avatar
+                        );
+                      }}
+                      onTouchStart={() => {
+                        if (posterUrl) preloadImage(posterUrl, "high");
+                        preloadBusinessAssets(
+                          brandLogoUrl,
+                          matchedPlace?.bannerUrl || video.placeBannerUrl,
+                          author?.avatar
+                        );
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSelectVideo(video.id);
+                        }
+                      }}
+                      className="relative shrink-0 w-[176px] xs:w-[192px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)] h-[310px] xs:h-[340px] sm:h-auto sm:aspect-[3/4.35] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.22] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
+                    >
+                      {/* Clean Neutral Obsidian Fallback (Never loud indigo) */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] flex flex-col items-center justify-center p-4 text-center z-0">
+                        <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white font-semibold text-base mb-2">
+                          {businessName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-xs font-medium text-zinc-400 line-clamp-2">{businessName}</span>
                       </div>
-                      <span className="text-[11px] font-bold text-zinc-300 line-clamp-2 px-1">{businessName}</span>
-                    </div>
 
-                    {/* Photo Review Thumbnail */}
-                    {posterUrl && (
-                      <img
-                        src={posterUrl}
-                        alt={`${businessName} review - ${creatorFullName}`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 z-10 pointer-events-none"
-                        loading="eager"
-                        decoding="sync"
-                        fetchPriority={idx < 8 ? "high" : "auto"}
-                        referrerPolicy={/^https?:\/\//i.test(posterUrl) ? "no-referrer" : undefined}
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
-                            target.dataset.triedProxy = "true";
-                            target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
-                          } else {
-                            target.style.display = 'none';
-                          }
-                        }}
-                      />
-                    )}
+                      {/* Full-Bleed Live Photo Review */}
+                      {posterUrl && (
+                        <img
+                          src={posterUrl}
+                          alt={`${businessName} review - ${creatorFullName}`}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out z-10 pointer-events-none"
+                          loading="eager"
+                          decoding="sync"
+                          fetchPriority={idx < 8 ? "high" : "auto"}
+                          referrerPolicy={/^https?:\/\//i.test(posterUrl) ? "no-referrer" : undefined}
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
+                              target.dataset.triedProxy = "true";
+                              target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
+                            } else {
+                              target.style.display = "none";
+                            }
+                          }}
+                        />
+                      )}
 
-                    {/* Top-Left Star Badge: ⭐ 5 (Whole Number) */}
-                    <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-md z-10 pointer-events-none">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span className="text-[11px] sm:text-xs font-bold text-white leading-none">
-                        {getRoundedRating(rating)}
-                      </span>
-                    </div>
-
-                    {/* Clean Bottom Scrim: Business Name & Creator Full Name */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-10 pb-3 px-2.5 sm:px-4 flex flex-col justify-end z-10 pointer-events-none">
-                      <div className="flex items-center gap-1 min-w-0">
-                        <span className="text-white text-[13px] sm:text-base font-bold tracking-tight truncate leading-tight">
-                          {businessName}
-                        </span>
-                        <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                      {/* Top-Left Uniform Pill Row: Champagne-Gold Whole Star + Consistent Recency */}
+                      <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex items-center gap-1.5 z-20 pointer-events-none">
+                        <div className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.12] flex items-center gap-1 shadow-sm">
+                          <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
+                          <span className="text-[11.5px] font-semibold text-white leading-none tabular-nums">
+                            {getRoundedRating(rating)}
+                          </span>
+                        </div>
+                        <div className="px-2 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/[0.1] text-[10.5px] font-medium text-white/85 leading-none">
+                          {recency}
+                        </div>
                       </div>
-                      <div className="text-white/85 text-[10.5px] sm:text-xs font-normal truncate mt-0.5 flex items-center gap-1">
-                        <span className="truncate text-white/85">{creatorFullName}</span>
-                        {Boolean(author?.passkeyProtected || (video as any)?.author?.passkeyProtected) && (
-                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-white/85 text-zinc-950 shrink-0 inline-block" />
-                        )}
+
+                      {/* Seamless Multi-Stop Organic Gradient Scrim (Zero Boxy Seams) + Crisp Mini Brand Logo */}
+                      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.68)_38%,rgba(0,0,0,0.22)_72%,transparent_100%)] pt-20 pb-3 px-2.5 sm:px-3.5 z-20 pointer-events-none">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <CopoBrandLogo
+                            domain={brandDomain || video.placeId}
+                            name={businessName}
+                            logoUrl={brandLogoUrl}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] sm:rounded-[10px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 sm:p-1 shadow-md"
+                            imageClassName="w-full h-full object-contain"
+                            fallbackTextClassName="text-[11px] font-bold text-zinc-900"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="text-white text-[13px] sm:text-[14px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                                {businessName}
+                              </span>
+                              <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
+                            </div>
+                            <div className="text-white/75 text-[10.5px] sm:text-[11.5px] font-normal truncate mt-0.5 flex items-center gap-1">
+                              <span className="truncate">{creatorFullName}</span>
+                              {brandDomain && (
+                                <span className="hidden sm:inline text-white/55 truncate">· {brandDomain}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
           )}
         </section>
+
+        {/* Whisper-Quiet Minimal Desktop Footer (About / Privacy / Terms live cleanly here) */}
+        <footer className="hidden md:flex items-center justify-between w-full mt-auto pt-10 pb-2 border-t border-white/[0.06] text-[12px] text-zinc-500">
+          <div className="flex items-center gap-2">
+            <span>{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</span>
+            <span className="text-zinc-700">·</span>
+            <span className="text-zinc-400">{t("legal.tagline", "Real Photos. Real Proof.")}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => onOpenMore?.()}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+            >
+              {t("legal.about", "About")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onOpenMore?.()}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+            >
+              {t("legal.privacy", "Privacy")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenLegal ? onOpenLegal("terms") : onOpenMore?.()}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+            >
+              {t("legal.terms", "Terms")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenBusiness ? onOpenBusiness() : window.open("/business", "_blank", "noopener,noreferrer")}
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300 font-medium"
+            >
+              Yoouz for Business
+            </button>
+          </div>
+        </footer>
       </main>
     </div>
   );

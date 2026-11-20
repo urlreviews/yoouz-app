@@ -27,9 +27,9 @@ export const CopoStarRating: React.FC<CopoStarRatingProps> = ({
   rating,
   maxStars = 5,
   starClassName = "w-6 h-6",
-  filledColorClass = "text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
-  emptyColorClass = "text-zinc-500/60 fill-zinc-900/70 print:text-zinc-300 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
-  className = "flex items-center text-amber-400 gap-0.5 print:inline-flex [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+  filledColorClass = "text-[#E8C78A] fill-[#E8C78A] print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
+  emptyColorClass = "text-zinc-600/50 fill-zinc-900/60 print:text-zinc-300 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]",
+  className = "flex items-center text-[#E8C78A] gap-0.5 print:inline-flex [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
 }) => {
   const wholeStars = getRoundedRating(rating);
 

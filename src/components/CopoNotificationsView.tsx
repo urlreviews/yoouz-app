@@ -352,8 +352,8 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   return (
     <div 
-      className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
-      style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.5rem + env(safe-area-inset-top, 0px))' }}
+      className="flex-1 h-full overflow-y-auto bg-[#050506] text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
+      style={{ paddingBottom: 'calc(7.5rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.5rem + env(safe-area-inset-top, 0px))' }}
     >
       <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
         
@@ -364,18 +364,18 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                className="w-10 h-10 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                 title="Back to Feed"
                 aria-label="Back to Feed"
               >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
               </button>
             )}
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em] leading-tight">
                 {t("nav.notifications", "Notifications")}
               </h1>
-              <p className="text-xs text-zinc-400 font-medium truncate">
+              <p className="text-xs text-zinc-400 font-normal truncate">
                 {unreadCount > 0
                   ? `${unreadCount} ${t("notifications.newUpdates", "new updates")}`
                   : t("notifications.allCaughtUp", "All caught up")}

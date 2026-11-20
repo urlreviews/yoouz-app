@@ -1,29 +1,16 @@
-// Yoouz Platform Desktop Navigation Sidebar
+// Yoouz Platform Flagship 3-Zone Desktop & Tablet Top Navigation Bar
 import React, { useState } from "react";
 import {
-  Home,
-  Compass,
-  UserPlus,
-  Users,
-  Search,
-  MapPin,
   Mail,
   Bell,
-  Bookmark,
   User,
   Menu,
   Camera,
-  Shield,
-  Download,
-  Globe,
-  ChevronRight,
-  Building2,
-  ArrowRight
+  KeyRound
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
 import { LanguageSelectorModal } from "./LanguageSelectorModal";
-import { CopoMobileBottomNav } from "./CopoMobileBottomNav";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 interface CopoSidebarProps {
@@ -44,320 +31,217 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
   currentUser,
   unreadNotifsCount = 0,
   unreadMessagesCount = 0,
-  onOpenSearch,
-  onOpenCreateModal,
-  onOpenLegal,
   onOpenPasskeyModal
 }) => {
-  const { t, currentLanguageMeta, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
-  const mobileNavRef = React.useRef<HTMLElement>(null);
 
-  React.useEffect(() => {
-    const updateNavHeight = () => {
-      if (typeof window === "undefined") return;
-      if (window.innerWidth < 768 && mobileNavRef.current) {
-        const height = mobileNavRef.current.offsetHeight || mobileNavRef.current.getBoundingClientRect().height;
-        if (height > 0) {
-          document.documentElement.style.setProperty("--mobile-nav-height", `${Math.round(height)}px`);
-          return;
-        }
-      } else if (window.innerWidth >= 768) {
-        document.documentElement.style.setProperty("--mobile-nav-height", "0px");
-      }
-    };
-
-    updateNavHeight();
-
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined" && mobileNavRef.current) {
-      ro = new ResizeObserver(() => updateNavHeight());
-      ro.observe(mobileNavRef.current);
-    }
-
-    window.addEventListener("resize", updateNavHeight, { passive: true });
-    window.addEventListener("orientationchange", updateNavHeight, { passive: true });
-
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener("resize", updateNavHeight);
-      window.removeEventListener("orientationchange", updateNavHeight);
-    };
-  }, []);
- 
-  const navItems = [
-    { id: "home" as NavSection, label: t("nav.home", "Home"), icon: Home },
-    { id: "search" as NavSection, label: t("nav.search", "Search"), icon: Search, hasDot: true },
-    { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
-    { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
-    { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },
-    { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Saved"), icon: Bookmark },
-    { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
-    { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu },
-  ];
+  const isDiscoverActive =
+    activeSection === "home" || activeSection === "search" || activeSection === "discover";
+  const isFollowingActive = activeSection === "following";
+  const isSavedActive = activeSection === "bookmarks";
+  const isMessagesActive = activeSection === "messages";
+  const isNotificationsActive = activeSection === "notifications";
+  const isProfileActive = activeSection === "profile";
+  const isMoreActive = activeSection === "more";
+  const needsPasskeySave = Boolean(currentUser && !(currentUser as any).passkeyProtected);
 
   return (
     <>
-      {/* 1. Desktop Left Sidebar (Expanded - lg and above) */}
-      <aside
-        id="copo-desktop-sidebar"
-        className="hidden lg:flex flex-col w-64 h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 justify-between select-none z-30 shadow-none text-white"
+      {/* Flagship 3-Zone Desktop & Tablet Top Bar (md and above) */}
+      <header
+        id="copo-desktop-topbar"
+        className="hidden md:flex items-center justify-between w-full h-16 shrink-0 bg-[#050506]/90 backdrop-blur-2xl border-b border-white/[0.07] px-5 lg:px-8 select-none z-40 text-white"
       >
-        <div className="flex flex-col gap-6">
-          {/* Official Yoouz Logo */}
-          <div
-            id="copo-brand-logo"
-            onClick={() => onSelectSection("home")}
-            className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
-          >
-            <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-              </svg>
-            </div>
-            <div className="flex flex-col justify-center pt-0.5 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-                  Yoouz
-                </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
-                  Beta
-                </span>
-              </div>
-              <span className="text-[11.5px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
-                {t("legal.tagline", "Real Photos. Real Proof.")}
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation items list */}
-          <nav className="flex flex-col gap-1.5 mt-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeSection === item.id;
-
-              const isProfileItem = item.id === "profile" && currentUser?.avatar;
-
-              return (
-                <React.Fragment key={item.id}>
-                  <button
-                    id={`nav-btn-${item.id}`}
-                    onClick={() => onSelectSection(item.id)}
-                    className={`relative flex items-center transition-all duration-150 cursor-pointer group ${
-                      isActive
-                        ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                        : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-                    }`}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {isProfileItem ? (
-                        <img
-                          src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
-                          alt={currentUser?.name || "Profile"}
-                          className={`w-5 h-5 rounded-full object-cover shrink-0 ring-1.5 ${
-                            isActive ? "ring-white" : "ring-white/40"
-                          }`}
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
-                          }}
-                        />
-                      ) : (
-                        <Icon className="w-5 h-5 shrink-0 text-white" />
-                      )}
-                      {item.hasDot && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
-                      )}
-                      {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected && (
-                        <span
-                          className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-zinc-950"
-                          title="Save your passkey"
-                        />
-                      )}
-                    </div>
-                    <span className="truncate flex-1">
-                      {item.id === "profile" && currentUser?.name ? currentUser.name.split(" ")[0] : item.label}
-                    </span>
-
-                    {item.id === "profile" && currentUser && !(currentUser as any).passkeyProtected ? (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          if (onOpenPasskeyModal) {
-                            e.stopPropagation();
-                            onOpenPasskeyModal("save");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (onOpenPasskeyModal && (e.key === "Enter" || e.key === " ")) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onOpenPasskeyModal("save");
-                          }
-                        }}
-                        className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border border-amber-400/30 transition-colors"
-                      >
-                        Save Key
-                      </span>
-                    ) : item.badge && item.badge > 0 ? (
-                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
-                        {item.badge > 99 ? "99+" : item.badge}
-                      </span>
-                    ) : null}
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </nav>
-
-          {/* Photo Review Primary Hero CTA */}
-          <button
-            id="sidebar-record-btn"
-            onClick={() => onSelectSection("record_review")}
-            className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg shadow-white/10 active:scale-[0.98] transition-all cursor-pointer mt-1"
-          >
-            <Camera className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
-            <span>{t("nav.add_review", "Add Review")}</span>
-          </button>
-        </div>
-
-        {/* Lower Section: Legal Footer */}
-        <div className="flex flex-col gap-3">
-          {/* Footer & Legal Links */}
-          <div className="px-1 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
-            {/* Yoouz for Business Clean Bold Title */}
-            <button
-              onClick={() => {
-                window.open("/business", "_blank", "noopener,noreferrer");
-              }}
-              className="text-left font-black text-[13px] text-white hover:text-zinc-200 transition-colors tracking-tight cursor-pointer bg-transparent border-none p-0 w-fit"
-            >
-              Yoouz for Business
-            </button>
-
-            {/* Legal Links Line */}
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-300 w-full">
-              <button
-                onClick={() => onOpenLegal ? onOpenLegal("privacy") : onSelectSection("more")}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
-              >
-                {t("legal.privacy", "Privacy")}
-              </button>
-              <span className="text-zinc-500 text-[9px]">•</span>
-              <button
-                onClick={() => onOpenLegal ? onOpenLegal("terms") : onSelectSection("more")}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
-              >
-                {t("legal.terms", "Terms")}
-              </button>
-              <span className="text-zinc-500 text-[9px]">•</span>
-              <button
-                onClick={() => onSelectSection("more")}
-                className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300"
-              >
-                {t("legal.about", "About")}
-              </button>
-            </div>
-
-            {/* Separate Line for Copyright */}
-            <p className="text-[10.5px] text-zinc-400 font-medium">
-              {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-            </p>
-          </div>
-        </div>
-      </aside>
-
-      {/* 2. Tablet Left Rail (Collapsed - md to lg) */}
-      <aside
-        id="copo-tablet-rail"
-        className="hidden md:flex lg:hidden flex-col w-[76px] h-[100dvh] shrink-0 bg-zinc-950 border-r border-zinc-800/80 py-6 items-center justify-between select-none z-30 shadow-none text-white"
-      >
-        <div className="flex flex-col gap-6 items-center w-full">
-          {/* Logo Icon Only */}
-          <div
-            onClick={() => onSelectSection("home")}
-            className="flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] cursor-pointer hover:-translate-y-0.5 transition-all duration-300 border border-zinc-800"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+        {/* Zone 1: Brand Mark (Left) */}
+        <button
+          id="copo-brand-logo"
+          type="button"
+          onClick={() => onSelectSection("home")}
+          className="flex items-center gap-2.5 group cursor-pointer bg-transparent border-none p-0 shrink-0"
+          aria-label="Yoouz Home"
+        >
+          <div className="relative flex items-center justify-center w-[34px] h-[34px] rounded-[10px] bg-[#121216] border border-white/[0.12] group-hover:border-white/[0.24] shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-all duration-200 shrink-0">
+            <svg viewBox="0 0 24 24" className="w-[17px] h-[17px] fill-white">
               <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
             </svg>
           </div>
+          <span className="text-white text-[20px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif]">
+            Yoouz
+          </span>
+        </button>
 
-          {/* Navigation items list (Icons Only) */}
-          <nav className="flex flex-col gap-3 w-full px-3">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeSection === item.id;
-
-              const isProfileItem = item.id === "profile" && currentUser?.avatar;
-
-              return (
-                <React.Fragment key={item.id}>
-                  <button
-                    onClick={() => onSelectSection(item.id)}
-                    className={`relative flex items-center justify-center w-12 h-12 mx-auto rounded-full transition-all duration-150 cursor-pointer ${
-                      isActive
-                        ? "bg-zinc-850 border border-zinc-700 text-white shadow-xs"
-                        : "text-white hover:bg-zinc-900/90"
-                    }`}
-                    title={item.label}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      {isProfileItem ? (
-                        <img
-                          src={getSafeAvatarUrl(currentUser?.avatar, currentUser?.name, (currentUser as any)?.handle || currentUser?.email)}
-                          alt={currentUser!.name || "Profile"}
-                          className={`w-7 h-7 rounded-full object-cover shrink-0 ring-2 ${
-                            isActive ? "ring-white" : "ring-white/40"
-                          }`}
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, currentUser?.name, (currentUser as any)?.handle || currentUser?.email);
-                          }}
-                        />
-                      ) : (
-                        <Icon className="w-[22px] h-[22px] shrink-0 text-white" />
-                      )}
-                      {item.hasDot && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-zinc-950" />
-                      )}
-                    </div>
-                    {item.badge && item.badge > 0 ? (
-                      <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] flex items-center justify-center px-1 text-[9px] font-black rounded-full bg-white text-zinc-950 border-2 border-zinc-950 shadow-md">
-                        {item.badge > 9 ? "9+" : item.badge}
-                      </span>
-                    ) : null}
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </nav>
-
-          {/* Tablet Add Review CTA button */}
+        {/* Zone 2: Primary High-Frequency Destinations (Center) */}
+        <nav
+          aria-label="Primary Navigation"
+          className="flex items-center gap-1 lg:gap-1.5"
+        >
           <button
-            onClick={() => onSelectSection("record_review")}
-            className="relative flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg mt-2 active:scale-95 transition-all cursor-pointer"
-            title={t("nav.add_review", "Add Review")}
+            id="nav-btn-home"
+            type="button"
+            onClick={() => onSelectSection("home")}
+            className={`px-3.5 py-2 rounded-full text-[14px] tracking-[-0.01em] transition-all duration-150 cursor-pointer ${
+              isDiscoverActive
+                ? "text-white font-semibold bg-white/[0.08]"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium"
+            }`}
           >
-            <Camera className="w-5 h-5 shrink-0 text-zinc-950 stroke-[2.2]" />
+            {t("nav.discover", "Discover")}
+          </button>
+
+          <button
+            id="nav-btn-following"
+            type="button"
+            onClick={() => onSelectSection("following")}
+            className={`px-3.5 py-2 rounded-full text-[14px] tracking-[-0.01em] transition-all duration-150 cursor-pointer ${
+              isFollowingActive
+                ? "text-white font-semibold bg-white/[0.08]"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium"
+            }`}
+          >
+            {t("nav.following", "Following")}
+          </button>
+
+          <button
+            id="nav-btn-bookmarks"
+            type="button"
+            onClick={() => onSelectSection("bookmarks")}
+            className={`px-3.5 py-2 rounded-full text-[14px] tracking-[-0.01em] transition-all duration-150 cursor-pointer ${
+              isSavedActive
+                ? "text-white font-semibold bg-white/[0.08]"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium"
+            }`}
+          >
+            {t("nav.bookmarks", "Saved")}
+          </button>
+
+          <button
+            id="nav-btn-business"
+            type="button"
+            onClick={() => onSelectSection("business")}
+            className="px-3.5 py-2 rounded-full text-[14px] tracking-[-0.01em] text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium transition-all duration-150 cursor-pointer"
+          >
+            For Business
+          </button>
+        </nav>
+
+        {/* Zone 3: Utility Icons + Signature White Add Review Pill (Right) */}
+        <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
+          {/* Messages */}
+          <button
+            id="nav-btn-messages"
+            type="button"
+            onClick={() => onSelectSection("messages")}
+            title={t("nav.messages", "Messages")}
+            aria-label={t("nav.messages", "Messages")}
+            className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${
+              isMessagesActive
+                ? "bg-white/[0.12] text-white"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            <Mail className="w-[18px] h-[18px] stroke-[1.9]" />
+            {unreadMessagesCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center text-[9.5px] font-bold rounded-full bg-white text-zinc-950 border-2 border-[#050506]">
+                {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications */}
+          <button
+            id="nav-btn-notifications"
+            type="button"
+            onClick={() => onSelectSection("notifications")}
+            title={t("nav.notifications", "Notifications")}
+            aria-label={t("nav.notifications", "Notifications")}
+            className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${
+              isNotificationsActive
+                ? "bg-white/[0.12] text-white"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            <Bell className="w-[18px] h-[18px] stroke-[1.9]" />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center text-[9.5px] font-bold rounded-full bg-white text-zinc-950 border-2 border-[#050506]">
+                {unreadNotifsCount > 9 ? "9+" : unreadNotifsCount}
+              </span>
+            )}
+          </button>
+
+          {/* Passkey Save Shortcut (Only when signed-in user hasn't backed up passkey yet) */}
+          {needsPasskeySave && onOpenPasskeyModal && (
+            <button
+              type="button"
+              onClick={() => onOpenPasskeyModal("save")}
+              title="Save your passkey"
+              className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#E8C78A]/10 hover:bg-[#E8C78A]/18 border border-[#E8C78A]/25 text-[#E8C78A] text-[11.5px] font-semibold transition-all cursor-pointer"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Save Key</span>
+            </button>
+          )}
+
+          {/* Profile */}
+          <button
+            id="nav-btn-profile"
+            type="button"
+            onClick={() => onSelectSection("profile")}
+            title={currentUser?.name || t("nav.profile", "Profile")}
+            aria-label={t("nav.profile", "Profile")}
+            className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${
+              isProfileActive
+                ? "bg-white/[0.12] text-white ring-1 ring-white/30"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            {currentUser?.avatar ? (
+              <img
+                src={getSafeAvatarUrl(currentUser.avatar, currentUser.name, (currentUser as any)?.handle || currentUser?.email)}
+                alt={currentUser.name || "Profile"}
+                className="w-7 h-7 rounded-full object-cover ring-1 ring-white/25"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.src = getSafeAvatarUrl(null, currentUser.name, (currentUser as any)?.handle || currentUser?.email);
+                }}
+              />
+            ) : (
+              <User className="w-[18px] h-[18px] stroke-[1.9]" />
+            )}
+            {needsPasskeySave && (
+              <span className="xl:hidden absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#E8C78A] ring-2 ring-[#050506]" />
+            )}
+          </button>
+
+          {/* More / Settings / About */}
+          <button
+            id="nav-btn-more"
+            type="button"
+            onClick={() => onSelectSection("more")}
+            title={t("nav.more", "More")}
+            aria-label={t("nav.more", "More")}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${
+              isMoreActive
+                ? "bg-white/[0.12] text-white"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.06]"
+            }`}
+          >
+            <Menu className="w-[18px] h-[18px] stroke-[1.9]" />
+          </button>
+
+          {/* Primary Hero CTA: Pure White Add Review Pill */}
+          <button
+            id="sidebar-record-btn"
+            type="button"
+            onClick={() => onSelectSection("record_review")}
+            className="ml-1.5 flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-[13.5px] tracking-[-0.01em] shadow-[0_4px_20px_rgba(255,255,255,0.14)] active:scale-[0.97] transition-all cursor-pointer"
+          >
+            <Camera className="w-4 h-4 shrink-0 text-zinc-950 stroke-[2.2]" />
+            <span>{t("nav.add_review", "Add Review")}</span>
           </button>
         </div>
-      </aside>
-
-      {/* 3. Mobile Native 5-Tab Bottom Navigation Bar (iOS & Android Universal) */}
-      <CopoMobileBottomNav
-        activeSection={activeSection}
-        onSelectSection={onSelectSection}
-        currentUser={currentUser}
-        unreadNotifsCount={unreadNotifsCount}
-        unreadMessagesCount={unreadMessagesCount}
-        onOpenCreateModal={onOpenCreateModal}
-        onOpenSearch={onOpenSearch}
-        className="md:hidden fixed bottom-0 left-0 right-0"
-      />
+      </header>
 
       {/* Language Selection Modal */}
       <LanguageSelectorModal

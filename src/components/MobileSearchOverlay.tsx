@@ -71,16 +71,16 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[500] bg-zinc-950 flex flex-col h-[100dvh] safe-area-bottom">
-      {/* Standard High-End Search Header */}
-      <div className="flex items-center gap-3 px-4 pt-3.5 pb-3 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-2xl sticky top-0">
+    <div className="fixed inset-0 z-[500] bg-[#050506] flex flex-col h-[100dvh] safe-area-bottom">
+      {/* Flagship Obsidian Search Header */}
+      <div className="flex items-center gap-3 px-4 pt-[max(14px,env(safe-area-inset-top,14px))] pb-3 border-b border-white/[0.07] bg-[#050506]/95 backdrop-blur-2xl sticky top-0">
         <form onSubmit={onSubmit} className="flex-1">
           <div
             onClick={() => inputRef.current?.focus()}
-            className={`relative flex items-center w-full bg-zinc-900 rounded-full px-4 py-2.5 border transition-all shadow-inner cursor-text ${
+            className={`relative flex items-center w-full bg-white/[0.05] rounded-full px-4 py-2.5 border transition-all cursor-text ${
               isFocused || query.length === 0
-                ? "border-white/40 ring-2 ring-white/10"
-                : "border-zinc-700/80 focus-within:border-white/40 focus-within:ring-2 focus-within:ring-white/10"
+                ? "border-white/35 ring-2 ring-white/[0.08]"
+                : "border-white/[0.12] focus-within:border-white/35 focus-within:ring-2 focus-within:ring-white/[0.08]"
             }`}
           >
             <Search className="w-4.5 h-4.5 text-zinc-400 mr-3 shrink-0" />
@@ -88,7 +88,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
               {!isFocused && query.length === 0 && (
                 <span
                   aria-hidden="true"
-                  className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-full bg-[#007aff]"
+                  className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[18px] rounded-full bg-white"
                 />
               )}
               <input
@@ -101,8 +101,8 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder="Search any business, place, or URL..."
-                className="w-full bg-transparent text-white text-[15px] font-medium focus:outline-none placeholder:text-zinc-500 caret-[#007aff] select-text"
+                placeholder="Search brand, place, or URL..."
+                className="w-full bg-transparent text-white text-[15px] font-normal focus:outline-none placeholder:text-zinc-500 caret-white select-text"
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -122,7 +122,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   setQuery("");
                   inputRef.current?.focus();
                 }}
-                className="p-1 rounded-full bg-zinc-800 text-zinc-400 hover:text-white ml-2 shrink-0 cursor-pointer active:scale-90"
+                className="p-1 rounded-full bg-white/[0.1] text-zinc-300 hover:text-white ml-2 shrink-0 cursor-pointer active:scale-90"
                 aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -133,14 +133,14 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
         <button 
           type="button"
           onClick={onClose} 
-          className="text-zinc-300 hover:text-white font-semibold text-[15px] transition-colors shrink-0 px-1 py-1 active:scale-95"
+          className="text-zinc-300 hover:text-white font-medium text-[15px] transition-colors shrink-0 px-1 py-1 active:scale-95"
         >
           Cancel
         </button>
       </div>
 
-      {/* Results List - Normal, Clean Standard Size */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 overscroll-contain no-scrollbar divide-y divide-zinc-900/60">
+      {/* Results List */}
+      <div className="flex-1 overflow-y-auto px-2 py-2 overscroll-contain no-scrollbar divide-y divide-white/[0.05]">
         {suggestions.length === 0 && !isLoading && query.trim() && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Search className="w-10 h-10 text-zinc-700 mb-3" />
@@ -152,7 +152,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
           <button
             key={idx}
             onClick={() => onSelectSuggestion(item)}
-            className="w-full px-3 py-3 flex items-center gap-3.5 hover:bg-zinc-900/60 active:bg-zinc-900 rounded-xl text-left transition-colors group cursor-pointer"
+            className="w-full px-3 py-3 flex items-center gap-3.5 hover:bg-white/[0.05] active:bg-white/[0.08] rounded-xl text-left transition-colors group cursor-pointer"
           >
             {item.isCreator ? (
               <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">

@@ -81,27 +81,24 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
         onClick={onClose}
       />
 
-      {/* Drawer Container (exact 1-to-1 match to desktop sidebar styling) */}
-      <div className="relative w-[85%] max-w-[320px] h-[100dvh] bg-zinc-950 text-white border-r border-zinc-800/80 shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300 ease-out select-none">
+      {/* Drawer Container (Flagship Obsidian Glass) */}
+      <div className="relative w-[84%] max-w-[316px] h-[100dvh] bg-[#050506]/96 backdrop-blur-2xl text-white border-r border-white/[0.08] shadow-[20px_0_60px_rgba(0,0,0,0.85)] flex flex-col justify-between z-10 animate-in slide-in-from-left duration-300 ease-out select-none">
         
         {/* Top Header: Brand Logo, Tagline & Close Button */}
-        <div className="flex items-center justify-between px-4 pt-[max(16px,calc(env(safe-area-inset-top,0px)+12px))] pb-3 border-b border-zinc-800/80 bg-zinc-950/95 sticky top-0 z-20">
+        <div className="flex items-center justify-between px-4 pt-[max(16px,calc(env(safe-area-inset-top,0px)+12px))] pb-3.5 border-b border-white/[0.07] bg-[#050506]/95 sticky top-0 z-20">
           <div
             onClick={() => handleNavClick("home")}
             className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform group min-w-0"
           >
-            <div className="relative flex items-center justify-center w-[40px] h-[40px] rounded-[13px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0 border border-zinc-800">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+            <div className="relative flex items-center justify-center w-[38px] h-[38px] rounded-[12px] bg-[#121216] shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0 border border-white/[0.12]">
+              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-white">
                 <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
               </svg>
             </div>
             <div className="flex flex-col justify-center min-w-0 pt-0.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-white text-[21px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                <span className="text-white text-[20px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif]">
                   Yoouz
-                </span>
-                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[8.5px] text-zinc-300 font-black uppercase tracking-wider scale-90 origin-left">
-                  Beta
                 </span>
               </div>
               <span className="text-[11px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap">
@@ -112,7 +109,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90 shrink-0 ml-2"
+            className="w-8 h-8 rounded-full bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.12] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer active:scale-90 shrink-0 ml-2"
             title="Close menu"
             aria-label="Close menu"
           >

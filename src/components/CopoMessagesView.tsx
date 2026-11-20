@@ -1694,45 +1694,45 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 text-white p-0 sm:p-4 md:p-8 flex flex-col select-none">
+    <div className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-0 sm:p-4 md:p-6 flex flex-col select-none">
       
       {/* Toast alert banner */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 animate-in fade-in slide-from-top-3 duration-200">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#141417] border border-white/[0.12] text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 animate-in fade-in slide-from-top-3 duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col md:space-y-6 h-full">
+      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col md:space-y-4 h-full min-h-0">
         
         {/* Header section (Native mobile & desktop layout) */}
-        <div className={`flex flex-col gap-3 bg-zinc-950 sm:bg-zinc-900 px-3.5 py-3 sm:p-5 rounded-none sm:rounded-3xl border-b sm:border border-zinc-800 shadow-xs shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
+        <div className={`flex flex-col gap-3 bg-[#050506] sm:bg-white/[0.03] px-3.5 py-3 sm:p-4 rounded-none sm:rounded-3xl border-b sm:border border-white/[0.08] shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
           <div className="flex items-center justify-between gap-3">
             {/* Left: Back Button + Title & Counter */}
             <div className="flex items-center gap-3 min-w-0">
               {onNavigateHome && (
                 <button
                   onClick={onNavigateHome}
-                  className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                  className="w-10 h-10 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                   title="Back to Feed"
                   aria-label="Back to Feed"
                 >
-                  <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
+                  <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
               )}
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em] leading-tight">
                     {t("nav.messages", "Messages")}
                   </h1>
                   {unreadCount > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-white text-zinc-950 flex items-center justify-center shadow-xs">
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-white text-zinc-950 flex items-center justify-center">
                       {unreadCount}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-400 font-medium truncate">
+                <p className="text-xs text-zinc-400 font-normal truncate">
                   {unreadCount > 0
                     ? `${unreadCount} ${t("messages.unread", "UNREAD").toLowerCase()} ${unreadCount > 1 ? t("messages.messages", "messages") : t("messages.message", "message")}`
                     : filteredThreads.length > 0
@@ -1744,14 +1744,14 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
 
             {/* Right: New Chat compose button + Desktop stats */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="hidden sm:flex items-center gap-4 bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 shrink-0">
-                <div className="text-center border-r border-zinc-800 pr-4">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{t("messages.unread", "UNREAD")}</p>
-                  <p className="text-sm font-black text-white">{unreadCount}</p>
+              <div className="hidden sm:flex items-center gap-4 bg-[#050506]/80 border border-white/[0.08] rounded-2xl px-4 py-2 shrink-0">
+                <div className="text-center border-r border-white/[0.08] pr-4">
+                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.unread", "UNREAD")}</p>
+                  <p className="text-sm font-bold text-white">{unreadCount}</p>
                 </div>
                 <div className="text-center pl-1">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{t("messages.totalChats", "TOTAL CHATS")}</p>
-                  <p className="text-sm font-black text-white">{messages.length}</p>
+                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.totalChats", "TOTAL CHATS")}</p>
+                  <p className="text-sm font-bold text-white">{messages.length}</p>
                 </div>
               </div>
 
@@ -1762,23 +1762,23 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   setNewChatSearch("");
                   setShowNewChatModal(true);
                 }}
-                className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                className="w-10 h-10 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                 title="New Conversation"
                 aria-label="New Conversation"
               >
-                <Plus className="w-5 h-5 stroke-[2.5]" />
+                <Plus className="w-5 h-5 stroke-[2.2]" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Master Chat Dashboard Frame */}
-        <div className={`flex-1 bg-zinc-950 sm:bg-zinc-900 rounded-none sm:rounded-3xl sm:border border-zinc-800 shadow-sm flex overflow-hidden ${isMobileThreadViewOpen ? "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto h-[100dvh] md:h-[calc(100vh-210px)] min-h-0" : "h-[calc(100vh-120px)] sm:h-[calc(100vh-210px)] min-h-[500px]"}`}>
+        <div className={`flex-1 min-h-0 bg-[#050506] sm:bg-white/[0.025] rounded-none sm:rounded-3xl sm:border border-white/[0.08] flex overflow-hidden ${isMobileThreadViewOpen ? "fixed inset-0 z-50 md:relative md:inset-auto md:z-auto h-[100dvh] md:h-auto min-h-0" : "min-h-[460px] pb-20 md:pb-0"}`}>
           
           {/* Threads Column (Hidden on mobile if viewing active thread) */}
-          <div className={`w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-950 shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
+          <div className={`w-full md:w-80 border-r border-white/[0.08] flex flex-col bg-[#050506] shrink-0 ${isMobileThreadViewOpen ? "hidden md:flex" : "flex"}`}>
             {/* Search thread input */}
-            <div className="p-3 sm:p-4 border-b border-zinc-800/80 bg-zinc-950">
+            <div className="p-3 sm:p-4 border-b border-white/[0.08] bg-[#050506]">
               <div className="relative flex items-center">
                 <Search className="absolute left-3.5 w-4 h-4 text-zinc-400 pointer-events-none" />
                 <input

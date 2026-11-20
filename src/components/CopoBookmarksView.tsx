@@ -98,26 +98,26 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-zinc-950 md:bg-zinc-950 text-white md:text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="flex items-center justify-between gap-4 pb-4 border-b border-zinc-800 md:border-zinc-800">
+        <div className="flex items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm border border-zinc-800"
+                className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                 title="Back to Feed"
               >
-                <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
               </button>
             )}
-            <div className="w-10 h-10 rounded-full bg-zinc-900 text-white flex items-center justify-center shadow-xs border border-zinc-800">
+            <div className="w-10 h-10 rounded-full bg-white/[0.05] text-white flex items-center justify-center border border-white/[0.1]">
               <Bookmark className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">{t("nav.bookmarks", "Bookmarks")}</h2>
+              <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("nav.bookmarks", "Saved")}</h2>
               <p className="text-xs text-zinc-400 font-semibold">
                 {t("bookmarks.subtitle", "Your saved visual reviews, places & creators")}
               </p>
