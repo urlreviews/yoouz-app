@@ -1,28 +1,27 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Check, 
-  Shield, 
-  Zap, 
-  Sparkles, 
-  Download, 
-  Code, 
-  Search, 
-  QrCode, 
-  MessageSquare, 
-  Star, 
-  CheckCircle2, 
+import {
+  X,
+  Check,
+  Shield,
+  Zap,
+  Sparkles,
+  Download,
+  Code,
+  Search,
+  QrCode,
+  MessageSquare,
+  Star,
+  CheckCircle2,
   ArrowRight,
   HelpCircle,
   BarChart3,
   Layers,
-  Building2,
   Mail,
   Clock,
-  CheckCircle,
   TrendingUp,
   CreditCard,
-  Award
+  Award,
+  BadgeCheck
 } from 'lucide-react';
 import { Place } from '../types';
 
@@ -46,7 +45,6 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
   placeId,
   isPremium = false,
   currentPlace,
-  onUpdatePlace,
   isEmbedded = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'plans' | 'matrix' | 'faq'>('plans');
@@ -114,350 +112,293 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
     }
   };
 
+  const matrixRows: Array<{ label: string; free: string | boolean; pro: boolean }> = [
+    { label: 'Real-time photo review impression analytics', free: true, pro: true },
+    { label: 'Interactive performance charts (7D / 30D / 90D / All)', free: true, pro: true },
+    { label: 'Reply to customer photo reviews & comments', free: true, pro: true },
+    { label: 'Update business profile, hours & bio', free: true, pro: true },
+    { label: 'Print-ready table & counter QR standee', free: true, pro: true },
+    { label: 'Track customer followers & alerts', free: true, pro: true },
+    { label: 'Embed customer photo reviews on your website', free: false, pro: true },
+    { label: 'Export high-res branded review cards for social ads', free: false, pro: true },
+    { label: 'Google SEO indexing & rich review snippets', free: false, pro: true },
+    { label: 'Direct messaging with customer reviewers', free: false, pro: true },
+    { label: 'Custom profile action buttons (Book, Order, Reserve)', free: false, pro: true },
+    { label: 'Priority category search placement', free: false, pro: true },
+    { label: 'Business support', free: 'Standard', pro: true },
+  ];
+
   return (
-    <div className={isEmbedded ? "w-full text-white flex flex-col space-y-6 animate-in fade-in duration-200 select-none pb-12" : "fixed inset-0 z-[100] bg-zinc-950 text-white flex flex-col overflow-y-auto animate-in fade-in duration-200 select-none"}>
-      {/* Sticky Top Header Bar (only if not embedded) */}
+    <div
+      className={
+        isEmbedded
+          ? 'w-full text-white flex flex-col space-y-6 animate-in fade-in duration-200 select-none pb-6'
+          : 'fixed inset-0 z-[100] bg-[#050506] text-white flex flex-col overflow-y-auto animate-in fade-in duration-200 select-none'
+      }
+    >
+      {/* Modal Top Header Bar (standalone modal mode only) */}
       {!isEmbedded && (
-        <div className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-700 flex items-center justify-center shrink-0 shadow-inner">
-              <Zap className="w-5 h-5 text-white" />
+        <div className="sticky top-0 z-30 bg-[#050506]/92 backdrop-blur-2xl border-b border-white/[0.08] px-4 sm:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center shrink-0">
+              <Zap className="w-4 h-4 text-[#E8C78A]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-xl font-black text-white tracking-tight">Business Membership Plans</h2>
-                {isPremium && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-white text-zinc-950 text-[10px] font-black uppercase tracking-wider hidden sm:inline-block">
-                    PREMIUM
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-zinc-300 font-medium hidden sm:block">
-                Scale your location's video reputation and acquire high-intent local customers
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-white tracking-[-0.02em] truncate">
+                Plans &amp; Membership
+              </h2>
+              <p className="text-xs text-zinc-400 hidden sm:block truncate">
+                Scale authentic photo proof across your website and search listings.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 transition-colors cursor-pointer active:scale-95"
-            aria-label="Close modal"
+            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/[0.1] flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
+            aria-label="Close plans"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Main Content Area */}
-      <div className={isEmbedded ? "w-full space-y-6" : "max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 space-y-6"}>
-        
-        {/* Business Identifier & Plan Status Banner */}
-        <div className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all ${
-          isPremium 
-            ? 'bg-gradient-to-r from-zinc-900 via-zinc-900 to-zinc-950 border-zinc-700 shadow-xl' 
-            : 'bg-zinc-900/90 border-zinc-800'
-        }`}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-3">
+      {/* Main Content */}
+      <div className={isEmbedded ? 'w-full max-w-4xl mx-auto space-y-6' : 'max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 space-y-6'}>
+        {/* Embedded Editorial Page Header */}
+        {isEmbedded && (
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="space-y-1">
+              <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12]">
+                Plans &amp; Membership
+              </h1>
+              <p className="text-xs sm:text-sm text-zinc-400">
+                Manage your workspace tier and growth tools for {businessName || 'your business'}.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-zinc-400 shrink-0">
+              <span>Current tier:</span>
+              <span className={`font-semibold ${isPremium ? 'text-[#E8C78A]' : 'text-white'}`}>
+                {isPremium ? 'Premium Suite' : 'Free Standard'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Summary Bar (modal mode or clean status strip) */}
+        {!isEmbedded && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               {currentPlace?.logoUrl ? (
-                <img 
-                  src={currentPlace.logoUrl} 
-                  alt={businessName} 
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover border border-zinc-700 shrink-0" 
+                <img
+                  src={currentPlace.logoUrl}
+                  alt={businessName}
+                  className="w-10 h-10 rounded-xl object-contain bg-white/[0.05] p-1 border border-white/[0.1] shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-black shrink-0 text-base sm:text-lg">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white font-semibold shrink-0 text-sm">
                   {(businessName || 'B').charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-zinc-400">Claimed Business Workspace</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                  <h3 className="text-sm sm:text-base font-semibold text-white truncate">
+                    {businessName || 'Your Business Workspace'}
+                  </h3>
+                  <BadgeCheck className="w-4 h-4 text-[#E8C78A] shrink-0" />
                 </div>
-                <h3 className="text-base sm:text-lg font-black text-white truncate">{businessName || 'Your Business Workspace'}</h3>
+                <p className="text-xs text-zinc-400 truncate">
+                  Verified business workspace
+                </p>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl sm:rounded-2xl bg-zinc-950 border border-zinc-800 text-xs font-bold text-zinc-200 shrink-0 self-start sm:self-auto">
-              <span className="text-zinc-400 font-medium">Status:</span>
-              {isPremium ? (
-                <span className="font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
-                  Premium Suite Active
-                </span>
-              ) : (
-                <span className="font-black text-zinc-200 uppercase tracking-wider">
-                  Free Plan Active
-                </span>
-              )}
+            <div className="text-xs text-zinc-400 shrink-0">
+              Status:{' '}
+              <span className={`font-semibold ${isPremium ? 'text-[#E8C78A]' : 'text-white'}`}>
+                {isPremium ? 'Premium Suite Active' : 'Free Standard'}
+              </span>
             </div>
           </div>
+        )}
+
+        {/* Segmented Control */}
+        <div className="inline-flex w-full sm:w-auto items-center gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+          {[
+            { id: 'plans' as const, label: 'Plans', icon: Zap },
+            { id: 'matrix' as const, label: 'Compare', icon: Layers },
+            { id: 'faq' as const, label: 'FAQ', icon: HelpCircle },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap min-h-[38px] ${
+                  active
+                    ? 'bg-white text-zinc-950 shadow-xs'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Segmented Controller / Native App Capsule Switcher */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-zinc-900/90 border border-zinc-800/80 shadow-inner">
-          <button
-            onClick={() => setActiveTab('plans')}
-            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              activeTab === 'plans'
-                ? 'bg-white text-zinc-950 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span>Plans</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('matrix')}
-            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              activeTab === 'matrix'
-                ? 'bg-white text-zinc-950 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span>Compare</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('faq')}
-            className={`flex-1 py-2.5 px-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
-              activeTab === 'faq'
-                ? 'bg-white text-zinc-950 shadow-sm'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span>FAQ</span>
-          </button>
-        </div>
-
-        {/* TAB 1: PLAN CARDS OVERVIEW */}
+        {/* TAB 1: PLAN CARDS */}
         {activeTab === 'plans' && (
-          <div className="grid md:grid-cols-2 gap-6 items-stretch animate-in fade-in duration-150">
-            {/* FREE PLAN CARD */}
-            <div className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 relative transition-all ${
-              !isPremium 
-                ? 'bg-zinc-900/90 border-2 border-zinc-700 shadow-xl' 
-                : 'bg-zinc-900/60 border border-zinc-800 opacity-90'
-            }`}>
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-5 items-stretch animate-in fade-in duration-150">
+            {/* FREE STANDARD */}
+            <div
+              className={`rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6 transition-all border ${
+                !isPremium
+                  ? 'bg-white/[0.035] border-white/[0.14]'
+                  : 'bg-white/[0.02] border-white/[0.08]'
+              }`}
+            >
               <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase ${
-                    !isPremium 
-                      ? 'bg-zinc-800 text-white border border-zinc-700' 
-                      : 'bg-zinc-800/80 text-zinc-400 border border-zinc-700/80'
-                  }`}>
-                    {!isPremium ? 'Active Plan' : 'Standard Tier'}
-                  </span>
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-zinc-950 px-2.5 py-1 rounded-full border border-zinc-800">
-                    Baseline
-                  </span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-zinc-400">Standard</span>
+                  {!isPremium && (
+                    <span className="font-semibold text-white">Current plan</span>
+                  )}
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">Free Standard Tier</h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 mt-2 leading-relaxed font-medium">
-                    Essential tools for verified local businesses to manage reviews and engage customers.
+                  <h3 className="text-xl font-semibold text-white tracking-[-0.02em]">
+                    Free Standard
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-zinc-400 mt-1.5 leading-relaxed">
+                    Essential tools for verified businesses to track photo proof, reply to reviews, and collect scans.
                   </p>
                 </div>
 
-                <div className="pt-1">
+                <div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">$0</span>
-                    <span className="text-xs sm:text-sm font-bold text-zinc-400">/ forever</span>
+                    <span className="text-4xl font-semibold text-white tracking-[-0.03em] tabular-nums">$0</span>
+                    <span className="text-xs text-zinc-400">/ forever</span>
                   </div>
-                  <div className="text-[11px] text-zinc-400 mt-1 font-medium">No credit card required</div>
+                  <p className="text-[11px] text-zinc-500 mt-1">No credit card required</p>
                 </div>
 
-                <div className="h-px bg-zinc-800/80 my-2" />
+                <div className="h-px bg-white/[0.08]" />
 
-                <div className="space-y-3.5">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400">Included in Free Tier:</p>
-
-                  <div className="flex items-start gap-3">
-                    <BarChart3 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Real-time Photo Review Analytics & view impression tracking
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <TrendingUp className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Interactive Performance Charts (7D, 30D, 90D & All Time)
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Reply to Customer Reviews & direct chat feedback
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Update Business Profile, hours & location
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <QrCode className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-300 font-medium">
-                      Custom Table QR Code Generator for table tents
-                    </span>
-                  </div>
+                <div className="space-y-3">
+                  <p className="text-[11px] font-medium text-zinc-400">Included</p>
+                  {[
+                    { icon: BarChart3, text: 'Real-time photo review impression analytics' },
+                    { icon: TrendingUp, text: 'Interactive charts across 7D, 30D, 90D & All Time' },
+                    { icon: MessageSquare, text: 'Public owner replies on customer photo reviews' },
+                    { icon: CheckCircle2, text: 'Editable business profile, hours & location' },
+                    { icon: QrCode, text: 'Print-ready table & counter QR standee' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5">
+                      <item.icon className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                      <span className="text-xs sm:text-[13px] text-zinc-300 leading-snug">
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-2">
                 <button
+                  type="button"
                   disabled
-                  className={`w-full py-3.5 rounded-2xl text-xs sm:text-sm font-black border text-center transition-all ${
-                    !isPremium 
-                      ? 'bg-zinc-800 text-white border-zinc-700 cursor-default shadow-xs' 
-                      : 'bg-zinc-900/80 text-zinc-500 border-zinc-800/80 cursor-not-allowed'
-                  }`}
+                  className="w-full py-3 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.04] text-zinc-400 cursor-default min-h-[44px]"
                 >
-                  {!isPremium ? 'Current Active Plan' : 'Included'}
+                  {!isPremium ? 'Current active plan' : 'Included'}
                 </button>
               </div>
             </div>
 
-            {/* PREMIUM PLAN CARD */}
-            <div className={`rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6 relative transition-all shadow-2xl ${
-              isPremium
-                ? 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-white ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-zinc-900 via-zinc-950 to-black border-2 border-zinc-600 hover:border-zinc-400 shadow-[0_0_50px_rgba(255,255,255,0.06)]'
-            }`}>
+            {/* PREMIUM BUSINESS SUITE */}
+            <div
+              className={`rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-6 transition-all border ${
+                isPremium
+                  ? 'bg-white/[0.05] border-[#E8C78A]/40'
+                  : 'bg-white/[0.045] border-white/[0.18]'
+              }`}
+            >
               <div className="space-y-5">
-                {/* Clean, perfectly aligned top header bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-xs font-extrabold border border-zinc-700 tracking-wide uppercase self-start">
-                    <Shield className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#E8C78A] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#E8C78A]" />
                     <span>Growth Suite</span>
-                  </div>
-
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-zinc-950 text-xs font-black uppercase tracking-wider shadow-sm self-start sm:self-auto">
-                    <Sparkles className="w-3.5 h-3.5 fill-zinc-950 text-zinc-950" />
-                    <span>Full Suite Access</span>
-                  </div>
+                  </span>
+                  <span className="font-medium text-zinc-300">
+                    {isPremium ? 'Active' : 'Recommended'}
+                  </span>
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-black text-white tracking-tight">Premium Business Suite</h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 mt-2 leading-relaxed font-medium">
-                    Website video embedding, HD ad downloads, Google SEO indexing, and smart review tools.
+                  <h3 className="text-xl font-semibold text-white tracking-[-0.02em]">
+                    Premium Business Suite
+                  </h3>
+                  <p className="text-xs sm:text-[13px] text-zinc-300 mt-1.5 leading-relaxed">
+                    Website photo embeds, high-res ad exports, Google SEO rich snippets, and direct customer messaging.
                   </p>
                 </div>
 
-                {/* PRICING DISPLAY SECTION */}
-                <div className="pt-1">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">$149</span>
-                    <span className="text-xs sm:text-sm font-extrabold text-zinc-300">/ month</span>
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl font-semibold text-white tracking-[-0.03em] tabular-nums">$149</span>
+                    <span className="text-xs text-zinc-400">/ month</span>
                   </div>
-                  
-                  <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black">
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>Billed monthly • Cancel anytime</span>
-                  </div>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Billed monthly · Cancel anytime
+                  </p>
                 </div>
 
-                <div className="h-px bg-zinc-800/80 my-2" />
+                <div className="h-px bg-white/[0.09]" />
 
-                {/* Premium Features List */}
-                <div className="space-y-3.5">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-white">Everything in Free, plus:</p>
-
-                  <div className="flex items-start gap-3">
-                    <Code className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Embed Photo Reviews on your official website
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Download className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Download High-Res Branded Cards for social ads & marketing
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Search className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Google SEO Indexing with rich review snippets
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Sparkles className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Smart Photo Review Finder for web aggregation
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      AI Response Recommendations for instant replies
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Reply to Comments & Direct Messages
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Custom Profile Action Buttons
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Star className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Priority Search Placement in category listings
-                    </span>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Shield className="w-4 h-4 text-white shrink-0 mt-0.5" />
-                    <span className="text-xs sm:text-sm text-zinc-200 font-medium">
-                      Priority Business Support
-                    </span>
-                  </div>
+                <div className="space-y-3">
+                  <p className="text-[11px] font-medium text-zinc-300">Everything in Free, plus</p>
+                  {[
+                    { icon: Code, text: 'Embed live photo reviews on your official website' },
+                    { icon: Download, text: 'Export high-res branded review cards for social ads' },
+                    { icon: Search, text: 'Google SEO indexing with Schema.org rich snippets' },
+                    { icon: MessageSquare, text: 'Direct messaging with verified reviewers' },
+                    { icon: Zap, text: 'Custom profile CTA button (Book, Order, Reserve)' },
+                    { icon: Star, text: 'Priority placement in local category listings' },
+                    { icon: Shield, text: 'Priority business onboarding & support' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5">
+                      <item.icon className="w-4 h-4 text-[#E8C78A] shrink-0 mt-0.5" />
+                      <span className="text-xs sm:text-[13px] text-zinc-200 leading-snug">
+                        {item.text}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="pt-4 space-y-3">
+              <div className="pt-2 space-y-3">
                 {isPremium ? (
                   <div className="space-y-3">
                     {cancelStatus === 'success' ? (
-                      <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center font-medium">
-                        Cancellation request sent to support. Your account will revert to the Free Plan upon review.
+                      <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.09] text-xs text-zinc-300 text-center">
+                        Cancellation request sent. Your workspace will revert to Free Standard after review.
                       </div>
                     ) : showCancelConfirm ? (
-                      <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-700 space-y-3 animate-in fade-in">
-                        <div className="text-xs font-bold text-white text-center">
-                          Are you sure you want to request subscription cancellation?
+                      <div className="p-4 rounded-xl bg-[#09090b] border border-white/[0.1] space-y-3 animate-in fade-in">
+                        <div className="text-xs font-medium text-white text-center">
+                          Request subscription cancellation?
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setShowCancelConfirm(false)}
-                            className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition cursor-pointer"
+                            className="flex-1 py-2.5 rounded-full bg-white/[0.07] hover:bg-white/[0.12] text-zinc-200 text-xs font-semibold transition cursor-pointer"
                           >
-                            Keep Plan
+                            Keep plan
                           </button>
                           <button
                             type="button"
@@ -466,9 +407,9 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                               handleCancelSubscription();
                             }}
                             disabled={isSubmitting}
-                            className="flex-1 py-2 rounded-xl bg-red-600/90 hover:bg-red-600 text-white text-xs font-bold transition cursor-pointer"
+                            className="flex-1 py-2.5 rounded-full bg-rose-500/90 hover:bg-rose-500 text-white text-xs font-semibold transition cursor-pointer"
                           >
-                            {isSubmitting ? 'Processing...' : 'Confirm Cancellation'}
+                            {isSubmitting ? 'Sending...' : 'Confirm'}
                           </button>
                         </div>
                       </div>
@@ -477,47 +418,49 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
                         type="button"
                         onClick={() => setShowCancelConfirm(true)}
                         disabled={isSubmitting}
-                        className="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-white text-xs font-bold transition-all cursor-pointer border border-zinc-700"
+                        className="w-full py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer border border-white/[0.1] min-h-[44px]"
                       >
-                        Cancel Subscription & Downgrade to Free
+                        Cancel subscription
                       </button>
                     )}
                   </div>
                 ) : requestStatus === 'success' ? (
-                  <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-600 text-center space-y-1.5 animate-in fade-in">
-                    <div className="inline-flex items-center gap-2 text-white font-black text-sm">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                      <span>Upgrade Request Sent!</span>
+                  <div className="p-4 rounded-xl bg-white/[0.04] border border-[#E8C78A]/30 text-center space-y-1 animate-in fade-in">
+                    <div className="inline-flex items-center gap-1.5 text-white font-semibold text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-[#E8C78A]" />
+                      <span>Upgrade request sent</span>
                     </div>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-medium">
-                      Our support team has been notified. Admin will activate your Premium Suite shortly.
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Our team has been notified and will activate your Premium Suite shortly.
                     </p>
                   </div>
                 ) : requestStatus === 'error' ? (
-                  <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 text-center space-y-2 font-medium">
-                    <p>Failed to send request. Please try again.</p>
+                  <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.09] text-xs text-zinc-300 text-center space-y-2.5">
+                    <p>Could not send request. Please try again.</p>
                     <button
+                      type="button"
                       onClick={handleUpgrade}
-                      className="px-4 py-2 bg-white text-zinc-950 font-black rounded-lg text-xs hover:bg-zinc-200 cursor-pointer"
+                      className="px-4 py-2 bg-white text-zinc-950 font-semibold rounded-full text-xs hover:bg-zinc-200 cursor-pointer"
                     >
-                      Retry Request
+                      Retry request
                     </button>
                   </div>
                 ) : (
                   <button
+                    type="button"
                     onClick={handleUpgrade}
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl transition-all shadow-xl hover:shadow-2xl active:scale-98 flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base tracking-wide"
+                    className="w-full py-3.5 bg-white hover:bg-zinc-200 active:scale-[0.99] text-zinc-950 font-semibold rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer text-sm min-h-[46px]"
                   >
                     {isSubmitting ? (
                       <span className="inline-flex items-center gap-2">
                         <span className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                        Sending Request...
+                        Sending request...
                       </span>
                     ) : (
                       <>
-                        <span>Upgrade to Premium Suite</span>
-                        <ArrowRight className="w-5 h-5" />
+                        <span>Upgrade to Premium</span>
+                        <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
@@ -527,197 +470,129 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: DETAILED COMPARISON MATRIX */}
+        {/* TAB 2: COMPARISON MATRIX */}
         {activeTab === 'matrix' && (
-          <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 animate-in fade-in duration-150">
-            <div className="border-b border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-7 space-y-5 animate-in fade-in duration-150">
+            <div className="border-b border-white/[0.07] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg sm:text-xl font-black text-white">Full Feature Comparison Matrix</h3>
-                <p className="text-xs text-zinc-300 font-medium mt-0.5">Exact feature breakdown between Standard Free ($0) and Premium Business Suite ($149/mo)</p>
+                <h3 className="text-base sm:text-lg font-semibold text-white tracking-[-0.02em]">
+                  Feature comparison
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Side-by-side breakdown of Free Standard ($0) and Premium Suite ($149/mo).
+                </p>
               </div>
 
               {!isPremium && (
                 <button
+                  type="button"
                   onClick={handleUpgrade}
                   disabled={isSubmitting || requestStatus === 'success'}
-                  className="px-4 py-2.5 rounded-xl bg-white text-zinc-950 font-black text-xs hover:bg-zinc-200 transition-all self-start sm:self-auto cursor-pointer shadow-md"
+                  className="px-4 py-2.5 rounded-full bg-white text-zinc-950 font-semibold text-xs hover:bg-zinc-200 transition-all self-start sm:self-auto cursor-pointer"
                 >
-                  {requestStatus === 'success' ? 'Request Sent' : 'Request Premium Upgrade'}
+                  {requestStatus === 'success' ? 'Request sent' : 'Upgrade to Premium'}
                 </button>
               )}
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs sm:text-sm">
+              <table className="w-full text-left text-xs sm:text-[13px]">
                 <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-400">
-                    <th className="pb-3.5 font-bold w-1/2 text-zinc-300">Capability</th>
-                    <th className="pb-3.5 font-bold text-center w-1/4 text-zinc-300">Free Standard ($0)</th>
-                    <th className="pb-3.5 font-black text-center w-1/4 text-white">Premium Suite ($149/mo)</th>
+                  <tr className="border-b border-white/[0.08] text-zinc-400">
+                    <th className="pb-3 font-medium w-1/2">Capability</th>
+                    <th className="pb-3 font-medium text-center w-1/4 tabular-nums">Free ($0)</th>
+                    <th className="pb-3 font-semibold text-center w-1/4 text-white tabular-nums">Premium ($149/mo)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/60 text-zinc-200 font-medium">
-                  <tr>
-                    <td className="py-4 font-bold text-white">Real-time Review Impression Analytics & View Counts</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Interactive Performance Charts (7D / 30D / 90D / All Time)</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Reply to Customer Photo Reviews, Comments & Direct Messages (User Chat)</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Custom Profile Action Buttons</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Update Business Profile, Hours & Bio</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Update & Download Business Profile QR Code</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Track Customer Followers & In-App Notifications</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-zinc-300" /></td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Embed Customer Photo Reviews on Website</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Download High-Res Photo Reviews for Social Ads</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Google SEO Indexing & Review Rich Snippets</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Smart Web Photo Review Finder</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">AI Response Recommendations</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Priority Local Category Search Ranking</td>
-                    <td className="py-4 text-center text-zinc-600">—</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 font-bold text-white">Priority Business Support</td>
-                    <td className="py-4 text-center text-zinc-600">Standard Support</td>
-                    <td className="py-4 text-center"><Check className="w-4 h-4 mx-auto text-white stroke-[3]" /></td>
-                  </tr>
+                <tbody className="divide-y divide-white/[0.06]">
+                  {matrixRows.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="py-3.5 text-zinc-200 font-medium pr-3">{row.label}</td>
+                      <td className="py-3.5 text-center">
+                        {row.free === true ? (
+                          <Check className="w-4 h-4 mx-auto text-zinc-400" />
+                        ) : row.free === false ? (
+                          <span className="text-zinc-600">—</span>
+                        ) : (
+                          <span className="text-zinc-400 text-xs">{row.free}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 text-center">
+                        <Check className="w-4 h-4 mx-auto text-[#E8C78A]" />
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* TAB 3: FAQ & SUPPORT */}
+        {/* TAB 3: FAQ */}
         {activeTab === 'faq' && (
-          <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 animate-in fade-in duration-150">
-            <div className="border-b border-zinc-800 pb-4">
-              <h3 className="text-lg sm:text-xl font-black text-white">Frequently Asked Questions</h3>
-              <p className="text-xs text-zinc-300 font-medium mt-0.5">Everything you need to know about Yoouz Business Memberships and $149/mo pricing</p>
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-7 space-y-5 animate-in fade-in duration-150">
+            <div className="border-b border-white/[0.07] pb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-white tracking-[-0.02em]">
+                Frequently asked questions
+              </h3>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Details on Yoouz Business memberships, billing, and activation.
+              </p>
             </div>
 
-            <div className="space-y-4 text-xs sm:text-sm">
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <CreditCard className="w-4 h-4 text-zinc-300" />
-                  What is included in the Yoouz Premium Business Suite ($149/mo)?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  The Premium Business Suite is <strong className="text-white font-bold">$149 per month</strong> ($99/mo billed annually). It includes:
-                </p>
-                <ul className="list-disc list-inside text-zinc-400 pl-6 space-y-1 font-medium">
-                  <li><strong className="text-zinc-200">Verified Business Badge</strong> & Priority Search Placement</li>
-                  <li><strong className="text-zinc-200">Live Website Review Widget</strong> with automated Google Rich Snippets SEO Schema</li>
-                  <li><strong className="text-zinc-200">HD Branded Ad Exporter</strong> with official logo watermark overlays</li>
-                  <li><strong className="text-zinc-200">Pinned Owner Replies</strong> & Direct Messaging Lead Capture</li>
-                  <li><strong className="text-zinc-200">Print-Ready Table & Window QR Standees</strong> & Real-Time Analytics</li>
-                </ul>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <Sparkles className="w-4 h-4 text-zinc-300" />
-                  How does the Premium Plan boost Google Search SEO & Rich Snippets?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  When you embed your Yoouz review widget on your website, our system automatically generates Schema.org JSON-LD structured data. Search engines like Google index your customer star ratings and live photo reviews directly in organic search results, boosting click-through rates (CTR) by up to 35%.
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <Award className="w-4 h-4 text-zinc-300" />
-                  Can I export customer photo reviews as branded ad campaigns?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  Yes! Premium Suite subscribers can export customer live photo reviews as high-definition branded ad assets with your official venue logo overlay and watermark—ready to run on Instagram, TikTok, or Facebook Ads.
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <HelpCircle className="w-4 h-4 text-zinc-300" />
-                  How is the Premium upgrade activated?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  When you click <strong className="text-white font-bold">Upgrade to Premium Suite</strong>, our team receives an instant notification with your place details. Once verified, the admin team activates your account and unlocks all features immediately.
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <Code className="w-4 h-4 text-zinc-300" />
-                  Can I embed photo reviews on any website?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  Yes! Premium Suite provides an iframe embed code and direct script snippet compatible with WordPress, Wix, Shopify, Squarespace, Webflow, or custom React/HTML sites.
-                </p>
-              </div>
-
-              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                <h4 className="font-extrabold text-white flex items-center gap-2 text-sm sm:text-base">
-                  <Clock className="w-4 h-4 text-zinc-300" />
-                  What happens if I downgrade or switch back to Free?
-                </h4>
-                <p className="text-zinc-300 leading-relaxed pl-6 font-medium">
-                  If your subscription is updated back to Free by admin, your profile remains verified and active. You retain full capability to reply to customer reviews, update hours, and download QR codes ($0 standard tier).
-                </p>
-              </div>
+            <div className="divide-y divide-white/[0.07]">
+              {[
+                {
+                  icon: CreditCard,
+                  q: 'What is included in the Premium Business Suite ($149/mo)?',
+                  a: 'It includes the live website review embed with automated Google Rich Snippets SEO schema, high-resolution branded ad card exports, direct customer messaging, custom profile action buttons, priority search placement, and priority support.',
+                },
+                {
+                  icon: Sparkles,
+                  q: 'How does the embed improve Google Search SEO?',
+                  a: 'When embedded on your site, Yoouz outputs valid Schema.org JSON-LD structured data so search engines can index your verified customer ratings and live photo proof.',
+                },
+                {
+                  icon: Award,
+                  q: 'Can I export customer photo reviews for social ads?',
+                  a: 'Yes. Premium subscribers can export customer live photo reviews as high-definition branded cards featuring your official logo, ready for Instagram, TikTok, or Meta ads.',
+                },
+                {
+                  icon: HelpCircle,
+                  q: 'How is the Premium upgrade activated?',
+                  a: 'When you request an upgrade, our onboarding team verifies your workspace and activates all Premium Suite features immediately.',
+                },
+                {
+                  icon: Code,
+                  q: 'Which websites support the Yoouz embed?',
+                  a: 'The embed snippet works on WordPress, Shopify, Wix, Squarespace, Webflow, and custom HTML or React websites.',
+                },
+                {
+                  icon: Clock,
+                  q: 'What happens if I cancel and return to Free?',
+                  a: 'Your business stays verified on Yoouz. You continue to have full access to analytics, public review replies, profile edits, and print-ready QR standees at $0.',
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="py-4 first:pt-1 last:pb-1 space-y-1.5">
+                  <h4 className="font-semibold text-white flex items-center gap-2 text-xs sm:text-sm">
+                    <item.icon className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <span>{item.q}</span>
+                  </h4>
+                  <p className="text-xs sm:text-[13px] text-zinc-400 leading-relaxed pl-6">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            <div className="text-center border-t border-zinc-800 pt-6 space-y-2">
-              <p className="text-xs text-zinc-300 font-medium">
-                Need customized enterprise agreements or multi-location agency onboarding?
+            <div className="text-center border-t border-white/[0.07] pt-5 space-y-2">
+              <p className="text-xs text-zinc-400">
+                Need multi-location enterprise onboarding?
               </p>
               <button
                 type="button"
                 onClick={handleUpgrade}
-                className="text-xs font-black text-white hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-semibold text-white hover:underline inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span>Contact Business Support</span>
@@ -725,9 +600,7 @@ export const CopoPremiumPlansModal: React.FC<CopoPremiumPlansModalProps> = ({
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
 };
-

@@ -240,6 +240,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   const [showEmbedTester, setShowEmbedTester] = useState(false);
   // Navigation tab state
   const [activeTab, setActiveTab] = useState<BusinessTab>('overview');
+  const [isMobileBizMenuOpen, setIsMobileBizMenuOpen] = useState(false);
 
   // Premium Upgrade State & Marketing Agency Matcher
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
@@ -273,6 +274,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   // Automatically scroll main content area back to top when switching tabs
   useEffect(() => {
     setShowEmbedTester(false);
+    setIsMobileBizMenuOpen(false);
     const resetScroll = () => {
       if (mainScrollRef.current) {
         mainScrollRef.current.scrollTop = 0;
@@ -2510,37 +2512,78 @@ ${jsonLd}
     }
   };
 
-  // Nav Items array with clean Google Material icons (short, super premium labels matching CopoSidebar)
-  const suiteNavItems = [
-    { 
-      id: 'reviews' as BusinessTab, 
-      label: 'Reviews', 
-      icon: Camera, 
-      badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined 
+  // Clean grouped navigation structure (Apple Business Connect / Stripe / Linear standard)
+  const workspaceNavItems = [
+    { id: 'overview' as BusinessTab, label: 'Overview', icon: Home },
+    {
+      id: 'reviews' as BusinessTab,
+      label: 'Reviews',
+      icon: Camera,
+      badge: unseenReviewsCount > 0 ? unseenReviewsCount : undefined
     },
-    { 
-      id: 'inbox' as BusinessTab, 
-      label: 'Messages', 
+    {
+      id: 'inbox' as BusinessTab,
+      label: 'Messages',
       icon: MessageSquare,
       badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined
     },
-    { 
-      id: 'followers' as BusinessTab, 
-      label: 'Followers', 
+    {
+      id: 'followers' as BusinessTab,
+      label: 'Followers',
       icon: Users,
       badge: unseenFollowersCount > 0 ? unseenFollowersCount : undefined
     },
-    { 
-      id: 'notifications' as BusinessTab, 
-      label: 'Alerts', 
+    {
+      id: 'notifications' as BusinessTab,
+      label: 'Alerts',
       icon: Bell,
       badge: unreadBusinessNotifsCount > 0 ? unreadBusinessNotifsCount : undefined
     },
-    { id: 'embed' as BusinessTab, label: 'Embed', icon: Code },
-    { id: 'qr_invites' as BusinessTab, label: 'QR Code', icon: QrCode },
-    { id: 'membership' as BusinessTab, label: 'Membership', icon: Zap, isProBadge: !isPremium },
-    { id: 'profile' as BusinessTab, label: 'Profile', icon: Building2 },
   ];
+
+  const growthNavItems = [
+    { id: 'embed' as BusinessTab, label: 'Website Embed', icon: Code },
+    { id: 'qr_invites' as BusinessTab, label: 'QR Standee', icon: QrCode },
+  ];
+
+  const accountNavItems = [
+    { id: 'profile' as BusinessTab, label: 'Business Profile', icon: Building2 },
+    {
+      id: 'membership' as BusinessTab,
+      label: 'Membership',
+      icon: Zap,
+      tierLabel: isPremium ? 'Pro' : 'Free'
+    },
+    { id: 'more' as BusinessTab, label: 'More & Help', icon: Menu },
+  ];
+
+  const activeTabLabelMap: Record<BusinessTab, string> = {
+    overview: 'Overview',
+    reviews: 'Reviews',
+    inbox: 'Messages',
+    followers: 'Followers',
+    notifications: 'Alerts',
+    embed: 'Website Embed',
+    qr_invites: 'QR Standee',
+    profile: 'Business Profile',
+    membership: 'Membership',
+    more: 'More & Help',
+  };
+
+  const activeTabTitle = showEmbedTester ? 'Embed Tester' : (activeTabLabelMap[activeTab] || 'Overview');
+  const cleanBusinessDomain = useMemo(() => {
+    const raw = currentPlace?.website || currentPlace?.brandDomain || currentPlace?.id || verifiedBusinessSession?.domain || '';
+    const cleaned = extractCleanDomain(raw);
+    return cleaned || 'yoouz.com';
+  }, [currentPlace?.website, currentPlace?.brandDomain, currentPlace?.id, verifiedBusinessSession?.domain]);
+
+  const dateRangeLabel = analyticsDateRange === '7d'
+    ? 'Last 7 days'
+    : analyticsDateRange === '30d'
+      ? 'Last 30 days'
+      : analyticsDateRange === '90d'
+        ? 'Last 90 days'
+        : 'All time';
 
   // If user hasn't signed in / claimed a business or is currently claiming
   if (!verifiedBusinessSession || isClaiming) {
@@ -2572,218 +2615,329 @@ ${jsonLd}
   return (
     <div className="w-full max-w-full h-[100dvh] flex bg-[#050506] select-none antialiased overflow-x-hidden font-sans text-white copo-business-dashboard">
       <div className="w-full h-full flex">
-      {/* Left Enterprise Navigation Sidebar */}
-      <aside className="w-64 h-[100dvh] bg-[#050506] border-r border-white/[0.08] px-4 py-6 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white shadow-none">
+      {/* Desktop Left Workspace Sidebar (Flagship Obsidian) */}
+      <aside className="w-[252px] h-[100dvh] bg-[#050506] border-r border-white/[0.07] px-3.5 py-5 flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white">
         {/* Scrollable Upper Area */}
-        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar min-h-0">
-          <div className="flex flex-col gap-6">
-            {/* Official Yoouz Brand Logo */}
-            <div 
-              id="biz-brand-logo"
-              className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
-              onClick={() => setActiveTab('overview')}
-            >
-              <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white/[0.05] shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:bg-white/[0.09] transition-all duration-300 shrink-0 border border-white/[0.1]">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                  <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
-                </svg>
-              </div>
-              <div className="flex flex-col justify-center pt-0.5 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-white text-[22px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
-                    Yoouz
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[10px] text-zinc-200 font-semibold scale-95 origin-left">
-                    {t("business.badge", "Business")}
-                  </span>
-                </div>
-                <span className="text-[11.5px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
-                  {t("business.tagline", "Real Photos. Real Proof.")}
+        <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar min-h-0 gap-5">
+          {/* Minimal Yoouz Business Wordmark (No Pill, No Marketing Tagline) */}
+          <button
+            type="button"
+            id="biz-brand-logo"
+            onClick={() => setActiveTab('overview')}
+            className="flex items-center gap-2.5 px-2.5 py-1.5 text-left cursor-pointer group rounded-xl hover:bg-white/[0.03] transition-colors"
+          >
+            <div className="flex items-center justify-center w-8 h-8 rounded-[10px] bg-white/[0.06] border border-white/[0.1] group-hover:bg-white/[0.1] transition-colors shrink-0">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+              </svg>
+            </div>
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="text-white text-[18px] font-semibold tracking-[-0.03em] leading-none">
+                Yoouz
+              </span>
+              <span className="text-[12px] font-medium text-zinc-500">
+                Business
+              </span>
+            </div>
+          </button>
+
+          {/* Active Business Workspace Card */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.055] border border-white/[0.08] transition-colors text-left cursor-pointer group"
+            title={`Manage ${currentPlace.name}`}
+          >
+            <CopoBrandLogo
+              domain={currentPlace.website || currentPlace.id}
+              name={currentPlace.name}
+              logoUrl={profileLogoUrl || currentPlace.logoUrl}
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] p-1 flex items-center justify-center shrink-0 overflow-hidden"
+              imageClassName="w-full h-full object-contain rounded-lg"
+              fallbackTextClassName="font-semibold text-xs text-white"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-[13px] font-semibold text-white truncate">
+                  {currentPlace.name}
                 </span>
+                <BadgeCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
+              </div>
+              <div className="text-[11px] text-zinc-400 truncate">
+                {cleanBusinessDomain}
               </div>
             </div>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0 transition-colors" />
+          </button>
 
-            {/* Navigation items list */}
-            <nav className="flex flex-col gap-1">
-              {/* Home button at the top (Navigates to Business Suite Overview) */}
-              <button
-                id="biz-nav-btn-home"
-                onClick={() => setActiveTab('overview')}
-                className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
-                  activeTab === 'overview'
-                    ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs'
-                    : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
-                }`}
-                title={t('nav.home', 'Home')}
-              >
-                <div className="relative flex items-center justify-center">
-                  <Home className="w-[18px] h-[18px] shrink-0 transition-colors" />
-                </div>
-                <span className="truncate flex-1">{t('nav.home', 'Home')}</span>
-              </button>
-
-              {suiteNavItems.map((item) => {
+          {/* Semantic Grouped Navigation */}
+          <nav className="flex flex-col gap-5" aria-label="Business navigation">
+            {/* Group 1: Workspace */}
+            <div className="space-y-0.5">
+              <div className="px-2.5 pb-1.5 text-[11px] font-medium text-zinc-500">
+                Workspace
+              </div>
+              {workspaceNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 return (
                   <button
                     key={item.id}
-                    id={`biz-nav-btn-${item.id}`}
-                    onClick={() => {
-                      if (item.id === 'membership') {
-                        setPremiumTriggerFeature('general');
-                        setIsPremiumModalOpen(true);
-                      } else {
-                        setActiveTab(item.id as BusinessTab);
-                      }
-                    }}
-                    className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
-                      isActive 
-                        ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs' 
-                        : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
+                    type="button"
+                    id={`biz-nav-btn-${item.id === 'overview' ? 'home' : item.id}`}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-2.5 h-9 rounded-xl text-[13.5px] transition-colors text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-white/[0.09] text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium'
                     }`}
                   >
-                    <div className="relative flex items-center justify-center">
-                      <Icon className="w-[18px] h-[18px] shrink-0 transition-colors" />
-                    </div>
+                    <Icon className={`w-[17px] h-[17px] shrink-0 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
                     <span className="truncate flex-1">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white text-zinc-950">
+                      <span className="min-w-[20px] h-5 px-1.5 text-[11px] font-semibold rounded-full bg-white text-zinc-950 flex items-center justify-center tabular-nums">
                         {item.badge}
-                      </span>
-                    )}
-                    {(item as any).isProBadge && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 bg-[#E8C78A]/15 text-[#E8C78A] border border-[#E8C78A]/30">
-                        {t("business.active", "Active")}
                       </span>
                     )}
                   </button>
                 );
               })}
-
-              {/* More Button under Profile */}
-              <button
-                id="biz-nav-btn-more"
-                onClick={() => setActiveTab('more')}
-                className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
-                  activeTab === 'more'
-                    ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs'
-                    : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
-                }`}
-                title={t('nav.more', 'More')}
-              >
-                <div className="relative flex items-center justify-center">
-                  <Menu className="w-[18px] h-[18px] shrink-0 transition-colors" />
-                </div>
-                <span className="truncate flex-1">{t('nav.more', 'More')}</span>
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        {/* Footer & Legal Links */}
-        <div className="px-3 pt-3 pb-2 border-t border-white/[0.08] flex flex-col gap-2 shrink-0 bg-[#050506]">
-          <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
-            <button
-              type="button"
-              onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate("home")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.privacy", "Privacy")}
-            </button>
-            <span className="text-zinc-600">•</span>
-            <button
-              type="button"
-              onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate("home")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.terms", "Terms")}
-            </button>
-            <span className="text-zinc-600">•</span>
-            <button
-              type="button"
-              onClick={() => setActiveTab("more")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-            >
-              {t("legal.about", "About")}
-            </button>
-          </div>
-          <p className="text-[11px] text-zinc-200 font-normal">
-            {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-          </p>
-        </div>
-      </aside>
-        
-        {/* Right side content wrapper */}
-        <div className="flex-1 flex flex-col overflow-hidden relative bg-[#050506]">
-          
-          {/* Refined Enterprise Header (Flagship Obsidian) */}
-          <header className="w-full h-16 bg-[#050506]/90 backdrop-blur-2xl border-b border-white/[0.08] px-3 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-30 relative">
-            
-            {/* Left: Mobile Exit Back Button & Platform Scope */}
-            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-              {/* Mobile Exit Back Button */}
-              <button
-                onClick={onClose}
-                className="md:hidden w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.1] flex items-center justify-center transition-all shrink-0 cursor-pointer"
-                title="Back to Yoouz Feed"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-
-              {/* Verified Workspace Scope Badge */}
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] text-zinc-200 text-[11px] sm:text-xs font-semibold border border-white/[0.09] shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
-                  <span>{t("business.verifiedLocation", "Verified Business Portal")}</span>
-                </span>
-              </div>
             </div>
 
-            {/* Right: Clean, Uncluttered Utility Bar */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              {/* Header Plan Badge / Upgrade Trigger */}
-              {isPremium ? (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] border border-[#E8C78A]/30 text-xs font-semibold text-[#E8C78A]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
-                  <span className="hidden sm:inline">Premium Partner</span>
-                  <span className="sm:hidden text-[10px] font-bold">Pro</span>
-                </div>
-              ) : (
+            {/* Group 2: Growth */}
+            <div className="space-y-0.5">
+              <div className="px-2.5 pb-1.5 text-[11px] font-medium text-zinc-500">
+                Growth
+              </div>
+              {growthNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    id={`biz-nav-btn-${item.id}`}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-2.5 h-9 rounded-xl text-[13.5px] transition-colors text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-white/[0.09] text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium'
+                    }`}
+                  >
+                    <Icon className={`w-[17px] h-[17px] shrink-0 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
+                    <span className="truncate flex-1">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Group 3: Account */}
+            <div className="space-y-0.5">
+              <div className="px-2.5 pb-1.5 text-[11px] font-medium text-zinc-500">
+                Account
+              </div>
+              {accountNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    id={`biz-nav-btn-${item.id}`}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-2.5 h-9 rounded-xl text-[13.5px] transition-colors text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-white/[0.09] text-white font-semibold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium'
+                    }`}
+                  >
+                    <Icon className={`w-[17px] h-[17px] shrink-0 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
+                    <span className="truncate flex-1">{item.label}</span>
+                    {(item as any).tierLabel && (
+                      <span className={`text-[11px] font-medium shrink-0 ${isPremium ? 'text-[#E8C78A]' : 'text-zinc-500'}`}>
+                        {(item as any).tierLabel}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
+
+        {/* Bottom Exit & Quiet Legal Footer */}
+        <div className="pt-3 border-t border-white/[0.07] flex flex-col gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full flex items-center gap-2.5 px-2.5 h-9 rounded-xl text-[13px] font-medium text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4 shrink-0" />
+            <span>Back to Yoouz</span>
+          </button>
+
+          <div className="px-2.5 space-y-1">
+            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+              <button
+                type="button"
+                onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate("home")}
+                className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.privacy", "Privacy")}
+              </button>
+              <span className="text-zinc-700">·</span>
+              <button
+                type="button"
+                onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate("home")}
+                className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.terms", "Terms")}
+              </button>
+              <span className="text-zinc-700">·</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("more")}
+                className="hover:text-zinc-300 transition-colors cursor-pointer bg-transparent border-none p-0"
+              >
+                {t("legal.about", "About")}
+              </button>
+            </div>
+            <p className="text-[10.5px] text-zinc-600">
+              {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
+            </p>
+          </div>
+        </div>
+      </aside>
+
+        {/* Right Side Workspace Column */}
+        <div className="flex-1 flex flex-col overflow-hidden relative bg-[#050506] min-w-0">
+
+          {/* Unified Top Bar: Desktop Breadcrumb Header & Native Mobile PWA App Bar */}
+          <header className="w-full h-14 md:h-16 bg-[#050506]/92 backdrop-blur-2xl border-b border-white/[0.07] px-3.5 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-30 relative">
+
+            {/* Left: Desktop SaaS Breadcrumb OR Mobile Native App Header */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              {/* Mobile Native Back Button + Active Business & Page Title */}
+              <div className="flex md:hidden items-center gap-2.5 min-w-0">
                 <button
                   type="button"
-                  onClick={() => {
-                    setPremiumTriggerFeature('general');
-                    setIsPremiumModalOpen(true);
-                  }}
-                  className="h-9 px-3.5 flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1] font-semibold rounded-full transition-all shrink-0 cursor-pointer text-xs active:scale-95"
-                  title="View Plans & Membership"
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.09] flex items-center justify-center transition-colors shrink-0 cursor-pointer active:scale-95"
+                  aria-label="Back to Yoouz"
                 >
-                  <Zap className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
-                  <span className="hidden sm:inline">Plans & Membership</span>
-                  <span className="sm:hidden text-[11px] font-semibold text-zinc-200">Plans</span>
+                  <ArrowLeft className="w-4 h-4" />
                 </button>
-              )}
+                <div className="flex items-center gap-2 min-w-0">
+                  <CopoBrandLogo
+                    domain={currentPlace.website || currentPlace.id}
+                    name={currentPlace.name}
+                    logoUrl={profileLogoUrl || currentPlace.logoUrl}
+                    className="w-7 h-7 rounded-lg bg-white/[0.05] border border-white/[0.1] p-0.5 flex items-center justify-center shrink-0 overflow-hidden"
+                    imageClassName="w-full h-full object-contain rounded-md"
+                    fallbackTextClassName="font-semibold text-[11px] text-white"
+                  />
+                  <div className="min-w-0 leading-tight">
+                    <div className="text-[15px] font-semibold text-white tracking-[-0.02em] truncate">
+                      {activeTabTitle}
+                    </div>
+                    <div className="text-[11px] text-zinc-400 truncate flex items-center gap-1">
+                      <span className="truncate">{currentPlace.name}</span>
+                      <BadgeCheck className="w-3 h-3 text-[#E8C78A] shrink-0" />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              {/* Quick Merchant Support / Docs Button */}
+              {/* Desktop Minimal Breadcrumb Trail (Zero Pill Soup) */}
+              <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-2 text-[13px] min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('overview')}
+                  className="text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer shrink-0"
+                >
+                  Business
+                </button>
+                <span className="text-zinc-700">/</span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('overview')}
+                  className="text-zinc-300 hover:text-white transition-colors truncate max-w-[180px] cursor-pointer font-medium"
+                >
+                  {currentPlace.name}
+                </button>
+                <span className="text-zinc-700">/</span>
+                <span className="text-white font-semibold truncate">
+                  {activeTabTitle}
+                </span>
+              </nav>
+            </div>
+
+            {/* Right: Streamlined Utilities (Max 2 quiet controls + Account trigger) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Desktop Public Profile Quick Link */}
+              <button
+                type="button"
+                onClick={() => {
+                  const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
+                  if (onOpenPlaceDrawer) {
+                    onOpenPlaceDrawer(targetId);
+                  } else {
+                    window.location.href = `/reviews/${targetId}`;
+                  }
+                }}
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              >
+                <span>Public page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Desktop Help Icon Button */}
               <button
                 type="button"
                 id="biz-header-help-trigger"
                 onClick={() => setShowHelpModal(true)}
-                className="hidden sm:flex h-9 px-3.5 items-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.09] rounded-full transition-all shrink-0 cursor-pointer text-xs font-semibold"
-                title={t("business.openGuideDocs", "Open Guide & Docs")}
+                className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                title={t("business.openGuideDocs", "Help & Documentation")}
+                aria-label="Help & Documentation"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
-                <span>{t("business.support", "Support")}</span>
+                <HelpCircle className="w-[18px] h-[18px]" />
               </button>
 
-              {/* Profile / Account Control */}
-              <div className="relative" ref={accountDropdownRef}>
-                <button 
+              {/* Mobile Alerts Bell */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('notifications')}
+                className={`md:hidden relative w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+                  activeTab === 'notifications'
+                    ? 'bg-white/[0.12] text-white'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/[0.06]'
+                }`}
+                aria-label="Alerts"
+              >
+                <Bell className="w-[18px] h-[18px]" />
+                {unreadBusinessNotifsCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E8C78A] ring-2 ring-[#050506]" />
+                )}
+              </button>
+
+              {/* Mobile Business Sheet Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsMobileBizMenuOpen(true)}
+                className="md:hidden w-9 h-9 rounded-full text-zinc-200 hover:text-white hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                aria-label="Open business menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              {/* Desktop Account Control Popover */}
+              <div className="relative hidden md:block" ref={accountDropdownRef}>
+                <button
+                  type="button"
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.12] transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20 overflow-hidden"
-                  title={`${currentPlace.name} - Business Account Menu`}
+                  className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.12] transition-all shrink-0 cursor-pointer flex items-center justify-center p-0.5 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 overflow-hidden"
+                  title={`${currentPlace.name} - Account`}
                 >
                   <CopoBrandLogo
                     domain={currentPlace.website || currentPlace.id}
@@ -2791,200 +2945,138 @@ ${jsonLd}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
                     className="w-full h-full rounded-full bg-[#050506] flex items-center justify-center shrink-0 overflow-hidden"
                     imageClassName="w-full h-full object-contain rounded-full"
-                    fallbackTextClassName="font-black text-xs text-white"
+                    fallbackTextClassName="font-semibold text-xs text-white"
                   />
                 </button>
 
-                {/* Business Account Control Dropdown */}
+                {/* Business Account Popover */}
                 {showAccountDropdown && (
                   <>
-                    {/* Fixed backdrop for click-outside dismiss */}
-                    <div 
-                      className="fixed inset-0 bg-black/50 z-[190]" 
-                      onClick={() => setShowAccountDropdown(false)} 
+                    <div
+                      className="fixed inset-0 bg-black/45 z-[190]"
+                      onClick={() => setShowAccountDropdown(false)}
                     />
-
-                    {/* Anchored Top Right Popover Dropdown */}
-                    <div className="absolute top-full right-0 sm:right-0 mt-2 w-[calc(100vw-32px)] sm:w-[300px] max-w-[320px] bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-2xl border border-white/[0.1] text-white shadow-[0_24px_60px_rgba(0,0,0,0.85)] py-2 z-[200] animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
-                      {/* Business Header Card */}
-                      <div className="px-4 py-3 border-b border-white/[0.08] mb-1">
+                    <div className="absolute top-full right-0 mt-2 w-[280px] bg-[#0B0B0E]/96 backdrop-blur-2xl rounded-2xl border border-white/[0.1] text-white shadow-[0_24px_60px_rgba(0,0,0,0.85)] py-1.5 z-[200] animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+                      <div className="px-4 py-3 border-b border-white/[0.07]">
                         <div className="flex items-center gap-3">
                           <CopoBrandLogo
                             domain={currentPlace.website || currentPlace.id}
                             name={currentPlace.name}
                             logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                            className="w-10 h-10 rounded-xl border border-white/[0.1] bg-white/[0.06] flex items-center justify-center font-black text-xs shrink-0 overflow-hidden p-1"
+                            className="w-9 h-9 rounded-xl border border-white/[0.1] bg-white/[0.05] flex items-center justify-center shrink-0 overflow-hidden p-1"
                             imageClassName="w-full h-full object-contain rounded-lg"
-                            fallbackTextClassName="font-black text-xs text-white"
+                            fallbackTextClassName="font-semibold text-xs text-white"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-white text-sm truncate">{currentPlace.name}</span>
-                              <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
+                              <span className="font-semibold text-white text-[13.5px] truncate">{currentPlace.name}</span>
+                              <BadgeCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
                             </div>
-                            <div className="text-[11px] text-zinc-400 truncate mt-1 font-normal flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
-                              <span className="truncate">{displayOwnerEmail}</span>
+                            <div className="text-[11.5px] text-zinc-400 truncate mt-0.5">
+                              {cleanBusinessDomain} · {isPremium ? 'Premium' : 'Free'}
                             </div>
                           </div>
                         </div>
-
-                        {/* Clean Executive Badge */}
-                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-zinc-200 text-[10.5px] font-medium">
-                          <BadgeCheck className="w-3 h-3 text-[#E8C78A] shrink-0" />
-                          <span>{t("business.verifiedWorkspace", "Verified Business Workspace")}</span>
-                        </div>
                       </div>
-                      
-                      {/* Core Essential Actions */}
-                      <button 
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          setPremiumTriggerFeature('general');
-                          setIsPremiumModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
-                      >
-                        <Zap className="w-4 h-4 text-[#E8C78A] shrink-0" />
-                        <span>{t("business.plansAndMembership", "Plans & Membership")}</span>
-                        <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white border border-white/[0.1]">
-                          {isPremium ? 'Pro' : 'Upgrade'}
-                        </span>
-                      </button>
 
-                      <button 
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          setActiveTab('profile');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
-                      >
-                        <Settings className="w-4 h-4 text-zinc-300 shrink-0" />
-                        <span>{t("business.workspaceSettings", "Workspace Settings")}</span>
-                      </button>
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAccountDropdown(false);
+                            setActiveTab('membership');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-200 cursor-pointer"
+                        >
+                          <Zap className="w-4 h-4 text-[#E8C78A] shrink-0" />
+                          <span>Plans &amp; Membership</span>
+                          <span className="ml-auto text-[11px] font-medium text-zinc-400">
+                            {isPremium ? 'Pro' : 'Upgrade'}
+                          </span>
+                        </button>
 
-                      <button 
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          setIsClaiming(true);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
-                      >
-                        <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
-                        <span>{t("business.switchWorkspace", "Switch Workspace")}</span>
-                      </button>
-                      
-                      <button 
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
-                          if (onOpenPlaceDrawer) {
-                            onOpenPlaceDrawer(targetId);
-                          } else {
-                            window.location.href = `/reviews/${targetId}`;
-                          }
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
-                      >
-                        <ExternalLink className="w-4 h-4 text-zinc-300 shrink-0" />
-                        <span>{t("business.viewPublicProfile", "View Public Profile")}</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAccountDropdown(false);
+                            setActiveTab('profile');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-200 cursor-pointer"
+                        >
+                          <Settings className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span>Workspace Settings</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAccountDropdown(false);
+                            setIsClaiming(true);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-200 cursor-pointer"
+                        >
+                          <Building2 className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span>Switch Business</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAccountDropdown(false);
+                            const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
+                            if (onOpenPlaceDrawer) {
+                              onOpenPlaceDrawer(targetId);
+                            } else {
+                              window.location.href = `/reviews/${targetId}`;
+                            }
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-200 cursor-pointer"
+                        >
+                          <ExternalLink className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span>View Public Profile</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAccountDropdown(false);
+                            onNavigate('home');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-200 cursor-pointer"
+                        >
+                          <Home className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span>Consumer Feed</span>
+                        </button>
+                      </div>
+
+                      <div className="h-px bg-white/[0.07] my-1" />
 
                       <button
-                        onClick={() => {
-                          setShowAccountDropdown(false);
-                          onNavigate('home');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
-                      >
-                        <Home className="w-4 h-4 text-zinc-300 shrink-0" />
-                        <span>{t("business.consumerFeed", "Consumer Feed")}</span>
-                      </button>
-                      
-                      <div className="h-px bg-white/[0.08] my-1.5" />
-                      
-                      <button 
+                        type="button"
                         onClick={() => {
                           setShowAccountDropdown(false);
                           localStorage.removeItem('copo_business_verified_session');
                           window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: null }));
                           setVerifiedBusinessSession(null);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-400 hover:text-white cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors text-left text-[13px] font-medium text-zinc-400 hover:text-white cursor-pointer"
                       >
-                        <LogOut className="w-4 h-4 text-zinc-400 shrink-0" />
-                        <span>{t("business.signOut", "Sign Out")}</span>
+                        <LogOut className="w-4 h-4 text-zinc-500 shrink-0" />
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   </>
                 )}
               </div>
-
             </div>
           </header>
 
-          {/* Top Mobile Pill Scroller */}
-          <div className="md:hidden w-full bg-[#050506] border-b border-white/[0.08] px-2 py-2.5 shrink-0 z-20">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-1">
-              {/* Home Pill */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
-                  activeTab === 'overview'
-                    ? 'bg-white text-zinc-950 border-white shadow-sm'
-                    : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
-                }`}
-                title={t('nav.home', 'Home')}
-              >
-                <Home className={`w-4 h-4 shrink-0 ${activeTab === 'overview' ? 'text-zinc-950' : 'text-zinc-300'}`} />
-                <span>{t('nav.home', 'Home')}</span>
-              </button>
-
-              {suiteNavItems.map(item => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
-                      isActive 
-                        ? 'bg-white text-zinc-950 border-white shadow-sm' 
-                        : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
-                    }`}
-                  >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-zinc-950' : 'text-zinc-300'}`} />
-                    <span>{item.label}</span>
-                    {item.badge !== undefined && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums ${isActive ? 'bg-zinc-950 text-white' : 'bg-white/[0.1] text-zinc-200'}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-
-              {/* More Pill */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('more')}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
-                  activeTab === 'more'
-                    ? 'bg-white text-zinc-950 border-white shadow-sm'
-                    : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
-                }`}
-                title={t('nav.more', 'More')}
-              >
-                <Menu className={`w-4 h-4 shrink-0 ${activeTab === 'more' ? 'text-zinc-950' : 'text-zinc-300'}`} />
-                <span>{t('nav.more', 'More')}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Center/Right Workspace (Flagship Obsidian) */}
-          <main ref={mainScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#050506] p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth w-full max-w-full">
-            <div className="max-w-[1160px] mx-auto space-y-5 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+          {/* Center/Right Workspace Main Scroll Area */}
+          <main
+            ref={mainScrollRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#050506] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-12 no-scrollbar scroll-smooth w-full max-w-full"
+          >
+            <div className="max-w-[1120px] mx-auto space-y-6 w-full max-w-full overflow-x-hidden">
 
             {showEmbedTester ? (
               <div className="animate-in fade-in duration-300">
@@ -2999,122 +3091,148 @@ ${jsonLd}
               <>
                 {/* TAB 1: OVERVIEW & INSIGHTS */}
                 {activeTab === 'overview' && (
-              <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
-                
-                {/* Banner with Welcome & Date Filter */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center gap-2.5 w-full">
-                      <h1 className="text-[26px] sm:text-[34px] font-semibold text-white tracking-[-0.03em] leading-[1.1] break-words">{currentPlace.name}</h1>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.09] text-zinc-200 text-[11px] font-medium shrink-0 whitespace-nowrap">
-                        <BadgeCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
-                        {t("business.claimedVerified", "Claimed & Verified")}
-                      </div>
+              <div className="space-y-6 animate-in fade-in duration-200">
+
+                {/* Clean Editorial Header + Date Range Segmented Control */}
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12] truncate">
+                        {currentPlace.name}
+                      </h1>
+                      <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#E8C78A] shrink-0" aria-label="Verified Business" />
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-400 font-normal">
-                      {t("business.overviewSubtitle", "Real-time performance metrics driven by customer photo reviews across the Yoouz network.")}
+                    <p className="text-xs sm:text-[13px] text-zinc-400">
+                      Verified business · {cleanBusinessDomain} · {dateRangeLabel}
                     </p>
                   </div>
-                  {/* Liquid-Glass Date Filter Segmented Control */}
-                  <div className="flex items-center bg-white/[0.045] p-1 rounded-full border border-white/[0.08] w-full sm:w-auto justify-between sm:justify-start shrink-0">
-                    {(['7d', '30d', '90d', 'ytd'] as const).map(range => (
-                      <button
-                        key={range}
-                        onClick={() => setAnalyticsDateRange(range)}
-                        className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 rounded-full text-[11.5px] sm:text-xs font-semibold transition-all cursor-pointer text-center ${
-                          analyticsDateRange === range 
-                            ? 'bg-white text-zinc-950 shadow-xs' 
-                            : 'text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        {range === '7d' ? t("business.range7d", "7 Days") : range === '30d' ? t("business.range30d", "30 Days") : range === '90d' ? t("business.range90d", "90 Days") : t("business.rangeAllTime", "All Time")}
-                      </button>
-                    ))}
+
+                  {/* Compact Segmented Date Filter */}
+                  <div className="flex items-center bg-white/[0.04] p-1 rounded-xl border border-white/[0.08] w-full sm:w-auto shrink-0">
+                    {([
+                      { id: '7d', short: '7D', full: '7 Days' },
+                      { id: '30d', short: '30D', full: '30 Days' },
+                      { id: '90d', short: '90D', full: '90 Days' },
+                      { id: 'ytd', short: 'All', full: 'All Time' },
+                    ] as const).map((range) => {
+                      const active = analyticsDateRange === range.id;
+                      return (
+                        <button
+                          key={range.id}
+                          type="button"
+                          onClick={() => setAnalyticsDateRange(range.id)}
+                          className={`flex-1 sm:flex-initial px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center min-h-[34px] ${
+                            active
+                              ? 'bg-white text-zinc-950 shadow-xs'
+                              : 'text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          <span className="sm:hidden">{range.short}</span>
+                          <span className="hidden sm:inline">{range.full}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-                {/* 3 Flagship Obsidian Glass KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+
+                {/* Unified 3-Column KPI Metric Strip (Zero Pills, Zero Fake Sparklines) */}
+                <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.07] overflow-hidden">
                   {[
-                    { key: 'views' as const, label: t('business.kpiImpressions', 'Photo Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-white/[0.06]' },
-                    { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Photo Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Camera, color: 'text-white', bg: 'bg-white/[0.06]' },
-                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-[#E8C78A]', bg: 'bg-[#E8C78A]/10' },
-                  ].map((stat, i) => {
+                    {
+                      key: 'views' as const,
+                      label: t('business.kpiImpressions', 'Photo Review Impressions'),
+                      value: totalViews.toLocaleString(),
+                      meta: `${dateRangeLabel} across Yoouz`,
+                      icon: Eye,
+                      iconColor: 'text-zinc-400',
+                    },
+                    {
+                      key: 'reviews' as const,
+                      label: t('business.kpiReviews', 'Verified Photo Reviews'),
+                      value: totalReviews.toLocaleString(),
+                      meta: `${placeVideos.length} total live ${placeVideos.length === 1 ? 'review' : 'reviews'}`,
+                      icon: Camera,
+                      iconColor: 'text-zinc-400',
+                    },
+                    {
+                      key: 'rating' as const,
+                      label: t('business.kpiRating', 'Overall Rating'),
+                      value: avgRating.toString(),
+                      meta: placeVideos.length > 0 ? `Based on ${placeVideos.length} verified ${placeVideos.length === 1 ? 'review' : 'reviews'}` : 'Ready for first customer review',
+                      icon: Star,
+                      iconColor: 'text-[#E8C78A]',
+                    },
+                  ].map((stat) => {
                     const isSelected = selectedChartMetric === stat.key;
-                    const sparklineColor = isSelected ? '#ffffff' : '#71717a';
+                    const Icon = stat.icon;
                     return (
-                      <div 
-                         key={i} 
-                         onClick={() => handleSelectMetric(stat.key)}
-                        className={`rounded-[24px] border p-5 sm:p-6 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
-                          isSelected 
-                             ? 'border-white/[0.2] bg-white/[0.06] shadow-[0_12px_36px_rgba(0,0,0,0.45)]' 
-                             : 'border-white/[0.08] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.05]'
+                      <button
+                        key={stat.key}
+                        type="button"
+                        onClick={() => handleSelectMetric(stat.key)}
+                        className={`relative p-5 sm:p-6 text-left transition-colors cursor-pointer flex flex-col justify-between gap-4 min-h-[124px] ${
+                          isSelected
+                            ? 'bg-white/[0.045]'
+                            : 'hover:bg-white/[0.025]'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-4 relative z-10">
-                          <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-white/[0.09]`}>
-                            <stat.icon className="w-4 h-4" />
-                          </div>
-                          <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-300 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.08] shrink-0 whitespace-nowrap">
-                            <TrendingUp className="w-3 h-3 text-[#E8C78A]" /> {stat.change}
+                        {/* Crisp Active Top Hairline Indicator */}
+                        {isSelected && (
+                          <span className="absolute inset-x-0 top-0 h-[2px] bg-white" />
+                        )}
+
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <span className={`text-xs font-medium ${isSelected ? 'text-zinc-200' : 'text-zinc-400'}`}>
+                            {stat.label}
                           </span>
+                          <Icon className={`w-4 h-4 shrink-0 ${stat.key === 'rating' ? 'text-[#E8C78A]' : isSelected ? 'text-white' : stat.iconColor}`} />
                         </div>
-                        <div className="relative z-10">
-                          <div className="flex items-end justify-between mb-1.5">
-                            <div className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] tabular-nums leading-none flex items-center gap-2">
-                              <span>{stat.value}</span>
-                              {stat.key === 'rating' && (
-                                <Star className="w-5 h-5 text-[#E8C78A] fill-[#E8C78A] inline-block" />
-                              )}
-                            </div>
-                            {/* SVG Mini Sparkline */}
-                            <svg className="w-12 h-5 overflow-visible opacity-80" viewBox="0 0 60 20">
-                              <polyline
-                                fill="none"
-                                stroke={sparklineColor}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                points={stat.key === 'views' ? '0,15 15,12 30,14 45,8 60,4' : stat.key === 'reviews' ? '0,18 15,18 30,12 45,15 60,5' : '0,10 20,10 40,10 60,10'}
-                              />
-                            </svg>
+
+                        <div className="space-y-1">
+                          <div className="text-[30px] sm:text-[34px] font-semibold text-white tracking-[-0.03em] tabular-nums leading-none flex items-center gap-2">
+                            <span>{stat.value}</span>
+                            {stat.key === 'rating' && (
+                              <Star className="w-5 h-5 text-[#E8C78A] fill-[#E8C78A] shrink-0" />
+                            )}
                           </div>
-                          <div className="text-xs font-medium text-zinc-400">{stat.label}</div>
+                          <div className="text-[11.5px] text-zinc-500 tabular-nums">
+                            {stat.meta}
+                          </div>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
 
-                {/* Interactive Performance Graph */}
-                <div ref={chartSectionRef} className="bg-white/[0.03] rounded-[24px] sm:rounded-[28px] border border-white/[0.08] text-white p-5 sm:p-7 flex flex-col justify-between scroll-mt-4">
+                {/* Interactive Performance Area Chart (Apple Stocks / Stripe Precision) */}
+                <div
+                  ref={chartSectionRef}
+                  className="bg-white/[0.03] rounded-2xl border border-white/[0.08] text-white p-5 sm:p-6 flex flex-col justify-between scroll-mt-4"
+                >
                   <div>
-                    {/* Metric Selector Tabs */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <h3 className="text-sm sm:text-base font-semibold text-white tracking-[-0.015em]">
-                            {selectedChartMetric === 'views' && 'Customer Photo Reviews Impressions'}
-                            {selectedChartMetric === 'reviews' && 'Verified Photo Reviews'}
-                            {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
-                          </h3>
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.05] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
-                            Live Metrics
-                          </span>
-                        </div>
-                        <p className="text-xs text-zinc-400 mt-1 font-normal tabular-nums">
-                          Total {chartData.total} {chartData.unit} recorded during this period
+                        <h2 className="text-[15px] sm:text-base font-semibold text-white tracking-[-0.015em]">
+                          {selectedChartMetric === 'views' && 'Photo Review Impressions'}
+                          {selectedChartMetric === 'reviews' && 'Verified Photo Reviews'}
+                          {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
+                        </h2>
+                        <p className="text-xs text-zinc-400 mt-0.5 tabular-nums">
+                          {chartData.total.toLocaleString()} {chartData.unit} · {dateRangeLabel}
                         </p>
                       </div>
 
-                      {/* Liquid-Glass Metric Selector Pills */}
-                      <div className="flex items-center gap-1 bg-white/[0.045] p-1 rounded-full border border-white/[0.08] self-stretch sm:self-auto w-full sm:w-auto">
-                        {(['views', 'reviews', 'rating'] as const).map(m => (
+                      {/* Segmented Metric Selector */}
+                      <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.08] self-stretch sm:self-auto w-full sm:w-auto">
+                        {(['views', 'reviews', 'rating'] as const).map((m) => (
                           <button
                             key={m}
+                            type="button"
                             onClick={() => handleSelectMetric(m)}
-                            className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
-                              selectedChartMetric === m ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white'
+                            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-center min-h-[32px] ${
+                              selectedChartMetric === m
+                                ? 'bg-white text-zinc-950 shadow-xs'
+                                : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             {m === 'views' ? 'Impressions' : m === 'reviews' ? 'Reviews' : 'Rating'}
@@ -3123,243 +3241,343 @@ ${jsonLd}
                       </div>
                     </div>
 
-                    {/* SVG Area & Bézier Curve Chart */}
-                    <div 
-                      className="relative w-full h-56 sm:h-72 select-none pt-2 touch-pan-y"
-                      onTouchStart={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const touch = e.touches[0];
-                        if (touch) {
-                          const relX = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                          const idx = Math.round(relX * (chartData.points.length - 1));
-                          setHoveredChartPoint(idx);
-                        }
-                      }}
-                      onTouchMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const touch = e.touches[0];
-                        if (touch) {
-                          const relX = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                          const idx = Math.round(relX * (chartData.points.length - 1));
-                          setHoveredChartPoint(idx);
-                        }
-                      }}
-                    >
-                      {/* Hover Tooltip display */}
-                      {hoveredChartPoint !== null && (
-                        <div 
-                          className="absolute top-0 transform -translate-x-1/2 bg-[#111114] text-white rounded-2xl px-3 py-1.5 shadow-2xl border border-white/[0.12] pointer-events-none z-30 flex flex-col items-center text-xs animate-in fade-in zoom-in-95 duration-100"
-                          style={{ 
-                            left: `${(hoveredChartPoint / (chartData.points.length - 1)) * 88 + 6}%` 
-                          }}> 
-                          <span className="font-semibold text-sm text-white tabular-nums">
-                            {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
-                          </span>
-                          <span className="text-[10px] text-zinc-400 font-medium">
-                            {chartData.labels[hoveredChartPoint]}
-                          </span>
-                        </div>
-                      )}
+                    {/* Chart Viewport with Smooth Scrubbing (Pointer + Touch) */}
+                    {(() => {
+                      const pts = chartData.points.length > 0 ? chartData.points : [0, 0];
+                      const maxVal = Math.max(...pts, selectedChartMetric === 'rating' ? 5 : 1);
+                      const minVal = 0;
+                      const range = maxVal - minVal || 1;
+                      const denom = Math.max(1, pts.length - 1);
 
-                      <svg 
-                        viewBox="0 0 700 200" 
-                        className="w-full h-full overflow-visible"
-                        preserveAspectRatio="none"
-                      >
-                        <defs>
-                          <linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor={chartData.color} stopOpacity="0.24" />
-                            <stop offset="100%" stopColor={chartData.color} stopOpacity="0.01" />
-                          </linearGradient>
-                        </defs>
+                      const coordinates = pts.map((val, idx) => {
+                        const x = (idx / denom) * 680 + 10;
+                        const y = 178 - ((val - minVal) / range) * 144;
+                        return { x, y, val };
+                      });
 
-                        {/* Hairline Grid Lines */}
-                        <line x1="0" y1="40" x2="700" y2="40" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="90" x2="700" y2="90" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="140" x2="700" y2="140" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="190" x2="700" y2="190" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+                      let pathD = `M ${coordinates[0].x} ${coordinates[0].y}`;
+                      for (let i = 0; i < coordinates.length - 1; i++) {
+                        const curr = coordinates[i];
+                        const next = coordinates[i + 1];
+                        const cpX1 = curr.x + (next.x - curr.x) / 2;
+                        const cpY1 = curr.y;
+                        const cpX2 = curr.x + (next.x - curr.x) / 2;
+                        const cpY2 = next.y;
+                        pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
+                      }
 
-                        {/* Generate Smooth Path */}
-                        {(() => {
-                          const pts = chartData.points;
-                          const maxVal = Math.max(...pts, 1);
-                          const minVal = 0;
-                          const range = maxVal - minVal;
-                          
-                          const coordinates = pts.map((val, idx) => {
-                            const x = (idx / (pts.length - 1)) * 680 + 10;
-                            const y = 180 - ((val - minVal) / range) * 140;
-                            return { x, y, val };
-                          });
+                      const areaD = `${pathD} L ${coordinates[coordinates.length - 1].x} 190 L ${coordinates[0].x} 190 Z`;
+                      const activeIdx = hoveredChartPoint !== null && hoveredChartPoint < coordinates.length ? hoveredChartPoint : null;
+                      const activeCoord = activeIdx !== null ? coordinates[activeIdx] : null;
+                      const midLabel = selectedChartMetric === 'rating'
+                        ? (maxVal / 2).toFixed(1)
+                        : Math.round(maxVal / 2).toLocaleString();
+                      const topLabel = selectedChartMetric === 'rating'
+                        ? maxVal.toFixed(1)
+                        : Math.round(maxVal).toLocaleString();
 
-                          let pathD = `M ${coordinates[0].x} ${coordinates[0].y}`;
-                          for (let i = 0; i < coordinates.length - 1; i++) {
-                            const curr = coordinates[i];
-                            const next = coordinates[i + 1];
-                            const cpX1 = curr.x + (next.x - curr.x) / 2;
-                            const cpY1 = curr.y;
-                            const cpX2 = curr.x + (next.x - curr.x) / 2;
-                            const cpY2 = next.y;
-                            pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
-                          }
+                      const handleScrubClientX = (clientX: number, rect: DOMRect) => {
+                        const relX = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
+                        const idx = Math.round(relX * denom);
+                        setHoveredChartPoint(idx);
+                      };
 
-                          const areaD = `${pathD} L ${coordinates[coordinates.length - 1].x} 190 L ${coordinates[0].x} 190 Z`;
+                      const tickIndices = [
+                        0,
+                        Math.floor(denom * 0.25),
+                        Math.floor(denom * 0.5),
+                        Math.floor(denom * 0.75),
+                        denom,
+                      ];
 
-                          return (
-                            <>
-                              {/* Gradient Filled Area */}
+                      return (
+                        <>
+                          <div
+                            className="relative w-full h-52 sm:h-64 select-none pt-2 touch-pan-y cursor-crosshair"
+                            onMouseMove={(e) => handleScrubClientX(e.clientX, e.currentTarget.getBoundingClientRect())}
+                            onMouseLeave={() => setHoveredChartPoint(null)}
+                            onTouchStart={(e) => {
+                              const touch = e.touches[0];
+                              if (touch) handleScrubClientX(touch.clientX, e.currentTarget.getBoundingClientRect());
+                            }}
+                            onTouchMove={(e) => {
+                              const touch = e.touches[0];
+                              if (touch) handleScrubClientX(touch.clientX, e.currentTarget.getBoundingClientRect());
+                            }}
+                            onTouchEnd={() => setHoveredChartPoint(null)}
+                          >
+                            {/* Quiet Y-Axis Scale Labels */}
+                            <div className="absolute inset-y-2 left-0 flex flex-col justify-between text-[10px] text-zinc-600 tabular-nums pointer-events-none z-10">
+                              <span>{topLabel}</span>
+                              <span>{midLabel}</span>
+                              <span>0</span>
+                            </div>
+
+                            {/* Hover / Touch Scrubbing Tooltip */}
+                            {activeIdx !== null && (
+                              <div
+                                className="absolute top-0 transform -translate-x-1/2 bg-[#111114]/95 backdrop-blur-xl text-white rounded-xl px-3 py-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.7)] border border-white/[0.12] pointer-events-none z-30 flex flex-col items-center text-xs"
+                                style={{
+                                  left: `${Math.min(88, Math.max(12, (activeIdx / denom) * 92 + 4))}%`
+                                }}
+                              >
+                                <span className="font-semibold text-[13px] text-white tabular-nums whitespace-nowrap">
+                                  {pts[activeIdx].toLocaleString()} {chartData.unit}
+                                </span>
+                                <span className="text-[10.5px] text-zinc-400 whitespace-nowrap">
+                                  {chartData.labels[activeIdx] || ''}
+                                </span>
+                              </div>
+                            )}
+
+                            <svg
+                              viewBox="0 0 700 200"
+                              className="w-full h-full overflow-visible"
+                              preserveAspectRatio="none"
+                            >
+                              <defs>
+                                <linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                  <stop offset="0%" stopColor={selectedChartMetric === 'rating' ? '#E8C78A' : '#FFFFFF'} stopOpacity="0.18" />
+                                  <stop offset="100%" stopColor={selectedChartMetric === 'rating' ? '#E8C78A' : '#FFFFFF'} stopOpacity="0.0" />
+                                </linearGradient>
+                              </defs>
+
+                              {/* Subtle Horizontal Gridlines */}
+                              <line x1="0" y1="34" x2="700" y2="34" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                              <line x1="0" y1="106" x2="700" y2="106" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                              <line x1="0" y1="178" x2="700" y2="178" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+
+                              {/* Gradient Area */}
                               <path d={areaD} fill="url(#metricGradient)" />
-                              
-                              {/* Stroke Line */}
-                              <path 
-                                d={pathD} 
-                                fill="none" 
-                                stroke={chartData.color} 
-                                strokeWidth="2.5" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
+
+                              {/* Precision Curve */}
+                              <path
+                                d={pathD}
+                                fill="none"
+                                stroke={selectedChartMetric === 'rating' ? '#E8C78A' : '#FFFFFF'}
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                               />
 
-                              {/* Interactive Data Points */}
-                              {coordinates.map((coord, idx) => (
-                                <g key={idx} className="cursor-pointer">
-                                  <circle
-                                    cx={coord.x}
-                                    cy={coord.y}
-                                    r={hoveredChartPoint === idx ? 5 : 3}
-                                    fill="#050506"
-                                    stroke={chartData.color}
-                                    strokeWidth={hoveredChartPoint === idx ? 3 : 2}
-                                    className="transition-all duration-150"
-                                    onMouseEnter={() => setHoveredChartPoint(idx)}
-                                    onMouseLeave={() => setHoveredChartPoint(null)}
+                              {/* Vertical Hairline Crosshair + Active Point ONLY when scrubbing/hovering */}
+                              {activeCoord && (
+                                <g>
+                                  <line
+                                    x1={activeCoord.x}
+                                    y1="24"
+                                    x2={activeCoord.x}
+                                    y2="190"
+                                    stroke="rgba(255,255,255,0.22)"
+                                    strokeDasharray="3 3"
+                                    strokeWidth="1"
                                   />
-                                  {/* Invisible larger hit area for smooth hovering/touch */}
                                   <circle
-                                    cx={coord.x}
-                                    cy={coord.y}
-                                    r={24}
-                                    fill="transparent"
-                                    onMouseEnter={() => setHoveredChartPoint(idx)}
-                                    onMouseLeave={() => setHoveredChartPoint(null)}
+                                    cx={activeCoord.x}
+                                    cy={activeCoord.y}
+                                    r={5}
+                                    fill="#050506"
+                                    stroke={selectedChartMetric === 'rating' ? '#E8C78A' : '#FFFFFF'}
+                                    strokeWidth={2.5}
                                   />
                                 </g>
-                              ))}
-                            </>
-                          );
-                        })()}
-                      </svg>
-                    </div>
+                              )}
+                            </svg>
+                          </div>
 
-                    {/* X-Axis Labels */}
-                    <div className="flex justify-between text-[11px] font-medium text-zinc-400 mt-2 px-1 sm:px-2 border-t border-white/[0.07] pt-2.5 tabular-nums">
-                      <span>Day 1</span>
-                      <span>Day 7</span>
-                      <span>Day 15</span>
-                      <span>Day 22</span>
-                      <span>Today</span>
-                    </div>
+                          {/* Dynamic X-Axis Labels */}
+                          <div className="flex justify-between text-[11px] text-zinc-500 mt-2 pt-2.5 border-t border-white/[0.06] tabular-nums">
+                            {tickIndices.map((tIdx, i) => (
+                              <span key={i} className={i === 1 || i === 3 ? 'hidden sm:inline' : ''}>
+                                {chartData.labels[tIdx] || (i === 4 ? 'Today' : '')}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
+                </div>
+
+                {/* Quick Workspace Actions Strip */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      tab: 'reviews' as BusinessTab,
+                      icon: Camera,
+                      title: 'Photo Reviews',
+                      desc: placeVideos.length > 0 ? `Reply & export from ${placeVideos.length} live ${placeVideos.length === 1 ? 'review' : 'reviews'}` : 'View and reply to customer reviews',
+                    },
+                    {
+                      tab: 'qr_invites' as BusinessTab,
+                      icon: QrCode,
+                      title: 'QR Table Standee',
+                      desc: 'Print or share your live scan card',
+                    },
+                    {
+                      tab: 'embed' as BusinessTab,
+                      icon: Code,
+                      title: 'Website Embed',
+                      desc: 'Add verified photo proof to your site',
+                    },
+                  ].map((action) => (
+                    <button
+                      key={action.tab}
+                      type="button"
+                      onClick={() => setActiveTab(action.tab)}
+                      className="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.055] border border-white/[0.08] hover:border-white/[0.15] transition-all text-left flex items-center gap-3.5 cursor-pointer group active:scale-[0.99]"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 text-zinc-200 group-hover:text-white">
+                        <action.icon className="w-[18px] h-[18px]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13.5px] font-semibold text-white truncate">
+                          {action.title}
+                        </div>
+                        <div className="text-xs text-zinc-400 truncate mt-0.5">
+                          {action.desc}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 shrink-0 transition-colors" />
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-            {/* TAB 2: VIDEO REVIEWS & MODERATION */}
+            {/* TAB 2: PHOTO REVIEWS & MODERATION */}
             {activeTab === 'reviews' && (
-              <div className="space-y-5 animate-in fade-in duration-200">
+              <div className="space-y-6 animate-in fade-in duration-200">
                 {/* Widget Notice Alert Toast */}
                 {widgetNotice && (
-                  <div className="bg-[#111114] text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-lg border border-white/[0.1] flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
-                    <span className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-[#E8C78A]" />
-                      {widgetNotice}
+                  <div className="bg-[#101014] text-white text-xs font-medium px-4 py-3 rounded-2xl border border-white/[0.1] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Eye className="w-4 h-4 text-[#E8C78A] shrink-0" />
+                      <span className="truncate">{widgetNotice}</span>
                     </span>
                     <button
+                      type="button"
                       onClick={() => setActiveTab('embed')}
-                      className="text-white hover:underline text-xs font-semibold cursor-pointer"
+                      className="text-white hover:underline text-xs font-semibold cursor-pointer shrink-0"
                     >
-                      View Website Widget →
+                      View embed →
                     </button>
                   </div>
                 )}
 
-                <div className="bg-white/[0.03] rounded-[24px] border border-white/[0.08] text-white p-5 sm:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 w-full max-w-full overflow-hidden">
+                {/* Editorial Header + Inline Controls */}
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                   <div className="min-w-0 space-y-1">
-                    <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">Customer Photo Reviews</h2>
-                    <p className="text-xs sm:text-[13px] text-zinc-400">
-                      Manage and curate authentic live camera photo reviews displayed on your profile and website widget.
+                    <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12]">
+                      Customer Photo Reviews
+                    </h1>
+                    <p className="text-xs sm:text-[13px] text-zinc-400 tabular-nums">
+                      {placeVideos.length} live camera {placeVideos.length === 1 ? 'review' : 'reviews'} displayed on your profile and website embed.
                     </p>
                   </div>
 
-                  {/* Search, Filter and Clear Badge Row */}
+                  {/* Search, Filter and Mark Reviewed Toolbar */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-                    {/* Spotlight Search Reviews Input */}
-                    <div className="relative flex-1 w-full sm:w-52">
-                      <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <div className="relative flex-1 w-full sm:w-56">
+                      <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input
                         type="text"
                         value={reviewsSearchQuery}
                         onChange={(e) => setReviewsSearchQuery(e.target.value)}
                         placeholder="Search reviews..."
-                        className="w-full pl-9 pr-7 py-2 bg-white/[0.045] focus:bg-white/[0.07] border border-white/[0.09] focus:border-white/25 rounded-full text-xs text-white placeholder-zinc-500 focus:outline-hidden transition-all font-medium"
+                        className="w-full h-10 pl-10 pr-8 bg-white/[0.04] focus:bg-white/[0.065] border border-white/[0.08] focus:border-white/25 rounded-xl text-[16px] sm:text-[13px] text-white placeholder-zinc-500 focus:outline-hidden transition-all"
                       />
                       {reviewsSearchQuery && (
                         <button
+                          type="button"
                           onClick={() => setReviewsSearchQuery('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-semibold p-1 cursor-pointer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1 cursor-pointer"
+                          aria-label="Clear search"
                         >
-                          ✕
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
 
-                    {/* Filter Pills and Clear Badge Container */}
-                    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-0.5">
-                      {/* Liquid-Glass Filter Pills */}
-                      <div className="flex items-center gap-1 bg-white/[0.045] p-1 rounded-full border border-white/[0.08] shrink-0">
-                        {(['all', '5', '4'] as const).map(f => (
+                    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                      <div className="flex items-center gap-1 bg-white/[0.04] p-1 rounded-xl border border-white/[0.08] shrink-0">
+                        {(['all', '5', '4'] as const).map((f) => (
                           <button
                             key={f}
+                            type="button"
                             onClick={() => setReviewsFilter(f)}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer min-h-[32px] ${
                               reviewsFilter === f ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white'
                             }`}
                           >
-                            {f === 'all' ? 'All' : `${f} Stars`}
+                            {f === 'all' ? 'All' : `${f}★`}
                           </button>
                         ))}
                       </div>
 
-                      {/* Clear Badge Button */}
                       <button
                         type="button"
                         id="btn-clear-reviews-badge"
                         onClick={handleMarkReviewsAsRead}
-                        className="px-3.5 py-2 rounded-full text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.09] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 whitespace-nowrap"
-                        title="Clear badge and mark all reviews as reviewed"
+                        className="h-10 px-3.5 rounded-xl text-xs font-medium bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 whitespace-nowrap"
+                        title="Mark all reviews as reviewed"
                       >
                         <CheckCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
-                        <span>{unseenReviewsCount > 0 ? `Clear (${unseenReviewsCount})` : 'All Reviewed'}</span>
+                        <span>{unseenReviewsCount > 0 ? `Mark read (${unseenReviewsCount})` : 'Reviewed'}</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Reviews List */}
-                <div className="space-y-4 w-full max-w-full overflow-hidden">
-                  {placeVideos
-                    .filter(v => {
-                      if (reviewsSearchQuery.trim()) {
-                        const q = reviewsSearchQuery.toLowerCase();
-                        const matchName = v.author?.name?.toLowerCase().includes(q);
-                        const matchCaption = v.caption?.toLowerCase().includes(q);
-                        const matchDish = (v as any).dishOrItem?.toLowerCase().includes(q);
-                        if (!matchName && !matchCaption && !matchDish) return false;
-                      }
-                      if (reviewsFilter === '5') return (v.rating || 5) === 5;
-                      if (reviewsFilter === '4') return (v.rating || 5) === 4;
-                      return true;
-                    })
-                    .map((video) => {
+                {(() => {
+                  const filteredReviews = placeVideos.filter((v) => {
+                    if (reviewsSearchQuery.trim()) {
+                      const q = reviewsSearchQuery.toLowerCase();
+                      const matchName = v.author?.name?.toLowerCase().includes(q);
+                      const matchCaption = v.caption?.toLowerCase().includes(q);
+                      const matchDish = (v as any).dishOrItem?.toLowerCase().includes(q);
+                      if (!matchName && !matchCaption && !matchDish) return false;
+                    }
+                    if (reviewsFilter === '5') return (v.rating || 5) === 5;
+                    if (reviewsFilter === '4') return (v.rating || 5) === 4;
+                    return true;
+                  });
+
+                  if (filteredReviews.length === 0) {
+                    return (
+                      <div className="p-10 sm:p-14 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-center space-y-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.09] text-zinc-300 flex items-center justify-center mx-auto">
+                          <Camera className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-1 max-w-sm mx-auto">
+                          <h3 className="text-sm sm:text-base font-semibold text-white">
+                            {reviewsSearchQuery || reviewsFilter !== 'all'
+                              ? 'No matching photo reviews'
+                              : 'No customer photo reviews yet'}
+                          </h3>
+                          <p className="text-xs sm:text-[13px] text-zinc-400 leading-relaxed">
+                            {reviewsSearchQuery || reviewsFilter !== 'all'
+                              ? 'Try adjusting your search or rating filter.'
+                              : 'Place your QR standee at checkout or share your review link to collect verified live camera reviews.'}
+                          </p>
+                        </div>
+                        {!reviewsSearchQuery && reviewsFilter === 'all' && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('qr_invites')}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors cursor-pointer"
+                          >
+                            <QrCode className="w-4 h-4" />
+                            <span>Open QR Standee</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3.5 w-full max-w-full overflow-hidden">
+                      {filteredReviews.map((video) => {
                       const hasReply = Boolean(ownerReplies[video.id]);
                       const isReplying = activeReplyId === video.id;
                       const isHidden = hiddenVideoIds.includes(video.id);
@@ -3372,44 +3590,44 @@ ${jsonLd}
                               onOpenCreator(video.author);
                             }
                           }}
-                          className="flex items-start gap-2.5 text-left group cursor-pointer hover:opacity-90 transition-opacity min-w-0 w-full"
+                          className="flex items-start gap-3 text-left group cursor-pointer hover:opacity-95 transition-opacity min-w-0 w-full"
                           title={`View ${video.author?.name || 'Customer'}'s Profile`}
                         >
                           <img
                             src={getSafeAvatarUrl(video.author?.avatar, video.author?.name, video.author?.handle)}
                             alt={video.author?.name}
-                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-zinc-700 group-hover:ring-white transition-all shrink-0"
+                            className="w-10 h-10 rounded-full object-cover ring-1 ring-white/[0.12] shrink-0"
                             referrerPolicy="no-referrer"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               target.src = getSafeAvatarUrl(null, video.author?.name, video.author?.handle);
-                            }} 
+                            }}
                           />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-xs sm:text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm text-white group-hover:text-zinc-200 transition-colors truncate">
                                 {video.author?.name || 'Customer Review'}
                               </span>
                               {isHidden && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 border border-zinc-700 shrink-0">
-                                  <EyeOff className="w-2.5 h-2.5" /> Hidden
+                                <span className="text-[11px] font-medium text-zinc-500 flex items-center gap-1 shrink-0">
+                                  <EyeOff className="w-3 h-3" /> Hidden
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] sm:text-xs text-zinc-300 flex-wrap">
+                            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-zinc-400 flex-wrap">
                               <CopoStarRating
                                 rating={Math.max(1, Math.min(5, Math.round(video.rating || 5)))}
                                 roundToWhole={true}
                                 starClassName="w-3 h-3 sm:w-3.5 sm:h-3.5"
                                 filledColorClass="fill-[#E8C78A] text-[#E8C78A]"
-                                emptyColorClass="fill-zinc-900/90 text-zinc-500"
+                                emptyColorClass="fill-zinc-900/90 text-zinc-600"
                               />
-                              <span className="text-zinc-600 font-bold shrink-0">•</span>
-                              <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
+                              <span className="text-zinc-600">·</span>
+                              <span className="tabular-nums">{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                               {video.dishOrItem && (
                                 <>
-                                  <span className="text-zinc-600 font-bold shrink-0">•</span>
-                                  <span className="font-semibold text-zinc-200 bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] truncate max-w-[120px]">
+                                  <span className="text-zinc-600">·</span>
+                                  <span className="text-zinc-300 truncate max-w-[160px]">
                                     {video.dishOrItem}
                                   </span>
                                 </>
@@ -3419,31 +3637,26 @@ ${jsonLd}
                         </button>
                       );
 
-                      const isPhoto = Boolean(video.photoUrl || (video as any).mediaType === 'photo' || !video.videoUrl);
-
                       return (
-                        <div 
+                        <div
                           key={video.id}
-                          className={`rounded-3xl border p-4 sm:p-6 transition-all w-full max-w-full overflow-hidden ${
-                            isHidden 
-                              ? 'border-white/[0.06] opacity-60 bg-white/[0.02] text-zinc-200' 
-                              : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] text-white'
+                          className={`rounded-2xl border p-4 sm:p-5 transition-colors w-full max-w-full overflow-hidden ${
+                            isHidden
+                              ? 'border-white/[0.06] opacity-60 bg-white/[0.02] text-zinc-200'
+                              : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.14] text-white'
                           }`}
                         >
                           <div className="flex flex-col gap-4 w-full">
-                            
-                            {/* Author Header Top Bar */}
-                            <div className="flex items-center justify-between gap-3 w-full border-b border-white/[0.08] pb-3">
+                            {/* Author Header */}
+                            <div className="flex items-center justify-between gap-3 w-full border-b border-white/[0.07] pb-3.5">
                               {authorInfoJSX}
                             </div>
 
-                            {/* Middle Row: Photo / Review Viewport */}
-                            <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-5 items-start w-full">
-                              
-                              {/* Photo Review Viewport */}
-                              <div 
+                            {/* Photo Viewport + Review Caption */}
+                            <div className="flex flex-col sm:flex-row gap-4 items-start w-full">
+                              <div
                                 onClick={() => handleOpenBusinessVideo(video)}
-                                className="w-full sm:w-32 md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-[#0a0a0d] border border-white/[0.1] shadow-md cursor-pointer group"
+                                className="w-full sm:w-32 md:w-36 aspect-9/14 shrink-0 relative rounded-xl overflow-hidden bg-[#0a0a0d] border border-white/[0.1] cursor-pointer group"
                                 title="Click to view photo review"
                               >
                                 <img
@@ -3454,62 +3667,47 @@ ${jsonLd}
                                   onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;
                                     target.src = getSafeAvatarUrl(null, video.author?.name, video.author?.handle);
-                                  }} 
-                                /> 
-                                {/* Photo / Review Overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-1 border border-white/[0.12]">
-                                      <Camera className="w-2.5 h-2.5 text-zinc-200" /> Live Photo
-                                    </span>
-                                  </div>
-
-                                  <div>
-                                    <span className="text-xs font-bold text-white block line-clamp-1">
-                                      {video.dishOrItem || 'Verified Photo Review'}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Review Details / Note Block */}
-                              <div className="flex-1 min-w-0 bg-white/[0.03] rounded-2xl p-3.5 sm:p-4 border border-white/[0.08] space-y-1.5 w-full">
-                                <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-zinc-400">
-                                  <Camera className="w-3 h-3 text-zinc-400" />
-                                  <span>{isPhoto ? 'Photo Review' : 'Review Note'}</span>
-                                </div>
-                                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal">
-                                  {video.caption ? `"${video.caption}"` : `Live camera proof rated ${Math.max(1, Math.min(5, Math.round(video.rating || 5)))}/5 stars.`}
-                                </p>
-                              </div>
-
-                            </div>
-
-                            {/* Action Buttons: Essential 2-button toolbar (Export & Reply) */}
-                            <div className="flex items-center gap-2 flex-wrap justify-end w-full pt-2 border-t border-white/[0.08]">
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadVideoForAds(video)}
-                                className="flex-1 sm:flex-initial px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1]"
-                                title="Export branded photo review card for social media & web"
-                              >
-                                <Download className="w-3.5 h-3.5 text-white" />
-                                <span>Export</span>
-                              </button>
-
-                              {!hasReply && !isReplying && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveReplyId(video.id);
-                                    setReplyText('');
                                   }}
-                                  className="flex-1 sm:flex-initial px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                  <span>Reply</span>
-                                </button>
-                              )}
+                                />
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 text-white">
+                                  <span className="text-[11px] font-semibold text-white block line-clamp-1">
+                                    {video.dishOrItem || 'Live photo proof'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex-1 min-w-0 space-y-3 w-full">
+                                <p className="text-[13px] sm:text-sm text-zinc-200 leading-relaxed">
+                                  {video.caption ? `"${video.caption}"` : `Live camera photo proof rated ${Math.max(1, Math.min(5, Math.round(video.rating || 5)))}/5 stars.`}
+                                </p>
+
+                                {/* Action Buttons Row */}
+                                <div className="flex items-center gap-2 flex-wrap pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadVideoForAds(video)}
+                                    className="px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1] min-h-[38px]"
+                                    title="Export branded photo review card for social media & web"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                    <span>Export card</span>
+                                  </button>
+
+                                  {!hasReply && !isReplying && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveReplyId(video.id);
+                                        setReplyText('');
+                                      }}
+                                      className="px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px]"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                      <span>Reply</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
 
                               {/* Existing Owner Reply */}
@@ -3667,15 +3865,17 @@ ${jsonLd}
                             </div>
                           </div>
                       );
-                    })}
-                </div>
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
             
             {/* INBOX TAB */}
             {activeTab === 'inbox' && (
-              <div className="w-full max-w-[1160px] h-[calc(100dvh-130px)] md:h-[calc(100vh-140px)] bg-[#050506] sm:bg-white/[0.02] rounded-none sm:rounded-[28px] border-0 sm:border border-white/[0.08] overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="w-full max-w-[1120px] h-[calc(100dvh-168px)] md:h-[calc(100dvh-128px)] bg-[#050506] sm:bg-white/[0.02] rounded-2xl border border-white/[0.08] overflow-hidden animate-in fade-in duration-200 flex flex-col">
                 <CopoMessagesView
                   messages={businessMessages}
                   currentUser={effectiveUser}
@@ -3725,76 +3925,68 @@ ${jsonLd}
 
             {/* FOLLOWING & FOLLOWERS TAB (Flagship Obsidian) */}
             {activeTab === 'followers' && (
-              <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-200">
                 {/* Editorial Header */}
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <button
-                      onClick={() => setActiveTab('overview')}
-                      className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 border border-white/[0.09]"
-                      title="Back to Overview"
-                    >
-                      <ChevronLeft className="w-5 h-5 stroke-[2]" />
-                    </button>
-                    <div className="min-w-0">
-                      <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em] leading-tight">
-                        Following & Followers
-                      </h1>
-                      <p className="text-xs sm:text-[13px] text-zinc-400 truncate mt-0.5">
-                        Manage businesses and reviewers you follow & view your followers
-                      </p>
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12]">
+                    Followers
+                  </h1>
+                  <p className="text-xs sm:text-[13px] text-zinc-400">
+                    Connect with reviewers following {currentPlace.name} and manage your network.
+                  </p>
                 </div>
 
-                {/* Liquid-Glass Segmented Toggle */}
-                <div className="grid grid-cols-2 p-1 bg-white/[0.045] rounded-full border border-white/[0.08] gap-1">
+                {/* Segmented Toggle */}
+                <div className="grid grid-cols-2 p-1 bg-white/[0.04] rounded-xl border border-white/[0.08] gap-1">
                   <button
+                    type="button"
                     onClick={() => setBusinessActiveTabSegment('following')}
-                    className={`py-2 px-4 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`py-2 px-4 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[38px] ${
                       businessActiveTabSegment === 'following'
-                        ? 'bg-white text-zinc-950 shadow-sm'
+                        ? 'bg-white text-zinc-950 shadow-xs'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     <span>Following</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums ${
-                      businessActiveTabSegment === 'following' ? 'bg-zinc-950/10 text-zinc-900' : 'bg-white/[0.08] text-zinc-300'
+                    <span className={`text-[11px] font-semibold tabular-nums ${
+                      businessActiveTabSegment === 'following' ? 'text-zinc-700' : 'text-zinc-500'
                     }`}>
                       {totalBusinessFollowingCount}
                     </span>
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setBusinessActiveTabSegment('followers')}
-                    className={`py-2 px-4 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`py-2 px-4 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 min-h-[38px] ${
                       businessActiveTabSegment === 'followers'
-                        ? 'bg-white text-zinc-950 shadow-sm'
+                        ? 'bg-white text-zinc-950 shadow-xs'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     <span>Followers</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums ${
-                      businessActiveTabSegment === 'followers' ? 'bg-zinc-950/10 text-zinc-900' : 'bg-white/[0.08] text-zinc-300'
+                    <span className={`text-[11px] font-semibold tabular-nums ${
+                      businessActiveTabSegment === 'followers' ? 'text-zinc-700' : 'text-zinc-500'
                     }`}>
                       {businessFollowers.length}
-                      {unseenFollowersCount > 0 && ` (${unseenFollowersCount} new)`}
+                      {unseenFollowersCount > 0 && ` (+${unseenFollowersCount})`}
                     </span>
                   </button>
                 </div>
 
-                {/* Spotlight Search Bar */}
+                {/* Search Bar (16px on mobile for zero iOS zoom) */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={followerSearchQuery}
                     onChange={(e) => setFollowerSearchQuery(e.target.value)}
-                    placeholder={businessActiveTabSegment === 'following' ? "Search followed reviewers or search any reviewer..." : "Search followers by name or review..."}
-                    className="w-full bg-white/[0.045] border border-white/[0.09] rounded-full pl-11 pr-9 py-2.5 text-xs sm:text-[13px] text-white placeholder-zinc-500 focus:outline-hidden focus:border-white/25 focus:bg-white/[0.07] transition-all"
+                    placeholder={businessActiveTabSegment === 'following' ? "Search reviewers you follow..." : "Search your followers..."}
+                    className="w-full h-11 bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-9 text-[16px] sm:text-[13px] text-white placeholder-zinc-500 focus:outline-hidden focus:border-white/25 focus:bg-white/[0.065] transition-all"
                   />
                   {followerSearchQuery && (
                     <button
+                      type="button"
                       onClick={() => setFollowerSearchQuery("")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-white/[0.1] transition-colors"
                     >
@@ -4074,54 +4266,59 @@ ${jsonLd}
 
             {/* TAB 3: WEBSITE EMBED */}
             {activeTab === 'embed' && (
-              <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-200">
+                {/* Editorial Page Header */}
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div className="space-y-1">
+                    <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12]">
+                      Website Embed
+                    </h1>
+                    <p className="text-xs sm:text-[13px] text-zinc-400">
+                      Showcase verified customer photo proof directly on your website with built-in SEO rich snippets.
+                    </p>
+                  </div>
+                  {placeVideos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={copyEmbedCode}
+                      className="px-5 py-2.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto min-h-[40px]"
+                    >
+                      {isCodeCopied ? <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 text-zinc-950" />}
+                      <span>{isCodeCopied ? 'Copied code' : 'Copy embed code'}</span>
+                    </button>
+                  )}
+                </div>
+
                 {placeVideos.length === 0 ? (
-                  /* Guidance State for Venues with 0 Reviews - Embed Code Locked */
-                  <div className="bg-white/[0.03] rounded-[28px] border border-white/[0.08] text-white p-6 sm:p-10 space-y-6 text-center relative overflow-hidden">
-                    {/* Top Status Pill */}
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.09] text-xs font-medium text-zinc-300">
-                      <Lock className="w-3.5 h-3.5 text-[#E8C78A]" />
-                      <span>Unlocks After 1st Photo Review</span>
-                    </div>
-
-                    {/* Center Visual & Messaging */}
-                    <div className="space-y-3 max-w-lg mx-auto relative z-10">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto relative">
-                        <QrCode className="w-8 h-8 sm:w-9 sm:h-9 text-zinc-200" />
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#111114] border-2 border-[#050506] flex items-center justify-center text-[#E8C78A]">
-                          <Camera className="w-3.5 h-3.5" />
-                        </div>
+                  /* Guidance State for Venues with 0 Reviews */
+                  <div className="bg-white/[0.03] rounded-2xl border border-white/[0.08] text-white p-6 sm:p-10 space-y-6 text-center">
+                    <div className="space-y-3 max-w-md mx-auto">
+                      <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto">
+                        <Lock className="w-6 h-6 text-[#E8C78A]" />
                       </div>
-
-                      <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
-                        Collect Your First Photo Review to Unlock Website Embed
+                      <h2 className="text-lg sm:text-xl font-semibold text-white tracking-[-0.02em]">
+                        Collect your first photo review to unlock
                       </h2>
-                      <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                        To guarantee high conversion and visitor trust on your website, your responsive photo review carousel and embed iframe code unlock automatically as soon as your venue receives its first verified live camera photo review.
+                      <p className="text-xs sm:text-[13px] text-zinc-400 leading-relaxed">
+                        Your live photo carousel and HTML embed snippet activate automatically once {currentPlace.name} receives its first verified customer photo review.
                       </p>
                     </div>
 
-                    {/* Action Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl mx-auto pt-2 relative z-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
                       <button
                         type="button"
                         onClick={() => setActiveTab('qr_invites')}
-                        className="p-5 rounded-[22px] bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.98] flex flex-col justify-between gap-3 group cursor-pointer border border-white/[0.09] hover:border-white/[0.18]"
+                        className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.99] flex flex-col justify-between gap-3 cursor-pointer border border-white/[0.09]"
                       >
-                        <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center">
-                            <QrCode className="w-4.5 h-4.5" />
-                          </div>
-                          <span className="text-[10.5px] font-medium bg-white/[0.07] text-[#E8C78A] px-2.5 py-0.5 rounded-full border border-white/[0.09]">
-                            Recommended
-                          </span>
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center">
+                          <QrCode className="w-4 h-4 text-[#E8C78A]" />
                         </div>
                         <div>
-                          <div className="text-sm font-semibold leading-tight text-white">
-                            Print Table QR Standees
+                          <div className="text-[13.5px] font-semibold text-white">
+                            Print QR Table Standee
                           </div>
-                          <div className="text-xs text-zinc-400 mt-1">
-                            Place printed QR cards at tables to collect customer reviews live.
+                          <div className="text-xs text-zinc-400 mt-0.5">
+                            Collect live photo reviews in person at checkout.
                           </div>
                         </div>
                       </button>
@@ -4129,101 +4326,63 @@ ${jsonLd}
                       <button
                         type="button"
                         onClick={copyDirectReviewLink}
-                        className="p-5 rounded-[22px] bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.98] border border-white/[0.09] hover:border-white/[0.18] flex flex-col justify-between gap-3 group cursor-pointer"
+                        className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.99] border border-white/[0.09] flex flex-col justify-between gap-3 cursor-pointer"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center">
-                            <Link2 className="w-4.5 h-4.5" />
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center">
+                            <Link2 className="w-4 h-4 text-zinc-200" />
                           </div>
                           {isDirectReviewLinkCopied && (
-                            <span className="text-[10.5px] font-medium bg-white text-zinc-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                              <Check className="w-3 h-3" /> Copied
+                            <span className="text-xs font-semibold text-[#E8C78A] flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5" /> Copied
                             </span>
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold leading-tight text-white">
-                            {isDirectReviewLinkCopied ? 'Review Link Copied!' : 'Copy Direct Review Link'}
+                          <div className="text-[13.5px] font-semibold text-white">
+                            {isDirectReviewLinkCopied ? 'Direct link copied' : 'Copy direct review link'}
                           </div>
-                          <div className="text-xs text-zinc-400 mt-1">
-                            Send via SMS, WhatsApp, or email to invite customer reviews.
+                          <div className="text-xs text-zinc-400 mt-0.5">
+                            Share via SMS, WhatsApp, or email follow-up.
                           </div>
                         </div>
                       </button>
                     </div>
                   </div>
                 ) : (
-                  /* FULL UNLOCKED STATE WHEN >= 1 VIDEO REVIEW EXISTS */
-                  <div className="bg-white/[0.03] rounded-[28px] border border-white/[0.08] text-white p-5 sm:p-8 space-y-6">
-                    {/* Clean Editorial Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.07] pb-5">
-                      <div>
-                        <div className="flex items-center gap-2.5">
-                          <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
-                            Website Embed
-                          </h2>
-                          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-[11px] font-medium text-[#E8C78A]">
-                            <span>Live Stream</span>
-                          </div>
+                  /* UNLOCKED EMBED STUDIO */
+                  <div className="space-y-4">
+                    {/* Capability Strip */}
+                    <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.07]">
+                      <div className="p-4 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0">
+                          <Globe className="w-4 h-4 text-zinc-200" />
                         </div>
-                        <p className="text-xs sm:text-[13px] text-zinc-400 mt-1">
-                          Display verified photo reviews on your website, reservation widget, or booking page.
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={copyEmbedCode}
-                          className="px-5 py-2.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm active:scale-95"
-                        >
-                          {isCodeCopied ? <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 text-zinc-950" />}
-                          <span>{isCodeCopied ? 'Copied Code' : 'Copy Embed Code'}</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Quick Install Bar & SEO Badge */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-4 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                            <Globe className="w-4 h-4 text-zinc-200" />
-                          </div>
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="text-xs font-semibold text-white">Works on Any Website</div>
-                            <div className="text-[11px] text-zinc-400">WordPress, Shopify, Wix, Squarespace, HTML</div>
-                          </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-white">Works on any website</div>
+                          <div className="text-[11.5px] text-zinc-400">Shopify, WordPress, Webflow, Wix, HTML</div>
                         </div>
                       </div>
-
-                      <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-4 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                      <div className="p-4 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0">
                           <Star className="w-4 h-4 text-[#E8C78A] fill-[#E8C78A]" />
                         </div>
-                        <div className="min-w-0 space-y-0.5">
-                          <div className="text-xs font-semibold text-white flex items-center gap-1.5">
-                            <span>Google Rich Snippets</span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-white/[0.07] text-zinc-200 rounded-md font-mono font-medium">SEO</span>
-                          </div>
-                          <div className="text-[11px] text-zinc-400">Displays review stars on Google Search</div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold text-white">Google Rich Snippets</div>
+                          <div className="text-[11.5px] text-zinc-400">Automatic Schema.org review markup</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Collapsible Technical Code Inspector */}
-                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] overflow-hidden transition-all">
-                      <div className="p-3.5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0 font-mono text-[11px] text-zinc-400">
-                          <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                            <Code className="w-3.5 h-3.5 text-zinc-300" />
-                          </div>
-                          <span className="text-zinc-500 select-none">&lt;iframe&gt;</span>
-                          <span className="text-zinc-200 font-medium truncate select-none">
-                            {isPremium 
+                    {/* Collapsible Embed Code Bar */}
+                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden">
+                      <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0 font-mono text-xs text-zinc-400">
+                          <Code className="w-4 h-4 text-zinc-400 shrink-0" />
+                          <span className="text-zinc-200 truncate select-none">
+                            {isPremium
                               ? `yoouz.com/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`
-                              : "yoouz.com/embed/••••••••"
-                            }
+                              : "yoouz.com/embed/••••••••"}
                           </span>
                         </div>
 
@@ -4238,16 +4397,16 @@ ${jsonLd}
                                 setShowAdvanceEmbedCode(!showAdvanceEmbedCode);
                               }
                             }}
-                            className="text-xs font-medium text-zinc-300 hover:text-white flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.09] transition-colors cursor-pointer"
+                            className="text-xs font-medium text-zinc-300 hover:text-white flex items-center gap-1 px-3 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.09] transition-colors cursor-pointer"
                           >
-                            <span>{showAdvanceEmbedCode ? 'Hide Code' : 'View Code'}</span>
+                            <span>{showAdvanceEmbedCode ? 'Hide code' : 'View code'}</span>
                             {showAdvanceEmbedCode ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
 
                           <button
                             type="button"
                             onClick={copyEmbedCode}
-                            className="text-xs font-semibold text-zinc-950 bg-white hover:bg-zinc-200 flex items-center gap-1 px-3.5 py-1.5 rounded-full transition cursor-pointer active:scale-95"
+                            className="text-xs font-semibold text-zinc-950 bg-white hover:bg-zinc-200 flex items-center gap-1.5 px-3.5 py-2 rounded-full transition cursor-pointer active:scale-95"
                           >
                             {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5" />}
                             <span>{isCodeCopied ? 'Copied' : 'Copy'}</span>
@@ -4255,9 +4414,8 @@ ${jsonLd}
                         </div>
                       </div>
 
-                      {/* Expandable Code Block */}
                       {showAdvanceEmbedCode && (
-                        <div className="border-t border-white/[0.07] p-4 bg-[#09090b] space-y-2.5">
+                        <div className="border-t border-white/[0.07] p-4 bg-[#08080a] space-y-2.5">
                           <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
                             <span>HTML + Schema.org JSON-LD</span>
                             <button
@@ -4265,31 +4423,29 @@ ${jsonLd}
                               onClick={() => setShowEmbedTester(true)}
                               className="text-zinc-200 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                             >
-                              <span>Open Live Embed Tester</span>
+                              <span>Open live tester</span>
                               <ExternalLink className="w-3 h-3" />
                             </button>
                           </div>
-                          <pre className="text-[11px] text-zinc-300 font-mono whitespace-pre-wrap break-all leading-relaxed p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] max-h-48 overflow-y-auto">
+                          <pre className="text-[11px] text-zinc-300 font-mono whitespace-pre-wrap break-all leading-relaxed p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] max-h-48 overflow-y-auto">
                             {getEmbedCode()}
                           </pre>
                         </div>
                       )}
                     </div>
 
-                    {/* Hero Interactive Widget Preview */}
-                    <div className="pt-2 space-y-3">
+                    {/* Interactive Widget Preview */}
+                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 sm:p-6 space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white">
-                          Live Widget Preview
-                        </span>
-                        {displayableWidgetVideos.length > 1 && (
-                          <span className="text-xs text-zinc-400 hidden sm:inline-block tabular-nums">
-                            Interactive player ({displayableWidgetVideos.length} reviews)
+                        <span className="text-xs font-semibold text-white">Live widget preview</span>
+                        {displayableWidgetVideos.length > 0 && (
+                          <span className="text-xs text-zinc-400 tabular-nums">
+                            {displayableWidgetVideos.length} {displayableWidgetVideos.length === 1 ? 'review' : 'reviews'}
                           </span>
                         )}
                       </div>
 
-                      <div className="relative w-full max-w-[420px] h-[540px] mx-auto bg-black border border-white/[0.1] rounded-[28px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.65)] flex flex-col group/embed select-none">
+                      <div className="relative w-full max-w-[400px] h-[520px] mx-auto bg-black border border-white/[0.1] rounded-[24px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.65)] flex flex-col select-none">
                         <iframe
                           src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
                           title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
@@ -4305,13 +4461,22 @@ ${jsonLd}
 
             {/* TAB 4: QR CODE STUDIO */}
             {activeTab === 'qr_invites' && (
-              <div className="space-y-4 animate-in fade-in duration-200 max-w-md mx-auto pb-16 px-1 sm:px-0">
-                
+              <div className="space-y-6 animate-in fade-in duration-200 max-w-md mx-auto pb-8">
+                {/* Editorial Header */}
+                <div className="text-center space-y-1">
+                  <h1 className="text-[26px] sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.12]">
+                    QR Table Standee
+                  </h1>
+                  <p className="text-xs sm:text-[13px] text-zinc-400">
+                    Place at checkout or tables so guests capture live photo proof in seconds.
+                  </p>
+                </div>
+
                 {/* Centerpiece: Physical Standee Card */}
                 <div className="flex flex-col items-center w-full">
-                  <div className="w-full bg-white/[0.035] border border-white/[0.1] rounded-[28px] p-6 sm:p-8 shadow-[0_24px_60px_rgba(0,0,0,0.55)] relative overflow-hidden text-center text-white backdrop-blur-2xl">
+                  <div className="w-full bg-[#0B0B0E] border border-white/[0.1] rounded-[28px] p-6 sm:p-7 shadow-[0_24px_60px_rgba(0,0,0,0.55)] relative overflow-hidden text-center text-white">
                     {/* Top Acrylic Bevel */}
-                    <div className="w-16 h-1 bg-white/[0.15] rounded-full mx-auto mb-5" />
+                    <div className="w-14 h-1 bg-white/[0.14] rounded-full mx-auto mb-5" />
 
                     {qrTableLabel && (
                       <div className="absolute top-5 right-5 px-2.5 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-semibold border border-white/[0.1]">
@@ -4324,21 +4489,21 @@ ${jsonLd}
                       domain={currentPlace.website || currentPlace.id}
                       name={currentPlace.name}
                       logoUrl={currentPlace.logoUrl}
-                      className="w-16 h-16 rounded-2xl bg-[#0a0a0d] p-2 flex items-center justify-center mx-auto mb-3.5 shadow-lg border border-white/[0.1] [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 overflow-hidden"
+                      className="w-15 h-15 rounded-2xl bg-[#050506] p-2 flex items-center justify-center mx-auto mb-3.5 border border-white/[0.1] [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 overflow-hidden"
                       imageClassName="w-full h-full object-contain"
                       fallbackTextClassName="font-semibold text-lg text-white"
                     />
 
-                    {/* Venue Title & Verified Badge */}
+                    {/* Venue Title & Verified Check */}
                     <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
                       <h3 className="font-semibold text-white text-lg sm:text-xl tracking-[-0.02em] truncate max-w-[260px] sm:max-w-[300px]">
                         {currentPlace.name}
                       </h3>
-                      <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
+                      <BadgeCheck className="w-4 h-4 text-[#E8C78A] shrink-0" />
                     </div>
 
                     {/* Business Place Handle / URL */}
-                    <div className="text-[11.5px] font-medium text-zinc-400 flex items-center justify-center gap-1 mb-2.5">
+                    <div className="text-[11.5px] text-zinc-400 flex items-center justify-center gap-1 mb-2.5">
                       <span>yoouz.com/reviews/{(selectedPlaceId || currentPlace.id || '').replace(/^(https?:\/\/)?(www\.)?yoouz\.com\/(place|reviews)\//, '')}</span>
                     </div>
 
@@ -4358,14 +4523,14 @@ ${jsonLd}
 
                     {/* Callout Prompt with Edit Trigger */}
                     <div className="mb-5 px-2 flex items-center justify-center gap-2">
-                      <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.06] text-zinc-100 font-semibold text-xs border border-white/[0.1] max-w-[85%] truncate">
+                      <span className="text-xs font-medium text-zinc-200 truncate max-w-[85%]">
                         {qrCustomHeading || 'Leave a live photo review'}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowCustomizeAccordion(!showCustomizeAccordion)}
-                        title="Customize Text"
-                        className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-zinc-300 hover:text-white transition-all cursor-pointer shrink-0 border border-white/[0.1]"
+                        title="Customize standee text"
+                        className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-zinc-300 hover:text-white transition-all cursor-pointer shrink-0 border border-white/[0.09] flex items-center justify-center"
                       >
                         <Sliders className="w-3.5 h-3.5" />
                       </button>
@@ -4373,7 +4538,7 @@ ${jsonLd}
 
                     {/* Collapsible Text Customization */}
                     {showCustomizeAccordion && (
-                      <div className="mb-4 p-4 rounded-2xl bg-[#09090b] border border-white/[0.09] space-y-3 text-left animate-in fade-in slide-in-from-top-1">
+                      <div className="mb-4 p-4 rounded-2xl bg-[#050506] border border-white/[0.08] space-y-3 text-left animate-in fade-in slide-in-from-top-1">
                         <div>
                           <label className="block text-[11px] font-medium text-zinc-400 mb-1">
                             Callout Heading
@@ -4383,7 +4548,7 @@ ${jsonLd}
                             value={qrCustomHeading}
                             onChange={(e) => setQrCustomHeading(e.target.value)}
                             placeholder="e.g. Leave a live photo review"
-                            className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
+                            className="w-full h-10 bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 text-[16px] sm:text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
                           />
                         </div>
                         <div>
@@ -4395,7 +4560,7 @@ ${jsonLd}
                             value={qrTableLabel}
                             onChange={(e) => setQrTableLabel(e.target.value)}
                             placeholder="e.g. Counter, Table #4"
-                            className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
+                            className="w-full h-10 bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 text-[16px] sm:text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
                           />
                         </div>
                       </div>
@@ -4632,7 +4797,7 @@ ${jsonLd}
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value.slice(0, 70))}
                       placeholder="e.g. Legal500"
-                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-[16px] sm:text-sm font-medium text-white focus:outline-none focus:bg-white/[0.065] focus:border-white/25 transition-all placeholder:text-zinc-500"
                     />
                   </div>
 
@@ -4642,7 +4807,7 @@ ${jsonLd}
                       <label className="text-xs font-medium text-zinc-300">
                         Bio
                       </label>
-                      <span className="text-[11px] font-medium text-zinc-400 tabular-nums">{profileDesc.length} / 300</span>
+                      <span className="text-[11px] text-zinc-500 tabular-nums">{profileDesc.length} / 300</span>
                     </div>
                     <textarea
                       id="textarea-profile-desc"
@@ -4650,7 +4815,7 @@ ${jsonLd}
                       onChange={(e) => setProfileDesc(e.target.value.slice(0, 300))}
                       rows={3}
                       placeholder="Tell visitors what makes your venue authentic and special..."
-                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl p-4 text-sm text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500 leading-relaxed font-normal"
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl p-3.5 text-[16px] sm:text-sm text-white focus:outline-none focus:bg-white/[0.065] focus:border-white/25 transition-all placeholder:text-zinc-500 leading-relaxed font-normal"
                     />
                   </div>
 
@@ -4771,7 +4936,7 @@ ${jsonLd}
                         <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
                       </label>
                       {profilePhone && (
-                        <span className="text-[11px] font-medium text-[#E8C78A] bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.09]">
+                        <span className="text-[11px] font-medium text-[#E8C78A]">
                           Connected
                         </span>
                       )}
@@ -4804,7 +4969,7 @@ ${jsonLd}
                           value={localPhone}
                           onChange={(e) => setLocalPhone(e.target.value)}
                           placeholder={activeCountryDialInfo?.phonePlaceholder || "e.g. (212) 555-0198"}
-                          className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-[16px] sm:text-sm font-medium text-white focus:outline-none focus:bg-white/[0.065] focus:border-white/25 transition-all placeholder:text-zinc-500"
                         />
                       </div>
                     </div>
@@ -4837,7 +5002,7 @@ ${jsonLd}
                       value={profileEmail}
                       onChange={(e) => setProfileEmail(e.target.value)}
                       placeholder="e.g. contact@business.com"
-                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-[16px] sm:text-sm font-medium text-white focus:outline-none focus:bg-white/[0.065] focus:border-white/25 transition-all placeholder:text-zinc-500"
                     />
                   </div>
 
@@ -4847,18 +5012,18 @@ ${jsonLd}
                       <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                         <Globe className="w-3.5 h-3.5 text-zinc-400" /> Website URL
                       </label>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] font-medium text-zinc-300">
-                        <Lock className="w-2.5 h-2.5 text-[#E8C78A]" /> Verified Domain
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-400">
+                        <Lock className="w-3 h-3 text-[#E8C78A]" /> Verified domain
                       </span>
                     </div>
                     <div className="relative flex items-center">
                       <input
                         type="text"
                         id="input-profile-website-readonly"
-                        value={profileWebsite || (currentPlace as any).website || 'https://legal500.com'}
+                        value={profileWebsite || (currentPlace as any).website || 'https://yoouz.com'}
                         readOnly
                         tabIndex={-1}
-                        className="w-full bg-white/[0.025] border border-white/[0.07] text-zinc-400 rounded-2xl px-4 py-3 text-sm font-medium cursor-not-allowed select-all pr-12 focus:outline-none"
+                        className="w-full bg-white/[0.025] border border-white/[0.07] text-zinc-400 rounded-xl px-4 py-3 text-[16px] sm:text-sm font-medium cursor-not-allowed select-all pr-12 focus:outline-none"
                       />
                       {(profileWebsite || (currentPlace as any).website) && (
                         <a
@@ -4888,11 +5053,11 @@ ${jsonLd}
                   {/* FEATURED ACTION BUTTON (CALL-TO-ACTION / CTA) */}
                   <div className="space-y-3.5 pt-5 border-t border-white/[0.08]">
                     <div className="flex items-center justify-between gap-2">
-                      <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                      <label className="text-xs font-medium text-zinc-200 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-[#E8C78A]" /> Featured Action Button (CTA)
                       </label>
-                      <span className="text-[11px] font-medium text-zinc-300 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.08]">
-                        Appears on Business Page
+                      <span className="text-[11px] text-zinc-500">
+                        Shown on business page
                       </span>
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">
@@ -5044,40 +5209,327 @@ ${jsonLd}
             </>
           )}
 
-            {/* Mobile & Bottom Page Footer Links */}
-            <div className="md:hidden pt-8 pb-12 flex flex-col items-center justify-center gap-2 text-center text-zinc-400">
-              <div className="flex items-center justify-center gap-2 text-xs font-medium text-zinc-200">
-                <button
-                  type="button"
-                  onClick={() => onOpenLegal ? onOpenLegal("privacy") : onNavigate("home")}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-                >
-                  {t("legal.privacy", "Privacy")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegal ? onOpenLegal("terms") : onNavigate("home")}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-                >
-                  {t("legal.terms", "Terms")}
-                </button>
-                <span className="text-zinc-600">•</span>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("more")}
-                  className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
-                >
-                  {t("legal.about", "About")}
-                </button>
-              </div>
-              <p className="text-[11px] text-zinc-400 font-normal">
-                {t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}
-              </p>
-            </div>
-
           </div>
         </main>
+
+        {/* Native Mobile PWA Floating Obsidian Bottom Navigation Dock */}
+        <nav
+          aria-label="Mobile business navigation"
+          className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom))] left-3 right-3 z-40 rounded-full bg-[#101013]/92 backdrop-blur-2xl border border-white/[0.12] shadow-[0_16px_48px_rgba(0,0,0,0.85)] h-[64px] px-2 flex items-center justify-around"
+        >
+          {[
+            { id: 'overview' as const, label: 'Overview', icon: Home },
+            { id: 'reviews' as const, label: 'Reviews', icon: Camera, badge: unseenReviewsCount },
+            { id: 'inbox' as const, label: 'Messages', icon: MessageSquare, badge: unreadMessagesCount },
+            { id: 'qr_invites' as const, label: 'QR Code', icon: QrCode },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id && !isMobileBizMenuOpen;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setIsMobileBizMenuOpen(false);
+                  setActiveTab(tab.id);
+                }}
+                className={`relative flex-1 h-12 rounded-full flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer active:scale-95 ${
+                  active ? 'text-white' : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                <div className="relative">
+                  <Icon className="w-[19px] h-[19px]" />
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-white text-zinc-950 text-[9px] font-bold flex items-center justify-center tabular-nums">
+                      {tab.badge > 9 ? '9+' : tab.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[10px] leading-none ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                  {tab.label}
+                </span>
+                {active && (
+                  <span className="w-1 h-1 rounded-full bg-white mt-0.5" />
+                )}
+              </button>
+            );
+          })}
+
+          {/* 5th Dock Item: Menu / More Sheet */}
+          {(() => {
+            const inSheetTab = ['followers', 'notifications', 'embed', 'profile', 'membership', 'more'].includes(activeTab);
+            const active = isMobileBizMenuOpen || inSheetTab;
+            return (
+              <button
+                type="button"
+                onClick={() => setIsMobileBizMenuOpen((prev) => !prev)}
+                className={`relative flex-1 h-12 rounded-full flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer active:scale-95 ${
+                  active ? 'text-white' : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                <div className="relative">
+                  <Menu className="w-[19px] h-[19px]" />
+                  {(unreadBusinessNotifsCount + unseenFollowersCount) > 0 && (
+                    <span className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full bg-[#E8C78A]" />
+                  )}
+                </div>
+                <span className={`text-[10px] leading-none ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                  Menu
+                </span>
+                {active && (
+                  <span className="w-1 h-1 rounded-full bg-white mt-0.5" />
+                )}
+              </button>
+            );
+          })()}
+        </nav>
+
+        {/* Native Mobile PWA Right-Aligned Business Navigation Sheet */}
+        {isMobileBizMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex justify-end animate-in fade-in duration-150">
+            <div
+              className="absolute inset-0 bg-black/65 backdrop-blur-xs"
+              onClick={() => setIsMobileBizMenuOpen(false)}
+            />
+            <div className="relative z-10 w-[86%] max-w-[340px] h-full bg-[#0B0B0E]/96 backdrop-blur-2xl border-l border-white/[0.1] rounded-l-[28px] shadow-[-24px_0_64px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
+              {/* Sheet Header */}
+              <div className="px-5 pt-[max(20px,env(safe-area-inset-top))] pb-4 border-b border-white/[0.07] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <CopoBrandLogo
+                    domain={currentPlace.website || currentPlace.id}
+                    name={currentPlace.name}
+                    logoUrl={profileLogoUrl || currentPlace.logoUrl}
+                    className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.1] p-1 flex items-center justify-center shrink-0 overflow-hidden"
+                    imageClassName="w-full h-full object-contain rounded-lg"
+                    fallbackTextClassName="font-semibold text-xs text-white"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[15px] font-semibold text-white truncate">{currentPlace.name}</span>
+                      <BadgeCheck className="w-4 h-4 text-[#E8C78A] shrink-0" />
+                    </div>
+                    <div className="text-xs text-zinc-400 truncate">
+                      {cleanBusinessDomain} · {isPremium ? 'Premium' : 'Free'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileBizMenuOpen(false)}
+                  className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300 flex items-center justify-center shrink-0 cursor-pointer active:scale-95"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Grouped Menu */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 no-scrollbar">
+                {/* Workspace Group */}
+                <div className="space-y-1">
+                  <div className="px-2 pb-1 text-[11px] font-medium text-zinc-500">Workspace</div>
+                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] divide-y divide-white/[0.06] overflow-hidden">
+                    {workspaceNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsMobileBizMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] transition-colors cursor-pointer ${
+                            active ? 'bg-white/[0.07] text-white font-semibold' : 'text-zinc-300 hover:bg-white/[0.04] font-medium'
+                          }`}
+                        >
+                          <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-white' : 'text-zinc-400'}`} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {item.badge !== undefined && (
+                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-white text-zinc-950 text-[11px] font-semibold flex items-center justify-center tabular-nums">
+                              {item.badge}
+                            </span>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Growth Group */}
+                <div className="space-y-1">
+                  <div className="px-2 pb-1 text-[11px] font-medium text-zinc-500">Growth</div>
+                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] divide-y divide-white/[0.06] overflow-hidden">
+                    {growthNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsMobileBizMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] transition-colors cursor-pointer ${
+                            active ? 'bg-white/[0.07] text-white font-semibold' : 'text-zinc-300 hover:bg-white/[0.04] font-medium'
+                          }`}
+                        >
+                          <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-white' : 'text-zinc-400'}`} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Account & Tools Group */}
+                <div className="space-y-1">
+                  <div className="px-2 pb-1 text-[11px] font-medium text-zinc-500">Business Account</div>
+                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] divide-y divide-white/[0.06] overflow-hidden">
+                    {accountNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsMobileBizMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] transition-colors cursor-pointer ${
+                            active ? 'bg-white/[0.07] text-white font-semibold' : 'text-zinc-300 hover:bg-white/[0.04] font-medium'
+                          }`}
+                        >
+                          <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-white' : 'text-zinc-400'}`} />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          {(item as any).tierLabel && (
+                            <span className={`text-xs font-medium ${isPremium ? 'text-[#E8C78A]' : 'text-zinc-500'}`}>
+                              {(item as any).tierLabel}
+                            </span>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileBizMenuOpen(false);
+                        const targetId = selectedPlaceId || currentPlace?.id || 'yoouz.com';
+                        if (onOpenPlaceDrawer) {
+                          onOpenPlaceDrawer(targetId);
+                        } else {
+                          window.location.href = `/reviews/${targetId}`;
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] text-zinc-300 hover:bg-white/[0.04] font-medium transition-colors cursor-pointer"
+                    >
+                      <ExternalLink className="w-[18px] h-[18px] text-zinc-400 shrink-0" />
+                      <span className="flex-1 truncate">View Public Profile</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileBizMenuOpen(false);
+                        setShowHelpModal(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] text-zinc-300 hover:bg-white/[0.04] font-medium transition-colors cursor-pointer"
+                    >
+                      <HelpCircle className="w-[18px] h-[18px] text-zinc-400 shrink-0" />
+                      <span className="flex-1 truncate">Support &amp; Docs</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileBizMenuOpen(false);
+                        setIsClaiming(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 min-h-[48px] text-left text-[14px] text-zinc-300 hover:bg-white/[0.04] font-medium transition-colors cursor-pointer"
+                    >
+                      <Building2 className="w-[18px] h-[18px] text-zinc-400 shrink-0" />
+                      <span className="flex-1 truncate">Switch Business</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sticky Bottom Actions & Quiet Legal */}
+              <div className="p-4 pb-[max(16px,env(safe-area-inset-bottom))] border-t border-white/[0.07] space-y-3 bg-[#0B0B0E]">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileBizMenuOpen(false);
+                      onClose();
+                    }}
+                    className="flex-1 h-11 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    <span>Consumer Feed</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileBizMenuOpen(false);
+                      localStorage.removeItem('copo_business_verified_session');
+                      window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: null }));
+                      setVerifiedBusinessSession(null);
+                    }}
+                    className="h-11 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-zinc-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileBizMenuOpen(false);
+                      onOpenLegal ? onOpenLegal("privacy") : onNavigate("home");
+                    }}
+                    className="hover:text-zinc-300 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    Privacy
+                  </button>
+                  <span className="text-zinc-700">·</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileBizMenuOpen(false);
+                      onOpenLegal ? onOpenLegal("terms") : onNavigate("home");
+                    }}
+                    className="hover:text-zinc-300 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    Terms
+                  </button>
+                  <span className="text-zinc-700">·</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileBizMenuOpen(false);
+                      setActiveTab("more");
+                    }}
+                    className="hover:text-zinc-300 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    About
+                  </button>
+                  <span className="text-zinc-700">·</span>
+                  <span>© 2026 Yoouz</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Official CopoVideoPlayer (100% parity with homepage and user profile) */}
