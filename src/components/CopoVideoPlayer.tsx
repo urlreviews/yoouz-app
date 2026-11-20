@@ -944,7 +944,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       return (
         <main
           id="copo-loading-feed-container"
-          className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-black md:bg-zinc-950 p-0 md:p-3"
+          className="flex-1 h-full flex items-center justify-center relative overflow-hidden bg-[#050506] p-0 md:p-3"
         />
       );
     }
@@ -954,17 +954,17 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
     return (
       <main
         id="copo-empty-feed-container"
-        className="flex-1 h-full flex items-center justify-center relative p-3 overflow-hidden bg-zinc-950"
+        className="flex-1 h-full flex items-center justify-center relative p-3 overflow-hidden bg-[#050506]"
       >
-        <div className="relative w-full max-w-[360px] sm:max-w-[400px] h-[80vh] max-h-[680px] bg-zinc-900 rounded-[40px] px-6 sm:px-10 py-10 flex flex-col items-center justify-center text-center shadow-2xl border border-zinc-800 text-white overflow-hidden">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[28px] sm:rounded-[32px] bg-zinc-800/50 border border-zinc-700 shadow-xl flex items-center justify-center text-white mb-6 sm:mb-8 shrink-0">
+        <div className="relative w-full max-w-[360px] sm:max-w-[400px] h-[80vh] max-h-[660px] bg-[#0a0a0d] rounded-[32px] px-6 sm:px-10 py-10 flex flex-col items-center justify-center text-center shadow-[0_24px_80px_rgba(0,0,0,0.85)] border border-white/[0.08] text-white overflow-hidden">
+          <div className="w-20 h-20 rounded-[24px] bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-white mb-6 shrink-0">
             {isUserProfileEmpty ? (
-              <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+              <User className="w-9 h-9 text-white stroke-[1.7]" />
             ) : (
-              <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+              <Camera className="w-9 h-9 text-white stroke-[1.7]" />
             )}
           </div>
-          <h2 className="w-full max-w-full text-xl sm:text-2xl font-black text-white mb-3 tracking-tight leading-snug break-words">
+          <h2 className="w-full max-w-full text-xl sm:text-2xl font-semibold text-white mb-3 tracking-[-0.025em] leading-snug break-words">
             {isUserProfileEmpty ? (
               isOwnGuestPreview ? (
                 t("profile.guestMemberTitle", "Your Community Profile")
@@ -974,7 +974,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             ) : feedContextTitle ? (
               <>
                 No Photo Reviews for{" "}
-                <span className="inline font-black text-white break-words max-w-full">
+                <span className="inline font-semibold text-white break-words max-w-full">
                   {toTitleCase(formatBusinessName(feedContextTitle) || feedContextTitle)}
                 </span>
               </>
@@ -982,7 +982,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               "No Photo Reviews Yet"
             )}
           </h2>
-          <p className="w-full max-w-[320px] text-xs sm:text-sm text-zinc-400 mb-8 sm:mb-10 leading-relaxed font-medium break-words">
+          <p className="w-full max-w-[300px] text-xs sm:text-sm text-zinc-400 mb-8 leading-relaxed break-words">
             {isUserProfileEmpty ? (
               isOwnGuestPreview ? (
                 t(
@@ -996,9 +996,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 )
               )
             ) : feedContextTitle ? (
-              "A picture is worth a thousand words. Snap 1 live photo and rate in 2 seconds, no signup, no typing."
+              "Snap a live photo and rate in seconds — no signup, no text needed."
             ) : (
-              "Snap a real-time photo review and select 1–5 stars for any business or place!"
+              "Snap a real-time photo review and select 1–5 stars for any business or place."
             )}
           </p>
           {isUserProfileEmpty ? (
@@ -1006,7 +1006,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <button
                 id="copo-empty-state-explore-btn"
                 onClick={onGoHome}
-                className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
+                className="w-full max-w-[260px] flex items-center justify-center gap-2.5 py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-full shadow-[0_8px_30px_rgba(255,255,255,0.14)] active:scale-[0.98] transition-all text-sm cursor-pointer shrink-0"
               >
                 {t("profile.exploreBusinesses", "Explore Businesses")}
               </button>
@@ -1016,9 +1016,9 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
               <button
                 id="copo-empty-state-record-btn"
                 onClick={onOpenCreateModal}
-                className="w-full max-w-[280px] flex items-center justify-center gap-3 py-4 sm:py-4.5 bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-950 font-black rounded-2xl shadow-[0_12px_40px_rgba(255,255,255,0.1)] active:scale-[0.98] transition-all text-sm cursor-pointer uppercase tracking-tight shrink-0"
+                className="w-full max-w-[260px] flex items-center justify-center gap-2.5 py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-full shadow-[0_8px_30px_rgba(255,255,255,0.14)] active:scale-[0.98] transition-all text-sm cursor-pointer shrink-0"
               >
-                <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.5]" />
+                <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.2]" />
                 Add Review
               </button>
             )
@@ -1034,8 +1034,8 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
       className={`flex-1 h-full min-h-full max-h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[440px] md:pl-3 md:pr-6 lg:pl-4 lg:pr-8" : "md:mr-0"
-      } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-black md:bg-zinc-950"}`}
+        commentsOpen ? "md:mr-[420px] md:pl-3 md:pr-6 lg:pl-4 lg:pr-8" : "md:mr-0"
+      } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-[#050506]"}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none", containerType: "size" }}
     >
       <div
@@ -1134,13 +1134,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtFirstPhoto}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtFirstPhoto
-                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                    ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                    : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
                 }`}
                 title={isAtFirstPhoto ? "First Review" : "Previous Review (Up Arrow)"}
                 aria-label="Previous Review"
               >
-                <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+                <ChevronUp className="w-5.5 h-5.5 stroke-[2]" />
               </button>
 
               <button
@@ -1149,13 +1149,13 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 disabled={isAtLastPhoto}
                 className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
                   isAtLastPhoto
-                    ? "bg-zinc-800/40 border-zinc-800 text-zinc-500 cursor-not-allowed"
-                    : "bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/80 text-white hover:scale-110 active:scale-95 cursor-pointer shadow-black/80"
+                    ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                    : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
                 }`}
                 title={isAtLastPhoto ? "Last Review" : "Next Review (Down Arrow)"}
                 aria-label="Next Review"
               >
-                <ChevronDown className="w-6 h-6 stroke-[2.5]" />
+                <ChevronDown className="w-5.5 h-5.5 stroke-[2]" />
               </button>
             </div>
           );
@@ -1166,19 +1166,19 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {moreMenuVideo && (
         <div
           id="copo-more-options-backdrop"
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in overscroll-contain"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 animate-in fade-in overscroll-contain"
           onClick={() => setMoreMenuVideo(null)}
           onWheel={(e) => e.stopPropagation()}
         >
           <div
             id="copo-more-options-modal"
-            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain flex flex-col max-h-[70vh] sm:max-h-[80vh] pb-safe"
+            className="w-full sm:max-w-md bg-[#0c0c0f]/96 backdrop-blur-2xl border border-white/[0.1] rounded-t-[28px] sm:rounded-[28px] shadow-[0_24px_80px_rgba(0,0,0,0.85)] overflow-hidden text-white animate-in slide-in-from-bottom-5 overscroll-contain flex flex-col max-h-[70vh] sm:max-h-[80vh] pb-safe"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
+            <div className="px-5 py-4 border-b border-white/[0.07] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-200 shrink-0">
+                <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-zinc-200 shrink-0">
                   <MoreHorizontal className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -1266,7 +1266,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
                       {moreMenuVideo.isBookmarked ? (
-                        <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                        <BookmarkCheck className="w-4 h-4 text-[#E8C78A] fill-[#E8C78A]" />
                       ) : (
                         <Bookmark className="w-4 h-4 text-zinc-200" />
                       )}
@@ -1333,7 +1333,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-zinc-800 transition-colors text-left font-medium text-sm text-zinc-200 cursor-pointer"
                     >
                       {moreMenuVideo.isBookmarked ? (
-                        <BookmarkCheck className="w-4 h-4 text-amber-400 fill-amber-400" />
+                        <BookmarkCheck className="w-4 h-4 text-[#E8C78A] fill-[#E8C78A]" />
                       ) : (
                         <Bookmark className="w-4 h-4 text-zinc-200" />
                       )}
@@ -1420,14 +1420,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         >
           <div
             id="copo-edit-rating-modal"
-            className="w-full sm:max-w-md bg-zinc-900 border border-zinc-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden text-white animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] sm:max-h-[90vh]"
+            className="w-full sm:max-w-md bg-[#0c0c0f]/96 backdrop-blur-2xl border border-white/[0.1] rounded-t-[28px] sm:rounded-[28px] shadow-[0_24px_80px_rgba(0,0,0,0.85)] overflow-hidden text-white animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] sm:max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/40 shrink-0">
+            <div className="px-6 py-4 border-b border-white/[0.07] flex items-center justify-between bg-white/[0.02] shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                <div className="w-8 h-8 rounded-xl bg-[#E8C78A]/15 border border-[#E8C78A]/25 text-[#E8C78A] flex items-center justify-center">
+                  <Star className="w-4 h-4 fill-[#E8C78A] text-[#E8C78A]" />
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-zinc-100">{t("video.editReviewRating", "Edit Your Star Rating")}</h3>
@@ -1538,15 +1538,15 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {/* Permanent Deletion Confirmation Modal */}
       {videoConfirmDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-sm rounded-[24px] bg-[#0c0c0f]/96 backdrop-blur-2xl border border-white/[0.1] p-6 shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
             <div className="text-center space-y-1.5">
-              <h3 className="text-lg font-bold text-white tracking-tight">
+              <h3 className="text-lg font-semibold text-white tracking-[-0.02em]">
                 {t("video.deleteReviewTitle", "Delete Photo Review?")}
               </h3>
-              <p className="text-xs text-zinc-200 leading-relaxed">
+              <p className="text-xs text-zinc-400 leading-relaxed">
                 {t("video.deleteReviewDesc", "This will permanently delete your photo review from all feeds, databases, and storage.")}
               </p>
             </div>
@@ -1555,7 +1555,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 type="button"
                 id="btn-cancel-delete-video"
                 onClick={() => setVideoConfirmDelete(null)}
-                className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] text-zinc-200 font-medium text-sm transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
@@ -1570,7 +1570,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                     onDeleteVideo(id);
                   }
                 }}
-                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+                className="flex-1 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-all shadow-lg shadow-red-600/30 cursor-pointer"
               >
                 {t("common.delete", "Delete")}
               </button>
@@ -1582,7 +1582,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       {/* Purge All Confirmation Modal */}
       {showConfirmPurgeAllModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-sm rounded-[24px] bg-[#0c0c0f]/96 backdrop-blur-2xl border border-white/[0.1] p-6 shadow-2xl space-y-4">
             <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>

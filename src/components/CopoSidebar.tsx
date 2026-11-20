@@ -112,7 +112,7 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
                 : "text-zinc-400 hover:text-white hover:bg-white/[0.04] font-medium"
             }`}
           >
-            {t("nav.bookmarks", "Saved")}
+            {t("nav.saved", "Saved")}
           </button>
 
           <button

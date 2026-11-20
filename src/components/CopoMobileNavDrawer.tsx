@@ -68,7 +68,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
     { id: "following" as NavSection, label: t("nav.following", "Following"), icon: UserPlus },
     { id: "messages" as NavSection, label: t("nav.messages", "Messages"), icon: Mail, badge: unreadMessagesCount },
     { id: "notifications" as NavSection, label: t("nav.notifications", "Notifications"), icon: Bell, badge: unreadNotifsCount },
-    { id: "bookmarks" as NavSection, label: t("nav.bookmarks", "Bookmarks"), icon: Bookmark },
+    { id: "bookmarks" as NavSection, label: t("nav.saved", "Saved"), icon: Bookmark },
     { id: "profile" as NavSection, label: t("nav.profile", "Profile"), icon: User },
     { id: "more" as NavSection, label: t("nav.more", "More"), icon: Menu }
   ];

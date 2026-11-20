@@ -611,7 +611,7 @@ export const CopoAuthPrompt: React.FC<{
         
         {/* Step-Aware Brand / Profile Icon (hidden during profile step for clean hero focus) */}
         {step !== 'profile' && (
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-[0_4px_24px_rgba(0,0,0,0.5)] shrink-0">
+          <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.1] shadow-[0_4px_24px_rgba(0,0,0,0.5)] shrink-0">
             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white">
               <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
             </svg>
@@ -635,7 +635,7 @@ export const CopoAuthPrompt: React.FC<{
         {step === 'email' && (
           <form onSubmit={handleSendMagicLink} className="w-full space-y-3 pt-1 text-left">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-300 mb-1 tracking-wider uppercase">
+              <label className="block text-[11.5px] font-semibold text-zinc-300 mb-1.5">
                 {t("auth.emailAddress", "Email Address")}
               </label>
               <div className="relative">
@@ -648,14 +648,14 @@ export const CopoAuthPrompt: React.FC<{
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full h-11 sm:h-12 pl-10 pr-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all"
+                  className="w-full h-11 sm:h-12 pl-10 pr-3 rounded-2xl bg-white/[0.04] border border-white/[0.1] text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white/30 transition-all"
                 />
                 <Mail className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5 sm:top-4" />
               </div>
             </div>
 
             {errorMessage && (
-              <div className="p-2.5 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
+              <div className="p-2.5 bg-red-950/40 text-red-400 text-xs rounded-2xl border border-red-900/40 text-center flex items-center justify-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{errorMessage}</span>
               </div>
@@ -664,14 +664,14 @@ export const CopoAuthPrompt: React.FC<{
             <button
               type="submit"
               disabled={isLoading || !email.includes('@')}
-              className="w-full h-11 sm:h-12 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-black font-bold text-[14px] sm:text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-11 sm:h-12 rounded-full bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 font-semibold text-[14px] sm:text-[14.5px] shadow-lg shadow-black/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black" />
+                <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
               ) : (
                 <>
                   <span>{t("auth.continueWithEmail", "Continue with Email")}</span>
-                  <ArrowRight className="w-4 h-4 text-black" />
+                  <ArrowRight className="w-4 h-4 text-zinc-950" />
                 </>
               )}
             </button>
@@ -723,10 +723,10 @@ export const CopoAuthPrompt: React.FC<{
                         key={index}
                         className={`h-13 rounded-xl flex items-center justify-center font-mono text-xl font-bold transition-all select-none ${
                           isFilled
-                            ? "bg-zinc-800/90 text-white border-2 border-white/80 shadow-md shadow-white/5"
+                            ? "bg-white/[0.1] text-white border-2 border-white/80"
                             : isFocused
-                            ? "bg-zinc-900 text-zinc-200 border-2 border-zinc-400 ring-2 ring-white/10"
-                            : "bg-zinc-900/90 text-zinc-600 border border-zinc-800"
+                            ? "bg-white/[0.06] text-zinc-200 border-2 border-white/40 ring-2 ring-white/10"
+                            : "bg-white/[0.04] text-zinc-600 border border-white/[0.1]"
                         }`}
                       >
                         {isFilled ? (
@@ -744,7 +744,7 @@ export const CopoAuthPrompt: React.FC<{
             </div>
 
             {errorMessage && (
-              <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-xl border border-red-900/40 text-center flex items-center justify-center gap-2">
+              <div className="p-3 bg-red-950/40 text-red-400 text-xs rounded-2xl border border-red-900/40 text-center flex items-center justify-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{errorMessage}</span>
               </div>
@@ -753,13 +753,13 @@ export const CopoAuthPrompt: React.FC<{
             <button
               type="submit"
               disabled={isLoading || otpCode.length < 6}
-              className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:bg-zinc-300 text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-12 rounded-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-semibold text-[14.5px] shadow-lg shadow-black/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black" />
+                <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-black" />
+                  <CheckCircle2 className="w-4 h-4 text-zinc-950" />
                   <span>{t("auth.verifyCode", "Verify Code")}</span>
                 </>
               )}
@@ -1016,13 +1016,13 @@ export const CopoAuthPrompt: React.FC<{
             <button
               type="submit"
               disabled={isLoading || !firstName.trim() || !lastName.trim()}
-              className="w-full h-12 rounded-xl bg-white hover:bg-zinc-200 active:scale-[0.98] text-black font-bold text-[14.5px] shadow-lg shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full h-12 rounded-full bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 font-semibold text-[14.5px] shadow-lg shadow-black/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black" />
+                <Loader2 className="w-5 h-5 animate-spin text-zinc-950" />
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-black" />
+                  <CheckCircle2 className="w-4 h-4 text-zinc-950" />
                   <span>{t("auth.activateProfileAndContinue", "Activate Profile & Continue")}</span>
                 </>
               )}
@@ -1104,37 +1104,37 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm pt-[max(12px,env(safe-area-inset-top,12px))] pb-0 sm:p-6 animate-in fade-in duration-200 select-none sm:select-auto"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md pt-[max(12px,env(safe-area-inset-top,12px))] pb-0 sm:p-6 animate-in fade-in duration-200 select-none sm:select-auto"
       onClick={onClose}
     >
       <div 
-        className="w-full sm:max-w-[480px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#09090b] rounded-t-[28px] sm:rounded-[28px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border-t sm:border border-white/10 text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto sm:my-auto"
+        className="w-full sm:max-w-[480px] h-auto max-h-[85dvh] sm:max-h-[90dvh] bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-t-[28px] sm:rounded-[28px] shadow-[0_25px_70px_rgba(0,0,0,0.92)] border-t sm:border border-white/[0.1] text-white flex flex-col relative animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 overflow-y-auto pb-[max(16px,env(safe-area-inset-bottom,16px))] mt-auto sm:my-auto"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sticky Header with Drag Indicator, High-Contrast Back Button & Help */}
+        {/* Sticky Header with Drag Indicator, Back Button & Help */}
         <div 
-          className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-b border-white/[0.06] pt-2 pb-2.5 px-4 sm:px-5 flex flex-col gap-1 shrink-0 touch-pan-y"
+          className="sticky top-0 z-30 bg-[#08080b]/85 backdrop-blur-xl border-b border-white/[0.08] pt-2 pb-2.5 px-4 sm:px-5 flex flex-col gap-1 shrink-0 touch-pan-y"
           {...swipeProps}
         >
           {/* Top Drag Handle Indicator */}
           <div className="w-full flex justify-center py-0.5 sm:hidden cursor-grab active:cursor-grabbing touch-none">
-            <div className="w-12 h-1.5 rounded-full bg-zinc-700/80" />
+            <div className="w-11 h-1 rounded-full bg-white/20" />
           </div>
 
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2.5">
-              {/* High-Contrast Prominent Back Button */}
+              {/* Prominent Back Button */}
               <button
                 onClick={handleBackClick}
-                className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/90 text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer shadow-md group"
+                className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.12] text-white flex items-center justify-center shrink-0 active:scale-90 transition-all cursor-pointer group"
                 aria-label="Back"
                 title="Go Back"
               >
-                <ArrowLeft className="w-5 h-5 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
+                <ArrowLeft className="w-4 h-4 text-white stroke-[2.25] group-hover:-translate-x-0.5 transition-transform" />
               </button>
 
               {onOpenHelp ? (
@@ -1143,7 +1143,7 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
                     onClose();
                     onOpenHelp();
                   }}
-                  className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 hover:bg-zinc-700/80 cursor-pointer active:scale-95 shadow-sm"
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-200 hover:text-white transition-all px-3 py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.12] cursor-pointer active:scale-95"
                 >
                   <HelpCircle className="w-3.5 h-3.5 text-zinc-200" />
                   <span>Help</span>
@@ -1154,9 +1154,9 @@ export const CopoGoogleAuthModal: React.FC<CopoGoogleAuthModalProps> = ({
             <button
               onClick={onClose}
               aria-label="Close modal"
-              className="w-9 h-9 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-300 hover:text-white hover:bg-zinc-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-90"
+              className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.1] text-zinc-300 hover:text-white hover:bg-white/[0.12] flex items-center justify-center transition-all cursor-pointer active:scale-90"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

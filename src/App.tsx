@@ -9340,6 +9340,7 @@ export function App() {
           videos={videos}
           currentUser={currentUser}
           allUsers={allRegisteredUsers}
+          hasTopBar={!isPlaceView && !isCreatorView}
           onClose={() => setActiveCommentVideo(null)}
           onRequireAuth={() => {
             setAuthIntent("general");

@@ -1474,7 +1474,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         id="google-maps-business-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-zinc-950 md:bg-zinc-900 rounded-none text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[360px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1500,7 +1500,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
+          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Mobile Pull Handle Indicator Overlay */}
           <div 
@@ -1588,7 +1588,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/15 to-black/25 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-black/15 to-black/25 pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
@@ -1638,7 +1638,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               );
             })()}
             {/* Subtle dark gradient overlay once banner photo is visibly loaded */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/20 to-black/30 z-20 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-black/20 to-black/30 z-20 pointer-events-none" />
           </div>
         ) : null}
 
@@ -1663,9 +1663,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
       </div>
 
       {/* Business Title & Structured Sub-Header Metadata */}
-      <div className="px-6 pb-2 bg-zinc-950 md:bg-zinc-900 border-b border-zinc-800/80 pt-12 sm:pt-16">
+      <div className="px-6 pb-3 bg-[#050506] border-b border-white/[0.07] pt-12 sm:pt-16">
         {/* Title & Follow Action Bar */}
-        <div className="flex items-start justify-between gap-3 w-full mb-1">
+        <div className="flex items-start justify-between gap-3 w-full mb-2">
           <div className="min-w-0 flex-1">
             {(() => {
               const fullName = (displayedPlaceName || "").trim();
@@ -1673,12 +1673,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               const lastWord = words.pop() || '';
               const firstPart = words.join(' ');
               return (
-                <h2 className="text-xl sm:text-2xl md:text-[26px] font-extrabold text-white tracking-tight leading-snug break-normal" dir="auto">
+                <h2 className="text-xl sm:text-2xl md:text-[26px] font-semibold text-white tracking-[-0.03em] leading-snug break-normal font-['Google_Sans',sans-serif]" dir="auto">
                   <span className="text-white" dir="auto">
                     {firstPart ? firstPart + " " : ""}
                     <span className="whitespace-nowrap inline-block align-baseline">
                       {lastWord}
-                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-zinc-950 shrink-0 inline-block align-middle ml-1.5" />
+                      <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-[#050506] shrink-0 inline-block align-middle ml-1.5" />
                     </span>
                   </span>
                 </h2>
@@ -1691,9 +1691,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 href={effectiveWebsite || `https://${displayWebsiteClean}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-300 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-sm mt-0.5 transition-colors cursor-pointer group no-underline"
+                className="text-zinc-400 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-[13px] mt-0.5 transition-colors cursor-pointer group no-underline"
               >
-                <Globe className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                <Globe className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0 transition-colors" />
                 <span className="truncate">{displayWebsiteClean}</span>
               </a>
             )}
@@ -1705,12 +1705,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               onClick={() => onToggleFollowPlace(place.id)}
               onMouseEnter={() => setIsHoveredUnfollow(true)}
               onMouseLeave={() => setIsHoveredUnfollow(false)}
-              className={`px-4 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 mt-1 ${
+              className={`px-4 py-1.5 rounded-full font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border whitespace-nowrap active:scale-95 mt-1 ${
                 place.isFollowed
                   ? isHoveredUnfollow
                     ? "bg-red-500/15 text-red-400 border-red-500/30"
-                    : "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
-                  : "bg-white text-zinc-950 hover:bg-zinc-200 border-white"
+                    : "bg-white/[0.06] text-zinc-100 border-white/[0.12] hover:bg-white/[0.11]"
+                  : "bg-white text-zinc-950 hover:bg-zinc-200 border-white shadow-[0_4px_16px_rgba(255,255,255,0.12)]"
               }`}
               title={place.isFollowed ? (isHoveredUnfollow ? t("business.unfollowTitle", "Unfollow this business") : t("business.followingTitle", "You are following this business")) : t("business.followTitle", "Follow this business")}
             >
@@ -1736,50 +1736,50 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           )}
         </div>
 
-        {/* Rating & Action Hero Showcase Header Box (Premium Tighter Layout) */}
-        <div className="mb-2 p-3.5 sm:p-4.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 flex flex-col items-center gap-3 shadow-xl backdrop-blur-sm">
-          {/* Star Rating Row - Consistently aligned on one line */}
+        {/* Rating & Action Hero Showcase Header Box (Flagship Obsidian Glass) */}
+        <div className="mb-1 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex flex-col items-center gap-3.5 backdrop-blur-xl">
+          {/* Star Rating Row */}
           <div className="flex items-center justify-center gap-4 w-full">
             {dynamicReviewCount > 0 ? (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-white text-2xl leading-none tracking-tight">
+                  <span className="font-semibold text-white text-2xl leading-none tracking-[-0.03em]">
                     {dynamicAvgRating.toFixed(1)}
                   </span>
                   <CopoStarRating
                     rating={dynamicAvgRating}
-                    starClassName="w-6 h-6"
-                    filledColorClass="fill-amber-400 text-amber-400"
-                    emptyColorClass="fill-zinc-900/90 text-zinc-400"
+                    starClassName="w-5 h-5"
+                    filledColorClass="fill-[#E8C78A] text-[#E8C78A]"
+                    emptyColorClass="fill-white/10 text-white/20"
                   />
                 </div>
-                <div className="h-6 w-px bg-zinc-800 mx-1" />
-                <span className="text-zinc-400 font-bold text-xs uppercase tracking-wider whitespace-nowrap">
+                <div className="h-5 w-px bg-white/[0.1]" />
+                <span className="text-zinc-400 font-medium text-xs whitespace-nowrap">
                   {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
                 </span>
               </>
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
-                  <span className="font-black text-zinc-500 text-2xl leading-none tracking-tight">0.0</span>
+                  <span className="font-semibold text-zinc-500 text-2xl leading-none tracking-[-0.03em]">0.0</span>
                   <div className="flex items-center text-zinc-700 gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className="w-6 h-6 fill-none text-zinc-700 stroke-[2.5]"
+                        className="w-5 h-5 fill-none text-zinc-700 stroke-[2]"
                       />
                     ))}
                   </div>
                 </div>
-                <div className="h-6 w-px bg-zinc-800 mx-1" />
-                <span className="text-zinc-500 font-bold text-xs uppercase tracking-wider">
+                <div className="h-5 w-px bg-white/[0.1]" />
+                <span className="text-zinc-500 font-medium text-xs">
                   {t("place.noReviews", "No Reviews")}
                 </span>
               </>
             )}
           </div>
 
-          {/* Premium Add Live Photo Review Call-to-Action */}
+          {/* Signature Pure-White Sentence-Case Add Review Pill */}
           <button
             id="btn-record-video-review-main"
             type="button"
@@ -1787,22 +1787,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("medium");
               onRecordForPlace(place);
             }}
-            className="w-full bg-zinc-100 hover:bg-white active:bg-zinc-200 text-zinc-950 font-black text-sm py-3.5 rounded-xl shadow-[0_4px_25px_rgba(255,255,255,0.08)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shrink-0 cursor-pointer group"
+            className="w-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-semibold text-sm py-3 rounded-full shadow-[0_6px_24px_rgba(255,255,255,0.14)] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shrink-0 cursor-pointer group"
           >
-            <Camera className="w-5 h-5 text-zinc-950 shrink-0 stroke-[2.5]" />
-            <span className="uppercase tracking-widest">{t("place.addReview", "Add Review")}</span>
+            <Camera className="w-4.5 h-4.5 text-zinc-950 shrink-0 stroke-[2.2]" />
+            <span>{t("place.addReview", "Add Review")}</span>
           </button>
         </div>
       </div>
 
-      {/* Google Maps Tabs: Overview | Reviews | About */}
-      <div className="flex items-center border-b border-zinc-800 bg-zinc-950 px-5 text-sm font-semibold text-zinc-200">
+      {/* Tabs: Overview | Reviews | About */}
+      <div className="flex items-center border-b border-white/[0.07] bg-[#050506] px-5 text-sm font-medium text-zinc-400">
         <button
           onClick={() => handleTabClick("overview")}
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === "overview"
-              ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-400 text-zinc-400"
+              ? "border-white text-white font-semibold"
+              : "border-transparent hover:text-zinc-200 text-zinc-400"
           }`}
         >
           {t("place.overview", "Overview")}
@@ -1811,12 +1811,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           onClick={() => handleTabClick("reviews")}
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
             activeTab === "reviews"
-              ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-400 text-zinc-400"
+              ? "border-white text-white font-semibold"
+              : "border-transparent hover:text-zinc-200 text-zinc-400"
           }`}
         >
           <span>{t("place.reviews", "Reviews")}</span>
-          <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
+          <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
             {rawPlaceVideos.length}
           </span>
         </button>
@@ -1824,8 +1824,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           onClick={() => handleTabClick("about")}
           className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
             activeTab === "about"
-              ? "border-white text-white font-bold"
-              : "border-transparent hover:text-zinc-400 text-zinc-400"
+              ? "border-white text-white font-semibold"
+              : "border-transparent hover:text-zinc-200 text-zinc-400"
           }`}
         >
           {t("place.about", "About")}
@@ -1836,7 +1836,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-zinc-950 space-y-4 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent" 
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#050506] space-y-5 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {copiedNotification && (
@@ -1848,18 +1848,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-5 animate-in fade-in duration-500">
-              {/* Action Buttons Row (Directions, Call, Save, Share, Chat) */}
-              <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto no-scrollbar shadow-xl backdrop-blur-md whitespace-nowrap">
+              {/* Action Buttons Row (Floating Obsidian Glass Circles) */}
+              <div className="py-1 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-directions-place"
                   onClick={handleOpenDirections}
-                  className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
                   title={t("place.directions", "Directions")}
                 >
-                  <div className="w-11 h-11 rounded-full bg-zinc-800/80 text-white border border-zinc-700/50 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 group-hover:border-zinc-600 transition-all">
-                    <Navigation className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <Navigation className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-bold text-[10px] uppercase tracking-tight">{t("place.directions", "Directions")}</span>
+                  <span className="font-medium text-[11px]">{t("place.directions", "Directions")}</span>
                 </button>
 
                 <a
@@ -1876,34 +1876,34 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       }
                     }
                   }}
-                  className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
                   title={t("place.call", "Call")}
                 >
-                  <div className="w-11 h-11 rounded-full bg-zinc-800/80 text-white border border-zinc-700/50 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 group-hover:border-zinc-600 transition-all">
-                    <Phone className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <Phone className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-bold text-[10px] uppercase tracking-tight">{t("place.call", "Call")}</span>
+                  <span className="font-medium text-[11px]">{t("place.call", "Call")}</span>
                 </a>
 
                 <button
                   id="btn-save-place"
                   onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
-                  className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
                 >
                   <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center shadow-sm transition-all border ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border ${
                       isSaved
-                        ? "bg-amber-500 border-amber-400 text-zinc-950"
-                        : "bg-zinc-800/80 border-zinc-700/50 text-white group-hover:bg-zinc-700 group-hover:border-zinc-600"
+                        ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
+                        : "bg-white/[0.05] border-white/[0.09] text-zinc-100 group-hover:bg-white/[0.11] group-hover:border-white/[0.18]"
                     }`}
                   >
                     {isSaved ? (
-                      <BookmarkCheck className="w-5 h-5 fill-current" />
+                      <BookmarkCheck className="w-[18px] h-[18px] fill-current" />
                     ) : (
-                      <Bookmark className="w-5 h-5" />
+                      <Bookmark className="w-[18px] h-[18px] stroke-[1.9]" />
                     )}
                   </div>
-                  <span className="font-bold text-[10px] uppercase tracking-tight">
+                  <span className="font-medium text-[11px]">
                     {isSaved ? t("place.saved", "Saved") : t("place.save", "Save")}
                   </span>
                 </button>
@@ -1914,13 +1914,13 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
                   title={t("place.shareBusiness", "Share Business")}
                 >
-                  <div className="w-11 h-11 rounded-full bg-zinc-800/80 text-white border border-zinc-700/50 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 group-hover:border-zinc-600 transition-all">
-                    <Share2 className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <Share2 className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-bold text-[10px] uppercase tracking-tight">{t("common.share", "Share")}</span>
+                  <span className="font-medium text-[11px]">{t("common.share", "Share")}</span>
                 </button>
 
                 <button
@@ -1942,43 +1942,43 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onStartChat(place.id, place.name, getPlaceLogoUrl(place) || "");
                     }
                   }}
-                  className="flex flex-col items-center gap-2 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
                   title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
                 >
-                  <div className="w-11 h-11 rounded-full bg-zinc-800/80 text-white border border-zinc-700/50 flex items-center justify-center shadow-sm group-hover:bg-zinc-700 group-hover:border-zinc-600 transition-all">
-                    <MessageSquare className="w-5 h-5" />
+                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <MessageSquare className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-bold text-[10px] uppercase tracking-tight">{t("place.chat", "Chat")}</span>
+                  <span className="font-medium text-[11px]">{t("place.chat", "Chat")}</span>
                 </button>
               </div>
               
-              {/* Featured Video Reviews Section */}
-              <div className="space-y-4">
+              {/* Featured Photo Reviews Section */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between px-1">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                  <h3 className="text-[12px] font-semibold tracking-[-0.01em] text-zinc-300">
                     {t("place.featuredReviews", "Featured Reviews")}
                   </h3>
                   {rawPlaceVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
-                      className="text-[10px] font-bold text-zinc-300 hover:text-white transition-colors uppercase tracking-wider"
+                      className="text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
                     >
-                      {t("place.viewAll", "View All")}
+                      {t("place.viewAll", "View all")}
                     </button>
                   )}
                 </div>
 
                 {rawPlaceVideos.length === 0 ? (
-                  <div className="py-12 rounded-3xl bg-zinc-900/30 border border-dashed border-zinc-800 flex flex-col items-center justify-center gap-3 text-center px-6">
-                    <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-zinc-700" />
+                  <div className="py-10 rounded-2xl bg-white/[0.02] border border-dashed border-white/[0.1] flex flex-col items-center justify-center gap-3 text-center px-6">
+                    <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                      <Camera className="w-5 h-5 text-zinc-400" />
                     </div>
                     <p className="text-xs text-zinc-400 font-medium leading-relaxed">
                       {t("place.noReviewsYetShort", `Be the first to share a live photo review for ${displayedPlaceName}.`)}
                     </p>
                     <button
                       onClick={() => onRecordForPlace(place)}
-                      className="mt-2 px-6 py-2 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-colors cursor-pointer"
+                      className="mt-1 px-5 py-2 rounded-full bg-white text-zinc-950 font-semibold text-xs hover:bg-zinc-200 transition-colors cursor-pointer"
                     >
                       {t("place.addReview", "Add Review")}
                     </button>
@@ -1993,27 +1993,27 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <div
                           key={v.id}
                           onClick={() => onSelectVideo(v.id)}
-                          className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-zinc-800/50 hover:border-zinc-700/80"
+                          className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-white/[0.08] hover:border-white/[0.2]"
                         >
                           <CopoVideoThumbnail
                             video={v}
                             alt={v.placeName}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
 
                           {/* Whole-Number Rating Badge */}
-                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-lg bg-black/60 backdrop-blur-md text-[9px] font-black text-white flex items-center gap-1 border border-white/10">
-                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-1 border border-white/[0.12]">
+                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                             <span>{getRoundedRating(v.rating || 5)}</span>
                           </div>
 
                           {/* Bottom Meta Info - Business Name & Views */}
                           <div className="absolute bottom-2 left-2 right-2 flex flex-col gap-0.5 pointer-events-none z-10">
-                            <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
+                            <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
                               {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
                             </span>
-                            <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold">
+                            <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium">
                               <Eye className="w-2.5 h-2.5 shrink-0" />
                               <span>{formattedViews}</span>
                             </div>
@@ -2028,33 +2028,32 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               {/* Quick Summary Card */}
               <div 
                 onClick={() => handleTabClick("about")}
-                className="p-5 rounded-[2rem] bg-zinc-900/50 border border-zinc-800/50 shadow-xl backdrop-blur-md cursor-pointer hover:bg-zinc-900/80 transition-all group"
+                className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.06] transition-all group"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                      <Info className="w-4 h-4 text-zinc-400" />
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
+                      <Info className="w-4 h-4 text-zinc-300" />
                     </div>
-                    <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                      {t("place.aboutThisBusiness", "The Story")}
+                    <h3 className="text-xs font-semibold tracking-[-0.01em] text-white">
+                      {t("place.aboutThisBusiness", "About")}
                     </h3>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                  <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3 font-medium">
+                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
                   {getEffectivePlaceDescription(place)}
                 </p>
                 
                 {/* Micro Metadata Row */}
-                <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center gap-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                  {place.category && (
+                {place.category && (
+                  <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-4 text-[11px] font-medium text-zinc-400">
                     <div className="flex items-center gap-1.5">
-                      <Tag className="w-3 h-3" />
+                      <Tag className="w-3 h-3 text-zinc-500" />
                       <span>{place.category}</span>
                     </div>
-                  )}
-                  {/* Removed green "Open Now" text here */}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2139,15 +2138,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                               triggerHaptic("light");
                               setStarFilter(isSelected ? "all" : stars);
                             }}
-                            className={`px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold flex items-center gap-1 transition-all shrink-0 cursor-pointer border ${
+                            className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all shrink-0 cursor-pointer border ${
                               isSelected
-                                ? "bg-amber-400 text-zinc-950 border-amber-400 shadow-sm font-black"
-                                : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:text-white hover:border-zinc-700"
+                                ? "bg-[#E8C78A] text-zinc-950 border-[#E8C78A] font-semibold"
+                                : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:text-white hover:border-white/[0.16]"
                             }`}
                           >
-                            <Star className={`w-3 h-3 ${isSelected ? "fill-zinc-950 text-zinc-950" : "fill-amber-400 text-amber-400"}`} />
+                            <Star className={`w-3 h-3 ${isSelected ? "fill-zinc-950 text-zinc-950" : "fill-[#E8C78A] text-[#E8C78A]"}`} />
                             <span>{stars}★</span>
-                            <span className="text-[9.5px] opacity-75">({count})</span>
+                            <span className="text-[10px] opacity-75">({count})</span>
                           </button>
                         );
                       })}
@@ -2228,8 +2227,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/25 pointer-events-none" />
 
                         {/* Whole-Number Rating Badge */}
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs border border-white/10">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
+                          <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                           <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
 
@@ -3033,12 +3032,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </button>
 
                 {/* Standee Card */}
-                <div className="w-full bg-zinc-900/95 border border-zinc-800/90 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/10 backdrop-blur-2xl">
+                <div className="w-full bg-[#0c0c0f]/96 border border-white/[0.1] rounded-[28px] p-6 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.85)] relative overflow-hidden text-center text-white backdrop-blur-2xl">
                   {/* Top Acrylic Lip & Bevel */}
-                  <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-zinc-700/80 rounded-full mx-auto mb-4 sm:mb-5 shadow-inner" />
+                  <div className="w-16 sm:w-20 h-1 bg-white/20 rounded-full mx-auto mb-4 sm:mb-5" />
 
                   {qrTableLabel && (
-                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 text-[8.5px] sm:text-[9px] font-extrabold uppercase border border-zinc-700 tracking-wider">
+                    <div className="absolute top-4 right-4 sm:top-5 sm:right-5 px-2.5 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[9px] font-semibold uppercase border border-white/[0.1] tracking-wider">
                       {qrTableLabel}
                     </div>
                   )}
@@ -3057,25 +3056,25 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   {/* Venue Title & Verified Badge */}
                   <div className="flex items-center justify-center gap-1.5 mb-0.5 px-2">
-                    <h3 className="font-black text-white text-base sm:text-xl tracking-tight truncate max-w-[260px] sm:max-w-[300px]">
+                    <h3 className="font-semibold text-white text-base sm:text-xl tracking-[-0.02em] truncate max-w-[260px] sm:max-w-[300px]">
                       {displayedPlaceName}
                     </h3>
                     <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
                   </div>
 
                   {/* Business Place Handle / URL */}
-                  <div className="text-[11px] font-bold text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
+                  <div className="text-[11px] font-medium text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
                     <span>yoouz.com/reviews/{placeSlug}</span>
                   </div>
 
                   {/* Star Rating & Reviews Count */}
-                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
-                    <span className="text-amber-400 font-extrabold">{avgRatingStr}</span>
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-semibold mb-3">
+                    <span className="text-[#E8C78A] font-semibold">{avgRatingStr}</span>
                     <CopoStarRating
                       rating={dynamicReviewCount > 0 ? (Number(avgRatingStr) || 0) : 0}
                       starClassName="w-3.5 h-3.5"
-                      filledColorClass="text-amber-400 fill-amber-400"
-                      emptyColorClass="text-zinc-600 fill-zinc-800"
+                      filledColorClass="text-[#E8C78A] fill-[#E8C78A]"
+                      emptyColorClass="text-white/20 fill-white/10"
                     />
                     <span className="text-zinc-400 text-[11px] font-normal">
                       ({dynamicReviewCount} {dynamicReviewCount === 1 ? "Photo Review" : "Photo Reviews"})

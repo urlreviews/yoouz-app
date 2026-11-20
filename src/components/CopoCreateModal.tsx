@@ -731,28 +731,28 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     return (
       <div
         id="copo-create-review-modal"
-        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200"
+        className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-200"
         onClick={handleCloseModal}
       >
         <div
-          className="relative w-full max-w-[440px] bg-zinc-950 rounded-[32px] border border-zinc-800 shadow-2xl p-6 sm:p-8 text-white space-y-6 text-center"
+          className="relative w-full max-w-[440px] bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-[32px] border border-white/[0.1] shadow-[0_24px_80px_rgba(0,0,0,0.9)] p-6 sm:p-8 text-white space-y-6 text-center"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={handleCloseModal}
-            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             title={t("common.close", "Close")}
           >
             <X className="w-4 h-4" />
           </button>
 
-          <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-lg">
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto shadow-lg">
             <Smartphone className="w-7 h-7 text-white" />
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-xl font-black tracking-tight text-white">Add Live Photo Review</h2>
+            <h2 className="text-xl font-bold tracking-tight text-white">Add Live Photo Review</h2>
             <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">
               Point your phone camera at the QR code below to snap a live photo review and rate{" "}
               {selectedPlace ? formatBusinessName(selectedPlace.name) : "any business"} in seconds.
@@ -772,9 +772,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                 triggerHaptic("light");
                 setTimeout(() => setQrCopied(false), 2000);
               }}
-              className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              className="w-full py-3 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
-              {qrCopied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+              {qrCopied ? <Check className="w-4 h-4 text-[#E8C78A]" /> : <Copy className="w-4 h-4 text-zinc-400" />}
               <span>{qrCopied ? "Mobile Camera Link Copied" : "Copy Mobile Camera Link"}</span>
             </button>
           </div>
@@ -822,9 +822,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   return (
     <div
       id="copo-create-review-modal"
-      className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 md:p-6 overflow-hidden animate-in fade-in duration-200"
+      className="fixed inset-0 z-[200] bg-black/92 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 overflow-hidden animate-in fade-in duration-200"
     >
-      <div className="relative w-full h-full md:h-[780px] md:max-h-[90vh] max-w-[440px] bg-zinc-950 md:rounded-[36px] overflow-hidden shadow-2xl flex flex-col border border-white/10">
+      <div className="relative w-full h-full md:h-[780px] md:max-h-[90vh] max-w-[440px] bg-[#050506] md:rounded-[36px] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.92)] flex flex-col border border-white/[0.1]">
         {/* Native HTML5 Mobile Camera Input (forces iOS Safari & Android Chrome to open native phone camera app directly) */}
         <input
           ref={nativeCameraInputRef}
@@ -837,18 +837,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           aria-label="Open native camera to take review photo"
         />
 
-        {/* POST-SUBMIT ZERO-FRICTION ONBOARDING (Anonymous -> Optional Username / Google or Apple Link) */}
+        {/* POST-SUBMIT ZERO-FRICTION ONBOARDING */}
         {postSubmitOnboarding && publishedReview ? (
-          <div className="flex flex-col h-full w-full bg-zinc-950 p-6 justify-between overflow-y-auto">
+          <div className="flex flex-col h-full w-full bg-[#050506] p-6 justify-between overflow-y-auto">
             <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-700 text-white text-[11px] font-black uppercase tracking-wider">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-white text-[11px] font-semibold">
+                <Check className="w-3.5 h-3.5 text-[#E8C78A] stroke-[2.5]" />
                 <span>Photo Review Live</span>
               </div>
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 flex items-center justify-center cursor-pointer"
+                className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -857,7 +857,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
             <div className="space-y-5 my-auto py-4">
               <div className="text-center space-y-2">
-                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 mx-auto overflow-hidden shadow-xl">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.1] mx-auto overflow-hidden shadow-xl">
                   <img
                     src={publishedReview.photoUrl || publishedReview.thumbnailUrl}
                     alt={publishedReview.placeName}
@@ -865,15 +865,15 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                <h2 className="text-xl font-black text-white tracking-tight">Claim Your Reviewer Handle</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">Claim Your Reviewer Handle</h2>
                 <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                  Your review is live under <span className="text-white font-bold">{currentUser?.name || "your account"}</span>. Pick a handle, save a passkey, or tap Done.
+                  Your review is live under <span className="text-white font-semibold">{currentUser?.name || "your account"}</span>. Pick a handle, save a passkey, or tap Done.
                 </p>
               </div>
 
               {/* Optional Custom Username */}
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3">
+                <label className="text-[11.5px] font-semibold text-zinc-300 block">
                   Custom Username (Optional)
                 </label>
                 <div className="flex items-center gap-2">
@@ -885,14 +885,14 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       onChange={(e) => setUsernameInput(e.target.value)}
                       placeholder="yourhandle"
                       maxLength={24}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 focus:border-white text-sm font-semibold text-white outline-none"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-full bg-white/[0.04] border border-white/[0.1] focus:border-white/30 text-sm font-medium text-white outline-none"
                     />
                   </div>
                   <button
                     type="button"
                     disabled={usernameStatus !== "available"}
                     onClick={handleSaveUsername}
-                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-bold text-xs transition-colors cursor-pointer shrink-0"
+                    className="px-4 py-2.5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-white/[0.06] disabled:text-zinc-500 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer shrink-0"
                   >
                     {usernameStatus === "checking" ? "..." : usernameStatus === "saved" ? "Saved" : "Claim"}
                   </button>
@@ -909,9 +909,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               </div>
 
               {/* 1-Tap Passkey Account Backup */}
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2.5">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                  <KeyRound className="w-3.5 h-3.5 text-zinc-200" />
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2.5">
+                <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-zinc-200">
+                  <KeyRound className="w-3.5 h-3.5 text-[#E8C78A]" />
                   <span>Passkey</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
@@ -921,7 +921,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   type="button"
                   disabled={isLinkingAccount || Boolean((currentUser as any)?.passkeyProtected)}
                   onClick={handleRegisterPasskey}
-                  className="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-300 disabled:border-zinc-700 border border-white text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-3 px-4 rounded-full bg-white hover:bg-zinc-200 disabled:bg-white/[0.06] disabled:text-zinc-400 disabled:border-white/[0.08] border border-white text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <KeyRound className="w-4 h-4" />
                   <span>
@@ -943,7 +943,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             <button
               type="button"
               onClick={handleCloseModal}
-              className="w-full py-3.5 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-black text-sm transition-all cursor-pointer shadow-xl"
+              className="w-full py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-sm transition-all cursor-pointer shadow-xl"
             >
               Done
             </button>
@@ -1041,7 +1041,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                         nativeCameraInputRef.current.value = "";
                       }
                     }}
-                    className="min-h-[52px] px-5 rounded-2xl bg-zinc-950/85 hover:bg-zinc-900 backdrop-blur-xl border border-white/18 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all select-none shrink-0"
+                    className="min-h-[52px] px-5 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/[0.16] text-white font-semibold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all select-none shrink-0"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Retake</span>
@@ -1051,10 +1051,10 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     type="button"
                     disabled={rating < 1}
                     onClick={handlePublish}
-                    className={`flex-1 min-h-[52px] px-5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-2xl ${
+                    className={`flex-1 min-h-[52px] px-5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-2xl ${
                       rating >= 1
-                        ? "bg-white hover:bg-zinc-100 text-zinc-950 cursor-pointer"
-                        : "bg-zinc-900/85 text-zinc-500 border border-white/10 cursor-not-allowed"
+                        ? "bg-white hover:bg-zinc-200 text-zinc-950 cursor-pointer"
+                        : "bg-white/[0.08] text-zinc-500 border border-white/[0.1] cursor-not-allowed"
                     }`}
                   >
                     <Sparkles className="w-4 h-4" />
@@ -1066,7 +1066,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           </div>
         ) : (
           /* NATIVE CAMERA LAUNCH STAGE: Opens iOS/Android phone camera app directly */
-          <div className="relative w-full h-full bg-zinc-950 flex flex-col justify-between overflow-hidden">
+          <div className="relative w-full h-full bg-[#050506] flex flex-col justify-between overflow-hidden">
             {/* Top Place Pill & Close */}
             <div className="relative z-20 flex items-center justify-between gap-2 p-4 pt-5">
               <button
@@ -1075,7 +1075,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   userClearedPlaceRef.current = true;
                   setSelectedPlace(null);
                 }}
-                className="px-3.5 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 backdrop-blur-xl border border-white/15 text-white flex items-center gap-2.5 min-w-0 cursor-pointer transition-colors"
+                className="px-3.5 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] backdrop-blur-xl border border-white/[0.12] text-white flex items-center gap-2.5 min-w-0 cursor-pointer transition-colors"
                 title="Change business"
               >
                 <CopoBrandLogo
@@ -1088,7 +1088,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   imageClassName="w-full h-full object-contain"
                   fallbackTextClassName="font-extrabold text-[10px] text-zinc-950"
                 />
-                <span className="font-extrabold text-xs truncate">
+                <span className="font-semibold text-xs truncate">
                   {formatBusinessName(selectedPlace?.name, selectedPlace?.brandDomain || selectedPlace?.website, selectedPlace?.id)}
                 </span>
               </button>
@@ -1096,7 +1096,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-10 h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 backdrop-blur-xl border border-white/15 text-white flex items-center justify-center cursor-pointer shrink-0"
+                className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.12] backdrop-blur-xl border border-white/[0.12] text-white flex items-center justify-center cursor-pointer shrink-0 transition-colors"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -1107,19 +1107,19 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
             <div className="relative z-20 flex-1 flex flex-col items-center justify-center px-6 text-center space-y-6">
               {isProcessingPhoto || isSearchingMetadata ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-2xl">
+                  <div className="w-20 h-20 rounded-3xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shadow-2xl">
                     <Loader2 className="w-8 h-8 text-white animate-spin" />
                   </div>
-                  <p className="text-sm font-bold text-white">Preparing your photo...</p>
+                  <p className="text-sm font-semibold text-white">Preparing your photo...</p>
                 </div>
               ) : (
                 <>
-                  <div className="w-20 h-20 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-2xl">
+                  <div className="w-20 h-20 rounded-3xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shadow-2xl">
                     <Camera className="w-9 h-9 text-white" />
                   </div>
 
                   <div className="space-y-2 max-w-xs">
-                    <h2 className="text-2xl font-black text-white tracking-tight">
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
                       Snap a Native Photo
                     </h2>
                     <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -1128,7 +1128,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                   </div>
 
                   {errorMessage && (
-                    <div className="w-full max-w-xs p-3 rounded-2xl bg-red-950/90 border border-red-800 text-red-200 text-xs font-medium text-center flex items-center justify-center gap-2">
+                    <div className="w-full max-w-xs p-3 rounded-2xl bg-red-950/90 border border-red-800/60 text-red-200 text-xs font-medium text-center flex items-center justify-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                       <span>{errorMessage}</span>
                     </div>
@@ -1144,9 +1144,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                         nativeCameraInputRef.current.value = "";
                       }
                     }}
-                    className="w-full max-w-xs py-4 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-black text-base flex items-center justify-center gap-2.5 shadow-[0_12px_32px_rgba(255,255,255,0.18)] active:scale-95 transition-all cursor-pointer select-none"
+                    className="w-full max-w-xs py-4 px-6 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-[15px] flex items-center justify-center gap-2.5 shadow-[0_12px_32px_rgba(255,255,255,0.16)] active:scale-95 transition-all cursor-pointer select-none"
                   >
-                    <Camera className="w-5 h-5 stroke-[2.5]" />
+                    <Camera className="w-5 h-5 stroke-[2.25]" />
                     <span>Open Camera</span>
                   </label>
                 </>

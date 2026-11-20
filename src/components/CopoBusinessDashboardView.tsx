@@ -2570,10 +2570,10 @@ ${jsonLd}
   }
 
   return (
-    <div className="w-full max-w-full h-[100dvh] flex bg-zinc-950 select-none antialiased overflow-x-hidden font-sans text-white copo-business-dashboard">
+    <div className="w-full max-w-full h-[100dvh] flex bg-[#050506] select-none antialiased overflow-x-hidden font-sans text-white copo-business-dashboard">
       <div className="w-full h-full flex">
-      {/* Left Google Enterprise Navigation Sidebar (Matching CopoSidebar exactly) */}
-      <aside className="w-64 h-[100dvh] bg-zinc-950 border-r border-zinc-800/80 px-4 py-6 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white shadow-none">
+      {/* Left Enterprise Navigation Sidebar */}
+      <aside className="w-64 h-[100dvh] bg-[#050506] border-r border-white/[0.08] px-4 py-6 flex flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white shadow-none">
         {/* Scrollable Upper Area */}
         <div className="flex flex-col flex-1 overflow-y-auto no-scrollbar min-h-0">
           <div className="flex flex-col gap-6">
@@ -2583,44 +2583,41 @@ ${jsonLd}
               className="flex items-center gap-3 px-3 py-2 cursor-pointer group"
               onClick={() => setActiveTab('overview')}
             >
-              <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-zinc-900 shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.6)] group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 border border-zinc-800">
+              <div className="relative flex items-center justify-center w-[42px] h-[42px] rounded-[14px] bg-white/[0.05] shadow-[0_4px_16px_rgba(0,0,0,0.5)] group-hover:bg-white/[0.09] transition-all duration-300 shrink-0 border border-white/[0.1]">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
                   <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
                 </svg>
               </div>
               <div className="flex flex-col justify-center pt-0.5 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-white text-[23px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
+                  <span className="text-white text-[22px] font-black tracking-tight leading-none font-['Google_Sans',sans-serif]">
                     Yoouz
                   </span>
-                  <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[9px] text-zinc-200 font-black uppercase tracking-wider scale-90 origin-left">
-                    {t("business.badge", "BUSINESS")}
+                  <span className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[10px] text-zinc-200 font-semibold scale-95 origin-left">
+                    {t("business.badge", "Business")}
                   </span>
                 </div>
-                <span className="text-[11.5px] text-zinc-200 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
+                <span className="text-[11.5px] text-zinc-400 font-medium tracking-tight mt-1 whitespace-nowrap flex items-center gap-1.5">
                   {t("business.tagline", "Real Photos. Real Proof.")}
                 </span>
               </div>
             </div>
 
-            {/* Business Plan Premium Card / Indicator */}
-            {/* Note: Upgrade moved to account utility in header */}
-
-            {/* Navigation items list (Clean unified list matching consumer sidebar) */}
-            <nav className="flex flex-col gap-1.5">
+            {/* Navigation items list */}
+            <nav className="flex flex-col gap-1">
               {/* Home button at the top (Navigates to Business Suite Overview) */}
               <button
                 id="biz-nav-btn-home"
                 onClick={() => setActiveTab('overview')}
-                className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
                   activeTab === 'overview'
-                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
-                    : 'text-white hover:bg-zinc-900/90 font-medium'
+                    ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
                 }`}
                 title={t('nav.home', 'Home')}
               >
                 <div className="relative flex items-center justify-center">
-                  <Home className="w-5 h-5 shrink-0 transition-colors text-white" />
+                  <Home className="w-[18px] h-[18px] shrink-0 transition-colors" />
                 </div>
                 <span className="truncate flex-1">{t('nav.home', 'Home')}</span>
               </button>
@@ -2640,23 +2637,23 @@ ${jsonLd}
                         setActiveTab(item.id as BusinessTab);
                       }
                     }}
-                    className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                    className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
                       isActive 
-                        ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs' 
-                        : 'text-white hover:bg-zinc-900/90 font-medium'
+                        ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs' 
+                        : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
                     }`}
                   >
                     <div className="relative flex items-center justify-center">
-                      <Icon className="w-5 h-5 shrink-0 transition-colors text-white" />
+                      <Icon className="w-[18px] h-[18px] shrink-0 transition-colors" />
                     </div>
                     <span className="truncate flex-1">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className="px-2 py-0.5 text-xs font-black rounded-full bg-white text-zinc-950 border border-white shadow-md">
+                      <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white text-zinc-950">
                         {item.badge}
                       </span>
                     )}
                     {(item as any).isProBadge && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide shrink-0 bg-zinc-800 text-zinc-200 border border-zinc-700">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 bg-[#E8C78A]/15 text-[#E8C78A] border border-[#E8C78A]/30">
                         {t("business.active", "Active")}
                       </span>
                     )}
@@ -2668,15 +2665,15 @@ ${jsonLd}
               <button
                 id="biz-nav-btn-more"
                 onClick={() => setActiveTab('more')}
-                className={`relative flex items-center gap-3.5 px-4 py-3 rounded-full text-[15px] transition-all duration-150 text-left cursor-pointer group ${
+                className={`relative flex items-center gap-3.5 px-4 py-2.5 rounded-full text-[14.5px] transition-all duration-150 text-left cursor-pointer group ${
                   activeTab === 'more'
-                    ? 'bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs'
-                    : 'text-white hover:bg-zinc-900/90 font-medium'
+                    ? 'bg-white/[0.09] border border-white/[0.14] text-white font-semibold shadow-xs'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/[0.05] border border-transparent font-medium'
                 }`}
                 title={t('nav.more', 'More')}
               >
                 <div className="relative flex items-center justify-center">
-                  <Menu className="w-5 h-5 shrink-0 transition-colors text-white" />
+                  <Menu className="w-[18px] h-[18px] shrink-0 transition-colors" />
                 </div>
                 <span className="truncate flex-1">{t('nav.more', 'More')}</span>
               </button>
@@ -2684,8 +2681,8 @@ ${jsonLd}
           </div>
         </div>
 
-        {/* Footer & Legal Links (Matching Homepage Sidebar) */}
-        <div className="px-3 pt-3 pb-2 border-t border-zinc-800/80 flex flex-col gap-2 shrink-0 bg-zinc-950">
+        {/* Footer & Legal Links */}
+        <div className="px-3 pt-3 pb-2 border-t border-white/[0.08] flex flex-col gap-2 shrink-0 bg-[#050506]">
           <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-200">
             <button
               type="button"
@@ -2718,17 +2715,17 @@ ${jsonLd}
       </aside>
         
         {/* Right side content wrapper */}
-        <div className="flex-1 flex flex-col overflow-hidden relative bg-zinc-950">
+        <div className="flex-1 flex flex-col overflow-hidden relative bg-[#050506]">
           
-          {/* Refined Enterprise Header (Sleek Dark Theme) */}
-          <header className="w-full h-14 sm:h-15 bg-zinc-950 border-b border-zinc-800/80 px-3 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-30 relative">
+          {/* Refined Enterprise Header (Flagship Obsidian) */}
+          <header className="w-full h-16 bg-[#050506]/90 backdrop-blur-2xl border-b border-white/[0.08] px-3 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 z-30 relative">
             
             {/* Left: Mobile Exit Back Button & Platform Scope */}
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
               {/* Mobile Exit Back Button */}
               <button
                 onClick={onClose}
-                className="md:hidden p-2 rounded-xl bg-zinc-900 active:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-800 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                className="md:hidden w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.1] flex items-center justify-center transition-all shrink-0 cursor-pointer"
                 title="Back to Yoouz Feed"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -2736,8 +2733,8 @@ ${jsonLd}
 
               {/* Verified Workspace Scope Badge */}
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-zinc-900 text-zinc-200 text-[10.5px] sm:text-xs font-bold border border-zinc-800 shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] text-zinc-200 text-[11px] sm:text-xs font-semibold border border-white/[0.09] shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
                   <span>{t("business.verifiedLocation", "Verified Business Portal")}</span>
                 </span>
               </div>
@@ -2747,10 +2744,10 @@ ${jsonLd}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {/* Header Plan Badge / Upgrade Trigger */}
               {isPremium ? (
-                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] border border-[#E8C78A]/30 text-xs font-semibold text-[#E8C78A]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
                   <span className="hidden sm:inline">Premium Partner</span>
-                  <span className="sm:hidden text-[10px] font-bold">PRO</span>
+                  <span className="sm:hidden text-[10px] font-bold">Pro</span>
                 </div>
               ) : (
                 <button
@@ -2759,46 +2756,46 @@ ${jsonLd}
                     setPremiumTriggerFeature('general');
                     setIsPremiumModalOpen(true);
                   }}
-                  className="h-8 sm:h-10 px-2.5 sm:px-4 flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700/80 font-bold rounded-xl transition-all shrink-0 cursor-pointer text-xs shadow-md active:scale-95"
+                  className="h-9 px-3.5 flex items-center gap-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1] font-semibold rounded-full transition-all shrink-0 cursor-pointer text-xs active:scale-95"
                   title="View Plans & Membership"
                 >
-                  <Zap className="w-3.5 h-3.5 fill-zinc-300 text-zinc-300 shrink-0" />
+                  <Zap className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
                   <span className="hidden sm:inline">Plans & Membership</span>
-                  <span className="sm:hidden text-[11px] font-extrabold text-zinc-300">Plans</span>
+                  <span className="sm:hidden text-[11px] font-semibold text-zinc-200">Plans</span>
                 </button>
               )}
 
-              {/* Quick Merchant Support / Docs Button (Hidden on mobile to save space) */}
+              {/* Quick Merchant Support / Docs Button */}
               <button
                 type="button"
                 id="biz-header-help-trigger"
                 onClick={() => setShowHelpModal(true)}
-                className="hidden sm:flex h-9 sm:h-10 px-2.5 sm:px-3 items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition-all shrink-0 cursor-pointer text-xs font-semibold shadow-xs"
+                className="hidden sm:flex h-9 px-3.5 items-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.09] rounded-full transition-all shrink-0 cursor-pointer text-xs font-semibold"
                 title={t("business.openGuideDocs", "Open Guide & Docs")}
               >
-                <HelpCircle className="w-4 h-4 text-zinc-400" />
+                <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
                 <span>{t("business.support", "Support")}</span>
               </button>
 
-              {/* Profile / Account Control with Clean Google-Style Circular Avatar */}
+              {/* Profile / Account Control */}
               <div className="relative" ref={accountDropdownRef}>
                 <button 
                   id="biz-header-account-trigger"
                   onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 hover:text-white border border-zinc-700/80 hover:border-zinc-500 transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 shadow-xs active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20 overflow-hidden"
+                  className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.12] transition-all duration-200 shrink-0 cursor-pointer flex items-center justify-center p-0.5 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-white/20 overflow-hidden"
                   title={`${currentPlace.name} - Business Account Menu`}
                 >
                   <CopoBrandLogo
                     domain={currentPlace.website || currentPlace.id}
                     name={currentPlace.name}
                     logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                    className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs"
+                    className="w-full h-full rounded-full bg-[#050506] flex items-center justify-center shrink-0 overflow-hidden"
                     imageClassName="w-full h-full object-contain rounded-full"
                     fallbackTextClassName="font-black text-xs text-white"
                   />
                 </button>
 
-                {/* Business Account Control Dropdown (Anchored to Top Right Avatar Button) */}
+                {/* Business Account Control Dropdown */}
                 {showAccountDropdown && (
                   <>
                     {/* Fixed backdrop for click-outside dismiss */}
@@ -2808,22 +2805,22 @@ ${jsonLd}
                     />
 
                     {/* Anchored Top Right Popover Dropdown */}
-                    <div className="absolute top-full right-0 sm:right-0 mt-2 w-[calc(100vw-32px)] sm:w-[300px] max-w-[320px] bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800 text-white shadow-2xl py-2 z-[200] animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+                    <div className="absolute top-full right-0 sm:right-0 mt-2 w-[calc(100vw-32px)] sm:w-[300px] max-w-[320px] bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-2xl border border-white/[0.1] text-white shadow-[0_24px_60px_rgba(0,0,0,0.85)] py-2 z-[200] animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
                       {/* Business Header Card */}
-                      <div className="px-4 py-3 border-b border-zinc-800/80 mb-1">
+                      <div className="px-4 py-3 border-b border-white/[0.08] mb-1">
                         <div className="flex items-center gap-3">
                           <CopoBrandLogo
                             domain={currentPlace.website || currentPlace.id}
                             name={currentPlace.name}
                             logoUrl={profileLogoUrl || currentPlace.logoUrl}
-                            className="w-10 h-10 rounded-xl border border-zinc-700/80 bg-zinc-800 flex items-center justify-center font-black text-xs shrink-0 overflow-hidden shadow-sm p-1"
+                            className="w-10 h-10 rounded-xl border border-white/[0.1] bg-white/[0.06] flex items-center justify-center font-black text-xs shrink-0 overflow-hidden p-1"
                             imageClassName="w-full h-full object-contain rounded-lg"
                             fallbackTextClassName="font-black text-xs text-white"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-extrabold text-white text-sm truncate">{currentPlace.name}</span>
-                              <ShieldCheck className="w-3.5 h-3.5 text-white shrink-0" />
+                              <span className="font-bold text-white text-sm truncate">{currentPlace.name}</span>
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#E8C78A] shrink-0" />
                             </div>
                             <div className="text-[11px] text-zinc-400 truncate mt-1 font-normal flex items-center gap-1">
                               <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
@@ -2833,8 +2830,8 @@ ${jsonLd}
                         </div>
 
                         {/* Clean Executive Badge */}
-                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 border border-zinc-700/80 text-zinc-200 text-[10px] font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] shrink-0" />
+                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-zinc-200 text-[10.5px] font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E8C78A] shrink-0" />
                           <span>{t("business.verifiedWorkspace", "Verified Business Workspace")}</span>
                         </div>
                       </div>
@@ -2926,21 +2923,21 @@ ${jsonLd}
             </div>
           </header>
 
-          {/* Top Mobile Pill Scroller (Clean, High-Contrast Dark Mode - Matching User Knowledge Center Style) */}
-          <div className="md:hidden w-full bg-zinc-950 border-b border-zinc-800/80 px-2 py-2.5 shrink-0 z-20">
+          {/* Top Mobile Pill Scroller */}
+          <div className="md:hidden w-full bg-[#050506] border-b border-white/[0.08] px-2 py-2.5 shrink-0 z-20">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-1">
-              {/* Home Pill (Navigates to Business Suite Overview) */}
+              {/* Home Pill */}
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                   activeTab === 'overview'
-                    ? 'bg-white text-zinc-950 border-white shadow-sm font-black'
-                    : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                    ? 'bg-white text-zinc-950 border-white shadow-sm'
+                    : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
                 }`}
                 title={t('nav.home', 'Home')}
               >
-                <Home className={`w-4 h-4 shrink-0 ${activeTab === 'overview' ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
+                <Home className={`w-4 h-4 shrink-0 ${activeTab === 'overview' ? 'text-zinc-950' : 'text-zinc-300'}`} />
                 <span>{t('nav.home', 'Home')}</span>
               </button>
 
@@ -2951,16 +2948,16 @@ ${jsonLd}
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
+                    className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                       isActive 
-                        ? 'bg-white text-zinc-950 border-white shadow-sm font-black' 
-                        : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                        ? 'bg-white text-zinc-950 border-white shadow-sm' 
+                        : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-zinc-950' : 'text-zinc-300'}`} />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-zinc-950 text-white' : 'bg-zinc-800 text-zinc-200 border border-zinc-700'}`}>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-zinc-950 text-white' : 'bg-white/[0.1] text-zinc-200'}`}>
                         {item.badge}
                       </span>
                     )}
@@ -2972,21 +2969,21 @@ ${jsonLd}
               <button
                 type="button"
                 onClick={() => setActiveTab('more')}
-                className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer border active:scale-95 ${
                   activeTab === 'more'
-                    ? 'bg-white text-zinc-950 border-white shadow-sm font-black' 
-                    : 'bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800'
+                    ? 'bg-white text-zinc-950 border-white shadow-sm'
+                    : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 border-white/[0.09]'
                 }`}
                 title={t('nav.more', 'More')}
               >
-                <Menu className={`w-4 h-4 shrink-0 ${activeTab === 'more' ? 'text-zinc-950 font-bold' : 'text-zinc-300'}`} />
+                <Menu className={`w-4 h-4 shrink-0 ${activeTab === 'more' ? 'text-zinc-950' : 'text-zinc-300'}`} />
                 <span>{t('nav.more', 'More')}</span>
               </button>
             </div>
           </div>
 
-          {/* Center/Right Workspace (Dark Theme) */}
-          <main ref={mainScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-zinc-950 p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth w-full max-w-full">
+          {/* Center/Right Workspace (Flagship Obsidian) */}
+          <main ref={mainScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#050506] p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth w-full max-w-full">
             <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
 
             {showEmbedTester ? (
@@ -3009,25 +3006,25 @@ ${jsonLd}
                   <div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-1.5 w-full">
                       <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-none break-words">{currentPlace.name}</h1>
-                      <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider self-start sm:self-auto shrink-0 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        {t("business.claimedVerified", "CLAIMED & VERIFIED")}
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.1] text-zinc-200 text-[10.5px] font-semibold self-start sm:self-auto shrink-0 whitespace-nowrap">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8C78A]" />
+                        {t("business.claimedVerified", "Claimed & Verified")}
                       </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-200 font-medium">
+                    <p className="text-xs sm:text-sm text-zinc-400 font-normal">
                       {t("business.overviewSubtitle", "Real-time performance metrics driven by customer photo reviews across the Yoouz network.")}
                     </p>
                   </div>
                   {/* Date Filter Pills */}
-                  <div className="flex items-center bg-zinc-950 p-1 rounded-full border border-zinc-800 w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex items-center bg-white/[0.03] p-1 rounded-full border border-white/[0.08] w-full sm:w-auto justify-between sm:justify-start">
                     {(['7d', '30d', '90d', 'ytd'] as const).map(range => (
                       <button
                         key={range}
                         onClick={() => setAnalyticsDateRange(range)}
-                        className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all cursor-pointer text-center ${
+                        className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer text-center ${
                           analyticsDateRange === range 
-                            ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' 
-                            : 'text-zinc-300 hover:text-white font-medium'
+                            ? 'bg-white text-zinc-950 shadow-xs' 
+                            : 'text-zinc-400 hover:text-white'
                         }`}
                       >
                         {range === '7d' ? t("business.range7d", "7 Days") : range === '30d' ? t("business.range30d", "30 Days") : range === '90d' ? t("business.range90d", "90 Days") : t("business.rangeAllTime", "All Time")}
@@ -3035,12 +3032,12 @@ ${jsonLd}
                     ))}
                   </div>
                 </div>
-                {/* 3 Premium Glass KPI Cards with Real Metrics */}
+                {/* 3 Flagship Obsidian Glass KPI Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4">
                   {[
-                    { key: 'views' as const, label: t('business.kpiImpressions', 'Photo Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Photo Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Camera, color: 'text-white', bg: 'bg-zinc-800' },
-                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-white', bg: 'bg-zinc-800' },
+                    { key: 'views' as const, label: t('business.kpiImpressions', 'Photo Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-white/[0.06]' },
+                    { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Photo Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Camera, color: 'text-white', bg: 'bg-white/[0.06]' },
+                    { key: 'rating' as const, label: t('business.kpiRating', 'Overall Rating'), value: avgRating.toString(), change: t('common.realTime', 'Real-time'), icon: Star, color: 'text-[#E8C78A]', bg: 'bg-[#E8C78A]/10' },
                   ].map((stat, i) => {
                     const isSelected = selectedChartMetric === stat.key;
                     const sparklineColor = isSelected ? '#ffffff' : '#71717a';
@@ -3048,26 +3045,26 @@ ${jsonLd}
                       <div 
                          key={i} 
                          onClick={() => handleSelectMetric(stat.key)}
-                        className={`bg-zinc-900/90 rounded-[20px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
+                        className={`rounded-[22px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
                           isSelected 
-                             ? 'border-zinc-700 ring-1 ring-zinc-700/60 bg-zinc-850' 
-                             : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-850/50'
+                             ? 'border-white/[0.2] bg-white/[0.06] shadow-[0_12px_36px_rgba(0,0,0,0.45)]' 
+                             : 'border-white/[0.08] bg-white/[0.03] hover:border-white/[0.15] hover:bg-white/[0.05]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
-                          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-zinc-700`}>
+                          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-white/[0.09]`}>
                             <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </div>
-                          <span className={`flex items-center gap-1 text-[9px] sm:text-[10px] font-extrabold text-white bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700 shrink-0 whitespace-nowrap`}>
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-200 bg-white/[0.06] px-2.5 py-0.5 rounded-full border border-white/[0.09] shrink-0 whitespace-nowrap">
                             <TrendingUp className="w-2.5 h-2.5" /> {stat.change}
                           </span>
                         </div>
                         <div className="relative z-10">
                           <div className="flex items-end justify-between mb-1">
-                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter leading-none flex items-center gap-1">
+                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter leading-none flex items-center gap-1.5">
                               <span>{stat.value}</span>
                               {stat.key === 'rating' && (
-                                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 fill-amber-400 inline-block drop-shadow-xs" />
+                                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-[#E8C78A] fill-[#E8C78A] inline-block" />
                               )}
                             </div>
                             {/* SVG Mini Sparkline */}
@@ -3082,7 +3079,7 @@ ${jsonLd}
                               />
                             </svg>
                           </div>
-                          <div className="text-[10.5px] sm:text-[11px] font-medium text-zinc-200 mt-1">{stat.label}</div>
+                          <div className="text-[11px] font-medium text-zinc-400 mt-1">{stat.label}</div>
                         </div>
                       </div>
                     );
@@ -3090,7 +3087,7 @@ ${jsonLd}
                 </div>
 
                 {/* Interactive Performance Graph */}
-                <div ref={chartSectionRef} className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-3.5 sm:p-5 md:p-6 shadow-xs flex flex-col justify-between scroll-mt-4">
+                <div ref={chartSectionRef} className="bg-white/[0.03] rounded-2xl sm:rounded-3xl border border-white/[0.08] text-white p-3.5 sm:p-5 md:p-6 flex flex-col justify-between scroll-mt-4">
                   <div>
                     {/* Metric Selector Tabs */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -3101,23 +3098,23 @@ ${jsonLd}
                             {selectedChartMetric === 'reviews' && 'Verified Photo Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-950 text-emerald-400 text-[10px] font-extrabold border border-zinc-800 shadow-2xs">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.05] text-emerald-400 text-[10.5px] font-semibold border border-white/[0.09]">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Metrics
                           </span>
                         </div>
-                        <p className="text-[11px] sm:text-xs text-zinc-200 mt-0.5 font-medium">
+                        <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 font-normal">
                           Total {chartData.total} {chartData.unit} recorded during this period
                         </p>
                       </div>
 
                       {/* Metric Selector Pills */}
-                      <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-800 self-stretch sm:self-auto w-full sm:w-auto">
+                      <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-full border border-white/[0.08] self-stretch sm:self-auto w-full sm:w-auto">
                         {(['views', 'reviews', 'rating'] as const).map(m => (
                           <button
                             key={m}
                             onClick={() => handleSelectMetric(m)}
-                            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold capitalize transition-all cursor-pointer text-center ${
-                              selectedChartMetric === m ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' : 'text-zinc-300 hover:text-white font-medium'
+                            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
+                              selectedChartMetric === m ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             {m === 'views' ? 'Impressions' : m === 'reviews' ? 'Reviews' : 'Rating'}
@@ -3404,15 +3401,15 @@ ${jsonLd}
                                 rating={Math.max(1, Math.min(5, Math.round(video.rating || 5)))}
                                 roundToWhole={true}
                                 starClassName="w-3 h-3 sm:w-3.5 sm:h-3.5"
-                                filledColorClass="fill-amber-400 text-amber-400"
-                                emptyColorClass="fill-zinc-900/90 text-zinc-400"
+                                filledColorClass="fill-[#E8C78A] text-[#E8C78A]"
+                                emptyColorClass="fill-zinc-900/90 text-zinc-500"
                               />
                               <span className="text-zinc-600 font-bold shrink-0">•</span>
                               <span>{formatRecordedDate(video.recordedAt, video.createdAtMs)}</span>
                               {video.dishOrItem && (
                                 <>
                                   <span className="text-zinc-600 font-bold shrink-0">•</span>
-                                  <span className="font-semibold text-zinc-200 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] truncate max-w-[120px]">
+                                  <span className="font-semibold text-zinc-200 bg-white/[0.05] border border-white/[0.08] px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] truncate max-w-[120px]">
                                     {video.dishOrItem}
                                   </span>
                                 </>
@@ -3427,16 +3424,16 @@ ${jsonLd}
                       return (
                         <div 
                           key={video.id}
-                          className={`rounded-3xl border p-4 sm:p-6 shadow-xs transition-all w-full max-w-full overflow-hidden ${
+                          className={`rounded-3xl border p-4 sm:p-6 transition-all w-full max-w-full overflow-hidden ${
                             isHidden 
-                              ? 'border-zinc-800 opacity-60 bg-zinc-900/60 text-zinc-200' 
-                              : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700 text-white'
+                              ? 'border-white/[0.06] opacity-60 bg-white/[0.02] text-zinc-200' 
+                              : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.15] text-white'
                           }`}
                         >
                           <div className="flex flex-col gap-4 w-full">
                             
                             {/* Author Header Top Bar */}
-                            <div className="flex items-center justify-between gap-3 w-full border-b border-zinc-800/80 pb-3">
+                            <div className="flex items-center justify-between gap-3 w-full border-b border-white/[0.08] pb-3">
                               {authorInfoJSX}
                             </div>
 
@@ -3446,7 +3443,7 @@ ${jsonLd}
                               {/* Photo Review Viewport */}
                               <div 
                                 onClick={() => handleOpenBusinessVideo(video)}
-                                className="w-full sm:w-32 md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-md cursor-pointer group"
+                                className="w-full sm:w-32 md:w-44 aspect-9/14 shrink-0 relative rounded-2xl overflow-hidden bg-[#0a0a0d] border border-white/[0.1] shadow-md cursor-pointer group"
                                 title="Click to view photo review"
                               >
                                 <img
@@ -3462,7 +3459,7 @@ ${jsonLd}
                                 {/* Photo / Review Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2.5 sm:p-3 text-white">
                                   <div className="flex items-center justify-between gap-1">
-                                    <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 border border-white/10">
+                                    <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-1 border border-white/[0.12]">
                                       <Camera className="w-2.5 h-2.5 text-zinc-200" /> Live Photo
                                     </span>
                                   </div>
@@ -3476,12 +3473,12 @@ ${jsonLd}
                               </div>
 
                               {/* Review Details / Note Block */}
-                              <div className="flex-1 min-w-0 bg-zinc-900/90 rounded-2xl p-3.5 sm:p-4 border border-zinc-800 space-y-1.5 w-full">
-                                <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider">
+                              <div className="flex-1 min-w-0 bg-white/[0.03] rounded-2xl p-3.5 sm:p-4 border border-white/[0.08] space-y-1.5 w-full">
+                                <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-zinc-400">
                                   <Camera className="w-3 h-3 text-zinc-400" />
                                   <span>{isPhoto ? 'Photo Review' : 'Review Note'}</span>
                                 </div>
-                                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-medium">
+                                <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal">
                                   {video.caption ? `"${video.caption}"` : `Live camera proof rated ${Math.max(1, Math.min(5, Math.round(video.rating || 5)))}/5 stars.`}
                                 </p>
                               </div>
@@ -3489,11 +3486,11 @@ ${jsonLd}
                             </div>
 
                             {/* Action Buttons: Essential 2-button toolbar (Export & Reply) */}
-                            <div className="flex items-center gap-2 flex-wrap justify-end w-full pt-2 border-t border-zinc-800/80">
+                            <div className="flex items-center gap-2 flex-wrap justify-end w-full pt-2 border-t border-white/[0.08]">
                               <button
                                 type="button"
                                 onClick={() => handleDownloadVideoForAds(video)}
-                                className="flex-1 sm:flex-initial px-3 py-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                                className="flex-1 sm:flex-initial px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1]"
                                 title="Export branded photo review card for social media & web"
                               >
                                 <Download className="w-3.5 h-3.5 text-white" />
@@ -3507,7 +3504,7 @@ ${jsonLd}
                                     setActiveReplyId(video.id);
                                     setReplyText('');
                                   }}
-                                  className="flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                                  className="flex-1 sm:flex-initial px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                                 >
                                   <MessageSquare className="w-3.5 h-3.5" />
                                   <span>Reply</span>
@@ -3517,10 +3514,10 @@ ${jsonLd}
 
                               {/* Existing Owner Reply */}
                               {hasReply && !isReplying && (
-                                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5">
+                                <div className="bg-white/[0.04] border border-white/[0.09] rounded-2xl p-3.5">
                                   <div className="flex items-center justify-between mb-1">
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                                      <BadgeCheck className="w-3.5 h-3.5 text-white" />
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                                      <BadgeCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
                                       <span>Response from {currentPlace.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">

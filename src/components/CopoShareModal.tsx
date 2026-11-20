@@ -771,38 +771,38 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     }
   ];
 
-  // Action buttons (Row 2): Circular buttons matching the official iOS/Android sheet
+  // Action buttons (Row 2): Circular frosted obsidian glass buttons
   const actionButtons = [
     {
       id: "copy",
       name: copied ? "Copied" : t("shareModal.copyLinkShort", "Copy"),
-      icon: copied ? <Check className="w-5.5 h-5.5 stroke-[2.5] text-zinc-950" /> : <Copy className="w-5.5 h-5.5 text-zinc-100" />,
+      icon: copied ? <Check className="w-5 h-5 stroke-[2.4] text-zinc-950" /> : <Copy className="w-5 h-5 text-zinc-100" />,
       circleClass: copied
         ? "bg-white border-white text-zinc-950"
-        : "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+        : "bg-white/[0.06] border-white/[0.1] text-zinc-100 hover:bg-white/[0.12]",
       onClick: handleCopy
     },
     {
       id: "native-share",
       name: t("shareModal.systemShareShort", "Share"),
-      icon: <Share2 className="w-5.5 h-5.5 text-zinc-100" />,
-      circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+      icon: <Share2 className="w-5 h-5 text-zinc-100" />,
+      circleClass: "bg-white/[0.06] border-white/[0.1] text-zinc-100 hover:bg-white/[0.12]",
       onClick: handleNativeShare
     },
     {
       id: "bookmark",
       name: isBookmarked ? "Saved" : "Save",
-      icon: isBookmarked ? <Bookmark className="w-5.5 h-5.5 stroke-[2.5] text-amber-400 fill-amber-400" /> : <Bookmark className="w-5.5 h-5.5 text-zinc-100" />,
+      icon: isBookmarked ? <Bookmark className="w-5 h-5 stroke-[2.2] text-[#E8C78A] fill-[#E8C78A]" /> : <Bookmark className="w-5 h-5 text-zinc-100" />,
       circleClass: isBookmarked
-        ? "bg-amber-950/90 border-amber-500/80 text-amber-300"
-        : "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+        ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
+        : "bg-white/[0.06] border-white/[0.1] text-zinc-100 hover:bg-white/[0.12]",
       onClick: handleBookmarkToggle
     },
     {
       id: "open",
       name: t("shareModal.openTabShort", "Open"),
-      icon: <ExternalLink className="w-5.5 h-5.5 text-zinc-100" />,
-      circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+      icon: <ExternalLink className="w-5 h-5 text-zinc-100" />,
+      circleClass: "bg-white/[0.06] border-white/[0.1] text-zinc-100 hover:bg-white/[0.12]",
       onClick: () => {
         triggerHaptic("light");
         window.open(shareUrl, "_blank", "noopener,noreferrer");
@@ -811,8 +811,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     {
       id: "report",
       name: t("shareModal.reportShort", "Report"),
-      icon: <Flag className="w-5.5 h-5.5 text-zinc-100" />,
-      circleClass: "bg-zinc-800/90 border-zinc-700/70 text-zinc-100 hover:bg-zinc-700",
+      icon: <Flag className="w-5 h-5 text-zinc-100" />,
+      circleClass: "bg-white/[0.06] border-white/[0.1] text-zinc-100 hover:bg-white/[0.12]",
       onClick: () => {
         triggerHaptic("medium");
         onClose();
@@ -850,10 +850,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       {/* Background click to dismiss */}
       <div className="absolute inset-0 cursor-pointer" />
 
-      {/* Main Dialog Card: Mobile Bottom Sheet + Desktop Centered Modal Card */}
+      {/* Main Dialog Card: Mobile Bottom Sheet + Desktop Centered Obsidian Glass Modal */}
       <div 
         id="yoouz-share-modal-dialog"
-        className="relative z-10 w-full sm:w-[420px] max-h-[92vh] sm:max-h-[88vh] bg-zinc-900/98 backdrop-blur-2xl rounded-t-[28px] sm:rounded-[28px] shadow-2xl border-t sm:border border-zinc-800/90 flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
+        className="relative z-10 w-full sm:w-[440px] max-h-[92vh] sm:max-h-[88vh] bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-t-[28px] sm:rounded-[28px] shadow-[0_24px_80px_rgba(0,0,0,0.85)] border-t sm:border border-white/[0.1] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 text-white pb-safe select-text overscroll-contain"
         style={{
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
@@ -865,22 +865,22 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
           className="h-6 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none pt-2"
           {...swipeProps}
         >
-          <div className="w-10 h-1 rounded-full bg-zinc-600/90" />
+          <div className="w-10 h-1 rounded-full bg-white/25" />
         </div>
 
         {/* Toast Feedback Notification Banner */}
         {toastMessage && (
-          <div className="mx-4 mt-2 py-2 px-3.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 shadow-md">
+          <div className="mx-4 mt-2 py-2 px-3.5 rounded-xl bg-white/[0.08] border border-white/[0.12] text-zinc-100 text-xs font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 shadow-md">
             <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
             <span>{toastMessage}</span>
           </div>
         )}
 
-        {/* VIEW 1: Main iOS / Android Dark Mode Share Sheet */}
+        {/* VIEW 1: Main Flagship Obsidian Share Sheet */}
         {activeView === "sheet" && (
-          <div className="p-4 sm:p-5 flex flex-col space-y-3.5 animate-in fade-in duration-150">
+          <div className="p-4 sm:p-5 flex flex-col space-y-4 animate-in fade-in duration-150">
             {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
-            <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
+            <div className="relative w-full rounded-2xl overflow-hidden border border-white/[0.1] bg-[#050506] shadow-xl select-none group">
               {propIsCreatorProfile || (!isVideoMode && !isBusiness && !propIsBusinessProfile) ? (
                 /* DEDICATED USER / REVIEWER PROFILE CARD (Single clean author squircle on bottom, matching profile header & banner) */
                 <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
@@ -1015,7 +1015,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                                       className="absolute inset-0 overflow-hidden" 
                                       style={{ width: `${Math.round(fillAmount * 100)}%` }}
                                     >
-                                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400 shrink-0" />
+                                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#E8C78A] fill-[#E8C78A] shrink-0" />
                                     </div>
                                   )}
                                 </div>
@@ -1043,9 +1043,9 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
                   {/* TOP BAR: Place pill with Business Logo, Place Name, Rating & Reviews Count */}
                   <div className="absolute top-2.5 left-2.5 z-10 flex items-center max-w-[96%] pointer-events-none">
-                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-lg min-w-0">
+                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/70 backdrop-blur-xl border border-white/[0.15] shadow-lg min-w-0">
                       {/* Business Squircle Logo Container with crisp white framing */}
-                      <div className="w-9 h-9 rounded-xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-xs">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-xs">
                         <CopoBrandLogo
                           domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
                           name={title}
@@ -1059,13 +1059,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                       {/* Text Column */}
                       <div className="flex flex-col min-w-0 justify-center pr-0.5">
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
+                          <span className="text-white text-xs sm:text-[13px] font-semibold whitespace-nowrap leading-tight">{title}</span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
                         <div className="flex items-center gap-1 leading-tight mt-0.5 whitespace-nowrap">
-                          <span className="text-amber-400 text-xs font-black">★</span>
-                          <span className="text-amber-400 text-xs font-bold">{placeStats.scoreStr}</span>
-                          <span className="text-white text-[11px] font-bold ml-0.5">
+                          <span className="text-[#E8C78A] text-xs font-bold">★</span>
+                          <span className="text-[#E8C78A] text-xs font-semibold">{placeStats.scoreStr}</span>
+                          <span className="text-zinc-300 text-[11px] font-medium ml-0.5">
                             ({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})
                           </span>
                         </div>
@@ -1076,8 +1076,8 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   {/* BOTTOM BAR: Author Info (Sleek Compact 2-Row: By Name, 5 Stars) */}
                   <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
                     {isVideoMode && video ? (
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/35 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/70 backdrop-blur-xl border border-white/[0.15] shadow-xl min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/25 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
                           <img
                             src={getSafeAvatarUrl(resolvedAvatarUrl, resolvedAuthorName, safeAuthor?.handle)}
                             alt={resolvedAuthorName}
@@ -1091,7 +1091,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         <div className="flex flex-col min-w-0 justify-center pr-0.5">
                           {/* Line 1: By AuthorName + Passkey Verified badge */}
                           <div className="flex items-center gap-1 min-w-0">
-                            <span className="text-white text-xs font-bold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
+                            <span className="text-white text-xs font-semibold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
                             {isAuthorPasskeyVerified && (
                               <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                             )}
@@ -1102,7 +1102,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                               {[1, 2, 3, 4, 5].map((starIdx) => (
                                 <span
                                   key={starIdx}
-                                  className={`text-[11px] ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-amber-400 font-black' : 'text-zinc-600'}`}
+                                  className={`text-[11px] ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-[#E8C78A]' : 'text-zinc-600'}`}
                                 >
                                   ★
                                 </span>
@@ -1126,22 +1126,22 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             </div>
 
             {/* Hairline Divider */}
-            <div className="border-t border-zinc-800/80 -mx-4 sm:-mx-5" />
+            <div className="border-t border-white/[0.07] -mx-4 sm:-mx-5" />
 
-            {/* Row 1: APPS Shelf (Horizontal Scroll of Squircles) */}
+            {/* Row 1: APPS Shelf (Evenly spaced non-clipped horizontal scroll) */}
             <div>
-              <div className="flex items-start gap-4 overflow-x-auto no-scrollbar py-1 px-1">
+              <div className="flex items-start gap-3 overflow-x-auto no-scrollbar py-1 px-0.5">
                 {primaryShelfApps.map((app) => (
                   <button
                     key={app.id}
                     type="button"
                     onClick={app.onClick}
-                    className="flex flex-col items-center group cursor-pointer shrink-0 w-16 focus:outline-hidden"
+                    className="flex flex-col items-center group cursor-pointer shrink-0 w-[68px] focus:outline-hidden"
                   >
-                    <div className={`w-14 h-14 rounded-[18px] flex items-center justify-center shadow-md transition-all group-hover:scale-105 active:scale-95 ${app.bgClass}`}>
+                    <div className={`w-13 h-13 rounded-[16px] flex items-center justify-center shadow-md transition-all group-hover:scale-105 active:scale-95 ${app.bgClass}`}>
                       {app.icon}
                     </div>
-                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
+                    <span className="text-[11px] text-zinc-400 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
                       {app.name}
                     </span>
                   </button>
@@ -1150,22 +1150,22 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             </div>
 
             {/* Hairline Divider */}
-            <div className="border-t border-zinc-800/80 -mx-4 sm:-mx-5" />
+            <div className="border-t border-white/[0.07] -mx-4 sm:-mx-5" />
 
-            {/* Row 2: ACTION BUTTONS (Horizontal Scroll of Circular Buttons) */}
+            {/* Row 2: ACTION BUTTONS (Evenly distributed 5-column glass circles) */}
             <div>
-              <div className="flex items-start gap-4 overflow-x-auto no-scrollbar py-1 px-1">
+              <div className="grid grid-cols-5 gap-2 py-1">
                 {actionButtons.map((action) => (
                   <button
                     key={action.id}
                     type="button"
                     onClick={action.onClick}
-                    className="flex flex-col items-center group cursor-pointer shrink-0 w-16 focus:outline-hidden"
+                    className="flex flex-col items-center group cursor-pointer focus:outline-hidden"
                   >
-                    <div className={`w-13 h-13 rounded-full border flex items-center justify-center transition-all shadow-xs group-hover:scale-105 active:scale-95 ${action.circleClass}`}>
+                    <div className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all group-hover:scale-105 active:scale-95 ${action.circleClass}`}>
                       {action.icon}
                     </div>
-                    <span className="text-[11px] text-zinc-300 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
+                    <span className="text-[11px] text-zinc-400 group-hover:text-white font-medium whitespace-nowrap text-center mt-1.5 transition-colors tracking-tight">
                       {action.name}
                     </span>
                   </button>
@@ -1173,12 +1173,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               </div>
             </div>
 
-            {/* Hairline Divider & Bottom Done Button */}
-            <div className="pt-2">
+            {/* Bottom Done Button */}
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/70 text-zinc-100 hover:text-white font-medium text-xs transition-colors cursor-pointer text-center"
+                className="w-full py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.1] text-zinc-200 hover:text-white font-medium text-xs transition-colors cursor-pointer text-center"
               >
                 {t("common.done", "Done")}
               </button>

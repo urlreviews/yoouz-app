@@ -45,7 +45,7 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
   return (
     <div
       id="copo-legal-modal-backdrop"
-      className="fixed inset-0 z-[400] bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[400] bg-black/75 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -54,31 +54,31 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
           transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : undefined,
           transition: dragOffsetY === 0 ? "transform 0.2s ease-out" : "none"
         }}
-        className="bg-zinc-900 rounded-none sm:rounded-3xl max-w-3xl w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col shadow-2xl border-0 sm:border border-zinc-800 overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-150 text-white"
+        className="bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-none sm:rounded-[28px] max-w-3xl w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col shadow-[0_24px_80px_rgba(0,0,0,0.9)] border-0 sm:border border-white/[0.1] overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-150 text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Drag Indicator Pill for Mobile (Signature Top Black/Dark Line like Comments) */}
+        {/* Top Drag Indicator Pill for Mobile */}
         <div 
           className="h-8 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing sm:hidden touch-none"
           {...swipeProps}
         >
-          <div className="w-12 h-1.5 rounded-full bg-zinc-700" />
+          <div className="w-11 h-1 rounded-full bg-white/20" />
         </div>
 
         {/* Modal Header */}
         <div 
-          className="px-6 pt-2 sm:pt-4 pb-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950 shrink-0 touch-pan-y"
+          className="px-6 pt-2 sm:pt-4 pb-4 border-b border-white/[0.08] flex items-center justify-between bg-[#08080b]/80 shrink-0 touch-pan-y"
           {...swipeProps}
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white shrink-0">
               <Scale className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-white font-['Google_Sans',sans-serif]">
+              <h2 className="text-base sm:text-lg font-bold text-white font-['Google_Sans',sans-serif]">
                 {t("legal.title", "Yoouz Legal & Compliance")}
               </h2>
-              <p className="text-[11px] text-zinc-200 font-medium">
+              <p className="text-[11px] text-zinc-400 font-medium">
                 {t("legal.jurisdiction", "Governing Compliance & Data Protection")}
               </p>
             </div>
@@ -87,39 +87,39 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
           <button
             id="copo-legal-modal-close-btn"
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-zinc-800 hidden sm:flex items-center justify-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.09] hidden sm:flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer"
             aria-label={t("common.close", "Close")}
             title={t("common.close", "Close")}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="px-6 pt-3 pb-2 bg-zinc-950/80 border-b border-zinc-800 flex items-center gap-2 shrink-0">
+        <div className="px-6 py-3 bg-[#08080b]/60 border-b border-white/[0.08] flex items-center gap-2 shrink-0">
           <button
             id="copo-legal-terms-tab-btn"
             onClick={() => setActiveTab("terms")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer border ${
               activeTab === "terms"
-                ? "bg-zinc-800 text-white shadow-xs border border-zinc-700"
-                : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                ? "bg-white text-zinc-950 border-white shadow-xs"
+                : "bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] border-white/[0.08]"
             }`}
           >
-            <FileText className="w-4 h-4 text-white" />
+            <FileText className="w-3.5 h-3.5" />
             <span>{t("legal.termsTab", "Terms & Conditions")}</span>
           </button>
 
           <button
             id="copo-legal-privacy-tab-btn"
             onClick={() => setActiveTab("privacy")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer border ${
               activeTab === "privacy"
-                ? "bg-zinc-800 text-white shadow-xs border border-zinc-700"
-                : "text-zinc-200 hover:text-white hover:bg-zinc-900"
+                ? "bg-white text-zinc-950 border-white shadow-xs"
+                : "bg-white/[0.04] text-zinc-300 hover:text-white hover:bg-white/[0.08] border-white/[0.08]"
             }`}
           >
-            <ShieldCheck className="w-4 h-4 text-white" />
+            <ShieldCheck className="w-3.5 h-3.5" />
             <span>{t("legal.privacyTab", "Privacy Policy")}</span>
           </button>
         </div>
@@ -392,13 +392,13 @@ export const CopoLegalModal: React.FC<CopoLegalModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between text-xs text-zinc-200 shrink-0">
-          <span className="font-semibold text-[11px] text-zinc-200">
+        <div className="px-6 py-3.5 border-t border-white/[0.08] bg-[#08080b]/80 flex items-center justify-between text-xs text-zinc-400 shrink-0">
+          <span className="font-medium text-[11px] text-zinc-400">
             {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved.")}
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs transition-colors cursor-pointer"
+            className="px-5 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] text-white font-semibold text-xs transition-colors cursor-pointer"
           >
             {t("common.close", "Close")}
           </button>

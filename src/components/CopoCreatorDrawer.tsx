@@ -1159,7 +1159,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         id="google-maps-creator-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[350px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-zinc-950 md:bg-zinc-900 text-white md:text-white flex flex-col shadow-none md:shadow-lg border-r border-zinc-800 md:border-zinc-800 shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform"
+        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[360px] lg:w-[430px] h-[100dvh] md:h-[100dvh] max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform"
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1192,7 +1192,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-zinc-950 touch-pan-y"
+          className="relative h-48 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Top-Left Back Button (Both Desktop & Mobile) */}
           <button
@@ -1274,7 +1274,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </button>
 
               {isSettingsMenuOpen && (
-                <div className="absolute right-0 top-11 w-56 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 top-11 w-56 bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/[0.1] py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                   {isOwner ? (
                     <>
                       <button
@@ -1375,7 +1375,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           )}
 
           {/* Overlapping Creator Avatar - Exact squircle shape and styling matching Business Profile Logo */}
-          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-zinc-950 md:border-zinc-800 bg-zinc-900 shadow-2xl flex items-center justify-center z-20 p-2 sm:p-3 ring-1 ring-white/15 overflow-hidden group">
+          <div className="absolute -bottom-10 sm:-bottom-12 left-6 w-24 h-24 sm:w-32 sm:h-32 rounded-[24px] sm:rounded-[28px] border-[4px] sm:border-[5px] border-[#050506] bg-[#121216] shadow-2xl flex items-center justify-center z-20 p-1.5 sm:p-2 ring-1 ring-white/[0.12] overflow-hidden group">
             {!avatarImgError ? (() => {
               const creatorAvatarSrc = getSafeAvatarUrl(effectiveAvatar, displayName, author.handle);
               return (
@@ -1414,24 +1414,24 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         </div>
 
         {/* Creator Details Header */}
-        <div className="px-6 pt-14 pb-3 bg-zinc-950 md:bg-zinc-900">
+        <div className="px-6 pt-14 pb-3 bg-[#050506]">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="min-w-0 flex-1 pr-2">
-              <h2 className="text-2xl font-bold text-white tracking-tight leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap" dir="auto">
+              <h2 className="text-2xl font-semibold text-white tracking-[-0.03em] leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap font-['Google_Sans',sans-serif]" dir="auto">
                 <bdi dir="auto">{displayName || ""}</bdi>
                 {isPasskeyProtected && (
                   <span title="Verified Reviewer (Passkey Protected)" className="inline-flex shrink-0">
-                    <CheckCircle className="w-5 h-5 fill-white text-zinc-950 shrink-0" />
+                    <CheckCircle className="w-5 h-5 fill-white text-[#050506] shrink-0" />
                   </span>
                 )}
                 {isOwner && !isPasskeyProtected && (
                   <button
                     type="button"
                     onClick={handleRegisterPasskeyInline}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 text-[11px] font-bold tracking-normal cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8C78A]/12 hover:bg-[#E8C78A]/20 border border-[#E8C78A]/30 text-[#E8C78A] text-[11px] font-semibold tracking-normal cursor-pointer transition-colors"
                     title="Save a passkey to back up your account"
                   >
-                    <KeyRound className="w-3 h-3 text-white shrink-0" />
+                    <KeyRound className="w-3 h-3 text-[#E8C78A] shrink-0" />
                     <span>Save Passkey</span>
                   </button>
                 )}
@@ -1442,10 +1442,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             {!isOwner && (
               <button
                 onClick={() => onToggleFollow(author.name)}
-                className={`px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0 border ${
+                className={`px-4 py-2 rounded-full font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 border ${
                   isFollowed
-                    ? "bg-zinc-800 text-zinc-100 border-zinc-700 hover:bg-zinc-700"
-                    : "bg-white text-zinc-950 hover:bg-zinc-200 border-white"
+                    ? "bg-white/[0.06] text-zinc-100 border-white/[0.12] hover:bg-white/[0.12]"
+                    : "bg-white text-zinc-950 hover:bg-zinc-200 border-white shadow-[0_4px_16px_rgba(255,255,255,0.12)]"
                 }`}
               >
                 {isFollowed ? (
@@ -1522,13 +1522,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
         </div>
 
-        {/* Google Maps Tabs: Overview | Reviews | About */}
-        <div className="flex items-center border-b border-zinc-800 bg-zinc-950 px-5 text-sm font-semibold text-zinc-200 shrink-0">
+        {/* Tabs: Overview | Reviews | About */}
+        <div className="flex items-center border-b border-white/[0.07] bg-[#050506] px-5 text-sm font-medium text-zinc-400 shrink-0">
           <button
             onClick={() => handleTabClick("overview")}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
               activeTab === "overview"
-                ? "border-white text-white font-bold"
+                ? "border-white text-white font-semibold"
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
@@ -1538,12 +1538,12 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             onClick={() => handleTabClick("reviews")}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
               activeTab === "reviews"
-                ? "border-white text-white font-bold"
+                ? "border-white text-white font-semibold"
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
             <span>{t("common.photoReviews", "Reviews")}</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-700">
+            <span className="px-1.5 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
               {authorVideos.length}
             </span>
           </button>
@@ -1551,7 +1551,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             onClick={() => handleTabClick("about")}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer ${
               activeTab === "about"
-                ? "border-white text-white font-bold"
+                ? "border-white text-white font-semibold"
                 : "border-transparent hover:text-zinc-200"
             }`}
           >
@@ -1563,34 +1563,34 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-zinc-800 bg-zinc-950 focus:outline-none scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent" 
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain divide-y divide-white/[0.06] bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
-            <div className="divide-y divide-zinc-800">
+            <div className="divide-y divide-white/[0.06]">
               {/* Action Buttons Row */}
-              <div className="px-3 sm:px-5 py-3.5 flex items-center justify-between sm:justify-around text-center bg-zinc-900/60 border-b border-zinc-800 gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+              <div className="px-3 sm:px-5 py-4 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
                       isSaved
-                        ? "bg-white text-zinc-950"
-                        : "bg-zinc-800 text-zinc-200 border border-zinc-700 group-hover:bg-zinc-700"
+                        ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
+                        : "bg-white/[0.05] text-zinc-100 border-white/[0.09] group-hover:bg-white/[0.11]"
                     }`}
                   >
                     {isSaved ? (
-                      <BookmarkCheck className="w-5 h-5 fill-zinc-950" />
+                      <BookmarkCheck className="w-[18px] h-[18px] fill-current" />
                     ) : (
-                      <Bookmark className="w-5 h-5" />
+                      <Bookmark className="w-[18px] h-[18px] stroke-[1.9]" />
                     )}
                   </div>
-                  <span className="font-semibold text-[11px] text-zinc-200">
+                  <span className="font-medium text-[11px]">
                     {isSaved ? t("profile.saved", "Saved") : t("profile.save", "Save")}
                   </span>
                 </button>
@@ -1601,13 +1601,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     triggerHaptic("light");
                     handleTabClick("reviews");
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.viewPhotoReviews", "View Photo Reviews")}
                 >
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                    <Camera className="w-5 h-5 text-zinc-200" />
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                    <Camera className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-semibold text-[11px] text-zinc-200">{t("place.reviews", "Photo Reviews")}</span>
+                  <span className="font-medium text-[11px]">{t("place.reviews", "Reviews")}</span>
                 </button>
 
                 <button
@@ -1616,13 +1616,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                   title={t("profile.shareProfile", "Share Profile")}
                 >
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                    <Share2 className="w-5 h-5 text-zinc-200" />
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                    <Share2 className="w-[18px] h-[18px] stroke-[1.9]" />
                   </div>
-                  <span className="font-semibold text-[11px] text-zinc-200">{t("common.share", "Share")}</span>
+                  <span className="font-medium text-[11px]">{t("common.share", "Share")}</span>
                 </button>
 
                 {!isOwner && onStartChat && (
@@ -1632,13 +1632,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       triggerHaptic("light");
                       onStartChat(author.userId || author.id || author.name, displayName, effectiveAvatar);
                     }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-200 hover:text-white hover:scale-105 transition-transform group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
                     title={t("common.chat", "Message")}
                   >
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 text-zinc-200 flex items-center justify-center shadow-md border border-zinc-700">
-                      <MessageSquare className="w-5 h-5 text-zinc-200" />
+                    <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] text-zinc-100 flex items-center justify-center border border-white/[0.09]">
+                      <MessageSquare className="w-[18px] h-[18px] stroke-[1.9]" />
                     </div>
-                    <span className="font-semibold text-[11px] text-zinc-200">{t("common.chat", "Message")}</span>
+                    <span className="font-medium text-[11px]">{t("common.chat", "Message")}</span>
                   </button>
                 )}
               </div>
@@ -1646,23 +1646,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* Badges & Status Section */}
               <div className="p-5 space-y-3">
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.avgRatingGiven", "Average Rating Given")}</span>
-                    <span className="text-sm font-black text-white flex items-center gap-1">
+                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[10.5px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Average Rating")}</span>
+                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
                       {avgRating !== "—" ? (
                         <>
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <Star className="w-4 h-4 fill-[#E8C78A] text-[#E8C78A]" />
                           <span>{avgRating}</span>
-                          <span className="text-zinc-400 text-xs font-normal">/ 5.0</span>
+                          <span className="text-zinc-500 text-xs font-normal">/ 5.0</span>
                         </>
                       ) : (
                         <span className="text-zinc-400 font-semibold">—</span>
                       )}
                     </span>
                   </div>
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">{t("profile.totalReviews", "Total Reviews")}</span>
-                    <span className="text-sm font-black text-white flex items-center gap-1">
+                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[10.5px] font-medium text-zinc-400 block mb-1">{t("profile.totalReviews", "Total Reviews")}</span>
+                    <span className="text-sm font-semibold text-white flex items-center gap-1.5">
                       <Camera className="w-4 h-4 text-zinc-400" />
                       <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.photo", "Photo") : t("feed.photos", "Photos")}</span>
                     </span>
@@ -1673,22 +1673,22 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               {/* Photo Reviews Preview Section */}
               <div className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-                    <Camera className="w-4 h-4 text-zinc-200" />
+                  <h3 className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-zinc-400" />
                     <span>{t("place.reviews", "Photo Reviews")} ({authorVideos.length})</span>
                   </h3>
                   {authorVideos.length > 0 && (
                     <button
                       onClick={() => handleTabClick("reviews")}
-                      className="text-xs font-bold text-zinc-200 hover:text-white hover:underline cursor-pointer"
+                      className="text-xs font-medium text-zinc-400 hover:text-white cursor-pointer transition-colors"
                     >
-                      {t("common.seeAll", "See all")} ({authorVideos.length})
+                      {t("common.seeAll", "See all")}
                     </button>
                   )}
                 </div>
 
                 {authorVideos.length === 0 ? (
-                  <div className="bg-zinc-900/60 rounded-2xl p-6 text-center border border-zinc-800 text-zinc-300 text-xs">
+                  <div className="bg-white/[0.02] rounded-2xl p-6 text-center border border-white/[0.08] text-zinc-400 text-xs">
                     {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
                   </div>
                 ) : (
@@ -1702,10 +1702,10 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         <div
                           key={v.id}
                           onClick={() => onSelectVideo(v.id)}
-                          className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-zinc-800 ${
+                          className={`relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-white/[0.08] ${
                             isCurrentActive
                               ? "ring-2 ring-white"
-                              : "hover:opacity-90 hover:ring-zinc-600"
+                              : "hover:opacity-95 hover:ring-white/[0.2]"
                           }`}
                         >
                           <CopoVideoThumbnail
@@ -1713,9 +1713,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             alt={v.placeName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
-                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
-                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
+                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
+                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                             <span>{getRoundedRating(v.rating || 5)}</span>
                           </div>
                           {/* Bottom Meta Info - Business Name & Views */}
@@ -1773,8 +1773,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 pointer-events-none" />
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-black text-white flex items-center gap-0.5 shadow-xs">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
+                          <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                           <span>{getRoundedRating(v.rating || 5)}</span>
                         </div>
                         {onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(v, currentUser))) && (

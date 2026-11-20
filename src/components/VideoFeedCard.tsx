@@ -359,18 +359,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className={`${
             isDesktop
-              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
-              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+              ? "w-12 h-12 bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22]"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/40 hover:bg-black/75"
           } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
           title={t("video.like", "Like")}
         >
           <Heart
             className={`w-5 h-5 md:w-5.5 md:h-5.5 transition-colors ${
-              video.isLiked ? "fill-[#ff2d55] text-[#ff2d55] drop-shadow-sm" : "text-white fill-none stroke-[2]"
+              video.isLiked ? "fill-[#ff2d55] text-[#ff2d55] drop-shadow-sm" : "text-white fill-none stroke-[1.9]"
             }`}
           />
         </button>
-        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {typeof video.likesCount === "number" ? video.likesCount : typeof video.likes === "number" ? video.likes : 0}
         </span>
       </div>
@@ -385,14 +385,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className={`${
             isDesktop
-              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
-              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+              ? "w-12 h-12 bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22]"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/40 hover:bg-black/75"
           } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
           title={t("video.comments", "Comments")}
         >
-          <MessageCircle className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[2]" />
+          <MessageCircle className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[1.9]" />
         </button>
-        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {(() => {
             let delSet = new Set<string>();
             try {
@@ -435,18 +435,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className={`${
             isDesktop
-              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
-              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+              ? "w-12 h-12 bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22]"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/40 hover:bg-black/75"
           } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
           title={t("video.save", "Save Review")}
         >
           <Bookmark
             className={`w-5 h-5 md:w-5.5 md:h-5.5 transition-colors ${
-              video.isBookmarked ? "fill-amber-400 text-amber-400 drop-shadow-sm" : "text-white fill-none stroke-[2]"
+              video.isBookmarked ? "fill-[#E8C78A] text-[#E8C78A] drop-shadow-sm" : "text-white fill-none stroke-[1.9]"
             }`}
           />
         </button>
-        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {typeof video.bookmarksCount === "number"
             ? video.bookmarksCount
             : typeof (video as any).bookmarks === "number"
@@ -465,14 +465,14 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           }}
           className={`${
             isDesktop
-              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
-              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+              ? "w-12 h-12 bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22]"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/40 hover:bg-black/75"
           } rounded-full backdrop-blur-xl border flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-xl cursor-pointer`}
           title={t("video.shareReview", "Share Photo Review")}
         >
-          <Share2 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[2]" />
+          <Share2 className="w-5 h-5 md:w-5.5 md:h-5.5 text-white stroke-[1.9]" />
         </button>
-        <span className={`text-[11.5px] font-extrabold mt-1 tracking-tight ${isDesktop ? "text-zinc-200" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {video.sharesCount || video.shares || 0}
         </span>
       </div>
@@ -490,12 +490,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           onTouchStart={(e) => e.stopPropagation()}
           className={`${
             isDesktop
-              ? "w-12 h-12 bg-zinc-800/90 hover:bg-zinc-700/90 border-zinc-700/60 hover:border-zinc-500/80"
-              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/50 hover:bg-black/75"
+              ? "w-12 h-12 bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22]"
+              : "w-10 h-10 sm:w-11 sm:h-11 bg-black/50 border-white/20 hover:border-white/40 hover:bg-black/75"
           } rounded-full backdrop-blur-xl border flex items-center justify-center hover:scale-110 transition-all active:scale-90 text-white cursor-pointer touch-manipulation shadow-xl relative z-50 pointer-events-auto`}
           title={t("video.moreOptions", "More options")}
         >
-          <MoreHorizontal className="w-5 h-5 md:w-5.5 md:h-5.5 stroke-[2] text-white" />
+          <MoreHorizontal className="w-5 h-5 md:w-5.5 md:h-5.5 stroke-[1.9] text-white" />
         </button>
       </div>
     </>
@@ -532,10 +532,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
           id={`copo-video-card-${video.id}`}
           className={`relative bg-black select-none flex flex-col justify-end group overflow-hidden ${
             isEmbed
-              ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-2xl border border-zinc-800/90 mx-auto"
+              ? "w-auto h-full max-h-full aspect-[9/16] max-w-[min(460px,100%)] rounded-[24px] shadow-[0_24px_80px_rgba(0,0,0,0.85)] border border-white/[0.1] mx-auto"
               : commentsOpen
-              ? "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-204px))] md:aspect-[9/16] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
-              : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(480px,calc(min(93cqh,860px)*9/16),calc(100cqw-136px))] md:aspect-[9/16] md:rounded-[24px] md:shadow-2xl md:border md:border-zinc-800/90"
+              ? "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(470px,calc(min(92cqh,840px)*9/16),calc(100cqw-204px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
+              : "w-full h-full min-h-full max-h-full md:min-h-0 md:max-h-none md:h-auto md:w-[min(480px,calc(min(93cqh,860px)*9/16),calc(100cqw-136px))] md:aspect-[9/16] md:rounded-[26px] md:shadow-[0_24px_80px_rgba(0,0,0,0.85)] md:border md:border-white/[0.1]"
           }`}
         >
           {/* Full-Frame Live Photo */}
@@ -655,7 +655,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   onOpenPlace(targetPlaceId, video.id);
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/90 backdrop-blur-2xl border border-white/20 hover:border-white/40 text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
+                className="flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-2xl sm:rounded-3xl bg-black/60 hover:bg-black/78 backdrop-blur-2xl border border-white/[0.14] hover:border-white/[0.28] text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-2xl active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
               >
                 {(() => {
                   const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
@@ -673,12 +673,12 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                         bannerUrl={businessBannerUrl || video.placeBannerUrl}
                         loading="eager"
                         fetchPriority={isActive || isNear ? "high" : "auto"}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white border border-white/30 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
                         imageClassName="w-full h-full object-contain rounded-lg sm:rounded-xl"
                         fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
                       />
                       <div className="min-w-0 flex-1 py-0.5">
-                        <span className="leading-snug font-black text-[12.5px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
+                        <span className="leading-snug font-semibold text-[13px] sm:text-[13.5px] text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
                           {(() => {
                             const fullName = (cardName || "").trim();
                             const words = fullName.split(/\s+/);
@@ -696,8 +696,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                           })()}
                         </span>
                         {!isEmbed && (
-                          <div className="flex items-center gap-1 text-[10px] text-amber-400 font-extrabold leading-none mt-0.5">
-                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                          <div className="flex items-center gap-1 text-[10.5px] text-[#E8C78A] font-semibold leading-none mt-0.5">
+                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />
                             <span>{effectiveRating}</span>
                             <span className="text-zinc-300 font-normal">
                               ({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})
@@ -742,7 +742,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             <footer
               id={`copo-video-bottom-info-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl sm:rounded-3xl bg-black/75 hover:bg-black/85 backdrop-blur-2xl border border-white/20 text-white shadow-2xl transition-all"
+              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl sm:rounded-3xl bg-black/60 hover:bg-black/75 backdrop-blur-2xl border border-white/[0.14] text-white shadow-2xl transition-all"
             >
               <div className="flex flex-col gap-1 min-w-0">
                 {/* Line 1: Reviewer Anonymous ID / Username + Verified Badge + Timestamp */}
@@ -753,7 +753,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                       e.stopPropagation();
                       onOpenCreator(safeAuthor);
                     }}
-                    className="font-black text-white text-[13px] sm:text-[13.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit max-w-full outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
+                    className="font-semibold text-white text-[13px] sm:text-[13.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit max-w-full outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
                     title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
                   >
                     <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
@@ -763,8 +763,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   </button>
                   {(video.recordedAt || video.createdAtMs) && (
                     <>
-                      <span className="text-zinc-400 text-[11px] select-none">•</span>
-                      <span className="text-zinc-300 text-[11px] sm:text-[11.5px] font-semibold whitespace-nowrap">
+                      <span className="text-zinc-500 text-[11px] select-none">•</span>
+                      <span className="text-zinc-300 text-[11px] sm:text-[11.5px] font-medium whitespace-nowrap">
                         {formatRecordedDate(video.recordedAt, video.createdAtMs)}
                       </span>
                     </>
@@ -776,8 +776,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   <CopoStarRating
                     rating={wholeStarScore}
                     starClassName="w-3.5 h-3.5"
-                    filledColorClass="fill-amber-400 text-amber-400 drop-shadow-sm"
-                    emptyColorClass="fill-zinc-700/70 text-zinc-400/70"
+                    filledColorClass="fill-[#E8C78A] text-[#E8C78A] drop-shadow-sm"
+                    emptyColorClass="fill-white/10 text-white/20"
                   />
                   {cleanDomain && (
                     <button
