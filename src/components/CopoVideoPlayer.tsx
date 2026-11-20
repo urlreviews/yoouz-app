@@ -1048,16 +1048,14 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ref={mainRef}
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
-      className={`w-full flex-1 min-h-0 h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:[container-type:size] md:transition-all md:duration-200 ${
-        commentsOpen ? "md:mr-[420px] md:pl-3 md:pr-6 lg:pl-4 lg:pr-8" : "md:mr-0"
+      className={`self-start flex-1 min-h-0 h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:[container-type:size] md:transition-[width,padding] md:duration-200 ${
+        commentsOpen
+          ? "w-full md:w-[calc(100%-420px)] md:pl-3 md:pr-16 lg:pl-4 lg:pr-[72px]"
+          : "w-full"
       } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-[#050506]"}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div
-        className={`w-full h-full min-h-0 flex items-center justify-center relative ${
-          commentsOpen ? "md:gap-3 lg:gap-4" : ""
-        }`}
-      >
+      <div className="w-full h-full min-h-0 flex items-center justify-center relative">
         {/* Scroll Snap Feed Container (Strict 100% height slides on both mobile & desktop) */}
         <div
           ref={containerRef}
@@ -1128,54 +1126,54 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
             );
           })}
         </div>
-
-        {/* Floating Up/Down Navigation Buttons (Desktop Only) */}
-        {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
-          const isAtFirstPhoto = activeCardIndex <= 0;
-          const isAtLastPhoto = activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
-
-          return (
-            <div
-              id="copo-floating-nav-buttons"
-              className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 z-50 fixed top-1/2 -translate-y-1/2 transition-all duration-200 ${
-                commentsOpen
-                  ? "right-[440px] lg:right-[452px]"
-                  : "right-4 lg:right-8"
-              }`}
-            >
-              <button
-                id="btn-scroll-prev-video"
-                onClick={handlePrev}
-                disabled={isAtFirstPhoto}
-                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtFirstPhoto
-                    ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
-                    : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
-                }`}
-                title={isAtFirstPhoto ? "First Review" : "Previous Review (Up Arrow)"}
-                aria-label="Previous Review"
-              >
-                <ChevronUp className="w-5.5 h-5.5 stroke-[2]" />
-              </button>
-
-              <button
-                id="btn-scroll-next-video"
-                onClick={handleNext}
-                disabled={isAtLastPhoto}
-                className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
-                  isAtLastPhoto
-                    ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
-                    : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
-                }`}
-                title={isAtLastPhoto ? "Last Review" : "Next Review (Down Arrow)"}
-                aria-label="Next Review"
-              >
-                <ChevronDown className="w-5.5 h-5.5 stroke-[2]" />
-              </button>
-            </div>
-          );
-        })()}
       </div>
+
+      {/* Floating Up/Down Navigation Buttons (Desktop Only — anchored cleanly inside stage right gutter) */}
+      {!hideFloatingNav && effectiveVideos.length > 0 && (() => {
+        const isAtFirstPhoto = activeCardIndex <= 0;
+        const isAtLastPhoto = activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
+
+        return (
+          <div
+            id="copo-floating-nav-buttons"
+            className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 z-40 absolute top-1/2 -translate-y-1/2 transition-all duration-200 ${
+              commentsOpen
+                ? "right-3 lg:right-4"
+                : "right-4 lg:right-8"
+            }`}
+          >
+            <button
+              id="btn-scroll-prev-video"
+              onClick={handlePrev}
+              disabled={isAtFirstPhoto}
+              className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
+                isAtFirstPhoto
+                  ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                  : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
+              }`}
+              title={isAtFirstPhoto ? "First Review" : "Previous Review (Up Arrow)"}
+              aria-label="Previous Review"
+            >
+              <ChevronUp className="w-5.5 h-5.5 stroke-[2]" />
+            </button>
+
+            <button
+              id="btn-scroll-next-video"
+              onClick={handleNext}
+              disabled={isAtLastPhoto}
+              className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full backdrop-blur-xl border flex items-center justify-center transition-all shadow-2xl ${
+                isAtLastPhoto
+                  ? "bg-white/[0.03] border-white/[0.06] text-zinc-600 cursor-not-allowed"
+                  : "bg-white/[0.06] hover:bg-white/[0.13] border-white/[0.1] hover:border-white/[0.22] text-white hover:scale-105 active:scale-95 cursor-pointer"
+              }`}
+              title={isAtLastPhoto ? "Last Review" : "Next Review (Down Arrow)"}
+              aria-label="Next Review"
+            >
+              <ChevronDown className="w-5.5 h-5.5 stroke-[2]" />
+            </button>
+          </div>
+        );
+      })()}
 
       {/* More Options Modal */}
       {moreMenuVideo && (
