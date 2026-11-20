@@ -76,7 +76,7 @@ export const preloadImage = (url: string | null | undefined, priority: 'high' | 
       if ('fetchPriority' in img) {
         (img as any).fetchPriority = priority;
       }
-      img.decoding = 'sync';
+      img.decoding = 'async';
 
       // Enforce bounded LRU-style cache size
       if (cache.size >= MAX_PINNED_IMAGES && !cache.has(clean)) {

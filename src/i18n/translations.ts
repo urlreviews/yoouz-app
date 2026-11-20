@@ -1,78 +1,5 @@
-import { nl } from "./locales/nl";
-import { ja } from "./locales/ja";
-import { ko } from "./locales/ko";
-import { tr } from "./locales/tr";
-import { id } from "./locales/id";
-import { hi } from "./locales/hi";
-import { fr } from "./locales/fr";
-import { es } from "./locales/es";
-import { de } from "./locales/de";
-import { it } from "./locales/it";
-import { pt } from "./locales/pt";
-import { ru } from "./locales/ru";
-import { he } from "./locales/he";
-import { ar } from "./locales/ar";
-import { zh } from "./locales/zh";
-import { pl } from "./locales/pl";
-import { uk } from "./locales/uk";
-import { sv } from "./locales/sv";
-import { no } from "./locales/no";
-import { da } from "./locales/da";
-import { fi } from "./locales/fi";
-import { el } from "./locales/el";
-import { cs } from "./locales/cs";
-import { hu } from "./locales/hu";
-import { ro } from "./locales/ro";
-import { bg } from "./locales/bg";
-import { sk } from "./locales/sk";
-import { hr } from "./locales/hr";
-import { sr } from "./locales/sr";
-import { sl } from "./locales/sl";
-import { lt } from "./locales/lt";
-import { lv } from "./locales/lv";
-import { et } from "./locales/et";
-import { vi } from "./locales/vi";
-import { th } from "./locales/th";
-import { ms } from "./locales/ms";
-import { bn } from "./locales/bn";
-import { pa } from "./locales/pa";
-import { ta } from "./locales/ta";
-import { te } from "./locales/te";
-import { mr } from "./locales/mr";
-import { gu } from "./locales/gu";
-import { kn } from "./locales/kn";
-import { ml } from "./locales/ml";
-import { ur } from "./locales/ur";
-import { tl } from "./locales/tl";
-import { sw } from "./locales/sw";
-import { fa } from "./locales/fa";
-import { my } from "./locales/my";
-import { km } from "./locales/km";
-import { am } from "./locales/am";
-import { so } from "./locales/so";
-import { ha } from "./locales/ha";
-import { yo } from "./locales/yo";
-import { ig } from "./locales/ig";
-import { zu } from "./locales/zu";
-import { is } from "./locales/is";
-import { sq } from "./locales/sq";
-import { ga } from "./locales/ga";
-import { ca } from "./locales/ca";
-import { eu } from "./locales/eu";
-import { gl } from "./locales/gl";
-import { mt } from "./locales/mt";
-import { ka } from "./locales/ka";
-import { hy } from "./locales/hy";
-import { az } from "./locales/az";
-import { zhTW } from "./locales/zhTW";
-import { lo } from "./locales/lo";
-import { kk } from "./locales/kk";
-import { uz } from "./locales/uz";
-import { mn } from "./locales/mn";
-import { ne } from "./locales/ne";
-import { si } from "./locales/si";
-import { xh } from "./locales/xh";
-import { af } from "./locales/af";
+// Non-English locale dictionaries are dynamically loaded on demand via loadLocaleTranslations()
+// so initial English / landing boot stays tiny in both dev preview and production.
 
 export interface TranslationSchema {
   [key: string]: any;
@@ -1707,80 +1634,111 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       language_subtitle: "",
       search_languages_placeholder: "Search language..."
     }
-  },
-  ar,
-  es,
-  fr,
-  de,
-  it,
-  pt,
-  ru,
-  zh,
-  he,
-  pl,
-  ja,
-  ko,
-  hi,
-  tr,
-  nl,
-  id,
-  uk,
-  sv,
-  no,
-  da,
-  fi,
-  el,
-  cs,
-  hu,
-  ro,
-  bg,
-  sk,
-  hr,
-  sr,
-  sl,
-  lt,
-  lv,
-  et,
-  vi,
-  th,
-  ms,
-  bn,
-  pa,
-  ta,
-  te,
-  mr,
-  gu,
-  kn,
-  ml,
-  ur,
-  tl,
-  sw,
-  fa,
-  my,
-  km,
-  am,
-  so,
-  ha,
-  yo,
-  ig,
-  zu,
-  is,
-  sq,
-  ga,
-  ca,
-  eu,
-  gl,
-  mt,
-  ka,
-  hy,
-  az,
-  "zh-TW": zhTW,
-  lo,
-  kk,
-  uz,
-  mn,
-  ne,
-  si,
-  xh,
-  af
+  }
 };
+
+const LOCALE_LOADERS: Partial<Record<SupportedLanguage, () => Promise<TranslationSchema | undefined>>> = {
+  ar: () => import("./locales/ar").then((m) => m.ar),
+  es: () => import("./locales/es").then((m) => m.es),
+  fr: () => import("./locales/fr").then((m) => m.fr),
+  de: () => import("./locales/de").then((m) => m.de),
+  it: () => import("./locales/it").then((m) => m.it),
+  pt: () => import("./locales/pt").then((m) => m.pt),
+  ru: () => import("./locales/ru").then((m) => m.ru),
+  zh: () => import("./locales/zh").then((m) => m.zh),
+  he: () => import("./locales/he").then((m) => m.he),
+  pl: () => import("./locales/pl").then((m) => m.pl),
+  ja: () => import("./locales/ja").then((m) => m.ja),
+  ko: () => import("./locales/ko").then((m) => m.ko),
+  hi: () => import("./locales/hi").then((m) => m.hi),
+  tr: () => import("./locales/tr").then((m) => m.tr),
+  nl: () => import("./locales/nl").then((m) => m.nl),
+  id: () => import("./locales/id").then((m) => m.id),
+  uk: () => import("./locales/uk").then((m) => m.uk),
+  sv: () => import("./locales/sv").then((m) => m.sv),
+  no: () => import("./locales/no").then((m) => m.no),
+  da: () => import("./locales/da").then((m) => m.da),
+  fi: () => import("./locales/fi").then((m) => m.fi),
+  el: () => import("./locales/el").then((m) => m.el),
+  cs: () => import("./locales/cs").then((m) => m.cs),
+  hu: () => import("./locales/hu").then((m) => m.hu),
+  ro: () => import("./locales/ro").then((m) => m.ro),
+  bg: () => import("./locales/bg").then((m) => m.bg),
+  sk: () => import("./locales/sk").then((m) => m.sk),
+  hr: () => import("./locales/hr").then((m) => m.hr),
+  sr: () => import("./locales/sr").then((m) => m.sr),
+  sl: () => import("./locales/sl").then((m) => m.sl),
+  lt: () => import("./locales/lt").then((m) => m.lt),
+  lv: () => import("./locales/lv").then((m) => m.lv),
+  et: () => import("./locales/et").then((m) => m.et),
+  vi: () => import("./locales/vi").then((m) => m.vi),
+  th: () => import("./locales/th").then((m) => m.th),
+  ms: () => import("./locales/ms").then((m) => m.ms),
+  bn: () => import("./locales/bn").then((m) => m.bn),
+  pa: () => import("./locales/pa").then((m) => m.pa),
+  ta: () => import("./locales/ta").then((m) => m.ta),
+  te: () => import("./locales/te").then((m) => m.te),
+  mr: () => import("./locales/mr").then((m) => m.mr),
+  gu: () => import("./locales/gu").then((m) => m.gu),
+  kn: () => import("./locales/kn").then((m) => m.kn),
+  ml: () => import("./locales/ml").then((m) => m.ml),
+  ur: () => import("./locales/ur").then((m) => m.ur),
+  tl: () => import("./locales/tl").then((m) => m.tl),
+  sw: () => import("./locales/sw").then((m) => m.sw),
+  fa: () => import("./locales/fa").then((m) => m.fa),
+  my: () => import("./locales/my").then((m) => m.my),
+  km: () => import("./locales/km").then((m) => m.km),
+  am: () => import("./locales/am").then((m) => m.am),
+  so: () => import("./locales/so").then((m) => m.so),
+  ha: () => import("./locales/ha").then((m) => m.ha),
+  yo: () => import("./locales/yo").then((m) => m.yo),
+  ig: () => import("./locales/ig").then((m) => m.ig),
+  zu: () => import("./locales/zu").then((m) => m.zu),
+  is: () => import("./locales/is").then((m) => m.is),
+  sq: () => import("./locales/sq").then((m) => m.sq),
+  ga: () => import("./locales/ga").then((m) => m.ga),
+  ca: () => import("./locales/ca").then((m) => m.ca),
+  eu: () => import("./locales/eu").then((m) => m.eu),
+  gl: () => import("./locales/gl").then((m) => m.gl),
+  mt: () => import("./locales/mt").then((m) => m.mt),
+  ka: () => import("./locales/ka").then((m) => m.ka),
+  hy: () => import("./locales/hy").then((m) => m.hy),
+  az: () => import("./locales/az").then((m) => m.az),
+  "zh-TW": () => import("./locales/zhTW").then((m) => m.zhTW),
+  lo: () => import("./locales/lo").then((m) => m.lo),
+  kk: () => import("./locales/kk").then((m) => m.kk),
+  uz: () => import("./locales/uz").then((m) => m.uz),
+  mn: () => import("./locales/mn").then((m) => m.mn),
+  ne: () => import("./locales/ne").then((m) => m.ne),
+  si: () => import("./locales/si").then((m) => m.si),
+  xh: () => import("./locales/xh").then((m) => m.xh),
+  af: () => import("./locales/af").then((m) => m.af)
+};
+
+const inFlightLocaleLoads = new Map<SupportedLanguage, Promise<TranslationSchema | null>>();
+
+export async function loadLocaleTranslations(lang: SupportedLanguage): Promise<TranslationSchema | null> {
+  if (!lang || lang === "en") return translations.en;
+  if (translations[lang]) return translations[lang]!;
+  const existingPromise = inFlightLocaleLoads.get(lang);
+  if (existingPromise) return existingPromise;
+
+  const loader = LOCALE_LOADERS[lang];
+  if (!loader) return null;
+
+  const p = loader()
+    .then((schema) => {
+      if (schema) {
+        translations[lang] = schema;
+        return schema;
+      }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => {
+      inFlightLocaleLoads.delete(lang);
+    });
+  inFlightLocaleLoads.set(lang, p);
+  return p;
+}
+

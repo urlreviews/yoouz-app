@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, Suspense, lazy } from "react";
 import { flushSync } from "react-dom";
 import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe } from "lucide-react";
-import { MobileSearchOverlay } from "./MobileSearchOverlay";
+const MobileSearchOverlay = lazy(() => import("./MobileSearchOverlay").then(m => ({ default: m.MobileSearchOverlay })));
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -219,11 +219,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return `${Math.max(1, Math.floor(days / 365))}y`;
   }, []);
 
-  // Eagerly prewarm and GPU-decode ALL trending review photos for instant zero-flash display
+  // Background-warm trending review photos smoothly after initial paint
   useEffect(() => {
-    if (trendingVideos.length > 0) {
-      preloadAllReviewPhotos(trendingVideos, 12);
-    }
+    if (trendingVideos.length === 0) return;
+    const timer = setTimeout(() => {
+      preloadAllReviewPhotos(trendingVideos.slice(0, 16), 6);
+    }, 800);
+    return () => clearTimeout(timer);
   }, [trendingVideos]);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -1371,6 +1373,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
           {/* Mobile Search Overlay */}
           {isMobile && isMobileSearchOpen && (
+            <Suspense fallback={null}>
             <MobileSearchOverlay
               query={query}
               setQuery={setQuery}
@@ -1410,6 +1413,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               }}
               isLoading={isLoadingSuggest}
             />
+            </Suspense>
           )}
         </div>
 

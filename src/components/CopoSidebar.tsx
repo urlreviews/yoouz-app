@@ -1,5 +1,5 @@
 // Yoouz Platform Flagship 3-Zone Desktop & Tablet Top Navigation Bar
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import {
   Mail,
   Bell,
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { useLanguage } from "../i18n/LanguageContext";
-import { LanguageSelectorModal } from "./LanguageSelectorModal";
+const LanguageSelectorModal = lazy(() => import("./LanguageSelectorModal").then(m => ({ default: m.LanguageSelectorModal })));
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 
 interface CopoSidebarProps {
@@ -244,10 +244,14 @@ export const CopoSidebar: React.FC<CopoSidebarProps> = ({
       </header>
 
       {/* Language Selection Modal */}
-      <LanguageSelectorModal
-        isOpen={isLangModalOpen}
-        onClose={() => setIsLangModalOpen(false)}
-      />
+      {isLangModalOpen && (
+        <Suspense fallback={null}>
+          <LanguageSelectorModal
+            isOpen={isLangModalOpen}
+            onClose={() => setIsLangModalOpen(false)}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

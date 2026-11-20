@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoReview } from '../types';
 import { getDisplayViews, resolveSafeAuthor, unrecordDeletedUsersInLocalStorage, YOOUZ_VIDEOS_CACHE_KEY, getReviewTime, purgeVideoIdFromClientStorage } from '../utils/placeUtils';
-import { INITIAL_SEED_VIDEOS } from '../data/seedReviews';
 import { buildCommentTree } from '../utils/commentUtils';
 
 // Helper to record deleted video IDs in localStorage and aggressively purge from all caches
@@ -351,12 +350,7 @@ export function useFeedPagination() {
           } catch (e) {}
         }
 
-        // 3. Initial fresh seed baseline fallback
-        INITIAL_SEED_VIDEOS.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview).forEach((v) => {
-          if (v && v.id && !combinedMap.has(String(v.id))) {
-            combinedMap.set(String(v.id), v);
-          }
-        });
+        // 3. No blocking 1MB static seed import on boot (async fallback loads below only if offline & empty)
       }
 
       // 4. Local in-flight published
@@ -376,10 +370,10 @@ export function useFeedPagination() {
 
       return result;
     } catch (e) {}
-    // Instant fallback to injected server videos or seed videos
+    // Instant fallback to injected server videos
     const fallbackSource = (typeof window !== "undefined" && Array.isArray((window as any).__INITIAL_FEED_VIDEOS__) && (window as any).__INITIAL_FEED_VIDEOS__.length > 0)
       ? (window as any).__INITIAL_FEED_VIDEOS__
-      : INITIAL_SEED_VIDEOS;
+      : [];
     const seeds = fallbackSource.filter((v: any) => !isPurgedItem(v, deletedIds)).map(normalizeReview);
     seeds.sort((a, b) => getReviewTime(b) - getReviewTime(a));
     return seeds;
@@ -1183,6 +1177,25 @@ export function useFeedPagination() {
     window.addEventListener("copo-users-purged", handleUsersPurgedEvent);
 
     loadDataRef.current = loadData;
+
+    // Async offline seed fallback only when server-injected state and cache are empty
+    if (videos.length === 0) {
+      import('../data/seedReviews')
+        .then((mod) => {
+          if (!active || !Array.isArray(mod?.INITIAL_SEED_VIDEOS)) return;
+          setVideos((prev) => {
+            if (prev.length > 0) return prev;
+            const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+            let delIds: string[] = [];
+            try { delIds = JSON.parse(deletedStr); } catch {}
+            return mod.INITIAL_SEED_VIDEOS
+              .filter((v: any) => !isPurgedItem(v, delIds))
+              .map(normalizeReview)
+              .sort((a: VideoReview, b: VideoReview) => getReviewTime(b) - getReviewTime(a));
+          });
+        })
+        .catch(() => {});
+    }
 
     // Initial load (silent background sync so page loads instantly for cold starts)
     loadData(1, true);

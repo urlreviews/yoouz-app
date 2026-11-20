@@ -13,6 +13,7 @@ async function fetchBase64(url: string): Promise<string> {
 import express from "express";
 import opentype from "opentype.js";
 import crypto from "crypto";
+import zlib from "zlib";
 import { execSync, spawn } from "child_process";
 import * as cheerio from 'cheerio';
 import path from "path";
@@ -4738,6 +4739,113 @@ async function startServer() {
     if (req.method === "OPTIONS") {
       return res.status(204).end();
     }
+    next();
+  });
+
+  // Fast Gzip HTTP Compression Middleware (accelerates Vite dev ESM/CSS modules, SSR HTML & JSON APIs)
+  app.use((req, res, next) => {
+    const acceptEnc = String(req.headers["accept-encoding"] || "");
+    const reqUrl = String(req.url || "");
+    if (
+      req.method === "HEAD" ||
+      req.headers.range ||
+      !acceptEnc.includes("gzip") ||
+      reqUrl.startsWith("/api/sse") ||
+      reqUrl.startsWith("/api/videos/stream") ||
+      /\.(png|jpe?g|webp|avif|gif|ico|mp4|webm|mov|mp3|wav|woff2?|pdf)(\?|$)/i.test(reqUrl)
+    ) {
+      return next();
+    }
+
+    const origWrite = res.write.bind(res) as any;
+    const origEnd = res.end.bind(res) as any;
+    const origWriteHead = res.writeHead.bind(res) as any;
+
+    let decided = false;
+    let gzipStream: zlib.Gzip | null = null;
+    const COMPRESSIBLE_MIME = /^(text\/(html|css|plain|xml|javascript|csv)|application\/(javascript|x-javascript|json|xml|rss\+xml|manifest\+json|ld\+json)|image\/svg\+xml)/i;
+
+    const decideCompression = (explicitHeaders?: Record<string, any>) => {
+      if (decided) return;
+      decided = true;
+      const status = res.statusCode || 200;
+      if (status < 200 || status === 204 || status === 206 || status === 304) return;
+      const alreadyEnc = res.getHeader("content-encoding") || explicitHeaders?.["Content-Encoding"] || explicitHeaders?.["content-encoding"];
+      if (alreadyEnc) return;
+      const rawCt = String(res.getHeader("content-type") || explicitHeaders?.["Content-Type"] || explicitHeaders?.["content-type"] || "");
+      if (!COMPRESSIBLE_MIME.test(rawCt)) return;
+      const rawLen = Number(res.getHeader("content-length") || explicitHeaders?.["Content-Length"] || explicitHeaders?.["content-length"] || 0);
+      if (rawLen > 0 && rawLen < 512) return;
+
+      res.removeHeader("Content-Length");
+      if (explicitHeaders) {
+        delete explicitHeaders["Content-Length"];
+        delete explicitHeaders["content-length"];
+      }
+      res.setHeader("Content-Encoding", "gzip");
+      const vary = String(res.getHeader("Vary") || "");
+      if (!vary.toLowerCase().includes("accept-encoding")) {
+        res.setHeader("Vary", vary ? `${vary}, Accept-Encoding` : "Accept-Encoding");
+      }
+      gzipStream = zlib.createGzip({ level: 5 });
+      gzipStream.on("data", (chunk: Buffer) => {
+        origWrite(chunk);
+      });
+      gzipStream.on("end", () => {
+        origEnd();
+      });
+      gzipStream.on("error", () => {
+        try { origEnd(); } catch {}
+      });
+      res.on("close", () => {
+        try { gzipStream?.destroy(); } catch {}
+      });
+    };
+
+    res.writeHead = function (statusCode: number, reasonOrHeaders?: any, maybeHeaders?: any) {
+      res.statusCode = statusCode;
+      const hdrs = typeof reasonOrHeaders === "object" && reasonOrHeaders !== null ? reasonOrHeaders : (typeof maybeHeaders === "object" ? maybeHeaders : undefined);
+      decideCompression(hdrs);
+      if (hdrs) {
+        return typeof reasonOrHeaders === "string"
+          ? origWriteHead(statusCode, reasonOrHeaders, hdrs)
+          : origWriteHead(statusCode, hdrs);
+      }
+      return typeof reasonOrHeaders === "string"
+        ? origWriteHead(statusCode, reasonOrHeaders)
+        : origWriteHead(statusCode);
+    } as any;
+
+    res.write = function (chunk: any, encodingOrCb?: any, cb?: any) {
+      decideCompression();
+      if (gzipStream) {
+        return gzipStream.write(chunk, encodingOrCb, cb);
+      }
+      return origWrite(chunk, encodingOrCb, cb);
+    } as any;
+
+    res.end = function (chunk?: any, encodingOrCb?: any, cb?: any) {
+      if (!decided && chunk && typeof chunk !== "function") {
+        const len = Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(String(chunk), typeof encodingOrCb === "string" ? (encodingOrCb as BufferEncoding) : "utf8");
+        if (len < 512) {
+          decided = true;
+          return origEnd(chunk, encodingOrCb, cb);
+        }
+      }
+      decideCompression();
+      if (gzipStream) {
+        if (typeof chunk === "function") {
+          gzipStream.end(chunk);
+        } else if (chunk !== undefined) {
+          gzipStream.end(chunk, encodingOrCb, cb);
+        } else {
+          gzipStream.end();
+        }
+        return res;
+      }
+      return origEnd(chunk, encodingOrCb, cb);
+    } as any;
+
     next();
   });
 
@@ -42705,12 +42813,28 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     // For search engines and AI crawlers, expose clean readable semantic <main> content;
     // for human browsers, strip the ENTIRE crawler-only <main id="yoouz-knowledge-grounding">...</main> block so initial HTML is minimal and renders instantly.
     if (isCrawler) {
+      updatedHtml = updatedHtml.replace(/(?:<!--\s*Instant 0ms[\s\S]*?-->\s*)?<div id="yoouz-boot-shell"[\s\S]*?<!--\s*\/yoouz-boot-shell\s*-->/i, '');
       updatedHtml = updatedHtml.replace(
         /<main id="yoouz-knowledge-grounding"[^>]*>/i,
         `<main id="yoouz-knowledge-grounding" aria-label="Yoouz Official Live Camera Photo Review Platform Knowledge Base" style="max-width:920px;margin:0 auto;padding:32px 20px;color:#f4f4f5;background:#050506;font-family:'Google Sans',Roboto,Arial,sans-serif;line-height:1.65;">`
       );
     } else {
       updatedHtml = updatedHtml.replace(/(?:<!--\s*Semantic HTML fallback[\s\S]*?-->\s*)?<main id="yoouz-knowledge-grounding"[\s\S]*?<\/main>/i, '');
+      const metaPath = (() => {
+        try {
+          return new URL(String(meta?.url || 'https://www.yoouz.com/')).pathname || '/';
+        } catch {
+          return '/';
+        }
+      })();
+      if (metaPath.startsWith('/embed') || metaPath.startsWith('/e/') || metaPath === '/e') {
+        updatedHtml = updatedHtml.replace(/(?:<!--\s*Instant 0ms[\s\S]*?-->\s*)?<div id="yoouz-boot-shell"[\s\S]*?<!--\s*\/yoouz-boot-shell\s*-->/i, '');
+      } else if (metaPath !== '/' && metaPath !== '' && metaPath !== '/discover' && metaPath !== '/feed' && metaPath !== '/search') {
+        updatedHtml = updatedHtml.replace(
+          /<div class="ybs-main">[\s\S]*?<!--\s*\/ybs-main\s*-->/i,
+          '<div class="ybs-main" style="padding-top:28px;"><div style="width:100%;max-width:980px;height:44px;border-radius:14px;background:rgba(255,255,255,0.04);margin-bottom:20px;"></div><div class="ybs-cards"><div class="ybs-card"></div><div class="ybs-card"></div><div class="ybs-card"></div><div class="ybs-card"></div><div class="ybs-card"></div></div></div><!-- /ybs-main -->'
+        );
+      }
     }
 
     return updatedHtml;
@@ -42724,22 +42848,26 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       const validSource = (sourceVideos || []).filter(
         (v: any) => v && v.id && !deletedSet.has(String(v.id)) && (v.mediaType === 'photo' || Boolean(v.photoUrl))
       );
-      // Include all recent live reviews (up to 65) so homepage, business profiles, and user profiles have instant data
-      const liveVideos = validSource.slice(0, 65);
-
+      // Embed top 24 reviews (+ deep-linked target if outside top 24) without bulky comment trees so HTML stays compact & parses fast
+      const baseSlice = validSource.slice(0, 24);
       if (targetUrlOrVideoId) {
         const revMatch = String(targetUrlOrVideoId).match(/(rev[-_][a-zA-Z0-9_\-]+)/i);
         const targetId = revMatch ? revMatch[1] : (/^rev[-_]/i.test(String(targetUrlOrVideoId)) ? String(targetUrlOrVideoId) : "");
-        if (targetId && !liveVideos.some((v: any) => String(v.id) === targetId)) {
+        if (targetId && !baseSlice.some((v: any) => String(v.id) === targetId)) {
           const targetVid = validSource.find((v: any) => String(v.id) === targetId);
-          if (targetVid) {
-            liveVideos.push(targetVid);
-          }
+          if (targetVid) baseSlice.push(targetVid);
         }
       }
+      const liveVideos = baseSlice.map((v: any) => {
+        if (!v) return v;
+        const { comments, segments, transcript, transcriptText, ...rest } = v;
+        return {
+          ...rest,
+          commentsCount: typeof v.commentsCount === 'number' ? v.commentsCount : (Array.isArray(comments) ? comments.length : 0)
+        };
+      });
 
-      // Collect prioritized photo, logo, banner & avatar URLs to decode in browser GPU memory BEFORE React hydrates
-      // (Uses JS Image + img.decode pinned in window.__YOOUZ_IMAGE_CACHE__, never <link rel="preload">, so zero Chrome warnings)
+      // Collect top visible hero photos/logos (deferred until after first paint so Vite/JS downloads are never throttled)
       const preloadAssets: string[] = [];
       const seenPreload = new Set<string>();
       const pushAsset = (u?: string) => {
@@ -42750,7 +42878,6 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         preloadAssets.push(clean);
       };
 
-      // Prioritize route-targeted review/business/user photo + logo + banner + avatar FIRST (index 0..5 -> high priority)
       if (targetUrlOrVideoId) {
         const cleanTarget = String(targetUrlOrVideoId).toLowerCase();
         for (const v of liveVideos) {
@@ -42767,46 +42894,27 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           ) {
             pushAsset(v.photoUrl || v.thumbnailUrl);
             pushAsset(v.placeLogoUrl);
-            pushAsset(v.placeBannerUrl);
-            pushAsset(v.author?.avatar || v.author?.avatarUrl);
           }
         }
-        // Also prewarm target business logo & banner directly from places index if visiting a business profile URL
-        try {
-          const allPlaces = readPlacesIndex();
-          for (const p of allPlaces) {
-            const pid = String(p?.id || '').toLowerCase().replace(/^www\./, '');
-            if (pid && pid.length > 2 && cleanTarget.includes(pid)) {
-              pushAsset(p.logoUrl);
-              pushAsset(p.bannerUrl || p.ogImage);
-              break;
-            }
-          }
-        } catch {}
       }
 
-      // First wave: top visible photos + their business logos
-      for (const v of liveVideos.slice(0, 12)) {
+      for (const v of liveVideos.slice(0, 8)) {
         pushAsset(v.photoUrl || v.thumbnailUrl);
         pushAsset(v.placeLogoUrl);
-      }
-      // Second wave: remaining feed photos, all business logos, all business banners, and custom avatars
-      for (const v of liveVideos) {
-        pushAsset(v.photoUrl || v.thumbnailUrl);
-        pushAsset(v.placeLogoUrl);
-        pushAsset(v.placeBannerUrl);
-        pushAsset(v.author?.avatar || v.author?.avatarUrl);
       }
 
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
-      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 160)).replace(/</g, '\\u003c');
-      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u,hi){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}if('fetchPriority' in img){img.fetchPriority=hi?'high':'auto';}img.decoding='sync';cache.set(u,img);img.onload=function(){ready.add(u);if(img.decode){img.decode().catch(function(){});}};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<Math.min(16,urls.length);i++){warm(urls[i],true);}var idx=16;var pump=function(){var end=Math.min(idx+8,urls.length);for(;idx<end;idx++){warm(urls[idx],false);}if(idx<urls.length){setTimeout(pump,65);}};if(urls.length>16){setTimeout(pump,85);}}catch(e){}})();`;
+      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 24)).replace(/</g, '\\u003c');
+      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var start=function(){var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}img.decoding='async';cache.set(u,img);img.onload=function(){ready.add(u);};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<Math.min(6,urls.length);i++){warm(urls[i]);}};setTimeout(start,120);}catch(e){}})();`;
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};${prewarmBootstrap}</script>`;
-      if (/<\/head>/i.test(html)) {
-        return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);
+      if (/<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>/i.test(html)) {
+        return html.replace(/(<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>)/i, `${scriptTag}\n$1`);
       }
       if (/<\/body>/i.test(html)) {
         return html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+      }
+      if (/<\/head>/i.test(html)) {
+        return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);
       }
       return html + scriptTag;
     } catch (e) {

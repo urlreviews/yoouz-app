@@ -4,11 +4,36 @@ import {
   LanguageMeta,
   SUPPORTED_LANGUAGES,
   translations,
-  TranslationSchema
+  TranslationSchema,
+  loadLocaleTranslations
 } from "./translations";
-import { UNIVERSAL_PAGE_TRANSLATIONS } from "./locales/universal";
-import universalAllJson from "./locales/universal_all.json";
 import { parseLocaleFromPath, buildLocalizedPath, syncUrlWithLanguage } from "./urlLocalization";
+
+let loadedUniversalPageTranslations: Record<string, Record<string, string>> = {};
+let loadedUniversalAllJson: Record<string, Record<string, string>> = {};
+let universalLoaded = false;
+let universalLoadPromise: Promise<void> | null = null;
+
+function ensureUniversalTranslationsLoaded(): Promise<void> {
+  if (universalLoaded) return Promise.resolve();
+  if (universalLoadPromise) return universalLoadPromise;
+  universalLoadPromise = Promise.all([
+    import("./locales/universal").then((m) => {
+      if (m?.UNIVERSAL_PAGE_TRANSLATIONS) {
+        loadedUniversalPageTranslations = m.UNIVERSAL_PAGE_TRANSLATIONS;
+      }
+    }).catch(() => {}),
+    import("./locales/universal_all.json").then((m) => {
+      const data = (m && (m.default || m)) as Record<string, Record<string, string>>;
+      if (data && typeof data === "object") {
+        loadedUniversalAllJson = data;
+      }
+    }).catch(() => {})
+  ]).then(() => {
+    universalLoaded = true;
+  });
+  return universalLoadPromise;
+}
 
 interface LanguageContextType {
   language: SupportedLanguage;
@@ -352,16 +377,27 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     batchTimerRef.current = setTimeout(flushBatch, 30);
   }, [flushBatch]);
 
-  // Warm up core strings when language changes
+  // Load non-English locale bundle + universal dictionaries on demand, and warm core strings
   useEffect(() => {
     if (language === "en") return;
-    const existing = dynamicCache[language] || loadSavedTranslations(language);
-    const missing = CORE_STRINGS_TO_WARM.filter((s) => !existing[s]);
-    if (missing.length > 0) {
-      missing.forEach((s) => pendingBatchRef.current.add(s));
-      if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
-      batchTimerRef.current = setTimeout(flushBatch, 50);
-    }
+    let cancelled = false;
+    Promise.all([
+      loadLocaleTranslations(language),
+      ensureUniversalTranslationsLoaded()
+    ]).then(() => {
+      if (cancelled) return;
+      setTick((t) => t + 1);
+      const existing = dynamicCache[language] || loadSavedTranslations(language);
+      const missing = CORE_STRINGS_TO_WARM.filter((s) => !existing[s]);
+      if (missing.length > 0) {
+        missing.forEach((s) => pendingBatchRef.current.add(s));
+        if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
+        batchTimerRef.current = setTimeout(flushBatch, 50);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [language, flushBatch]);
 
   // Browser Back/Forward navigation sync with URL language
@@ -525,7 +561,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // 2. Dynamic cache lookup by keyPath or by englishText or by fallback
       const langCache = dynamicCache[language] || loadSavedTranslations(language);
-      const universalAllDict = (universalAllJson as Record<string, Record<string, string>>)[language];
+      const universalAllDict = loadedUniversalAllJson[language];
       if (typeof val !== "string" || !val) {
         if (langCache[keyPath]) {
           val = langCache[keyPath];
@@ -539,12 +575,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           val = universalAllDict[fallback];
         } else if (universalAllDict?.[keyPath]) {
           val = universalAllDict[keyPath];
-        } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[englishText]) {
-          val = UNIVERSAL_PAGE_TRANSLATIONS[language][englishText];
-        } else if (fallback && UNIVERSAL_PAGE_TRANSLATIONS[language]?.[fallback]) {
-          val = UNIVERSAL_PAGE_TRANSLATIONS[language][fallback];
-        } else if (UNIVERSAL_PAGE_TRANSLATIONS[language]?.[keyPath]) {
-          val = UNIVERSAL_PAGE_TRANSLATIONS[language][keyPath];
+        } else if (loadedUniversalPageTranslations[language]?.[englishText]) {
+          val = loadedUniversalPageTranslations[language][englishText];
+        } else if (fallback && loadedUniversalPageTranslations[language]?.[fallback]) {
+          val = loadedUniversalPageTranslations[language][fallback];
+        } else if (loadedUniversalPageTranslations[language]?.[keyPath]) {
+          val = loadedUniversalPageTranslations[language][keyPath];
         } else if (universalAllDict) {
           // Case-insensitive / trimmed match across universalAllDict
           const queryClean = (englishText || fallback || "").trim().toLowerCase();

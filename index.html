@@ -275,10 +275,211 @@
         z-index: -9999 !important;
         overflow: hidden !important;
       }
+      /* Instant 0ms Zero-JS Obsidian App Shell (no splash screen, zero black void) */
+      #yoouz-boot-shell {
+        min-height: 100dvh;
+        width: 100%;
+        background: #050506;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        overflow: hidden;
+      }
+      .ybs-d-nav {
+        display: none;
+        height: 64px;
+        width: 100%;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        padding: 0 32px;
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      .ybs-m-nav {
+        display: flex;
+        height: 55px;
+        width: 100%;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding: 8px 16px;
+        align-items: center;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      .ybs-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .ybs-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #121216;
+        border: 1px solid rgba(255,255,255,0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .ybs-word {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #fff;
+      }
+      .ybs-main {
+        flex: 1;
+        width: 100%;
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: 28px 16px 96px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-sizing: border-box;
+      }
+      .ybs-hero-t {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.038em;
+        line-height: 1.05;
+        text-align: center;
+        margin: 0 0 8px;
+      }
+      .ybs-hero-s {
+        font-size: 14px;
+        color: #a1a1aa;
+        text-align: center;
+        margin: 0 0 24px;
+      }
+      .ybs-search {
+        width: 100%;
+        max-width: 660px;
+        height: 54px;
+        border-radius: 9999px;
+        background: rgba(255,255,255,0.045);
+        border: 1px solid rgba(255,255,255,0.11);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px 0 20px;
+        box-sizing: border-box;
+        margin-bottom: 40px;
+      }
+      .ybs-search-ph {
+        font-size: 14.5px;
+        color: #71717a;
+      }
+      .ybs-search-go {
+        width: 38px;
+        height: 38px;
+        border-radius: 9999px;
+        background: #fff;
+      }
+      .ybs-row-hdr {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .ybs-row-ttl {
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .ybs-cards {
+        width: 100%;
+        display: flex;
+        gap: 12px;
+        overflow: hidden;
+      }
+      .ybs-card {
+        flex: 0 0 176px;
+        height: 310px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, #16161a 0%, #0b0b0e 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .ybs-pill {
+        height: 30px;
+        border-radius: 9999px;
+        background: rgba(255,255,255,0.06);
+      }
+      .ybs-m-dock {
+        position: fixed;
+        bottom: 12px;
+        left: 14px;
+        right: 14px;
+        max-width: 430px;
+        height: 58px;
+        margin: 0 auto;
+        border-radius: 28px;
+        background: rgba(17,17,20,0.9);
+        border: 1px solid rgba(255,255,255,0.12);
+      }
+      @media (min-width: 768px) {
+        .ybs-d-nav { display: flex; }
+        .ybs-m-nav, .ybs-m-dock { display: none; }
+        .ybs-main { padding: 44px 32px 32px; }
+        .ybs-hero-t { font-size: 52px; margin-bottom: 12px; }
+        .ybs-hero-s { font-size: 16px; margin-bottom: 32px; }
+        .ybs-cards { gap: 16px; }
+        .ybs-card { flex: 1 1 0; height: auto; aspect-ratio: 3 / 4.35; border-radius: 24px; }
+      }
     </style>
   </head>
   <body class="h-full bg-[#050506] text-white font-['Google_Sans','Roboto',-apple-system,BlinkMacSystemFont,sans-serif] antialiased select-none overscroll-none" style="background:#050506;color:#ffffff;margin:0;">
     <div id="root" class="h-full bg-[#050506]">
+      <!-- Instant 0ms First-Paint App Shell (automatically replaced on React mount; stripped for crawlers) -->
+      <div id="yoouz-boot-shell" aria-hidden="true">
+        <div class="ybs-d-nav">
+          <div class="ybs-brand">
+            <div class="ybs-logo">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="#ffffff"><path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z"/></svg>
+            </div>
+            <span class="ybs-word">Yoouz</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="ybs-pill" style="width:82px;"></div>
+            <div class="ybs-pill" style="width:82px;background:transparent;"></div>
+            <div class="ybs-pill" style="width:68px;background:transparent;"></div>
+            <div class="ybs-pill" style="width:110px;background:transparent;"></div>
+          </div>
+          <div class="ybs-pill" style="width:118px;height:36px;background:#ffffff;"></div>
+        </div>
+        <div class="ybs-m-nav">
+          <div class="ybs-brand">
+            <div class="ybs-logo">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="#ffffff"><path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z"/></svg>
+            </div>
+            <span class="ybs-word">Yoouz</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div style="width:28px;height:28px;border-radius:9999px;background:rgba(255,255,255,0.06);"></div>
+            <div style="width:28px;height:28px;border-radius:9999px;background:rgba(255,255,255,0.06);"></div>
+          </div>
+        </div>
+        <div class="ybs-main">
+          <div class="ybs-hero-t">See the truth before you decide.</div>
+          <div class="ybs-hero-s">Live camera photo reviews in 3 seconds.</div>
+          <div class="ybs-search">
+            <span class="ybs-search-ph">Search brand, place, or URL...</span>
+            <div class="ybs-search-go"></div>
+          </div>
+          <div class="ybs-row-hdr">
+            <div class="ybs-row-ttl">Live Photo Proof</div>
+          </div>
+          <div class="ybs-cards">
+            <div class="ybs-card"></div>
+            <div class="ybs-card"></div>
+            <div class="ybs-card"></div>
+            <div class="ybs-card"></div>
+            <div class="ybs-card"></div>
+          </div>
+        </div><!-- /ybs-main -->
+        <div class="ybs-m-dock"></div>
+      </div><!-- /yoouz-boot-shell -->
       <!-- Semantic HTML fallback strictly for non-JS search/AI crawlers (stripped for browsers by server.ts and visually hidden as sr-only fallback) -->
       <main id="yoouz-knowledge-grounding" aria-label="Yoouz Official Live Camera Photo Review Platform Knowledge Base" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
         <article itemscope itemtype="https://schema.org/WebApplication">

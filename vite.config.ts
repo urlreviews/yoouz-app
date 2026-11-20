@@ -16,11 +16,49 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-dom/client', 'lucide-react'],
+      exclude: ['pdfjs-dist', '@vladmandic/face-api'],
+    },
     build: {
       outDir: 'dist',
       sourcemap: false,
       emptyOutDir: true,
-      chunkSizeWarningLimit: 2000,
+      chunkSizeWarningLimit: 900,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('/lucide-react/')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('/country-state-city/')) {
+              return 'vendor-geo-cities';
+            }
+            if (id.includes('/pdfjs-dist/')) {
+              return 'vendor-pdf';
+            }
+            if (id.includes('/leaflet/')) {
+              return 'vendor-leaflet';
+            }
+            if (id.includes('/motion/') || id.includes('/framer-motion/')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('/hls.js/')) {
+              return 'vendor-hls';
+            }
+            if (id.includes('/@vladmandic/')) {
+              return 'vendor-face';
+            }
+            if (id.includes('/qrcode.react/')) {
+              return 'vendor-qr';
+            }
+          },
+        },
+      },
     },
     server: {
       allowedHosts: true as const,
