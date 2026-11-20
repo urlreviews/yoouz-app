@@ -5,33 +5,30 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import './index.css';
 
-// Safari Mobile Anti-Cache & Version Enforcement
+// Silent stale-cache cleanup without ever forcing a jarring reload on first/Incognito visits
 const CURRENT_APP_VERSION = "v20261118_safari_fix_v2";
 if (typeof localStorage !== 'undefined') {
   try {
     const savedVer = localStorage.getItem("yoouz_app_version");
     if (savedVer !== CURRENT_APP_VERSION) {
       localStorage.setItem("yoouz_app_version", CURRENT_APP_VERSION);
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          names.forEach((name) => caches.delete(name));
-        }).catch(() => {});
-      }
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((regs) => {
-          regs.forEach((reg) => reg.unregister().catch(() => {}));
-        }).catch(() => {});
-      }
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && key !== "yoouz_app_version" && !key.includes("auth") && !key.includes("user")) {
-          localStorage.removeItem(key);
+      if (savedVer) {
+        if ('caches' in window) {
+          caches.keys().then((names) => {
+            names.forEach((name) => caches.delete(name));
+          }).catch(() => {});
         }
-      }
-      // Force hard reload once if not already reloaded for this version
-      if (!sessionStorage.getItem("yoouz_reloaded_" + CURRENT_APP_VERSION)) {
-        sessionStorage.setItem("yoouz_reloaded_" + CURRENT_APP_VERSION, "true");
-        window.location.reload();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((reg) => reg.unregister().catch(() => {}));
+          }).catch(() => {});
+        }
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key !== "yoouz_app_version" && !key.includes("auth") && !key.includes("user")) {
+            localStorage.removeItem(key);
+          }
+        }
       }
     }
   } catch (e) {}
@@ -58,17 +55,6 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>,
 );
-
-// Dismiss initial HTML splash loader once React has painted its initial frame
-if (typeof (window as any).__dismissAppSplash === 'function') {
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      if (typeof (window as any).__dismissAppSplash === 'function') {
-        (window as any).__dismissAppSplash();
-      }
-    }, 50);
-  });
-}
 
 // Proactively purge ALL stale service workers and cache storage to completely prevent stale mobile code
 if (typeof window !== 'undefined') {

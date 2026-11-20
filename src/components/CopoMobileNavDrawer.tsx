@@ -78,13 +78,21 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
 
   const displayName = currentUser
     ? currentUser.name || formattedHandle || t("nav.profile", "Your Profile")
-    : t("profile.instant_title", "Your Yoouz Profile");
+    : t("profile.your_profile", "Your Profile");
+
+  const hasDistinctHandle =
+    Boolean(currentUser?.name) &&
+    Boolean(formattedHandle) &&
+    currentUser!.name.toLowerCase().replace(/^@/, "") !==
+      formattedHandle.toLowerCase().replace(/^@/, "");
 
   const profileSubtitle = currentUser
     ? isPasskeyProtected
       ? t("profile.passkey_protected", "Passkey protected")
-      : t("profile.no_email_needed", "Instant handle · No email needed")
-    : t("profile.instant_subtitle", "Automatic handle · No email needed");
+      : hasDistinctHandle
+        ? formattedHandle
+        : t("profile.view_profile", "View profile")
+    : t("profile.reviews_activity", "Reviews & activity");
 
   const libraryItems: {
     id: NavSection;
@@ -311,7 +319,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
                     {t("business.portal", "Yoouz for Business")}
                   </p>
                   <p className="text-[11.5px] text-zinc-400 truncate mt-0.5">
-                    {t("business.claim_subtitle", "Claim your page & manage reviews")}
+                    {t("business.claim_subtitle", "Claim & manage your page")}
                   </p>
                 </div>
               </div>

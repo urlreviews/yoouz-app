@@ -1453,8 +1453,6 @@ export const translations: Partial<Record<SupportedLanguage, TranslationSchema>>
       faq_trust_3_a: "Strict whole-number solid stars make every individual customer verdict clear, honest, and easy to scan in a full-screen vertical feed.",
       faq_trust_4_q: "Is my private email address exposed on my public profile or business claim badge?",
       faq_trust_4_a: "No. Yoouz strictly protects user privacy. Consumers receive anonymous U/XXXXXX identifiers, and public profiles or claimed business badges never display personal email addresses publicly.",
-      faq_trust_5_q: "Is Yoouz a misspelling or affiliated with YouTube, Yoox, Youz, or Yelp?",
-      faq_trust_5_a: "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform dedicated to authentic live camera photo reviews.",
       faq_trust_6_q: "How are community guidelines and safety rules enforced?",
       faq_trust_6_a: "Every photo review and comment includes a report flag button. Community submissions triggering policy violations are queued for immediate review and removal.",
       faq_trust_7_q: "Which profiles display a Verified checkmark badge?",

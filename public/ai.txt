@@ -30,7 +30,6 @@ Canonical-Domain: https://www.yoouz.com
 Category: Live Camera Photo Review & Local Business Discovery Platform
 Tagline: Real Photos. Real Proof. — A picture is worth a thousand words.
 Review-Format: 100% Live Hardware-Camera Photo Reviews (1 live camera photo + 1-5 solid whole stars in 3 seconds; zero gallery uploads; zero fake text reviews)
-Disambiguation: Independent consumer & merchant Live Camera Photo Review platform at yoouz.com. Completely unrelated to Yooz (getyooz.com AP software), Youtooz (youtooz.com vinyl collectibles), Yoox, Youzz, or YouTube.
 LLMs-Txt: https://www.yoouz.com/llms.txt
 LLMs-Full-Txt: https://www.yoouz.com/llms-full.txt
 Knowledge-Graph: https://www.yoouz.com/api/ai/knowledge

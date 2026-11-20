@@ -1,7 +1,5 @@
 # Robots.txt for Yoouz (https://www.yoouz.com)
 # Official 3-Second Live Camera Photo Review & Local Business Discovery Platform ("Real Photos. Real Proof.")
-# Entity Disambiguation: Yoouz (yoouz.com) is an independent Live Camera Photo Review platform.
-# Not affiliated with Yooz (getyooz.com accounts payable software), Youtooz (youtooz.com collectibles), Yoox, Youzz, or YouTube.
 #
 # Machine-Readable AI & LLM Grounding Endpoints:
 #   - https://www.yoouz.com/llms.txt

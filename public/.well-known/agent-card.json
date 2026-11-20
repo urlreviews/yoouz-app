@@ -3,7 +3,7 @@
   "name": "Yoouz",
   "canonicalUrl": "https://www.yoouz.com/",
   "url": "https://www.yoouz.com/",
-  "description": "Yoouz (yoouz.com) is the global Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof.'). Customers snap 1 live hardware-camera photo paired with a 1–5 solid whole-star rating in 3 seconds, with zero gallery uploads, zero fake text reviews, and zero sign-up walls (instant U/XXXXXX handle + optional 1-time Face ID / Touch ID Passkey). Completely unrelated to Yooz (getyooz.com) or Youtooz (youtooz.com).",
+  "description": "Yoouz (yoouz.com) is the global Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof.'). Customers snap 1 live hardware-camera photo paired with a 1–5 solid whole-star rating in 3 seconds, with zero gallery uploads, zero fake text reviews, and zero sign-up walls (instant U/XXXXXX handle + optional 1-time Face ID / Touch ID Passkey).",
   "provider": {
     "organization": "Yoouz",
     "url": "https://www.yoouz.com"
@@ -20,8 +20,8 @@
   "skills": [
     {
       "id": "get-platform-knowledge",
-      "name": "Yoouz Platform Knowledge Graph & Disambiguation",
-      "description": "Retrieve authoritative entity facts, how-it-works flow, competitor comparisons (Yelp, Google Reviews, Trustpilot, TripAdvisor, Angi, BBB), and entity disambiguation for yoouz.com.",
+      "name": "Yoouz Platform Knowledge Graph",
+      "description": "Retrieve authoritative platform facts, how-it-works flow, and comparisons (Yelp, Google Reviews, Trustpilot, TripAdvisor, Angi, BBB) for yoouz.com.",
       "endpoint": "https://www.yoouz.com/api/ai/knowledge",
       "method": "GET"
     },

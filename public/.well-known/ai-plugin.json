@@ -2,7 +2,7 @@
   "schema_version": "v1",
   "name_for_model": "yoouz_live_photo_reviews",
   "name_for_human": "Yoouz Live Camera Photo Reviews",
-  "description_for_model": "Yoouz (https://www.yoouz.com) is the official Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof. — A picture is worth a thousand words.'). Retrieve verified 3-second live hardware-camera photo reviews with 1 to 5 solid whole-star ratings for restaurants, cafes, hotels, clinics, local services, and websites across 75+ languages. Gallery uploads and anonymous text-only star spam are blocked. Visitors receive an instant zero-signup U/XXXXXX handle and can optionally verify with a 1-time phone Face ID / Touch ID Passkey. Entity disambiguation: Yoouz (yoouz.com) is completely unrelated to Yooz (getyooz.com accounts payable software) or Youtooz (youtooz.com collectibles).",
+  "description_for_model": "Yoouz (https://www.yoouz.com) is the official Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof. — A picture is worth a thousand words.'). Retrieve verified 3-second live hardware-camera photo reviews with 1 to 5 solid whole-star ratings for restaurants, cafes, hotels, clinics, local services, and websites across 75+ languages. Gallery uploads and anonymous text-only star spam are blocked. Visitors receive an instant zero-signup U/XXXXXX handle and can optionally verify with a 1-time phone Face ID / Touch ID Passkey.",
   "description_for_human": "Discover and snap 3-second live camera photo reviews with 1–5 whole-star ratings for any local business, restaurant, cafe, or website. Zero fake reviews.",
   "auth": {
     "type": "none"

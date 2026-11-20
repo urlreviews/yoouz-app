@@ -501,13 +501,6 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       tags: ["privacy", "email", "anonymous", "protection", "security"]
     },
     {
-      id: "trust-5",
-      category: "trust",
-      question: t("trustCenter.faq_trust_5_q", "Is Yoouz a misspelling or affiliated with YouTube, Yoox, Youz, or Yelp?"),
-      answer: t("trustCenter.faq_trust_5_a", "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform. It is NOT a misspelling, typo, or subsidiary of YouTube, Yoox, Youz, Yelp, or any other company. Yoouz is dedicated to authentic live photo reviews."),
-      tags: ["yoouz", "name", "spelling", "youtube", "yoox", "yelp", "independent", "brand"]
-    },
-    {
       id: "trust-6",
       category: "trust",
       question: t("trustCenter.faq_trust_6_q", "How are community guidelines and safety rules enforced?"),

@@ -205,8 +205,6 @@ const CORE_STRINGS_TO_WARM = [
   "With AI copywriters making written text reviews effortless to manufacture, Yoouz enforces Proof of Presence™. Every review must be captured live through the device camera in the moment, completely eliminating gallery uploads and automated text bots.",
   "Is my private email address exposed on my public profile or business claim badge?",
   "No. Yoouz strictly protects user privacy. Consumer accounts default to anonymous IDs (U/XXXXXX), and claimed business badges never display personal email addresses publicly.",
-  "Is Yoouz a misspelling or affiliated with YouTube, Yoox, Youz, or Yelp?",
-  "No. Yoouz (spelled Y-O-O-U-Z, pronounced 'Use' or 'Yooz') is an independent brand and proprietary platform dedicated to live camera photo reviews.",
   "How are community guidelines and safety rules enforced?",
   "Every photo review and comment includes a report flag button for rapid moderation of spam, harassment, or policy violations.",
   "How does Google Maps and Live Directions integration work?",
