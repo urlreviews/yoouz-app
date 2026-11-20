@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User } from "lucide-react";
+import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
@@ -307,6 +307,98 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return Array.from(map.values());
   }, [videos, allUsers, currentUser]);
 
+  // Live business review stats lookup for enriching desktop & mobile autocomplete results
+  const businessStatsMap = useMemo(() => {
+    const map = new Map<string, { rating: number; reviewCount: number }>();
+    const agg = new Map<string, { sum: number; count: number; title?: string; domain?: string }>();
+
+    for (const v of trendingVideos) {
+      const matchedPlace = places.find((p) => isPlaceReviewMatch(v, p));
+      const dom = (extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || v.placeWebsite || v.placeId || "") || "").toLowerCase();
+      const title = ((dom && KNOWN_OFFICIAL_NAMES[dom]) || matchedPlace?.name || v.businessName || v.placeName || "").trim().toLowerCase();
+      const key = dom || title;
+      if (!key) continue;
+      const ratingVal = typeof v.rating === "number" && v.rating >= 1 && v.rating <= 5 ? v.rating : 5;
+      const cur = agg.get(key);
+      if (cur) {
+        cur.sum += ratingVal;
+        cur.count += 1;
+      } else {
+        agg.set(key, { sum: ratingVal, count: 1, title, domain: dom });
+      }
+    }
+
+    for (const [, val] of agg.entries()) {
+      const entry = {
+        rating: Math.round((val.sum / val.count) * 10) / 10,
+        reviewCount: val.count
+      };
+      if (val.domain) map.set(val.domain, entry);
+      if (val.title) map.set(val.title, entry);
+    }
+    return map;
+  }, [trendingVideos, places]);
+
+  const rankSuggestions = useCallback(
+    (items: SuggestionItem[], qRaw: string): SuggestionItem[] => {
+      const qLow = qRaw.trim().toLowerCase();
+      const qNoSpace = qLow.replace(/\s+/g, "");
+      const directDom = extractCleanDomain(qRaw)?.toLowerCase() || "";
+      const explicitlySearchingYoouz = qLow.startsWith("y") || qLow.includes("yoouz");
+
+      const scoreItem = (item: SuggestionItem): number => {
+        const titleLow = (item.title || "").trim().toLowerCase();
+        const titleNoSpace = titleLow.replace(/\s+/g, "");
+        const domLow = (item.domain || "").trim().toLowerCase();
+        const domRoot = domLow.split(".")[0] || "";
+
+        if ((domLow === "yoouz.com" || titleLow === "yoouz") && !explicitlySearchingYoouz) {
+          return -1000;
+        }
+
+        let score = 0;
+        if (directDom && isValidDomainUrl(directDom) && domLow === directDom) {
+          score = 1200;
+        } else if (titleLow === qLow || domLow === qLow || domRoot === qLow || (qNoSpace.length >= 2 && titleNoSpace === qNoSpace)) {
+          score = 1000;
+        } else if (titleLow.startsWith(qLow) || (qNoSpace.length >= 2 && titleNoSpace.startsWith(qNoSpace))) {
+          score = 860;
+        } else if (domLow.startsWith(qLow) || domRoot.startsWith(qNoSpace)) {
+          score = 820;
+        } else if (titleLow.split(/[\s\-_&./]+/).some((w) => w.startsWith(qLow))) {
+          score = 560;
+        } else if (titleLow.includes(qLow) || (qNoSpace.length >= 2 && titleNoSpace.includes(qNoSpace))) {
+          score = 260;
+        } else if (domLow.includes(qLow) || (qNoSpace.length >= 2 && domLow.includes(qNoSpace))) {
+          score = 210;
+        } else {
+          score = 100;
+        }
+
+        const stats = businessStatsMap.get(domLow) || businessStatsMap.get(titleLow);
+        if (stats && stats.reviewCount > 0) {
+          score += Math.min(stats.reviewCount * 12, 48);
+        }
+        // Subtle tie-breaker favoring shorter, cleaner canonical brand names
+        score -= Math.min(titleLow.length, 40) * 0.25;
+        return score;
+      };
+
+      return items
+        .filter((item) => {
+          if (searchMode === "review" && item.isCreator) return false;
+          const domLow = (item.domain || "").trim().toLowerCase();
+          const titleLow = (item.title || "").trim().toLowerCase();
+          if ((domLow === "yoouz.com" || titleLow === "yoouz") && !explicitlySearchingYoouz) {
+            return false;
+          }
+          return true;
+        })
+        .sort((a, b) => scoreItem(b) - scoreItem(a));
+    },
+    [businessStatsMap, searchMode]
+  );
+
   // Live Auto-Suggest debounce
   useEffect(() => {
     const trimmed = query.trim();
@@ -318,23 +410,85 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
 
     const qLow = trimmed.toLowerCase();
-    const localMatches: SuggestionItem[] = [];
-    const seenLocal = new Set<string>();
+    const normalizeDomain = (raw?: string | null): string => {
+      if (!raw) return "";
+      const extracted = extractCleanDomain(raw) || raw.trim().toLowerCase();
+      const cleaned = extracted.replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0].trim();
+      return cleaned.includes(".") ? cleaned : "";
+    };
+    const compactTitleKey = (title?: string | null): string =>
+      (title || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "").trim();
 
-    const pushLocal = (item: SuggestionItem) => {
-      const k = `${item.isCreator ? "creator:" : "place:"}${(item.id || item.domain || item.title).toLowerCase().trim()}`;
-      if (!seenLocal.has(k)) {
-        seenLocal.add(k);
-        localMatches.push(item);
-      }
+    const sanitizeSuggestion = (item: SuggestionItem): SuggestionItem => {
+      const cleanDom = normalizeDomain(item.domain || (item.id && item.id.includes(".") ? item.id : ""));
+      const cleanId = cleanDom || (item.id ? item.id.replace(/^www\d*\./i, "") : undefined);
+      return {
+        ...item,
+        id: cleanId,
+        domain: cleanDom,
+        websiteUrl: cleanDom ? `https://${cleanDom}` : item.websiteUrl
+      };
     };
 
-    // 1. If user typed a URL or domain directly (e.g. "https://apple.com" or "apple.com"), always put it #1
-    const directDomain = extractCleanDomain(trimmed);
+    const dedupeSuggestions = (items: SuggestionItem[]): SuggestionItem[] => {
+      const byDomain = new Map<string, SuggestionItem>();
+      const byTitle = new Map<string, SuggestionItem>();
+      const out: SuggestionItem[] = [];
+
+      const mergeInto = (target: SuggestionItem, incoming: SuggestionItem) => {
+        if (!target.domain && incoming.domain) {
+          target.domain = incoming.domain;
+          target.id = incoming.domain;
+        }
+        if (!target.logoUrl && incoming.logoUrl) {
+          target.logoUrl = incoming.logoUrl;
+        } else if (
+          target.logoUrl &&
+          target.logoUrl.includes("/api/favicon") &&
+          incoming.logoUrl &&
+          !incoming.logoUrl.includes("/api/favicon")
+        ) {
+          target.logoUrl = incoming.logoUrl;
+        }
+        if (!target.websiteUrl && incoming.websiteUrl) target.websiteUrl = incoming.websiteUrl;
+        if (!target.address && incoming.address) target.address = incoming.address;
+      };
+
+      for (const rawItem of items) {
+        const item = sanitizeSuggestion(rawItem);
+        const domKey = item.domain ? `${item.isCreator ? "creator:" : "dom:"}${item.domain}` : "";
+        const titleKey = compactTitleKey(item.title) ? `${item.isCreator ? "creator:" : "title:"}${compactTitleKey(item.title)}` : "";
+
+        const existingByDom = domKey ? byDomain.get(domKey) : undefined;
+        if (existingByDom) {
+          mergeInto(existingByDom, item);
+          continue;
+        }
+        const existingByTitle = titleKey ? byTitle.get(titleKey) : undefined;
+        if (existingByTitle) {
+          mergeInto(existingByTitle, item);
+          if (domKey && !byDomain.has(domKey)) byDomain.set(domKey, existingByTitle);
+          continue;
+        }
+
+        out.push(item);
+        if (domKey) byDomain.set(domKey, item);
+        if (titleKey) byTitle.set(titleKey, item);
+      }
+      return out;
+    };
+
+    const localMatches: SuggestionItem[] = [];
+    const pushLocal = (item: SuggestionItem) => {
+      localMatches.push(sanitizeSuggestion(item));
+    };
+
+    // 1. If user typed a URL or domain directly (e.g. "https://www.apple.com" or "www.mcdonalds.com"), strip www and put canonical domain #1
+    const directDomain = normalizeDomain(trimmed);
     if (directDomain && isValidDomainUrl(directDomain)) {
       const existingPlace = places.find((p) => {
-        const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
-        return pDom?.toLowerCase() === directDomain.toLowerCase();
+        const pDom = normalizeDomain(p.brandDomain || p.website || p.id);
+        return pDom === directDomain;
       });
       const officialTitle =
         KNOWN_OFFICIAL_NAMES[directDomain] ||
@@ -342,110 +496,123 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         formatBusinessName(directDomain, directDomain) ||
         directDomain;
       pushLocal({
-        id: existingPlace?.id || directDomain,
+        id: existingPlace?.id ? existingPlace.id.replace(/^www\d*\./i, "") : directDomain,
         title: officialTitle,
         domain: directDomain,
         logoUrl:
           (existingPlace?.logoUrl && !isGenericOrPlaceholderLogo(existingPlace.logoUrl) ? existingPlace.logoUrl : "") ||
           KNOWN_BRAND_LOGOS[directDomain] ||
-          (directDomain.includes(".") ? `/api/favicon?domain=${encodeURIComponent(directDomain)}` : ""),
+          `/api/favicon?domain=${encodeURIComponent(directDomain)}`,
         category: existingPlace?.category || "Website",
         address: existingPlace?.city || existingPlace?.address || ""
       });
     }
 
-    const qNoSpace = qLow.replace(/\s+/g, "");
+    const qSearchClean = qLow.replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "");
+    const qNoSpace = qSearchClean.replace(/\s+/g, "");
 
-    // 2. Match local places (space-insensitive so "jet blue" matches "JetBlue" and "doordash" matches "DoorDash")
+    // 2. Scan ALL local places (do not break early so prefix matches like "Zara" are never dropped)
     for (const p of places) {
-      if (localMatches.length >= 6) break;
       const pName = (p.name || "").toLowerCase();
       const pNameNoSpace = pName.replace(/\s+/g, "");
-      const pDom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
-      const pDomLow = pDom.toLowerCase();
-      if (pName.includes(qLow) || (qNoSpace.length >= 2 && pNameNoSpace.includes(qNoSpace)) || pDomLow.includes(qLow) || (qNoSpace.length >= 2 && pDomLow.includes(qNoSpace))) {
+      const pDomLow = normalizeDomain(p.brandDomain || p.website || p.id);
+      if (
+        pName.includes(qSearchClean) ||
+        (qNoSpace.length >= 2 && pNameNoSpace.includes(qNoSpace)) ||
+        pDomLow.includes(qSearchClean) ||
+        (qNoSpace.length >= 2 && pDomLow.includes(qNoSpace))
+      ) {
         const officialFromDesc = pDomLow ? extractOfficialBrandSpellingFromText(p.description, pDomLow) : null;
         const resolvedPlaceTitle =
           KNOWN_OFFICIAL_NAMES[pDomLow] ||
           ((isFalseSplitOfDomain(p.name, pDomLow) || isFalseSplitAgainstText(p.name, p.description, pDomLow)) && officialFromDesc ? officialFromDesc : "") ||
           p.name ||
-          pDom;
+          pDomLow;
         pushLocal({
-          id: p.id,
+          id: pDomLow || p.id.replace(/^www\d*\./i, ""),
           title: resolvedPlaceTitle,
-          domain: pDom.includes(".") ? pDom : "",
+          domain: pDomLow,
           logoUrl:
             (p.logoUrl && !isGenericOrPlaceholderLogo(p.logoUrl) ? p.logoUrl : "") ||
             (pDomLow && KNOWN_BRAND_LOGOS[pDomLow] ? KNOWN_BRAND_LOGOS[pDomLow] : "") ||
-            (pDomLow.includes(".") ? `/api/favicon?domain=${encodeURIComponent(pDomLow)}` : ""),
+            (pDomLow ? `/api/favicon?domain=${encodeURIComponent(pDomLow)}` : ""),
           category: p.category || "Business",
           address: p.city || p.address || ""
         });
       }
     }
 
-    // 3. Match businesses from video reviews if not already in places
-    for (const v of videos) {
-      if (localMatches.length >= 7) break;
+    // 3. Scan businesses from active video reviews if not already matched
+    for (const v of trendingVideos) {
       const vName = (v.placeName || v.businessName || "").trim();
       const vNameLow = vName.toLowerCase();
       const vNameNoSpace = vNameLow.replace(/\s+/g, "");
-      const vDom = extractCleanDomain(v.placeWebsite || v.placeId || "") || "";
-      const vDomLow = vDom.toLowerCase();
-      if (vNameLow.includes(qLow) || (qNoSpace.length >= 2 && vNameNoSpace.includes(qNoSpace)) || (vDomLow && (vDomLow.includes(qLow) || (qNoSpace.length >= 2 && vDomLow.includes(qNoSpace))))) {
+      const vDomLow = normalizeDomain(v.placeWebsite || v.placeId || "");
+      if (
+        vNameLow.includes(qSearchClean) ||
+        (qNoSpace.length >= 2 && vNameNoSpace.includes(qNoSpace)) ||
+        (vDomLow && (vDomLow.includes(qSearchClean) || (qNoSpace.length >= 2 && vDomLow.includes(qNoSpace))))
+      ) {
         pushLocal({
-          id: vDom || v.placeId || vName,
-          title: (vDomLow && KNOWN_OFFICIAL_NAMES[vDomLow]) || vName || vDom,
-          domain: vDom.includes(".") ? vDom : "",
+          id: vDomLow || (v.placeId ? v.placeId.replace(/^www\d*\./i, "") : vName),
+          title: (vDomLow && KNOWN_OFFICIAL_NAMES[vDomLow]) || vName || vDomLow,
+          domain: vDomLow,
           logoUrl:
             (v.placeLogoUrl && !isGenericOrPlaceholderLogo(v.placeLogoUrl) ? v.placeLogoUrl : "") ||
             (vDomLow && KNOWN_BRAND_LOGOS[vDomLow] ? KNOWN_BRAND_LOGOS[vDomLow] : "") ||
-            (vDomLow.includes(".") ? `/api/favicon?domain=${encodeURIComponent(vDomLow)}` : ""),
+            (vDomLow ? `/api/favicon?domain=${encodeURIComponent(vDomLow)}` : ""),
           category: "Business"
         });
       }
     }
 
-
-
-    if (localMatches.length > 0) {
-      setSuggestions(localMatches);
-      setShowDropdown(true);
+    // 4. Scan KNOWN_OFFICIAL_NAMES with strict www stripping so www.* aliases never duplicate canonical brands
+    for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+      if (!domKey.includes(".")) continue;
+      const domLow = normalizeDomain(domKey);
+      if (!domLow) continue;
+      const nameLow = officialName.toLowerCase();
+      if (nameLow.startsWith(qSearchClean) || domLow.startsWith(qSearchClean)) {
+        pushLocal({
+          id: domLow,
+          title: officialName,
+          domain: domLow,
+          logoUrl: KNOWN_BRAND_LOGOS[domLow] || `/api/favicon?domain=${encodeURIComponent(domLow)}`,
+          category: "Brand"
+        });
+      }
     }
 
+    const dedupedLocal = dedupeSuggestions(localMatches);
+    const rankedLocal = rankSuggestions(dedupedLocal, qSearchClean || trimmed).slice(0, 6);
+    setSuggestions(rankedLocal);
+    setShowDropdown(true);
+
     setIsLoadingSuggest(true);
-    const searchParam = directDomain && isValidDomainUrl(directDomain) ? directDomain : trimmed;
+    let cancelled = false;
+    const searchParam = directDomain && isValidDomainUrl(directDomain) ? directDomain : (qSearchClean || trimmed);
     const timer = setTimeout(async () => {
       try {
         const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(searchParam)}`);
-        if (resp.ok) {
+        if (!cancelled && resp.ok) {
           const data = await resp.json();
-          const serverList: SuggestionItem[] = data.suggestions || [];
-          const seen = new Map<string, SuggestionItem>();
-          const merged: SuggestionItem[] = [];
-
-          for (const item of [...localMatches, ...serverList]) {
-            const key = `${item.isCreator ? "creator:" : ""}${(item.id || item.domain || item.title).toLowerCase().trim()}`;
-            const existing = seen.get(key);
-            if (!existing) {
-              seen.set(key, item);
-              merged.push(item);
-            } else {
-              if (!existing.logoUrl && item.logoUrl) existing.logoUrl = item.logoUrl;
-              if (!existing.domain && item.domain) existing.domain = item.domain;
-            }
-          }
-          setSuggestions(merged.slice(0, 8));
+          const serverList: SuggestionItem[] = (data.suggestions || []).map(sanitizeSuggestion);
+          const merged = dedupeSuggestions([...dedupedLocal, ...serverList]);
+          const rankedMerged = rankSuggestions(merged, qSearchClean || trimmed).slice(0, 6);
+          setSuggestions(rankedMerged);
           setShowDropdown(true);
         }
       } catch (e) {
       } finally {
-        setIsLoadingSuggest(false);
+        if (!cancelled) setIsLoadingSuggest(false);
       }
     }, 120);
 
-    return () => clearTimeout(timer);
-  }, [query, places, videos, knownCreators, searchMode]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, places, trendingVideos, knownCreators, searchMode, rankSuggestions]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -906,138 +1073,301 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </div>
 
-        {/* 3. Spotlight-Grade Elevated Glass Search Bar + Tactile Domain Hint Chips */}
+        {/* 3. Spotlight-Grade Elevated Glass Search Bar + Tactile Domain Hint Chips (Zero Vertical Layout Jump) */}
         <div
-          className={`w-full max-w-[660px] relative mx-auto ${query.trim() ? "mb-3" : "mb-7 sm:mb-9 md:mb-10"} z-30`}
+          className="w-full max-w-[660px] relative mx-auto mb-7 sm:mb-9 md:mb-10 z-30"
           ref={dropdownRef}
         >
-          <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
-            <div
-              onClick={() => {
-                if (isMobile) {
-                  flushSync(() => {
-                    setIsMobileSearchOpen(true);
-                  });
-                  const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
-                  overlayInput?.focus();
-                } else {
-                  searchInputRef.current?.focus();
-                }
-              }}
-              className={`relative flex items-center w-full bg-white/[0.045] hover:bg-white/[0.065] backdrop-blur-2xl border rounded-full pl-4 sm:pl-5 pr-1.5 sm:pr-2 py-1.5 sm:py-2 shadow-[0_20px_54px_rgba(0,0,0,0.72),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-200 cursor-text ${
-                autoFocusSearch || isFocused
-                  ? "border-white/35 ring-4 ring-white/[0.07]"
-                  : "border-white/[0.11] hover:border-white/[0.2] focus-within:border-white/35 focus-within:ring-4 focus-within:ring-white/[0.07]"
-              }`}
-            >
-              <Search className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-zinc-400 shrink-0 mr-3 pointer-events-none" />
-              <div className="relative flex-1 min-w-0 flex items-center">
-                {autoFocusSearch && !isFocused && query.length === 0 && (
-                  <span
-                    aria-hidden="true"
-                    className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[20px] rounded-full bg-white"
-                  />
-                )}
-                <input
-                  ref={searchInputRef}
-                  id="copo-main-search-input"
-                  name="yoouz_search_q_disabled"
-                  type="text"
-                  autoFocus={autoFocusSearch && !isMobile}
-                  dir="auto"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  data-lpignore="true"
-                  data-form-type="other"
-                  aria-autocomplete="none"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleInputKeyDown}
-                  onFocus={() => {
-                    setIsFocused(true);
-                    if (isMobile && !isMobileSearchOpen) {
-                      flushSync(() => {
-                        setIsMobileSearchOpen(true);
-                      });
-                      const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
-                      const overlayInput = mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null;
-                      overlayInput?.focus();
-                    }
-                    if (suggestions.length > 0) setShowDropdown(true);
-                  }}
-                  onBlur={() => setIsFocused(false)}
-                  placeholder={
-                    isMobile
-                      ? "Search brand, place, or URL..."
-                      : "Search any brand, place, or paste a website URL..."
+          <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="w-full" autoComplete="off" role="search" action="#" noValidate>
+              <div
+                onClick={() => {
+                  if (isMobile) {
+                    flushSync(() => {
+                      setIsMobileSearchOpen(true);
+                    });
+                    const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
+                    overlayInput?.focus();
+                  } else {
+                    searchInputRef.current?.focus();
                   }
-                  className="w-full min-w-0 bg-transparent text-white text-[14.5px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
-                />
-              </div>
+                }}
+                className={`relative flex items-center w-full bg-white/[0.045] hover:bg-white/[0.065] backdrop-blur-2xl border rounded-full pl-4 sm:pl-5 pr-1.5 sm:pr-2 py-1.5 sm:py-2 shadow-[0_20px_54px_rgba(0,0,0,0.72),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-200 cursor-text ${
+                  autoFocusSearch || isFocused || (!isMobile && showDropdown && query.trim().length > 0)
+                    ? "border-white/35 ring-4 ring-white/[0.07] bg-white/[0.065]"
+                    : "border-white/[0.11] hover:border-white/[0.2] focus-within:border-white/35 focus-within:ring-4 focus-within:ring-white/[0.07]"
+                }`}
+              >
+                <Search className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-zinc-400 shrink-0 mr-3 pointer-events-none" />
+                <div className="relative flex-1 min-w-0 flex items-center">
+                  {autoFocusSearch && !isFocused && query.length === 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="yoouz-caret-blink pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-[20px] rounded-full bg-white"
+                    />
+                  )}
+                  <input
+                    ref={searchInputRef}
+                    id="copo-main-search-input"
+                    name="yoouz_search_q_disabled"
+                    type="text"
+                    autoFocus={autoFocusSearch && !isMobile}
+                    dir="auto"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-form-type="other"
+                    aria-autocomplete="none"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    onFocus={() => {
+                      setIsFocused(true);
+                      if (isMobile && !isMobileSearchOpen) {
+                        flushSync(() => {
+                          setIsMobileSearchOpen(true);
+                        });
+                        const mobileInputs = document.querySelectorAll<HTMLInputElement>("#yoouz-mobile-search-input");
+                        const overlayInput = mobileInputs.length > 0 ? mobileInputs[mobileInputs.length - 1] : null;
+                        overlayInput?.focus();
+                      }
+                      if (query.trim().length > 0) setShowDropdown(true);
+                    }}
+                    onBlur={() => setIsFocused(false)}
+                    placeholder={
+                      isMobile
+                        ? "Search brand, place, or URL..."
+                        : "Search any brand, place, or paste a website URL..."
+                    }
+                    className="w-full min-w-0 bg-transparent text-white text-[14.5px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
+                  />
+                </div>
 
-              {/* Right Side: Spinner / Clear + Pure-White Submit Arrow */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {(isLoadingSuggest || isResolvingPlace) && (
-                  <Loader2 className="w-4 h-4 text-zinc-400 animate-spin mr-1" />
-                )}
-                {query.trim() && (
+                {/* Right Side: Spinner / Clear + Pure-White Submit Arrow */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {(isLoadingSuggest || isResolvingPlace) && (
+                    <Loader2 className="w-4 h-4 text-zinc-400 animate-spin mr-1" />
+                  )}
+                  {query.trim() && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuery("");
+                        setSuggestions([]);
+                        setShowDropdown(false);
+                        setSelectedIndex(-1);
+                        searchInputRef.current?.focus();
+                      }}
+                      className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-white/[0.08] transition-colors cursor-pointer"
+                      title={t("common.clear", "Clear")}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    onClick={(e) => {
+                      if (!query.trim()) {
+                        e.preventDefault();
+                        if (isMobile) {
+                          flushSync(() => setIsMobileSearchOpen(true));
+                          const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
+                          overlayInput?.focus();
+                        } else {
+                          searchInputRef.current?.focus();
+                        }
+                      }
+                    }}
+                    aria-label="Search"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(255,255,255,0.16)]"
+                  >
+                    <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Desktop Spotlight Autocomplete Sheet — Anchored Directly Below Pill, Zero Half-Cut Rows */}
+            {!isMobile && showDropdown && query.trim().length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#0D0D10]/97 backdrop-blur-3xl border border-white/[0.12] rounded-[24px] shadow-[0_32px_90px_rgba(0,0,0,0.94),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden z-50 animate-in fade-in duration-150">
+                <div className="p-2 space-y-0.5 max-h-[388px] overflow-y-auto no-scrollbar md:scrollbar-thin overscroll-contain">
+                  {isLoadingSuggest && suggestions.length === 0 && (
+                    <div className="space-y-1 p-1">
+                      {[0, 1, 2].map((sIdx) => (
+                        <div key={sIdx} className="px-3 py-2.5 flex items-center gap-3.5">
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] shrink-0 animate-pulse" />
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-3.5 w-32 rounded bg-white/[0.08] animate-pulse" />
+                            <div className="h-2.5 w-24 rounded bg-white/[0.04] animate-pulse" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {suggestions.map((item, idx) => {
+                    const domKey = (item.domain || "").toLowerCase();
+                    const titleKey = (item.title || "").toLowerCase();
+                    const stats = !item.isCreator ? businessStatsMap.get(domKey) || businessStatsMap.get(titleKey) : undefined;
+                    const isActive = selectedIndex === idx;
+                    const qTrim = query.trim();
+                    const matchIdx = qTrim ? item.title.toLowerCase().indexOf(qTrim.toLowerCase()) : -1;
+
+                    return (
+                      <button
+                        key={`${item.id || item.domain || item.title}-${idx}`}
+                        ref={(el) => { itemRefs.current[idx] = el; }}
+                        type="button"
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                        onClick={() => handleSelectSuggestion(item)}
+                        className={`w-full px-3 py-2.5 rounded-[14px] flex items-center gap-3.5 transition-colors text-left cursor-pointer group ${
+                          isActive ? "bg-white/[0.09] text-white" : "hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        {item.isCreator ? (
+                          <div className="w-9 h-9 rounded-full bg-[#121216] border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
+                            {item.logoUrl ? (
+                              <img
+                                src={item.logoUrl}
+                                alt={item.title}
+                                loading="eager"
+                                decoding="sync"
+                                className="w-full h-full object-cover"
+                                referrerPolicy={/^https?:\/\//i.test(item.logoUrl) ? "no-referrer" : undefined}
+                              />
+                            ) : (
+                              <User className="w-4 h-4 text-zinc-400" />
+                            )}
+                          </div>
+                        ) : item.domain || item.logoUrl ? (
+                          <CopoBrandLogo
+                            domain={item.domain || item.id}
+                            name={item.title}
+                            logoUrl={item.logoUrl}
+                            className="w-9 h-9 rounded-[11px] bg-white border border-white/[0.12] flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
+                            imageClassName="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-[11px] bg-[#121216] border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
+                            <Building2 className="w-4 h-4 text-zinc-400" />
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 text-[14.5px] tracking-[-0.012em] truncate">
+                            <span className="truncate">
+                              {matchIdx >= 0 ? (
+                                <>
+                                  <span className="font-medium text-zinc-300">{item.title.slice(0, matchIdx)}</span>
+                                  <span className="font-semibold text-white">{item.title.slice(matchIdx, matchIdx + qTrim.length)}</span>
+                                  <span className="font-medium text-zinc-300">{item.title.slice(matchIdx + qTrim.length)}</span>
+                                </>
+                              ) : (
+                                <span className="font-semibold text-white">{item.title}</span>
+                              )}
+                            </span>
+                            {!item.isCreator && (
+                              <CheckCircle className="w-3.5 h-3.5 fill-white text-[#0D0D10] shrink-0 inline-block" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[12px] text-zinc-400 truncate font-normal mt-0.5 tabular-nums">
+                            {item.domain && <span className="truncate">{item.domain}</span>}
+                            {stats && stats.reviewCount > 0 && (
+                              <>
+                                {item.domain && <span aria-hidden="true">·</span>}
+                                <span className="inline-flex items-center gap-1 text-zinc-300 shrink-0">
+                                  <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
+                                  {stats.rating.toFixed(1)}
+                                </span>
+                                <span aria-hidden="true">·</span>
+                                <span className="shrink-0">
+                                  {stats.reviewCount} {stats.reviewCount === 1 ? "review" : "reviews"}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center">
+                          {searchMode === "review" ? (
+                            <span
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                isActive
+                                  ? "bg-white text-zinc-950"
+                                  : "bg-white/[0.06] text-zinc-300 group-hover:bg-white group-hover:text-zinc-950"
+                              }`}
+                            >
+                              <Camera className="w-3.5 h-3.5 stroke-[2.1]" />
+                            </span>
+                          ) : isActive ? (
+                            <span className="text-[11px] font-medium text-zinc-400 px-1.5 py-0.5 rounded-md bg-white/[0.07] border border-white/[0.1] font-mono">
+                              ↵
+                            </span>
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Integrated Direct-Action Footer + Quiet Keyboard Hints */}
+                <div className="border-t border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center justify-between gap-3">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setQuery("");
-                      setSuggestions([]);
-                      setShowDropdown(false);
-                      setSelectedIndex(-1);
-                      searchInputRef.current?.focus();
-                    }}
-                    className="p-1.5 text-zinc-400 hover:text-white rounded-full hover:bg-white/[0.08] transition-colors cursor-pointer"
-                    title={t("common.clear", "Clear")}
+                    onClick={() => handleSearchSubmit()}
+                    className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/[0.06] text-left transition-colors cursor-pointer min-w-0 flex-1 group"
                   >
-                    <X className="w-4 h-4" />
+                    <span className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-zinc-300 group-hover:text-white shrink-0">
+                      {isResolvingPlace ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : searchMode === "review" ? (
+                        <Camera className="w-3.5 h-3.5" />
+                      ) : (
+                        <Globe className="w-3.5 h-3.5" />
+                      )}
+                    </span>
+                    <span className="text-[13px] text-zinc-300 group-hover:text-white truncate">
+                      {searchMode === "review" ? "Review" : "Look up"}{" "}
+                      <span className="font-semibold text-white">“{query.trim()}”</span>
+                    </span>
                   </button>
-                )}
-                <button
-                  type="submit"
-                  onClick={(e) => {
-                    if (!query.trim()) {
-                      e.preventDefault();
-                      if (isMobile) {
-                        flushSync(() => setIsMobileSearchOpen(true));
-                        const overlayInput = document.getElementById("yoouz-mobile-search-input") as HTMLInputElement | null;
-                        overlayInput?.focus();
-                      } else {
-                        searchInputRef.current?.focus();
-                      }
-                    }
-                  }}
-                  aria-label="Search"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(255,255,255,0.16)]"
-                >
-                  <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
-                </button>
+                  <div className="hidden sm:flex items-center gap-2.5 text-[11px] text-zinc-500 shrink-0 pr-1">
+                    <span>↑↓ navigate</span>
+                    <span aria-hidden="true">·</span>
+                    <span>↵ open</span>
+                    <span aria-hidden="true">·</span>
+                    <span>Esc close</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </form>
+            )}
+          </div>
 
-          {/* Tactile Hairline Domain Chips (No 2005 underlines) */}
-          {!query.trim() && (
-            <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mt-3.5 px-1">
-              <span className="text-[12px] text-zinc-500 font-medium mr-0.5">Try</span>
-              {suggestedDomains.map((dom, i) => (
-                <button
-                  key={dom}
-                  type="button"
-                  onClick={() => resolveAndOpenBusiness(dom)}
-                  className={`${i === 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] hover:border-white/[0.18] text-[12px] text-zinc-300 hover:text-white font-medium tracking-[-0.01em] transition-all active:scale-95 cursor-pointer`}
-                >
-                  {dom}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Tactile Hairline Domain Chips — Kept in Flow so Zero Layout Jump Occurs When Typing */}
+          <div
+            className={`flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mt-3.5 px-1 transition-opacity duration-150 ${
+              !isMobile && showDropdown && query.trim().length > 0
+                ? "opacity-0 pointer-events-none"
+                : "opacity-100"
+            }`}
+          >
+            <span className="text-[12px] text-zinc-500 font-medium mr-0.5">Try</span>
+            {suggestedDomains.map((dom, i) => (
+              <button
+                key={dom}
+                type="button"
+                onClick={() => resolveAndOpenBusiness(dom)}
+                className={`${i === 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] hover:border-white/[0.18] text-[12px] text-zinc-300 hover:text-white font-medium tracking-[-0.01em] transition-all active:scale-95 cursor-pointer`}
+              >
+                {dom}
+              </button>
+            ))}
+          </div>
 
           {/* Mobile Search Overlay */}
           {isMobile && isMobileSearchOpen && (
@@ -1081,69 +1411,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               isLoading={isLoadingSuggest}
             />
           )}
-
-          {/* Desktop Autocomplete Dropdown */}
-          {!isMobile && showDropdown && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2.5 bg-[#101013]/96 backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.92)] overflow-hidden z-50 divide-y divide-white/[0.06] max-h-[340px] overflow-y-auto no-scrollbar md:scrollbar-thin animate-in fade-in duration-150 overscroll-contain">
-              {suggestions.map((item, idx) => (
-                <button
-                  key={idx}
-                  ref={(el) => { itemRefs.current[idx] = el; }}
-                  type="button"
-                  onClick={() => handleSelectSuggestion(item)}
-                  className={`w-full px-4 py-3 flex items-center gap-3.5 transition-colors text-left cursor-pointer group ${
-                    selectedIndex === idx ? "bg-white/[0.08] text-white" : "hover:bg-white/[0.05]"
-                  }`}
-                >
-                  {item.isCreator ? (
-                    <div className="w-9 h-9 rounded-full bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
-                      {item.logoUrl ? (
-                        <img
-                          src={item.logoUrl}
-                          alt={item.title}
-                          loading="eager"
-                          decoding="sync"
-                          className="w-full h-full object-cover"
-                          referrerPolicy={/^https?:\/\//i.test(item.logoUrl) ? "no-referrer" : undefined}
-                        />
-                      ) : (
-                        <User className="w-4 h-4 text-zinc-400" />
-                      )}
-                    </div>
-                  ) : item.domain || item.logoUrl ? (
-                    <CopoBrandLogo
-                      domain={item.domain || item.id}
-                      name={item.title}
-                      logoUrl={item.logoUrl}
-                      className="w-9 h-9 rounded-xl bg-white border border-white/[0.12] flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-xs"
-                      imageClassName="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/[0.1] flex items-center justify-center shrink-0 overflow-hidden text-zinc-300">
-                      <Building2 className="w-4 h-4 text-zinc-400" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 font-semibold text-sm text-white group-hover:text-white transition-colors truncate">
-                      <span>{item.title}</span>
-                      {!item.isCreator && (
-                        <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
-                      )}
-                    </div>
-                    {item.domain && (
-                      <div className="text-xs text-zinc-400 truncate font-normal mt-0.5">
-                        {item.domain}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* 4. Live Photo Proof Widescreen Gallery */}
-        <section className={`w-full relative transition-opacity duration-200 ${query.trim() ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
+        {/* 4. Live Photo Proof Widescreen Gallery — Smooth Focus Scrim Only While Desktop Dropdown Is Open */}
+        <section
+          className={`w-full relative transition-all duration-200 ${
+            !isMobile && showDropdown && query.trim().length > 0
+              ? "opacity-25 blur-[1.5px] pointer-events-none"
+              : "opacity-100"
+          }`}
+        >
           <div className="flex items-center justify-between w-full mb-3.5 sm:mb-4 px-0.5">
             <div className="flex items-baseline gap-2 min-w-0">
               <h2 className="text-[17px] sm:text-[19px] font-semibold tracking-[-0.02em] text-white truncate">

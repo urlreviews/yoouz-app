@@ -9285,8 +9285,17 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           }
         }
 
-        const domain = (p.brandDomain || (p.website ? p.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || canonId).toLowerCase().trim();
+        const rawBrandDom = String(p.brandDomain || '').trim();
+        const rawWebsite = String(p.website || '').trim();
+        const domain = (
+          (rawBrandDom ? (cleanDomainName(rawBrandDom) || rawBrandDom.toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\d*\./i, '').split('/')[0].trim()) : '') ||
+          (rawWebsite ? (cleanDomainName(rawWebsite) || rawWebsite.toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\d*\./i, '').split('/')[0].trim()) : '') ||
+          canonId
+        ).toLowerCase().replace(/^www\d*\./i, '').trim();
         const key = domain || canonId;
+        if (domain && domain.includes('.')) {
+          p.brandDomain = domain;
+        }
 
         if (KNOWN_OFFICIAL_NAMES[key]) {
           p.name = KNOWN_OFFICIAL_NAMES[key];
@@ -9375,11 +9384,16 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           }
         }
 
+        const cleanFinalId = (normDomKey && normDomKey.includes('.')) ? normDomKey : (canonId.includes('.') ? canonId.replace(/^www\d*\./i, '') : String(p.id).replace(/^www\d*\./i, ''));
         const existing = canonicalMap.get(key);
         if (!existing) {
-          canonicalMap.set(key, { ...p, id: canonId.includes('.') ? canonId : p.id });
+          canonicalMap.set(key, {
+            ...p,
+            id: cleanFinalId,
+            brandDomain: (normDomKey && normDomKey.includes('.')) ? normDomKey : (p.brandDomain ? String(p.brandDomain).toLowerCase().replace(/^www\d*\./i, '').trim() : p.brandDomain)
+          });
         } else {
-          const preferNew = (!existing.id.includes('.') && canonId.includes('.')) || (!existing.isClaimed && p.isClaimed);
+          const preferNew = (!existing.id.includes('.') && cleanFinalId.includes('.')) || (!existing.isClaimed && p.isClaimed);
           const base = preferNew ? p : existing;
           const other = preferNew ? existing : p;
 
@@ -9394,7 +9408,8 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
           canonicalMap.set(key, {
             ...other,
             ...base,
-            id: (base.id.includes('.') ? base.id : (other.id.includes('.') ? other.id : base.id)),
+            id: cleanFinalId,
+            brandDomain: (normDomKey && normDomKey.includes('.')) ? normDomKey : (base.brandDomain || other.brandDomain || '').replace(/^www\d*\./i, ''),
             logoUrl: mergedLogo,
             avatarUrl: mergedLogo,
             bannerUrl: mergedBanner,
@@ -10384,9 +10399,10 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             const flagPath = path.join(serverUploadsDir, 'all_places_purged.flag');
             if (fs.existsSync(flagPath)) fs.unlinkSync(flagPath);
           } catch(e) {}
-          const targetSaveId = (canonicalExistingPlaceId && canonicalExistingPlaceId.includes('.'))
-            ? canonicalExistingPlaceId
-            : (cleanIdDom && cleanIdDom.includes('.') ? cleanIdDom : id);
+          const rawCanonicalExisting = String(canonicalExistingPlaceId || '').trim().toLowerCase().replace(/^www\d*\./i, '');
+          const targetSaveId = (cleanIdDom && cleanIdDom.includes('.'))
+            ? cleanIdDom.replace(/^www\d*\./i, '')
+            : (rawCanonicalExisting && rawCanonicalExisting.includes('.') ? rawCanonicalExisting : String(id || '').replace(/^www\d*\./i, ''));
           const officialTextForSave = extractOfficialBrandSpellingFromText(finalDataObj.description, targetSaveId);
           const descBrandForSave = extractBrandFromDescription(finalDataObj.description, targetSaveId);
           const rawCandidateName = (officialTextForSave && (!finalDataObj.name || isDomainDerivedGuess(finalDataObj.name, targetSaveId) || isDomainStemName(finalDataObj.name, targetSaveId) || isFalseSplitOfDomain(finalDataObj.name, targetSaveId) || isFalseSplitAgainstText(finalDataObj.name, finalDataObj.description, targetSaveId)))
@@ -10439,7 +10455,11 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           const longitude = Number(finalDataObj.lng) || 0;
           const logoUrl = finalDataObj.logoUrl || finalDataObj.avatarUrl || '';
           const bannerUrl = finalDataObj.bannerUrl || finalDataObj.ogImage || '';
-          const brandDomain = finalDataObj.brandDomain || (cleanDomForSave && cleanDomForSave.includes('.') ? cleanDomForSave : (String(targetSaveId).includes('.') ? targetSaveId : ''));
+          const normalizedBrandDom = (cleanDomForSave && cleanDomForSave.includes('.')
+            ? cleanDomForSave
+            : (finalDataObj.brandDomain ? String(finalDataObj.brandDomain).toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\d*\./i, '').split('/')[0].trim() : (String(targetSaveId).includes('.') ? String(targetSaveId).toLowerCase().replace(/^www\d*\./i, '') : ''))
+          ).replace(/^www\d*\./i, '');
+          const brandDomain = normalizedBrandDom;
           const website = finalDataObj.website || (brandDomain ? `https://${brandDomain}` : '');
           finalDataObj.id = targetSaveId;
           finalDataObj.brandDomain = brandDomain || finalDataObj.brandDomain;
@@ -10464,18 +10484,27 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
             args: [targetSaveId, placeName, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, placeJsonStr,
                    placeName, address, category, city, country, latitude, longitude, logoUrl, logoUrl, bannerUrl, bannerUrl, brandDomain, website, placeJsonStr]
           });
+          if (brandDomain && brandDomain.includes('.')) {
+            await bunnyDb.execute({
+              sql: `DELETE FROM places WHERE LOWER(id) = LOWER(?) AND LOWER(id) != LOWER(?)`,
+              args: [`www.${brandDomain}`, targetSaveId]
+            }).catch(() => {});
+          }
           try {
             const curIndex = readPlacesIndex();
-            const idxMatch = curIndex.findIndex((p: any) => p && (
-              String(p.id || '').toLowerCase() === String(targetSaveId).toLowerCase() ||
-              (cleanDomForSave && String(p.brandDomain || '').toLowerCase() === cleanDomForSave)
-            ));
-            if (idxMatch >= 0) {
-              curIndex[idxMatch] = { ...curIndex[idxMatch], ...finalDataObj, id: targetSaveId };
-            } else {
-              curIndex.unshift({ id: targetSaveId, ...finalDataObj });
-            }
-            writePlacesIndex(curIndex);
+            const targetLow = String(targetSaveId).toLowerCase();
+            const wwwTargetLow = brandDomain ? `www.${brandDomain.toLowerCase()}` : '';
+            const dedupedIndex = curIndex.filter((p: any) => {
+              if (!p) return false;
+              const pIdLow = String(p.id || '').toLowerCase();
+              const pDomLow = String(p.brandDomain || '').toLowerCase().replace(/^www\d*\./i, '');
+              if (pIdLow === targetLow) return false;
+              if (wwwTargetLow && pIdLow === wwwTargetLow) return false;
+              if (brandDomain && pDomLow === brandDomain.toLowerCase()) return false;
+              return true;
+            });
+            dedupedIndex.unshift({ ...finalDataObj, id: targetSaveId, brandDomain });
+            writePlacesIndex(dedupedIndex);
           } catch (idxErr) {}
 
           // Also propagate place banner, logo, name, address, phone, email changes into existing video reviews
@@ -36279,32 +36308,57 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               lng: locInfo.lng || existingDoc.lng || 0
             };
 
-            await bunnyDb.execute({
-              sql: `UPDATE places SET 
-                      name = ?,
-                      logoUrl = ?,
-                      bannerUrl = ?,
-                      brandDomain = ?,
-                      website = ?,
-                      address = COALESCE(NULLIF(?, ''), places.address),
-                      city = COALESCE(NULLIF(?, ''), places.city),
-                      country = COALESCE(NULLIF(?, ''), places.country),
-                      latitude = ?,
-                      longitude = ?,
-                      data = ?,
-                      updatedAt = CURRENT_TIMESTAMP
-                    WHERE LOWER(id) = LOWER(?)`,
-              args: [formattedExistingName, mergedLogo, mergedBanner, cleanDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), matchedRowId]
-            }).catch(e => console.error("[Scraper DB Update Error]:", e));
+            const canonicalRowId = cleanDomain && cleanDomain.includes('.') ? cleanDomain.replace(/^www\d*\./i, '') : String(matchedRowId || '').replace(/^www\d*\./i, '');
+            mergedDoc.id = canonicalRowId;
+            mergedDoc.brandDomain = cleanDomain.replace(/^www\d*\./i, '');
+
+            if (matchedRowId.toLowerCase() !== canonicalRowId.toLowerCase()) {
+              await bunnyDb.execute({
+                sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(id) DO UPDATE SET
+                        name = ?, logoUrl = ?, bannerUrl = ?, brandDomain = ?, website = ?,
+                        address = COALESCE(NULLIF(?, ''), places.address),
+                        city = COALESCE(NULLIF(?, ''), places.city),
+                        country = COALESCE(NULLIF(?, ''), places.country),
+                        latitude = ?, longitude = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
+                args: [
+                  canonicalRowId, formattedExistingName, mergedAddress, mergedDoc.category || 'Website', mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, JSON.stringify(mergedDoc),
+                  formattedExistingName, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc)
+                ]
+              }).catch(e => console.error("[Scraper DB Canonical Migrate Error]:", e));
+              await bunnyDb.execute({
+                sql: `DELETE FROM places WHERE LOWER(id) = LOWER(?) AND LOWER(id) != LOWER(?)`,
+                args: [matchedRowId, canonicalRowId]
+              }).catch(() => {});
+            } else {
+              await bunnyDb.execute({
+                sql: `UPDATE places SET 
+                        name = ?,
+                        logoUrl = ?,
+                        bannerUrl = ?,
+                        brandDomain = ?,
+                        website = ?,
+                        address = COALESCE(NULLIF(?, ''), places.address),
+                        city = COALESCE(NULLIF(?, ''), places.city),
+                        country = COALESCE(NULLIF(?, ''), places.country),
+                        latitude = ?,
+                        longitude = ?,
+                        data = ?,
+                        updatedAt = CURRENT_TIMESTAMP
+                      WHERE LOWER(id) = LOWER(?)`,
+                args: [formattedExistingName, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), canonicalRowId]
+              }).catch(e => console.error("[Scraper DB Update Error]:", e));
+            }
 
             try {
-              const currentPlaces = readPlacesIndex();
-              const idx = currentPlaces.findIndex(p => p && (String(p.id).toLowerCase() === matchedRowId.toLowerCase() || String(p.id).toLowerCase() === autoPlaceId.toLowerCase()));
-              if (idx >= 0) {
-                currentPlaces[idx] = { ...currentPlaces[idx], ...mergedDoc, id: matchedRowId };
-              } else {
-                currentPlaces.unshift({ id: matchedRowId, ...mergedDoc });
-              }
+              const currentPlaces = readPlacesIndex().filter(p => {
+                if (!p) return false;
+                const pIdLow = String(p.id || '').toLowerCase();
+                const pDomLow = String(p.brandDomain || '').toLowerCase().replace(/^www\d*\./i, '');
+                return pIdLow !== matchedRowId.toLowerCase() && pIdLow !== canonicalRowId.toLowerCase() && pIdLow !== `www.${canonicalRowId.toLowerCase()}` && pDomLow !== mergedDoc.brandDomain.toLowerCase();
+              });
+              currentPlaces.unshift({ id: canonicalRowId, ...mergedDoc });
               writePlacesIndex(currentPlaces);
             } catch (pErr) {}
 
@@ -36449,20 +36503,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
         if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
 
-        let dom = (item.domain || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").trim();
+        let dom = (cleanDomainName(item.domain || "") || (item.domain || "").toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0]).replace(/^www\d*\./i, "").trim();
         const normTitle = item.title.toLowerCase().trim();
         const compactTitle = normTitle.replace(/[^\p{L}\p{N}]/gu, '');
 
-        // If domain is empty but title looks like a domain name (e.g. "example.com")
+        // If domain is empty but title looks like a domain name (e.g. "example.com" or "www.example.com")
         if (!dom && normTitle.includes(".") && !normTitle.includes(" ") && normTitle.length > 3) {
-          dom = normTitle;
+          dom = (cleanDomainName(normTitle) || normTitle.replace(/^www\d*\./i, "")).replace(/^www\d*\./i, "").trim();
         }
 
         const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
         if (hasValidDomain && seenDomains.has(dom)) return;
 
         const key = dom ? `${dom}:${normTitle}` : normTitle;
-        if (seenKeys.has(normTitle) && !dom) return;
+        if (seenKeys.has(normTitle)) return;
         if (compactTitle && seenKeys.has(`compact:${compactTitle}`)) return;
         if (seenKeys.has(key)) return;
         seenKeys.add(normTitle);
@@ -36480,12 +36534,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         }
 
         const cleanTitle = formatBusinessName(item.title, dom, undefined, { fromWebsite: item.source !== 'domain_guess' }) || item.title;
+        const cleanItemId = hasValidDomain ? dom : (item.id ? String(item.id).replace(/^www\d*\./i, "") : undefined);
 
         suggestions.push({
-          id: item.id || (hasValidDomain ? dom : undefined),
+          id: cleanItemId,
           title: cleanTitle,
           domain: hasValidDomain ? dom : "",
-          websiteUrl: item.websiteUrl || (hasValidDomain ? `https://${dom}` : undefined),
+          websiteUrl: hasValidDomain ? `https://${dom}` : item.websiteUrl,
           logoUrl: logo,
           category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
           address: "",
@@ -36540,17 +36595,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const escapedQ = qLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
       const wordRegex = new RegExp(`(?:^|\\s|-|\\.)${escapedQ}`, 'i');
       for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
-        const domLower = domKey.toLowerCase();
+        const domLower = domKey.toLowerCase().replace(/^www\d*\./i, "");
         const nameLower = officialName.toLowerCase();
         const nameNoSpaces = nameLower.replace(/\s+/g, '');
         if (domLower.startsWith(qLower) || nameLower.startsWith(qLower) || (qNoSpaces.length >= 2 && nameNoSpaces.startsWith(qNoSpaces)) || wordRegex.test(domLower) || wordRegex.test(nameLower)) {
-          const hasDot = domKey.includes(".");
+          const hasDot = domLower.includes(".");
           const validDomain = hasDot 
-            ? domKey 
-            : (KNOWN_BRAND_LOGOS[domKey + ".com"] ? domKey + ".com" : (KNOWN_OFFICIAL_NAMES[domKey + ".com"] ? domKey + ".com" : (KNOWN_BRAND_LOGOS[domKey] ? domKey : "")));
+            ? domLower 
+            : (KNOWN_BRAND_LOGOS[domLower + ".com"] ? domLower + ".com" : (KNOWN_OFFICIAL_NAMES[domLower + ".com"] ? domLower + ".com" : (KNOWN_BRAND_LOGOS[domLower] ? domLower : "")));
           addSuggestion({
             title: officialName,
-            domain: validDomain,
+            domain: validDomain.replace(/^www\d*\./i, ""),
             logoUrl: validDomain && KNOWN_BRAND_LOGOS[validDomain] ? KNOWN_BRAND_LOGOS[validDomain] : "",
             category: "",
             source: "brand_index"

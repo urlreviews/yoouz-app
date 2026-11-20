@@ -71,9 +71,27 @@ function loadRecentSearches(): RecentSearchEntry[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item) => item && typeof item.title === "string" && item.title.trim().length > 0)
-      .slice(0, MAX_RECENT_SEARCHES);
+    const seen = new Set<string>();
+    const cleanList: RecentSearchEntry[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item.title !== "string" || !item.title.trim()) continue;
+      const cleanDom = String(item.domain || "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//i, "")
+        .replace(/^www\d*\./i, "")
+        .split("/")[0];
+      const dedupeKey = cleanDom || item.title.trim().toLowerCase();
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      cleanList.push({
+        title: item.title.trim(),
+        domain: cleanDom,
+        logoUrl: item.logoUrl
+      });
+      if (cleanList.length >= MAX_RECENT_SEARCHES) break;
+    }
+    return cleanList;
   } catch {
     return [];
   }
@@ -113,7 +131,12 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
 
   const recordRecent = (entry: RecentSearchEntry) => {
     const cleanTitle = (entry.title || "").trim();
-    const cleanDomain = (entry.domain || "").trim().toLowerCase();
+    const cleanDomain = (entry.domain || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\d*\./i, "")
+      .split("/")[0];
     if (!cleanTitle && !cleanDomain) return;
     setRecentSearches((prev) => {
       const dedupeKey = cleanDomain || cleanTitle.toLowerCase();
@@ -327,10 +350,28 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
   }, [places, videos]);
 
   const visibleSuggestions = useMemo(() => {
-    if (isReviewMode) {
-      return suggestions.filter((item) => !item.isCreator);
+    const seenDom = new Set<string>();
+    const seenTitle = new Set<string>();
+    const result: SuggestionItem[] = [];
+    for (const raw of suggestions) {
+      if (isReviewMode && raw.isCreator) continue;
+      const cleanDom = (raw.domain || "")
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//i, "")
+        .replace(/^www\d*\./i, "")
+        .split("/")[0];
+      const titleKey = (raw.title || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "").trim();
+      if (cleanDom && seenDom.has(cleanDom)) continue;
+      if (!raw.isCreator && titleKey && seenTitle.has(titleKey)) continue;
+      if (cleanDom) seenDom.add(cleanDom);
+      if (!raw.isCreator && titleKey) seenTitle.add(titleKey);
+      result.push({
+        ...raw,
+        domain: cleanDom
+      });
     }
-    return suggestions;
+    return result;
   }, [suggestions, isReviewMode]);
 
   const handleSelectItem = (item: SuggestionItem) => {
@@ -860,10 +901,26 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                         )}
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-[15px] text-white tracking-[-0.015em] truncate">
-                              {item.title}
-                            </span>
+                          <div className="flex items-center gap-1.5 text-[15px] tracking-[-0.015em] truncate">
+                            {(() => {
+                              const matchIdx = item.title.toLowerCase().indexOf(trimmedQuery.toLowerCase());
+                              if (matchIdx >= 0) {
+                                return (
+                                  <span className="truncate">
+                                    <span className="font-medium text-zinc-300">
+                                      {item.title.slice(0, matchIdx)}
+                                    </span>
+                                    <span className="font-semibold text-white">
+                                      {item.title.slice(matchIdx, matchIdx + trimmedQuery.length)}
+                                    </span>
+                                    <span className="font-medium text-zinc-300">
+                                      {item.title.slice(matchIdx + trimmedQuery.length)}
+                                    </span>
+                                  </span>
+                                );
+                              }
+                              return <span className="font-semibold text-white truncate">{item.title}</span>;
+                            })()}
                             {!item.isCreator && (
                               <CheckCircle className="w-3.5 h-3.5 fill-white text-[#050506] shrink-0" />
                             )}
