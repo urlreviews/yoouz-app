@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoouz — Flagship Obsidian Platform Showcase (Live Verification)</title>
+  <style>
+    :root {
+      --bg: #050506;
+      --surface: #0c0c0f;
+      --surface-elevated: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --gold: #E8C78A;
+      --text: #ffffff;
+      --muted: #a1a1aa;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Google Sans", "Inter", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Sticky Master Showcase Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 64px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(5, 5, 6, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #121216;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(232, 199, 138, 0.12);
+      border: 1px solid rgba(232, 199, 138, 0.28);
+      color: var(--gold);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+    }
+
+    .mode-switcher {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: #ffffff;
+      color: #09090b;
+    }
+
+    .mode-btn:not(.active):hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .cta-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #09090b;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+    .cta-open:hover { background: #e4e4e7; }
+
+    /* Container */
+    .container {
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 28px 24px 80px;
+    }
+
+    /* Hero Intro */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 8px;
+      max-width: 680px;
+      line-height: 1.5;
+    }
+
+    /* Token Bar */
+    .tokens {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .token-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: #e4e4e7;
+      font-weight: 500;
+    }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* Route Selector Tabs */
+    .route-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+      padding: 12px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border);
+    }
+
+    .route-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: #d4d4d8;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .route-btn:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: #ffffff;
+    }
+
+    .route-btn.active {
+      background: #ffffff;
+      color: #09090b;
+      border-color: #ffffff;
+    }
+
+    /* Live Stage Layout */
+    .stage-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 48px;
+    }
+
+    .stage-grid.desktop-only {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stage-grid.mobile-only {
+      grid-template-columns: 390px;
+      justify-content: center;
+    }
+
+    @media (max-width: 1180px) {
+      .stage-grid {
+        grid-template-columns: 1fr;
+      }
+      .mobile-frame-wrap {
+        max-width: 390px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    }
+
+    .device-card {
+      background: #0a0a0d;
+      border: 1px solid var(--border-strong);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.8);
+    }
+
+    .device-bar {
+      height: 44px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0c0c10;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .url-pill {
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      color: #d4d4d8;
+      max-width: 340px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reload-btn {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .reload-btn:hover { background: rgba(255, 255, 255, 0.12); }
+
+    .desktop-iframe {
+      width: 100%;
+      height: 760px;
+      border: none;
+      display: block;
+      background: #050506;
+    }
+
+    .mobile-iframe {
+      width: 100%;
+      height: 760px;
+      border: none;
+      display: block;
+      background: #050506;
+    }
+
+    /* Verification Checklist Section */
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .section-sub {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-bottom: 20px;
+    }
+
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 16px;
+    }
+
+    .audit-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .audit-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .audit-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .audit-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(232, 199, 138, 0.12);
+      border: 1px solid rgba(232, 199, 138, 0.28);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .audit-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12.5px;
+      color: #d4d4d8;
+      line-height: 1.45;
+    }
+
+    .audit-list li {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .check-dot {
+      color: var(--gold);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .audit-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .btn-ghost {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
+
+    .btn-white {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #09090b;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .btn-white:hover { background: #e4e4e7; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" target="_blank" rel="noopener">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="#ffffff">
+          <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+        </svg>
+      </div>
+      <span class="brand-name">Yoouz</span>
+      <span class="badge-pill"><span class="live-dot"></span> Live Platform Showcase</span>
+    </a>
+
+    <div class="mode-switcher" role="tablist" aria-label="Viewport Mode">
+      <button class="mode-btn active" data-mode="both" onclick="setViewportMode('both')">Desktop + Mobile</button>
+      <button class="mode-btn" data-mode="desktop" onclick="setViewportMode('desktop')">Desktop Only</button>
+      <button class="mode-btn" data-mode="mobile" onclick="setViewportMode('mobile')">Mobile Only</button>
+    </div>
+
+    <a class="cta-open" href="/" target="_blank" rel="noopener">Open Full App ↗</a>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <h1>Master Platform Showcase — Live Build</h1>
+        <p>
+          Both frames below load the <strong>real, live Yoouz application</strong> side by side in Desktop &amp; Mobile viewports.
+          Click any destination below to inspect every page, drawer, modal, button, and overlay in real time.
+        </p>
+      </div>
+    </section>
+
+    <div class="tokens">
+      <span class="token-chip"><span class="swatch" style="background:#050506"></span>OLED Obsidian #050506</span>
+      <span class="token-chip"><span class="swatch" style="background:#0c0c0f"></span>Liquid Glass #0C0C0F / 96%</span>
+      <span class="token-chip"><span class="swatch" style="background:rgba(255,255,255,0.18)"></span>Hairline Border white/8–10%</span>
+      <span class="token-chip"><span class="swatch" style="background:#E8C78A"></span>Champagne Gold Stars #E8C78A</span>
+      <span class="token-chip"><span class="swatch" style="background:#ffffff"></span>Sentence Case White Pill CTAs</span>
+    </div>
+
+    <!-- Instant Live Route Switcher -->
+    <div class="route-bar" id="routeBar">
+      <button class="route-btn active" data-path="/" onclick="loadRoute('/', this)">Home (Discover)</button>
+      <button class="route-btn" data-path="/reviews/nike.com/rev_w3_nike_45" onclick="loadRoute('/reviews/nike.com/rev_w3_nike_45', this)">Photo Review Feed + Rail</button>
+      <button class="route-btn" data-path="/reviews/nike.com" onclick="loadRoute('/reviews/nike.com', this)">Business Profile Drawer</button>
+      <button class="route-btn" data-path="/following" onclick="loadRoute('/following', this)">Following</button>
+      <button class="route-btn" data-path="/bookmarks" onclick="loadRoute('/bookmarks', this)">Saved</button>
+      <button class="route-btn" data-path="/messages" onclick="loadRoute('/messages', this)">Messages</button>
+      <button class="route-btn" data-path="/notifications" onclick="loadRoute('/notifications', this)">Notifications</button>
+      <button class="route-btn" data-path="/business" onclick="loadRoute('/business', this)">Business Portal &amp; Dashboard</button>
+      <button class="route-btn" data-path="/more" onclick="loadRoute('/more', this)">Trust Center &amp; More</button>
+    </div>
+
+    <!-- Live Interactive Desktop + Mobile Iframes -->
+    <section class="stage-grid" id="stageGrid">
+      <div class="device-card" id="desktopCard">
+        <div class="device-bar">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <strong style="color:#fff;">Desktop Live View</strong>
+          </div>
+          <span class="url-pill" id="desktopUrl">/</span>
+          <button class="reload-btn" onclick="reloadFrames()">Refresh</button>
+        </div>
+        <iframe id="desktopFrame" class="desktop-iframe" src="/?showcase=1" title="Yoouz Live Desktop"></iframe>
+      </div>
+
+      <div class="mobile-frame-wrap" id="mobileCard">
+        <div class="device-card">
+          <div class="device-bar">
+            <strong style="color:#fff;">Mobile (390px)</strong>
+            <span class="url-pill" id="mobileUrl" style="max-width:165px;">/</span>
+            <button class="reload-btn" onclick="reloadFrames()">↻</button>
+          </div>
+          <iframe id="mobileFrame" class="mobile-iframe" src="/?showcase=1" title="Yoouz Live Mobile"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- Complete Page-by-Page Verification Matrix -->
+    <h2 class="section-title">Complete Platform Unification Checklist</h2>
+    <p class="section-sub">Every screen, drawer, modal, and button across Yoouz verified under the Flagship Obsidian Design System. Click "Load in Frames" to test interactively above.</p>
+
+    <section class="audit-grid">
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">1. Home &amp; Top Navigation</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> 3-zone Desktop Top Bar (Discover · Following · Saved · For Business)</li>
+            <li><span class="check-dot">✓</span> Pure-white Sentence Case Add Review pill CTA</li>
+            <li><span class="check-dot">✓</span> Floating iOS liquid-glass Mobile Bottom Dock &amp; Hamburger Drawer</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/')">Load in Frames</button>
+          <a class="btn-ghost" href="/" target="_blank">Open Tab ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">2. Photo Review Feed &amp; Action Rail</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> #050506 OLED canvas with frosted glass right-side action rail</li>
+            <li><span class="check-dot">✓</span> Top Business Pill &amp; Bottom Reviewer Pill in obsidian glass</li>
+            <li><span class="check-dot">✓</span> Whole-number champagne-gold (#E8C78A) stars &amp; saved state</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/reviews/nike.com/rev_w3_nike_45')">Load in Frames</button>
+          <a class="btn-ghost" href="/reviews/nike.com/rev_w3_nike_45" target="_blank">Open Tab ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">3. Comments Drawer &amp; Share Modal</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> Desktop Comments anchored at top-16 (never overlaps Top Bar)</li>
+            <li><span class="check-dot">✓</span> Clean universal starter prompts &amp; obsidian glass composer</li>
+            <li><span class="check-dot">✓</span> 5-column frosted utility Share sheet with #E8C78A bookmark</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/reviews/nike.com/rev_w3_nike_45')">Test on Feed</button>
+          <a class="btn-ghost" href="/reviews/nike.com/rev_w3_nike_45" target="_blank">Open Tab ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">4. Business Profile Drawer</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> Seamless #050506 hero scrim &amp; hairline glass Rating Card</li>
+            <li><span class="check-dot">✓</span> Pure-white Sentence Case Add Review pill &amp; circular glass actions</li>
+            <li><span class="check-dot">✓</span> #E8C78A star filter chips, review pills, and QR Standee modal</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/reviews/nike.com')">Load in Frames</button>
+          <a class="btn-ghost" href="/reviews/nike.com" target="_blank">Open Tab ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">5. Business Portal &amp; Dashboard</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> Business Sign-In / Claim Portal in #0c0c0f/96 liquid glass</li>
+            <li><span class="check-dot">✓</span> Sidebar, header, mobile scroller &amp; KPI cards in #050506 obsidian</li>
+            <li><span class="check-dot">✓</span> Champagne-gold ratings &amp; Sentence Case Export/Reply pills</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/business')">Load in Frames</button>
+          <a class="btn-ghost" href="/business" target="_blank">Open Tab ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">6. Saved, Following &amp; Messages</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> Nav renamed from "Bookmarks" to clean "Saved" everywhere</li>
+            <li><span class="check-dot">✓</span> Obsidian hairline cards for Saved, Following, Messages &amp; Alerts</li>
+            <li><span class="check-dot">✓</span> Consistent pill filters, empty states &amp; Trust Center layout</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/bookmarks')">Load Saved</button>
+          <button class="btn-ghost" onclick="jumpTo('/messages')">Load Messages</button>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">7. Reviewer Profile &amp; Passkey Flow</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> #050506 drawer with floating glass Save · Reviews · Share · Chat</li>
+            <li><span class="check-dot">✓</span> Hairline stat tiles with #E8C78A average rating star</li>
+            <li><span class="check-dot">✓</span> Click any reviewer name on the feed to inspect live</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/reviews/nike.com/rev_w3_nike_45')">Inspect via Feed</button>
+          <a class="btn-ghost" href="/more" target="_blank">Trust Center ↗</a>
+        </div>
+      </article>
+
+      <article class="audit-card">
+        <div>
+          <div class="audit-head">
+            <h3 class="audit-name">8. Capture, Star Rating &amp; System Modals</h3>
+            <span class="status-tag">★ Unified</span>
+          </div>
+          <ul class="audit-list" style="margin-top:12px;">
+            <li><span class="check-dot">✓</span> Add Review QR modal, camera prompt &amp; champagne-gold 1–5 star bar</li>
+            <li><span class="check-dot">✓</span> Auth modal, Report Content modal &amp; Legal/Privacy modal in glass</li>
+            <li><span class="check-dot">✓</span> Click "Add Review" in the top bar above to test live</li>
+          </ul>
+        </div>
+        <div class="audit-actions">
+          <button class="btn-white" onclick="jumpTo('/')">Test Add Review</button>
+          <a class="btn-ghost" href="/more" target="_blank">Open Legal ↗</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    let currentPath = '/';
+
+    function loadRoute(path, btnEl) {
+      currentPath = path;
+      const cacheBust = (path.includes('?') ? '&' : '?') + 'v=' + Date.now();
+      document.getElementById('desktopFrame').src = path + cacheBust;
+      document.getElementById('mobileFrame').src = path + cacheBust;
+      document.getElementById('desktopUrl').textContent = path;
+      document.getElementById('mobileUrl').textContent = path;
+
+      document.querySelectorAll('.route-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) {
+        btnEl.classList.add('active');
+      } else {
+        const match = document.querySelector(`.route-btn[data-path="${path}"]`);
+        if (match) match.classList.add('active');
+      }
+    }
+
+    function jumpTo(path) {
+      loadRoute(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function reloadFrames() {
+      loadRoute(currentPath);
+    }
+
+    function setViewportMode(mode) {
+      const grid = document.getElementById('stageGrid');
+      const desktopCard = document.getElementById('desktopCard');
+      const mobileCard = document.getElementById('mobileCard');
+
+      grid.classList.remove('desktop-only', 'mobile-only');
+      desktopCard.classList.remove('hidden');
+      mobileCard.classList.remove('hidden');
+
+      if (mode === 'desktop') {
+        grid.classList.add('desktop-only');
+        mobileCard.classList.add('hidden');
+      } else if (mode === 'mobile') {
+        grid.classList.add('mobile-only');
+        desktopCard.classList.add('hidden');
+      }
+
+      document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+      });
+    }
+  </script>
+</body>
+</html>

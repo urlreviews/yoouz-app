@@ -615,11 +615,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   return (
     <div
       id="yoouz-more-view-container"
-      className="flex-1 w-full h-full bg-[#050506] overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-zinc-700 selection:text-white"
+      className="flex-1 w-full h-full bg-[#050506] overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-white/20 selection:text-white"
     >
-      {/* Top Banner / Flagship Header */}
-      <header className="sticky top-0 z-40 w-full bg-[#050506]/90 backdrop-blur-2xl border-b border-white/[0.07]">
-        <div className="h-14 px-4 flex items-center justify-between">
+      {/* Top Sticky Bar */}
+      <header className="sticky top-0 z-40 w-full bg-[#050506]/85 backdrop-blur-2xl border-b border-white/[0.07]">
+        <div className="max-w-[1160px] mx-auto h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <button
             onClick={() => {
               if (onBack) {
@@ -628,104 +628,115 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 onNavigate("home");
               }
             }}
-            className="w-10 h-10 -ml-2 rounded-full hover:bg-white/[0.08] text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
+            className="w-9 h-9 -ml-1.5 rounded-full hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
             title={isBusinessSuiteEmbedded ? "Back to Dashboard" : "Back to Feed"}
           >
-            <ChevronLeft className="w-6 h-6 stroke-[2]" />
+            <ChevronLeft className="w-5 h-5 stroke-[2]" />
           </button>
-          <h1 className="text-base font-semibold text-white tracking-[-0.02em] absolute left-1/2 -translate-x-1/2">
+          <span className="text-[13.5px] font-semibold text-zinc-200 tracking-[-0.01em] absolute left-1/2 -translate-x-1/2">
             {t("trustCenter.title", "Knowledge & Trust Center")}
-          </h1>
-          <div className="w-10 h-10" /> {/* Spacer */}
+          </span>
+          <div className="w-9 h-9" />
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* 1. Top-Level Tab Switcher - Single-Line Horizontal Pill Bar (Matching Business Portal Style) */}
-        <section aria-label="Knowledge Navigation" className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-hidden">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-1 px-0.5">
-            <button
-              onClick={() => setActiveTab("about")}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "about"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <Info className="w-5 h-5 shrink-0" />
-              <span>{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
-            </button>
+      {/* Main Widescreen Container */}
+      <main className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 pt-7 sm:pt-10 pb-8 space-y-7 sm:space-y-9">
+        {/* Editorial Hero Header + Liquid-Glass Segmented Control */}
+        <section aria-label="Knowledge Navigation" className="space-y-6">
+          <div className="space-y-2 max-w-2xl">
+            <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.03em] text-white leading-[1.1]">
+              {t("trustCenter.title", "Knowledge & Trust Center")}
+            </h1>
+            <p className="text-sm sm:text-[15px] text-zinc-400 leading-relaxed font-normal">
+              {t("trustCenter.heroSubtitle", "How Yoouz verifies live camera proof, protects privacy, and empowers transparent businesses.")}
+            </p>
+          </div>
 
-            <button
-              onClick={() => setActiveTab("faq")}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "faq"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <HelpCircle className="w-5 h-5 shrink-0" />
-              <span>{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("business")}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "business"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <Building2 className="w-5 h-5 shrink-0" />
-              <span>{t("trustCenter.forBusinesses", "For Businesses")}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("security")}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "security"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <Shield className="w-5 h-5 shrink-0" />
-              <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
-            </button>
-
-            {!isBusinessSuiteEmbedded && (
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar">
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.045] border border-white/[0.08] whitespace-nowrap">
               <button
-                onClick={() => setActiveTab("language")}
-                className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                  activeTab === "language"
-                    ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                    : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
+                onClick={() => setActiveTab("about")}
+                className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "about"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:text-white"
                 }`}
               >
-                <Globe className="w-5 h-5 shrink-0" />
-                <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
+                <Info className="w-4 h-4 shrink-0" />
+                <span>{t("trustCenter.trustProtocol", "Trust Protocol")}</span>
               </button>
-            )}
 
-            <button
-              onClick={() => {
-                setActiveTab("contact");
-                setSubmitSuccess(false);
-                setSubmitError("");
-              }}
-              className={`px-5 py-3 rounded-full text-[13px] sm:text-sm font-bold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer border ${
-                activeTab === "contact"
-                  ? "bg-white text-zinc-950 border-white shadow-sm font-black"
-                  : "bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border-zinc-800"
-              }`}
-            >
-              <Mail className="w-5 h-5 shrink-0" />
-              <span>{t("trustCenter.contactSupport", "Support")}</span>
-            </button>
+              <button
+                onClick={() => setActiveTab("faq")}
+                className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "faq"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <HelpCircle className="w-4 h-4 shrink-0" />
+                <span>{t("trustCenter.helpFaqs", "Help & FAQs")}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("business")}
+                className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "business"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Building2 className="w-4 h-4 shrink-0" />
+                <span>{t("trustCenter.forBusinesses", "For Businesses")}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("security")}
+                className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "security"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Shield className="w-4 h-4 shrink-0" />
+                <span>{t("trustCenter.privacySecurity", "Privacy")}</span>
+              </button>
+
+              {!isBusinessSuiteEmbedded && (
+                <button
+                  onClick={() => setActiveTab("language")}
+                  className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === "language"
+                      ? "bg-white text-zinc-950 shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span>{t("nav.language", "Language")} ({currentLanguageMeta.code.toUpperCase()})</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  setActiveTab("contact");
+                  setSubmitSuccess(false);
+                  setSubmitError("");
+                }}
+                className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "contact"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Mail className="w-4 h-4 shrink-0" />
+                <span>{t("trustCenter.contactSupport", "Support")}</span>
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* 3. Tab Contents */}
+        {/* Tab Contents */}
         <section aria-label="Tab Content Area" className="space-y-8">
           {/* ========================================================= */}
           {/* TAB 1: ABOUT & THE TRUST PROTOCOL */}
@@ -733,54 +744,54 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {activeTab === "about" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
               {/* Hero Banner: Evolution of Trust & Proof of Presence */}
-              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
-                <div className="space-y-3 max-w-3xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-7">
+                <div className="space-y-3.5 max-w-3xl">
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-[#E8C78A]">
+                    <Sparkles className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.theYoouzStandard", "The Yoouz Standard")}</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-snug">
+                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15]">
                     {t("trustCenter.trustEvolutionTitle", "The Evolution of Trust: From Static Text to Visual Proof")}
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
+                  <p className="text-sm text-zinc-300 leading-relaxed font-normal">
                     {t("trustCenter.trustEvolutionPara1", "For years, online reviews relied on static text. Written reviews served a simple baseline purpose—giving quick signals on whether a place was safe to consider. But text has a structural limit. In a digital landscape saturated with review inflation, bot networks, and AI-generated copy, written text is too easy to manufacture.")}
                   </p>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
+                  <p className="text-sm text-zinc-400 leading-relaxed font-normal">
                     {t("trustCenter.trustEvolutionPara2", "When a customer asks \"Is this actually true?\", written reviews stop converting. Yoouz bridges that gap with zero-friction, real-time visual proof. We eliminate gallery uploads, stock photos, and scripted marketing. Every review on Yoouz is captured live through the device camera, paired with a whole-number 1–5 star rating, and published in seconds.")}
                   </p>
                 </div>
 
                 {/* The 3 Core Pillars */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
-                      <Camera className="w-4 h-4" />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  <div className="bg-white/[0.035] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <Camera className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule1Title", "Live Camera Only")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
+                    <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule1Title", "Live Camera Only")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule1Desc", "Zero gallery uploads or saved stock photos. Snap a live photo on the spot using your front or rear camera.")}
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
-                      <Lock className="w-4 h-4" />
+                  <div className="bg-white/[0.035] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[#E8C78A]">
+                      <Lock className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule2Title", "Strict 1–5 Whole Stars")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
+                    <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule2Title", "Strict 1–5 Whole Stars")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule2Desc", "Clean, decisive whole-number ratings from 1 to 5 stars paired directly with live visual proof.")}
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/80 p-5 rounded-2xl border border-zinc-700/60 space-y-2">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
-                      <Users className="w-4 h-4" />
+                  <div className="bg-white/[0.035] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <Users className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-300 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.rule3Title", "Instant Handles & Passkeys")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
+                    <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule3Title", "Instant Handles & Passkeys")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule3Desc", "Browse with zero sign-up. An anonymous handle is created automatically when you post or interact, with optional Passkey backup across devices.")}
                     </p>
                   </div>
@@ -788,72 +799,67 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </div>
 
               {/* Section: Why Live Photo Proof Wins Every Time */}
-              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-6">
                 <div className="space-y-2 max-w-3xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
-                    <Flame className="w-3.5 h-3.5 text-zinc-300" />
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400">
+                    <Flame className="w-3.5 h-3.5 text-[#E8C78A]" />
                     <span>{t("trustCenter.conversionScienceLabel", "The Conversion Science")}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
                     {t("trustCenter.conversionScienceTitle", "Why Live Visual Proof Wins Every Time")}
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                  <p className="text-sm text-zinc-400 leading-relaxed">
                     {t("trustCenter.conversionScienceDesc", "Live photos show what actually happened in the moment—replacing anonymous text paragraphs with undeniable proof.")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Card 1 */}
-                  <div className="bg-zinc-800/60 p-5 rounded-2xl border border-zinc-700/50 space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                      <Zap className="w-5 h-5 text-zinc-200" />
+                  <div className="bg-white/[0.03] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <Zap className="w-4.5 h-4.5" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point1Title", "1. Instant Reality Check (No Marketing Fluff)")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[15px] font-semibold text-white">{t("trustCenter.point1Title", "1. Instant Reality Check (No Marketing Fluff)")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.point1Desc", "When users swipe through live photo reviews, they see real plates, real rooms, real receipts, and genuine moments in natural lighting instead of polished ads.")}
                     </p>
                   </div>
 
-                  {/* Card 2 */}
-                  <div className="bg-zinc-800/60 p-5 rounded-2xl border border-zinc-700/50 space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                      <Award className="w-5 h-5 text-zinc-200" />
+                  <div className="bg-white/[0.03] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <Award className="w-4.5 h-4.5" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point2Title", "2. Concrete Specifics Over Generic Buzzwords")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[15px] font-semibold text-white">{t("trustCenter.point2Title", "2. Concrete Specifics Over Generic Buzzwords")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.point2Desc", "Written testimonials rely on interchangeable buzzwords like \"great service, highly recommend\". Live photos show true quality, portion sizes, and atmosphere at a glance.")}
                     </p>
                   </div>
 
-                  {/* Card 3 */}
-                  <div className="bg-zinc-800/60 p-5 rounded-2xl border border-zinc-700/50 space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                      <TrendingUp className="w-5 h-5 text-zinc-200" />
+                  <div className="bg-white/[0.03] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <TrendingUp className="w-4.5 h-4.5" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point3Title", "3. Full-Screen Vertical Feed Speed")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[15px] font-semibold text-white">{t("trustCenter.point3Title", "3. Full-Screen Vertical Feed Speed")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.point3Desc", "Swipe up or down through full-screen photo reviews paired with whole-star 1–5 ratings and verified venue metadata without wasting time.")}
                     </p>
                   </div>
 
-                  {/* Card 4 */}
-                  <div className="bg-zinc-800/60 p-5 rounded-2xl border border-zinc-700/50 space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                      <ShieldCheck className="w-5 h-5 text-zinc-200" />
+                  <div className="bg-white/[0.03] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <ShieldCheck className="w-4.5 h-4.5" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point4Title", "4. Trust Anchor for Real Decisions")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[15px] font-semibold text-white">{t("trustCenter.point4Title", "4. Trust Anchor for Real Decisions")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.point4Desc", "Before booking dining, hotels, services, or online stores, real customer photos captured live act as definitive proof that dismantles buyer skepticism.")}
                     </p>
                   </div>
 
-                  {/* Card 5 - Full Width */}
-                  <div className="md:col-span-2 bg-zinc-800/60 p-5 rounded-2xl border border-zinc-700/50 space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                      <Globe className="w-5 h-5 text-zinc-200" />
+                  <div className="md:col-span-2 bg-white/[0.03] p-5 sm:p-6 rounded-[22px] border border-white/[0.07] hover:border-white/[0.15] transition-colors space-y-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <Globe className="w-4.5 h-4.5" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.point5Title", "5. Permanent Competitive Moat & AI Discovery")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[15px] font-semibold text-white">{t("trustCenter.point5Title", "5. Permanent Competitive Moat & AI Discovery")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed max-w-3xl">
                       {t("trustCenter.point5Desc", "Text review volume can be copied overnight, but building a library of live customer photo reviews creates an uncatchable trust advantage across Google Search and AI discovery engines.")}
                     </p>
                   </div>
@@ -861,118 +867,114 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </div>
 
               {/* 4 Bento Cards: Core Pillars */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Bento 1 */}
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                    <Camera className="w-6 h-6" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                <div className="bg-white/[0.03] rounded-[24px] p-6 sm:p-7 border border-white/[0.08] hover:border-white/[0.16] transition-colors space-y-4">
+                  <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-white">
+                    <Camera className="w-5 h-5" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">{t("trustCenter.bento1Title", "Live Camera Visual Proof")}</h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                    <h3 className="text-base font-semibold text-white tracking-[-0.015em]">{t("trustCenter.bento1Title", "Live Camera Visual Proof")}</h3>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed font-normal">
                       {t("trustCenter.bento1Desc", "Every reviewer builds a public visual review trail. Instant camera capture prevents old gallery uploads, edited ads, and automated spam.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-300">
-                    <ShieldCheck className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-1 flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <ShieldCheck className="w-4 h-4 text-[#E8C78A]" />
                     <span>{t("trustCenter.bento1Sub", "Audit Any Reviewer Profile Instantly")}</span>
                   </div>
                 </div>
 
-                {/* Bento 2: Living Discussions */}
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                    <MessageSquare className="w-6 h-6" />
+                <div className="bg-white/[0.03] rounded-[24px] p-6 sm:p-7 border border-white/[0.08] hover:border-white/[0.16] transition-colors space-y-4">
+                  <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-white">
+                    <MessageSquare className="w-5 h-5" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">{t("trustCenter.bento2Title", "Interactive Community Dialogue")}</h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                    <h3 className="text-base font-semibold text-white tracking-[-0.015em]">{t("trustCenter.bento2Title", "Interactive Community Dialogue")}</h3>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed font-normal">
                       {t("trustCenter.bento2Desc", "Reviews shouldn't be dead one-way monologues. Viewers can ask real-time questions ('Is there outdoor seating?', 'How was the service?'), and the community answers collaboratively.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-300">
-                    <Users className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-1 flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <Users className="w-4 h-4 text-[#E8C78A]" />
                     <span>{t("trustCenter.bento2Sub", "Crowdsourced Community Validation")}</span>
                   </div>
                 </div>
 
-                {/* Bento 3: Verified Business Ownership */}
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                    <Building2 className="w-6 h-6" />
+                <div className="bg-white/[0.03] rounded-[24px] p-6 sm:p-7 border border-white/[0.08] hover:border-white/[0.16] transition-colors space-y-4">
+                  <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-white">
+                    <Building2 className="w-5 h-5" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">{t("trustCenter.bento3Title", "Official Domain Verification")}</h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                    <h3 className="text-base font-semibold text-white tracking-[-0.015em]">{t("trustCenter.bento3Title", "Official Domain Verification")}</h3>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed font-normal">
                       {t("trustCenter.bento3Desc", "Business owners can claim their base domain page, respond with verified owner badges, and pin helpful solutions or updates at the top of customer review threads.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-300">
-                    <BadgeCheck className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-1 flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <BadgeCheck className="w-4 h-4 text-[#E8C78A]" />
                     <span>{t("trustCenter.bento3Sub", "Verified Owner Pinned Responses")}</span>
                   </div>
                 </div>
 
-                {/* Bento 4: Zero Paid Deletions */}
-                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4 hover:border-zinc-700 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white">
-                    <Lock className="w-6 h-6" />
+                <div className="bg-white/[0.03] rounded-[24px] p-6 sm:p-7 border border-white/[0.08] hover:border-white/[0.16] transition-colors space-y-4">
+                  <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-white">
+                    <Lock className="w-5 h-5" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-base font-black text-white">{t("trustCenter.bento4Title", "No Pay-to-Remove Extortion")}</h3>
-                    <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                    <h3 className="text-base font-semibold text-white tracking-[-0.015em]">{t("trustCenter.bento4Title", "No Pay-to-Remove Extortion")}</h3>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed font-normal">
                       {t("trustCenter.bento4Desc", "Unlike legacy review sites that pressure businesses into costly subscriptions to suppress negative feedback, Yoouz guarantees all verified reviews stay transparent and tamper-free.")}
                     </p>
                   </div>
-                  <div className="pt-2 flex items-center gap-2 text-xs font-bold text-zinc-300">
-                    <CheckCircle2 className="w-4 h-4 text-zinc-300" />
+                  <div className="pt-1 flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <CheckCircle2 className="w-4 h-4 text-[#E8C78A]" />
                     <span>{t("trustCenter.bento4Sub", "100% Equal Rules for All")}</span>
                   </div>
                 </div>
               </div>
 
               {/* Section: The SEO & Discovery Power of Photo Reviews */}
-              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-6">
                 <div className="space-y-2 max-w-3xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-[11px] font-black uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400">
+                    <Sparkles className="w-3.5 h-3.5 text-[#E8C78A]" />
                     <span>{t("trustCenter.seoVisibilityLabel", "Search Engine & AI Visibility")}</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
                     {t("trustCenter.seoAdvantageTitle", "The SEO & Discovery Advantage of Photo Reviews")}
                   </h3>
-                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                  <p className="text-sm text-zinc-400 leading-relaxed">
                     {t("trustCenter.seoAdvantageDesc", "Search engines like Google and generative AI engines prioritize authentic visual entities over faceless text snippets.")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                  <div className="bg-zinc-800/50 p-5 rounded-2xl border border-zinc-700/40 space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
+                  <div className="bg-white/[0.03] p-5 rounded-[22px] border border-white/[0.07] space-y-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
                       <Camera className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.seoRichSnippetsTitle", "Google Review Rich Snippets")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[14.5px] font-semibold text-white">{t("trustCenter.seoRichSnippetsTitle", "Google Review Rich Snippets")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.seoRichSnippetsDesc", "Structured Schema.org ImageObject and Review metadata display star ratings and visual thumbnails directly in Google search results.")}
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/50 p-5 rounded-2xl border border-zinc-700/40 space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
+                  <div className="bg-white/[0.03] p-5 rounded-[22px] border border-white/[0.07] space-y-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
                       <Zap className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.aiRecommendationsTitle", "AI Grounded Recommendations")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[14.5px] font-semibold text-white">{t("trustCenter.aiRecommendationsTitle", "AI Grounded Recommendations")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.aiRecommendationsDesc", "Google AI Overviews, Gemini, ChatGPT, and Perplexity index verified geolocation and star ratings to recommend authentic venues.")}
                     </p>
                   </div>
 
-                  <div className="bg-zinc-800/50 p-5 rounded-2xl border border-zinc-700/40 space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center text-white">
+                  <div className="bg-white/[0.03] p-5 rounded-[22px] border border-white/[0.07] space-y-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
                       <Building2 className="w-4 h-4" />
                     </div>
-                    <h4 className="text-sm font-black text-white">{t("trustCenter.qrCaptureTitle", "In-Store QR Capture")}</h4>
-                    <p className="text-xs text-zinc-300 leading-relaxed">
+                    <h4 className="text-[14.5px] font-semibold text-white">{t("trustCenter.qrCaptureTitle", "In-Store QR Capture")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.qrCaptureDesc", "Merchants download instant table tents and counter cards so happy customers can scan and snap a live photo review on the spot.")}
                     </p>
                   </div>
@@ -985,22 +987,22 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* TAB 2: HELP & FAQS */}
           {/* ========================================================= */}
           {activeTab === "faq" && (
-            <div className="space-y-6 animate-in fade-in duration-200 text-left">
-              {/* Search & Category Filter Bar */}
-              <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs space-y-4">
+            <div className="space-y-5 animate-in fade-in duration-200 text-left">
+              {/* Spotlight Search & Category Filter Bar */}
+              <div className="bg-white/[0.03] rounded-[24px] p-5 sm:p-6 border border-white/[0.08] space-y-4">
                 <div className="relative">
-                  <Search className="w-5 h-5 text-zinc-200 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4.5 h-4.5 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t("trustCenter.searchFaqsPlaceholder", "Search FAQs, guidelines, or topics...")}
-                    className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-sm font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
+                    className="w-full pl-11 pr-10 py-3 rounded-full bg-white/[0.045] border border-white/[0.09] focus:bg-white/[0.07] focus:border-white/25 text-sm font-medium outline-none transition-all text-white placeholder:text-zinc-500"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-200 transition-colors cursor-pointer"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/[0.1] hover:bg-white/[0.18] flex items-center justify-center text-zinc-200 transition-colors cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1008,10 +1010,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 </div>
 
                 {/* Filter Pills */}
-                <div className="flex items-center sm:justify-center gap-2 overflow-x-auto no-scrollbar pt-1">
-                  <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider shrink-0 mr-1">
-                    {t("trustCenter.categoryLabel", "Category")}:
-                  </span>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
                   {[
                     { id: "all", label: t("trustCenter.categoryAll", "All Questions") },
                     { id: "reviewers", label: t("trustCenter.categoryReviewers", "For Reviewers") },
@@ -1022,10 +1021,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <button
                       key={cat.id}
                       onClick={() => setFaqCategoryFilter(cat.id as any)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer shrink-0 border ${
                         faqCategoryFilter === cat.id
-                          ? "bg-white text-black shadow-xs font-extrabold"
-                          : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white"
+                          ? "bg-white text-zinc-950 border-white shadow-xs"
+                          : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 border-white/[0.08]"
                       }`}
                     >
                       {cat.label}
@@ -1035,12 +1034,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </div>
 
               {/* FAQ Accordion List */}
-              <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 shadow-xs divide-y divide-zinc-800">
+              <div className="bg-white/[0.03] rounded-[24px] p-5 sm:p-7 border border-white/[0.08] divide-y divide-white/[0.06]">
                 {filteredFaqs.length === 0 ? (
                   <div className="py-12 text-center space-y-3">
-                    <HelpCircle className="w-10 h-10 text-zinc-200 mx-auto" />
-                    <h3 className="text-base font-bold text-zinc-200">{t("trustCenter.noMatchingFaqs", "No matching questions found")}</h3>
-                    <p className="text-xs text-zinc-200 max-w-sm mx-auto">
+                    <HelpCircle className="w-9 h-9 text-zinc-500 mx-auto" />
+                    <h3 className="text-base font-semibold text-white">{t("trustCenter.noMatchingFaqs", "No matching questions found")}</h3>
+                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                       {t("trustCenter.tryDifferentKeywords", "Try searching with different keywords, or reach out directly to our support desk.")}
                     </p>
                     <button
@@ -1048,7 +1047,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         setSearchQuery("");
                         setFaqCategoryFilter("all");
                       }}
-                      className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-all cursor-pointer inline-flex"
+                      className="px-5 py-2 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 font-semibold text-xs transition-all cursor-pointer inline-flex"
                     >
                       {t("trustCenter.clearFilter", "Clear Search Filter")}
                     </button>
@@ -1063,7 +1062,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           className="w-full flex items-center justify-between text-left cursor-pointer group gap-4"
                         >
                           <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200">
+                            <span className="text-[11px] font-medium text-zinc-400">
                               {faq.category === "reviewers"
                                 ? t("trustCenter.categoryReviewers", "Reviewers")
                                 : faq.category === "business"
@@ -1072,13 +1071,15 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 ? t("trustCenter.categoryTrust", "Trust Model")
                                 : t("trustCenter.categoryTechnical", "Technical")}
                             </span>
-                            <h3 className="font-extrabold text-sm sm:text-base text-white group-hover:text-zinc-200 transition-colors leading-snug">
+                            <h3 className="font-semibold text-sm sm:text-[15px] text-white group-hover:text-zinc-200 transition-colors leading-snug">
                               {t(`trustCenter.faq_${faq.id.replace(/-/g, "_")}_q`, faq.question)}
                             </h3>
                           </div>
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
-                              isOpen ? "bg-white text-black" : "bg-zinc-800 text-zinc-200 group-hover:bg-zinc-700"
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 border ${
+                              isOpen
+                                ? "bg-white text-zinc-950 border-white"
+                                : "bg-white/[0.05] text-zinc-300 border-white/[0.08] group-hover:bg-white/[0.1]"
                             }`}
                           >
                             <ChevronDown
@@ -1088,8 +1089,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         </button>
 
                         {isOpen && (
-                          <div className="mt-3 pt-2 text-xs sm:text-sm text-zinc-200 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
-                            <p className="bg-zinc-950 p-4 rounded-2xl border border-zinc-800">{t(`trustCenter.faq_${faq.id.replace(/-/g, "_")}_a`, faq.answer)}</p>
+                          <div className="mt-3 pt-1 text-[13.5px] text-zinc-300 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
+                            <p className="bg-white/[0.03] p-4 rounded-2xl border border-white/[0.07]">
+                              {t(`trustCenter.faq_${faq.id.replace(/-/g, "_")}_a`, faq.answer)}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -1104,50 +1107,55 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* TAB 3: FOR BUSINESSES & DOMAIN OWNERS */}
           {/* ========================================================= */}
           {activeTab === "business" && (
-            <div className="space-y-8 animate-in fade-in duration-200 text-left">
-              {/* Business Overview Hero */}
-              <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-6">
-                <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] font-black uppercase tracking-wider">
+            <div className="space-y-6 animate-in fade-in duration-200 text-left">
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-7">
+                <div className="space-y-2.5 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-[#E8C78A]">
                     <Building2 className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.forBusinesses", "Business Verification Portal")}</span>
                   </div>
-                  <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15]">
                     {t("trustCenter.businessHeroTitle", "Claim Your Business Domain & Engage Directly")}
                   </h2>
-                  <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
+                  <p className="text-sm text-zinc-400 leading-relaxed">
                     {t("trustCenter.businessHeroDesc", "Verify ownership of your base website domain (e.g., yourcompany.com) or local place profile to access creator tools, official owner badges, and community response features.")}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                    <BadgeCheck className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">{t("trustCenter.verifiedOwnerBadgeTitle", "Verified Owner Badge")}</h4>
-                    <p className="text-xs text-zinc-200 leading-relaxed">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  <div className="p-5 sm:p-6 rounded-[22px] bg-white/[0.035] border border-white/[0.07] space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[#E8C78A]">
+                      <BadgeCheck className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-semibold text-[15px] text-white">{t("trustCenter.verifiedOwnerBadgeTitle", "Verified Owner Badge")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.verifiedOwnerBadgeDesc", "Stand out with a distinguished badge and official business owner designation on all comment threads.")}
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                    <MessageSquare className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">{t("trustCenter.pinnedSolutionsTitle", "Pinned Solutions")}</h4>
-                    <p className="text-xs text-zinc-200 leading-relaxed">
+                  <div className="p-5 sm:p-6 rounded-[22px] bg-white/[0.035] border border-white/[0.07] space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-semibold text-[15px] text-white">{t("trustCenter.pinnedSolutionsTitle", "Pinned Solutions")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.pinnedSolutionsDesc", "Pin an official response at the top of any review discussion to clarify updates or resolve questions.")}
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2">
-                    <ExternalLink className="w-6 h-6 text-white" />
-                    <h4 className="font-bold text-sm text-white">{t("trustCenter.embedTrustFeedsTitle", "Embed Trust Feeds")}</h4>
-                    <p className="text-xs text-zinc-200 leading-relaxed">
+                  <div className="p-5 sm:p-6 rounded-[22px] bg-white/[0.035] border border-white/[0.07] space-y-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                      <ExternalLink className="w-5 h-5" />
+                    </div>
+                    <h4 className="font-semibold text-[15px] text-white">{t("trustCenter.embedTrustFeedsTitle", "Embed Trust Feeds")}</h4>
+                    <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.embedTrustFeedsDesc", "Easily embed genuine customer photo review carousels onto your landing page to increase conversions.")}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-zinc-200 font-medium">
+                <div className="pt-5 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-[13px] text-zinc-400 font-normal">
                     {t("trustCenter.readyToVerify", "Ready to claim and verify your business? Launch our dedicated business portal.")}
                   </p>
                   <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1162,11 +1170,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           window.location.href = "/business";
                         }
                       }}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                     >
-                      <Building2 className="w-4 h-4 text-black" />
+                      <Building2 className="w-4 h-4 text-zinc-950" />
                       <span>{isBusinessSuiteEmbedded ? t("business.returnToDashboard", "Return to Business Dashboard") : t("nav.forBusinesses", "Open Business Suite")}</span>
-                      {!isBusinessSuiteEmbedded && <ExternalLink className="w-3.5 h-3.5 text-black" />}
+                      {!isBusinessSuiteEmbedded && <ExternalLink className="w-3.5 h-3.5 text-zinc-950" />}
                     </button>
                   </div>
                 </div>
@@ -1179,65 +1187,66 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* ========================================================= */}
           {activeTab === "security" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
-              {/* Google OAuth & Security Overview Card */}
-              <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white shrink-0">
-                    <Lock className="w-6 h-6" />
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-7">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-[#E8C78A] shrink-0">
+                    <Lock className="w-5.5 h-5.5" />
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white">{t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}</h3>
-                      <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 text-[10px] font-black uppercase tracking-wider">
-                        {t("trustCenter.privacyVerifiedBadge", "Passkey Ready • Zero Passwords")}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
+                        {t("trustCenter.privacySecurityTitle", "Privacy, Security & Legal Compliance")}
+                      </h3>
+                      <span className="px-3 py-0.5 rounded-full bg-white/[0.05] text-[#E8C78A] border border-white/[0.09] text-[11px] font-medium">
+                        {t("trustCenter.privacyVerifiedBadge", "Passkey Ready · Zero Passwords")}
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
+                    <p className="text-sm text-zinc-400 leading-relaxed max-w-3xl">
                       {t("trustCenter.privacySummary", "Yoouz is built with privacy-first standards. Browse freely without an account, and back up your handle across devices with a Passkey — zero emails or passwords stored.")}
                     </p>
                   </div>
                 </div>
 
                 {/* Legal Documents Direct Access */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
-                    <div className="space-y-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="p-5 sm:p-6 rounded-[22px] bg-white/[0.035] border border-white/[0.07] space-y-4 flex flex-col justify-between">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
+                        <span className="text-[11px] font-medium text-zinc-400">
                           {t("trustCenter.updatedDate", "Updated Nov 16, 2026")}
                         </span>
-                        <ShieldCheck className="w-4 h-4 text-white" />
+                        <ShieldCheck className="w-4.5 h-4.5 text-[#E8C78A]" />
                       </div>
-                      <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
-                      <p className="text-xs text-zinc-200 leading-normal">
+                      <h4 className="text-base font-semibold text-white">{t("trustCenter.privacyPolicyTitle", "Privacy Policy")}</h4>
+                      <p className="text-[13px] text-zinc-400 leading-relaxed">
                         {t("trustCenter.privacyPolicyDesc", "Covers anonymous handles, Passkey security, live camera usage, and zero data selling.")}
                       </p>
                     </div>
                     <button
                       onClick={() => onOpenLegal ? onOpenLegal("privacy") : null}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1] font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
                       <FileText className="w-3.5 h-3.5 text-white" />
                       <span>{t("trustCenter.readPrivacyPolicy", "Read Privacy Policy")}</span>
                     </button>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3 flex flex-col justify-between">
-                    <div className="space-y-1">
+                  <div className="p-5 sm:p-6 rounded-[22px] bg-white/[0.035] border border-white/[0.07] space-y-4 flex flex-col justify-between">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded-full border border-zinc-700">
+                        <span className="text-[11px] font-medium text-zinc-400">
                           {t("trustCenter.updatedDate", "Updated Nov 16, 2026")}
                         </span>
-                        <Scale className="w-4 h-4 text-white" />
+                        <Scale className="w-4.5 h-4.5 text-[#E8C78A]" />
                       </div>
-                      <h4 className="text-sm font-black text-white pt-1">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
-                      <p className="text-xs text-zinc-200 leading-normal">
+                      <h4 className="text-base font-semibold text-white">{t("trustCenter.termsConditionsTitle", "Terms & Conditions")}</h4>
+                      <p className="text-[13px] text-zinc-400 leading-relaxed">
                         {t("trustCenter.termsConditionsDesc", "Covers live camera capture rules, anonymous accounts, Passkeys, and platform compliance.")}
                       </p>
                     </div>
                     <button
                       onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
-                      className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500 font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/[0.1] font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
                       <FileText className="w-3.5 h-3.5 text-white" />
                       <span>{t("trustCenter.readTermsConditions", "Read Terms & Conditions")}</span>
@@ -1247,62 +1256,62 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                 {/* 4 Pillars Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("auth.title", "Passkeys")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.authPillarTitle", "1-Tap Passkey (No Passwords)")}</h4>
-                    <p className="text-[11px] text-zinc-200 leading-normal">
+                  <div className="p-5 rounded-[20px] bg-white/[0.025] border border-white/[0.06] space-y-1.5">
+                    <span className="text-[11px] font-medium text-zinc-400">{t("auth.title", "Passkeys")}</span>
+                    <h4 className="text-sm font-semibold text-white">{t("trustCenter.authPillarTitle", "1-Tap Passkey (No Passwords)")}</h4>
+                    <p className="text-[12.5px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.authPillarDesc", "No emails or passwords required. Save a Passkey once to restore your account automatically on any new device.")}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("record.title", "Capture Privacy")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.recordingPillarTitle", "Real-Time Camera Only")}</h4>
-                    <p className="text-[11px] text-zinc-200 leading-normal">
+                  <div className="p-5 rounded-[20px] bg-white/[0.025] border border-white/[0.06] space-y-1.5">
+                    <span className="text-[11px] font-medium text-zinc-400">{t("record.title", "Capture Privacy")}</span>
+                    <h4 className="text-sm font-semibold text-white">{t("trustCenter.recordingPillarTitle", "Real-Time Camera Only")}</h4>
+                    <p className="text-[12.5px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.recordingPillarDesc", "Camera feeds are accessed strictly during live photo capture. We never access photo libraries or saved gallery files.")}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("trustCenter.privacySecurity", "Zero Data Selling")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.zeroSellingPillarTitle", "No Selling or Renting")}</h4>
-                    <p className="text-[11px] text-zinc-200 leading-normal">
+                  <div className="p-5 rounded-[20px] bg-white/[0.025] border border-white/[0.06] space-y-1.5">
+                    <span className="text-[11px] font-medium text-zinc-400">{t("trustCenter.privacySecurity", "Zero Data Selling")}</span>
+                    <h4 className="text-sm font-semibold text-white">{t("trustCenter.zeroSellingPillarTitle", "No Selling or Renting")}</h4>
+                    <p className="text-[12.5px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.zeroSellingPillarDesc", "We never sell, rent, or trade your personal data to third parties. Data is shared solely with trusted cloud infrastructure providers.")}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-200">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
-                    <h4 className="text-xs font-black text-white">{t("trustCenter.jurisdictionPillarTitle", "Governing Compliance & Standards")}</h4>
-                    <p className="text-[11px] text-zinc-200 leading-normal">
+                  <div className="p-5 rounded-[20px] bg-white/[0.025] border border-white/[0.06] space-y-1.5">
+                    <span className="text-[11px] font-medium text-zinc-400">{t("legal.termsConditions", "Legal Jurisdiction")}</span>
+                    <h4 className="text-sm font-semibold text-white">{t("trustCenter.jurisdictionPillarTitle", "Governing Compliance & Standards")}</h4>
+                    <p className="text-[12.5px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.jurisdictionPillarDesc", "Platform terms and privacy policies enforce strict global consumer data protection and digital privacy standards.")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Account Deletion Request (Safe & Standard) */}
+              {/* Account Deletion Request */}
               {currentUser && (
-                <div className="bg-zinc-900 rounded-3xl p-8 border border-zinc-800 shadow-xs space-y-4">
+                <div className="bg-white/[0.03] rounded-[24px] p-6 sm:p-8 border border-white/[0.08] space-y-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-zinc-300 shrink-0">
-                      <Shield className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-zinc-300 shrink-0">
+                      <Shield className="w-5 h-5" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-black text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
-                      <p className="text-xs text-zinc-400 leading-relaxed">
+                      <h3 className="text-base font-semibold text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
+                      <p className="text-[13px] text-zinc-400 leading-relaxed">
                         {t("trustCenter.requestDeletionNotice", "Submit a formal request to permanently delete your account & profile. Our support team will process your request within 24–48 hours.")}
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="text-xs text-zinc-400 font-medium">
+                  <div className="border-t border-white/[0.07] pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="text-xs text-zinc-400">
                       {t("trustCenter.requestDeletionDesc", "Under GDPR & international privacy standards, all associated data and profile records will be securely handled upon review.")}
                     </p>
                     <button
                       onClick={() => setIsMoreDeletionModalOpen(true)}
-                      className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-bold transition-all cursor-pointer shrink-0 shadow-xs"
+                      className="px-5 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.1] text-xs font-semibold transition-all cursor-pointer shrink-0 active:scale-[0.98]"
                     >
                       {t("profile.requestBtn", "Request Deletion")}
                     </button>
@@ -1316,38 +1325,36 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* TAB 5: CONTACT SUPPORT DESK */}
           {/* ========================================================= */}
           {activeTab === "contact" && (
-            <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6 text-left animate-in fade-in duration-200">
+            <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-6 text-left animate-in fade-in duration-200 max-w-3xl">
               {submitSuccess ? (
-                /* Success Confirmation State */
                 <div className="text-center py-10 px-4 space-y-4 animate-in fade-in duration-200">
-                  <div className="w-16 h-16 rounded-3xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white mx-auto shadow-xs">
-                    <Check className="w-8 h-8 stroke-[3]" />
+                  <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-[#E8C78A] mx-auto">
+                    <Check className="w-7 h-7 stroke-[2.5]" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-xl font-black text-white">{t("trustCenter.inquiryReceivedTitle", "Inquiry Received Successfully")}</h3>
-                    <p className="text-xs sm:text-sm text-zinc-200 max-w-md mx-auto leading-relaxed">
+                    <h3 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("trustCenter.inquiryReceivedTitle", "Inquiry Received Successfully")}</h3>
+                    <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
                       {t("trustCenter.inquiryReceivedDesc", "Thank you for contacting Yoouz. Your message has been logged securely in our support queue. Our team reviews all requests within 24 hours.")}
                     </p>
                   </div>
                   <button
                     onClick={() => setSubmitSuccess(false)}
-                    className="py-3 px-6 rounded-2xl bg-white hover:bg-zinc-200 text-black font-extrabold text-xs transition-all cursor-pointer inline-flex items-center gap-2"
+                    className="py-2.5 px-6 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs transition-all cursor-pointer inline-flex items-center gap-2 active:scale-[0.98]"
                   >
                     <span>{t("trustCenter.sendAnotherInquiry", "Send Another Inquiry")}</span>
                   </button>
                 </div>
               ) : (
-                /* Contact Form */
                 <form onSubmit={handleContactSubmit} className="space-y-5">
-                  <div className="space-y-1 border-b border-zinc-800 pb-4">
-                    <h3 className="text-lg font-black text-white">{t("trustCenter.supportDeskTitle", "Official Yoouz Support Desk")}</h3>
-                    <p className="text-xs text-zinc-200 font-medium">
+                  <div className="space-y-1 border-b border-white/[0.07] pb-5">
+                    <h3 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("trustCenter.supportDeskTitle", "Official Yoouz Support Desk")}</h3>
+                    <p className="text-[13px] text-zinc-400">
                       {t("trustCenter.supportDeskDesc", "Submit support inquiries, business domain claim requests, or report community guideline infractions.")}
                     </p>
                   </div>
 
                   {submitError && (
-                    <div className="p-4 rounded-2xl bg-red-950/40 border border-red-800 text-red-400 text-xs font-semibold flex items-center gap-2.5">
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs font-medium flex items-center gap-2.5">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{submitError}</span>
                     </div>
@@ -1355,7 +1362,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                      <label className="text-xs font-medium text-zinc-300 block px-1">
                         {t("trustCenter.fullNameLabel", "Your Full Name *")}
                       </label>
                       <input
@@ -1364,12 +1371,12 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactName}
                         onChange={(e) => setContactName(e.target.value)}
                         placeholder={t("trustCenter.namePlaceholder", "e.g. Sarah Jenkins")}
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
+                        className="w-full px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.09] focus:bg-white/[0.07] focus:border-white/25 text-sm font-medium outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                      <label className="text-xs font-medium text-zinc-300 block px-1">
                         {t("trustCenter.emailLabel", "Email Address *")}
                       </label>
                       <input
@@ -1378,20 +1385,20 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactEmail}
                         onChange={(e) => setContactEmail(e.target.value)}
                         placeholder={t("trustCenter.emailPlaceholder", "e.g. sarah@example.com")}
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
+                        className="w-full px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.09] focus:bg-white/[0.07] focus:border-white/25 text-sm font-medium outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                      <label className="text-xs font-medium text-zinc-300 block px-1">
                         {t("trustCenter.categoryLabel", "Category *")}
                       </label>
                       <select
                         value={contactCategory}
                         onChange={(e) => setContactCategory(e.target.value)}
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-bold outline-none transition-all text-white"
+                        className="w-full px-4 py-3 rounded-2xl bg-[#111114] border border-white/[0.09] focus:border-white/25 text-sm font-medium outline-none transition-all text-white"
                       >
                         <option value="support">{t("trustCenter.categorySupport", "General Account / Technical Support")}</option>
                         <option value="guidelines">{t("trustCenter.categoryGuidelines", "Report Policy Violation / Fake Content")}</option>
@@ -1400,7 +1407,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                      <label className="text-xs font-medium text-zinc-300 block px-1">
                         {t("trustCenter.websiteDomainLabel", "Website Domain (Optional)")}
                       </label>
                       <input
@@ -1408,13 +1415,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         value={contactDomain}
                         onChange={(e) => setContactDomain(e.target.value)}
                         placeholder={t("trustCenter.domainPlaceholder", "e.g. yourcompany.com")}
-                        className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all text-white placeholder:text-zinc-400"
+                        className="w-full px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.09] focus:bg-white/[0.07] focus:border-white/25 text-sm font-medium outline-none transition-all text-white placeholder:text-zinc-500"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                    <label className="text-xs font-medium text-zinc-300 block px-1">
                       {t("trustCenter.messageLabel", "Message Details *")}
                     </label>
                     <textarea
@@ -1423,13 +1430,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
                       placeholder={t("trustCenter.messagePlaceholder", "Describe your inquiry or request in detail...")}
-                      className="w-full px-4 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 focus:bg-zinc-900 focus:border-white focus:ring-1 focus:ring-white/20 text-xs font-semibold outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-400"
+                      className="w-full px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.09] focus:bg-white/[0.07] focus:border-white/25 text-sm font-normal outline-none transition-all resize-none leading-relaxed text-white placeholder:text-zinc-500"
                     />
                   </div>
 
                   {/* Drag-and-Drop Attachments */}
                   <div className="space-y-2">
-                    <label className="text-[11px] uppercase tracking-wider font-black text-zinc-200 block px-1">
+                    <label className="text-xs font-medium text-zinc-300 block px-1">
                       {t("trustCenter.attachFilesLabel", "Attach Screenshots or Verification Proof (Optional)")}
                     </label>
 
@@ -1438,10 +1445,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-3xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                      className={`border border-dashed rounded-[22px] p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
                         dragOver
-                          ? "border-white bg-zinc-800"
-                          : "border-zinc-800 bg-zinc-950 hover:bg-zinc-900 hover:border-zinc-700"
+                          ? "border-white/40 bg-white/[0.07]"
+                          : "border-white/[0.12] bg-white/[0.025] hover:bg-white/[0.045] hover:border-white/[0.2]"
                       }`}
                     >
                       <input
@@ -1452,43 +1459,42 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         accept=".png,.jpg,.jpeg,.webp,.pdf,.txt,.doc,.docx"
                         className="hidden"
                       />
-                      <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shadow-2xs">
-                        <UploadCloud className="w-5 h-5 text-white" />
+                      <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
+                        <UploadCloud className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-zinc-200">
-                          {t("trustCenter.dragDropPrompt", "Drag & drop files here, or")} <span className="text-white underline">{t("trustCenter.browseFiles", "browse files")}</span>
+                        <p className="text-xs font-medium text-zinc-200">
+                          {t("trustCenter.dragDropPrompt", "Drag & drop files here, or")} <span className="text-white underline underline-offset-2">{t("trustCenter.browseFiles", "browse files")}</span>
                         </p>
-                        <p className="text-[10px] text-zinc-200 font-medium mt-0.5">
+                        <p className="text-[11px] text-zinc-500 mt-0.5">
                           {t("trustCenter.fileLimitHint", "PNG, JPG, WEBP, PDF or DOC (Max 3 files, up to 2MB each)")}
                         </p>
                       </div>
                     </div>
 
-                    {/* Attachment Previews */}
                     {attachedFiles.length > 0 && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                         {attachedFiles.map((file, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between p-2.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-xs gap-2"
+                            className="flex items-center justify-between p-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-xs gap-2"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               {file.type.startsWith("image/") ? (
                                 <img
                                   src={file.base64}
                                   alt="preview"
-                                  className="w-8 h-8 rounded-lg object-cover shrink-0 border border-zinc-800"
+                                  className="w-8 h-8 rounded-lg object-cover shrink-0 border border-white/[0.1]"
                                   referrerPolicy="no-referrer"
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-200 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-zinc-200 shrink-0">
                                   <FileText className="w-4 h-4" />
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-white truncate">{file.name}</p>
-                                <p className="text-[9px] text-zinc-200 font-bold">
+                                <p className="text-[11px] font-semibold text-white truncate">{file.name}</p>
+                                <p className="text-[10px] text-zinc-400 tabular-nums">
                                   {(file.size / 1024).toFixed(0)} KB
                                 </p>
                               </div>
@@ -1499,7 +1505,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                                 e.stopPropagation();
                                 handleRemoveFile(idx);
                               }}
-                              className="w-6 h-6 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-200 transition-colors cursor-pointer shrink-0"
+                              className="w-6 h-6 rounded-full hover:bg-white/[0.1] flex items-center justify-center text-zinc-300 transition-colors cursor-pointer shrink-0"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1513,11 +1519,11 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-black text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-97"
+                      className="w-full sm:w-auto py-3 px-7 rounded-full bg-white hover:bg-zinc-200 disabled:bg-white/[0.08] disabled:text-zinc-500 text-zinc-950 font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
                       {isSubmitting ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin" />
                           <span>{t("trustCenter.submitting", "Submitting...")}</span>
                         </>
                       ) : (
@@ -1535,24 +1541,26 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           {/* ========================================================= */}
           {activeTab === "language" && (
             <div className="space-y-6 animate-in fade-in duration-200 text-left">
-              {/* Active Language Overview Banner */}
-              <div className="bg-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-800 shadow-xs space-y-6">
+              <div className="bg-white/[0.03] rounded-[28px] p-6 sm:p-9 border border-white/[0.08] space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl sm:text-[28px] font-semibold text-white tracking-[-0.025em]">
                       {t("nav.language", "Language")}
                     </h2>
+                    <p className="text-[13px] text-zinc-400">
+                      {t("trustCenter.languageSubtitle", "Choose your preferred display language across Yoouz.")}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 px-3.5 py-2 rounded-2xl shrink-0">
-                    <span className="text-xl select-none">{currentLanguageMeta.flag}</span>
-                    <span className="text-sm font-bold text-white leading-none">
+                  <div className="flex items-center gap-2.5 bg-white/[0.05] border border-white/[0.09] px-4 py-2 rounded-full shrink-0">
+                    <span className="text-lg select-none">{currentLanguageMeta.flag}</span>
+                    <span className="text-[13px] font-semibold text-white leading-none">
                       {currentLanguageMeta.name}
                     </span>
                   </div>
                 </div>
 
-                {/* Search / Filter Languages */}
+                {/* Spotlight Search */}
                 <div className="relative">
                   <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
@@ -1561,20 +1569,20 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     value={langSearchFilter}
                     onChange={(e) => setLangSearchFilter(e.target.value)}
                     placeholder={t("trustCenter.languageSearchLabel", "Search 64+ languages...")}
-                    className="w-full pl-11 pr-10 py-3 rounded-2xl bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-white transition-colors"
+                    className="w-full pl-11 pr-10 py-3 rounded-full bg-white/[0.045] border border-white/[0.09] text-white placeholder-zinc-500 text-sm focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all"
                   />
                   {langSearchFilter && (
                     <button
                       onClick={() => setLangSearchFilter("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/[0.1] hover:bg-white/[0.18] flex items-center justify-center text-zinc-300 hover:text-white cursor-pointer"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
                 {/* Languages Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-1">
                   {languages
                     .filter((l) => {
                       const q = langSearchFilter.toLowerCase().trim();
@@ -1594,13 +1602,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                           onClick={() => setLanguage(lang.code)}
                           className={`px-3.5 py-3 rounded-2xl transition-all text-left flex items-center justify-between cursor-pointer border ${
                             isSelected
-                              ? "bg-white text-zinc-950 border-white shadow-md"
-                              : "bg-zinc-950/60 hover:bg-zinc-800 text-white border-zinc-800/80 hover:border-zinc-700"
+                              ? "bg-white text-zinc-950 border-white shadow-sm"
+                              : "bg-white/[0.03] hover:bg-white/[0.07] text-white border-white/[0.07] hover:border-white/[0.15]"
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                            <span className="text-xl leading-none select-none shrink-0">{lang.flag}</span>
-                            <span className={`text-sm leading-tight truncate ${isSelected ? "font-bold text-zinc-950" : "font-semibold text-white"}`}>
+                            <span className="text-lg leading-none select-none shrink-0">{lang.flag}</span>
+                            <span className={`text-[13.5px] leading-tight truncate ${isSelected ? "font-semibold text-zinc-950" : "font-medium text-zinc-200"}`}>
                               {lang.name}
                             </span>
                           </div>
@@ -1619,61 +1627,61 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
           )}
         </section>
 
-        {/* 4. Google-Standard Footer */}
-        <footer className="pt-8 pb-14 border-t border-zinc-800 text-center space-y-4 text-xs text-zinc-200">
-          <div className="flex items-center justify-center gap-4 text-xs font-semibold text-zinc-200 flex-wrap">
+        {/* Minimal Editorial Footer */}
+        <footer className="pt-8 pb-12 border-t border-white/[0.07] text-center space-y-3 text-xs text-zinc-400">
+          <div className="flex items-center justify-center gap-3 text-xs font-medium text-zinc-400 flex-wrap">
             <button
               onClick={() => onOpenLegal ? onOpenLegal("terms") : null}
-              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               {t("legal.termsConditions", "Terms & Conditions")}
             </button>
-            <span>•</span>
+            <span className="text-zinc-600">·</span>
             <button
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : null}
-              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               {t("legal.privacyPolicy", "Privacy Policy")}
             </button>
-            <span>•</span>
+            <span className="text-zinc-600">·</span>
             <button
               onClick={() => {
                 setActiveTab("contact");
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="hover:text-white underline cursor-pointer bg-transparent border-none p-0"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0"
             >
               {t("legal.supportDesk", "Support Desk")}
             </button>
           </div>
 
-          <div className="space-y-1 text-center font-medium">
-            <p className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
+          <div className="space-y-1 text-center">
+            <p className="text-[11px] font-medium text-zinc-400">
               {t("legal.networkLocation", "Yoouz Trust Network")}
             </p>
-            <p className="text-[11px] text-zinc-200">
+            <p className="text-[11px] text-zinc-500">
               {t("legal.copyright", "© 2026 Yoouz Inc. All rights reserved. Real Photos. Real Proof.")}
             </p>
           </div>
         </footer>
       </main>
 
-      {/* Account Deletion Request Modal (Dark Mode) */}
+      {/* Account Deletion Request Modal (Flagship Obsidian) */}
       {isMoreDeletionModalOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setIsMoreDeletionModalOpen(false)}
         >
           <div
-            className="bg-zinc-900 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-zinc-800 space-y-4 animate-in zoom-in-95 duration-150 text-left"
+            className="bg-[#111114] rounded-[28px] max-w-sm w-full p-6 shadow-2xl border border-white/[0.1] space-y-4 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 flex items-center justify-center mx-auto shadow-inner">
-              <Shield className="w-6 h-6 text-zinc-300" />
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] text-zinc-200 flex items-center justify-center mx-auto">
+              <Shield className="w-5.5 h-5.5" />
             </div>
 
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-black text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-semibold text-white">{t("profile.requestDeletionTitle", "Request Account Deletion")}</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
                 {t("profile.requestDeletionNotice", "Please select a reason below. Our support team will review and process your account deletion within 24–48 hours.")}
               </p>
@@ -1681,13 +1689,13 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
             <div className="space-y-3 pt-1">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                <label className="text-xs font-medium text-zinc-300 block">
                   {t("profile.reasonLabel", "Reason")}
                 </label>
                 <select
                   value={moreDeletionReason}
                   onChange={(e) => setMoreDeletionReason(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 transition-colors"
+                  className="w-full bg-[#09090b] border border-white/[0.1] rounded-2xl px-3.5 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-white/25 transition-colors"
                 >
                   <option value="I no longer use this account">{t("profile.reasonNoLongerUse", "I no longer use this account")}</option>
                   <option value="Privacy concerns">{t("profile.reasonPrivacy", "Privacy concerns")}</option>
@@ -1698,7 +1706,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                <label className="text-xs font-medium text-zinc-300 block">
                   {t("profile.notesLabel", "Additional Notes (Optional)")}
                 </label>
                 <textarea
@@ -1707,17 +1715,17 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   rows={2}
                   maxLength={300}
                   placeholder={t("profile.notesPlaceholder", "Tell us if there is anything we can help with...")}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors resize-none"
+                  className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl p-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-white/25 transition-colors resize-none"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setIsMoreDeletionModalOpen(false)}
                 disabled={isSubmittingMoreDeletion}
-                className="flex-1 py-2.5 rounded-xl border border-zinc-800 text-xs font-bold text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-full border border-white/[0.1] bg-white/[0.04] text-xs font-semibold text-zinc-300 hover:bg-white/[0.09] hover:text-white transition-colors cursor-pointer"
               >
                 {t("common.cancel", "Cancel")}
               </button>
@@ -1747,7 +1755,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                   }
                 }}
                 disabled={isSubmittingMoreDeletion}
-                className="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-black transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-colors shadow-sm cursor-pointer disabled:opacity-50"
               >
                 {isSubmittingMoreDeletion ? t("common.submitting", "Submitting...") : t("profile.submitRequest", "Submit Request")}
               </button>
@@ -1758,9 +1766,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
 
       {/* Confirmation Toast */}
       {moreDeletionSuccessToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 border border-zinc-700 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <p className="text-xs font-semibold leading-snug text-zinc-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] bg-[#111114] border border-white/[0.12] text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 max-w-sm">
+          <CheckCircle2 className="w-5 h-5 text-[#E8C78A] shrink-0" />
+          <p className="text-xs font-medium leading-snug text-zinc-200">
             {t("profile.deletionRequestSuccess", "Your account deletion request has been submitted. Our team will process it within 24–48 hours.")}
           </p>
         </div>

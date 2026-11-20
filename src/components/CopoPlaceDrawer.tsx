@@ -3193,14 +3193,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </div>
                 </div>
 
-                {/* Premium Primary Action Button: Download Print-Ready Table Standee */}
+                {/* Primary Action Button: Download Print-Ready Table Standee */}
                 <div className="w-full mt-4">
                   <button
                     type="button"
                     onClick={handleDownloadPlaceQr}
-                    className="w-full py-3.5 px-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-[0.98] text-zinc-950 rounded-2xl text-sm font-black shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer tracking-wide border border-amber-300/30"
+                    className="w-full py-3.5 px-6 bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 rounded-full text-sm font-semibold shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer"
                   >
-                    <Download className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.5]" />
+                    <Download className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.25]" />
                     <span>Download Print-Ready Table Standee</span>
                   </button>
                 </div>
@@ -3221,30 +3221,30 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
           return (
             <div
-              className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+              className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
               onClick={() => setShowQrPrintModal(false)}
             >
               <div
-                className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white max-w-lg w-full p-6 shadow-2xl relative space-y-5 print:p-0 print:border-none print:shadow-none"
+                className="bg-[#0c0c0f]/96 backdrop-blur-2xl rounded-[28px] border border-white/[0.1] text-white max-w-lg w-full p-6 shadow-2xl relative space-y-5 print:p-0 print:border-none print:shadow-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
                   onClick={() => setShowQrPrintModal(false)}
-                  className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 transition-colors cursor-pointer print:hidden"
+                  className="absolute top-4 right-4 p-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-zinc-200 transition-colors cursor-pointer print:hidden"
                 >
                   <X className="w-4 h-4" />
                 </button>
 
                 <div className="flex items-center gap-2 print:hidden">
                   <Printer className="w-5 h-5 text-white" />
-                  <h3 className="font-extrabold text-white text-base">A6 Table Standee Print Layout</h3>
+                  <h3 className="font-bold text-white text-base">A6 Table Standee Print Layout</h3>
                 </div>
 
                 {/* Printable Area */}
-                <div className="bg-zinc-950 border-2 border-zinc-800 rounded-3xl p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
+                <div className="bg-[#050506] border border-white/[0.1] rounded-3xl p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
                   {qrTableLabel && (
-                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-extrabold uppercase border border-zinc-700 tracking-wider print:bg-zinc-100 print:text-black print:border-zinc-300">
+                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-semibold border border-white/[0.12] print:bg-zinc-100 print:text-black print:border-zinc-300">
                       {qrTableLabel}
                     </div>
                   )}
@@ -3265,15 +3265,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <span>{displayedPlaceName}</span>
                       <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 print:fill-black print:text-white" />
                     </h2>
-                    <div className="text-xs font-bold text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                    <div className="text-xs font-medium text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
                       <span>yoouz.com/reviews/{placeSlug}</span>
                     </div>
-                    <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
-                      <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRatingStr}</span>
+                    <div className="text-[#E8C78A] font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
+                      <span className="text-[#E8C78A] font-bold print:text-amber-600">{avgRatingStr}</span>
                       <CopoStarRating
                         rating={dynamicReviewCount > 0 ? (Number(avgRatingStr) || 0) : 0}
                         starClassName="w-3.5 h-3.5"
-                        filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                        filledColorClass="text-[#E8C78A] fill-[#E8C78A] print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                         emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                       />
                       <span className="text-zinc-300 font-medium print:text-zinc-700">

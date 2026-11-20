@@ -1848,16 +1848,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
                     <span className="text-base font-black text-white">{totalLikes}</span>
                   </div>
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
+                  <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[10.5px] font-semibold text-zinc-400 block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
                     <span className="text-base font-black text-white">{authorVideos.length}</span>
                   </div>
-                  <div className="bg-zinc-900/80 p-3 rounded-2xl border border-zinc-800">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
+                  <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/[0.08]">
+                    <span className="text-[10.5px] font-semibold text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
                     <span className="text-base font-black text-white inline-flex items-center gap-1.5">
                       {avgRating !== "—" ? (
                         <>
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                          <Star className="w-3.5 h-3.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />
                           <span>{avgRating}</span>
                         </>
                       ) : "—"}
@@ -2615,8 +2615,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                               <div className="flex items-center gap-1.5 shrink-0">
                                 {videoCount > 0 ? (
                                   <>
-                                    <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
-                                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                    <span className="text-[#E8C78A] font-bold flex items-center gap-0.5 shrink-0">
+                                      <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
                                       {dynamicRating.toFixed(1)}
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>

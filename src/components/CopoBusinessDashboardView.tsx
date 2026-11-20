@@ -2830,8 +2830,8 @@ ${jsonLd}
                         </div>
 
                         {/* Clean Executive Badge */}
-                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-zinc-200 text-[10.5px] font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#E8C78A] shrink-0" />
+                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-zinc-200 text-[10.5px] font-medium">
+                          <BadgeCheck className="w-3 h-3 text-[#E8C78A] shrink-0" />
                           <span>{t("business.verifiedWorkspace", "Verified Business Workspace")}</span>
                         </div>
                       </div>
@@ -2843,12 +2843,12 @@ ${jsonLd}
                           setPremiumTriggerFeature('general');
                           setIsPremiumModalOpen(true);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
                       >
-                        <Zap className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <Zap className="w-4 h-4 text-[#E8C78A] shrink-0" />
                         <span>{t("business.plansAndMembership", "Plans & Membership")}</span>
-                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700">
-                          {isPremium ? 'PRO' : 'UPGRADE'}
+                        <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white border border-white/[0.1]">
+                          {isPremium ? 'Pro' : 'Upgrade'}
                         </span>
                       </button>
 
@@ -2857,7 +2857,7 @@ ${jsonLd}
                           setShowAccountDropdown(false);
                           setActiveTab('profile');
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
                       >
                         <Settings className="w-4 h-4 text-zinc-300 shrink-0" />
                         <span>{t("business.workspaceSettings", "Workspace Settings")}</span>
@@ -2868,7 +2868,7 @@ ${jsonLd}
                           setShowAccountDropdown(false);
                           setIsClaiming(true);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
                       >
                         <Building2 className="w-4 h-4 text-zinc-300 shrink-0" />
                         <span>{t("business.switchWorkspace", "Switch Workspace")}</span>
@@ -2884,7 +2884,7 @@ ${jsonLd}
                             window.location.href = `/reviews/${targetId}`;
                           }
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
                       >
                         <ExternalLink className="w-4 h-4 text-zinc-300 shrink-0" />
                         <span>{t("business.viewPublicProfile", "View Public Profile")}</span>
@@ -2895,13 +2895,13 @@ ${jsonLd}
                           setShowAccountDropdown(false);
                           onNavigate('home');
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-200 cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-200 cursor-pointer min-h-[44px]"
                       >
                         <Home className="w-4 h-4 text-zinc-300 shrink-0" />
                         <span>{t("business.consumerFeed", "Consumer Feed")}</span>
                       </button>
                       
-                      <div className="h-px bg-zinc-800 my-1.5" />
+                      <div className="h-px bg-white/[0.08] my-1.5" />
                       
                       <button 
                         onClick={() => {
@@ -2910,9 +2910,9 @@ ${jsonLd}
                           window.dispatchEvent(new CustomEvent('copo_business_auth_changed', { detail: null }));
                           setVerifiedBusinessSession(null);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 active:bg-zinc-800 transition-colors text-left text-xs font-semibold text-zinc-300 hover:text-white cursor-pointer min-h-[44px]"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] active:bg-white/[0.09] transition-colors text-left text-xs font-medium text-zinc-400 hover:text-white cursor-pointer min-h-[44px]"
                       >
-                        <LogOut className="w-4 h-4 text-zinc-300 shrink-0" />
+                        <LogOut className="w-4 h-4 text-zinc-400 shrink-0" />
                         <span>{t("business.signOut", "Sign Out")}</span>
                       </button>
                     </div>
@@ -2957,7 +2957,7 @@ ${jsonLd}
                     <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-zinc-950' : 'text-zinc-300'}`} />
                     <span>{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-zinc-950 text-white' : 'bg-white/[0.1] text-zinc-200'}`}>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums ${isActive ? 'bg-zinc-950 text-white' : 'bg-white/[0.1] text-zinc-200'}`}>
                         {item.badge}
                       </span>
                     )}
@@ -2984,7 +2984,7 @@ ${jsonLd}
 
           {/* Center/Right Workspace (Flagship Obsidian) */}
           <main ref={mainScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#050506] p-3 sm:p-6 lg:p-8 pb-32 sm:pb-12 no-scrollbar scroll-smooth w-full max-w-full">
-            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+            <div className="max-w-[1160px] mx-auto space-y-5 sm:space-y-6 w-full max-w-full overflow-x-hidden">
 
             {showEmbedTester ? (
               <div className="animate-in fade-in duration-300">
@@ -2999,15 +2999,15 @@ ${jsonLd}
               <>
                 {/* TAB 1: OVERVIEW & INSIGHTS */}
                 {activeTab === 'overview' && (
-              <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
                 
                 {/* Banner with Welcome & Date Filter */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                  <div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 mb-1.5 w-full">
-                      <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight leading-none break-words">{currentPlace.name}</h1>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.1] text-zinc-200 text-[10.5px] font-semibold self-start sm:self-auto shrink-0 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8C78A]" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2.5 w-full">
+                      <h1 className="text-[26px] sm:text-[34px] font-semibold text-white tracking-[-0.03em] leading-[1.1] break-words">{currentPlace.name}</h1>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.09] text-zinc-200 text-[11px] font-medium shrink-0 whitespace-nowrap">
+                        <BadgeCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
                         {t("business.claimedVerified", "Claimed & Verified")}
                       </div>
                     </div>
@@ -3015,13 +3015,13 @@ ${jsonLd}
                       {t("business.overviewSubtitle", "Real-time performance metrics driven by customer photo reviews across the Yoouz network.")}
                     </p>
                   </div>
-                  {/* Date Filter Pills */}
-                  <div className="flex items-center bg-white/[0.03] p-1 rounded-full border border-white/[0.08] w-full sm:w-auto justify-between sm:justify-start">
+                  {/* Liquid-Glass Date Filter Segmented Control */}
+                  <div className="flex items-center bg-white/[0.045] p-1 rounded-full border border-white/[0.08] w-full sm:w-auto justify-between sm:justify-start shrink-0">
                     {(['7d', '30d', '90d', 'ytd'] as const).map(range => (
                       <button
                         key={range}
                         onClick={() => setAnalyticsDateRange(range)}
-                        className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer text-center ${
+                        className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 rounded-full text-[11.5px] sm:text-xs font-semibold transition-all cursor-pointer text-center ${
                           analyticsDateRange === range 
                             ? 'bg-white text-zinc-950 shadow-xs' 
                             : 'text-zinc-400 hover:text-white'
@@ -3033,7 +3033,7 @@ ${jsonLd}
                   </div>
                 </div>
                 {/* 3 Flagship Obsidian Glass KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
                     { key: 'views' as const, label: t('business.kpiImpressions', 'Photo Reviews Impressions'), value: totalViews.toLocaleString(), change: t('common.realTime', 'Real-time'), icon: Eye, color: 'text-white', bg: 'bg-white/[0.06]' },
                     { key: 'reviews' as const, label: t('business.kpiReviews', 'Verified Photo Reviews'), value: totalReviews.toString(), change: t('common.realTime', 'Real-time'), icon: Camera, color: 'text-white', bg: 'bg-white/[0.06]' },
@@ -3045,30 +3045,30 @@ ${jsonLd}
                       <div 
                          key={i} 
                          onClick={() => handleSelectMetric(stat.key)}
-                        className={`rounded-[22px] sm:rounded-[24px] border p-4 sm:p-5 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
+                        className={`rounded-[24px] border p-5 sm:p-6 flex flex-col justify-between transition-all cursor-pointer relative overflow-hidden group active:scale-[0.99] ${
                           isSelected 
                              ? 'border-white/[0.2] bg-white/[0.06] shadow-[0_12px_36px_rgba(0,0,0,0.45)]' 
-                             : 'border-white/[0.08] bg-white/[0.03] hover:border-white/[0.15] hover:bg-white/[0.05]'
+                             : 'border-white/[0.08] bg-white/[0.03] hover:border-white/[0.16] hover:bg-white/[0.05]'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-3 sm:mb-4 relative z-10">
-                          <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-white/[0.09]`}>
-                            <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                          <div className={`w-9 h-9 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center border border-white/[0.09]`}>
+                            <stat.icon className="w-4 h-4" />
                           </div>
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-200 bg-white/[0.06] px-2.5 py-0.5 rounded-full border border-white/[0.09] shrink-0 whitespace-nowrap">
-                            <TrendingUp className="w-2.5 h-2.5" /> {stat.change}
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-zinc-300 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.08] shrink-0 whitespace-nowrap">
+                            <TrendingUp className="w-3 h-3 text-[#E8C78A]" /> {stat.change}
                           </span>
                         </div>
                         <div className="relative z-10">
-                          <div className="flex items-end justify-between mb-1">
-                            <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tighter leading-none flex items-center gap-1.5">
+                          <div className="flex items-end justify-between mb-1.5">
+                            <div className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] tabular-nums leading-none flex items-center gap-2">
                               <span>{stat.value}</span>
                               {stat.key === 'rating' && (
-                                <Star className="w-4 h-4 sm:w-5 sm:h-5 text-[#E8C78A] fill-[#E8C78A] inline-block" />
+                                <Star className="w-5 h-5 text-[#E8C78A] fill-[#E8C78A] inline-block" />
                               )}
                             </div>
                             {/* SVG Mini Sparkline */}
-                            <svg className="w-10 sm:w-12 h-4 sm:h-5 overflow-visible opacity-80" viewBox="0 0 60 20">
+                            <svg className="w-12 h-5 overflow-visible opacity-80" viewBox="0 0 60 20">
                               <polyline
                                 fill="none"
                                 stroke={sparklineColor}
@@ -3079,7 +3079,7 @@ ${jsonLd}
                               />
                             </svg>
                           </div>
-                          <div className="text-[11px] font-medium text-zinc-400 mt-1">{stat.label}</div>
+                          <div className="text-xs font-medium text-zinc-400">{stat.label}</div>
                         </div>
                       </div>
                     );
@@ -3087,33 +3087,33 @@ ${jsonLd}
                 </div>
 
                 {/* Interactive Performance Graph */}
-                <div ref={chartSectionRef} className="bg-white/[0.03] rounded-2xl sm:rounded-3xl border border-white/[0.08] text-white p-3.5 sm:p-5 md:p-6 flex flex-col justify-between scroll-mt-4">
+                <div ref={chartSectionRef} className="bg-white/[0.03] rounded-[24px] sm:rounded-[28px] border border-white/[0.08] text-white p-5 sm:p-7 flex flex-col justify-between scroll-mt-4">
                   <div>
                     {/* Metric Selector Tabs */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-xs sm:text-sm md:text-base font-bold text-white">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <h3 className="text-sm sm:text-base font-semibold text-white tracking-[-0.015em]">
                             {selectedChartMetric === 'views' && 'Customer Photo Reviews Impressions'}
                             {selectedChartMetric === 'reviews' && 'Verified Photo Reviews'}
                             {selectedChartMetric === 'rating' && 'Overall Venue Rating'}
                           </h3>
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.05] text-emerald-400 text-[10.5px] font-semibold border border-white/[0.09]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live Metrics
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.05] text-zinc-300 text-[11px] font-medium border border-white/[0.08]">
+                            Live Metrics
                           </span>
                         </div>
-                        <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 font-normal">
+                        <p className="text-xs text-zinc-400 mt-1 font-normal tabular-nums">
                           Total {chartData.total} {chartData.unit} recorded during this period
                         </p>
                       </div>
 
-                      {/* Metric Selector Pills */}
-                      <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-full border border-white/[0.08] self-stretch sm:self-auto w-full sm:w-auto">
+                      {/* Liquid-Glass Metric Selector Pills */}
+                      <div className="flex items-center gap-1 bg-white/[0.045] p-1 rounded-full border border-white/[0.08] self-stretch sm:self-auto w-full sm:w-auto">
                         {(['views', 'reviews', 'rating'] as const).map(m => (
                           <button
                             key={m}
                             onClick={() => handleSelectMetric(m)}
-                            className={`flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
+                            className={`flex-1 sm:flex-initial px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
                               selectedChartMetric === m ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white'
                             }`}
                           >
@@ -3148,14 +3148,14 @@ ${jsonLd}
                       {/* Hover Tooltip display */}
                       {hoveredChartPoint !== null && (
                         <div 
-                          className="absolute top-0 transform -translate-x-1/2 bg-zinc-800 text-white rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 shadow-xl border border-zinc-700 pointer-events-none z-30 flex flex-col items-center text-[10px] sm:text-xs animate-in fade-in zoom-in-95 duration-100"
+                          className="absolute top-0 transform -translate-x-1/2 bg-[#111114] text-white rounded-2xl px-3 py-1.5 shadow-2xl border border-white/[0.12] pointer-events-none z-30 flex flex-col items-center text-xs animate-in fade-in zoom-in-95 duration-100"
                           style={{ 
                             left: `${(hoveredChartPoint / (chartData.points.length - 1)) * 88 + 6}%` 
                           }}> 
-                          <span className="font-extrabold text-xs sm:text-sm text-white">
+                          <span className="font-semibold text-sm text-white tabular-nums">
                             {chartData.points[hoveredChartPoint].toLocaleString()} {chartData.unit}
                           </span>
-                          <span className="text-[9px] sm:text-[10px] text-zinc-300 font-medium">
+                          <span className="text-[10px] text-zinc-400 font-medium">
                             {chartData.labels[hoveredChartPoint]}
                           </span>
                         </div>
@@ -3168,16 +3168,16 @@ ${jsonLd}
                       >
                         <defs>
                           <linearGradient id="metricGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor={chartData.color} stopOpacity="0.28" />
+                            <stop offset="0%" stopColor={chartData.color} stopOpacity="0.24" />
                             <stop offset="100%" stopColor={chartData.color} stopOpacity="0.01" />
                           </linearGradient>
                         </defs>
 
-                        {/* Grid Lines */}
-                        <line x1="0" y1="40" x2="700" y2="40" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="90" x2="700" y2="90" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="140" x2="700" y2="140" stroke="currentColor" className="text-zinc-800/80" strokeDasharray="4 4" strokeWidth="1" />
-                        <line x1="0" y1="190" x2="700" y2="190" stroke="currentColor" className="text-zinc-800" strokeWidth="1" />
+                        {/* Hairline Grid Lines */}
+                        <line x1="0" y1="40" x2="700" y2="40" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="90" x2="700" y2="90" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="140" x2="700" y2="140" stroke="rgba(255,255,255,0.06)" strokeDasharray="4 4" strokeWidth="1" />
+                        <line x1="0" y1="190" x2="700" y2="190" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
                         {/* Generate Smooth Path */}
                         {(() => {
@@ -3215,7 +3215,7 @@ ${jsonLd}
                                 d={pathD} 
                                 fill="none" 
                                 stroke={chartData.color} 
-                                strokeWidth="3" 
+                                strokeWidth="2.5" 
                                 strokeLinecap="round" 
                                 strokeLinejoin="round" 
                               />
@@ -3227,7 +3227,7 @@ ${jsonLd}
                                     cx={coord.x}
                                     cy={coord.y}
                                     r={hoveredChartPoint === idx ? 5 : 3}
-                                    fill="#18181b"
+                                    fill="#050506"
                                     stroke={chartData.color}
                                     strokeWidth={hoveredChartPoint === idx ? 3 : 2}
                                     className="transition-all duration-150"
@@ -3252,7 +3252,7 @@ ${jsonLd}
                     </div>
 
                     {/* X-Axis Labels */}
-                    <div className="flex justify-between text-[10px] sm:text-[11px] font-medium text-zinc-300 mt-2 px-1 sm:px-2 border-t border-zinc-800 pt-2">
+                    <div className="flex justify-between text-[11px] font-medium text-zinc-400 mt-2 px-1 sm:px-2 border-t border-white/[0.07] pt-2.5 tabular-nums">
                       <span>Day 1</span>
                       <span>Day 7</span>
                       <span>Day 15</span>
@@ -3265,47 +3265,47 @@ ${jsonLd}
             )}
             {/* TAB 2: VIDEO REVIEWS & MODERATION */}
             {activeTab === 'reviews' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="space-y-5 animate-in fade-in duration-200">
                 {/* Widget Notice Alert Toast */}
                 {widgetNotice && (
-                  <div className="bg-zinc-900 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-lg border border-zinc-700 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="bg-[#111114] text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-lg border border-white/[0.1] flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-200">
                     <span className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-white" />
+                      <Eye className="w-4 h-4 text-[#E8C78A]" />
                       {widgetNotice}
                     </span>
                     <button
                       onClick={() => setActiveTab('embed')}
-                      className="text-[#8ab4f8] hover:underline text-xs font-bold cursor-pointer"
+                      className="text-white hover:underline text-xs font-semibold cursor-pointer"
                     >
                       View Website Widget →
                     </button>
                   </div>
                 )}
 
-                <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full max-w-full overflow-hidden">
-                  <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Customer Photo Reviews</h2>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-zinc-300">
-                      <span>Manage and curate authentic live camera photo reviews displayed on your profile and website widget.</span>
-                    </div>
+                <div className="bg-white/[0.03] rounded-[24px] border border-white/[0.08] text-white p-5 sm:p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 w-full max-w-full overflow-hidden">
+                  <div className="min-w-0 space-y-1">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">Customer Photo Reviews</h2>
+                    <p className="text-xs sm:text-[13px] text-zinc-400">
+                      Manage and curate authentic live camera photo reviews displayed on your profile and website widget.
+                    </p>
                   </div>
 
                   {/* Search, Filter and Clear Badge Row */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-                    {/* Search Reviews Input */}
-                    <div className="relative flex-1 w-full sm:w-auto">
-                      <Search className="w-3.5 h-3.5 text-zinc-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+                    {/* Spotlight Search Reviews Input */}
+                    <div className="relative flex-1 w-full sm:w-52">
+                      <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input
                         type="text"
                         value={reviewsSearchQuery}
                         onChange={(e) => setReviewsSearchQuery(e.target.value)}
                         placeholder="Search reviews..."
-                        className="w-full pl-8 pr-7 py-2 bg-zinc-950 focus:bg-zinc-900 border border-zinc-800 rounded-full text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-700 focus:border-zinc-700 transition-all font-medium"
+                        className="w-full pl-9 pr-7 py-2 bg-white/[0.045] focus:bg-white/[0.07] border border-white/[0.09] focus:border-white/25 rounded-full text-xs text-white placeholder-zinc-500 focus:outline-hidden transition-all font-medium"
                       />
                       {reviewsSearchQuery && (
                         <button
                           onClick={() => setReviewsSearchQuery('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white text-xs font-bold p-1 cursor-pointer"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs font-semibold p-1 cursor-pointer"
                         >
                           ✕
                         </button>
@@ -3314,14 +3314,14 @@ ${jsonLd}
 
                     {/* Filter Pills and Clear Badge Container */}
                     <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar pb-0.5">
-                      {/* Filter Pills */}
-                      <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-full border border-zinc-800 shrink-0">
+                      {/* Liquid-Glass Filter Pills */}
+                      <div className="flex items-center gap-1 bg-white/[0.045] p-1 rounded-full border border-white/[0.08] shrink-0">
                         {(['all', '5', '4'] as const).map(f => (
                           <button
                             key={f}
                             onClick={() => setReviewsFilter(f)}
-                            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                              reviewsFilter === f ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-xs font-bold' : 'text-zinc-300 hover:text-white font-medium'
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                              reviewsFilter === f ? 'bg-white text-zinc-950 shadow-xs' : 'text-zinc-400 hover:text-white'
                             }`}
                           >
                             {f === 'all' ? 'All' : `${f} Stars`}
@@ -3334,10 +3334,10 @@ ${jsonLd}
                         type="button"
                         id="btn-clear-reviews-badge"
                         onClick={handleMarkReviewsAsRead}
-                        className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 whitespace-nowrap"
+                        className="px-3.5 py-2 rounded-full text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.09] transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95 whitespace-nowrap"
                         title="Clear badge and mark all reviews as reviewed"
                       >
-                        <CheckCheck className="w-3.5 h-3.5 text-white" />
+                        <CheckCheck className="w-3.5 h-3.5 text-[#E8C78A]" />
                         <span>{unseenReviewsCount > 0 ? `Clear (${unseenReviewsCount})` : 'All Reviewed'}</span>
                       </button>
                     </div>
@@ -3547,38 +3547,38 @@ ${jsonLd}
 
                               {/* Owner Reply Input Box */}
                               {isReplying && (
-                                <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800 space-y-3 animate-in fade-in">
+                                <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/[0.08] space-y-3 animate-in fade-in">
                                   <div className="space-y-2">
                                     <div className="flex items-center justify-between text-xs">
-                                      <span className="font-bold text-white">Reply as {currentPlace.name}</span>
-                                      <span className="text-[10.5px] text-zinc-400 font-medium hidden sm:inline">Quick Response Templates:</span>
+                                      <span className="font-semibold text-white">Reply as {currentPlace.name}</span>
+                                      <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline">Quick Response Templates</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                       <button
                                         type="button"
                                         onClick={() => setReplyText("Thank you so much for visiting us and sharing your kind review! We're thrilled you had a great experience.")}
-                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                        className="px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.09] text-[11px] font-medium transition-all cursor-pointer active:scale-95"
                                       >
                                         + Thank Guest
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => setReplyText("Thanks for visiting! We look forward to welcoming you back again very soon.")}
-                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                        className="px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.09] text-[11px] font-medium transition-all cursor-pointer active:scale-95"
                                       >
                                         + Invite Back
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => setReplyText(`We sincerely apologize that your experience fell short of our standards. Please contact us directly at ${displayOwnerEmail} so we can address your concerns and make things right for you.`)}
-                                        className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                        onClick={() => setReplyText(`We sincerely apologize that your experience fell short of our standards. Please message us directly here on Yoouz so our team can address your concerns and make things right for you.`)}
+                                        className="px-3 py-1 rounded-full bg-[#E8C78A]/10 hover:bg-[#E8C78A]/20 text-[#E8C78A] border border-[#E8C78A]/25 text-[11px] font-medium transition-all cursor-pointer active:scale-95"
                                       >
                                         + Apologize & Resolve
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => setReplyText("Thank you for your constructive feedback! Our team is constantly striving to improve and we hope to make your next visit even better.")}
-                                        className="px-2.5 py-1 rounded-lg bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                                        className="px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/[0.09] text-[11px] font-medium transition-all cursor-pointer active:scale-95"
                                       >
                                         + Value Feedback
                                       </button>
@@ -3589,7 +3589,7 @@ ${jsonLd}
                                     onChange={(e) => setReplyText(e.target.value)}
                                     placeholder="Thank your customer or share upcoming specials..."
                                     rows={3}
-                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:ring-1 focus:ring-zinc-700 focus:border-zinc-700 transition-all"
+                                    className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl p-3 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-white/25 transition-all"
                                   />
                                   <div className="flex items-center justify-end gap-2">
                                     <button
@@ -3597,14 +3597,14 @@ ${jsonLd}
                                         setActiveReplyId(null);
                                         setReplyText('');
                                       }}
-                                      className="px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                      className="px-4 py-1.5 rounded-full text-xs font-medium text-zinc-300 hover:bg-white/[0.08] transition-colors cursor-pointer"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       onClick={() => handleSaveReply(video.id)}
                                       disabled={!replyText.trim()}
-                                      className="px-4 py-1.5 rounded-xl bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-200 text-zinc-950 text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                                      className="px-4 py-1.5 rounded-full bg-white hover:bg-zinc-200 disabled:bg-white/[0.08] disabled:text-zinc-500 text-zinc-950 text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                                     >
                                       <Send className="w-3.5 h-3.5" /> Publish Response
                                     </button>
@@ -3613,7 +3613,7 @@ ${jsonLd}
                               )}
 
                               {/* Customer Comments Toggle Section */}
-                              <div className="pt-2 border-t border-zinc-800">
+                              <div className="pt-2 border-t border-white/[0.07]">
                                 <button
                                   onClick={() => {
                                     setExpandedCommentsMap(prev => ({
@@ -3621,25 +3621,25 @@ ${jsonLd}
                                       [video.id]: !prev[video.id]
                                     }));
                                   }}
-                                  className="text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
+                                  className="text-xs font-medium text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer transition-colors"
                                 >
-                                  <MessageCircle className="w-3.5 h-3.5 text-zinc-200" />
-                                  <span>
+                                  <MessageCircle className="w-3.5 h-3.5 text-zinc-400" />
+                                  <span className="tabular-nums">
                                     {expandedCommentsMap[video.id] ? 'Hide' : 'View'} Customer Comments ({video.commentsCount || video.comments?.length || 0})
                                   </span>
                                 </button>
 
                                 {expandedCommentsMap[video.id] && (
-                                  <div className="mt-3 space-y-3 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+                                  <div className="mt-3 space-y-2.5 bg-white/[0.025] p-4 rounded-2xl border border-white/[0.07]">
                                     {(!video.comments || video.comments.length === 0) ? (
-                                      <p className="text-xs text-zinc-200 italic">No customer comments yet on this review.</p>
+                                      <p className="text-xs text-zinc-400">No customer comments yet on this review.</p>
                                     ) : (
                                       video.comments.map((comment) => (
-                                        <div key={comment.id} className="flex items-start gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-800 shadow-2xs">
+                                        <div key={comment.id} className="flex items-start gap-3 bg-white/[0.03] p-3 rounded-2xl border border-white/[0.06]">
                                           <img
                                             src={getSafeAvatarUrl(comment.authorAvatar, comment.authorName, comment.authorHandle || comment.authorName)}
                                             alt={comment.authorName}
-                                            className="w-8 h-8 rounded-full object-cover shrink-0"
+                                            className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-white/[0.1]"
                                             referrerPolicy="no-referrer"
                                             onError={(e) => {
                                               const target = e.currentTarget as HTMLImageElement;
@@ -3647,16 +3647,16 @@ ${jsonLd}
                                             }} 
                                           />
                                           <div className="flex-1 min-w-0 space-y-1">
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex items-center justify-between gap-2">
                                               <div className="flex items-center gap-1.5">
-                                                <span className="text-xs font-bold text-zinc-200">{comment.authorName}</span>
+                                                <span className="text-xs font-semibold text-white">{comment.authorName}</span>
                                                 {comment.isOwner && (
-                                                  <span className="bg-zinc-800 text-zinc-200 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-zinc-700">Owner</span>
+                                                  <span className="bg-white/[0.08] text-[#E8C78A] text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/[0.1]">Owner</span>
                                                 )}
                                               </div>
-                                              <span className="text-[10px] text-zinc-200">{comment.createdAt || 'Recently'}</span>
+                                              <span className="text-[10.5px] text-zinc-400">{comment.createdAt || 'Recently'}</span>
                                             </div>
-                                            <p className="text-xs text-zinc-200 leading-relaxed">{comment.text}</p>
+                                            <p className="text-xs text-zinc-300 leading-relaxed">{comment.text}</p>
                                           </div>
                                         </div>
                                       ))
@@ -3675,7 +3675,7 @@ ${jsonLd}
             
             {/* INBOX TAB */}
             {activeTab === 'inbox' && (
-              <div className="w-full max-w-5xl h-[calc(100dvh-130px)] md:h-[calc(100vh-140px)] bg-zinc-950 sm:bg-zinc-900 rounded-none sm:rounded-3xl border-0 sm:border border-zinc-800 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+              <div className="w-full max-w-[1160px] h-[calc(100dvh-130px)] md:h-[calc(100vh-140px)] bg-[#050506] sm:bg-white/[0.02] rounded-none sm:rounded-[28px] border-0 sm:border border-white/[0.08] overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
                 <CopoMessagesView
                   messages={businessMessages}
                   currentUser={effectiveUser}
@@ -3723,44 +3723,43 @@ ${jsonLd}
               </div>
             )}
 
-            {/* FOLLOWING & FOLLOWERS TAB (Exact User Account Layout & Design Language) */}
+            {/* FOLLOWING & FOLLOWERS TAB (Flagship Obsidian) */}
             {activeTab === 'followers' && (
-              <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                {/* Top Header & Navigation Bar */}
-                <div className="flex items-center justify-between gap-3 pt-1 pb-2">
+              <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                {/* Editorial Header */}
+                <div className="flex items-center justify-between gap-3 pt-1">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
                       onClick={() => setActiveTab('overview')}
-                      className="w-10 h-10 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 shadow-xs border border-zinc-800"
+                      className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95 border border-white/[0.09]"
                       title="Back to Overview"
                     >
-                      <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                      <ChevronLeft className="w-5 h-5 stroke-[2]" />
                     </button>
                     <div className="min-w-0">
-                      <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight flex items-center gap-2">
-                        <Users className="w-5 h-5 text-zinc-300 shrink-0" />
-                        <span>Following & Followers</span>
+                      <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em] leading-tight">
+                        Following & Followers
                       </h1>
-                      <p className="text-xs text-zinc-400 font-medium truncate mt-0.5">
+                      <p className="text-xs sm:text-[13px] text-zinc-400 truncate mt-0.5">
                         Manage businesses and reviewers you follow & view your followers
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Main Segmented Toggle: Following vs Followers */}
-                <div className="grid grid-cols-2 p-1 bg-zinc-900/90 rounded-2xl border border-zinc-800 gap-1">
+                {/* Liquid-Glass Segmented Toggle */}
+                <div className="grid grid-cols-2 p-1 bg-white/[0.045] rounded-full border border-white/[0.08] gap-1">
                   <button
                     onClick={() => setBusinessActiveTabSegment('following')}
-                    className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`py-2 px-4 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       businessActiveTabSegment === 'following'
-                        ? 'bg-white text-zinc-950 shadow-sm font-black'
+                        ? 'bg-white text-zinc-950 shadow-sm'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     <span>Following</span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                      businessActiveTabSegment === 'following' ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-300'
+                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums ${
+                      businessActiveTabSegment === 'following' ? 'bg-zinc-950/10 text-zinc-900' : 'bg-white/[0.08] text-zinc-300'
                     }`}>
                       {totalBusinessFollowingCount}
                     </span>
@@ -3768,15 +3767,15 @@ ${jsonLd}
 
                   <button
                     onClick={() => setBusinessActiveTabSegment('followers')}
-                    className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`py-2 px-4 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       businessActiveTabSegment === 'followers'
-                        ? 'bg-white text-zinc-950 shadow-sm font-black'
+                        ? 'bg-white text-zinc-950 shadow-sm'
                         : 'text-zinc-400 hover:text-white'
                     }`}
                   >
                     <span>Followers</span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                      businessActiveTabSegment === 'followers' ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-300'
+                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold tabular-nums ${
+                      businessActiveTabSegment === 'followers' ? 'bg-zinc-950/10 text-zinc-900' : 'bg-white/[0.08] text-zinc-300'
                     }`}>
                       {businessFollowers.length}
                       {unseenFollowersCount > 0 && ` (${unseenFollowersCount} new)`}
@@ -3784,20 +3783,20 @@ ${jsonLd}
                   </button>
                 </div>
 
-                {/* Search Bar */}
+                {/* Spotlight Search Bar */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={followerSearchQuery}
                     onChange={(e) => setFollowerSearchQuery(e.target.value)}
                     placeholder={businessActiveTabSegment === 'following' ? "Search followed reviewers or search any reviewer..." : "Search followers by name or review..."}
-                    className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
+                    className="w-full bg-white/[0.045] border border-white/[0.09] rounded-full pl-11 pr-9 py-2.5 text-xs sm:text-[13px] text-white placeholder-zinc-500 focus:outline-hidden focus:border-white/25 focus:bg-white/[0.07] transition-all"
                   />
                   {followerSearchQuery && (
                     <button
                       onClick={() => setFollowerSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-zinc-800 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer p-1 rounded-full hover:bg-white/[0.1] transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -3808,40 +3807,40 @@ ${jsonLd}
                 {businessActiveTabSegment === 'following' ? (
                   <div className="space-y-4">
                     {filteredBusinessFollowingAuthors.length > 0 ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2.5">
                         {filteredBusinessFollowingAuthors.map((author) => {
                           const isHovered = hoveredUnfollow === author.name;
                           return (
                             <div
                               key={`biz-followed-author-${author.name}`}
                               onClick={() => onOpenCreator?.(author)}
-                              className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                              className="bg-white/[0.03] hover:bg-white/[0.055] rounded-[22px] border border-white/[0.08] hover:border-white/[0.16] p-4 transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                             >
-                              <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
                                 <img
                                   src={getSafeAvatarUrl(author.avatar, author.name, (author as any).handle || author.name)}
                                   alt={author.name}
-                                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-1 ring-white/[0.12] shrink-0 group-hover:scale-105 transition-transform"
                                   onError={(e) => {
                                     (e.currentTarget as HTMLImageElement).src = getSafeAvatarUrl(null, author.name, (author as any).handle || author.name);
                                   }}
                                 />
                                 <div className="min-w-0 flex-1 text-left">
-                                  <div className="flex items-center gap-1.5 min-w-0">
-                                    <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <h3 className="text-sm sm:text-[15px] font-semibold text-white truncate group-hover:text-zinc-200 transition-colors">
                                       {author.name}
                                     </h3>
-                                    <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
-                                      <span>Reviewer</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08] text-[10px] font-medium shrink-0">
+                                      Reviewer
                                     </span>
                                   </div>
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-400 font-medium mt-0.5 min-w-0">
-                                    <span className="shrink-0 text-zinc-300 text-xs">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-400 mt-0.5 min-w-0">
+                                    <span className="shrink-0 text-zinc-300 tabular-nums">
                                       {author.videoReviewCount || 0} {(author.videoReviewCount === 1) ? 'photo review' : 'photo reviews'}
                                     </span>
-                                    <span className="hidden sm:inline text-zinc-600 shrink-0">•</span>
-                                    <span className="text-[11px] sm:text-xs text-zinc-400 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
-                                      <MapPin className="w-3 h-3 text-zinc-400 shrink-0 mt-0.5 sm:mt-0" />
+                                    <span className="hidden sm:inline text-zinc-600 shrink-0">·</span>
+                                    <span className="text-xs text-zinc-400 flex items-start sm:items-center gap-1 mt-0.5 sm:mt-0 whitespace-normal break-words leading-snug min-w-0">
+                                      <MapPin className="w-3 h-3 text-zinc-500 shrink-0 mt-0.5 sm:mt-0" />
                                       <span className="whitespace-normal break-words">{author.location || 'Local Contributor'}</span>
                                     </span>
                                   </div>
@@ -3856,11 +3855,11 @@ ${jsonLd}
                                     e.stopPropagation();
                                     handleToggleBusinessFollowAuthor(author.name);
                                   }}
-                                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                  className={`px-4 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                                     author.isFollowed
                                       ? (isHovered
                                           ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                                          : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700")
+                                          : "bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.1]")
                                       : "bg-white hover:bg-zinc-200 text-zinc-950 border border-white"
                                   }`}
                                 >
@@ -3889,12 +3888,12 @@ ${jsonLd}
                         })}
                       </div>
                     ) : (
-                      <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
-                        <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-white flex items-center justify-center mx-auto">
-                          <Users className="w-6 h-6" />
+                      <div className="p-10 sm:p-12 rounded-[24px] bg-white/[0.03] border border-white/[0.08] text-center text-zinc-400 space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center mx-auto">
+                          <Users className="w-5.5 h-5.5" />
                         </div>
                         <div className="space-y-1 max-w-sm mx-auto">
-                          <p className="font-bold text-white text-sm sm:text-base">
+                          <p className="font-semibold text-white text-sm sm:text-base">
                             {followerSearchQuery ? "No matching reviewers found" : "Not following anyone yet"}
                           </p>
                           <p className="text-xs text-zinc-400 leading-relaxed">
@@ -3907,12 +3906,12 @@ ${jsonLd}
                 ) : (
                   /* LIST CONTENT: FOLLOWERS SEGMENT */
                   filteredFollowers.length === 0 ? (
-                    <div className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-400 space-y-3 shadow-xs">
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-800 text-white flex items-center justify-center mx-auto">
-                        <Users className="w-6 h-6" />
+                    <div className="p-10 sm:p-12 rounded-[24px] bg-white/[0.03] border border-white/[0.08] text-center text-zinc-400 space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center mx-auto">
+                        <Users className="w-5.5 h-5.5" />
                       </div>
                       <div className="space-y-1 max-w-sm mx-auto">
-                        <p className="font-bold text-white text-sm sm:text-base">
+                        <p className="font-semibold text-white text-sm sm:text-base">
                           {followerSearchQuery ? "No matching followers found" : "No followers yet"}
                         </p>
                         <p className="text-xs text-zinc-400 leading-relaxed">
@@ -3923,46 +3922,46 @@ ${jsonLd}
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2.5">
                       {filteredFollowers.map((follower) => {
                         const isHovered = hoveredUnfollow === follower.name;
                         return (
                           <div
                             key={`follower-${follower.id || follower.name}`}
                             onClick={() => onOpenCreator?.({ name: follower.name, avatar: getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name), id: follower.id } as any)}
-                            className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                            className="bg-white/[0.03] hover:bg-white/[0.055] rounded-[22px] border border-white/[0.08] hover:border-white/[0.16] p-4 transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                           >
-                            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
                               <div className="relative shrink-0">
                                 <img
                                   src={getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name)}
                                   alt={follower.name}
-                                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover border border-zinc-800 shrink-0 group-hover:scale-105 transition-transform"
+                                  className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-1 ring-white/[0.12] shrink-0 group-hover:scale-105 transition-transform"
                                   onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;
                                     target.src = getSafeAvatarUrl(null, follower.name, (follower as any).handle || follower.name);
                                   }}
                                 />
                                 {follower.isReviewer && (
-                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-950 text-amber-400 shadow-xs" title="Verified Customer Reviewer">
-                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#111114] flex items-center justify-center ring-2 ring-[#050506] text-[#E8C78A]" title="Verified Customer Reviewer">
+                                    <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                                   </div>
                                 )}
                               </div>
 
                               <div className="min-w-0 flex-1 text-left">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <h3 className="text-sm sm:text-[15px] font-semibold text-white truncate group-hover:text-zinc-200 transition-colors">
                                     {follower.name}
                                   </h3>
                                   {follower.isReviewer && (
-                                    <span className="px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 border border-zinc-700/80 text-[10px] font-medium shrink-0 flex items-center gap-1">
+                                    <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08] text-[10px] font-medium shrink-0 flex items-center gap-1">
                                       <span>Reviewer</span>
                                       {follower.rating && (
                                         <>
-                                          <span className="text-zinc-400">•</span>
-                                          <span className="flex items-center gap-0.5 text-zinc-200 font-semibold">
-                                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                          <span className="text-zinc-500">·</span>
+                                          <span className="flex items-center gap-0.5 text-zinc-200 font-semibold tabular-nums">
+                                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
                                             {follower.rating.toFixed(1)}
                                           </span>
                                         </>
@@ -3971,12 +3970,12 @@ ${jsonLd}
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium truncate mt-0.5">
+                                <div className="flex items-center gap-2 text-xs text-zinc-400 truncate mt-0.5">
                                   <span className="shrink-0 text-zinc-300">
                                     {follower.location || 'Local Contributor'}
                                   </span>
-                                  <span>•</span>
-                                  <span className="shrink-0 text-zinc-300">
+                                  <span className="text-zinc-600">·</span>
+                                  <span className="shrink-0 text-zinc-400 tabular-nums">
                                     {follower.reviewCount} {follower.reviewCount === 1 ? 'photo review' : 'photo reviews'}
                                   </span>
                                 </div>
@@ -3992,12 +3991,12 @@ ${jsonLd}
                                     e.stopPropagation();
                                     handleToggleBusinessFollowAuthor(follower.name);
                                   }}
-                                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
+                                  className={`px-4 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                                     follower.isFollowedBack
                                       ? isHovered
                                         ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                                        : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
-                                      : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
+                                        : "bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 border border-white/[0.1]"
+                                      : "bg-white hover:bg-zinc-200 text-zinc-950 border border-white"
                                   }`}
                                 >
                                   {follower.isFollowedBack ? (
@@ -4075,26 +4074,26 @@ ${jsonLd}
 
             {/* TAB 3: WEBSITE EMBED */}
             {activeTab === 'embed' && (
-              <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="max-w-3xl mx-auto space-y-5 sm:space-y-6 animate-in fade-in duration-200">
                 {placeVideos.length === 0 ? (
-                  /* STRICT DARKMODE: Guidance State for Venues with 0 Reviews - Embed Code Locked */
-                  <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-6 sm:p-10 shadow-xl space-y-6 text-center relative overflow-hidden">
+                  /* Guidance State for Venues with 0 Reviews - Embed Code Locked */
+                  <div className="bg-white/[0.03] rounded-[28px] border border-white/[0.08] text-white p-6 sm:p-10 space-y-6 text-center relative overflow-hidden">
                     {/* Top Status Pill */}
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-zinc-950 border border-zinc-800 text-xs font-semibold text-zinc-300 shadow-sm">
-                      <Lock className="w-3.5 h-3.5 text-zinc-400" />
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.09] text-xs font-medium text-zinc-300">
+                      <Lock className="w-3.5 h-3.5 text-[#E8C78A]" />
                       <span>Unlocks After 1st Photo Review</span>
                     </div>
 
                     {/* Center Visual & Messaging */}
                     <div className="space-y-3 max-w-lg mx-auto relative z-10">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto shadow-2xl relative">
-                        <QrCode className="w-8 h-8 sm:w-10 sm:h-10 text-zinc-300" />
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-white shadow-md">
-                          <Camera className="w-3.5 h-3.5 text-white" />
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto relative">
+                        <QrCode className="w-8 h-8 sm:w-9 sm:h-9 text-zinc-200" />
+                        <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#111114] border-2 border-[#050506] flex items-center justify-center text-[#E8C78A]">
+                          <Camera className="w-3.5 h-3.5" />
                         </div>
                       </div>
 
-                      <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
                         Collect Your First Photo Review to Unlock Website Embed
                       </h2>
                       <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -4102,26 +4101,26 @@ ${jsonLd}
                       </p>
                     </div>
 
-                    {/* Darkmode Action Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto pt-2 relative z-10">
+                    {/* Action Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-xl mx-auto pt-2 relative z-10">
                       <button
                         type="button"
                         onClick={() => setActiveTab('qr_invites')}
-                        className="p-4 rounded-2xl bg-zinc-950 hover:bg-zinc-800/80 text-white text-left transition-all active:scale-[0.98] shadow-lg flex flex-col justify-between gap-3 group cursor-pointer border border-zinc-800 hover:border-zinc-700"
+                        className="p-5 rounded-[22px] bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.98] flex flex-col justify-between gap-3 group cursor-pointer border border-white/[0.09] hover:border-white/[0.18]"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center">
-                            <QrCode className="w-5 h-5 text-white" />
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center">
+                            <QrCode className="w-4.5 h-4.5" />
                           </div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full border border-zinc-700">
+                          <span className="text-[10.5px] font-medium bg-white/[0.07] text-[#E8C78A] px-2.5 py-0.5 rounded-full border border-white/[0.09]">
                             Recommended
                           </span>
                         </div>
                         <div>
-                          <div className="text-sm font-black leading-tight text-white group-hover:text-zinc-200">
+                          <div className="text-sm font-semibold leading-tight text-white">
                             Print Table QR Standees
                           </div>
-                          <div className="text-xs text-zinc-400 font-medium mt-0.5">
+                          <div className="text-xs text-zinc-400 mt-1">
                             Place printed QR cards at tables to collect customer reviews live.
                           </div>
                         </div>
@@ -4130,23 +4129,23 @@ ${jsonLd}
                       <button
                         type="button"
                         onClick={copyDirectReviewLink}
-                        className="p-4 rounded-2xl bg-zinc-950 hover:bg-zinc-800/80 text-white text-left transition-all active:scale-[0.98] border border-zinc-800 hover:border-zinc-700 shadow-md flex flex-col justify-between gap-3 group cursor-pointer"
+                        className="p-5 rounded-[22px] bg-white/[0.04] hover:bg-white/[0.07] text-white text-left transition-all active:scale-[0.98] border border-white/[0.09] hover:border-white/[0.18] flex flex-col justify-between gap-3 group cursor-pointer"
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 text-white flex items-center justify-center">
-                            <Link2 className="w-5 h-5 text-white" />
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.09] text-white flex items-center justify-center">
+                            <Link2 className="w-4.5 h-4.5" />
                           </div>
                           {isDirectReviewLinkCopied && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-800 text-white px-2 py-0.5 rounded-full flex items-center gap-1 border border-zinc-700">
-                              <Check className="w-3 h-3" /> Copied!
+                            <span className="text-[10.5px] font-medium bg-white text-zinc-950 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                              <Check className="w-3 h-3" /> Copied
                             </span>
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-black leading-tight text-white group-hover:text-zinc-200 transition-colors">
+                          <div className="text-sm font-semibold leading-tight text-white">
                             {isDirectReviewLinkCopied ? 'Review Link Copied!' : 'Copy Direct Review Link'}
                           </div>
-                          <div className="text-xs text-zinc-400 font-medium mt-0.5">
+                          <div className="text-xs text-zinc-400 mt-1">
                             Send via SMS, WhatsApp, or email to invite customer reviews.
                           </div>
                         </div>
@@ -4155,20 +4154,19 @@ ${jsonLd}
                   </div>
                 ) : (
                   /* FULL UNLOCKED STATE WHEN >= 1 VIDEO REVIEW EXISTS */
-                  <div className="bg-zinc-900 rounded-2xl sm:rounded-3xl border border-zinc-800 text-white p-4 sm:p-7 shadow-xl space-y-6">
-                    {/* Clean Dark Title Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-5">
+                  <div className="bg-white/[0.03] rounded-[28px] border border-white/[0.08] text-white p-5 sm:p-8 space-y-6">
+                    {/* Clean Editorial Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.07] pb-5">
                       <div>
                         <div className="flex items-center gap-2.5">
-                          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                          <h2 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">
                             Website Embed
                           </h2>
-                          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-[11px] font-medium text-[#E8C78A]">
                             <span>Live Stream</span>
                           </div>
                         </div>
-                        <p className="text-xs text-zinc-400 mt-1">
+                        <p className="text-xs sm:text-[13px] text-zinc-400 mt-1">
                           Display verified photo reviews on your website, reservation widget, or booking page.
                         </p>
                       </div>
@@ -4177,51 +4175,51 @@ ${jsonLd}
                         <button
                           type="button"
                           onClick={copyEmbedCode}
-                          className="px-4 py-2 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-md active:scale-95"
+                          className="px-5 py-2.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-sm active:scale-95"
                         >
-                          {isCodeCopied ? <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-4 h-4 text-zinc-950" />}
-                          <span>{isCodeCopied ? 'Copied Code!' : 'Copy Embed Code'}</span>
+                          {isCodeCopied ? <Check className="w-4 h-4 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5 text-zinc-950" />}
+                          <span>{isCodeCopied ? 'Copied Code' : 'Copy Embed Code'}</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Quick Install Bar & SEO Badge */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
-                            <Globe className="w-4 h-4 text-zinc-300" />
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                            <Globe className="w-4 h-4 text-zinc-200" />
                           </div>
                           <div className="min-w-0 space-y-0.5">
-                            <div className="text-xs font-bold text-white tracking-tight">Works on Any Website</div>
-                            <div className="text-[11px] text-zinc-400 font-medium">WordPress, Shopify, Wix, Squarespace, HTML</div>
+                            <div className="text-xs font-semibold text-white">Works on Any Website</div>
+                            <div className="text-[11px] text-zinc-400">WordPress, Shopify, Wix, Squarespace, HTML</div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-zinc-950/90 border border-zinc-800 rounded-2xl p-3.5 flex items-center gap-3 shadow-sm">
-                        <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
-                          <Star className="w-4 h-4 text-zinc-300" />
+                      <div className="bg-white/[0.03] border border-white/[0.07] rounded-[20px] p-4 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                          <Star className="w-4 h-4 text-[#E8C78A] fill-[#E8C78A]" />
                         </div>
                         <div className="min-w-0 space-y-0.5">
-                          <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <div className="text-xs font-semibold text-white flex items-center gap-1.5">
                             <span>Google Rich Snippets</span>
-                            <span className="text-[9px] uppercase px-1.5 py-0.5 bg-zinc-800 text-zinc-200 rounded font-mono font-bold tracking-wider">SEO</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-white/[0.07] text-zinc-200 rounded-md font-mono font-medium">SEO</span>
                           </div>
-                          <div className="text-[11px] text-zinc-400 font-medium">Displays golden review stars on Google Search</div>
+                          <div className="text-[11px] text-zinc-400">Displays review stars on Google Search</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Collapsible Technical Code Inspector (Clean Minimal Pill) */}
-                    <div className="bg-zinc-950/90 border border-zinc-800/90 rounded-2xl overflow-hidden transition-all">
-                      <div className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                    {/* Collapsible Technical Code Inspector */}
+                    <div className="bg-white/[0.03] border border-white/[0.08] rounded-[20px] overflow-hidden transition-all">
+                      <div className="p-3.5 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0 font-mono text-[11px] text-zinc-400">
-                          <div className="w-6 h-6 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
-                            <Code className="w-3.5 h-3.5 text-zinc-400" />
+                          <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
+                            <Code className="w-3.5 h-3.5 text-zinc-300" />
                           </div>
                           <span className="text-zinc-500 select-none">&lt;iframe&gt;</span>
-                          <span className="text-zinc-300 font-semibold truncate select-none">
+                          <span className="text-zinc-200 font-medium truncate select-none">
                             {isPremium 
                               ? `yoouz.com/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}`
                               : "yoouz.com/embed/••••••••"
@@ -4240,7 +4238,7 @@ ${jsonLd}
                                 setShowAdvanceEmbedCode(!showAdvanceEmbedCode);
                               }
                             }}
-                            className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 transition-colors cursor-pointer"
+                            className="text-xs font-medium text-zinc-300 hover:text-white flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.09] transition-colors cursor-pointer"
                           >
                             <span>{showAdvanceEmbedCode ? 'Hide Code' : 'View Code'}</span>
                             {showAdvanceEmbedCode ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -4249,9 +4247,9 @@ ${jsonLd}
                           <button
                             type="button"
                             onClick={copyEmbedCode}
-                            className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1 px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition cursor-pointer active:scale-95"
+                            className="text-xs font-semibold text-zinc-950 bg-white hover:bg-zinc-200 flex items-center gap-1 px-3.5 py-1.5 rounded-full transition cursor-pointer active:scale-95"
                           >
-                            {isCodeCopied ? <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5" />}
+                            {isCodeCopied ? <Check className="w-3.5 h-3.5 text-zinc-950 stroke-[2.5]" /> : <Copy className="w-3.5 h-3.5" />}
                             <span>{isCodeCopied ? 'Copied' : 'Copy'}</span>
                           </button>
                         </div>
@@ -4259,19 +4257,19 @@ ${jsonLd}
 
                       {/* Expandable Code Block */}
                       {showAdvanceEmbedCode && (
-                        <div className="border-t border-zinc-800/80 p-3.5 bg-black/50 space-y-2">
-                          <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
-                            <span>Ready to paste HTML + Schema.org JSON-LD</span>
+                        <div className="border-t border-white/[0.07] p-4 bg-[#09090b] space-y-2.5">
+                          <div className="flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+                            <span>HTML + Schema.org JSON-LD</span>
                             <button
                               type="button"
                               onClick={() => setShowEmbedTester(true)}
-                              className="text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                              className="text-zinc-200 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                             >
                               <span>Open Live Embed Tester</span>
                               <ExternalLink className="w-3 h-3" />
                             </button>
                           </div>
-                          <pre className="text-[10px] sm:text-[11px] text-zinc-300 font-mono whitespace-pre-wrap break-all leading-relaxed p-3 rounded-xl bg-zinc-950 border border-zinc-850 max-h-48 overflow-y-auto">
+                          <pre className="text-[11px] text-zinc-300 font-mono whitespace-pre-wrap break-all leading-relaxed p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] max-h-48 overflow-y-auto">
                             {getEmbedCode()}
                           </pre>
                         </div>
@@ -4281,17 +4279,17 @@ ${jsonLd}
                     {/* Hero Interactive Widget Preview */}
                     <div className="pt-2 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-white">
                           Live Widget Preview
                         </span>
                         {displayableWidgetVideos.length > 1 && (
-                          <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline-block">
+                          <span className="text-xs text-zinc-400 hidden sm:inline-block tabular-nums">
                             Interactive player ({displayableWidgetVideos.length} reviews)
                           </span>
                         )}
                       </div>
 
-                      <div className="relative w-full max-w-[420px] h-[540px] mx-auto bg-black border border-zinc-800 rounded-[28px] overflow-hidden shadow-2xl flex flex-col group/embed select-none ring-1 ring-white/10">
+                      <div className="relative w-full max-w-[420px] h-[540px] mx-auto bg-black border border-white/[0.1] rounded-[28px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.65)] flex flex-col group/embed select-none">
                         <iframe
                           src={`/embed/${getPlaceSlug(currentPlace) || currentPlace?.id || currentPlace?.brandDomain || 'yoouz.com'}?preview=true`}
                           title={`Yoouz Live Embed Preview - ${currentPlace.name}`}
@@ -4309,14 +4307,14 @@ ${jsonLd}
             {activeTab === 'qr_invites' && (
               <div className="space-y-4 animate-in fade-in duration-200 max-w-md mx-auto pb-16 px-1 sm:px-0">
                 
-                {/* Centerpiece: Physical Mobile App Standee Card */}
+                {/* Centerpiece: Physical Standee Card */}
                 <div className="flex flex-col items-center w-full">
-                  <div className="w-full bg-zinc-900/90 border border-zinc-800/90 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden text-center text-white ring-1 ring-white/10 backdrop-blur-2xl">
-                    {/* Top Acrylic Lip & Bevel */}
-                    <div className="w-16 sm:w-20 h-1 sm:h-1.5 bg-zinc-700/80 rounded-full mx-auto mb-4 sm:mb-5 shadow-inner" />
+                  <div className="w-full bg-white/[0.035] border border-white/[0.1] rounded-[28px] p-6 sm:p-8 shadow-[0_24px_60px_rgba(0,0,0,0.55)] relative overflow-hidden text-center text-white backdrop-blur-2xl">
+                    {/* Top Acrylic Bevel */}
+                    <div className="w-16 h-1 bg-white/[0.15] rounded-full mx-auto mb-5" />
 
                     {qrTableLabel && (
-                      <div className="absolute top-4 right-4 sm:top-5 sm:right-5 px-2.5 py-0.5 rounded-full bg-zinc-800/90 text-zinc-300 text-[8.5px] sm:text-[9px] font-extrabold uppercase border border-zinc-700 tracking-wider">
+                      <div className="absolute top-5 right-5 px-2.5 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-semibold border border-white/[0.1]">
                         {qrTableLabel}
                       </div>
                     )}
@@ -4326,31 +4324,31 @@ ${jsonLd}
                       domain={currentPlace.website || currentPlace.id}
                       name={currentPlace.name}
                       logoUrl={currentPlace.logoUrl}
-                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto mb-3 shadow-lg border border-zinc-800 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 overflow-hidden"
+                      className="w-16 h-16 rounded-2xl bg-[#0a0a0d] p-2 flex items-center justify-center mx-auto mb-3.5 shadow-lg border border-white/[0.1] [print-color-adjust:exact] [-webkit-print-color-adjust:exact] print:bg-zinc-950 print:border-zinc-800 overflow-hidden"
                       imageClassName="w-full h-full object-contain"
-                      fallbackTextClassName="font-black text-lg text-white"
+                      fallbackTextClassName="font-semibold text-lg text-white"
                     />
 
                     {/* Venue Title & Verified Badge */}
-                    <div className="flex items-center justify-center gap-1.5 mb-0.5 px-2">
-                      <h3 className="font-black text-white text-base sm:text-xl tracking-tight truncate max-w-[260px] sm:max-w-[300px]">
+                    <div className="flex items-center justify-center gap-1.5 mb-1 px-2">
+                      <h3 className="font-semibold text-white text-lg sm:text-xl tracking-[-0.02em] truncate max-w-[260px] sm:max-w-[300px]">
                         {currentPlace.name}
                       </h3>
                       <CheckCircle className="w-4 h-4 fill-white text-black shrink-0" />
                     </div>
 
                     {/* Business Place Handle / URL */}
-                    <div className="text-[11px] font-bold text-zinc-400 tracking-tight flex items-center justify-center gap-1 mb-2">
+                    <div className="text-[11.5px] font-medium text-zinc-400 flex items-center justify-center gap-1 mb-2.5">
                       <span>yoouz.com/reviews/{(selectedPlaceId || currentPlace.id || '').replace(/^(https?:\/\/)?(www\.)?yoouz\.com\/(place|reviews)\//, '')}</span>
                     </div>
 
                     {/* Star Rating & Reviews Count */}
-                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold mb-3">
-                      <span className="text-amber-400 font-extrabold">{avgRating}</span>
+                    <div className="flex items-center justify-center gap-1.5 text-xs font-semibold mb-4 tabular-nums">
+                      <span className="text-[#E8C78A]">{avgRating}</span>
                       <CopoStarRating
                         rating={Number(avgRating) || 5.0}
                         starClassName="w-3.5 h-3.5"
-                        filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                        filledColorClass="text-[#E8C78A] fill-[#E8C78A] print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                         emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                       />
                       <span className="text-zinc-400 text-[11px] font-normal">
@@ -4359,15 +4357,15 @@ ${jsonLd}
                     </div>
 
                     {/* Callout Prompt with Edit Trigger */}
-                    <div className="mb-4 sm:mb-5 px-2 flex items-center justify-center gap-1.5">
-                      <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-[85%] truncate">
-                        {qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW'}
+                    <div className="mb-5 px-2 flex items-center justify-center gap-2">
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.06] text-zinc-100 font-semibold text-xs border border-white/[0.1] max-w-[85%] truncate">
+                        {qrCustomHeading || 'Leave a live photo review'}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowCustomizeAccordion(!showCustomizeAccordion)}
                         title="Customize Text"
-                        className="p-1.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 active:scale-95 text-zinc-400 hover:text-white transition-all cursor-pointer shrink-0 border border-zinc-700/60"
+                        className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-zinc-300 hover:text-white transition-all cursor-pointer shrink-0 border border-white/[0.1]"
                       >
                         <Sliders className="w-3.5 h-3.5" />
                       </button>
@@ -4375,21 +4373,21 @@ ${jsonLd}
 
                     {/* Collapsible Text Customization */}
                     {showCustomizeAccordion && (
-                      <div className="mb-4 p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2.5 text-left animate-in fade-in slide-in-from-top-1 shadow-inner">
+                      <div className="mb-4 p-4 rounded-2xl bg-[#09090b] border border-white/[0.09] space-y-3 text-left animate-in fade-in slide-in-from-top-1">
                         <div>
-                          <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          <label className="block text-[11px] font-medium text-zinc-400 mb-1">
                             Callout Heading
                           </label>
                           <input
                             type="text"
                             value={qrCustomHeading}
                             onChange={(e) => setQrCustomHeading(e.target.value)}
-                            placeholder="e.g. LEAVE A LIVE PHOTO REVIEW"
-                            className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                            placeholder="e.g. Leave a live photo review"
+                            className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider mb-1">
+                          <label className="block text-[11px] font-medium text-zinc-400 mb-1">
                             Table / Zone Label (Optional)
                           </label>
                           <input
@@ -4397,14 +4395,14 @@ ${jsonLd}
                             value={qrTableLabel}
                             onChange={(e) => setQrTableLabel(e.target.value)}
                             placeholder="e.g. Counter, Table #4"
-                            className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                            className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-hidden focus:border-white/25"
                           />
                         </div>
                       </div>
                     )}
 
                     {/* QR Code Canvas Card */}
-                    <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-2xl inline-block border border-zinc-300 relative group my-1 max-w-full">
+                    <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-2xl inline-block border border-white/20 relative group my-1 max-w-full">
                       <div className="hidden sm:block">
                         <QRCodeCanvas
                           id="yoouz-qr-code"
@@ -4426,20 +4424,20 @@ ${jsonLd}
 
                       {/* Center Yoouz Star Overlay */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-black text-sm shadow-xl">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-950 border-2 border-white text-white flex items-center justify-center font-semibold text-sm shadow-xl">
                           ★
                         </div>
                       </div>
                     </div>
 
                     {/* Camera Guidance Prompt */}
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mt-4 font-medium px-2">
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-zinc-400 mt-4 font-normal px-2">
                       <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                       <span>Scan with phone camera to record live review</span>
                     </div>
 
                     {/* Footnote: Direct URL + Copy Link */}
-                    <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-1">
+                    <div className="mt-4 pt-3.5 border-t border-white/[0.08] flex items-center justify-between gap-2 px-1">
                       <span className="text-[11px] font-mono text-zinc-400 truncate max-w-[200px] sm:max-w-[240px]">
                         {qrDirectReviewUrl.replace(/^https?:\/\//, '')}
                       </span>
@@ -4451,18 +4449,18 @@ ${jsonLd}
                             setQrLinkCopied(true);
                             setTimeout(() => setQrLinkCopied(false), 2500);
                           }}
-                          className="p-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-750 active:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer text-xs font-semibold flex items-center gap-1 border border-zinc-700/60"
+                          className="py-1.5 px-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white transition-all cursor-pointer text-xs font-medium flex items-center gap-1.5 border border-white/[0.09]"
                           title="Copy Direct Link"
                         >
                           {qrLinkCopied ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                              <span className="text-[10px] text-emerald-400 font-bold">Copied</span>
+                              <Check className="w-3.5 h-3.5 text-[#E8C78A]" />
+                              <span className="text-[11px] text-[#E8C78A] font-semibold">Copied</span>
                             </>
                           ) : (
                             <>
                               <Copy className="w-3.5 h-3.5" />
-                              <span className="text-[10px]">Copy</span>
+                              <span className="text-[11px]">Copy</span>
                             </>
                           )}
                         </button>
@@ -4470,14 +4468,14 @@ ${jsonLd}
                     </div>
                   </div>
 
-                  {/* Premium Primary Action Button: Download Print-Ready Table Standee */}
+                  {/* Primary Action Button: Pure-White Flagship Pill */}
                   <div className="w-full mt-4">
                     <button
                       type="button"
                       onClick={downloadQRCode}
-                      className="w-full py-3.5 px-6 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 active:scale-[0.98] text-zinc-950 rounded-2xl text-sm font-black shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer tracking-wide border border-amber-300/30"
+                      className="w-full py-3.5 px-6 bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 rounded-full text-sm font-semibold shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <Download className="w-4 h-4 text-zinc-950 shrink-0 stroke-[2.5]" />
+                      <Download className="w-4 h-4 text-zinc-950 shrink-0" />
                       <span>Download Print-Ready Table Standee</span>
                     </button>
                   </div>
@@ -4488,25 +4486,25 @@ ${jsonLd}
             {/* TAB 6: BUSINESS PROFILE & INFO */}
             
             {activeTab === 'profile' && (
-              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-xl mx-auto">
+              <div className="space-y-6 animate-in fade-in duration-200 pb-16 max-w-2xl mx-auto">
                 
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">Business Profile</h2>
-                    <p className="text-xs sm:text-sm text-zinc-400 mt-0.5 sm:mt-1">The essential information guests and reviewers see on Yoouz.</p>
+                    <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-tight">Business Profile</h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 mt-1">The essential information guests and reviewers see on Yoouz.</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2.5 shrink-0">
                     {isProfileSaved && (
-                      <span className="hidden sm:flex text-[13px] font-bold text-zinc-300 items-center gap-1.5 animate-in zoom-in-95">
-                        <CheckCircle2 className="w-4 h-4 text-zinc-300" /> Saved
+                      <span className="hidden sm:flex text-[13px] font-medium text-[#E8C78A] items-center gap-1.5 animate-in zoom-in-95">
+                        <CheckCircle2 className="w-4 h-4 text-[#E8C78A]" /> Saved
                       </span>
                     )}
                     <button
                       type="button"
                       id="btn-save-profile-header"
                       onClick={handleSaveProfile}
-                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700 rounded-full text-xs sm:text-[13px] font-black shadow-lg transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 sm:px-5 py-2 sm:py-2.5 bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 rounded-full text-xs sm:text-[13px] font-semibold shadow-sm transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
@@ -4521,7 +4519,7 @@ ${jsonLd}
                 </div>
 
                 {/* Main Unified Settings Card */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur-xl">
+                <div className="bg-white/[0.03] border border-white/[0.08] rounded-[28px] p-5 sm:p-8 space-y-6">
                   
                   {/* Profile Picture / Logo Uploader */}
                   <div className="flex flex-col items-center gap-3 pt-1">
@@ -4530,14 +4528,14 @@ ${jsonLd}
                       onClick={() => logoFileInputRef.current?.click()}
                       title="Click to change profile picture"
                     >
-                      <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-white flex items-center justify-center p-2.5 transition-all group-hover:border-zinc-500">
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border border-white/[0.14] shadow-md relative bg-white flex items-center justify-center p-2.5 transition-all group-hover:border-white/35">
                         <CopoBrandLogo
                           domain={currentPlace.website || currentPlace.id}
                           name={profileName || currentPlace.name}
                           logoUrl={profileLogoUrl || currentPlace.logoUrl}
                           className="w-full h-full bg-transparent overflow-hidden flex items-center justify-center border-0 p-0 shadow-none ring-0"
                           imageClassName="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                          fallbackTextClassName="text-2xl font-black text-zinc-950 uppercase"
+                          fallbackTextClassName="text-2xl font-semibold text-zinc-950 uppercase"
                         />
                         <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                           <Camera className="w-6 h-6 text-white" />
@@ -4549,7 +4547,7 @@ ${jsonLd}
                           e.stopPropagation();
                           logoFileInputRef.current?.click();
                         }}
-                        className="absolute -bottom-1 -right-1 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700 active:scale-95"
+                        className="absolute -bottom-1.5 -right-1.5 p-2 bg-[#111114]/95 hover:bg-zinc-800 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-white/[0.14] backdrop-blur-md active:scale-95"
                         title="Upload Profile Picture"
                       >
                         <Camera className="w-3.5 h-3.5" />
@@ -4563,10 +4561,10 @@ ${jsonLd}
                       />
                     </div>
                     <div className="text-center">
-                      <span className="text-xs font-bold text-zinc-200 block">Profile Picture</span>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Click to upload a custom JPG or PNG</p>
+                      <span className="text-xs font-medium text-zinc-200 block">Profile Picture</span>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">Click to upload a custom JPG or PNG</p>
                     </div>
-                    {logoError && <p className="text-xs text-rose-400 font-semibold">{logoError}</p>}
+                    {logoError && <p className="text-xs text-rose-400 font-medium">{logoError}</p>}
                   </div>
 
                   {/* Cover Banner Uploader */}
@@ -4576,7 +4574,7 @@ ${jsonLd}
                       onClick={() => bannerFileInputRef.current?.click()}
                       title="Click to change cover banner"
                     >
-                      <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950 flex items-center justify-center transition-all group-hover:border-zinc-500">
+                      <div className="w-full h-36 sm:h-44 rounded-2xl overflow-hidden border border-white/[0.12] relative bg-white/[0.025] flex items-center justify-center transition-all group-hover:border-white/30">
                         {profileBannerUrl && !bannerPreviewFailed ? (
                           <img 
                             src={profileBannerUrl} 
@@ -4586,9 +4584,9 @@ ${jsonLd}
                             onError={() => setBannerPreviewFailed(true)}
                           />
                         ) : (
-                          <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center gap-2 text-zinc-500">
-                            <Camera className="w-7 h-7 text-zinc-600" />
-                            <span className="text-xs font-medium text-zinc-500">
+                          <div className="w-full h-full bg-white/[0.02] flex flex-col items-center justify-center gap-2 text-zinc-500">
+                            <Camera className="w-7 h-7 text-zinc-500" />
+                            <span className="text-xs font-medium text-zinc-400">
                               {bannerPreviewFailed ? "Image preview error (click to replace banner)" : "No cover banner set"}
                             </span>
                           </div>
@@ -4603,7 +4601,7 @@ ${jsonLd}
                           e.stopPropagation();
                           bannerFileInputRef.current?.click();
                         }}
-                        className="absolute bottom-2.5 right-2.5 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700 active:scale-95"
+                        className="absolute bottom-2.5 right-2.5 p-2 bg-[#111114]/90 hover:bg-zinc-800 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-white/[0.14] backdrop-blur-md active:scale-95"
                         title="Upload Cover Banner"
                       >
                         <Camera className="w-3.5 h-3.5" />
@@ -4617,15 +4615,15 @@ ${jsonLd}
                       />
                     </div>
                     <div className="text-center">
-                      <span className="text-xs font-bold text-zinc-200 block">Cover Banner</span>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Click to upload a custom JPG or PNG</p>
+                      <span className="text-xs font-medium text-zinc-200 block">Cover Banner</span>
+                      <p className="text-[11px] text-zinc-400 mt-0.5">Click to upload a custom JPG or PNG</p>
                     </div>
-                    {bannerError && <p className="text-xs text-rose-400 font-semibold">{bannerError}</p>}
+                    {bannerError && <p className="text-xs text-rose-400 font-medium">{bannerError}</p>}
                   </div>
 
                   {/* DISPLAY NAME */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                    <label className="text-xs font-medium text-zinc-300 block">
                       Display Name
                     </label>
                     <input
@@ -4634,17 +4632,17 @@ ${jsonLd}
                       value={profileName}
                       onChange={(e) => setProfileName(e.target.value.slice(0, 70))}
                       placeholder="e.g. Legal500"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
                     />
                   </div>
 
                   {/* BIO */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300">
+                      <label className="text-xs font-medium text-zinc-300">
                         Bio
                       </label>
-                      <span className="text-[10px] font-bold text-zinc-400">{profileDesc.length} / 300</span>
+                      <span className="text-[11px] font-medium text-zinc-400 tabular-nums">{profileDesc.length} / 300</span>
                     </div>
                     <textarea
                       id="textarea-profile-desc"
@@ -4652,13 +4650,13 @@ ${jsonLd}
                       onChange={(e) => setProfileDesc(e.target.value.slice(0, 300))}
                       rows={3}
                       placeholder="Tell visitors what makes your venue authentic and special..."
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500 leading-relaxed font-medium"
+                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl p-4 text-sm text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500 leading-relaxed font-normal"
                     />
                   </div>
 
                   {/* LOCATION (Structured Country, Region, City, Neighborhood) */}
                   <div className="space-y-2">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 block">
+                    <label className="text-xs font-medium text-zinc-300 block">
                       Location
                     </label>
                     
@@ -4693,7 +4691,7 @@ ${jsonLd}
                           {hasStates ? (
                             <>
                               <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                                <span className="text-[11px] font-medium text-zinc-400 pl-1 block">
                                   Region / Province
                                 </span>
                                 <SearchableComboSelector
@@ -4707,7 +4705,7 @@ ${jsonLd}
                                 />
                               </div>
                               <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                                <span className="text-[11px] font-medium text-zinc-400 pl-1 block">
                                   City
                                 </span>
                                 <SearchableComboSelector
@@ -4720,7 +4718,7 @@ ${jsonLd}
                             </>
                           ) : (
                             <div className="col-span-1 sm:col-span-2 space-y-1">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                              <span className="text-[11px] font-medium text-zinc-400 pl-1 block">
                                 City
                               </span>
                               <SearchableComboSelector
@@ -4737,7 +4735,7 @@ ${jsonLd}
 
                     {/* Street Address / Neighborhood */}
                     <div className="space-y-1 pt-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide pl-1 block">
+                      <span className="text-[11px] font-medium text-zinc-400 pl-1 block">
                         Street Address / Neighborhood
                       </span>
                       <input
@@ -4749,7 +4747,7 @@ ${jsonLd}
                           setProfileAddress(e.target.value);
                         }}
                         placeholder="e.g. 100 Bay Street, Financial District"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all font-medium"
+                        className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all font-normal"
                       />
                     </div>
                   </div>
@@ -4769,12 +4767,12 @@ ${jsonLd}
                   {/* PHONE NUMBER */}
                   <div className="space-y-1.5 pt-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-zinc-400" /> Phone Number
                       </label>
                       {profilePhone && (
-                        <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" /> Connected
+                        <span className="text-[11px] font-medium text-[#E8C78A] bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.09]">
+                          Connected
                         </span>
                       )}
                     </div>
@@ -4806,20 +4804,20 @@ ${jsonLd}
                           value={localPhone}
                           onChange={(e) => setLocalPhone(e.target.value)}
                           placeholder={activeCountryDialInfo?.phonePlaceholder || "e.g. (212) 555-0198"}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
                         />
                       </div>
                     </div>
                     {localPhone && (
                       <div className="flex items-center justify-between text-[11px] text-zinc-400 pl-1 pt-0.5">
                         <span>
-                          Full Number: <span className="font-bold text-white tracking-wide">{phoneDialCode ? `${phoneDialCode} ` : ''}{localPhone}</span>
+                          Full Number: <span className="font-medium text-white tabular-nums">{phoneDialCode ? `${phoneDialCode} ` : ''}{localPhone}</span>
                         </span>
                         {phoneDialCode && (
                           <button
                             type="button"
                             onClick={() => setPhoneDialCode('')}
-                            className="text-[10px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                            className="text-[11px] text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
                             Clear code
                           </button>
@@ -4830,7 +4828,7 @@ ${jsonLd}
 
                   {/* BUSINESS EMAIL */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                    <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-zinc-400" /> Business Email
                     </label>
                     <input
@@ -4839,18 +4837,18 @@ ${jsonLd}
                       value={profileEmail}
                       onChange={(e) => setProfileEmail(e.target.value)}
                       placeholder="e.g. contact@business.com"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                      className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-3 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
                     />
                   </div>
 
                   {/* WEBSITE (Read-Only / Linked Domain) */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
                         <Globe className="w-3.5 h-3.5 text-zinc-400" /> Website URL
                       </label>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-semibold text-zinc-400">
-                        <Lock className="w-2.5 h-2.5 text-zinc-400" /> Verified Domain
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] font-medium text-zinc-300">
+                        <Lock className="w-2.5 h-2.5 text-[#E8C78A]" /> Verified Domain
                       </span>
                     </div>
                     <div className="relative flex items-center">
@@ -4860,14 +4858,14 @@ ${jsonLd}
                         value={profileWebsite || (currentPlace as any).website || 'https://legal500.com'}
                         readOnly
                         tabIndex={-1}
-                        className="w-full bg-zinc-950/60 border border-zinc-800/80 text-zinc-400 rounded-2xl px-4 py-3 text-sm font-medium cursor-not-allowed select-all pr-12 focus:outline-none"
+                        className="w-full bg-white/[0.025] border border-white/[0.07] text-zinc-400 rounded-2xl px-4 py-3 text-sm font-medium cursor-not-allowed select-all pr-12 focus:outline-none"
                       />
                       {(profileWebsite || (currentPlace as any).website) && (
                         <a
                           href={profileWebsite || (currentPlace as any).website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute right-3.5 p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                          className="absolute right-3 p-1.5 rounded-full text-zinc-400 hover:text-white hover:bg-white/[0.08] transition-colors"
                           title="Open website"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -4888,12 +4886,12 @@ ${jsonLd}
                   </div>
 
                   {/* FEATURED ACTION BUTTON (CALL-TO-ACTION / CTA) */}
-                  <div className="space-y-3.5 pt-3 border-t border-zinc-800">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-zinc-300" /> Featured Action Button (CTA)
+                  <div className="space-y-3.5 pt-5 border-t border-white/[0.08]">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#E8C78A]" /> Featured Action Button (CTA)
                       </label>
-                      <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800/80 px-2 py-0.5 rounded-full border border-zinc-700/60">
+                      <span className="text-[11px] font-medium text-zinc-300 bg-white/[0.05] px-2.5 py-0.5 rounded-full border border-white/[0.08]">
                         Appears on Business Page
                       </span>
                     </div>
@@ -4926,10 +4924,10 @@ ${jsonLd}
                                 setCtaLabelCustom(preset.label);
                               }
                             }}
-                            className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                            className={`p-2.5 rounded-2xl border text-xs transition-all flex items-center gap-2 cursor-pointer ${
                               isSelected
-                                ? 'bg-zinc-800 text-white border-zinc-600 shadow-md ring-1 ring-zinc-500'
-                                : 'bg-zinc-950/80 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white'
+                                ? 'bg-white text-zinc-950 border-white font-semibold shadow-sm'
+                                : 'bg-white/[0.03] hover:bg-white/[0.07] text-zinc-300 border-white/[0.08] hover:text-white font-medium'
                             }`}
                           >
                             <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -4941,7 +4939,7 @@ ${jsonLd}
 
                     {/* Custom Button Label Input */}
                     <div className="space-y-1.5 pt-1">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide block">
+                      <label className="text-[11px] font-medium text-zinc-400 block">
                         Button Display Text
                       </label>
                       <input
@@ -4949,13 +4947,13 @@ ${jsonLd}
                         value={ctaLabelCustom}
                         onChange={(e) => setCtaLabelCustom(e.target.value.slice(0, 40))}
                         placeholder="e.g. Book Appointment"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                        className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
                       />
                     </div>
 
                     {/* Target Link or Phone URL */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide block">
+                      <label className="text-[11px] font-medium text-zinc-400 block">
                         Target Link URL or Phone Number
                       </label>
                       <input
@@ -4963,18 +4961,18 @@ ${jsonLd}
                         value={ctaUrl}
                         onChange={(e) => setCtaUrl(e.target.value)}
                         placeholder="e.g. https://yourbusiness.com/book or tel:+12125550198"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-zinc-600 focus:border-zinc-500 transition-all placeholder:text-zinc-500"
+                        className="w-full bg-white/[0.04] border border-white/[0.09] rounded-2xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:bg-white/[0.07] focus:border-white/25 transition-all placeholder:text-zinc-500"
                       />
                     </div>
 
                     {/* Live Yoouz Page Preview Box */}
-                    <div className="p-3 bg-zinc-950 rounded-2xl border border-zinc-800/80 space-y-1.5">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    <div className="p-4 bg-white/[0.025] rounded-2xl border border-white/[0.08] space-y-2.5">
+                      <span className="text-[11px] font-medium text-zinc-400 block">
                         Live Preview on Yoouz Page
                       </span>
-                      <div className="w-full py-3 bg-zinc-800 text-white border border-zinc-700/90 font-bold text-sm rounded-xl shadow-md flex items-center justify-center gap-2">
+                      <div className="w-full py-3 bg-white text-zinc-950 font-semibold text-sm rounded-full shadow-sm flex items-center justify-center gap-2">
                         <span>{ctaLabelCustom || 'Book Now'}</span>
-                        <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                        <ExternalLink className="w-3.5 h-3.5 opacity-75" />
                       </div>
                     </div>
                   </div>
@@ -4985,7 +4983,7 @@ ${jsonLd}
                       type="button"
                       id="btn-save-profile-bottom"
                       onClick={handleSaveProfile}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white border border-zinc-700 font-black text-sm transition-all active:scale-[0.98] shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3.5 px-6 rounded-full bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-semibold text-sm transition-all active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isProfileSaved ? (
                         <>
@@ -5185,44 +5183,44 @@ ${jsonLd}
 
       {/* Help & FAQ Modal */}
       {showHelpModal && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-          <div className="bg-zinc-950 rounded-3xl border border-zinc-800 text-white p-6 sm:p-7 max-w-xl w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300 max-h-[88vh] overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-[#0C0C0E] rounded-[28px] border border-white/[0.1] text-white p-6 sm:p-7 max-w-xl w-full shadow-2xl relative flex flex-col gap-5 animate-in zoom-in-95 duration-300 max-h-[88vh] overflow-hidden">
             <button
               onClick={() => {
                 setShowHelpModal(false);
                 setFaqSearchQuery('');
               }}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Header */}
             <div className="flex items-center gap-3 pr-8">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 shrink-0 shadow-xs">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.09] flex items-center justify-center text-white shrink-0">
                 <HelpCircle className="w-5 h-5 text-zinc-200" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg tracking-tight">Merchant Q&A & Guide</h3>
+                <h3 className="font-semibold text-white text-lg tracking-[-0.02em]">Merchant Q&A & Guide</h3>
                 <p className="text-xs text-zinc-400">Everything you need to know about Yoouz Business</p>
               </div>
             </div>
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-zinc-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={faqSearchQuery}
                 onChange={(e) => setFaqSearchQuery(e.target.value)}
                 placeholder="Search questions (e.g. video, reviews, QR, replies, embed)..."
-                className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 focus:border-zinc-600 focus:outline-none text-xs text-white placeholder-zinc-500 transition-colors"
+                className="w-full pl-11 pr-9 py-2.5 rounded-full bg-white/[0.05] border border-white/[0.09] focus:bg-white/[0.08] focus:border-white/25 focus:outline-none text-xs text-white placeholder:text-zinc-500 transition-all"
               />
               {faqSearchQuery && (
                 <button
                   type="button"
                   onClick={() => setFaqSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -5313,9 +5311,9 @@ ${jsonLd}
                 .map((item) => {
                   const ItemIcon = item.icon;
                   return (
-                    <div key={item.id} className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-2">
-                      <div className="text-white font-bold flex items-center gap-2.5 text-xs sm:text-sm">
-                        <ItemIcon className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <div key={item.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07] space-y-2">
+                      <div className="text-white font-semibold flex items-center gap-2.5 text-xs sm:text-sm">
+                        <ItemIcon className="w-4 h-4 text-[#E8C78A] shrink-0" />
                         <span>{item.question}</span>
                       </div>
                       <p className="text-zinc-400 pl-6 text-xs leading-relaxed">
@@ -5344,7 +5342,7 @@ ${jsonLd}
                 setShowHelpModal(false);
                 setFaqSearchQuery('');
               }}
-              className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-md shrink-0 active:scale-[0.99]"
+              className="w-full py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-full text-xs transition-colors cursor-pointer shadow-sm shrink-0 active:scale-[0.99]"
             >
               Got it, thanks!
             </button>
@@ -5356,27 +5354,27 @@ ${jsonLd}
 
  {/* Interactive Command Palette Modal (⌘K) */}
       {isCommandPaletteOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-start justify-center pt-16 md:pt-24 px-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-start justify-center pt-16 md:pt-24 px-4 animate-in fade-in duration-150">
           <div 
             className="fixed inset-0"
             onClick={() => setIsCommandPaletteOpen(false)}
           />
-          <div className="relative w-full max-w-xl bg-zinc-950 rounded-2xl border border-zinc-800 text-white shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-xl bg-[#0C0C0E]/95 backdrop-blur-2xl rounded-[24px] border border-white/[0.1] text-white shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-150">
             {/* Search Header Input */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800 bg-zinc-950">
-              <Search className="w-4 h-4 text-zinc-200 shrink-0" />
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08]">
+              <Search className="w-4 h-4 text-zinc-400 shrink-0" />
               <input
                 type="text"
                 value={commandQuery}
                 onChange={(e) => setCommandQuery(e.target.value)}
                 placeholder="Search navigation, reviews, actions..."
-                className="w-full text-sm font-medium text-white placeholder-zinc-400 bg-transparent focus:outline-hidden"
+                className="w-full text-sm font-medium text-white placeholder:text-zinc-500 bg-transparent focus:outline-hidden"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setIsCommandPaletteOpen(false)}
-                className="px-1.5 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-200 hover:bg-zinc-800 transition-colors"
+                className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.09] text-[10px] font-medium text-zinc-300 hover:bg-white/[0.1] transition-colors cursor-pointer"
               >
                 ESC
               </button>
@@ -5386,7 +5384,7 @@ ${jsonLd}
             <div className="max-h-96 overflow-y-auto p-2 space-y-3">
               {/* Navigation Sections */}
               <div>
-                <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[11px] font-medium text-zinc-500">
                   Portal Navigation
                 </div>
                 <div className="space-y-0.5 mt-1">
@@ -5410,16 +5408,16 @@ ${jsonLd}
                           setIsCommandPaletteOpen(false);
                           setCommandQuery('');
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-zinc-800 transition-colors cursor-pointer group ${
-                          activeTab === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-200'
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-white/[0.06] transition-colors cursor-pointer group ${
+                          activeTab === item.id ? 'bg-white/[0.08] text-white' : 'text-zinc-300'
                         }`}
                       >
-                        <item.icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? 'text-white' : 'text-zinc-200 group-hover:text-zinc-200'}`} />
+                        <item.icon className={`w-4 h-4 shrink-0 ${activeTab === item.id ? 'text-white' : 'text-zinc-400 group-hover:text-white'}`} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-bold truncate">{item.label}</div>
-                          <div className="text-[10px] text-zinc-200 truncate">{item.desc}</div>
+                          <div className="text-xs font-semibold truncate text-white">{item.label}</div>
+                          <div className="text-[11px] text-zinc-400 truncate">{item.desc}</div>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-200 group-hover:text-zinc-200 shrink-0" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0" />
                       </button>
                     ))}
                 </div>
@@ -5428,7 +5426,7 @@ ${jsonLd}
               {/* Customer Video Reviews Matching Query */}
               {commandQuery && (
                 <div>
-                  <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[11px] font-medium text-zinc-500">
                     Matching Customer Reviews
                   </div>
                   <div className="space-y-0.5 mt-1">
@@ -5448,22 +5446,22 @@ ${jsonLd}
                             setIsCommandPaletteOpen(false);
                             setCommandQuery('');
                           }}
-                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 transition-colors cursor-pointer group"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-white/[0.06] transition-colors cursor-pointer group"
                         >
                           <img
                             src={getSafeAvatarUrl(v.author?.avatar, v.author?.name, v.author?.handle)}
                             alt=""
-                            className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-zinc-200"
+                            className="w-7 h-7 rounded-full object-cover shrink-0 ring-1 ring-white/[0.15]"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
                               target.src = getSafeAvatarUrl(null, v.author?.name, v.author?.handle);
                             }}
                           /> 
- <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-white truncate">{v.author?.name}</div>
-                            <div className="text-[10px] text-zinc-200 truncate">{v.caption}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-white truncate">{v.author?.name}</div>
+                            <div className="text-[11px] text-zinc-400 truncate">{v.caption}</div>
                           </div>
-                          <div className="flex text-amber-400 text-[10px] shrink-0 font-bold items-center gap-0.5">
+                          <div className="flex text-[#E8C78A] text-[11px] shrink-0 font-semibold tabular-nums items-center gap-0.5">
                             <Star className="w-3 h-3 fill-current" /> {Math.max(1, Math.min(5, Math.round(v.rating || 5)))}
                           </div>
                         </button>
@@ -5474,7 +5472,7 @@ ${jsonLd}
 
               {/* Quick Merchant Actions */}
               <div>
-                <div className="px-3 py-1 text-[10px] font-bold text-zinc-200 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[11px] font-medium text-zinc-500">
                   Quick Actions
                 </div>
                 <div className="space-y-0.5 mt-1">
@@ -5513,9 +5511,9 @@ ${jsonLd}
                           setIsCommandPaletteOpen(false);
                           setCommandQuery('');
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-zinc-800 text-xs font-medium text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-white/[0.06] text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
                       >
-                        <a.icon className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
+                        <a.icon className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                         <span className="truncate">{a.label}</span>
                       </button>
                     ))}
@@ -5524,8 +5522,8 @@ ${jsonLd}
             </div>
             
             {/* Footer hint */}
-            <div className="px-4 py-2 border-t border-zinc-800 bg-zinc-950/50 flex items-center justify-between text-[10px] text-zinc-200 font-medium">
-              <span>Press <kbd className="px-1 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-white text-zinc-200 font-bold">ESC</kbd> to exit</span>
+            <div className="px-4 py-2.5 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between text-[11px] text-zinc-400 font-medium">
+              <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.1] text-zinc-200 font-medium">ESC</kbd> to exit</span>
               <span>Yoouz Business Portal</span>
             </div>
           </div>
@@ -5534,25 +5532,25 @@ ${jsonLd}
 
       {/* Standee PDF Print Sheet Modal */}
       {showPrintModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-zinc-900 rounded-3xl border border-zinc-800 text-white max-w-lg w-full p-6 shadow-2xl border border-zinc-800 relative space-y-5 print:p-0 print:border-none print:shadow-none">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-[#0C0C0E] rounded-[28px] border border-white/[0.1] text-white max-w-lg w-full p-6 shadow-2xl relative space-y-5 print:p-0 print:border-none print:shadow-none">
             <button
               type="button"
               onClick={() => setShowPrintModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-800 text-zinc-200 hover:text-zinc-200 transition-colors cursor-pointer print:hidden"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-400 hover:text-white transition-colors cursor-pointer print:hidden"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2 print:hidden">
+            <div className="flex items-center gap-2.5 print:hidden">
               <Printer className="w-5 h-5 text-white" />
-              <h3 className="font-extrabold text-white text-base">A6 Table Standee Print Layout</h3>
+              <h3 className="font-semibold text-white text-base tracking-[-0.02em]">A6 Table Standee Print Layout</h3>
             </div>
 
             {/* Printable Area */}
-            <div className="bg-zinc-950 border-2 border-zinc-800 rounded-3xl p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
+            <div className="bg-[#050506] border border-white/[0.1] rounded-[24px] p-8 text-center space-y-5 shadow-2xl relative overflow-hidden text-white print:bg-white print:text-black print:border-2 print:border-zinc-900 print:shadow-none print:p-6 print:rounded-2xl">
               {qrTableLabel && (
-                <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-[10px] font-extrabold uppercase border border-zinc-700 tracking-wider print:bg-zinc-100 print:text-black print:border-zinc-300">
+                <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-semibold border border-white/[0.12] tracking-wide print:bg-zinc-100 print:text-black print:border-zinc-300">
                   {qrTableLabel}
                 </div>
               )}
@@ -5561,29 +5559,29 @@ ${jsonLd}
                 domain={currentPlace.website || currentPlace.id}
                 name={currentPlace.name}
                 logoUrl={currentPlace.logoUrl}
-                className="w-14 h-14 rounded-2xl bg-zinc-950 p-2 flex items-center justify-center mx-auto shadow-md border border-zinc-800 print:bg-zinc-950 print:border-zinc-800 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
+                className="w-14 h-14 rounded-2xl bg-white/[0.04] p-2 flex items-center justify-center mx-auto shadow-md border border-white/[0.1] print:bg-zinc-950 print:border-zinc-800 [print-color-adjust:exact] [-webkit-print-color-adjust:exact] overflow-hidden shrink-0"
                 imageClassName="w-full h-full object-contain"
-                fallbackTextClassName="font-black text-xl text-white"
+                fallbackTextClassName="font-semibold text-xl text-white"
               />
 
               <div>
-                <h2 className="font-black text-white text-xl tracking-tight text-center [overflow-wrap:anywhere] print:text-black flex items-center justify-center gap-1.5">
+                <h2 className="font-semibold text-white text-xl tracking-[-0.02em] text-center [overflow-wrap:anywhere] print:text-black flex items-center justify-center gap-1.5">
                   <span>{currentPlace.name}</span>
                   <CheckCircle className="w-5 h-5 fill-white text-black shrink-0 print:fill-black print:text-white" />
                 </h2>
                 {/* Business Place Handle / URL */}
-                <div className="text-xs font-bold text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                <div className="text-xs font-medium text-zinc-400 print:text-zinc-700 tracking-tight flex items-center justify-center gap-1 mt-0.5">
                   <span>yoouz.com/reviews/{(selectedPlaceId || currentPlace.id || '').replace(/^(https?:\/\/)?(www\.)?yoouz\.com\/(place|reviews)\//, '')}</span>
                 </div>
-                <div className="text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 mt-1 print:text-amber-600">
-                  <span className="text-amber-400 font-extrabold print:text-amber-600">{avgRating}</span>
+                <div className="text-[#E8C78A] font-semibold text-xs flex items-center justify-center gap-1.5 mt-1.5 print:text-amber-600 tabular-nums">
+                  <span className="text-[#E8C78A] font-semibold print:text-amber-600">{avgRating}</span>
                   <CopoStarRating
                     rating={Number(avgRating) || 5.0}
                     starClassName="w-3.5 h-3.5"
-                    filledColorClass="text-amber-400 fill-amber-400 print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
-                    emptyColorClass="text-zinc-600 fill-zinc-800 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                    filledColorClass="text-[#E8C78A] fill-[#E8C78A] print:text-amber-500 print:fill-amber-500 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+                    emptyColorClass="text-zinc-700 fill-zinc-900 print:text-zinc-400 print:fill-zinc-200 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
                   />
-                  <span className="text-zinc-300 font-medium print:text-zinc-700">
+                  <span className="text-zinc-400 font-medium print:text-zinc-700">
                     ({placeVideos.length} {placeVideos.length === 1 ? 'Photo Review' : 'Photo Reviews'} on Yoouz)
                   </span>
                 </div>
@@ -5599,10 +5597,10 @@ ${jsonLd}
               </div>
 
               <div className="space-y-1.5">
-                <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white font-black text-xs uppercase tracking-wider border border-white/20 print:bg-zinc-100 print:text-black print:border-zinc-300">
-                  {qrCustomHeading || 'LEAVE A LIVE PHOTO REVIEW'}
+                <span className="inline-block px-4 py-1.5 rounded-full bg-white/[0.08] text-white font-semibold text-xs tracking-wide border border-white/[0.14] print:bg-zinc-100 print:text-black print:border-zinc-300">
+                  {qrCustomHeading || 'Leave a Live Photo Review'}
                 </span>
-                <p className="text-xs text-zinc-300 font-medium print:text-zinc-600">
+                <p className="text-xs text-zinc-400 font-normal print:text-zinc-600">
                   Scan with your phone camera app to snap your photo review!
                 </p>
               </div>
@@ -5613,7 +5611,7 @@ ${jsonLd}
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-3 bg-white hover:bg-zinc-200 text-black rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 bg-white hover:bg-zinc-200 text-zinc-950 rounded-full text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 Print Now / Save as PDF
@@ -5621,7 +5619,7 @@ ${jsonLd}
               <button
                 type="button"
                 onClick={() => setShowPrintModal(false)}
-                className="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="px-5 py-3 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.09] text-zinc-200 rounded-full text-xs font-medium transition-all cursor-pointer"
               >
                 Close
               </button>
