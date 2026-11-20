@@ -1671,8 +1671,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   }}
                   className="px-3.5 py-1.5 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-xs font-semibold rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1"
                 >
-                  <LogIn className="w-3 h-3 text-zinc-950 stroke-[2.2]" />
-                  <span>{t("nav.login", "Sign In")}</span>
+                  <span>{t("comments.post", "Comment")}</span>
                 </button>
               </div>
             ) : (

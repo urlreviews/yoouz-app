@@ -123,12 +123,17 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
     [clearTimers]
   );
 
-  // Create a fresh QR handoff session strictly when modal opens or Save/Restore tab changes
+  // Create a fresh QR handoff session on desktop strictly when modal opens or Save/Restore tab changes
   useEffect(() => {
     if (!isOpen) {
       requestIdRef.current++;
       clearTimers();
       setToken("");
+      setErrorMsg(null);
+      return;
+    }
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setStatus("ready");
       setErrorMsg(null);
       return;
     }
@@ -245,43 +250,45 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://www.yoouz.com";
   const qrUrl = token ? `${origin}/?passkeyLink=${encodeURIComponent(token)}` : "";
+  const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
 
   return (
     <div
       id="yoouz-passkey-qr-modal"
-      className="fixed inset-0 z-[260] bg-black/85 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[260] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-6 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[440px] bg-zinc-950 rounded-[32px] border border-zinc-800 shadow-2xl p-6 sm:p-8 text-white space-y-5 text-center"
+        className="relative w-full sm:max-w-[420px] bg-[#0B0B0E] rounded-t-[28px] sm:rounded-[28px] border-t sm:border border-white/[0.09] shadow-[0_24px_80px_rgba(0,0,0,0.85)] px-6 pt-6 sm:p-7 text-white space-y-5 text-center"
+        style={{ paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto shadow-lg">
+        <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mx-auto">
           {status === "completed" ? (
-            <Check className="w-7 h-7 text-white stroke-[2.6]" />
+            <Check className="w-6 h-6 text-[#E8C78A] stroke-[2.5]" />
           ) : (
-            <KeyRound className="w-7 h-7 text-white" />
+            <KeyRound className="w-5 h-5 text-[#E8C78A]" />
           )}
         </div>
 
         {/* Mode Switcher: Save Passkey vs Restore Account */}
         {status !== "completed" && (
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-zinc-900 border border-zinc-800 mx-auto">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.05] border border-white/[0.08] mx-auto">
             <button
               type="button"
               onClick={() => setMode("save")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                 mode === "save"
-                  ? "bg-white text-zinc-950 shadow-xs"
+                  ? "bg-white text-zinc-950"
                   : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -290,9 +297,9 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
             <button
               type="button"
               onClick={() => setMode("restore")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                 mode === "restore"
-                  ? "bg-white text-zinc-950 shadow-xs"
+                  ? "bg-white text-zinc-950"
                   : "text-zinc-400 hover:text-white"
               }`}
             >
@@ -303,70 +310,107 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
 
         {status === "completed" ? (
           <div className="space-y-2 py-4">
-            <h2 className="text-xl font-black tracking-tight text-white">
+            <h2 className="text-[20px] font-bold tracking-[-0.02em] text-white">
               {mode === "save" ? "Passkey Saved" : "Account Restored"}
             </h2>
-            <p className="text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto">
+            <p className="text-[13.5px] text-zinc-400 leading-relaxed max-w-xs mx-auto">
               {completedHandle
-                ? `${completedHandle} is now active on this computer.`
-                : "Your account is now synced on this computer."}
+                ? `${completedHandle} is now active on this device.`
+                : "Your handle is now synced on this device."}
             </p>
           </div>
+        ) : isMobileViewport ? (
+          /* Native Mobile Flow: 1-tap Face ID / Touch ID — never asks a phone to scan a QR code */
+          <div className="space-y-5 pt-1">
+            <div className="space-y-1.5">
+              <h2 className="text-[20px] font-bold tracking-[-0.02em] text-white text-balance">
+                {mode === "save" ? "Save your profile with Passkey" : "Restore your Yoouz profile"}
+              </h2>
+              <p className="text-[13.5px] text-zinc-400 leading-relaxed max-w-[300px] mx-auto text-balance">
+                {mode === "save"
+                  ? "Use Face ID or Touch ID to keep your handle and reviews safe. No email or password required."
+                  : "Sign back into your saved Yoouz handle using Face ID or Touch ID on this device."}
+              </p>
+            </div>
+
+            {errorMsg && (
+              <p className="text-[12.5px] text-[#E8C78A] bg-[#E8C78A]/10 border border-[#E8C78A]/20 rounded-xl px-3.5 py-2.5 leading-relaxed">
+                {errorMsg}
+              </p>
+            )}
+
+            <button
+              type="button"
+              disabled={isRunningLocal}
+              onClick={handleUseThisComputer}
+              className="w-full h-12 px-5 rounded-full bg-white hover:bg-zinc-200 active:scale-[0.98] text-zinc-950 font-semibold text-[14.5px] tracking-[-0.01em] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+            >
+              {isRunningLocal ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <KeyRound className="w-4 h-4 stroke-[2.2]" />
+              )}
+              <span>
+                {mode === "save" ? "Continue with Face ID / Passkey" : "Restore with Face ID / Passkey"}
+              </span>
+            </button>
+          </div>
         ) : (
+          /* Desktop Flow: Phone QR handoff + local device fallback */
           <>
             <div className="space-y-1.5">
-              <h2 className="text-xl font-black tracking-tight text-white text-balance">
+              <h2 className="text-[20px] font-bold tracking-[-0.02em] text-white text-balance">
                 {mode === "save" ? "Save Passkey with Your Phone" : "Restore Account with Your Phone"}
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xs mx-auto text-balance">
+              <p className="text-[13px] text-zinc-400 leading-relaxed max-w-xs mx-auto text-balance">
                 {mode === "save"
-                  ? "Point your phone camera at the QR code below to save a Passkey. This computer will update automatically."
-                  : "Point your phone camera at the QR code below to sign in with your saved Passkey on this computer."}
+                  ? "Scan with your phone camera to back up your handle with Face ID or Touch ID. No email required."
+                  : "Scan with your phone camera to restore your saved Yoouz handle on this computer."}
               </p>
             </div>
 
             {/* QR Frame */}
             <div className="flex flex-col items-center justify-center">
               {status === "loading" ? (
-                <div className="w-[240px] h-[240px] rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center gap-2.5 text-zinc-400">
+                <div className="w-[228px] h-[228px] rounded-2xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center gap-2.5 text-zinc-400">
                   <Loader2 className="w-6 h-6 animate-spin text-white" />
                   <span className="text-xs font-medium">Preparing QR code...</span>
                 </div>
               ) : status === "expired" || status === "error" ? (
-                <div className="w-[240px] h-[240px] rounded-3xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center gap-3 p-5 text-center">
+                <div className="w-[228px] h-[228px] rounded-2xl bg-white/[0.04] border border-white/[0.08] flex flex-col items-center justify-center gap-3 p-5 text-center">
                   <p className="text-xs text-zinc-300 leading-relaxed">
                     {errorMsg || "This QR code has expired."}
                   </p>
                   <button
                     type="button"
                     onClick={() => createSession(mode)}
-                    className="px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     <span>Generate New QR Code</span>
                   </button>
                 </div>
               ) : (
-                <div className="bg-white p-5 rounded-3xl inline-flex flex-col items-center justify-center shadow-2xl mx-auto">
-                  <QRCodeSVG value={qrUrl} size={200} level="M" includeMargin={false} />
+                <div className="bg-white p-4 rounded-2xl inline-flex flex-col items-center justify-center shadow-2xl mx-auto">
+                  <QRCodeSVG value={qrUrl} size={196} level="M" includeMargin={false} />
                 </div>
               )}
             </div>
 
             {status === "ready" && (
-              <p className="text-[11px] font-medium text-zinc-400">
+              <p className="text-[11.5px] font-medium text-zinc-500">
                 Waiting for your phone confirmation...
               </p>
             )}
 
             {errorMsg && status === "ready" && (
-              <p className="text-xs text-amber-300 leading-relaxed max-w-xs mx-auto">
+              <p className="text-xs text-[#E8C78A] leading-relaxed max-w-xs mx-auto">
                 {errorMsg}
               </p>
             )}
 
             {/* Actions */}
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-2 pt-1">
               {qrUrl && status === "ready" && (
                 <button
                   type="button"
@@ -376,9 +420,9 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
                     triggerHaptic("light");
                     setTimeout(() => setCopied(false), 2000);
                   }}
-                  className="w-full py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full h-11 px-4 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white font-semibold text-[13px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
-                  {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                  {copied ? <Check className="w-4 h-4 text-[#E8C78A]" /> : <Copy className="w-4 h-4 text-zinc-400" />}
                   <span>{copied ? "Passkey Link Copied" : "Copy Passkey Link"}</span>
                 </button>
               )}
@@ -387,14 +431,14 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
                 type="button"
                 disabled={isRunningLocal}
                 onClick={handleUseThisComputer}
-                className="w-full py-2.5 px-4 rounded-2xl bg-transparent hover:bg-zinc-900/80 text-zinc-400 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60"
+                className="w-full h-10 px-4 rounded-xl bg-transparent hover:bg-white/[0.05] text-zinc-400 hover:text-white font-medium text-[12.5px] flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60"
               >
                 {isRunningLocal ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Laptop className="w-3.5 h-3.5" />
                 )}
-                <span>Use This Computer Instead</span>
+                <span>Use This Device Instead</span>
               </button>
             </div>
           </>

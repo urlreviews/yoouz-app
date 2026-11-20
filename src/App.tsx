@@ -8356,10 +8356,13 @@ export function App() {
             setIsMobileNavDrawerOpen(false);
             handleOpenSearchModal();
           }}
-          onOpenAuth={(intent) => {
+          onOpenAuth={() => {
             setIsMobileNavDrawerOpen(false);
-            setAuthIntent((intent as AuthIntent) || 'general');
-            setIsAuthModalOpen(true);
+            ensureAnonymousUser(false);
+          }}
+          onOpenPasskeyModal={(mode) => {
+            setIsMobileNavDrawerOpen(false);
+            setPasskeyQrModalMode(mode);
           }}
           onOpenLegal={handleOpenLegal}
           onOpenEditProfile={handleGoToProfile}
@@ -8822,8 +8825,7 @@ export function App() {
                 onSelectVideo={handleSelectVideoById}
                 onNavigateHome={handleGoHome}
                 onOpenAuth={() => {
-                  setAuthIntent('general');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
               />
             )}
@@ -8952,8 +8954,7 @@ export function App() {
                 currentUser={currentUser}
                 allVideos={videos}
                 onOpenAuth={() => {
-                  setAuthIntent('notifications');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
                 onOpenHelp={() => setActiveSection('more')}
                 onOpenLegal={handleOpenLegal}
@@ -9012,8 +9013,7 @@ export function App() {
                 userVideos={userVideos}
                 allVideos={videos}
                 onOpenAuth={() => {
-                  setAuthIntent('messages');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
                 onOpenHelp={() => setActiveSection('more')}
                 onOpenLegal={handleOpenLegal}
@@ -9098,8 +9098,7 @@ export function App() {
                 savedCreators={savedCreatorsList}
                 currentUser={currentUser}
                 onOpenAuth={() => {
-                  setAuthIntent('bookmarks');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
                 onOpenHelp={() => setActiveSection('more')}
                 onOpenLegal={handleOpenLegal}
@@ -9122,8 +9121,7 @@ export function App() {
                 currentUser={currentUser}
                 allUsers={allRegisteredUsers}
                 onOpenAuth={() => {
-                  setAuthIntent('following');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
                 onOpenHelp={() => setActiveSection('more')}
                 onOpenLegal={handleOpenLegal}
@@ -9303,8 +9301,7 @@ export function App() {
                   setIsComparisonModalOpen(true);
                 }}
                 onOpenAuth={() => {
-                  setAuthIntent('general');
-                  setIsAuthModalOpen(true);
+                  ensureAnonymousUser(false);
                 }}
                 onSuccessAuth={(user) => setCurrentUser(user)}
                 onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
@@ -9348,8 +9345,7 @@ export function App() {
           hasTopBar={activeSection !== "business" && activeSection !== "admin"}
           onClose={() => setActiveCommentVideo(null)}
           onRequireAuth={() => {
-            setAuthIntent("general");
-            setIsAuthModalOpen(true);
+            ensureAnonymousUser(false);
           }}
           onAddComment={handleAddComment}
           onToggleCommentLike={handleToggleCommentLike}
@@ -9464,9 +9460,11 @@ export function App() {
         unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
         onOpenCreateModal={handleOpenReviewPicker}
         onOpenSearch={handleOpenSearchModal}
-        onOpenAuth={(intent) => {
-          setAuthIntent((intent as AuthIntent) || 'general');
-          setIsAuthModalOpen(true);
+        onOpenAuth={() => {
+          ensureAnonymousUser(false);
+        }}
+        onOpenPasskeyModal={(mode) => {
+          setPasskeyQrModalMode(mode);
         }}
         onOpenLegal={handleOpenLegal}
         onOpenEditProfile={handleGoToProfile}
@@ -9600,8 +9598,7 @@ export function App() {
           }}
           onOpenAuth={() => {
             setIsDiscoverModalOpen(false);
-            setAuthIntent('general');
-            setIsAuthModalOpen(true);
+            ensureAnonymousUser(false);
           }}
           onNavigateHome={() => setIsDiscoverModalOpen(false)}
           onClose={() => setIsDiscoverModalOpen(false)}
@@ -9831,7 +9828,7 @@ export function App() {
           </div>
           <div className="space-y-0.5">
             <p className="text-xs font-black">Account Deactivated</p>
-            <p className="text-[10px] text-zinc-300 font-semibold">Your profile and reviews are now hidden. Sign in anytime to reactivate!</p>
+            <p className="text-[10px] text-zinc-300 font-semibold">Your profile and reviews are now hidden. Restore with your Passkey anytime to reactivate.</p>
           </div>
         </div>
       )}
