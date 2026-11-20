@@ -34,6 +34,7 @@ interface CopoHomePageProps {
   headerTitle?: string;
   headerSubtitle?: string;
   onClose?: () => void;
+  onCancelSearch?: () => void;
   setIsSearchActive?: (active: boolean) => void;
 }
 
@@ -71,6 +72,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   headerTitle,
   headerSubtitle,
   onClose,
+  onCancelSearch,
   setIsSearchActive
 }) => {
   const { t } = useLanguage();
@@ -95,6 +97,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     setIsMobileSearchOpen(false);
     setIsFocused(false);
     if (onClose) onClose();
+    if (onCancelSearch) onCancelSearch();
     if (setIsSearchActive) setIsSearchActive(false);
   };
 
@@ -1044,13 +1047,36 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               suggestions={suggestions}
               isOpen={isMobileSearchOpen}
               onClose={handleCancelMobileSearch}
+              searchMode={searchMode}
+              places={places}
+              videos={trendingVideos}
+              suggestedDomains={suggestedDomains}
+              isResolving={isResolvingPlace}
+              onQuickSelectDomain={(domain) => {
+                resolveAndOpenBusiness(domain).finally(() => {
+                  setIsMobileSearchOpen(false);
+                });
+              }}
+              onSelectTrendingPlace={(place) => {
+                setIsMobileSearchOpen(false);
+                if (searchMode === "review" && onRecordReview) {
+                  onRecordReview(place);
+                } else {
+                  onOpenPlace(place.id);
+                }
+              }}
               onSelectSuggestion={(item) => {
                 setIsMobileSearchOpen(false);
                 handleSelectSuggestion(item);
               }}
               onSubmit={(e) => {
-                setIsMobileSearchOpen(false);
-                handleSearchSubmit(e);
+                e.preventDefault();
+                const trimmed = query.trim();
+                if (!trimmed) return;
+                setShowDropdown(false);
+                resolveAndOpenBusiness(trimmed).finally(() => {
+                  setIsMobileSearchOpen(false);
+                });
               }}
               isLoading={isLoadingSuggest}
             />

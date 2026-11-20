@@ -8737,6 +8737,7 @@ export function App() {
             allUsers={allRegisteredUsers}
             autoFocusSearch={activeSection === "search"}
             searchMode="general"
+            onCancelSearch={activeSection === "search" ? () => setActiveSection("home") : undefined}
             onSelectVideo={(vidId) => {
               setIsWatchingVideo(true);
               handleSelectVideoById(vidId, "feed");
@@ -8781,6 +8782,7 @@ export function App() {
                 allUsers={allRegisteredUsers}
                 autoFocusSearch={true}
                 searchMode="review"
+                onCancelSearch={() => setActiveSection("home")}
                 onSelectVideo={(vidId) => {
                   setIsWatchingVideo(true);
                   handleSelectVideoById(vidId, "feed");

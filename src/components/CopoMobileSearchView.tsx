@@ -40,7 +40,7 @@ export const CopoMobileSearchView: React.FC<CopoMobileSearchViewProps> = ({
   setIsSearchActive
 }) => {
   return (
-    <div className="fixed inset-0 h-[100dvh] z-[250] bg-zinc-950 flex flex-col font-sans">
+    <div className="fixed inset-0 h-[100dvh] z-[250] bg-[#050506] flex flex-col font-sans">
       <CopoHomePage
         places={places}
         videos={videos}
