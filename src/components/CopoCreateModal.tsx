@@ -11,7 +11,6 @@ import {
   Loader2,
   Smartphone,
   Copy,
-  Sparkles,
   AtSign,
   ShieldCheck,
   KeyRound
@@ -46,6 +45,8 @@ interface CopoCreateModalProps {
   onStartBackgroundUpload?: (placeName: string, progress: number) => void;
   onUpdateBackgroundUpload?: (progress: number) => void;
   onCompleteBackgroundUpload?: () => void;
+  initialCapturedFile?: File | null;
+  onRequestInstantCamera?: (place: Place) => boolean;
 }
 
 export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
@@ -60,7 +61,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   onAddPlace,
   onStartBackgroundUpload,
   onUpdateBackgroundUpload,
-  onCompleteBackgroundUpload
+  onCompleteBackgroundUpload,
+  initialCapturedFile,
+  onRequestInstantCamera
 }) => {
   const { t } = useLanguage();
 
@@ -101,6 +104,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
   const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   const isPublishingRef = useRef(false);
+  const optimizedBlobPromiseRef = useRef<Promise<Blob> | null>(null);
+  const lastConsumedInitialFileRef = useRef<File | null>(null);
 
   // Track viewport size cleanly
   useEffect(() => {
@@ -118,14 +123,45 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const userClearedPlaceRef = useRef(false);
   const wasOpenRef = useRef(false);
 
+  // Instant 0ms preview display while optimizing JPEG resolution silently in background
+  const acceptCapturedFile = (file: File) => {
+    if (file.type && !file.type.startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "")) {
+      setErrorMessage("Please take a photo using your phone camera.");
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsProcessingPhoto(false);
+    triggerHaptic("medium");
+
+    const instantUrl = URL.createObjectURL(file);
+    setCapturedPhotoUrl((prev) => {
+      if (prev && prev !== instantUrl) {
+        try {
+          URL.revokeObjectURL(prev);
+        } catch {}
+      }
+      return instantUrl;
+    });
+    setCapturedPhotoBlob(file);
+    setRating(0);
+
+    // Compress/normalize to crisp 2000px JPEG silently in background while user taps 1-5 stars
+    const bgOptimize = optimizeCapturedPhoto(file)
+      .then((preparedBlob) => {
+        setCapturedPhotoBlob(preparedBlob);
+        return preparedBlob;
+      })
+      .catch(() => file);
+    optimizedBlobPromiseRef.current = bgOptimize;
+  };
+
   // Reset modal flow only on open transition, never when preselectedPlace asynchronously enriches
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       userClearedPlaceRef.current = false;
       setSelectedPlace(preselectedPlace || null);
       setRating(0);
-      setCapturedPhotoUrl(null);
-      setCapturedPhotoBlob(null);
       setIsProcessingPhoto(false);
       setErrorMessage(null);
       setPostSubmitOnboarding(false);
@@ -134,9 +170,29 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUsernameStatus("idle");
       setUsernameMessage("");
       setLinkStatusMsg(null);
+      optimizedBlobPromiseRef.current = null;
+
+      if (initialCapturedFile) {
+        lastConsumedInitialFileRef.current = initialCapturedFile;
+        acceptCapturedFile(initialCapturedFile);
+      } else {
+        lastConsumedInitialFileRef.current = null;
+        setCapturedPhotoUrl(null);
+        setCapturedPhotoBlob(null);
+      }
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen, preselectedPlace]);
+  }, [isOpen, preselectedPlace, initialCapturedFile]);
+
+  // If a new instant-camera file arrives while modal is already open, load it immediately in 0ms
+  useEffect(() => {
+    if (!isOpen || !initialCapturedFile || initialCapturedFile === lastConsumedInitialFileRef.current) return;
+    lastConsumedInitialFileRef.current = initialCapturedFile;
+    if (preselectedPlace) {
+      setSelectedPlace(preselectedPlace);
+    }
+    acceptCapturedFile(initialCapturedFile);
+  }, [isOpen, initialCapturedFile, preselectedPlace]);
 
   // Smoothly enrich selectedPlace metadata as server/website lookup completes without interrupting camera or rating
   useEffect(() => {
@@ -216,32 +272,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     // Reset value immediately so retaking always triggers onChange cleanly
     e.target.value = "";
     if (!file) return;
-
-    if (file.type && !file.type.startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "")) {
-      setErrorMessage("Please take a photo using your phone camera.");
-      return;
-    }
-
-    setErrorMessage(null);
-    setIsProcessingPhoto(true);
-    triggerHaptic("medium");
-
-    try {
-      const preparedBlob = await optimizeCapturedPhoto(file);
-      const nextPreviewUrl = URL.createObjectURL(preparedBlob);
-      if (capturedPhotoUrl) {
-        try {
-          URL.revokeObjectURL(capturedPhotoUrl);
-        } catch {}
-      }
-      setCapturedPhotoBlob(preparedBlob);
-      setCapturedPhotoUrl(nextPreviewUrl);
-      setRating(0);
-    } catch {
-      setErrorMessage("Could not process captured photo. Please try taking it again.");
-    } finally {
-      setIsProcessingPhoto(false);
-    }
+    acceptCapturedFile(file);
   };
 
   const handleSearchMetadata = async (domain: string) => {
@@ -452,6 +483,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     let uploadedPhotoUrl = "";
     let uploadedPhotoDataUrl = "";
     try {
+      const readyPhotoBlob = (await optimizedBlobPromiseRef.current?.catch(() => null)) || capturedPhotoBlob;
       const imageBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -459,7 +491,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           else reject(new Error("Could not encode captured photo."));
         };
         reader.onerror = () => reject(new Error("Could not read captured photo."));
-        reader.readAsDataURL(capturedPhotoBlob);
+        reader.readAsDataURL(readyPhotoBlob);
       });
 
       setPublishProgress(55);
@@ -805,6 +837,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               (p.name && p.name.toLowerCase() === placeIdOrDomain.toLowerCase())
           );
           if (matched) {
+            // Immediately launch native phone camera inside this synchronous tap — zero extra screen
+            if (onRequestInstantCamera && onRequestInstantCamera(matched)) {
+              onClose();
+              return;
+            }
             setSelectedPlace(matched);
             setRating(0);
           } else {
@@ -812,6 +849,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
           }
         }}
         onRecordForPlace={(place) => {
+          // Immediately launch native phone camera inside this synchronous tap — zero extra screen
+          if (onRequestInstantCamera && onRequestInstantCamera(place)) {
+            onClose();
+            return;
+          }
           setSelectedPlace(place);
           setRating(0);
         }}
@@ -1056,11 +1098,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                     className={`flex-1 min-h-[52px] px-5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-2xl ${
                       rating >= 1
                         ? "bg-white hover:bg-zinc-200 text-zinc-950 cursor-pointer"
-                        : "bg-white/[0.08] text-zinc-500 border border-white/[0.1] cursor-not-allowed"
+                        : "bg-white/[0.08] text-zinc-400 border border-white/[0.12] cursor-not-allowed"
                     }`}
                   >
-                    <Sparkles className="w-4 h-4" />
-                    <span>{rating >= 1 ? "Publish Photo Review" : "Select a Star Rating"}</span>
+                    {rating >= 1 && <Check className="w-4 h-4 stroke-[2.5]" />}
+                    <span>{rating >= 1 ? "Publish Review" : "Tap 1–5 Stars to Publish"}</span>
                   </button>
                 </div>
               )}

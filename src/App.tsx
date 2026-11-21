@@ -1290,6 +1290,9 @@ export function App() {
   };
 
   const [preselectedPlaceForRecording, setPreselectedPlaceForRecording] = useState<Place | null>(null);
+  const [initialCapturedPhotoFile, setInitialCapturedPhotoFile] = useState<File | null>(null);
+  const globalNativeCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingNativeCameraPlaceRef = useRef<Place | null>(null);
   const [businessClaimTargetPlace, setBusinessClaimTargetPlace] = useState<Place | null>(null);
   const [businessInitialMode, setBusinessInitialMode] = useState<'signin' | 'claim' | 'demo'>('signin');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -7448,8 +7451,56 @@ export function App() {
     } catch (e) {}
   };
 
-  // Handle Opening the Create Review Modal (zero-friction — no sign-in wall)
+  // Detect mobile phone / touch tablet where native OS camera capture is available
+  const isMobileCameraCapable = (): boolean => {
+    if (typeof window === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    const isMobileOrTabletUA =
+      /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+      (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    return isMobileOrTabletUA || window.innerWidth < 768;
+  };
+
+  // Synchronous native camera launch inside the direct user tap gesture (iOS Safari + Android Chrome compliant)
+  const triggerInstantNativeCamera = (place: Place): boolean => {
+    if (!isMobileCameraCapable()) return false;
+    const inputEl = globalNativeCameraInputRef.current;
+    if (!inputEl) return false;
+    pendingNativeCameraPlaceRef.current = place;
+    setPreselectedPlaceForRecording(place);
+    // Pre-warm lazy CopoCreateModal chunk while user snaps photo so Photo + Star Rating opens in 0ms
+    void import("./components/CopoCreateModal").catch(() => {});
+    try {
+      inputEl.value = "";
+      inputEl.click();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleGlobalNativeCameraChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const targetPlace =
+      pendingNativeCameraPlaceRef.current ||
+      preselectedPlaceForRecording ||
+      activeDrawerPlace ||
+      drawerPlace;
+    if (targetPlace) {
+      setPreselectedPlaceForRecording(targetPlace);
+    }
+    setInitialCapturedPhotoFile(file);
+    setIsCreateModalOpen(true);
+  };
+
+  // Handle Opening the Create Review Flow (zero-friction — launches native camera directly on mobile when business is known)
   const handleOpenCreateReview = (place: Place | null = null) => {
+    if (place && triggerInstantNativeCamera(place)) {
+      return;
+    }
+    setInitialCapturedPhotoFile(null);
     setPreselectedPlaceForRecording(place);
     setIsCreateModalOpen(true);
   };
@@ -8133,8 +8184,7 @@ export function App() {
           onToggleFollow={handleToggleFollow}
           onOpenReport={(v) => handleOpenReport({ type: "video", video: v })}
           onRecordReview={(place) => {
-            setPreselectedPlaceForRecording(place || null);
-            setIsCreateModalOpen(true);
+            handleOpenCreateReview(place || null);
           }}
           onOpenAuth={() => {}}
           onOpenMenu={() => setIsMobileNavDrawerOpen(true)}
@@ -8414,14 +8464,51 @@ export function App() {
             }}
             onRecordForPlace={(place) => {
               setIsSearchModalOpen(false);
-              setPreselectedPlaceForRecording(place);
-              setIsCreateModalOpen(true);
+              handleOpenCreateReview(place);
             }}
             onOpenNotifications={handleOpenNotifications}
             unreadNotifsCount={effectiveUnreadNotifsCount}
           />
         )}
+        {isCreateModalOpen && (
+          <CopoCreateModal
+            isOpen={isCreateModalOpen}
+            onClose={() => {
+              setIsCreateModalOpen(false);
+              setPreselectedPlaceForRecording(null);
+              setInitialCapturedPhotoFile(null);
+            }}
+            places={places}
+            videos={videos}
+            preselectedPlace={preselectedPlaceForRecording || activeDrawerPlace || drawerPlace}
+            initialCapturedFile={initialCapturedPhotoFile}
+            onRequestInstantCamera={(place) => triggerInstantNativeCamera(place)}
+            onPublishVideoReview={handlePublishVideoReview}
+            currentUser={currentUser}
+            onUpdateUserProfile={(u) => setCurrentUser(u)}
+            onAddPlace={handleUpdatePlace}
+            onStartBackgroundUpload={(placeName, progress) => {
+              setBackgroundUpload({ isPublishing: true, progress, placeName });
+            }}
+            onUpdateBackgroundUpload={(progress) => {
+              setBackgroundUpload((prev) => prev ? { ...prev, progress } : null);
+            }}
+            onCompleteBackgroundUpload={() => {
+              setBackgroundUpload(null);
+            }}
+          />
+        )}
         </Suspense>
+        <input
+          ref={globalNativeCameraInputRef}
+          id="yoouz-global-native-camera"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleGlobalNativeCameraChange}
+          aria-label="Open native camera to take review photo"
+          style={{ position: "fixed", left: "-9999px", top: 0, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+        />
       </div>
     );
   }
@@ -8658,8 +8745,7 @@ export function App() {
                   ? undefined
                   : () => {
                       const targetPlaceForReview = isPlaceView ? (activeDrawerPlace || drawerPlace) : null;
-                      setPreselectedPlaceForRecording(targetPlaceForReview);
-                      setIsCreateModalOpen(true);
+                      handleOpenCreateReview(targetPlaceForReview);
                     }
               }
               onLoadMore={loadMoreVideos}
@@ -8773,8 +8859,7 @@ export function App() {
             setIsSearchActive={setIsSearchActive}
             onViewAll={() => handleViewAllTrending()}
             onRecordReview={(place) => {
-              setPreselectedPlaceForRecording(place || null);
-              setIsCreateModalOpen(true);
+              handleOpenCreateReview(place || null);
             }}
             onOpenLegal={handleOpenLegal}
             onOpenMore={() => setActiveSection("more")}
@@ -8792,8 +8877,7 @@ export function App() {
             videos={videos}
             onOpenPlace={handleOpenPlaceDrawer}
             onRecordForPlace={(place) => {
-              setPreselectedPlaceForRecording(place);
-              setIsCreateModalOpen(true);
+              handleOpenCreateReview(place);
             }}
           />
         ) : !isPlaceView && !isCreatorView && (
@@ -8813,8 +8897,7 @@ export function App() {
                 }}
                 onOpenPlace={(placeId) => {
                   const p = places.find(p => p.id === placeId || p.brandDomain === placeId);
-                  setPreselectedPlaceForRecording(p || null);
-                  setIsCreateModalOpen(true);
+                  handleOpenCreateReview(p || null);
                 }}
                 onAddPlace={handleUpdatePlace}
                 onOpenCreator={handleOpenCreatorDrawer}
@@ -8822,8 +8905,7 @@ export function App() {
                 setIsSearchActive={setIsSearchActive}
                 onViewAll={() => handleViewAllTrending()}
                 onRecordReview={(place) => {
-                  setPreselectedPlaceForRecording(place || null);
-                  setIsCreateModalOpen(true);
+                  handleOpenCreateReview(place || null);
                 }}
                 onOpenLegal={handleOpenLegal}
                 onOpenMore={() => setActiveSection("more")}
@@ -9570,8 +9652,7 @@ export function App() {
           }}
           onRecordForPlace={(place) => {
             setIsSearchModalOpen(false);
-            setPreselectedPlaceForRecording(place);
-            setIsCreateModalOpen(true);
+            handleOpenCreateReview(place);
           }}
           onAddPlace={(newPlace, skipServerSync = false) => {
             if (!newPlace) return;
@@ -9747,6 +9828,18 @@ export function App() {
         />
       )}
 
+      {/* Persistent Root Native Mobile Camera Input — always mounted for synchronous 0ms iOS/Android launch */}
+      <input
+        ref={globalNativeCameraInputRef}
+        id="yoouz-global-native-camera"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleGlobalNativeCameraChange}
+        aria-label="Open native camera to take review photo"
+        style={{ position: "fixed", left: "-9999px", top: 0, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+      />
+
       {/* Add Photo Review Modal */}
       {isCreateModalOpen && (
         <CopoCreateModal
@@ -9754,6 +9847,7 @@ export function App() {
           onClose={() => {
             setIsCreateModalOpen(false);
             setPreselectedPlaceForRecording(null);
+            setInitialCapturedPhotoFile(null);
           }}
           places={places}
           videos={videos}
@@ -9768,6 +9862,8 @@ export function App() {
               (preDom && liveDom && preDom === liveDom);
             return isSamePlace ? liveDrawer : preselectedPlaceForRecording;
           })()}
+          initialCapturedFile={initialCapturedPhotoFile}
+          onRequestInstantCamera={(place) => triggerInstantNativeCamera(place)}
           onPublishVideoReview={handlePublishVideoReview}
           currentUser={currentUser}
           onUpdateUserProfile={(u) => setCurrentUser(u)}

@@ -339,18 +339,22 @@
         box-sizing: border-box;
       }
       .ybs-hero-t {
-        font-size: 32px;
+        font-size: 30px;
         font-weight: 700;
         letter-spacing: -0.038em;
-        line-height: 1.05;
+        line-height: 1.06;
         text-align: center;
+        text-wrap: balance;
         margin: 0 0 8px;
       }
       .ybs-hero-s {
-        font-size: 14px;
+        font-size: 13px;
+        line-height: 1.45;
         color: #a1a1aa;
         text-align: center;
-        margin: 0 0 24px;
+        text-wrap: balance;
+        max-width: 365px;
+        margin: 0 auto 22px;
       }
       .ybs-search {
         width: 100%;
@@ -422,8 +426,8 @@
         .ybs-d-nav { display: flex; }
         .ybs-m-nav, .ybs-m-dock { display: none; }
         .ybs-main { padding: 44px 32px 32px; }
-        .ybs-hero-t { font-size: 52px; margin-bottom: 12px; }
-        .ybs-hero-s { font-size: 16px; margin-bottom: 32px; }
+        .ybs-hero-t { font-size: 52px; margin-bottom: 10px; }
+        .ybs-hero-s { font-size: 16px; max-width: 768px; margin-bottom: 28px; }
         .ybs-cards { gap: 16px; }
         .ybs-card { flex: 1 1 0; height: auto; aspect-ratio: 3 / 4.35; border-radius: 24px; }
       }
@@ -462,7 +466,7 @@
         </div>
         <div class="ybs-main">
           <div class="ybs-hero-t">See the truth before you decide.</div>
-          <div class="ybs-hero-s">Real photo reviews of places &amp; brands.</div>
+          <div class="ybs-hero-s">Real customer photo reviews of hotels, restaurants, products &amp; services — zero fake text.</div>
           <div class="ybs-search">
             <span class="ybs-search-ph">Search any place, brand, or URL...</span>
             <div class="ybs-search-go"></div>

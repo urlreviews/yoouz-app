@@ -1162,7 +1162,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
         <div className="w-full text-center max-w-3xl mx-auto mb-4 sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
-          <h1 className="text-[30px] xs:text-[34px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.05]">
+          <h1 className="text-[28px] xs:text-[32px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.06] text-balance">
             {searchMode === "review" ? (
               <>Find a business to review.</>
             ) : (
@@ -1171,18 +1171,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </h1>
 
           {searchMode === "review" ? (
-            <p className="text-zinc-400 text-[13.5px] sm:text-[15.5px] mt-2 sm:mt-2.5 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
+            <p className="text-zinc-400 text-[13px] sm:text-[15.5px] mt-2 sm:mt-2.5 leading-[1.45] sm:leading-relaxed max-w-[345px] sm:max-w-xl mx-auto font-normal tracking-[-0.01em] text-balance">
               {headerSubtitle || "Pick any hotel, restaurant, brand, or website URL to snap a live camera photo review."}
             </p>
           ) : (
-            <>
-              <p className="hidden sm:block text-zinc-400 text-[15px] md:text-[16px] mt-2.5 leading-relaxed max-w-3xl mx-auto font-normal tracking-[-0.01em]">
-                Real customer photo reviews of hotels, restaurants, products &amp; services — zero fake text.
-              </p>
-              <p className="sm:hidden text-zinc-400 text-[13.5px] mt-1.5 leading-snug max-w-[330px] mx-auto font-normal tracking-[-0.01em]">
-                Real photo reviews of places &amp; brands.
-              </p>
-            </>
+            <p className="text-zinc-400 text-[13px] sm:text-[15px] md:text-[16px] mt-2 sm:mt-2.5 leading-[1.45] sm:leading-relaxed max-w-[345px] xs:max-w-[370px] sm:max-w-3xl mx-auto font-normal tracking-[-0.01em] text-balance">
+              Real customer photo reviews of hotels, restaurants, products &amp; services — zero fake text.
+            </p>
           )}
         </div>
 
@@ -1529,27 +1524,29 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               : "opacity-100"
           }`}
         >
-          <div className="flex items-center md:justify-center gap-1.5 sm:gap-2 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5 pr-1">
-            {CANONICAL_CATEGORIES.map((cat) => {
-              const isSelected = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  data-category-pill={cat.id}
-                  aria-pressed={isSelected}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-[7px] rounded-full text-[12.5px] sm:text-[13px] tracking-[-0.01em] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer border ${
-                    isSelected
-                      ? "bg-white text-zinc-950 border-white font-semibold shadow-[0_4px_18px_rgba(255,255,255,0.16)]"
-                      : "bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border-white/[0.09] hover:border-white/[0.18] font-medium"
-                  }`}
-                >
-                  {renderCategoryIcon(cat.id, isSelected)}
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
+          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-max mx-auto pr-1">
+              {CANONICAL_CATEGORIES.map((cat) => {
+                const isSelected = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    data-category-pill={cat.id}
+                    aria-pressed={isSelected}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-[7px] rounded-full text-[12.5px] sm:text-[13px] tracking-[-0.01em] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer border ${
+                      isSelected
+                        ? "bg-white text-zinc-950 border-white font-semibold shadow-[0_4px_18px_rgba(255,255,255,0.16)]"
+                        : "bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border-white/[0.09] hover:border-white/[0.18] font-medium"
+                    }`}
+                  >
+                    {renderCategoryIcon(cat.id, isSelected)}
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </nav>
 
