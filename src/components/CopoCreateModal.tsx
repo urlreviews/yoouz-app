@@ -560,19 +560,21 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       isProcessing: false
     } as VideoReview;
 
+    const { photoDataUrl: _omitBase64, ...leanReviewForPersist } = finalReview as any;
+
     try {
       await fetch("/api/videos/save-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalReview),
-        signal: AbortSignal.timeout(10000)
+        body: JSON.stringify(leanReviewForPersist),
+        signal: AbortSignal.timeout(15000)
       });
     } catch {}
 
     fetch(`/api/nosql/videoReviews/${reviewId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: finalReview, merge: true })
+      body: JSON.stringify({ data: leanReviewForPersist, merge: true })
     }).catch(() => {});
 
     try {
@@ -584,7 +586,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         } catch {}
       }
       if (!Array.isArray(list)) list = [];
-      list = [finalReview, ...list.filter((v: any) => v && v.id !== finalReview.id)].slice(0, 50);
+      list = [leanReviewForPersist, ...list.filter((v: any) => v && v.id !== finalReview.id)].slice(0, 50);
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch {}
 

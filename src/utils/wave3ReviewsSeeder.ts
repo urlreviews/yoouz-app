@@ -355,7 +355,8 @@ export async function seedWave3MultiUserReviewsOnly(): Promise<{
 
   const publicPhotosDir = path.join(process.cwd(), "public", "uploads", "photos");
   const uploadsPhotosDir = path.join(process.cwd(), "uploads", "photos");
-  const now = Date.now();
+  // Fixed historical baseline anchor so seeded items NEVER outrank real customer reviews on redeploy
+  const BASELINE_ANCHOR_MS = Date.parse("2026-11-10T12:00:00.000Z");
   const touchedPlaceIds = new Set<string>();
   const touchedUserIds = new Set<string>();
 
@@ -396,11 +397,12 @@ export async function seedWave3MultiUserReviewsOnly(): Promise<{
       } catch {}
     }
 
-    // Preserve existing timestamp on redeploy; for fresh inserts offset by +72h so seeded items never outrank real live user reviews
+    // Use fixed historical anchor (never newer than BASELINE_ANCHOR_MS) so real live user reviews ALWAYS outrank seeded reviews
     const existingTs = existingReviewCreatedAtById.get(def.reviewId);
-    const reviewCreatedAtMs = existingTs && existingTs > 0
+    const fixedTs = BASELINE_ANCHOR_MS - def.hoursAgo * 3600 * 1000;
+    const reviewCreatedAtMs = existingTs && existingTs > 0 && existingTs <= BASELINE_ANCHOR_MS
       ? existingTs
-      : now - (def.hoursAgo + 72) * 3600 * 1000;
+      : fixedTs;
     const photoUrl = `/uploads/photos/${def.photoFilename}`;
     const starVal = Number(def.rating);
 

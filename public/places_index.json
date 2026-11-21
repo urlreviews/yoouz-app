@@ -1,11 +1,471 @@
 [
   {
+    "id": "hocoofficial.com",
+    "name": "HOCO Official",
+    "category": "Business & Services",
+    "categoryType": "services",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654.jpg%3Fcrop%3Dcenter%26height%3D32%26v%3D1765336997%26width%3D32",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654.jpg%3Fcrop%3Dcenter%26height%3D32%26v%3D1765336997%26width%3D32",
+    "brandDomain": "hocoofficial.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654_876361e7-4fed-47e8-b2a3-20cc155b823a.jpg%3Fv%3D1765554168",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654_876361e7-4fed-47e8-b2a3-20cc155b823a.jpg%3Fv%3D1765554168",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654_876361e7-4fed-47e8-b2a3-20cc155b823a.jpg%3Fv%3D1765554168"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "support@hocoofficial.com",
+    "website": "https://hocoofficial.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Explore HOCO Official Store: headphones, chargers, hubs, car accessories, audio devices & smart trackers. Quality, innovation and fast global shipping.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "sony.com",
+    "name": "Sony",
+    "category": "Consumer Electronics",
+    "categoryType": "products",
+    "address": "",
+    "city": "",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.sony.com%2Fen%2Ftemplate%2F2023%2Fimg%2Flogo.svg",
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.sony.com%2Fen%2Ftemplate%2F2023%2Fimg%2Flogo.svg",
+    "brandDomain": "sony.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fstore.sony.com.tw%2Fresource%2Ffile%2Fproduct_files%2FILCE-7CM2-S%2F02.jpg",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fstore.sony.com.tw%2Fresource%2Ffile%2Fproduct_files%2FILCE-7CM2-S%2F02.jpg",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fstore.sony.com.tw%2Fresource%2Ffile%2Fproduct_files%2FILCE-7CM2-S%2F02.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://sony.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Sony · verified business · sony.com",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "philips.nl",
+    "name": "Philips",
+    "category": "Consumer Electronics",
+    "categoryType": "products",
+    "address": "Gent",
+    "city": "Gent",
+    "country": "Netherlands",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 2,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fphilips.nl%2Fc-resources%2Ffavicons%2Fapple-touch-icon-152x152.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fphilips.nl%2Fc-resources%2Ffavicons%2Fapple-touch-icon-152x152.png",
+    "brandDomain": "https://philips.nl",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Feu-images.contentstack.com%2Fv3%2Fassets%2Fblte23630023bb36e19%2Fblt72ba7648b5a6cdee%2F68dc477fd6433a755ff8d94a%2F1c0122363c3e4a37832fb34b008cffbf.jpg%3Fbranch%3Dprod%26enable%3Dupscale%26format%3Dauto%26quality%3D85%26crop%3D1.91%3A1%2Csmart%26fit%3Dcrop%26width%3D1200%26height%3D630",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Feu-images.contentstack.com%2Fv3%2Fassets%2Fblte23630023bb36e19%2Fblt72ba7648b5a6cdee%2F68dc477fd6433a755ff8d94a%2F1c0122363c3e4a37832fb34b008cffbf.jpg%3Fbranch%3Dprod%26enable%3Dupscale%26format%3Dauto%26quality%3D85%26crop%3D1.91%3A1%2Csmart%26fit%3Dcrop%26width%3D1200%26height%3D630",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Feu-images.contentstack.com%2Fv3%2Fassets%2Fblte23630023bb36e19%2Fblt72ba7648b5a6cdee%2F68dc477fd6433a755ff8d94a%2F1c0122363c3e4a37832fb34b008cffbf.jpg%3Fbranch%3Dprod%26enable%3Dupscale%26format%3Dauto%26quality%3D85%26crop%3D1.91%3A1%2Csmart%26fit%3Dcrop%26width%3D1200%26height%3D630"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://philips.nl",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Lees meer over Philips en hoe wij helpen het leven van mensen te verbeteren met belangrijke innovaties op het gebied van gezondheidszorg, consumer lifestyle en verlichting.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "nivea.com",
+    "name": "NIVEA",
+    "category": "Skincare & Beauty",
+    "categoryType": "beauty",
+    "address": "Rome",
+    "city": "Rome",
+    "country": "Israel",
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2050%2050%22%3E%3Ccircle%20cx%3D%2225%22%20cy%3D%2225%22%20r%3D%2224.5%22%20style%3D%22fill%3A%230032a0%22%3E%3C%2Fcircle%3E%3Cpath%20d%3D%22M13.828%2020.722h-2.1v4.457c-1.84-1.65-3.676-3.3-5.561-4.947v9.046h2.1v-4.457c1.752%201.555%203.633%203.3%205.562%204.947Zm4.657%208.553h-2.1v-8.553h2.1Zm5.443.49c-1.488-2.8-2.978-6.017-4.466-9.046h2.364l2.1%204.634%202.022-4.634h2.316c-1.442%203.037-2.888%206.242-4.333%209.049Zm10.977-7.174h-3.554v1.476h3.558v1.866h-3.558V27.4h3.558v1.866h-5.66v-8.55h5.66Zm5.336-2.359c-1.445%202.852-2.89%205.927-4.335%209.046H38.1l.437-1.025h3.421l.439%201.025h2.273c-1.498-3.119-2.986-6.238-4.429-9.046Zm-1.089%206.416%201.089-2.488%201.052%202.488Z%22%20style%3D%22fill%3A%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2050%2050%22%3E%3Ccircle%20cx%3D%2225%22%20cy%3D%2225%22%20r%3D%2224.5%22%20style%3D%22fill%3A%230032a0%22%3E%3C%2Fcircle%3E%3Cpath%20d%3D%22M13.828%2020.722h-2.1v4.457c-1.84-1.65-3.676-3.3-5.561-4.947v9.046h2.1v-4.457c1.752%201.555%203.633%203.3%205.562%204.947Zm4.657%208.553h-2.1v-8.553h2.1Zm5.443.49c-1.488-2.8-2.978-6.017-4.466-9.046h2.364l2.1%204.634%202.022-4.634h2.316c-1.442%203.037-2.888%206.242-4.333%209.049Zm10.977-7.174h-3.554v1.476h3.558v1.866h-3.558V27.4h3.558v1.866h-5.66v-8.55h5.66Zm5.336-2.359c-1.445%202.852-2.89%205.927-4.335%209.046H38.1l.437-1.025h3.421l.439%201.025h2.273c-1.498-3.119-2.986-6.238-4.429-9.046Zm-1.089%206.416%201.089-2.488%201.052%202.488Z%22%20style%3D%22fill%3A%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "brandDomain": "nivea.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://nivea.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Overview of all NIVEA websites around the world. Please choose your country.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "guesswatches.com",
+    "name": "GUESS Watches",
+    "category": "Watches & Accessories",
+    "categoryType": "products",
+    "address": "",
+    "city": "Online",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
+    "brandDomain": "guesswatches.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://guesswatches.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "apple.com",
+    "category": "Consumer Electronics & Tech",
+    "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
+    "name": "Apple",
+    "categoryType": "tech",
+    "address": "One Apple Park Way",
+    "city": "Cupertino, CA",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 2,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "brandDomain": "apple.com",
+    "ogImage": "/uploads/brand-assets/banners/apple.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/apple.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (800) 692-7753",
+    "email": "",
+    "website": "https://apple.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Apple provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 2
+  },
+  {
+    "id": "makicafe.com",
+    "category": "Restaurant & Food",
+    "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/makicafe.com.webp",
+    "name": "Maki Cafe",
+    "categoryType": "restaurants",
+    "address": "",
+    "city": "Rockville",
+    "country": "US",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "brandDomain": "makicafe.com",
+    "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/makicafe.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://makicafe.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Maki Cafe is a popular dining destination in Rockville, US, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "lernerandrowe.com",
+    "category": "Legal Services",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
+    "name": "Lerner and Rowe Injury Attorneys",
+    "categoryType": "services",
+    "address": "2701 E Camelback Rd #140",
+    "city": "Phoenix, AZ",
+    "country": "United States",
+    "lat": 33.5092,
+    "lng": -112.0238,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "brandDomain": "lernerandrowe.com",
+    "ogImage": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/lernerandrowe.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (602) 977-1900",
+    "email": "",
+    "website": "https://lernerandrowe.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Lerner And Rowe Injury Attorneys is a dedicated law practice in Phoenix, AZ, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "flipper.net",
+    "category": "Tech & Gadgets",
+    "logoUrl": "/uploads/brand-assets/logos/flipper.net.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/flipper.net.webp",
+    "name": "Flipper Zero",
+    "categoryType": "tech",
+    "address": "",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/flipper.net.webp",
+    "brandDomain": "flipper.net",
+    "ogImage": "/uploads/brand-assets/banners/flipper.net.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/flipper.net.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://flipper.net",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Flipper Zero provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "healis.be",
+    "category": "Pharmacy & Healthcare",
+    "logoUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/healis.be.webp",
+    "name": "Healis",
+    "categoryType": "services",
+    "address": "Winkelom 83B/1",
+    "city": "Geel",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "brandDomain": "healis.be",
+    "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/healis.be.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 14 86 00 00",
+    "email": "",
+    "website": "https://healis.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Healis is a dependable automotive and transportation service provider in Geel, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
     "id": "amazon.com",
     "category": "E-Commerce & Retail",
     "logoUrl": "/uploads/brand-assets/logos/amazon.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/amazon.com.webp",
     "name": "Amazon",
-    "categoryType": "all",
+    "categoryType": "shopping",
     "address": "",
     "city": "",
     "country": "",
@@ -51,7 +511,7 @@
     "logoUrl": "/uploads/brand-assets/logos/dominos.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/dominos.com.webp",
     "name": "Domino's Pizza",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "",
     "country": "",
@@ -97,7 +557,7 @@
     "logoUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/mamotcv.com.webp",
     "name": "Mamo TCV",
-    "categoryType": "all",
+    "categoryType": "services",
     "address": "",
     "city": "",
     "country": "",
@@ -138,58 +598,12 @@
     "videoReviewCount": 1
   },
   {
-    "id": "apple.com",
-    "category": "Consumer Electronics & Tech",
-    "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
-    "name": "Apple",
-    "categoryType": "all",
-    "address": "One Apple Park Way",
-    "city": "Cupertino, CA",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "rating": 4,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/apple.com.svg",
-    "brandDomain": "apple.com",
-    "ogImage": "/uploads/brand-assets/banners/apple.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/apple.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (800) 692-7753",
-    "email": "",
-    "website": "https://apple.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Apple provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1
-  },
-  {
     "id": "easyhotel.com",
     "category": "Hotel & Hospitality",
     "logoUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/easyhotel.com.webp",
     "name": "easyHotel",
-    "categoryType": "all",
+    "categoryType": "hotels",
     "address": "",
     "city": "",
     "country": "",
@@ -235,7 +649,7 @@
     "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
     "name": "Sephora",
-    "categoryType": "all",
+    "categoryType": "beauty",
     "address": "350 Mission St, San Francisco, CA 94105",
     "city": "San Francisco",
     "country": "Japan",
@@ -281,7 +695,7 @@
     "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/7-eleven.com.webp",
     "name": "7-Eleven",
-    "categoryType": "all",
+    "categoryType": "shopping",
     "address": "",
     "city": "",
     "country": "",
@@ -327,7 +741,7 @@
     "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
     "name": "Uniqlo US",
-    "categoryType": "all",
+    "categoryType": "shopping",
     "address": "",
     "city": "",
     "country": "",
@@ -373,7 +787,7 @@
     "logoUrl": "/uploads/brand-assets/logos/izci.be.svg",
     "bannerUrl": "/uploads/brand-assets/banners/izci.be.webp",
     "name": "Bosch Car Service Izci",
-    "categoryType": "all",
+    "categoryType": "auto",
     "address": "",
     "city": "",
     "country": "",
@@ -419,7 +833,7 @@
     "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
     "name": "Delta Air Lines",
-    "categoryType": "all",
+    "categoryType": "hotels",
     "address": "",
     "city": "",
     "country": "",
@@ -465,7 +879,7 @@
     "logoUrl": "/uploads/brand-assets/logos/mcdonalds.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/mcdonalds.com.webp",
     "name": "McDonald's",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "110 N Carpenter St",
     "city": "Chicago, IL",
     "country": "United States",
@@ -511,7 +925,7 @@
     "logoUrl": "/uploads/brand-assets/logos/dunkindonuts.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/dunkindonuts.com.webp",
     "name": "Dunkin' Donuts",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "",
     "country": "",
@@ -557,7 +971,7 @@
     "logoUrl": "/uploads/brand-assets/logos/doordash.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/doordash.com.webp",
     "name": "DoorDash",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "",
     "country": "",
@@ -603,7 +1017,7 @@
     "logoUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/cetaphil.com.webp",
     "name": "Cetaphil",
-    "categoryType": "all",
+    "categoryType": "beauty",
     "address": "",
     "city": "",
     "country": "",
@@ -649,7 +1063,7 @@
     "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
     "name": "Nike",
-    "categoryType": "all",
+    "categoryType": "products",
     "address": "One Bowerman Dr",
     "city": "Beaverton, OR",
     "country": "United States",
@@ -965,60 +1379,6 @@
     "isFollowed": false
   },
   {
-    "id": "healis.be",
-    "name": "Healis",
-    "category": "Pharmacy & Healthcare",
-    "categoryType": "services",
-    "address": "Winkelom 83B/1",
-    "city": "Geel",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
-    "logoUrl": "/uploads/brand-assets/logos/healis.be.svg",
-    "brandDomain": "healis.be",
-    "bannerUrl": "/uploads/brand-assets/banners/healis.be.webp",
-    "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/healis.be.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 14 86 00 00",
-    "email": "",
-    "website": "https://healis.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Healis is a dependable automotive and transportation service provider in Geel, Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    }
-  },
-  {
     "id": "soluxecleaning.co.uk",
     "name": "Soluxe Cleaning",
     "category": "Home Services & Cleaning",
@@ -1054,116 +1414,6 @@
     "isSavedToProfile": true,
     "plusCode": "",
     "description": "Soluxe Cleaning provides professional, reliable emergency and maintenance services in London, United Kingdom, dedicated to quality workmanship and prompt client care.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    }
-  },
-  {
-    "id": "flipper.net",
-    "logoUrl": "/uploads/brand-assets/logos/flipper.net.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/flipper.net.webp",
-    "name": "Flipper Zero",
-    "category": "Tech & Gadgets",
-    "categoryType": "tech",
-    "address": "",
-    "city": "Online",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/flipper.net.webp",
-    "brandDomain": "flipper.net",
-    "ogImage": "/uploads/brand-assets/banners/flipper.net.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/flipper.net.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fflipper.net%2Fcdn%2Fshop%2Ffiles%2Fmain_wide.png%3Fv%3D1782305028"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://flipper.net",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Flipper Zero provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "locations": []
-  },
-  {
-    "id": "makicafe.com",
-    "name": "Maki Cafe",
-    "category": "Restaurant & Food",
-    "categoryType": "restaurants",
-    "address": "",
-    "city": "Rockville",
-    "country": "US",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
-    "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
-    "brandDomain": "makicafe.com",
-    "bannerUrl": "/uploads/brand-assets/banners/makicafe.com.webp",
-    "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/makicafe.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://makicafe.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Maki Cafe is a popular dining destination in Rockville, US, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -1240,60 +1490,6 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
-  },
-  {
-    "id": "lernerandrowe.com",
-    "name": "Lerner And Rowe Injury Attorneys",
-    "category": "Legal Services",
-    "categoryType": "services",
-    "address": "2701 E Camelback Rd #140",
-    "city": "Phoenix, AZ",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "brandDomain": "lernerandrowe.com",
-    "bannerUrl": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
-    "ogImage": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/lernerandrowe.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (602) 977-1900",
-    "email": "",
-    "website": "https://lernerandrowe.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Lerner And Rowe Injury Attorneys is a dedicated law practice in Phoenix, AZ, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    }
   },
   {
     "id": "hoteldesgaleries.be",

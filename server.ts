@@ -27,7 +27,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { Resend } from "resend";
 import sharp from "sharp";
-import { getBunnyDb, initBunnyDbSchema } from "./src/lib/bunny-db.ts";
+import { getBunnyDb, initBunnyDbSchema, waitForInitialRemoteSync, executeDurableBunnyDb, queryRemoteBunnyDbDirect } from "./src/lib/bunny-db.ts";
 import { getAvatarColor, getFirstLetter, normalizeAvatarSeed } from "./src/lib/avatar.ts";
 
 import { db, getDb } from "./src/db/index.ts";
@@ -39,7 +39,7 @@ import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
 import { alignBunnyCuesWithHardwareSilences, AudioSilenceInterval } from "./src/utils/subtitleSync.ts";
-import { classifyBusinessCategory, isGenericCategory } from "./src/utils/categoryUtils.ts";
+import { classifyBusinessCategory, isGenericCategory, isSeededReviewId } from "./src/utils/categoryUtils.ts";
 
 dotenv.config();
 
@@ -10666,8 +10666,16 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
           });
         } else if (colName === 'videoReviews' || colName === 'videos') {
           const rev = enrichReviewPlaceAssets({ id, ...finalDataObj });
-          const revCreatedAt = finalDataObj.createdAt || (finalDataObj.createdAtMs ? new Date(finalDataObj.createdAtMs).toISOString() : new Date().toISOString());
-          await bunnyDb.execute({
+          // Strip inline base64 blobs so BunnyDB JSON stays tiny (~2KB) and never times out remote replication
+          const leanRev: any = { ...rev };
+          if (leanRev.photoUrl || leanRev.thumbnailUrl) {
+            delete leanRev.photoDataUrl;
+            delete leanRev.photoBase64;
+          }
+          delete leanRev.videoData;
+          const safeJsonStr = JSON.stringify(leanRev);
+          const revCreatedAt = leanRev.createdAt || (leanRev.createdAtMs ? new Date(leanRev.createdAtMs).toISOString() : new Date().toISOString());
+          await executeDurableBunnyDb({
             sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, viewsCount, commentsCount, data, createdAt, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET 
@@ -10688,19 +10696,19 @@ const handleSaveNoSqlDoc = async (req: any, res: any) => {
                     updatedAt = CURRENT_TIMESTAMP`,
             args: [
               id,
-              rev.placeId || (rev.place && rev.place.id) || '',
-              rev.placeName || (rev.place && rev.place.name) || '',
-              rev.authorName || (rev.author && rev.author.name) || '',
-              rev.authorAvatar || (rev.author && rev.author.avatar) || '',
-              rev.userId || rev.authorEmail || (rev.author && rev.author.email) || '',
-              rev.rating || 5,
-              rev.videoUrl || '',
-              rev.thumbnailUrl || '',
-              rev.duration || 60,
-              rev.likesCount || rev.likes || 0,
-              rev.viewsCount || rev.views || 0,
-              rev.commentsCount || (Array.isArray(rev.comments) ? rev.comments.length : 0),
-              jsonStr,
+              leanRev.placeId || (leanRev.place && leanRev.place.id) || '',
+              leanRev.placeName || (leanRev.place && leanRev.place.name) || '',
+              leanRev.authorName || (leanRev.author && leanRev.author.name) || '',
+              leanRev.authorAvatar || (leanRev.author && leanRev.author.avatar) || '',
+              leanRev.userId || leanRev.authorEmail || (leanRev.author && leanRev.author.email) || '',
+              leanRev.rating || 5,
+              leanRev.videoUrl || '',
+              leanRev.photoUrl || leanRev.thumbnailUrl || '',
+              leanRev.mediaType === 'photo' ? 0 : (leanRev.duration || 60),
+              leanRev.likesCount || leanRev.likes || 0,
+              leanRev.viewsCount || leanRev.views || 0,
+              leanRev.commentsCount || (Array.isArray(leanRev.comments) ? leanRev.comments.length : 0),
+              safeJsonStr,
               revCreatedAt
             ]
           });
@@ -15980,10 +15988,48 @@ ${imageEntries.join('\n')}
                 return await buildPhotoRamEntry(rawFilename, imgBuffer, "image/jpeg");
               }
             }
+            // Direct remote BunnyDB fallback in case fresh container hasn't finished syncing review_photos yet
+            const remotePhotoRow = await queryRemoteBunnyDbDirect({
+              sql: "SELECT dataUrl, mimeType FROM review_photos WHERE filename = ? OR reviewId = ? LIMIT 1",
+              args: [rawFilename, revIdPrefix]
+            });
+            if (remotePhotoRow && remotePhotoRow.rows && remotePhotoRow.rows.length > 0 && remotePhotoRow.rows[0].dataUrl) {
+              const dUrl = String(remotePhotoRow.rows[0].dataUrl);
+              const base64Data = dUrl.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+              const imgBuffer = Buffer.from(base64Data, "base64");
+              try {
+                fs.mkdirSync(path.dirname(localPath), { recursive: true });
+                fs.writeFileSync(localPath, imgBuffer);
+                fs.mkdirSync(path.dirname(publicPath), { recursive: true });
+                fs.writeFileSync(publicPath, imgBuffer);
+              } catch {}
+              return await buildPhotoRamEntry(rawFilename, imgBuffer, (remotePhotoRow.rows[0].mimeType as string) || "image/jpeg");
+            }
           } catch (dbErr) {
             console.warn("DB photo lookup error:", dbErr);
           }
         }
+
+        // Final fallback: fetch from Bunny Storage Pull Zone CDN if available
+        try {
+          const cdnBase = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/+$/, "");
+          const cdnResp = await fetch(`${cdnBase}/photos/${encodeURIComponent(rawFilename)}`, {
+            signal: AbortSignal.timeout(5000)
+          });
+          if (cdnResp.ok) {
+            const imgBuffer = Buffer.from(await cdnResp.arrayBuffer());
+            if (imgBuffer.length > 100) {
+              try {
+                fs.mkdirSync(path.dirname(localPath), { recursive: true });
+                fs.writeFileSync(localPath, imgBuffer);
+                fs.mkdirSync(path.dirname(publicPath), { recursive: true });
+                fs.writeFileSync(publicPath, imgBuffer);
+              } catch {}
+              return await buildPhotoRamEntry(rawFilename, imgBuffer, cdnResp.headers.get("content-type") || "image/jpeg");
+            }
+          }
+        } catch {}
+
         return null;
       } finally {
         photoRamInFlight.delete(rawFilename);
@@ -23102,55 +23148,34 @@ app.post("/api/videos/save-review", async (req, res) => {
         console.warn("SSE broadcast new_video error:", sseErr);
       }
 
-      // Return instant success response to client immediately so mobile & desktop users never hang
-      res.json({ success: true, review });
+      // Strip massive base64 photoDataUrl before persisting so BunnyDB rows stay ~2KB and never time out
+      const cleanReviewForDb: any = { ...review };
+      delete cleanReviewForDb.videoData;
+      if (cleanReviewForDb.photoUrl || cleanReviewForDb.thumbnailUrl) {
+        delete cleanReviewForDb.photoDataUrl;
+        delete cleanReviewForDb.photoBase64;
+      }
 
-      // Run BunnyDB, PostgreSQL mirroring, and search engine indexing asynchronously in the background
-      (async () => {
+      // 1. Durably persist core review record to BOTH local SQLite & remote BunnyDB BEFORE replying
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
         try {
-          if (!isPhotoReview) {
-            try {
-              let vBuffer: Buffer | null = null;
-              if (review.videoData && typeof review.videoData === 'string') {
-                const b64 = review.videoData.includes("base64,") ? review.videoData.split("base64,")[1] : review.videoData;
-                vBuffer = Buffer.from(b64, 'base64');
-              }
-              if (!vBuffer && review.videoUrl && review.videoUrl.startsWith("http")) {
-                try {
-                  const fetchRes = await fetch(review.videoUrl, { signal: AbortSignal.timeout(20000) });
-                  if (fetchRes.ok) vBuffer = Buffer.from(await fetchRes.arrayBuffer());
-                } catch (e) {}
-              }
-              if (!review.bunnyVideoId && !review.bunnyGuid && review.videoUrl) {
-                await uploadVideoToBunnyStream(review, vBuffer, review.videoUrl);
-              }
-            } catch (bunnyErr) {}
-          }
-
-          // 3. Sync to Bunny Database (libSQL cloud)
-          const bunnyDb = getBunnyDb();
-          if (bunnyDb) {
-            try {
-              const sqlReview = { ...review };
-              delete sqlReview.videoData; // Prevent libSQL request body too large error
-              const jsonStr = JSON.stringify(sqlReview);
-          
-          const reviewPlaceId = review.placeId || (review.place && review.place.id) || '';
-          const reviewPlaceName = review.placeName || (review.place && review.place.name) || '';
-          const rawAuthorName = review.authorName || (review.author && review.author.name) || '';
-          const authorEmailVal = review.userEmail || review.authorEmail || (review.author && review.author.email) || '';
+          const jsonStr = JSON.stringify(cleanReviewForDb);
+          const reviewPlaceId = cleanReviewForDb.placeId || (cleanReviewForDb.place && cleanReviewForDb.place.id) || '';
+          const reviewPlaceName = cleanReviewForDb.placeName || (cleanReviewForDb.place && cleanReviewForDb.place.name) || '';
+          const rawAuthorName = cleanReviewForDb.authorName || (cleanReviewForDb.author && cleanReviewForDb.author.name) || '';
+          const authorEmailVal = cleanReviewForDb.userEmail || cleanReviewForDb.authorEmail || (cleanReviewForDb.author && cleanReviewForDb.author.email) || '';
           const reviewAuthorName = rawAuthorName || 'U/YOOUZ1';
-          const reviewAuthorAvatar = review.authorAvatar || (review.author && review.author.avatar) || '';
-          const reviewUserId = review.userId || authorEmailVal || `anon_${Date.now()}`;
-          const reviewRating = Math.min(5, Math.max(1, Math.round(Number(review.rating) || 5)));
-          const reviewVideoUrl = isPhotoReview ? '' : (review.videoUrl || '');
-          const reviewThumbUrl = review.photoUrl || review.thumbnailUrl || '';
-          const reviewDuration = isPhotoReview ? 0 : (review.durationSeconds || review.duration || 0);
-          const reviewLikes = review.likesCount || review.likes || 0;
-          const reviewViews = review.viewsCount || review.views || 0;
+          const reviewAuthorAvatar = cleanReviewForDb.authorAvatar || (cleanReviewForDb.author && cleanReviewForDb.author.avatar) || '';
+          const reviewUserId = cleanReviewForDb.userId || authorEmailVal || `anon_${Date.now()}`;
+          const reviewRating = Math.min(5, Math.max(1, Math.round(Number(cleanReviewForDb.rating) || 5)));
+          const reviewVideoUrl = isPhotoReview ? '' : (cleanReviewForDb.videoUrl || '');
+          const reviewThumbUrl = cleanReviewForDb.photoUrl || cleanReviewForDb.thumbnailUrl || '';
+          const reviewDuration = isPhotoReview ? 0 : (cleanReviewForDb.durationSeconds || cleanReviewForDb.duration || 0);
+          const reviewLikes = cleanReviewForDb.likesCount || cleanReviewForDb.likes || 0;
+          const reviewViews = cleanReviewForDb.viewsCount || cleanReviewForDb.views || 0;
 
-          // 2a. Insert/Update Video Review in BunnyDB
-          await bunnyDb.execute({
+          await executeDurableBunnyDb({
             sql: `INSERT INTO videoReviews (id, placeId, placeName, authorName, authorAvatar, userId, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, viewsCount, data, createdAt, updatedAt)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                   ON CONFLICT(id) DO UPDATE SET 
@@ -23171,7 +23196,7 @@ app.post("/api/videos/save-review", async (req, res) => {
                     data = excluded.data,
                     updatedAt = CURRENT_TIMESTAMP`,
             args: [
-              review.id,
+              cleanReviewForDb.id,
               reviewPlaceId,
               reviewPlaceName,
               reviewAuthorName,
@@ -23182,15 +23207,36 @@ app.post("/api/videos/save-review", async (req, res) => {
               reviewThumbUrl,
               reviewDuration,
               reviewLikes,
-              review.bookmarksCount || 0,
-              review.sharesCount || 0,
-              review.commentsCount || 0,
+              cleanReviewForDb.bookmarksCount || 0,
+              cleanReviewForDb.sharesCount || 0,
+              cleanReviewForDb.commentsCount || 0,
               reviewViews,
               jsonStr,
-              review.createdAt || (review.createdAtMs ? new Date(review.createdAtMs).toISOString() : new Date().toISOString())
+              cleanReviewForDb.createdAt || (cleanReviewForDb.createdAtMs ? new Date(cleanReviewForDb.createdAtMs).toISOString() : new Date().toISOString())
             ]
           });
-          console.log(`🐰 [Server] BunnyDB successfully permanently saved video review ${review.id}`);
+          console.log(`🐰 [Server] BunnyDB durably saved live photo review ${cleanReviewForDb.id}`);
+        } catch (durableErr: any) {
+          console.warn("BunnyDB durable review save notice:", durableErr?.message || durableErr);
+        }
+      }
+
+      // Return success response after durable BunnyDB commit
+      res.json({ success: true, review: cleanReviewForDb });
+
+      // Run secondary profile/place metadata sync, PostgreSQL mirror, and search engine indexing in background
+      (async () => {
+        try {
+          if (bunnyDb) {
+            try {
+              const reviewPlaceId = cleanReviewForDb.placeId || (cleanReviewForDb.place && cleanReviewForDb.place.id) || '';
+              const reviewPlaceName = cleanReviewForDb.placeName || (cleanReviewForDb.place && cleanReviewForDb.place.name) || '';
+              const rawAuthorName = cleanReviewForDb.authorName || (cleanReviewForDb.author && cleanReviewForDb.author.name) || '';
+              const authorEmailVal = cleanReviewForDb.userEmail || cleanReviewForDb.authorEmail || (cleanReviewForDb.author && cleanReviewForDb.author.email) || '';
+              const reviewAuthorName = rawAuthorName || 'U/YOOUZ1';
+              const reviewAuthorAvatar = cleanReviewForDb.authorAvatar || (cleanReviewForDb.author && cleanReviewForDb.author.avatar) || '';
+              const reviewUserId = cleanReviewForDb.userId || authorEmailVal || `anon_${Date.now()}`;
+              const reviewRating = Math.min(5, Math.max(1, Math.round(Number(cleanReviewForDb.rating) || 5)));
 
           // 2b. Automatically ensure creator is upserted into BunnyDB users table
           if (reviewAuthorName !== 'Verified Reviewer' && reviewUserId !== 'usr_verified_reviewer' && reviewAuthorName !== 'Yoouz Reviewer') {
@@ -26176,11 +26222,11 @@ app.post("/api/videos/save-review", async (req, res) => {
       // Immediately warm RAM WebP + JPEG cache for instant 0ms serving
       buildPhotoRamEntry(filename, cleanJpegBuffer, "image/jpeg").catch(() => {});
 
-      // Persist to SQLite / BunnyDB review_photos table for indestructible storage
+      // Persist durably to BOTH local SQLite & remote BunnyDB review_photos table so photos always survive container redeploys
       try {
         const bunnyDb = getBunnyDb();
         if (bunnyDb) {
-          await bunnyDb.execute(`CREATE TABLE IF NOT EXISTS review_photos (
+          await executeDurableBunnyDb(`CREATE TABLE IF NOT EXISTS review_photos (
             filename TEXT PRIMARY KEY,
             reviewId TEXT,
             dataUrl TEXT,
@@ -26188,7 +26234,7 @@ app.post("/api/videos/save-review", async (req, res) => {
             createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
             updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
           )`);
-          await bunnyDb.execute({
+          await executeDurableBunnyDb({
             sql: `INSERT INTO review_photos (filename, reviewId, dataUrl, mimeType)
                   VALUES (?, ?, ?, 'image/jpeg')
                   ON CONFLICT(filename) DO UPDATE SET dataUrl = excluded.dataUrl, updatedAt = CURRENT_TIMESTAMP`,
@@ -44984,83 +45030,60 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       } catch(e) {}
     }
   };
-  const runPhotoPivotPurgeOnce = async (): Promise<void> => {
-    const markerPath = path.join(serverUploadsDir, ".photo_pivot_v6_done");
-    if (fs.existsSync(markerPath)) return;
-    console.log("🧹 [Photo Pivot] Running v6 scratch reset: removing all existing users, legacy chats/notifications, legacy videos, and starting clean from scratch...");
-    try {
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        // 1. Wipe ALL existing users so the platform starts 100% clean from scratch
-        await bunnyDb.execute(`DELETE FROM users`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'users'`).catch(() => {});
-        // 2. Wipe legacy video reviews & orphaned interactions/chats/notifications
-        await bunnyDb.execute(`DELETE FROM videoReviews WHERE (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection IN ('videoReviews', 'videos', 'video_reviews') AND (data NOT LIKE '%"mediaType":"photo"%' AND data NOT LIKE '%"photoUrl":"%' OR data IS NULL)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM chats`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'chats'`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM notifications`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection = 'notifications'`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM follows`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM comments WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM bookmarks WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
-        await bunnyDb.execute(`DELETE FROM shares WHERE videoId NOT IN (SELECT id FROM videoReviews)`).catch(() => {});
-      }
-      if (getDb()) {
-        try {
-          await db.delete(BunnyDB_video_reviews);
-        } catch {}
-        try {
-          await db.delete(users);
-        } catch {}
-      }
-
-      // Preserve any real photo reviews if already created, purge all legacy videos
-      const currentRevs = readReviewsIndex().filter((r: any) => r && (r.mediaType === 'photo' || Boolean(r.photoUrl)));
-      writeReviewsIndex(currentRevs);
+  // Persistent DB-backed migration marker helpers (immune to ephemeral container filesystem resets on redeploy!)
+  const hasPersistentMigrationMarker = async (key: string, legacyFile?: string): Promise<boolean> => {
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
       try {
-        const dataIdx = path.join(process.cwd(), "data", "reviews_index.json");
-        if (fs.existsSync(dataIdx)) fs.writeFileSync(dataIdx, JSON.stringify(currentRevs, null, 2), "utf8");
+        const rs = await bunnyDb.execute({
+          sql: "SELECT id FROM nosql_items WHERE collection = 'system_migrations' AND id = ? LIMIT 1",
+          args: [key]
+        });
+        if (rs && rs.rows && rs.rows.length > 0) return true;
       } catch {}
-
-      // Reset users_index.json, messages_index.json, and notifications_index.json to [] from scratch
-      writeUsersIndex([]);
-      try {
-        fs.writeFileSync(path.join(serverUploadsDir, "messages_index.json"), "[]", "utf8");
-        fs.writeFileSync(path.join(serverUploadsDir, "notifications_index.json"), "[]", "utf8");
-      } catch {}
-
-      // Remove legacy local video files (.mp4 / .webm) from uploads/ & uploads/videos/
-      try {
-        for (const dirCandidate of [serverUploadsDir, path.join(serverUploadsDir, "videos")]) {
-          if (fs.existsSync(dirCandidate)) {
-            for (const f of fs.readdirSync(dirCandidate)) {
-              if (f.endsWith(".mp4") || f.endsWith(".webm") || f.endsWith(".mov")) {
-                try { fs.unlinkSync(path.join(dirCandidate, f)); } catch {}
-              }
-            }
-          }
-        }
-      } catch {}
-
-      feedCache.videos = currentRevs;
-      feedCache.lastFetched = 0;
-      ogVideoCardCache.clear();
-      if (!fs.existsSync(serverUploadsDir)) fs.mkdirSync(serverUploadsDir, { recursive: true });
-      fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-      console.log("✅ [Photo Pivot] v5 scratch user & legacy data reset completed.");
-    } catch (e) {
-      console.warn("Photo pivot purge warning:", e);
     }
+    if (legacyFile && fs.existsSync(legacyFile)) {
+      // Backfill marker into durable BunnyDB so future redeploys remember it
+      if (bunnyDb) {
+        await executeDurableBunnyDb({
+          sql: "INSERT OR REPLACE INTO nosql_items (collection, id, data, updated_at) VALUES ('system_migrations', ?, ?, CURRENT_TIMESTAMP)",
+          args: [key, JSON.stringify({ doneAt: new Date().toISOString() })]
+        }).catch(() => {});
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const markPersistentMigrationDone = async (key: string, legacyFile?: string): Promise<void> => {
+    const nowIso = new Date().toISOString();
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await executeDurableBunnyDb({
+        sql: "INSERT OR REPLACE INTO nosql_items (collection, id, data, updated_at) VALUES ('system_migrations', ?, ?, CURRENT_TIMESTAMP)",
+        args: [key, JSON.stringify({ doneAt: nowIso })]
+      }).catch(() => {});
+    }
+    if (legacyFile) {
+      try {
+        const dir = path.dirname(legacyFile);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(legacyFile, nowIso, "utf8");
+      } catch {}
+    }
+  };
+
+  // Permanent Data Safety Guard: Legacy scratch reset is permanently retired so container redeploys can NEVER wipe real users, reviews, chats, or notifications.
+  const runPhotoPivotPurgeOnce = async (): Promise<void> => {
+    await markPersistentMigrationDone("photo_pivot_v6_done", path.join(serverUploadsDir, ".photo_pivot_v6_done")).catch(() => {});
   };
 
   const purgeFakeReviewsAndPlaces = async (): Promise<void> => {
     const bunnyDb = getBunnyDb();
     if (!bunnyDb) return;
     try {
-      // 1. Purge empty/corrupt rows while preserving live photo reviews (data LIKE '%"mediaType":"photo"%')
-      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR placeName IS NULL OR placeName = '' OR ((videoUrl IS NULL OR videoUrl = '') AND (data NOT LIKE '%\"mediaType\":\"photo\"%' OR data IS NULL)) OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
+      // 1. Only purge genuinely broken/empty rows or explicit renevolt spam — NEVER delete any real photo review (preserving all photoUrl / thumbnailUrl / mediaType:photo rows)
+      await bunnyDb.execute("DELETE FROM videoReviews WHERE id IS NULL OR id = '' OR id LIKE '%renevolt%' OR placeId LIKE '%renevolt%' OR placeName LIKE '%renevolt%'").catch(() => {});
 
       // 2. Purge broken, unnamed, broker/parked/doorway domains, or legacy synthesized .co.il fallback place records
       await bunnyDb.execute("DELETE FROM places WHERE name IS NULL OR name = '' OR LOWER(name) LIKE '%unnamed%' OR LOWER(name) = 'domain details page' OR id LIKE '%renevolt%' OR name LIKE '%renevolt%' OR LOWER(id) IN ('elaia.co.il', 'www.elaia.co.il', 'renevolt-by-solar-x.co.il', 'afore-capital-san-francisco.co.il', 'concept-ventures.co.il', 'sedo.com', 'sedoparking.com', 'hugedomains.com', 'dan.com', 'afternic.com', 'godaddy.com', 'guestreservations.com', 'abudhabinhotel.com', 'hotelabudhabi.net', 'hotelsofabudhabi.com', 'abudhabi-hotels-ae.com', 'abu-dhabi-hotels.net', 'tamm.abudhabi', 'www.tamm.abudhabi', 'stratospherehotel.com', 'www.stratospherehotel.com')").catch(() => {});
@@ -45235,10 +45258,12 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     }, 300);
   });
 
-  // Deferred sequential background initialization tasks after server is listening (purge runs BEFORE user sync to prevent race conditions)
+  // Deferred sequential background initialization tasks after server is listening
+  // CRITICAL: Always wait for initial remote BunnyDB sync FIRST so cloud user reviews & migration flags are restored before any startup task runs!
   setTimeout(async () => {
     try {
       await initBunnyDbSchema().catch(() => {});
+      await waitForInitialRemoteSync(15000).catch(() => {});
       await runPhotoPivotPurgeOnce().catch(() => {});
       await purgeFakeReviewsAndPlaces().catch(() => {});
       await syncAndMigrateBusinessPlaces().catch(() => {});
@@ -45253,7 +45278,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
 
       const syncCommunityNameMixV1 = async () => {
         const markerPath = path.join(globalUploadsDir, ".community_name_mix_v1_done");
-        if (fs.existsSync(markerPath)) return;
+        if (await hasPersistentMigrationMarker("community_name_mix_v1_done", markerPath)) return;
         try {
           const { COMMUNITY_REVIEWERS } = await import("./src/utils/communitySeeder.ts");
           const reviewerById = new Map(COMMUNITY_REVIEWERS.map((r) => [r.id, r]));
@@ -45384,10 +45409,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           feedCache.lastFetched = 0;
           if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
           if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
-          try {
-            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
-            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-          } catch {}
+          await markPersistentMigrationDone("community_name_mix_v1_done", markerPath);
           console.log("✅ [Server] Synced 10 named + 11 auto-code community profile mix cleanly.");
         } catch (mixErr: any) {
           console.warn("Community name mix sync notice:", mixErr?.message || mixErr);
@@ -45398,7 +45420,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
 
       const seedWave2CommunityV1 = async () => {
         const markerPath = path.join(globalUploadsDir, ".wave2_community_v1_done");
-        if (fs.existsSync(markerPath)) return;
+        if (await hasPersistentMigrationMarker("wave2_community_v1_done", markerPath)) return;
         try {
           const { seedWave2CommunityOnly } = await import("./src/utils/communitySeeder.ts");
           const { usersToAdd, reviewsToAdd } = await seedWave2CommunityOnly();
@@ -45414,18 +45436,18 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
             writeUsersIndex([...retainedUsers, ...usersToAdd]);
           } catch {}
 
-          // 2. Merge 20 new photo reviews cleanly into local JSON index + seedReviews.ts + feedCache
+          // 2. Merge 20 new photo reviews cleanly into local JSON index + feedCache without clobbering real user reviews
           try {
             const existingReviews = readReviewsIndex();
             const newRevIds = new Set(reviewsToAdd.map((r: any) => String(r.id)));
             const retainedReviews = existingReviews.filter((r: any) => r && !newRevIds.has(String(r.id || "")));
-            const mergedReviews = [...reviewsToAdd, ...retainedReviews].sort(
+            const mergedReviews = [...retainedReviews, ...reviewsToAdd].sort(
               (a: any, b: any) => Number(b?.createdAtMs || 0) - Number(a?.createdAtMs || 0)
             );
             writeReviewsIndex(mergedReviews);
           } catch {}
 
-          // 3. Update matching place entries in uploads/places_index.json & public/places_index.json
+          // 3. Update matching place entries in local places index without downgrading existing higher review counts
           try {
             const reviewByPlace = new Map<string, any>();
             for (const r of reviewsToAdd) {
@@ -45439,14 +45461,15 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
               if (!matchRev) return p;
               placesChanged = true;
               const starVal = Number(matchRev.rating || 5);
+              const prevCount = Number(p.totalReviews || 0);
               return {
                 ...p,
                 category: matchRev.placeCategory || p.category,
-                rating: starVal,
-                totalReviews: 1,
-                videoReviewCount: 1,
-                ratingCount: 1,
-                starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, [starVal]: 1 }
+                rating: prevCount > 0 ? p.rating : starVal,
+                totalReviews: Math.max(prevCount, 1),
+                videoReviewCount: Math.max(Number(p.videoReviewCount || 0), 1),
+                ratingCount: Math.max(Number(p.ratingCount || 0), 1),
+                starCounts: prevCount > 0 && p.starCounts ? p.starCounts : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, [starVal]: 1 }
               };
             });
             if (placesChanged) writePlacesIndex(updatedPlaces);
@@ -45456,10 +45479,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
           if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
           if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
-          try {
-            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
-            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-          } catch {}
+          await markPersistentMigrationDone("wave2_community_v1_done", markerPath);
           broadcastSseEvent({ type: "feed_refreshed" });
           console.log(`✅ [Server] Wave 2 seeded ${usersToAdd.length} community profiles and ${reviewsToAdd.length} candid photo reviews.`);
         } catch (w2Err: any) {
@@ -45471,7 +45491,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
 
       const seedWave3MultiReviewsV1 = async () => {
         const markerPath = path.join(globalUploadsDir, ".wave3_multi_reviews_v1_done");
-        if (fs.existsSync(markerPath)) return;
+        if (await hasPersistentMigrationMarker("wave3_multi_reviews_v1_done", markerPath)) return;
         try {
           const { seedWave3MultiUserReviewsOnly } = await import("./src/utils/wave3ReviewsSeeder.ts");
           const { reviewsToAdd, updatedPlacesMap } = await seedWave3MultiUserReviewsOnly();
@@ -45529,10 +45549,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
             if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
             if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
             if (typeof ogPlaceCardCache !== "undefined") ogPlaceCardCache.clear();
-            try {
-              if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
-              fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-            } catch {}
+            await markPersistentMigrationDone("wave3_multi_reviews_v1_done", markerPath);
             broadcastSseEvent({ type: "feed_refreshed" });
             console.log(`✅ [Server] Wave 3 seeded ${reviewsToAdd.length} candid multi-user photo reviews for 10 existing profiles.`);
           }
@@ -45545,15 +45562,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
 
       const runCommunityEngagementV1 = async () => {
         const markerPath = path.join(globalUploadsDir, ".community_engagement_v3_done");
-        if (bunnyDb) {
-          await Promise.all([
-            bunnyDb.execute("DELETE FROM comments WHERE id LIKE 'comm_179%' OR videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
-            bunnyDb.execute("DELETE FROM likes WHERE videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
-            bunnyDb.execute("DELETE FROM bookmarks WHERE videoId IS NOT NULL AND videoId != '' AND videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {}),
-            bunnyDb.execute("DELETE FROM shares WHERE videoId NOT IN (SELECT id FROM videoReviews)").catch(() => {})
-          ]);
-        }
-        if (fs.existsSync(markerPath)) return;
+        if (await hasPersistentMigrationMarker("community_engagement_v3_done", markerPath)) return;
         try {
           const { seedCommunityEngagementV1 } = await import("./src/utils/engagementSeeder.ts");
           const stats = await seedCommunityEngagementV1();
@@ -45592,10 +45601,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           feedCache.lastFetched = 0;
           if (typeof ogVideoCardCache !== "undefined") ogVideoCardCache.clear();
           if (typeof ogCreatorCardCache !== "undefined") ogCreatorCardCache.clear();
-          try {
-            if (!fs.existsSync(globalUploadsDir)) fs.mkdirSync(globalUploadsDir, { recursive: true });
-            fs.writeFileSync(markerPath, new Date().toISOString(), "utf8");
-          } catch {}
+          await markPersistentMigrationDone("community_engagement_v3_done", markerPath);
           broadcastSseEvent({ type: "feed_refreshed" });
           console.log(`✅ [Server] Community engagement seeded: +${stats.likesAdded} likes, +${stats.bookmarksAdded} saves, +${stats.sharesAdded} shares, +${stats.commentsAdded} comments across ${stats.updatedReviewsCount} reviews.`);
         } catch (engErr: any) {
@@ -45604,6 +45610,67 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       };
 
       await runCommunityEngagementV1().catch(() => {});
+
+      // Non-destructive one-time baseline anchor: ensure seeded Wave 1/2/3 reviews stay anchored at <= 2026-11-10
+      // so EVERY real customer photo review ALWAYS ranks strictly newer across all chronological feeds & Trending.
+      const backdateSeededBaselineOnce = async () => {
+        const markerPath = path.join(globalUploadsDir, ".seeded_baseline_anchor_v1_done");
+        if (await hasPersistentMigrationMarker("seeded_baseline_anchor_v1_done", markerPath)) return;
+        try {
+          const ANCHOR_MS = Date.parse("2026-11-10T12:00:00.000Z");
+          let updatedCount = 0;
+          if (bunnyDb) {
+            const rs = await bunnyDb.execute("SELECT id, createdAt, data FROM videoReviews");
+            let idx = 0;
+            for (const row of (rs.rows || []) as any[]) {
+              const rid = String(row?.id || "").trim();
+              if (!rid || !isSeededReviewId(rid)) continue;
+              let d: any = {};
+              try { d = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+              const curMs = Number(d.createdAtMs || (d.createdAt ? Date.parse(d.createdAt) : 0) || (row.createdAt ? Date.parse(String(row.createdAt)) : 0));
+              if (!curMs || curMs > ANCHOR_MS) {
+                const anchoredMs = ANCHOR_MS - (idx + 1) * 4 * 3600 * 1000;
+                const anchoredIso = new Date(anchoredMs).toISOString();
+                d.createdAtMs = anchoredMs;
+                d.createdAt = anchoredIso;
+                d.recordedAt = anchoredIso;
+                await executeDurableBunnyDb({
+                  sql: "UPDATE videoReviews SET createdAt = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                  args: [anchoredIso, JSON.stringify(d), rid]
+                }).catch(() => {});
+                updatedCount++;
+              }
+              idx++;
+            }
+          }
+          if (updatedCount > 0) {
+            const localRevs = readReviewsIndex();
+            let localIdx = 0;
+            const patched = localRevs.map((r: any) => {
+              if (!r || !r.id || !isSeededReviewId(r.id)) return r;
+              const curMs = Number(r.createdAtMs || (r.createdAt ? Date.parse(r.createdAt) : 0));
+              if (!curMs || curMs > ANCHOR_MS) {
+                const anchoredMs = ANCHOR_MS - (localIdx + 1) * 4 * 3600 * 1000;
+                const anchoredIso = new Date(anchoredMs).toISOString();
+                localIdx++;
+                return { ...r, createdAtMs: anchoredMs, createdAt: anchoredIso, recordedAt: anchoredIso };
+              }
+              localIdx++;
+              return r;
+            });
+            writeReviewsIndex(patched);
+            feedCache.lastFetched = 0;
+          }
+          await markPersistentMigrationDone("seeded_baseline_anchor_v1_done", markerPath);
+          if (updatedCount > 0) {
+            console.log(`✅ [Server] Anchored ${updatedCount} baseline seeded review timestamps so real customer reviews always sort first.`);
+          }
+        } catch (ancErr: any) {
+          console.warn("Baseline timestamp anchor notice:", ancErr?.message || ancErr);
+        }
+      };
+
+      await backdateSeededBaselineOnce().catch(() => {});
 
       // Purge legacy /videos/ folder from Bunny Storage (rev1) and strip any stale .mp4 references in places table
       (async () => {

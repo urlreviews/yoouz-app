@@ -7801,6 +7801,8 @@ export function App() {
       }).catch(() => {});
     }
 
+    const { photoDataUrl: _omitPhotoDataUrl, ...leanReview } = newReview as any;
+
     // Persist to local durable backup store so it is never dropped across reload or navigation
     try {
       const existingSaved = localStorage.getItem("yoouz_local_created_reviews");
@@ -7809,7 +7811,7 @@ export function App() {
         try { list = JSON.parse(existingSaved); } catch (e) {}
       }
       if (!Array.isArray(list)) list = [];
-      list = [newReview, ...list.filter((v: any) => v && v.id !== newReview.id)].slice(0, 50);
+      list = [leanReview, ...list.filter((v: any) => v && v.id !== newReview.id)].slice(0, 50);
       localStorage.setItem("yoouz_local_created_reviews", JSON.stringify(list));
     } catch (e) {}
 
@@ -7818,13 +7820,13 @@ export function App() {
       fetch("/api/videos/save-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newReview)
+        body: JSON.stringify(leanReview)
       }).catch(() => {});
 
       fetch(`/api/nosql/videoReviews/${newReview.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: newReview, merge: true })
+        body: JSON.stringify({ data: leanReview, merge: true })
       }).catch(() => {});
     } catch (e) {}
 

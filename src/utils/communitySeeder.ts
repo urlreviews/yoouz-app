@@ -1497,7 +1497,8 @@ export async function seedAuthenticCommunity(options: { force?: boolean } = {}):
 
   // 5. Process and seed each of the 20 Photo Reviews
   const reviewsToSave: VideoReview[] = [];
-  const now = Date.now();
+  const BASELINE_ANCHOR_MS = Date.parse("2026-11-10T10:00:00.000Z");
+  const now = BASELINE_ANCHOR_MS;
 
   for (const def of COMMUNITY_REVIEWS_DEF) {
     const reviewer = COMMUNITY_REVIEWERS.find((u) => u.id === def.reviewerId)!;
@@ -1806,7 +1807,8 @@ export async function seedWave2CommunityOnly(): Promise<{
   }
 
   const reviewsToAdd: VideoReview[] = [];
-  const now = Date.now();
+  const BASELINE_ANCHOR_MS = Date.parse("2026-11-10T10:00:00.000Z");
+  const now = BASELINE_ANCHOR_MS;
 
   for (const def of WAVE2_REVIEWS_DEF) {
     const reviewer = WAVE2_REVIEWERS.find((u) => u.id === def.reviewerId)!;

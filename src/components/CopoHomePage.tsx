@@ -11,7 +11,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { preloadImage, preloadAllReviewPhotos, preloadBusinessAssets } from "../utils/preloadUtils";
-import { CANONICAL_CATEGORIES, CanonicalCategoryId, ConcreteCategoryId, classifyBusinessCategory, selectDiverseTrendingReviews, isGenericCategory } from "../utils/categoryUtils";
+import { CANONICAL_CATEGORIES, CanonicalCategoryId, ConcreteCategoryId, classifyBusinessCategory, selectDiverseTrendingReviews, isGenericCategory, isSeededReviewId } from "../utils/categoryUtils";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -197,17 +197,14 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return map;
   }, [trendingVideos, places]);
 
-  // Filtered & category-diverse trending reviews ("All" prioritizes real organic user reviews alongside category breadth)
+  // Filtered & category-diverse trending reviews ("All" ALWAYS puts all real user photo reviews first in newest-first order)
   const displayedTrendingVideos = useMemo(() => {
     return selectDiverseTrendingReviews(
       trendingVideos,
       (v) => reviewCategoryMap.get(v.id)?.canonicalId || "services",
       (v) => getReviewTime(v),
       activeCategory,
-      (v) => {
-        const vid = String(v.id || "").toLowerCase();
-        return !vid.startsWith("rev_w3_") && !vid.startsWith("seed_");
-      }
+      (v) => !isSeededReviewId(v.id)
     );
   }, [trendingVideos, reviewCategoryMap, activeCategory]);
 
