@@ -1488,7 +1488,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         id="google-maps-business-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1880,7 +1880,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#050506] space-y-5 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
+          className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] space-y-5 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {copiedNotification && (
@@ -1893,7 +1893,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           {activeTab === "overview" && (
             <div className="space-y-5 animate-in fade-in duration-500">
               {/* Action Buttons Row (Floating Obsidian Glass Circles) */}
-              <div className="py-1 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+              <div className="py-1 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-directions-place"
                   onClick={handleOpenDirections}
@@ -2164,7 +2164,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   {/* Single-Line Horizontal Star Filter Chips */}
                   {Object.values(starCounts).filter(c => c > 0).length > 1 && (
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Users,
   MessageSquare,
@@ -12,11 +12,15 @@ import {
   KeyRound,
   ShieldCheck,
   Settings2,
+  Download,
+  Share,
+  PlusSquare,
 } from "lucide-react";
 import { NavSection, UserProfile } from "../types";
 import { getSafeAvatarUrl } from "../utils/placeUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 import { triggerHaptic } from "../utils/haptics";
+import { usePWAInstall } from "../hooks/usePWAInstall";
 
 interface CopoMobileNavDrawerProps {
   isOpen: boolean;
@@ -49,6 +53,8 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
   onOpenNotificationSettings,
 }) => {
   const { t } = useLanguage();
+  const { canShowInstall, promptInstall } = usePWAInstall();
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   // Lock background scroll & close on Escape while sheet is open
   useEffect(() => {
@@ -124,7 +130,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[200] md:hidden flex justify-end"
+      className="fixed inset-0 z-[200] md:hidden flex justify-end overflow-hidden overscroll-none"
       role="dialog"
       aria-modal="true"
       aria-label="Navigation menu"
@@ -136,7 +142,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
       />
 
       {/* Flush full-height Apple / Google right-aligned sheet */}
-      <aside className="relative z-10 w-[84%] max-w-[332px] h-[100dvh] bg-[#08080A] border-l border-white/[0.08] flex flex-col shadow-[-24px_0_64px_rgba(0,0,0,0.88)] animate-in slide-in-from-right duration-250 ease-out">
+      <aside className="relative z-10 w-[84%] max-w-[332px] h-[100dvh] bg-[#08080A] border-l border-white/[0.08] flex flex-col overflow-hidden overscroll-none shadow-[-24px_0_64px_rgba(0,0,0,0.88)] animate-in slide-in-from-right duration-250 ease-out">
         {/* Top Bar */}
         <div
           className="px-5 pb-3.5 border-b border-white/[0.06] flex items-center justify-between shrink-0"
@@ -171,7 +177,7 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
         </div>
 
         {/* Scrollable Sheet Content — proportioned to fit cleanly without clipping */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3.5 no-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y px-4 py-4 space-y-3.5 no-scrollbar">
           {/* 1. Passwordless Identity & Passkey Card (NEVER asks consumer for email) */}
           <div className="rounded-2xl bg-[#111114] border border-white/[0.07] overflow-hidden divide-y divide-white/[0.06]">
             <button
@@ -373,6 +379,51 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               </div>
               <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
             </button>
+
+            {canShowInstall && (
+              <div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    triggerHaptic("light");
+                    const res = await promptInstall();
+                    if (res === "ios-guide") {
+                      setShowIOSGuide((v) => !v);
+                    } else if (res === "accepted") {
+                      onClose();
+                    }
+                  }}
+                  className="w-full min-h-[52px] px-3.5 py-2.5 flex items-center justify-between gap-3 text-left text-white hover:bg-white/[0.03] active:bg-white/[0.05] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-[10px] bg-white text-zinc-950 flex items-center justify-center shrink-0">
+                      <Download className="w-[16px] h-[16px] stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold tracking-[-0.01em] text-white truncate">
+                        Install Yoouz App
+                      </p>
+                      <p className="text-[11.5px] text-zinc-400 truncate mt-0.5">
+                        Full-screen native home screen app
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" />
+                </button>
+                {showIOSGuide && (
+                  <div className="px-3.5 pb-3 pt-1 text-[12px] text-zinc-300 space-y-2 bg-white/[0.025] border-t border-white/[0.05]">
+                    <div className="flex items-center gap-2">
+                      <Share className="w-3.5 h-3.5 text-white shrink-0" />
+                      <span>1. Tap <strong className="text-white">Share</strong> in Safari&apos;s toolbar</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <PlusSquare className="w-3.5 h-3.5 text-white shrink-0" />
+                      <span>2. Tap <strong className="text-white">Add to Home Screen</strong></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

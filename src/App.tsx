@@ -8105,7 +8105,7 @@ export function App() {
     return (
       <div
         id="copo-app-root"
-        className="w-full h-[100dvh] min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center overflow-hidden font-sans select-none antialiased relative"
+        className="w-full max-w-full h-[100dvh] min-h-[100dvh] bg-black text-white flex flex-col items-center justify-center overflow-hidden overscroll-none font-sans select-none antialiased relative"
       >
         <SEOTags title={`Embedded Photo Review Feed - Yoouz`} description={`Browse authentic live photo reviews for ${embedTargetId}`} url={seoUrl} />
         <Suspense fallback={null}>
@@ -8419,7 +8419,7 @@ export function App() {
 
   if (isPitchRoute) {
     return (
-      <Suspense fallback={<div className="w-screen h-[100dvh] bg-[#050506]" />}>
+      <Suspense fallback={<div className="w-full h-[100dvh] bg-[#050506]" />}>
         <YoouzInvestorPitchView
           places={places}
           videos={videos}
@@ -8437,7 +8437,7 @@ export function App() {
   return (
     <div
       id="copo-app-root"
-      className="flex flex-col w-screen h-[100dvh] overflow-hidden bg-[#050506] text-white font-sans select-none antialiased relative"
+      className="flex flex-col w-full max-w-full h-full h-[100dvh] overflow-hidden overscroll-none bg-[#050506] text-white font-sans select-none antialiased relative"
     >
       <SEOTags title={seoTitle} description={seoDescription} url={seoUrl} />
       <AEOBlock />
@@ -8557,7 +8557,7 @@ export function App() {
 
       {/* 2. Workspace Stage: Optional Left Business/Creator Profile Panel + Main Stage */}
       <Suspense fallback={null}>
-      <div className="flex-1 min-h-0 w-full flex flex-row relative overflow-hidden">
+      <div className="flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-row relative overflow-hidden overscroll-none">
         {isPlaceView ? (
           <CopoPlaceDrawer
             key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
@@ -8625,7 +8625,7 @@ export function App() {
         ) : null}
 
       {/* Main Stage Content Switcher */}
-      <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 flex flex-col relative overflow-hidden bg-[#050506]">
+      <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-col relative overflow-hidden overscroll-none bg-[#050506]">
         {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
             <CopoVideoPlayer

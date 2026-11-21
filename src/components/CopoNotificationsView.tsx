@@ -352,7 +352,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   return (
     <div 
-      className="flex-1 h-full overflow-y-auto bg-[#050506] text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
+      className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
       style={{ paddingBottom: 'calc(7.5rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.5rem + env(safe-area-inset-top, 0px))' }}
     >
       <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
@@ -438,7 +438,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
+        <div className="flex items-center gap-2 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x pb-2 scrollbar-none no-scrollbar">
           {filterPills.map((pill) => {
             const isActive = activeFilter === pill.value;
             return (

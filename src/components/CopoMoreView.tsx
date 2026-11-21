@@ -608,7 +608,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
   return (
     <div
       id="yoouz-more-view-container"
-      className="flex-1 w-full h-full bg-[#050506] overflow-y-auto font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-white/20 selection:text-white"
+      className="flex-1 w-full max-w-full min-w-0 h-full bg-[#050506] overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-white/20 selection:text-white"
     >
       {/* Top Sticky Bar */}
       <header className="sticky top-0 z-40 w-full bg-[#050506]/85 backdrop-blur-2xl border-b border-white/[0.07]">

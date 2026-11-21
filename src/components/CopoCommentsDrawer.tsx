@@ -1189,7 +1189,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
         {/* Comments Scrollable Feed */}
         <div
           ref={commentsListRef}
-          className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4 overscroll-contain bg-transparent touch-pan-y"
+          className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 py-4 space-y-4 overscroll-y-contain overscroll-x-none bg-transparent touch-pan-y"
           onWheel={(e) => e.stopPropagation()}
         >
           {/* 1. Official Verified Business Owner Response (Pinned Banner - Google Maps Standard) */}

@@ -891,7 +891,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
   const totalReviewsCount = placeVideos.length;
 
   return (
-    <div className={`flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col select-none scroll-smooth ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))] items-center' : searchedPlace ? 'p-6 pt-8 md:pt-12 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] items-center' : 'pb-[calc(env(safe-area-inset-bottom,16px)+95px)] md:pb-12'}`}>
+    <div className={`flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-zinc-950 text-white flex flex-col select-none scroll-smooth ${isMobileModal ? 'p-4 pt-2 pb-[calc(env(safe-area-inset-bottom,16px))] items-center' : searchedPlace ? 'p-6 pt-8 md:pt-12 pb-[calc(env(safe-area-inset-bottom,16px)+88px)] items-center' : 'pb-[calc(env(safe-area-inset-bottom,16px)+95px)] md:pb-12'}`}>
       {!searchedPlace ? (
         <main className={isMobileModal ? "w-full max-w-xl flex flex-col items-center mt-2" : "flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-3 xs:pt-5 sm:pt-8 md:pt-16 lg:pt-22 flex flex-col items-center"}>
           {/* 2. Hero Copy - Identical to CopoHomePage */}

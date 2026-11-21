@@ -839,7 +839,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
 
         {/* POST-SUBMIT ZERO-FRICTION ONBOARDING */}
         {postSubmitOnboarding && publishedReview ? (
-          <div className="flex flex-col h-full w-full bg-[#050506] p-6 justify-between overflow-y-auto">
+          <div className="flex flex-col h-full w-full max-w-full bg-[#050506] p-6 justify-between overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y">
             <div className="flex items-center justify-between">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.1] text-white text-[11px] font-semibold">
                 <Check className="w-3.5 h-3.5 text-[#E8C78A] stroke-[2.5]" />

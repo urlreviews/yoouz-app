@@ -139,7 +139,7 @@ export const CopoMobileDiscoverView: React.FC<CopoMobileDiscoverViewProps> = ({
         </button>
       </div>
       
-      <div className="flex-1 overflow-y-auto w-full relative">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y w-full max-w-full relative">
         {submittedQuery ? (
           <CopoDiscoverView
             videos={videos}

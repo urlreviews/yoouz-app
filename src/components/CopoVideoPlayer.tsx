@@ -1048,25 +1048,26 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
       ref={mainRef}
       id="copo-main-feed-container"
       data-hide-scrollbar="true"
-      className={`self-start flex-1 min-h-0 h-full flex items-center justify-center relative overflow-hidden select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:[container-type:size] md:transition-[width,padding] md:duration-200 ${
+      className={`self-start flex-1 min-h-0 h-full max-w-full flex items-center justify-center relative overflow-hidden overscroll-none select-none hide-scrollbar no-scrollbar scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] md:[container-type:size] md:transition-[width,padding] md:duration-200 ${
         commentsOpen
           ? "w-full md:w-[calc(100%-420px)] md:pl-3 md:pr-16 lg:pl-4 lg:pr-[72px]"
           : "w-full"
       } ${isEmbed ? "bg-black p-0 sm:p-2" : "bg-[#050506]"}`}
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      <div className="w-full h-full min-h-0 flex items-center justify-center relative">
+      <div className="w-full max-w-full h-full min-h-0 flex items-center justify-center relative overflow-hidden">
         {/* Scroll Snap Feed Container (Strict 100% height slides on both mobile & desktop) */}
         <div
           ref={containerRef}
           data-hide-scrollbar="true"
-          className={`block w-full flex-1 min-w-0 min-h-0 h-full ${
+          className={`block w-full max-w-full flex-1 min-w-0 min-h-0 h-full overflow-x-hidden overscroll-x-none ${
             commentsOpen ? "overflow-hidden touch-none select-none" : "overflow-y-scroll touch-pan-y"
           } snap-y snap-mandatory overscroll-y-contain no-scrollbar hide-scrollbar scrollbar-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]`}
           style={{
             WebkitOverflowScrolling: "touch",
             scrollSnapType: commentsOpen ? "none" : "y mandatory",
             overscrollBehaviorY: "contain",
+            overscrollBehaviorX: "none",
             scrollbarWidth: "none",
             msOverflowStyle: "none",
             overflowAnchor: "none"

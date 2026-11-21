@@ -490,7 +490,7 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   return (
     <div
       id="copo-discover-root"
-      className="flex-1 h-full w-full relative overflow-y-auto bg-zinc-950 text-white flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-20 select-none"
+      className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-zinc-950 text-white flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-20 select-none"
     >
       {onNavigateHome && (
         <div className="w-full max-w-3xl flex justify-start mb-2">

@@ -201,7 +201,8 @@ function deriveBadgeFromSpecific(specific: string, canonicalId: ConcreteCategory
   if (canonicalId === "services") {
     if (s.includes("legal") || s.includes("law")) return "Legal";
     if (s.includes("clean")) return "Cleaning";
-    if (s.includes("health") || s.includes("medical") || s.includes("dental") || s.includes("clinic") || s.includes("pharmacy")) return "Health";
+    if (s.includes("dentist") || s.includes("dental")) return "Dental";
+    if (s.includes("health") || s.includes("medical") || s.includes("clinic") || s.includes("pharmacy")) return "Health";
     if (s.includes("real estate") || s.includes("property")) return "Real Estate";
     if (s.includes("venture") || s.includes("bank") || s.includes("finance") || s.includes("invest")) return "Finance";
     if (s.includes("marketing") || s.includes("agency") || s.includes("creative")) return "Agency";
@@ -457,53 +458,68 @@ export function classifyBusinessCategory(input: {
 
 /**
  * Interleaves reviews across distinct canonical categories on the default "All" tab
- * so first-time visitors immediately see real-world breadth (Dining, Hotels, Services, Beauty, Auto, Products)
- * instead of 5 similar product photos in a row.
- * Ultra-fresh reviews posted within the last 10 minutes are pinned first so users immediately see their own new post.
+ * so first-time visitors immediately see real-world breadth (Hotels, Dining, Products, Beauty, Auto, Services)
+ * while ALWAYS prioritizing real organic user-snapped reviews over baseline seeded reviews.
+ * Brand-new organic reviews posted within the last 2 hours are pinned right at the front.
  */
 export function selectDiverseTrendingReviews<T>(
   sortedNewestFirst: T[],
   getCategoryId: (item: T) => ConcreteCategoryId,
   getTimestampMs: (item: T) => number,
-  activeCategory: CanonicalCategoryId
+  activeCategory: CanonicalCategoryId,
+  isOrganicItem?: (item: T) => boolean
 ): T[] {
   if (!Array.isArray(sortedNewestFirst) || sortedNewestFirst.length === 0) return [];
 
+  const checkOrganic = isOrganicItem || (() => true);
+
+  // Sort helper: organic real user reviews always precede baseline seeded items, newest-first within each group
+  const prioritizeOrganic = (items: T[]): T[] => {
+    const organic: T[] = [];
+    const seeded: T[] = [];
+    for (const item of items) {
+      if (checkOrganic(item)) organic.push(item);
+      else seeded.push(item);
+    }
+    return [...organic, ...seeded];
+  };
+
   if (activeCategory !== "all") {
-    return sortedNewestFirst.filter((item) => getCategoryId(item) === activeCategory);
+    const filtered = sortedNewestFirst.filter((item) => getCategoryId(item) === activeCategory);
+    return prioritizeOrganic(filtered);
   }
 
   const now = Date.now();
-  const FRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+  const ULTRA_FRESH_WINDOW_MS = 2 * 60 * 60 * 1000; // 2 hours — brand-new user posts appear immediately at card #1
   const freshPinned: T[] = [];
   const pool: T[] = [];
 
   for (const item of sortedNewestFirst) {
     const ts = getTimestampMs(item);
-    if (ts > 0 && now - ts >= 0 && now - ts <= FRESH_WINDOW_MS) {
+    if (checkOrganic(item) && ts > 0 && now - ts >= 0 && now - ts <= ULTRA_FRESH_WINDOW_MS) {
       freshPinned.push(item);
     } else {
       pool.push(item);
     }
   }
 
-  // Group remaining pool by canonical category (preserving newest-first inside each bucket)
+  // Group remaining pool by canonical category, placing organic user reviews ahead of seeded baseline reviews in every bucket
   const buckets = new Map<ConcreteCategoryId, T[]>();
-  for (const item of pool) {
+  for (const item of prioritizeOrganic(pool)) {
     const cat = getCategoryId(item);
     const list = buckets.get(cat);
     if (list) list.push(item);
     else buckets.set(cat, [item]);
   }
 
-  // Showcase experiential real-world categories alongside products on round 1
-  // so the very first 5 cards immediately scream "Real Photo Reviews of Places, Hotels, Dining, Services & Products"
+  // Round 1 showcase order guarantees visual breadth across Hotels, Dining, Products, Beauty, Auto, Services, Shopping, Tech
+  // so real user product/skincare photos appear right in the first 5 cards alongside real-world places!
   const showcaseOrder: ConcreteCategoryId[] = [
     "hotels",
     "restaurants",
-    "auto",
-    "beauty",
     "products",
+    "beauty",
+    "auto",
     "services",
     "shopping",
     "tech",
@@ -511,18 +527,40 @@ export function selectDiverseTrendingReviews<T>(
 
   const interleaved: T[] = [...freshPinned];
   const used = new Set<T>(freshPinned);
-  let madeProgress = true;
 
+  // Round 1: Pick the top review (organic preferred) from each distinct category
+  for (const catId of showcaseOrder) {
+    const list = buckets.get(catId);
+    if (list && list.length > 0) {
+      const nextItem = list.shift()!;
+      if (!used.has(nextItem)) {
+        used.add(nextItem);
+        interleaved.push(nextItem);
+      }
+    }
+  }
+
+  // Round 2: Surface all remaining organic real user reviews immediately after the diverse opening showcase
+  for (const item of pool) {
+    if (!used.has(item) && checkOrganic(item)) {
+      used.add(item);
+      interleaved.push(item);
+    }
+  }
+
+  // Round 3+: Interleave remaining baseline reviews cleanly across categories
+  let madeProgress = true;
   while (madeProgress) {
     madeProgress = false;
     for (const catId of showcaseOrder) {
       const list = buckets.get(catId);
-      if (list && list.length > 0) {
-        const nextItem = list.shift()!;
-        if (!used.has(nextItem)) {
-          used.add(nextItem);
-          interleaved.push(nextItem);
+      while (list && list.length > 0) {
+        const candidate = list.shift()!;
+        if (!used.has(candidate)) {
+          used.add(candidate);
+          interleaved.push(candidate);
           madeProgress = true;
+          break;
         }
       }
     }

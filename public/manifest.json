@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Yoouz - Live Photo Reviews | Real Photos. Real Proof.",
   "short_name": "Yoouz",
   "description": "A picture is worth a thousand words. Authentic 3-second live camera photo reviews with 1–5 whole-star ratings for every business, restaurant, and website. Zero fake text reviews and zero gallery uploads.",
@@ -6,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#050506",
+  "theme_color": "#050506",
   "orientation": "portrait",
   "categories": ["lifestyle", "shopping", "social", "travel", "food"],
   "icons": [

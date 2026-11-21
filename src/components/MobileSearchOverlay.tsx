@@ -467,14 +467,14 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[500] bg-[#050506] text-white flex flex-col h-[100dvh] select-none overflow-hidden animate-in fade-in duration-150"
+      className="fixed inset-0 z-[500] w-full max-w-full bg-[#050506] text-white flex flex-col h-[100dvh] select-none overflow-hidden overscroll-none animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-label={isReviewMode ? "Choose a business to review" : "Search Yoouz"}
     >
       {/* Subtle Flagship Obsidian Top Ambient Depth */}
       <div
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[420px] h-[200px] bg-gradient-to-b from-white/[0.045] via-white/[0.015] to-transparent rounded-full blur-3xl"
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[min(420px,100%)] h-[200px] bg-gradient-to-b from-white/[0.045] via-white/[0.015] to-transparent rounded-full blur-3xl"
         aria-hidden="true"
       />
 
@@ -642,7 +642,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleBodyScroll}
-        className="relative z-10 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,16px)+28px)] overscroll-contain no-scrollbar"
+        className="relative z-10 flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,16px)+28px)] no-scrollbar"
       >
         {!hasQuery ? (
           /* ================= ZERO-STATE SPOTLIGHT DISCOVERY ================= */

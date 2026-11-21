@@ -2613,8 +2613,8 @@ ${jsonLd}
   }
 
   return (
-    <div className="w-full max-w-full h-[100dvh] flex bg-[#050506] select-none antialiased overflow-x-hidden font-sans text-white copo-business-dashboard">
-      <div className="w-full h-full flex">
+    <div className="w-full max-w-full h-[100dvh] flex bg-[#050506] select-none antialiased overflow-hidden overscroll-none font-sans text-white copo-business-dashboard">
+      <div className="w-full max-w-full h-full flex min-w-0 overflow-hidden">
       {/* Desktop Left Workspace Sidebar (Flagship Obsidian) */}
       <aside className="w-[252px] h-[100dvh] bg-[#050506] border-r border-white/[0.07] px-3.5 py-5 flex-col justify-between shrink-0 select-none hidden md:flex z-50 copo-business-sidebar text-white">
         {/* Scrollable Upper Area */}
@@ -3074,9 +3074,9 @@ ${jsonLd}
           {/* Center/Right Workspace Main Scroll Area */}
           <main
             ref={mainScrollRef}
-            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#050506] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-12 no-scrollbar scroll-smooth w-full max-w-full"
+            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-12 no-scrollbar scroll-smooth w-full max-w-full min-w-0"
           >
-            <div className="max-w-[1120px] mx-auto space-y-6 w-full max-w-full overflow-x-hidden">
+            <div className="max-w-[1120px] mx-auto space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
 
             {showEmbedTester ? (
               <div className="animate-in fade-in duration-300">
@@ -5324,7 +5324,7 @@ ${jsonLd}
               </div>
 
               {/* Scrollable Grouped Menu */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 no-scrollbar">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y px-4 py-4 space-y-5 no-scrollbar">
                 {/* Workspace Group */}
                 <div className="space-y-1">
                   <div className="px-2 pb-1 text-[11px] font-medium text-zinc-500">Workspace</div>

@@ -467,7 +467,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
   const totalFollowingCount = followedAuthors.length + followedPlacesList.length;
 
   return (
-    <div id="following-directory-container" className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-3.5 sm:p-6 select-none">
+    <div id="following-directory-container" className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white p-3.5 sm:p-6 select-none">
       <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-36 md:pb-12">
         {/* Sleek Flagship Header */}
         <div id="following-header-card" className="space-y-3.5">

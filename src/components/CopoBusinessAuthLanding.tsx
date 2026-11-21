@@ -360,7 +360,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
   };
 
   return (
-    <div className="relative w-full h-full min-h-0 flex-1 overflow-y-auto bg-[#050506] flex flex-col antialiased text-white selection:bg-white/15 selection:text-white copo-business-auth-landing">
+    <div className="relative w-full max-w-full min-w-0 h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] flex flex-col antialiased text-white selection:bg-white/15 selection:text-white copo-business-auth-landing">
       
       {/* Subtle Ambient Radial Highlight at Top */}
       <div 

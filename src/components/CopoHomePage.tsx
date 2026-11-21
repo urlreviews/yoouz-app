@@ -197,13 +197,17 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     return map;
   }, [trendingVideos, places]);
 
-  // Filtered & category-diverse trending reviews ("All" interleaves across categories so it never looks like a store)
+  // Filtered & category-diverse trending reviews ("All" prioritizes real organic user reviews alongside category breadth)
   const displayedTrendingVideos = useMemo(() => {
     return selectDiverseTrendingReviews(
       trendingVideos,
       (v) => reviewCategoryMap.get(v.id)?.canonicalId || "services",
       (v) => getReviewTime(v),
-      activeCategory
+      activeCategory,
+      (v) => {
+        const vid = String(v.id || "").toLowerCase();
+        return !vid.startsWith("rev_w3_") && !vid.startsWith("seed_");
+      }
     );
   }, [trendingVideos, reviewCategoryMap, activeCategory]);
 
@@ -1068,9 +1072,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full relative overflow-y-auto bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-8 scroll-smooth">
+    <div className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-8 scroll-smooth">
       {/* 1. Mobile Frameless Obsidian Header (md:hidden) — Brand Left, Bell + Minimal Menu Right */}
-      <header className="w-full flex md:hidden items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top,12px))] pb-2.5 shrink-0 select-none z-20 border-b border-white/[0.06] bg-[#050506]/88 backdrop-blur-2xl sticky top-0">
+      <header className="w-full max-w-full flex md:hidden items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top,12px))] pb-2.5 shrink-0 select-none z-20 border-b border-white/[0.06] bg-[#050506]/88 backdrop-blur-2xl sticky top-0">
         {searchMode === "review" ? (
           <div className="flex items-center gap-2.5">
             {onClose && (
@@ -1150,12 +1154,14 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Stage — Widescreen 1360px Gallery Canvas */}
-      <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 xs:pt-5 sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative">
-        {/* Subtle Editorial Radial Top Depth */}
+      <main className="flex-1 w-full max-w-[1360px] min-w-0 mx-auto px-4 sm:px-6 lg:px-8 pt-4 xs:pt-5 sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative overflow-x-clip">
+        {/* Subtle Editorial Radial Top Depth (strictly clipped so it never widens mobile scrollWidth) */}
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-gradient-to-b from-white/[0.035] via-white/[0.015] to-transparent rounded-full blur-3xl pointer-events-none"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[260px] overflow-hidden"
           aria-hidden="true"
-        />
+        >
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[min(520px,100%)] h-[220px] bg-gradient-to-b from-white/[0.035] via-white/[0.015] to-transparent rounded-full blur-3xl" />
+        </div>
 
         {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
         <div className="w-full text-center max-w-3xl mx-auto mb-4 sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
@@ -1173,8 +1179,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             </p>
           ) : (
             <>
-              <p className="hidden sm:block text-zinc-400 text-[15px] md:text-[16px] mt-2.5 leading-relaxed max-w-2xl mx-auto font-normal tracking-[-0.01em]">
-                Real customer photo reviews of places, hotels, restaurants, products &amp; services — zero fake text.
+              <p className="hidden sm:block text-zinc-400 text-[15px] md:text-[16px] mt-2.5 leading-relaxed max-w-3xl mx-auto font-normal tracking-[-0.01em]">
+                Real customer photo reviews of hotels, restaurants, products &amp; services — zero fake text.
               </p>
               <p className="sm:hidden text-zinc-400 text-[13.5px] mt-1.5 leading-snug max-w-[330px] mx-auto font-normal tracking-[-0.01em]">
                 Real photo reviews of places &amp; brands.
@@ -1520,13 +1526,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 3.5 Unified Universal Category Filter Rail — Apple/Google Single-Row Precision */}
         <nav
           aria-label="Browse reviews by category"
-          className={`w-full max-w-[1360px] mb-5 sm:mb-7 relative z-20 transition-all duration-200 ${
+          className={`w-full max-w-full overflow-hidden mb-5 sm:mb-7 relative z-20 transition-all duration-200 ${
             !isMobile && showDropdown && query.trim().length > 0
               ? "opacity-25 pointer-events-none"
               : "opacity-100"
           }`}
         >
-          <div className="flex items-center md:justify-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 py-0.5">
+          <div className="flex items-center md:justify-center gap-1.5 sm:gap-2 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5 pr-1">
             {CANONICAL_CATEGORIES.map((cat) => {
               const isSelected = activeCategory === cat.id;
               return (
@@ -1689,11 +1695,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </div>
             )
           ) : (
-            <div className="relative">
+            <div className="relative w-full max-w-full overflow-hidden">
               {/* Compact Widescreen 5-Card Row on Desktop, 2+Peek Compact Review Cards on Mobile */}
               <div
                 ref={carouselRef}
-                className="flex items-stretch gap-3 sm:gap-3.5 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
+                className="flex items-stretch gap-3 sm:gap-3.5 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
               >
                 {displayedTrendingVideos.map((video, idx) => {
                   const matchedPlace = places.find((p) => isPlaceReviewMatch(video, p));

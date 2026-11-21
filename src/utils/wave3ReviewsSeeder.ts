@@ -319,11 +319,17 @@ export async function seedWave3MultiUserReviewsOnly(): Promise<{
     }
   } catch {}
 
+  const existingReviewCreatedAtById = new Map<string, number>();
   try {
     const rRows = await db.execute("SELECT id, userId, data FROM videoReviews");
     for (const row of (rRows.rows || []) as any[]) {
       let parsed: any = {};
       try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+      const rid = String(row.id || parsed.id || "").trim();
+      const existingTs = Number(parsed.createdAtMs || (parsed.createdAt ? Date.parse(parsed.createdAt) : 0));
+      if (rid && Number.isFinite(existingTs) && existingTs > 0) {
+        existingReviewCreatedAtById.set(rid, existingTs);
+      }
       const uid = String(row.userId || parsed.userId || parsed.author?.id || "").trim();
       if (uid && parsed.author && !existingAuthorsById.has(uid)) {
         existingAuthorsById.set(uid, parsed.author);
@@ -390,7 +396,11 @@ export async function seedWave3MultiUserReviewsOnly(): Promise<{
       } catch {}
     }
 
-    const reviewCreatedAtMs = now - def.hoursAgo * 3600 * 1000;
+    // Preserve existing timestamp on redeploy; for fresh inserts offset by +72h so seeded items never outrank real live user reviews
+    const existingTs = existingReviewCreatedAtById.get(def.reviewId);
+    const reviewCreatedAtMs = existingTs && existingTs > 0
+      ? existingTs
+      : now - (def.hoursAgo + 72) * 3600 * 1000;
     const photoUrl = `/uploads/photos/${def.photoFilename}`;
     const starVal = Number(def.rating);
 

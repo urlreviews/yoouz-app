@@ -98,7 +98,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Header Section */}

@@ -1650,7 +1650,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   const numPagesStr = numPages < 10 ? `0${numPages}` : `${numPages}`;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#09090B] text-white flex flex-col font-sans overflow-hidden">
+    <div className="fixed inset-0 z-[9999] w-full max-w-full bg-[#09090B] text-white flex flex-col font-sans overflow-hidden overscroll-none">
       <style>{`
         .pdf-text-layer {
           position: absolute;

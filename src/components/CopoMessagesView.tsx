@@ -1508,7 +1508,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-[#050506] text-white p-0 sm:p-4 md:p-6 flex flex-col select-none">
+    <div className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white p-0 sm:p-4 md:p-6 flex flex-col select-none">
       
       {/* Toast alert banner */}
       {toastMessage && (
@@ -1615,7 +1615,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
             </div>
 
             {/* List of active threads */}
-            <div className="flex-1 overflow-y-auto divide-y divide-white/[0.06]">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y divide-y divide-white/[0.06]">
               {filteredThreads.length === 0 ? (
                 <div className="p-8 text-center text-zinc-300 space-y-3 mt-4">
                   <Mail className="w-8 h-8 text-zinc-600 mx-auto" />
@@ -1990,7 +1990,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 )}
 
                 {/* Messages Log area */}
-                <div className="flex-1 p-3.5 sm:p-5 overflow-y-auto space-y-4 overscroll-contain">
+                <div className="flex-1 p-3.5 sm:p-5 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y space-y-4">
                   {/* Introductory profile greeting when conversation has no messages yet */}
                   {activeThreadMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-12 px-4 space-y-3.5 my-auto animate-in fade-in duration-300">

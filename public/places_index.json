@@ -1,57 +1,11 @@
 [
   {
-    "id": "sephora.com",
-    "category": "Beauty & Cosmetics",
-    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
-    "name": "Sephora",
-    "categoryType": "beauty",
-    "address": "350 Mission St, San Francisco, CA 94105",
-    "city": "San Francisco",
-    "country": "Japan",
-    "lat": 0,
-    "lng": 0,
-    "rating": 3,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "brandDomain": "sephora.com",
-    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/sephora.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (877) 737-4672",
-    "email": "customerservice@sephora.com",
-    "website": "https://sephora.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Sephora · beauty & cosmetics · San Francisco, Japan",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1
-  },
-  {
     "id": "amazon.com",
     "category": "E-Commerce & Retail",
     "logoUrl": "/uploads/brand-assets/logos/amazon.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/amazon.com.webp",
     "name": "Amazon",
-    "categoryType": "shopping",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -97,7 +51,7 @@
     "logoUrl": "/uploads/brand-assets/logos/dominos.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/dominos.com.webp",
     "name": "Domino's Pizza",
-    "categoryType": "restaurants",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -143,7 +97,7 @@
     "logoUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/mamotcv.com.webp",
     "name": "Mamo TCV",
-    "categoryType": "services",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -189,7 +143,7 @@
     "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
     "name": "Apple",
-    "categoryType": "tech",
+    "categoryType": "all",
     "address": "One Apple Park Way",
     "city": "Cupertino, CA",
     "country": "United States",
@@ -230,18 +184,18 @@
     "videoReviewCount": 1
   },
   {
-    "id": "delta.com",
-    "category": "Airlines & Travel",
-    "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
-    "name": "Delta Air Lines",
-    "categoryType": "hotels",
+    "id": "easyhotel.com",
+    "category": "Hotel & Hospitality",
+    "logoUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/easyhotel.com.webp",
+    "name": "easyHotel",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
     "lat": 0,
     "lng": 0,
-    "rating": 4,
+    "rating": 2,
     "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
@@ -250,21 +204,67 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/uploads/brand-assets/logos/delta.com.svg",
-    "brandDomain": "delta.com",
-    "ogImage": "/uploads/brand-assets/banners/delta.com.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
+    "brandDomain": "easyhotel.com",
+    "ogImage": "/uploads/brand-assets/banners/easyhotel.com.webp",
     "photos": [
-      "/uploads/brand-assets/banners/delta.com.webp"
+      "/uploads/brand-assets/banners/easyhotel.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://delta.com",
+    "website": "https://easyhotel.com",
     "priceRange": "N/A",
     "isSavedToProfile": true,
     "plusCode": "",
-    "description": "Delta Air Lines · airlines & travel · delta.com",
+    "description": "easyHotel is a premier hospitality destination online at easyhotel.com, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "sephora.com",
+    "category": "Beauty & Cosmetics",
+    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
+    "name": "Sephora",
+    "categoryType": "all",
+    "address": "350 Mission St, San Francisco, CA 94105",
+    "city": "San Francisco",
+    "country": "Japan",
+    "lat": 0,
+    "lng": 0,
+    "rating": 3,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "brandDomain": "sephora.com",
+    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/sephora.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (877) 737-4672",
+    "email": "customerservice@sephora.com",
+    "website": "https://sephora.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Sephora · beauty & cosmetics · San Francisco, Japan",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -281,7 +281,7 @@
     "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/7-eleven.com.webp",
     "name": "7-Eleven",
-    "categoryType": "shopping",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -327,7 +327,7 @@
     "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
     "name": "Uniqlo US",
-    "categoryType": "shopping",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -373,7 +373,7 @@
     "logoUrl": "/uploads/brand-assets/logos/izci.be.svg",
     "bannerUrl": "/uploads/brand-assets/banners/izci.be.webp",
     "name": "Bosch Car Service Izci",
-    "categoryType": "auto",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -414,58 +414,12 @@
     "videoReviewCount": 1
   },
   {
-    "id": "easyhotel.com",
-    "category": "Hotel & Hospitality",
-    "logoUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/easyhotel.com.webp",
-    "name": "easyHotel",
-    "categoryType": "hotels",
-    "address": "",
-    "city": "",
-    "country": "",
-    "lat": 0,
-    "lng": 0,
-    "rating": 2,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/easyhotel.com.webp",
-    "brandDomain": "easyhotel.com",
-    "ogImage": "/uploads/brand-assets/banners/easyhotel.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/easyhotel.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://easyhotel.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "easyHotel is a premier hospitality destination online at easyhotel.com, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1
-  },
-  {
-    "id": "cetaphil.com",
-    "category": "Skincare & Beauty",
-    "logoUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/cetaphil.com.webp",
-    "name": "Cetaphil",
-    "categoryType": "beauty",
+    "id": "delta.com",
+    "category": "Airlines & Travel",
+    "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
+    "name": "Delta Air Lines",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -480,67 +434,21 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
-    "brandDomain": "cetaphil.com",
-    "ogImage": "/uploads/brand-assets/banners/cetaphil.com.webp",
+    "avatarUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "brandDomain": "delta.com",
+    "ogImage": "/uploads/brand-assets/banners/delta.com.webp",
     "photos": [
-      "/uploads/brand-assets/banners/cetaphil.com.webp"
+      "/uploads/brand-assets/banners/delta.com.webp"
     ],
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "",
     "email": "",
-    "website": "https://cetaphil.com",
+    "website": "https://delta.com",
     "priceRange": "N/A",
     "isSavedToProfile": true,
     "plusCode": "",
-    "description": "Cetaphil is a dependable automotive and transportation service provider online at cetaphil.com, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1
-  },
-  {
-    "id": "nike.com",
-    "category": "Sportswear & Footwear",
-    "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
-    "name": "Nike",
-    "categoryType": "products",
-    "address": "One Bowerman Dr",
-    "city": "Beaverton, OR",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/nike.com.svg",
-    "brandDomain": "nike.com",
-    "ogImage": "/uploads/brand-assets/banners/nike.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/nike.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (800) 806-6453",
-    "email": "",
-    "website": "https://nike.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Nike · sportswear & footwear · Beaverton, OR, United States",
+    "description": "Delta Air Lines · airlines & travel · delta.com",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -557,7 +465,7 @@
     "logoUrl": "/uploads/brand-assets/logos/mcdonalds.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/mcdonalds.com.webp",
     "name": "McDonald's",
-    "categoryType": "restaurants",
+    "categoryType": "all",
     "address": "110 N Carpenter St",
     "city": "Chicago, IL",
     "country": "United States",
@@ -603,7 +511,7 @@
     "logoUrl": "/uploads/brand-assets/logos/dunkindonuts.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/dunkindonuts.com.webp",
     "name": "Dunkin' Donuts",
-    "categoryType": "restaurants",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -649,7 +557,7 @@
     "logoUrl": "/uploads/brand-assets/logos/doordash.com.svg",
     "bannerUrl": "/uploads/brand-assets/banners/doordash.com.webp",
     "name": "DoorDash",
-    "categoryType": "restaurants",
+    "categoryType": "all",
     "address": "",
     "city": "",
     "country": "",
@@ -679,6 +587,98 @@
     "isSavedToProfile": true,
     "plusCode": "",
     "description": "DoorDash is a popular dining destination online at doordash.com, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "cetaphil.com",
+    "category": "Skincare & Beauty",
+    "logoUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/cetaphil.com.webp",
+    "name": "Cetaphil",
+    "categoryType": "all",
+    "address": "",
+    "city": "",
+    "country": "",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/cetaphil.com.webp",
+    "brandDomain": "cetaphil.com",
+    "ogImage": "/uploads/brand-assets/banners/cetaphil.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/cetaphil.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://cetaphil.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Cetaphil is a dependable automotive and transportation service provider online at cetaphil.com, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "nike.com",
+    "category": "Sportswear & Footwear",
+    "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
+    "name": "Nike",
+    "categoryType": "all",
+    "address": "One Bowerman Dr",
+    "city": "Beaverton, OR",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "brandDomain": "nike.com",
+    "ogImage": "/uploads/brand-assets/banners/nike.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/nike.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (800) 806-6453",
+    "email": "",
+    "website": "https://nike.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Nike · sportswear & footwear · Beaverton, OR, United States",
     "popularKeywords": [
       {
         "tag": "Verified",

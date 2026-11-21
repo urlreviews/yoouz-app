@@ -1159,7 +1159,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         id="google-maps-creator-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 overscroll-contain transition-transform"
+        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform"
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
@@ -1566,14 +1566,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
+          className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* Tab 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="px-5 py-3 space-y-5">
               {/* Action Buttons Row */}
-              <div className="py-1 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto no-scrollbar whitespace-nowrap">
+              <div className="py-1 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}
@@ -2422,7 +2422,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
 
               {/* Sub-Filters inside Following: All, Businesses, Reviewers */}
               {socialModalTab === "following" && (
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5">
                   <button
                     onClick={() => setFollowingFilter("all")}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border ${
