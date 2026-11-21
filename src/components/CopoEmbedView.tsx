@@ -842,7 +842,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   rating={getRoundedRating(currentVideo?.rating || 5)}
                   roundToWhole={true}
                   starClassName="w-[15px] h-[15px]"
-                  filledColorClass="fill-[#FBBF24] text-[#FBBF24] drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
+                  filledColorClass="fill-[#F5B942] text-[#F5B942] drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
                   emptyColorClass="fill-white/20 text-white/35 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
                 />
                 <span className="text-[13.5px] font-bold text-white tabular-nums tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
@@ -888,7 +888,7 @@ export const CopoEmbedView: React.FC<CopoEmbedViewProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 text-[11.5px] text-white/75 leading-tight mt-0.5 truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                     <span className="inline-flex items-center gap-0.5 font-semibold text-white/90 shrink-0 tabular-nums">
-                      <Star className="w-2.5 h-2.5 fill-[#FBBF24] text-[#FBBF24]" />
+                      <Star className="w-2.5 h-2.5 fill-[#F5B942] text-[#F5B942]" />
                       {overallRating.toFixed(1)}
                     </span>
                     <span className="text-white/60 shrink-0 tabular-nums">({totalReviewsCount})</span>

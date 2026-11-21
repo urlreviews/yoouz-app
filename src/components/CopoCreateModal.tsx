@@ -892,10 +892,11 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
+                className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
                 title="Close"
+                aria-label="Close"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4.5 h-4.5" />
               </button>
             </div>
 
@@ -929,7 +930,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
                       onChange={(e) => setUsernameInput(e.target.value)}
                       placeholder="yourhandle"
                       maxLength={24}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-full bg-white/[0.04] border border-white/[0.1] focus:border-white/30 text-sm font-medium text-white outline-none"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-full bg-white/[0.04] border border-white/[0.1] focus:border-white/30 text-[16px] md:text-sm font-medium text-white outline-none"
                     />
                   </div>
                   <button

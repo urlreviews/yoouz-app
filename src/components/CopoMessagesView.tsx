@@ -1600,7 +1600,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   placeholder={t("messages.searchPlaceholder", "Search chats or reviewers...")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white/[0.04] text-xs text-white placeholder-zinc-500 pl-10 pr-9 py-2.5 rounded-full border border-white/[0.08] focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all font-medium"
+                  className="w-full bg-white/[0.04] text-[16px] md:text-xs text-white placeholder-zinc-500 pl-10 pr-9 py-2.5 rounded-full border border-white/[0.08] focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all font-medium"
                 />
                 {searchTerm && (
                   <button
@@ -2540,7 +2540,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 autoFocus
-                className="w-full bg-zinc-950 text-xs text-white placeholder-zinc-500 pl-9 pr-8 py-2.5 rounded-xl border border-zinc-800 focus:outline-none focus:border-zinc-600 font-medium"
+                className="w-full bg-white/[0.04] text-[16px] md:text-xs text-white placeholder-zinc-500 pl-9 pr-8 py-2.5 rounded-xl border border-white/[0.09] focus:outline-none focus:border-white/25 font-medium"
               />
               {newChatSearch && (
                 <button

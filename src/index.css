@@ -311,3 +311,22 @@ video[id^="copo-feed-video-"],
   background-color: #000000 !important;
 }
 
+/* Crisp WCAG AA keyboard focus ring (desktop Tab navigation only, never on touch/click) */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.48);
+  outline-offset: 2px;
+}
+
+/* Respect OS-level Reduced Motion preferences across iOS, macOS, Android & Windows */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

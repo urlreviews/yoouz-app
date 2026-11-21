@@ -153,12 +153,12 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
             onClick={() => handleNavTap("home")}
             className="flex items-center gap-2.5 text-left active:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-[10px] bg-white/[0.08] border border-white/[0.12] flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
-                <path d="M12 2.4l2.9 6.2 6.7.9-4.9 4.7 1.2 6.7-5.9-3.2-5.9 3.2 1.2-6.7-4.9-4.7 6.7-.9L12 2.4z" />
+            <div className="w-[34px] h-[34px] rounded-[10px] bg-[#121216] border border-white/[0.12] flex items-center justify-center shrink-0 shadow-[0_4px_14px_rgba(0,0,0,0.45)]">
+              <svg viewBox="0 0 24 24" className="w-[17px] h-[17px] fill-white" aria-hidden="true">
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
               </svg>
             </div>
-            <span className="text-[17px] font-bold tracking-[-0.025em] text-white">
+            <span className="text-[19px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif] text-white">
               Yoouz
             </span>
           </button>
@@ -170,9 +170,9 @@ export const CopoMobileNavDrawer: React.FC<CopoMobileNavDrawerProps> = ({
               onClose();
             }}
             aria-label="Close menu"
-            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.11] active:scale-95 border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+            className="w-11 h-11 rounded-full bg-white/[0.06] hover:bg-white/[0.11] active:scale-95 border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
           >
-            <X className="w-4 h-4 stroke-[2]" />
+            <X className="w-4.5 h-4.5 stroke-[2]" />
           </button>
         </div>
 

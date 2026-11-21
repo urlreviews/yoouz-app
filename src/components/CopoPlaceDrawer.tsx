@@ -1534,8 +1534,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             triggerHaptic("light");
             onClose();
           }}
-          className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+          className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
           title={t("common.back", "Back to previous page")}
+          aria-label={t("common.back", "Back to previous page")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -1548,8 +1549,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("light");
               setIsQrModalOpen(true);
             }}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
             title={t("place.qrCode", "Business QR Code")}
+            aria-label={t("place.qrCode", "Business QR Code")}
           >
             <QrCode className="w-4 h-4 text-white" />
           </button>
@@ -1558,8 +1560,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               triggerHaptic("light");
               handleShare();
             }}
-            className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
             title={t("place.shareBusiness", "Share Business")}
+            aria-label={t("place.shareBusiness", "Share Business")}
           >
             <Share2 className="w-4 h-4" />
           </button>
@@ -1574,8 +1577,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   placeId: place.id
                 });
               }}
-              className="w-9 h-9 rounded-full bg-black/60 hover:bg-red-500/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-red-500/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
               title={t("place.reportBusiness", "Report or Flag Business")}
+              aria-label={t("place.reportBusiness", "Report or Flag Business")}
             >
               <Flag className="w-4 h-4 text-white" />
             </button>
@@ -1789,8 +1793,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   <CopoStarRating
                     rating={dynamicAvgRating}
                     starClassName="w-4.5 h-4.5"
-                    filledColorClass="fill-[#E8C78A] text-[#E8C78A]"
-                    emptyColorClass="fill-white/10 text-white/20"
+                    filledColorClass="fill-[#F5B942] text-[#F5B942]"
+                    emptyColorClass="fill-white/15 text-white/25"
                   />
                 </div>
                 <div className="h-4 w-px bg-white/[0.1]" />

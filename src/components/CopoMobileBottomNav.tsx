@@ -70,7 +70,8 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           id="mobile-nav-home-btn"
           type="button"
           onClick={() => onSelectSection("home")}
-          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+          aria-current={isHomeActive ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center min-h-[44px] py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
             isHomeActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -82,15 +83,18 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             />
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+            className={`text-[10px] tracking-tight mt-1 leading-none transition-colors whitespace-nowrap ${
               isHomeActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.home", "Home")}
           </span>
-          {isHomeActive && (
-            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
-          )}
+          <span
+            className={`mt-1 w-1 h-1 rounded-full bg-white transition-all duration-200 ${
+              isHomeActive ? "opacity-100 scale-100" : "opacity-0 scale-50"
+            }`}
+            aria-hidden="true"
+          />
         </button>
 
         {/* 2. Search */}
@@ -105,7 +109,8 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             }
             focusActiveSearch();
           }}
-          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+          aria-current={isSearchActive ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center min-h-[44px] py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
             isSearchActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -117,15 +122,18 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             />
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+            className={`text-[10px] tracking-tight mt-1 leading-none transition-colors whitespace-nowrap ${
               isSearchActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.search", "Search")}
           </span>
-          {isSearchActive && (
-            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
-          )}
+          <span
+            className={`mt-1 w-1 h-1 rounded-full bg-white transition-all duration-200 ${
+              isSearchActive ? "opacity-100 scale-100" : "opacity-0 scale-50"
+            }`}
+            aria-hidden="true"
+          />
         </button>
 
         {/* 3. CENTER HERO ACTION: Signature Tactile White Camera Shutter */}
@@ -156,7 +164,8 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           id="mobile-nav-inbox-btn"
           type="button"
           onClick={() => onSelectSection("messages")}
-          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+          aria-current={isMessagesActive ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center min-h-[44px] py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
             isMessagesActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
         >
@@ -167,21 +176,24 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
               }`}
             />
             {unreadMessagesCount > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center px-1 text-[9px] font-bold rounded-full bg-white text-zinc-950 border border-[#111114] shadow-md">
+              <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center px-1 text-[9px] font-bold tabular-nums rounded-full bg-white text-zinc-950 border border-[#111114] shadow-md">
                 {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
               </span>
             )}
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors ${
+            className={`text-[10px] tracking-tight mt-1 leading-none transition-colors whitespace-nowrap ${
               isMessagesActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {t("nav.messages", "Messages")}
           </span>
-          {isMessagesActive && (
-            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
-          )}
+          <span
+            className={`mt-1 w-1 h-1 rounded-full bg-white transition-all duration-200 ${
+              isMessagesActive ? "opacity-100 scale-100" : "opacity-0 scale-50"
+            }`}
+            aria-hidden="true"
+          />
         </button>
 
         {/* 5. Profile */}
@@ -189,7 +201,8 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
           id="mobile-nav-profile-btn"
           type="button"
           onClick={() => onSelectSection("profile")}
-          className={`relative flex flex-col items-center justify-center py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
+          aria-current={isProfileActive ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center min-h-[44px] py-1 px-1.5 flex-1 rounded-2xl active:scale-90 transition-all duration-200 cursor-pointer ${
             isProfileActive ? "text-white" : "text-zinc-400 hover:text-zinc-200"
           }`}
           title={
@@ -232,15 +245,18 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
             )}
           </div>
           <span
-            className={`text-[10px] tracking-tight mt-0.5 leading-none transition-colors max-w-[60px] truncate ${
+            className={`text-[10px] tracking-tight mt-1 leading-none transition-colors max-w-[60px] truncate ${
               isProfileActive ? "font-semibold text-white" : "font-medium text-zinc-400"
             }`}
           >
             {currentUser?.name ? currentUser.name.split(" ")[0] : t("nav.profile", "Profile")}
           </span>
-          {isProfileActive && (
-            <span className="mt-1 w-1 h-1 rounded-full bg-white" aria-hidden="true" />
-          )}
+          <span
+            className={`mt-1 w-1 h-1 rounded-full bg-white transition-all duration-200 ${
+              isProfileActive ? "opacity-100 scale-100" : "opacity-0 scale-50"
+            }`}
+            aria-hidden="true"
+          />
         </button>
       </nav>
     </div>

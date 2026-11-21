@@ -1078,7 +1078,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
+                className="w-11 h-11 -ml-2 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
                 aria-label={t("common.close", "Close")}
               >
                 <X className="w-5 h-5 stroke-[2]" />
@@ -1097,7 +1097,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-9 h-9 -ml-1 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
+                className="w-11 h-11 -ml-2 rounded-full flex items-center justify-center text-zinc-200 hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer shrink-0"
                 aria-label={t("common.close", "Close")}
               >
                 <X className="w-5 h-5 stroke-[2]" />
@@ -1114,22 +1114,19 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
         )}
 
-        {/* Right Actions: Notifications Bell + Minimalist 2-Line Menu */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Right Actions: Notifications Bell + Minimalist 2-Line Menu (44px Apple HIG targets) */}
+        <div className="flex items-center gap-0.5 shrink-0 -mr-1.5">
           {!onClose && (
             <button
               type="button"
               onClick={onOpenNotifications}
-              className="relative w-9 h-9 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
+              className="relative w-11 h-11 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
               aria-label={t("nav.notifications", "Notifications")}
               title={t("nav.notifications", "Notifications")}
             >
               <Bell className="w-[20px] h-[20px] stroke-[1.9]" />
               {unreadNotifsCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white border border-[#050506]" />
-                </span>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-white ring-2 ring-[#050506]" />
               )}
             </button>
           )}
@@ -1137,7 +1134,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             <button
               type="button"
               onClick={onOpenMenu}
-              className="w-9 h-9 -mr-1 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
+              className="w-11 h-11 rounded-full flex items-center justify-center text-zinc-200 hover:text-white hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer"
               aria-label={t("nav.openMenu", "Open menu")}
               title={t("nav.openMenu", "Open menu")}
             >
@@ -1249,7 +1246,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                         ? "Search any place, brand, or URL..."
                         : "Search any hotel, restaurant, brand, or paste a URL..."
                     }
-                    className="w-full min-w-0 bg-transparent text-white text-[14.5px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
+                    className="w-full min-w-0 bg-transparent text-white text-[16px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
                   />
                 </div>
 
@@ -1578,7 +1575,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     onClick={() => { if (canScrollLeft) scrollCarousel("left"); }}
                     disabled={!canScrollLeft}
                     aria-label="Previous photo reviews"
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
                       canScrollLeft
                         ? "bg-white/[0.04] hover:bg-white/[0.1] border-white/[0.12] text-white cursor-pointer active:scale-95"
                         : "bg-transparent border-white/[0.06] text-zinc-600 cursor-not-allowed"
@@ -1591,7 +1588,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     onClick={() => { if (canScrollRight) scrollCarousel("right"); }}
                     disabled={!canScrollRight}
                     aria-label="Next photo reviews"
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all ${
                       canScrollRight
                         ? "bg-white/[0.04] hover:bg-white/[0.1] border-white/[0.12] text-white cursor-pointer active:scale-95"
                         : "bg-transparent border-white/[0.06] text-zinc-600 cursor-not-allowed"
@@ -1845,32 +1842,32 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             <span className="text-zinc-700">·</span>
             <span className="text-zinc-400">{t("legal.tagline", "Real Photos. Real Proof.")}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <button
               type="button"
               onClick={() => onOpenMore?.()}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400 whitespace-nowrap"
             >
               {t("legal.about", "About")}
             </button>
             <button
               type="button"
               onClick={() => onOpenLegal ? onOpenLegal("privacy") : onOpenMore?.()}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400 whitespace-nowrap"
             >
               {t("legal.privacy", "Privacy")}
             </button>
             <button
               type="button"
               onClick={() => onOpenLegal ? onOpenLegal("terms") : onOpenMore?.()}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-400 whitespace-nowrap"
             >
               {t("legal.terms", "Terms")}
             </button>
             <button
               type="button"
               onClick={() => onOpenBusiness ? onOpenBusiness() : window.open("/business", "_blank", "noopener,noreferrer")}
-              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300 font-medium"
+              className="hover:text-white transition-colors cursor-pointer bg-transparent border-none p-0 text-zinc-300 font-medium whitespace-nowrap"
             >
               Yoouz for Business
             </button>

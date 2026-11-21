@@ -477,8 +477,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 <button
                   id="following-back-button"
                   onClick={onNavigateHome}
-                  className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
+                  className="w-10 h-10 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                   title="Back to Feed"
+                  aria-label="Back to Feed"
                 >
                   <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
                 </button>
@@ -548,7 +549,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                     ? t("following.searchPlaceholder", "Search followed businesses or reviewers...")
                     : t("following.searchFollowersPlaceholder", "Search followers by name...")
                 }
-                className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pl-10 pr-9 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-hidden focus:border-zinc-600 focus:bg-zinc-900 transition-all shadow-inner"
+                className="w-full bg-white/[0.04] border border-white/[0.09] rounded-full pl-10 pr-9 py-2.5 text-[16px] md:text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-all"
               />
               {searchQuery && (
                 <button
@@ -646,7 +647,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         key={`following-place-${place.id}`}
                         id={`card-following-place-${place.id.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                         onClick={() => onOpenPlace(place.id)}
-                        className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                        className="bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/[0.08] hover:border-white/[0.16] p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                       >
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Modern Squircle Business Logo */}
@@ -663,24 +664,21 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
 
                           {/* Business Info: Streamlined 2-Line Layout */}
                           <div className="min-w-0 flex-1 text-left">
-                            {/* Row 1: Name + Badges */}
-                            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                              <h3 className="text-sm sm:text-base font-bold text-white line-clamp-2 [overflow-wrap:anywhere] leading-snug group-hover:text-zinc-200 transition-colors">
+                            {/* Row 1: Name + Verified Check */}
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <h3 className="text-sm sm:text-base font-semibold text-white truncate leading-snug group-hover:text-zinc-200 transition-colors">
                                 {formattedTitle}
                               </h3>
                               <CheckCircle2 className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                              <span className="bg-zinc-800 text-zinc-300 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-zinc-700 uppercase tracking-wider shrink-0">
-                                Business
-                              </span>
                             </div>
 
-                            {/* Row 2: Star Rating + Video Review Count + Location / Website */}
+                            {/* Row 2: Star Rating + Photo Review Count + Location / Website */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 text-xs text-zinc-300 font-medium mt-0.5 min-w-0">
                               <div className="flex items-center gap-1.5 shrink-0">
                                 {(place.totalReviews || 0) > 0 ? (
                                   <>
-                                    <span className="text-amber-400 font-bold flex items-center gap-0.5 shrink-0">
-                                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                    <span className="text-[#F5B942] font-semibold tabular-nums flex items-center gap-0.5 shrink-0">
+                                      <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942]" />
                                       {typeof place.rating === "number" ? place.rating.toFixed(1) : "5.0"}
                                     </span>
                                     <span className="text-zinc-600 shrink-0">·</span>
@@ -761,7 +759,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                         key={`following-reviewer-${author.name}`}
                         id={`card-following-${author.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                         onClick={() => onOpenCreator(author)}
-                        className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                        className="bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/[0.08] hover:border-white/[0.16] p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                       >
                         <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Circular Reviewer Avatar */}
@@ -875,7 +873,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       key={`follower-${follower.name}`}
                       id={`card-follower-${follower.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                       onClick={() => onOpenCreator({ name: follower.name, handle: (follower as any).handle, avatar: getSafeAvatarUrl(follower.avatar, follower.name, (follower as any).handle || follower.name) } as any)}
-                      className="bg-zinc-900/70 hover:bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
+                      className="bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/[0.08] hover:border-white/[0.16] p-3.5 sm:p-4 shadow-sm transition-all flex items-center justify-between gap-3.5 group cursor-pointer"
                     >
                       <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                         <img

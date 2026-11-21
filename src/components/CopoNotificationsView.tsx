@@ -174,14 +174,14 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
 
   // Render Category Filter Pills
   const filterPills: { label: string; value: FilterType; count?: number; icon: React.ReactNode }[] = [
-    { label: t("notifications.all", "All"), value: "all", icon: <Bell className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.unread", "Unread"), value: "unread", count: unreadCount > 0 ? unreadCount : undefined, icon: <Bell className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.messages", "Messages"), value: "messages", icon: <Mail className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.likes", "Likes"), value: "likes", icon: <Heart className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.comments", "Comments"), value: "comments", icon: <MessageSquare className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.shares", "Shares"), value: "shares", icon: <Repeat2 className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.followers", "Followers"), value: "people", icon: <UserPlus className="w-5 h-5 shrink-0" /> },
-    { label: t("notifications.saves", "Saves"), value: "bookmarks", icon: <Bookmark className="w-5 h-5 shrink-0" /> }
+    { label: t("notifications.all", "All"), value: "all", icon: <Bell className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.unread", "Unread"), value: "unread", count: unreadCount > 0 ? unreadCount : undefined, icon: <Bell className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.messages", "Messages"), value: "messages", icon: <Mail className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.likes", "Likes"), value: "likes", icon: <Heart className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.comments", "Comments"), value: "comments", icon: <MessageSquare className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.shares", "Shares"), value: "shares", icon: <Repeat2 className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.followers", "Followers"), value: "people", icon: <UserPlus className="w-3.5 h-3.5 shrink-0" /> },
+    { label: t("notifications.saves", "Saves"), value: "bookmarks", icon: <Bookmark className="w-3.5 h-3.5 shrink-0" /> }
   ];
 
   // Helper to parse notification text into clean, scannable parts
@@ -407,7 +407,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
               <button
                 id="btn-notifications-settings"
                 onClick={onOpenSettings}
-                className="w-9 h-9 rounded-full text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.1] transition-all cursor-pointer border border-white/[0.08] active:scale-95 flex items-center justify-center shrink-0"
+                className="w-10 h-10 rounded-full text-zinc-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.1] transition-all cursor-pointer border border-white/[0.08] active:scale-95 flex items-center justify-center shrink-0"
                 title={t("notifications.preferences", "Notification Preferences")}
                 aria-label={t("notifications.preferences", "Notification Preferences")}
               >
@@ -689,7 +689,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <Star className="w-2.5 h-2.5 fill-[#F5B942] text-[#F5B942] inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
@@ -702,7 +702,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <Star className="w-2.5 h-2.5 fill-[#F5B942] text-[#F5B942] inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
@@ -715,7 +715,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
                             </span>
                             {details.rating && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 text-zinc-200 font-black text-[11px]">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 inline shrink-0" />
+                                <Star className="w-2.5 h-2.5 fill-[#F5B942] text-[#F5B942] inline shrink-0" />
                                 <span>{details.rating}</span>
                               </span>
                             )}
