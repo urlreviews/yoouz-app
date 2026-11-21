@@ -411,7 +411,11 @@ export function useFeedPagination() {
         let uUid = localStorage.getItem("copo_user_uid") || "";
         if (!uEmail && !uUid) {
           try {
-            const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+            const rawUser =
+              localStorage.getItem("copo_user_profile") ||
+              localStorage.getItem("yoouz_current_user") ||
+              localStorage.getItem("copo_current_user") ||
+              "";
             if (rawUser) {
               const parsed = JSON.parse(rawUser);
               uEmail = parsed?.email || "";
@@ -571,16 +575,22 @@ export function useFeedPagination() {
                     if (sStr) savedIds = JSON.parse(sStr);
                   } catch (e) {}
 
-                  const isLk = Boolean(v.isLiked) || Boolean(local?.isLiked) || likedIds.includes(String(v.id));
-                  const isBm = Boolean(v.isBookmarked) || Boolean(local?.isBookmarked) || savedIds.includes(String(v.id));
+                  const isLk = uIdentifier
+                    ? Boolean(v.isLiked)
+                    : (Boolean(v.isLiked) || likedIds.includes(String(v.id)));
+                  const isBm = uIdentifier
+                    ? Boolean(v.isBookmarked)
+                    : (Boolean(v.isBookmarked) || savedIds.includes(String(v.id)));
 
+                  const hasServerLikes = typeof v.likesCount === 'number' || typeof v.likes === 'number';
                   const rawServerLikes = typeof v.likesCount === 'number' ? v.likesCount : (typeof v.likes === 'number' ? v.likes : 0);
-                  const rawLocalLikes = typeof local?.likes === 'number' ? local.likes : (typeof local?.likesCount === 'number' ? local.likesCount : 0);
-                  const effLikes = Math.max(rawServerLikes, rawLocalLikes, isLk ? 1 : 0);
+                  const rawLocalLikes = typeof local?.likesCount === 'number' ? local.likesCount : (typeof local?.likes === 'number' ? local.likes : 0);
+                  const effLikes = hasServerLikes ? Math.max(rawServerLikes, isLk ? 1 : 0) : Math.max(rawLocalLikes, isLk ? 1 : 0);
 
+                  const hasServerBookmarks = typeof v.bookmarksCount === 'number' || typeof v.bookmarks === 'number';
                   const rawServerBookmarks = typeof v.bookmarksCount === 'number' ? v.bookmarksCount : (typeof v.bookmarks === 'number' ? v.bookmarks : 0);
-                  const rawLocalBookmarks = typeof local?.bookmarksCount === 'number' ? local.bookmarksCount : (typeof local?.bookmarks === 'number' ? local.bookmarksCount : 0);
-                  const effBookmarks = Math.max(rawServerBookmarks, rawLocalBookmarks, isBm ? 1 : 0);
+                  const rawLocalBookmarks = typeof local?.bookmarksCount === 'number' ? local.bookmarksCount : (typeof local?.bookmarks === 'number' ? local.bookmarks : 0);
+                  const effBookmarks = hasServerBookmarks ? Math.max(rawServerBookmarks, isBm ? 1 : 0) : Math.max(rawLocalBookmarks, isBm ? 1 : 0);
 
                   const rawServerShares = typeof v.sharesCount === 'number' ? v.sharesCount : (typeof v.shares === 'number' ? v.shares : 0);
                   const rawLocalShares = typeof local.sharesCount === 'number' ? local.sharesCount : 0;
@@ -737,7 +747,11 @@ export function useFeedPagination() {
                 currentEmail = localStorage.getItem("copo_user_email") || "";
                 currentUid = localStorage.getItem("copo_user_uid") || "";
                 if (!currentEmail && !currentUid) {
-                  const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+                  const rawUser =
+                    localStorage.getItem("copo_user_profile") ||
+                    localStorage.getItem("yoouz_current_user") ||
+                    localStorage.getItem("copo_current_user") ||
+                    "";
                   if (rawUser) {
                     const parsed = JSON.parse(rawUser);
                     currentEmail = parsed?.email || "";
@@ -794,7 +808,11 @@ export function useFeedPagination() {
                 currentEmail = localStorage.getItem("copo_user_email") || "";
                 currentUid = localStorage.getItem("copo_user_uid") || "";
                 if (!currentEmail && !currentUid) {
-                  const rawUser = localStorage.getItem("yoouz_current_user") || localStorage.getItem("copo_current_user") || "";
+                  const rawUser =
+                    localStorage.getItem("copo_user_profile") ||
+                    localStorage.getItem("yoouz_current_user") ||
+                    localStorage.getItem("copo_current_user") ||
+                    "";
                   if (rawUser) {
                     const parsed = JSON.parse(rawUser);
                     currentEmail = parsed?.email || "";

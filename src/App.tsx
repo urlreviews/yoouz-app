@@ -836,23 +836,40 @@ export function App() {
   const [messages, setMessages] = useState<CopoMessage[]>([]);
   const [allRegisteredUsers, setAllRegisteredUsers] = useState<any[]>([]);
 
-  // Load user bookmarks & saved creators from server on mount/login
+  // Load user likes, bookmarks & saved creators from server on mount/login (for both signed-in and zero-friction anonymous users)
   useEffect(() => {
-    const currentEmail = currentUser?.email || auth.currentUser?.email;
-    if (!currentEmail) return;
+    const userIdentifier = currentUser?.email || currentUser?.id || currentUser?.uid || auth.currentUser?.email || auth.currentUser?.uid || "";
+    if (!userIdentifier) return;
 
     const loadUserData = async () => {
       try {
-        const res = await fetch(`/api/interactions/user-bookmarks?userId=${encodeURIComponent(currentEmail)}`);
+        const res = await fetch(`/api/interactions/user-interactions?userId=${encodeURIComponent(userIdentifier)}`, { cache: "no-store" });
         const data = await res.json();
-        if (data.success) {
+        if (data?.success) {
+          const likedIds: string[] = Array.isArray(data.likedVideoIds) ? data.likedVideoIds.map(String) : [];
+          const savedIds: string[] = Array.isArray(data.savedVideoIds) ? data.savedVideoIds.map(String) : [];
           if (Array.isArray(data.savedPlaceIds) && data.savedPlaceIds.length > 0) {
             setSavedPlaceIds((prev) => Array.from(new Set([...prev, ...data.savedPlaceIds])));
           }
+          try {
+            localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
+            localStorage.setItem("copo_saved_video_ids", JSON.stringify(savedIds));
+          } catch {}
+          const likedSet = new Set(likedIds.map((id) => id.toLowerCase()));
+          const savedSet = new Set(savedIds.map((id) => id.toLowerCase()));
+          setVideos((prev) =>
+            prev.map((v) => {
+              const vIdLow = String(v.id).toLowerCase();
+              const isLk = likedSet.has(vIdLow);
+              const isBm = savedSet.has(vIdLow);
+              if (Boolean(v.isLiked) === isLk && Boolean(v.isBookmarked) === isBm) return v;
+              return { ...v, isLiked: isLk, isBookmarked: isBm };
+            })
+          );
         }
 
         // Load saved creators from NoSQL
-        const creatorsRes = await fetch(`/api/nosql/saved_creators?userId=${encodeURIComponent(currentEmail)}`);
+        const creatorsRes = await fetch(`/api/nosql/saved_creators?userId=${encodeURIComponent(userIdentifier)}`);
         const creatorsData = await creatorsRes.json();
         if (Array.isArray(creatorsData)) {
           const names = creatorsData.map((c: any) => String(c.creatorName).toLowerCase());
@@ -864,7 +881,7 @@ export function App() {
     };
 
     loadUserData();
-  }, [currentUser?.email]);
+  }, [currentUser?.email, currentUser?.id, currentUser?.uid]);
 
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
@@ -6079,129 +6096,134 @@ export function App() {
     setCurrentVideoIndex(0);
   };
 
-  // Handle Likes - fully synced with BunnyDB (zero-friction)
+  // Handle Likes - fully synced with BunnyDB & PostgreSQL (zero-friction, React 18/19 batch-safe)
   const handleToggleLike = async (videoId: string) => {
-    let activeUser = currentUser;
+    const now = Date.now();
+    const lastClick = pendingLikeClickRef.current.get(videoId) || 0;
+    if (now - lastClick < 250) return; // Prevent accidental double-fires
+    pendingLikeClickRef.current.set(videoId, now);
+
+    // Compute exact toggle target SYNCHRONOUSLY before React batches setVideos
+    const targetVideo =
+      videosRef.current.find((v) => v.id === videoId) ||
+      videos.find((v) => v.id === videoId) ||
+      places.flatMap((p) => p.reviews || []).find((v: any) => v && v.id === videoId);
+
+    const prevIsLiked = Boolean(targetVideo?.isLiked);
+    const prevLikes =
+      typeof targetVideo?.likesCount === "number" && !isNaN(targetVideo.likesCount)
+        ? targetVideo.likesCount
+        : typeof targetVideo?.likes === "number" && !isNaN(targetVideo.likes)
+        ? targetVideo.likes
+        : 0;
+    const nextIsLiked = !prevIsLiked;
+    const nextLikes = nextIsLiked ? prevLikes + 1 : Math.max(0, prevLikes - 1);
+
+    const applyLikeState = (likedState: boolean, likesVal: number) => {
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoId
+            ? { ...v, isLiked: likedState, likes: likesVal, likesCount: likesVal }
+            : v
+        )
+      );
+      setPlaces((prev) =>
+        prev.map((p) => {
+          if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
+          return {
+            ...p,
+            reviews: p.reviews.map((v: any) =>
+              v && v.id === videoId
+                ? { ...v, isLiked: likedState, likes: likesVal, likesCount: likesVal }
+                : v
+            )
+          };
+        })
+      );
+      setActiveCommentVideo((cur) =>
+        cur && cur.id === videoId
+          ? { ...cur, isLiked: likedState, likes: likesVal, likesCount: likesVal }
+          : cur
+      );
+      try {
+        const likedStr = localStorage.getItem("copo_liked_video_ids") || "[]";
+        let likedIds: string[] = [];
+        try { likedIds = JSON.parse(likedStr); } catch {}
+        if (!Array.isArray(likedIds)) likedIds = [];
+        if (likedState) {
+          if (!likedIds.includes(videoId)) likedIds.push(videoId);
+        } else {
+          likedIds = likedIds.filter((id) => id !== videoId);
+        }
+        localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
+      } catch {}
+    };
+
+    // 1. Instant optimistic UI update (zero perceived latency)
+    applyLikeState(nextIsLiked, nextLikes);
+
+    // 2. Ensure active user identity (supports both signed-in and zero-friction anonymous profiles)
+    let activeUser = currentUserRef.current || currentUser;
     if (!activeUser) {
       activeUser = await ensureAnonymousUser(false);
     }
-    const now = Date.now();
-    const lastClick = pendingLikeClickRef.current.get(videoId) || 0;
-    if (now - lastClick < 350) return; // Prevent rapid multi-clicks
-    pendingLikeClickRef.current.set(videoId, now);
+    const actorId =
+      activeUser?.email ||
+      activeUser?.id ||
+      activeUser?.uid ||
+      (() => {
+        try { return localStorage.getItem("copo_user_uid") || ""; } catch { return ""; }
+      })() ||
+      "anon";
 
-    let nextLikes = 0;
-    let nextIsLiked = false;
-
-    setVideos((prev) =>
-      prev.map((v) => {
-        if (v.id === videoId) {
-          nextIsLiked = !v.isLiked;
-          const currentLikes = typeof v.likes === 'number' && !isNaN(v.likes) ? v.likes : 0;
-          nextLikes = nextIsLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-          return {
-            ...v,
-            isLiked: nextIsLiked,
-            likes: nextLikes,
-            likesCount: nextLikes
-          };
-        }
-        return v;
-      })
-    );
-
-    setPlaces((prev) =>
-      prev.map((p) => {
-        if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
-        return {
-          ...p,
-          reviews: p.reviews.map((v: any) => {
-            if (v && v.id === videoId) {
-              const currentLikes = typeof v.likes === 'number' && !isNaN(v.likes) ? v.likes : (typeof v.likesCount === 'number' ? v.likesCount : 0);
-              const nLikes = nextIsLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-              return {
-                ...v,
-                isLiked: nextIsLiked,
-                likes: nLikes,
-                likesCount: nLikes
-              };
-            }
-            return v;
-          })
-        };
-      })
-    );
-
-    // Persist to user's liked set in LocalStorage
+    // 3. Persist authoritatively to BunnyDB + PostgreSQL via /api/interactions/like
     try {
-      const likedStr = localStorage.getItem("copo_liked_video_ids") || "[]";
-      let likedIds: string[] = [];
-      try { likedIds = JSON.parse(likedStr); } catch (e) {}
-      if (nextIsLiked) {
-        if (!likedIds.includes(videoId)) likedIds.push(videoId);
-      } else {
-        likedIds = likedIds.filter((id) => id !== videoId);
-      }
-      localStorage.setItem("copo_liked_video_ids", JSON.stringify(likedIds));
-    } catch (e) {}
-
-    // Persist to Server and BunnyDB database via authoritative /api/interactions/like endpoint (Live for everyone on the internet instantly)
-    try {
-      fetch("/api/interactions/like", {
+      const res = await fetch("/api/interactions/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId,
-          userId: currentUser?.email || currentUser?.id || "anon",
-          userEmail: currentUser?.email || "",
-          userName: currentUser?.name || "Community Member",
-          userAvatar: currentUser?.avatar || "",
-          userHandle: currentUser?.handle || "",
+          userId: actorId,
+          userEmail: activeUser?.email || "",
+          userName: activeUser?.name || "Community Member",
+          userAvatar: activeUser?.avatar || "",
+          userHandle: activeUser?.handle || "",
           isLiked: nextIsLiked
         })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data.likesCount === 'number') {
-          const authLikes = data.likesCount;
-          const authIsLiked = Boolean(data.isLiked);
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, likes: authLikes, likesCount: authLikes, isLiked: authIsLiked } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, likes: authLikes, likesCount: authLikes, isLiked: authIsLiked } : v) }));
-        }
-      })
-      .catch((err) => console.error("Like interaction error:", err));
-    } catch (e) { console.error("Like interaction error:", e); }
-
-    try {
-
-    } catch (err) {}
-
-    // Send social activity notification to video author
-    if (nextIsLiked && currentUser) {
-      const targetVid =
-        videos.find((v) => v.id === videoId) ||
-        videosRef.current.find((v) => v.id === videoId) ||
-        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
-      if (targetVid) {
-        const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
-
-        sendSocialNotification({
-          recipientEmail,
-          recipientId,
-          recipientHandle,
-          type: "like",
-          user: {
-            name: currentUser.name,
-            avatar: currentUser.avatar,
-            email: currentUser.email
-          },
-          text: `liked your photo review of ${targetVid.placeName || "a place"}`,
-          videoId: targetVid.id,
-          videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-          placeName: targetVid.placeName,
-          customId: `notif_like_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${targetVid.id}`
-        }).catch(() => {});
+      });
+      if (!res.ok) {
+        throw new Error(`Like HTTP ${res.status}`);
       }
+      const data = await res.json();
+      if (data && data.success && typeof data.likesCount === "number") {
+        applyLikeState(Boolean(data.isLiked), data.likesCount);
+      }
+    } catch (err) {
+      console.error("Like interaction error:", err);
+      // Roll back cleanly if server request failed
+      applyLikeState(prevIsLiked, prevLikes);
+      return;
+    }
+
+    // 4. Send social activity notification to photo review author
+    if (nextIsLiked && activeUser && targetVideo) {
+      const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVideo);
+      sendSocialNotification({
+        recipientEmail,
+        recipientId,
+        recipientHandle,
+        type: "like",
+        user: {
+          name: activeUser.name,
+          avatar: activeUser.avatar,
+          email: activeUser.email
+        },
+        text: `liked your photo review of ${targetVideo.placeName || "a place"}`,
+        videoId: targetVideo.id,
+        videoThumbnail: resolveVideoPosterUrl(targetVideo) || targetVideo.author?.avatar,
+        placeName: targetVideo.placeName,
+        customId: `notif_like_${actorId}_${targetVideo.id}`
+      }).catch(() => {});
     }
   };
 
@@ -6242,129 +6264,118 @@ export function App() {
     };
   };
 
-  // Handle Bookmarks - fully synced with Server & BunnyDB (zero-friction)
+  // Handle Bookmarks - fully synced with Server & BunnyDB (zero-friction, React 18/19 batch-safe)
   const handleToggleBookmark = async (videoId: string) => {
-    if (!currentUser) {
-      await ensureAnonymousUser(false);
-    }
-    let nextBookmarked = false;
-    let nextCount = 0;
+    const targetVid =
+      videosRef.current.find((v) => v.id === videoId) ||
+      videos.find((v) => v.id === videoId) ||
+      places.flatMap((p) => p.reviews || []).find((v: any) => v && v.id === videoId);
 
-    setVideos((prev) =>
-      prev.map((v) => {
-        if (v.id === videoId) {
-          nextBookmarked = !v.isBookmarked;
-          const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
-          nextCount = nextBookmarked ? Math.max(1, currentCount + 1) : Math.max(0, currentCount - 1);
+    const prevBookmarked = Boolean(targetVid?.isBookmarked);
+    const prevCount =
+      typeof targetVid?.bookmarksCount === "number" && !isNaN(targetVid.bookmarksCount)
+        ? targetVid.bookmarksCount
+        : typeof (targetVid as any)?.bookmarks === "number" && !isNaN((targetVid as any).bookmarks)
+        ? (targetVid as any).bookmarks
+        : 0;
+    const nextBookmarked = !prevBookmarked;
+    const nextCount = nextBookmarked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1);
+
+    const applyBookmarkState = (bmState: boolean, bmCount: number) => {
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoId
+            ? { ...v, isBookmarked: bmState, bookmarksCount: bmCount, bookmarks: bmCount }
+            : v
+        )
+      );
+      setPlaces((prev) =>
+        prev.map((p) => {
+          if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
           return {
-            ...v,
-            isBookmarked: nextBookmarked,
-            bookmarksCount: nextCount,
-            bookmarks: nextCount
+            ...p,
+            reviews: p.reviews.map((v: any) =>
+              v && v.id === videoId
+                ? { ...v, isBookmarked: bmState, bookmarksCount: bmCount, bookmarks: bmCount }
+                : v
+            )
           };
+        })
+      );
+      try {
+        const savedStr = localStorage.getItem("copo_saved_video_ids") || "[]";
+        let savedIds: string[] = [];
+        try { savedIds = JSON.parse(savedStr); } catch {}
+        if (!Array.isArray(savedIds)) savedIds = [];
+        if (bmState) {
+          if (!savedIds.includes(videoId)) savedIds.push(videoId);
+        } else {
+          savedIds = savedIds.filter((id) => id !== videoId);
         }
-        return v;
-      })
-    );
+        localStorage.setItem("copo_saved_video_ids", JSON.stringify(savedIds));
+      } catch {}
+    };
 
-    setPlaces((prev) =>
-      prev.map((p) => {
-        if (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) return p;
-        return {
-          ...p,
-          reviews: p.reviews.map((v: any) => {
-            if (v && v.id === videoId) {
-              const currentCount = typeof v.bookmarksCount === 'number' && !isNaN(v.bookmarksCount) ? v.bookmarksCount : (typeof (v as any).bookmarks === 'number' ? (v as any).bookmarks : 0);
-              const nBm = nextBookmarked ? Math.max(1, currentCount + 1) : Math.max(0, currentCount - 1);
-              return {
-                ...v,
-                isBookmarked: nextBookmarked,
-                bookmarksCount: nBm,
-                bookmarks: nBm
-              };
-            }
-            return v;
-          })
-        };
-      })
-    );
+    applyBookmarkState(nextBookmarked, nextCount);
 
-    // Persist to user's saved list in LocalStorage
+    let activeUser = currentUserRef.current || currentUser;
+    if (!activeUser) {
+      activeUser = await ensureAnonymousUser(false);
+    }
+    const actorId =
+      activeUser?.email ||
+      activeUser?.id ||
+      activeUser?.uid ||
+      (() => {
+        try { return localStorage.getItem("copo_user_uid") || ""; } catch { return ""; }
+      })() ||
+      "anon";
+
     try {
-      const savedStr = localStorage.getItem("copo_saved_video_ids") || "[]";
-      let savedIds: string[] = [];
-      try { savedIds = JSON.parse(savedStr); } catch (e) {}
-      if (nextBookmarked) {
-        if (!savedIds.includes(videoId)) savedIds.push(videoId);
-      } else {
-        savedIds = savedIds.filter((id) => id !== videoId);
-      }
-      localStorage.setItem("copo_saved_video_ids", JSON.stringify(savedIds));
-      
-      // Also sync to global user profile in BunnyDB
-
-    } catch (e) {}
-
-    // Persist to Server and BunnyDB database via authoritative /api/interactions/bookmark endpoint
-    try {
-      const targetVid = videos.find(v => v.id === videoId);
-      fetch("/api/interactions/bookmark", {
+      const res = await fetch("/api/interactions/bookmark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId,
           placeId: targetVid?.placeId || "",
           placeName: targetVid?.placeName || "",
-          userId: currentUser?.email || currentUser?.id || "anon",
-          userEmail: currentUser?.email || "",
-          userName: currentUser?.name || "Community Member",
-          userAvatar: currentUser?.avatar || "",
-          userHandle: currentUser?.handle || "",
+          userId: actorId,
+          userEmail: activeUser?.email || "",
+          userName: activeUser?.name || "Community Member",
+          userAvatar: activeUser?.avatar || "",
+          userHandle: activeUser?.handle || "",
           isBookmarked: nextBookmarked
         })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data.bookmarksCount === 'number') {
-          const authBm = data.bookmarksCount;
-          const authBmState = Boolean(data.isBookmarked);
-          setVideos(prev => prev.map(v => v.id === videoId ? { ...v, bookmarks: authBm, bookmarksCount: authBm, isBookmarked: authBmState } : v));
-          setPlaces(prev => prev.map(p => (!p.reviews || !p.reviews.some((r: any) => r && r.id === videoId)) ? p : { ...p, reviews: p.reviews.map((v: any) => v.id === videoId ? { ...v, bookmarks: authBm, bookmarksCount: authBm, isBookmarked: authBmState } : v) }));
-        }
-      })
-      .catch((err) => console.error("Bookmark interaction error:", err));
-    } catch (e) { console.error("Bookmark interaction error:", e); }
-
-    try {
-
-    } catch (err) {}
-
-    // Send social activity notification to video author for bookmark/save
-    if (nextBookmarked && currentUser) {
-      const targetVid =
-        videos.find((v) => v.id === videoId) ||
-        videosRef.current.find((v) => v.id === videoId) ||
-        places.flatMap((p) => p.reviews || []).find((v) => (v as any).id === videoId);
-      if (targetVid) {
-        const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
-
-        sendSocialNotification({
-          recipientEmail,
-          recipientId,
-          recipientHandle,
-          type: "bookmark",
-          user: {
-            name: currentUser.name,
-            avatar: currentUser.avatar,
-            email: currentUser.email
-          },
-          text: `saved your photo review of ${targetVid.placeName || "a place"}`,
-          videoId: targetVid.id,
-          videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
-          placeName: targetVid.placeName,
-          customId: `notif_bookmark_${currentUser?.email || auth.currentUser?.uid || 'anon'}_${targetVid.id}`
-        }).catch(() => {});
+      });
+      if (!res.ok) throw new Error(`Bookmark HTTP ${res.status}`);
+      const data = await res.json();
+      if (data && typeof data.bookmarksCount === "number") {
+        applyBookmarkState(Boolean(data.isBookmarked), data.bookmarksCount);
       }
+    } catch (err) {
+      console.error("Bookmark interaction error:", err);
+      applyBookmarkState(prevBookmarked, prevCount);
+      return;
+    }
+
+    if (nextBookmarked && activeUser && targetVid) {
+      const { recipientEmail, recipientId, recipientHandle } = getAuthorNotificationRecipient(targetVid);
+      sendSocialNotification({
+        recipientEmail,
+        recipientId,
+        recipientHandle,
+        type: "bookmark",
+        user: {
+          name: activeUser.name,
+          avatar: activeUser.avatar,
+          email: activeUser.email
+        },
+        text: `saved your photo review of ${targetVid.placeName || "a place"}`,
+        videoId: targetVid.id,
+        videoThumbnail: resolveVideoPosterUrl(targetVid) || targetVid.author?.avatar,
+        placeName: targetVid.placeName,
+        customId: `notif_bookmark_${actorId}_${targetVid.id}`
+      }).catch(() => {});
     }
   };
 

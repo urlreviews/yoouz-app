@@ -379,7 +379,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       <div className="flex flex-col items-center">
         <button
           id={isDesktop ? `btn-like-desktop-${video.id}` : `btn-like-${video.id}`}
-          onClick={() => {
+          type="button"
+          aria-pressed={Boolean(video.isLiked)}
+          onClick={(e) => {
+            e.stopPropagation();
             triggerHaptic(video.isLiked ? "selection" : "medium");
             onToggleLike(video.id);
           }}
@@ -396,7 +399,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             }`}
           />
         </button>
-        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
+        <span className={`text-[11.5px] font-semibold mt-1 tracking-tight tabular-nums ${isDesktop ? "text-zinc-300" : "text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]"}`}>
           {typeof video.likesCount === "number" ? video.likesCount : typeof video.likes === "number" ? video.likes : 0}
         </span>
       </div>
@@ -455,7 +458,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       <div className="flex flex-col items-center">
         <button
           id={isDesktop ? `btn-bookmark-desktop-${video.id}` : `btn-bookmark-${video.id}`}
-          onClick={() => {
+          type="button"
+          aria-pressed={Boolean(video.isBookmarked)}
+          onClick={(e) => {
+            e.stopPropagation();
             triggerHaptic(video.isBookmarked ? "selection" : "medium");
             onToggleBookmark(video.id);
           }}

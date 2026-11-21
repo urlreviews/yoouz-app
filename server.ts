@@ -18967,21 +18967,44 @@ ${imageEntries.join('\n')}
           let altQueryId = "";
           try {
             const prof = await resolveUserProfileFromAnySource(queryUserId);
-            if (prof) altQueryId = prof.email || prof.uid || prof.id || "";
+            if (prof) altQueryId = String(prof.email || prof.uid || prof.id || "").trim();
           } catch(e){}
 
-          const [uLikes, uBms] = await Promise.all([
-            bunnyDb.execute({
-              sql: "SELECT videoId FROM likes WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?) OR LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
-              args: [queryUserId, queryUserId, altQueryId, altQueryId]
-            }).catch(() => ({ rows: [] })),
-            bunnyDb.execute({
-              sql: "SELECT videoId FROM bookmarks WHERE LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?) OR LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)",
-              args: [queryUserId, queryUserId, altQueryId, altQueryId]
-            }).catch(() => ({ rows: [] }))
-          ]);
-          (uLikes.rows || []).forEach((r: any) => { if (r.videoId) userLikedSet.add(String(r.videoId)); });
-          (uBms.rows || []).forEach((r: any) => { if (r.videoId) userBookmarkedSet.add(String(r.videoId)); });
+          const userIdentifiers = Array.from(
+            new Set([queryUserId, altQueryId].map((s) => String(s || "").trim()).filter(Boolean))
+          );
+
+          if (userIdentifiers.length > 0) {
+            const whereClauses = userIdentifiers
+              .map(() => "LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)")
+              .join(" OR ");
+            const whereArgs = userIdentifiers.flatMap((id) => [id, id]);
+
+            const [uLikes, uBms] = await Promise.all([
+              bunnyDb.execute({
+                sql: `SELECT videoId FROM likes WHERE ${whereClauses}`,
+                args: whereArgs
+              }).catch(() => ({ rows: [] })),
+              bunnyDb.execute({
+                sql: `SELECT videoId FROM bookmarks WHERE ${whereClauses}`,
+                args: whereArgs
+              }).catch(() => ({ rows: [] }))
+            ]);
+            (uLikes.rows || []).forEach((r: any) => {
+              if (r.videoId) {
+                const rawVid = String(r.videoId).trim();
+                userLikedSet.add(rawVid);
+                userLikedSet.add(rawVid.toLowerCase());
+              }
+            });
+            (uBms.rows || []).forEach((r: any) => {
+              if (r.videoId) {
+                const rawVid = String(r.videoId).trim();
+                userBookmarkedSet.add(rawVid);
+                userBookmarkedSet.add(rawVid.toLowerCase());
+              }
+            });
+          }
         } catch (e) {}
       }
 
@@ -19207,22 +19230,28 @@ ${imageEntries.join('\n')}
         }
 
         try {
-          const bmRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY videoId");
+          const bmRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM bookmarks GROUP BY LOWER(videoId)");
           if (bmRows && bmRows.rows) {
             bmRows.rows.forEach((row: any) => {
               if (row.videoId) {
-                videoBookmarksCountMap.set(String(row.videoId), Number(row.total) || 0);
+                const rawId = String(row.videoId).trim();
+                const cnt = Number(row.total) || 0;
+                videoBookmarksCountMap.set(rawId, cnt);
+                videoBookmarksCountMap.set(rawId.toLowerCase(), cnt);
               }
             });
           }
         } catch (bmErr) {}
 
         try {
-          const likesRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY videoId");
+          const likesRows = await bunnyDb.execute("SELECT videoId, COUNT(*) as total FROM likes GROUP BY LOWER(videoId)");
           if (likesRows && likesRows.rows) {
             likesRows.rows.forEach((row: any) => {
               if (row.videoId) {
-                videoLikesCountMap.set(String(row.videoId), Number(row.total) || 0);
+                const rawId = String(row.videoId).trim();
+                const cnt = Number(row.total) || 0;
+                videoLikesCountMap.set(rawId, cnt);
+                videoLikesCountMap.set(rawId.toLowerCase(), cnt);
               }
             });
           }
@@ -19292,17 +19321,21 @@ ${imageEntries.join('\n')}
           typeof enriched.commentsCount === 'number' ? enriched.commentsCount : 0
         );
 
-        const dbBookmarks = videoBookmarksCountMap.get(String(r.id));
+        const dbBookmarks = videoBookmarksCountMap.has(String(r.id))
+          ? videoBookmarksCountMap.get(String(r.id))
+          : videoBookmarksCountMap.get(vKey);
         const realBookmarks = typeof dbBookmarks === 'number' ? dbBookmarks : (typeof enriched.bookmarksCount === 'number' ? enriched.bookmarksCount : (typeof enriched.bookmarks === 'number' ? enriched.bookmarks : 0));
         enriched.bookmarks = realBookmarks;
         enriched.bookmarksCount = realBookmarks;
-        enriched.isBookmarked = userBookmarkedSet.has(String(r.id));
+        enriched.isBookmarked = userBookmarkedSet.has(String(r.id)) || userBookmarkedSet.has(vKey);
 
-        const dbLikes = videoLikesCountMap.get(String(r.id));
+        const dbLikes = videoLikesCountMap.has(String(r.id))
+          ? videoLikesCountMap.get(String(r.id))
+          : videoLikesCountMap.get(vKey);
         const realLikes = typeof dbLikes === 'number' ? dbLikes : (typeof enriched.likesCount === 'number' ? enriched.likesCount : (typeof enriched.likes === 'number' ? enriched.likes : 0));
         enriched.likes = realLikes;
         enriched.likesCount = realLikes;
-        enriched.isLiked = userLikedSet.has(String(r.id));
+        enriched.isLiked = userLikedSet.has(String(r.id)) || userLikedSet.has(vKey);
 
         const realShares = videoSharesCountMap.has(String(r.id))
           ? Math.max(videoSharesCountMap.get(String(r.id))!, typeof enriched.sharesCount === 'number' ? enriched.sharesCount : (typeof enriched.shares === 'number' ? enriched.shares : 0))
@@ -20668,6 +20701,8 @@ ${imageEntries.join('\n')}
       const { videoId, userId, isLiked, userName, userAvatar, userHandle, userEmail } = req.body;
       if (!videoId) return res.status(400).json({ error: "Missing videoId" });
 
+      const cleanVideoId = String(videoId).trim();
+      const cleanUserId = String(userId || "").trim();
       const bunnyDb = getBunnyDb();
       let updatedLikesCount = 0;
       let effectiveIsLiked = isLiked;
@@ -20675,25 +20710,40 @@ ${imageEntries.join('\n')}
       let effName = userName || "";
       let effAvatar = userAvatar || "";
       let effHandle = userHandle || "";
-      let effEmail = userEmail || (userId && userId.includes("@") ? userId : "");
+      let effEmail = String(userEmail || (cleanUserId && cleanUserId.includes("@") ? cleanUserId : "")).trim();
 
       try {
-        const prof = await resolveUserProfileFromAnySource(userId || effEmail);
+        const prof = await resolveUserProfileFromAnySource(cleanUserId || effEmail);
         if (prof) {
           if (!effName || effName === "User") effName = prof.name;
           if (!effAvatar) effAvatar = prof.avatar;
           if (!effHandle) effHandle = prof.handle;
-          if (!effEmail) effEmail = prof.email;
+          if (!effEmail && prof.email) effEmail = String(prof.email).trim();
         }
       } catch (e) {}
 
+      const canonicalActorId = (cleanUserId || effEmail || "anon").trim();
+      const likeId = `like_${canonicalActorId.toLowerCase().replace(/[^a-z0-9]/g, "_")}_${cleanVideoId}`;
+      const legacyLikeId = `like_${cleanUserId || "anon"}_${cleanVideoId}`;
+
       if (bunnyDb) {
-        const likeId = `like_${userId || 'anon'}_${videoId}`;
+        // Build safe non-empty user identity match conditions (NEVER match empty string userId/userEmail!)
+        const userCondParts: string[] = ["id = ?", "id = ?"];
+        const userCondArgs: any[] = [likeId, legacyLikeId];
+        if (cleanUserId) {
+          userCondParts.push("(LOWER(userId) = LOWER(?) AND LOWER(videoId) = LOWER(?))");
+          userCondArgs.push(cleanUserId, cleanVideoId);
+        }
+        if (effEmail) {
+          userCondParts.push("(LOWER(userEmail) = LOWER(?) AND LOWER(videoId) = LOWER(?))");
+          userCondArgs.push(effEmail, cleanVideoId);
+        }
+
         if (typeof effectiveIsLiked !== "boolean") {
           try {
             const existing = await bunnyDb.execute({
-              sql: "SELECT id FROM likes WHERE (userId = ? AND videoId = ?) OR id = ? LIMIT 1",
-              args: [userId || "", videoId, likeId]
+              sql: `SELECT id FROM likes WHERE ${userCondParts.join(" OR ")} LIMIT 1`,
+              args: userCondArgs
             });
             effectiveIsLiked = !(existing && existing.rows && existing.rows.length > 0);
           } catch (e) {
@@ -20701,57 +20751,103 @@ ${imageEntries.join('\n')}
           }
         }
 
-        if (effectiveIsLiked) {
+        // Preserve any existing persisted likesCount on the review before toggling so legacy/seeded counts never drop
+        let existingPersistedCount = 0;
+        let existingVRowData: any = null;
+        let hasVRow = false;
+        try {
+          const preVRow = await bunnyDb.execute({
+            sql: "SELECT likesCount, data FROM videoReviews WHERE id = ? LIMIT 1",
+            args: [cleanVideoId]
+          });
+          if (preVRow && preVRow.rows && preVRow.rows.length > 0) {
+            hasVRow = true;
+            const row0 = preVRow.rows[0] as any;
+            try { existingVRowData = JSON.parse(row0.data || "{}"); } catch {}
+            existingPersistedCount = Math.max(
+              Number(row0.likesCount || 0) || 0,
+              Number(existingVRowData?.likesCount || existingVRowData?.likes || 0) || 0
+            );
+          } else {
+            const list = readReviewsIndex();
+            const foundLocal = list.find((v: any) => v && v.id === cleanVideoId);
+            if (foundLocal) {
+              existingPersistedCount = Math.max(
+                Number(foundLocal.likesCount || 0) || 0,
+                Number(foundLocal.likes || 0) || 0
+              );
+            }
+          }
+        } catch {}
 
+        try {
+          const preCountRes = await bunnyDb.execute({
+            sql: "SELECT COUNT(*) as total FROM likes WHERE LOWER(videoId) = LOWER(?)",
+            args: [cleanVideoId]
+          });
+          const preTableCount = preCountRes && preCountRes.rows && preCountRes.rows.length > 0 ? Number(preCountRes.rows[0].total) || 0 : 0;
+          if (existingPersistedCount > preTableCount) {
+            for (let i = preTableCount; i < existingPersistedCount; i++) {
+              const seedLikeId = `like_seed_${cleanVideoId}_${i + 1}`;
+              await bunnyDb.execute({
+                sql: "INSERT OR IGNORE INTO likes (id, userId, userEmail, videoId, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                args: [seedLikeId, "community_reviewer", "community_seed@yoouz.internal", cleanVideoId, JSON.stringify({ videoId: cleanVideoId, isLiked: true, initial: true })]
+              }).catch(() => {});
+            }
+          }
+        } catch {}
+
+        if (effectiveIsLiked) {
           const likeData = {
             id: likeId,
-            videoId,
-            userId: userId || "",
+            videoId: cleanVideoId,
+            userId: canonicalActorId,
             userEmail: effEmail,
             userName: effName || "Community Member",
             userAvatar: effAvatar,
-            userHandle: effHandle || `@${(effName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+            userHandle: effHandle || `@${(effName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`,
             isLiked: true,
             createdAt: new Date().toISOString()
           };
 
+          // Remove any duplicate legacy row for this exact user on this video before inserting canonical row
+          await bunnyDb.execute({
+            sql: `DELETE FROM likes WHERE ${userCondParts.join(" OR ")}`,
+            args: userCondArgs
+          }).catch(() => {});
+
           await bunnyDb.execute({
             sql: "INSERT OR REPLACE INTO likes (id, userId, userEmail, videoId, data, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-            args: [likeId, userId || "", effEmail || "", videoId, JSON.stringify(likeData)]
+            args: [likeId, canonicalActorId, effEmail || "", cleanVideoId, JSON.stringify(likeData)]
           });
         } else {
           await bunnyDb.execute({
-            sql: "DELETE FROM likes WHERE (userId = ? AND videoId = ?) OR (userEmail = ? AND videoId = ?) OR id = ?",
-            args: [userId || "", videoId, effEmail || "", videoId, likeId]
+            sql: `DELETE FROM likes WHERE ${userCondParts.join(" OR ")}`,
+            args: userCondArgs
           });
         }
 
         const countRes = await bunnyDb.execute({
           sql: "SELECT COUNT(*) as total FROM likes WHERE LOWER(videoId) = LOWER(?)",
-          args: [videoId.trim()]
+          args: [cleanVideoId]
         });
         const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
-        updatedLikesCount = dbLikes;
+        updatedLikesCount = Math.max(effectiveIsLiked ? 1 : 0, dbLikes);
 
-        const vRow = await bunnyDb.execute({
-          sql: "SELECT data FROM videoReviews WHERE id = ? LIMIT 1",
-          args: [videoId]
-        });
-        if (vRow && vRow.rows && vRow.rows.length > 0) {
-          let vData: any = {};
-          try { vData = JSON.parse((vRow.rows[0] as any).data || '{}'); } catch(e){}
+        if (hasVRow) {
+          const vData: any = existingVRowData && typeof existingVRowData === "object" ? { ...existingVRowData } : {};
           vData.likes = updatedLikesCount;
           vData.likesCount = updatedLikesCount;
           await bunnyDb.execute({
             sql: "UPDATE videoReviews SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-            args: [updatedLikesCount, JSON.stringify(vData), videoId]
+            args: [updatedLikesCount, JSON.stringify(vData), cleanVideoId]
           });
         } else {
           try {
             const list = readReviewsIndex();
-            const seedVid = list.find((v: any) => v && v.id === videoId) || {
-              id: videoId,
-              userId: userId || "",
+            const seedVid = list.find((v: any) => v && v.id === cleanVideoId) || {
+              id: cleanVideoId,
+              userId: canonicalActorId,
               authorName: effName || "Community Member",
               authorAvatar: effAvatar || "",
               placeId: "",
@@ -20766,10 +20862,10 @@ ${imageEntries.join('\n')}
             await bunnyDb.execute({
               sql: `INSERT INTO videoReviews (id, userId, authorName, authorAvatar, placeId, placeName, rating, videoUrl, thumbnailUrl, duration, likesCount, bookmarksCount, sharesCount, commentsCount, data, createdAt, updatedAt)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                    ON CONFLICT(id) DO UPDATE SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP`,
+                    ON CONFLICT(id) DO UPDATE SET likesCount = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
               args: [
-                videoId,
-                seedVid.userId || seedVid.userEmail || userId || "",
+                cleanVideoId,
+                seedVid.userId || seedVid.userEmail || canonicalActorId,
                 seedVid.author?.name || seedVid.authorName || effName || "Reviewer",
                 seedVid.author?.avatar || seedVid.authorAvatar || effAvatar || "",
                 seedVid.placeId || "",
@@ -20784,30 +20880,44 @@ ${imageEntries.join('\n')}
                 seedVid.commentsCount || 0,
                 JSON.stringify(seedData),
                 seedCreatedAt,
-                updatedLikesCount
+                updatedLikesCount,
+                JSON.stringify(seedData)
               ]
             }).catch(() => {});
           } catch(e){}
         }
       } else {
         const list = readReviewsIndex();
-        const vid = list.find((v: any) => v.id === videoId);
+        const vid = list.find((v: any) => v.id === cleanVideoId);
         if (vid) {
           const prevCount = typeof vid.likesCount === 'number' ? vid.likesCount : (typeof vid.likes === 'number' ? vid.likes : 0);
-          updatedLikesCount = isLiked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1);
+          updatedLikesCount = effectiveIsLiked ? Math.max(1, prevCount + 1) : Math.max(0, prevCount - 1);
         }
+      }
+
+      // Also keep PostgreSQL BunnyDB_video_reviews table in 100% parity
+      if (db) {
+        try {
+          const [pgExisting] = await db.select().from(BunnyDB_video_reviews).where(eq(BunnyDB_video_reviews.id, cleanVideoId));
+          if (pgExisting) {
+            const pgData = (pgExisting.data && typeof pgExisting.data === "object") ? { ...(pgExisting.data as any) } : {};
+            pgData.likes = updatedLikesCount;
+            pgData.likesCount = updatedLikesCount;
+            await db.update(BunnyDB_video_reviews).set({ data: pgData }).where(eq(BunnyDB_video_reviews.id, cleanVideoId));
+          }
+        } catch (pgErr) {}
       }
 
       try {
         const list = readReviewsIndex();
-        const vid = list.find((v: any) => v.id === videoId);
+        const vid = list.find((v: any) => v.id === cleanVideoId);
         if (vid) {
           vid.likes = updatedLikesCount;
           vid.likesCount = updatedLikesCount;
           writeReviewsIndex(list);
         }
         if (feedCache && Array.isArray(feedCache.videos)) {
-          const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === videoId || v._id === videoId));
+          const cachedIdx = feedCache.videos.findIndex((v: any) => v && (v.id === cleanVideoId || v._id === cleanVideoId));
           if (cachedIdx !== -1) {
             feedCache.videos[cachedIdx] = {
               ...feedCache.videos[cachedIdx],
@@ -21001,11 +21111,25 @@ ${imageEntries.join('\n')}
             args: [bmId, userId || "", effEmail || "", effPlaceId, videoId, JSON.stringify(bmData)]
           });
         } else {
+          const bmUserClauses: string[] = [];
+          const bmUserArgs: any[] = [];
+          const cleanBmUserId = String(userId || "").trim();
+          const cleanBmEmail = String(effEmail || userEmail || "").trim();
+          if (cleanBmUserId) {
+            bmUserClauses.push("LOWER(userId) = LOWER(?)");
+            bmUserArgs.push(cleanBmUserId);
+          }
+          if (cleanBmEmail) {
+            bmUserClauses.push("LOWER(userEmail) = LOWER(?)");
+            bmUserArgs.push(cleanBmEmail);
+          }
+          const userPredicate = bmUserClauses.length > 0 ? `(${bmUserClauses.join(" OR ")})` : "id = ?";
+          if (bmUserClauses.length === 0) bmUserArgs.push(bmId);
+
           await bunnyDb.execute({
-            sql: "DELETE FROM bookmarks WHERE (LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)) AND (videoId = ? OR id = ? OR (videoId = 'place_bookmark' AND (LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?))))",
+            sql: `DELETE FROM bookmarks WHERE ${userPredicate} AND (videoId = ? OR id = ? OR (videoId = 'place_bookmark' AND (LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?) OR LOWER(placeId) = LOWER(?))))`,
             args: [
-              userId || "",
-              effEmail || userEmail || "",
+              ...bmUserArgs,
               videoId,
               bmId,
               (placeId || "").toLowerCase(),
@@ -21192,14 +21316,23 @@ ${imageEntries.join('\n')}
 
       if (bunnyDb) {
         try {
+          let altId = "";
+          try {
+            const prof = await resolveUserProfileFromAnySource(userId);
+            if (prof) altId = String(prof.email || prof.uid || prof.id || "").trim();
+          } catch {}
+          const ids = Array.from(new Set([userId, altId].map((s) => String(s || "").trim()).filter(Boolean)));
+          const whereClause = ids.map(() => "LOWER(userId) = LOWER(?) OR LOWER(userEmail) = LOWER(?)").join(" OR ");
+          const whereArgs = ids.flatMap((id) => [id, id]);
+
           const [bmRows, likeRows] = await Promise.all([
             bunnyDb.execute({
-              sql: "SELECT videoId, placeId FROM bookmarks WHERE userId = ? OR userEmail = ?",
-              args: [userId, userId]
+              sql: `SELECT videoId, placeId FROM bookmarks WHERE ${whereClause}`,
+              args: whereArgs
             }).catch(() => ({ rows: [] })),
             bunnyDb.execute({
-              sql: "SELECT videoId FROM likes WHERE userId = ? OR userEmail = ?",
-              args: [userId, userId]
+              sql: `SELECT videoId FROM likes WHERE ${whereClause}`,
+              args: whereArgs
             }).catch(() => ({ rows: [] }))
           ]);
 
