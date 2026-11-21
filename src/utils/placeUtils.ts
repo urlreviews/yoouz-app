@@ -3017,8 +3017,11 @@ export function generateSmartPlaceDescription(params: {
   if (cat.includes("law") || cat.includes("legal") || cat.includes("attorney") || cat.includes("lawyer") || nameLower.includes("law") || nameLower.includes("attorney")) {
     return `${name} is a dedicated law practice${locStr}, offering expert legal counsel, professional representation, and trusted advisory services for clients.`;
   }
+  if (cat.includes("delivery") || nameLower.includes("doordash") || nameLower.includes("ubereats") || nameLower.includes("deliveroo") || nameLower.includes("grubhub")) {
+    return `${name} is an on-demand delivery and ordering platform${domain && isValidDomainUrl(domain) ? ` at ${domain}` : ""}.`;
+  }
   if (cat.includes("restaurant") || cat.includes("cafe") || cat.includes("food") || cat.includes("dining") || cat.includes("bakery") || cat.includes("bistro")) {
-    return `${name} is a popular dining destination${locStr}, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.`;
+    return `${name} is a dining destination${locStr}, reviewed through verified live customer photos on Yoouz.`;
   }
   if (cat.includes("hotel") || cat.includes("resort") || cat.includes("hospitality") || cat.includes("accommodation") || cat.includes("lodge")) {
     return `${name} is a premier hospitality destination${locStr}, offering comfortable accommodations, top-tier amenities, and attentive guest service.`;

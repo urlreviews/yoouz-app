@@ -93,6 +93,40 @@ export function formatRecordedDate(recordedAt?: string, createdAtMs?: number): s
 }
 
 /**
+ * Ultra-compact recency badge (e.g. "Now", "16m", "16h", "2d", "2w", "Nov 21")
+ * Shared across Homepage cards, Full-Screen Photo Reels, Business & User Profiles.
+ */
+export function formatCompactRecency(recordedAt?: string, createdAtMs?: number): string {
+  const targetMs = parseTimestampToMs(createdAtMs) ?? parseTimestampToMs(recordedAt);
+  if (targetMs && targetMs > 0) {
+    const diffMs = Math.max(0, Date.now() - targetMs);
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 2) return "Now";
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 14) return `${days}d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 8) return `${weeks}w`;
+    const date = new Date(targetMs);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  if (recordedAt) {
+    const lower = recordedAt.toLowerCase().trim();
+    const mMatch = lower.match(/(\d+)\s*m/);
+    if (mMatch) return `${mMatch[1]}m`;
+    const hMatch = lower.match(/(\d+)\s*h/);
+    if (hMatch) return `${hMatch[1]}h`;
+    const dMatch = lower.match(/(\d+)\s*d/);
+    if (dMatch) return `${dMatch[1]}d`;
+    if (lower.includes("yesterday")) return "1d";
+    if (lower.includes("just now") || lower === "now") return "Now";
+  }
+  return "New";
+}
+
+/**
  * Robustly resolve exact timestamp in milliseconds from a message object or raw value.
  * Handles embedded timestamps in IDs (msg_1790192617149_06ib), ISO strings, and createdAtMs.
  */

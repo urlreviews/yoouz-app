@@ -40,7 +40,9 @@ import {
 } from "lucide-react";
 import { registerFaceIdPasskey, restoreAccountWithPasskey, isDesktopPasskeyViewport } from "../lib/passkeyAuth";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName, isPlaceReviewMatch } from "../utils/placeUtils";
+import { formatCompactRecency } from "../utils/dateUtils";
+import { classifyBusinessCategory } from "../utils/categoryUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { getProxiedImageUrl } from "../utils/logoUtils";
 import { preloadImage } from "../utils/preloadUtils";
@@ -125,8 +127,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [deletionSuccessToast, setDeletionSuccessToast] = useState(false);
   const [videoToDeleteInDrawer, setVideoToDeleteInDrawer] = useState<VideoReview | null>(null);
   const [copiedNotification, setCopiedNotification] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
+  const [activeTab, setActiveTab] = useState<"reviews" | "about">("reviews");
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset to Photo Reviews tab whenever switching to a different reviewer profile
+  useEffect(() => {
+    setActiveTab("reviews");
+  }, [author?.name, author?.id]);
 
   // Inline handle claim / edit, mobile bio editor & biometric passkey state (zero-friction for U/XXXXXX accounts)
   const [usernameInput, setUsernameInput] = useState("");
@@ -904,7 +911,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     setIsShareModalOpen(true);
   };
 
-  const handleTabClick = (tab: "overview" | "reviews" | "about") => {
+  const handleTabClick = (tab: "reviews" | "about") => {
     setActiveTab(tab);
     if (contentRef.current) {
       contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
@@ -1516,20 +1523,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </div>
         </div>
 
-        {/* Flagship Liquid-Glass Segmented Control: Overview | Reviews | About */}
+        {/* Clean 2-Tab Segmented Control: Photo Reviews (Default) | About */}
         <div className="px-5 py-2.5 bg-[#050506] shrink-0">
-          <div className="grid grid-cols-3 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
-            <button
-              type="button"
-              onClick={() => handleTabClick("overview")}
-              className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
-                activeTab === "overview"
-                  ? "bg-white text-zinc-950 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:text-white font-medium"
-              }`}
-            >
-              {t("profile.overviewTab", "Overview")}
-            </button>
+          <div className="grid grid-cols-2 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
             <button
               type="button"
               onClick={() => handleTabClick("reviews")}
@@ -1539,7 +1535,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   : "text-zinc-400 hover:text-white font-medium"
               }`}
             >
-              <span>{t("common.photoReviews", "Reviews")}</span>
+              <span>{t("place.photoReviews", "Photo Reviews")}</span>
               <span
                 className={`text-[11px] tabular-nums ${
                   activeTab === "reviews" ? "text-zinc-600 font-semibold" : "text-zinc-500"
@@ -1569,28 +1565,28 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
           style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
         >
-          {/* Tab 1: OVERVIEW */}
-          {activeTab === "overview" && (
-            <div className="px-5 py-3 space-y-5">
-              {/* Action Buttons Row */}
-              <div className="py-1 flex items-center justify-between sm:justify-around text-center bg-transparent gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
+          {/* Tab 1 (DEFAULT): PHOTO REVIEWS + QUICK ACTIONS */}
+          {activeTab === "reviews" && (
+            <div className="px-4 py-2 space-y-4 animate-in fade-in duration-200">
+              {/* Contextual Quick-Action Strip */}
+              <div className="flex items-center justify-around gap-1.5 py-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
                 <button
                   id="btn-save-creator"
                   onClick={handleToggleSaveCreator}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                   title={isSaved ? t("profile.savedReviewer", "Saved Reviewer") : t("profile.saveReviewer", "Save Reviewer")}
                 >
                   <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors border ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border ${
                       isSaved
                         ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
                         : "bg-white/[0.05] text-zinc-100 border-white/[0.09] group-hover:bg-white/[0.11] group-hover:border-white/[0.18]"
                     }`}
                   >
                     {isSaved ? (
-                      <BookmarkCheck className="w-[18px] h-[18px] fill-current" />
+                      <BookmarkCheck className="w-[17px] h-[17px] fill-current" />
                     ) : (
-                      <Bookmark className="w-[18px] h-[18px] stroke-[1.9]" />
+                      <Bookmark className="w-[17px] h-[17px] stroke-[1.9]" />
                     )}
                   </div>
                   <span className="font-medium text-[11px]">
@@ -1599,31 +1595,16 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 </button>
 
                 <button
-                  id="btn-creator-video-reviews"
-                  onClick={() => {
-                    triggerHaptic("light");
-                    handleTabClick("reviews");
-                  }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
-                  title={t("profile.viewPhotoReviews", "View Photo Reviews")}
-                >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
-                    <Camera className="w-[18px] h-[18px] stroke-[1.9]" />
-                  </div>
-                  <span className="font-medium text-[11px]">{t("place.reviews", "Reviews")}</span>
-                </button>
-
-                <button
                   id="btn-share-creator-action"
                   onClick={() => {
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                   title={t("profile.shareProfile", "Share Profile")}
                 >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
-                    <Share2 className="w-[18px] h-[18px] stroke-[1.9]" />
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
+                    <Share2 className="w-[17px] h-[17px] stroke-[1.9]" />
                   </div>
                   <span className="font-medium text-[11px]">{t("common.share", "Share")}</span>
                 </button>
@@ -1635,170 +1616,143 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       triggerHaptic("light");
                       onStartChat(author.userId || author.id || author.name, displayName, effectiveAvatar);
                     }}
-                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[54px] sm:min-w-[58px] cursor-pointer"
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                     title={t("common.chat", "Message")}
                   >
-                    <div className="w-11 h-11 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
-                      <MessageSquare className="w-[18px] h-[18px] stroke-[1.9]" />
+                    <div className="w-10 h-10 rounded-full bg-white/[0.05] group-hover:bg-white/[0.11] group-hover:border-white/[0.18] text-zinc-100 flex items-center justify-center border border-white/[0.09] transition-all">
+                      <MessageSquare className="w-[17px] h-[17px] stroke-[1.9]" />
                     </div>
                     <span className="font-medium text-[11px]">{t("common.chat", "Message")}</span>
                   </button>
                 )}
               </div>
 
-              {/* Badges & Status Section */}
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                  <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Average Rating")}</span>
-                  <span className="text-sm font-semibold text-white flex items-center gap-1.5 tabular-nums">
-                    {avgRating !== "—" ? (
-                      <>
-                        <Star className="w-4 h-4 fill-[#E8C78A] text-[#E8C78A]" />
-                        <span>{avgRating}</span>
-                        <span className="text-zinc-500 text-xs font-normal">/ 5.0</span>
-                      </>
-                    ) : (
-                      <span className="text-zinc-400 font-semibold">—</span>
-                    )}
-                  </span>
-                </div>
-                <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                  <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalReviews", "Total Reviews")}</span>
-                  <span className="text-sm font-semibold text-white flex items-center gap-1.5 tabular-nums">
-                    <Camera className="w-4 h-4 text-zinc-400" />
-                    <span>{authorVideos.length} {authorVideos.length === 1 ? t("feed.photo", "Photo") : t("feed.photos", "Photos")}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Photo Reviews Preview Section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5 tabular-nums">
-                    <Camera className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{t("place.reviews", "Photo Reviews")} ({authorVideos.length})</span>
-                  </h3>
-                  {authorVideos.length > 0 && (
-                    <button
-                      onClick={() => handleTabClick("reviews")}
-                      className="text-xs font-medium text-zinc-400 hover:text-white cursor-pointer transition-colors"
-                    >
-                      {t("common.seeAll", "See all")}
-                    </button>
-                  )}
-                </div>
-
-                {authorVideos.length === 0 ? (
-                  <div className="bg-white/[0.02] rounded-2xl p-6 text-center border border-white/[0.08] text-zinc-400 text-xs">
-                    {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {authorVideos.slice(0, 6).map((v) => {
-                      const isCurrentActive = v.id === activeVideoId;
-                      const displayViews = getDisplayViews(v);
-                      const formattedViews = formatViewCount(displayViews);
-
-                      return (
-                        <div
-                          key={v.id}
-                          onClick={() => onSelectVideo(v.id)}
-                          className={`relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-md ring-1 ring-white/[0.08] ${
-                            isCurrentActive
-                              ? "ring-2 ring-white"
-                              : "hover:opacity-95 hover:ring-white/[0.2]"
-                          }`}
-                        >
-                          <CopoVideoThumbnail
-                            video={v}
-                            alt={v.placeName}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
-                          <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12]">
-                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
-                            <span>{getRoundedRating(v.rating || 5)}</span>
-                          </div>
-                          {/* Bottom Meta Info - Business Name & Views */}
-                          <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                            <span className="text-[10px] text-white font-bold drop-shadow-md truncate">
-                              {v.placeName || formatBusinessName(v.placeId) || "Business"}
-                            </span>
-                            <div className="flex items-center gap-1 text-zinc-300 text-[9px] font-semibold drop-shadow-md">
-                              <Eye className="w-2.5 h-2.5 shrink-0" />
-                              <span>{formattedViews}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tab 2: REVIEWS */}
-          {activeTab === "reviews" && (
-            <div className="px-5 py-3 space-y-3.5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-zinc-300 tabular-nums">
-                  {t("profile.allPhotoReviews", "All Photo Reviews")} ({authorVideos.length})
-                </h3>
-              </div>
-
               {authorVideos.length === 0 ? (
-                <div className="bg-white/[0.025] rounded-2xl p-8 text-center border border-white/[0.08] text-zinc-400 text-xs">
+                <div className="bg-white/[0.025] rounded-2xl p-8 text-center border border-white/[0.08] text-zinc-400 text-xs leading-relaxed">
                   {t("profile.memberCommentsActivity", "Active community member · Participates via comments & likes on business pages.")}
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid ${authorVideos.length <= 4 ? "grid-cols-2 gap-2.5" : "grid-cols-3 gap-2"}`}>
                   {authorVideos.map((v) => {
+                    const isCompact3Col = authorVideos.length > 4;
                     const isCurrentActive = v.id === activeVideoId;
-                    const displayViews = getDisplayViews(v);
-                    const formattedViews = formatViewCount(displayViews);
+                    const wholeStars = getRoundedRating(v.rating || 5);
+                    const recency = formatCompactRecency(v.recordedAt, v.createdAtMs);
+                    const matchedPlace = places.find((p) => isPlaceReviewMatch(v, p));
+                    const bName = matchedPlace?.name || v.businessName || v.placeName || formatBusinessName(v.placeId) || "Business";
+                    const bDomain = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || v.placeWebsite || v.placeId || "") || "";
+                    const bLogo = matchedPlace?.logoUrl || v.placeLogoUrl || "";
+                    const catInfo = classifyBusinessCategory({
+                      rawCategory: matchedPlace?.category || v.placeCategory,
+                      name: bName,
+                      domain: bDomain,
+                      description: matchedPlace?.description
+                    });
+                    const canDelete = Boolean(onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(v, currentUser))));
 
                     return (
                       <div
                         key={v.id}
                         onClick={() => onSelectVideo(v.id)}
-                        className={`relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg ring-1 ring-white/[0.08] ${
+                        className={`relative aspect-[3/4] rounded-[20px] overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border ${
                           isCurrentActive
-                            ? "ring-2 ring-white"
-                            : "hover:opacity-95 hover:ring-white/[0.2]"
+                            ? "border-white ring-1 ring-white"
+                            : "border-white/[0.09] hover:border-white/[0.24]"
                         }`}
                       >
                         <CopoVideoThumbnail
                           video={v}
-                          alt={v.placeName}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                          alt={`${bName} photo review by ${displayName}`}
+                          className="w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out pointer-events-none"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12] tabular-nums">
-                          <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
-                          <span>{getRoundedRating(v.rating || 5)}</span>
+
+                        {/* Smooth Editorial Bottom Scrim */}
+                        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.74)_46%,rgba(0,0,0,0.22)_78%,transparent_100%)] pointer-events-none" />
+
+                        {/* Top Row: Frosted Category + Recency (and Delete for Owner) */}
+                        <div className="absolute top-2 inset-x-2 flex items-center justify-between gap-1 z-10 pointer-events-none">
+                          {!isCompact3Col ? (
+                            <span className="px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.14] text-[10px] font-medium text-white/95 leading-none truncate max-w-[84px]">
+                              {catInfo.badgeLabel}
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded-full bg-black/52 backdrop-blur-md border border-white/[0.12] text-[9.5px] font-medium text-white/90 leading-none tabular-nums">
+                              {recency}
+                            </span>
+                          )}
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!isCompact3Col && (
+                              <span className="px-2 py-0.5 rounded-full bg-black/48 backdrop-blur-md border border-white/[0.12] text-[10px] font-medium text-white/85 leading-none tabular-nums">
+                                {recency}
+                              </span>
+                            )}
+                            {canDelete && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setVideoToDeleteInDrawer(v);
+                                }}
+                                className="pointer-events-auto p-1 rounded-full bg-black/70 hover:bg-red-600/90 text-zinc-200 hover:text-white backdrop-blur-md border border-white/[0.14] transition-colors cursor-pointer shadow-xs"
+                                title={t("feed.deleteReview", "Delete photo review")}
+                              >
+                                <Trash2 className="w-2.5 h-2.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        {onDeleteVideo && (isOwner || (currentUser && isAuthorMatch(v, currentUser))) && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setVideoToDeleteInDrawer(v);
-                            }}
-                            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-red-600/90 text-zinc-200 hover:text-white backdrop-blur-xs transition-colors z-10 cursor-pointer shadow-xs"
-                            title={t("feed.deleteReview", "Delete photo review")}
-                          >
-                            <Trash2 className="w-2.5 h-2.5" />
-                          </button>
-                        )}
-                        {/* Bottom Meta Info - Business Name & Views */}
-                        <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                          <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
-                            {v.placeName || formatBusinessName(v.placeId) || "Business"}
-                          </span>
-                          <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium drop-shadow-md tabular-nums">
-                            <Eye className="w-2.5 h-2.5 shrink-0" />
-                            <span>{formattedViews}</span>
+
+                        {/* Bottom Unmistakable Photo Review Metadata: 5-Star Rating + Brand Logo + Business Name */}
+                        <div className="absolute bottom-2.5 inset-x-2.5 flex flex-col justify-end gap-1.5 pointer-events-none z-10">
+                          {isCompact3Col ? (
+                            <div className="flex items-center gap-1" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                              <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942] shrink-0" />
+                              <span className="text-[10.5px] font-semibold text-white leading-none tabular-nums">
+                                {wholeStars}/5
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((starIdx) => (
+                                  <Star
+                                    key={starIdx}
+                                    className={`w-3 h-3 ${
+                                      starIdx <= wholeStars
+                                        ? "fill-[#F5B942] text-[#F5B942]"
+                                        : "fill-white/15 text-white/25"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10.5px] font-semibold text-white/95 leading-none tabular-nums">
+                                {wholeStars}/5
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {!isCompact3Col && (
+                              <CopoBrandLogo
+                                domain={bDomain || v.placeId}
+                                name={bName}
+                                logoUrl={bLogo}
+                                className="w-6 h-6 rounded-[7px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 shadow-sm"
+                                imageClassName="w-full h-full object-contain"
+                                fallbackTextClassName="text-[9px] font-bold text-zinc-900"
+                              />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-[11.5px] text-white font-semibold drop-shadow-sm truncate leading-tight">
+                                  {bName}
+                                </span>
+                                {!isCompact3Col && (
+                                  <CheckCircle className="w-3 h-3 fill-white text-zinc-950 shrink-0" />
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1809,62 +1763,72 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
             </div>
           )}
 
-          {/* Tab 3: ABOUT */}
+          {/* Tab 2: ABOUT — Clean Apple/Google Unified Details Sheet */}
           {activeTab === "about" && (
-            <div className="px-5 py-3 space-y-5">
+            <div className="px-4 py-2 space-y-4 animate-in fade-in duration-200">
               {displayBio ? (
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-                  <h3 className="text-xs font-semibold text-zinc-300 mb-2 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{t("profile.aboutUser", `About ${displayName || "User"}`, { name: displayName || "User" })}</span>
-                  </h3>
-                  <p className="text-zinc-300 text-[13px] leading-relaxed font-normal">
-                    {displayBio}
-                  </p>
-                </div>
+                <p className="text-[13.5px] text-zinc-300 leading-relaxed px-1 font-normal">
+                  {displayBio}
+                </p>
               ) : null}
 
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold text-zinc-300">
-                  {t("profile.communityStats", "Community Stats")}
-                </h3>
-                <div className="grid grid-cols-2 gap-2.5 tabular-nums">
-                  <button
-                    type="button"
-                    onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
-                    className="bg-white/[0.03] hover:bg-white/[0.06] p-3.5 rounded-2xl border border-white/[0.08] transition text-left cursor-pointer group"
-                  >
-                    <span className="text-[11px] font-medium text-zinc-400 group-hover:text-zinc-200 block mb-1">{t("profile.followers", "Followers")}</span>
-                    <span className="text-base font-semibold text-white">{effectiveFollowersCount}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
-                    className="bg-white/[0.03] hover:bg-white/[0.06] p-3.5 rounded-2xl border border-white/[0.08] transition text-left cursor-pointer group"
-                  >
-                    <span className="text-[11px] font-medium text-zinc-400 group-hover:text-zinc-200 block mb-1">{t("profile.following", "Following")}</span>
-                    <span className="text-base font-semibold text-white">{effectiveFollowingCount}</span>
-                  </button>
-                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalLikes", "Total Likes")}</span>
-                    <span className="text-base font-semibold text-white">{totalLikes}</span>
-                  </div>
-                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.totalPhotos", "Total Photos")}</span>
-                    <span className="text-base font-semibold text-white">{authorVideos.length}</span>
-                  </div>
-                  <div className="bg-white/[0.03] p-3.5 rounded-2xl border border-white/[0.08]">
-                    <span className="text-[11px] font-medium text-zinc-400 block mb-1">{t("profile.avgRatingGiven", "Avg Rating Given")}</span>
-                    <span className="text-base font-semibold text-white inline-flex items-center gap-1.5">
-                      {avgRating !== "—" ? (
-                        <>
-                          <Star className="w-3.5 h-3.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />
-                          <span>{avgRating}</span>
-                        </>
-                      ) : "—"}
-                    </span>
-                  </div>
+              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] divide-y divide-white/[0.06] overflow-hidden tabular-nums">
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[12.5px] font-medium text-zinc-400">
+                    {t("profile.avgRatingGiven", "Average Rating Given")}
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-white inline-flex items-center gap-1.5">
+                    {avgRating !== "—" ? (
+                      <>
+                        <Star className="w-3.5 h-3.5 fill-[#F5B942] text-[#F5B942] shrink-0" />
+                        <span>{avgRating}</span>
+                        <span className="text-zinc-500 text-xs font-normal">/ 5.0</span>
+                      </>
+                    ) : "—"}
+                  </span>
                 </div>
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[12.5px] font-medium text-zinc-400">
+                    {t("profile.totalPhotos", "Photo Reviews")}
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-white">
+                    {authorVideos.length}
+                  </span>
+                </div>
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <span className="text-[12.5px] font-medium text-zinc-400">
+                    {t("profile.totalLikes", "Total Likes")}
+                  </span>
+                  <span className="text-[13.5px] font-semibold text-white">
+                    {totalLikes}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSocialModalOpen("followers"); fetchSocialNetwork(); }}
+                  className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/[0.04] transition-colors cursor-pointer text-left"
+                >
+                  <span className="text-[12.5px] font-medium text-zinc-400">
+                    {t("profile.followers", "Followers")}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13.5px] font-semibold text-white">{effectiveFollowersCount}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSocialModalOpen("following"); fetchSocialNetwork(); }}
+                  className="w-full px-4 py-3 flex items-center justify-between gap-3 hover:bg-white/[0.04] transition-colors cursor-pointer text-left"
+                >
+                  <span className="text-[12.5px] font-medium text-zinc-400">
+                    {t("profile.following", "Following")}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13.5px] font-semibold text-white">{effectiveFollowingCount}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                  </div>
+                </button>
               </div>
             </div>
           )}

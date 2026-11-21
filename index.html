@@ -399,8 +399,8 @@
         overflow: hidden;
       }
       .ybs-card {
-        flex: 0 0 176px;
-        height: 310px;
+        flex: 0 0 clamp(176px, 46.5vw, 214px);
+        height: clamp(272px, calc(100dvh - 396px), 390px);
         border-radius: 22px;
         background: linear-gradient(180deg, #16161a 0%, #0b0b0e 100%);
         border: 1px solid rgba(255,255,255,0.08);

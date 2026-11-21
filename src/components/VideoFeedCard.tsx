@@ -16,7 +16,8 @@ import {
   Camera
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
-import { formatRecordedDate } from "../utils/dateUtils";
+import { formatRecordedDate, formatCompactRecency } from "../utils/dateUtils";
+import { classifyBusinessCategory } from "../utils/categoryUtils";
 import {
   formatBusinessName,
   resolveSafeAuthor,
@@ -33,7 +34,7 @@ import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
 import { preloadBusinessAssets, preloadImage } from "../utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
-import { CopoStarRating, getRoundedRating } from "./CopoStarRating";
+import { getRoundedRating } from "./CopoStarRating";
 
 interface VideoFeedCardProps {
   video: VideoReview;
@@ -297,6 +298,32 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
     (window.location.pathname.includes("/video/") || window.location.pathname.startsWith("/v/"));
 
   const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
+
+  const matchedPlace = React.useMemo(() => {
+    if (!places || places.length === 0) return undefined;
+    return places.find((p) => isPlaceReviewMatch(video, p));
+  }, [places, video]);
+
+  const cardDomain = extractCleanDomain(
+    matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || video.placeName
+  );
+  const cardBusinessName =
+    businessName ||
+    matchedPlace?.name ||
+    formatBusinessName(video?.businessName || video?.placeName || video?.dishOrItem || video?.placeId, cardDomain) ||
+    t("common.businessPlace", "Business Place");
+  const cardCategoryInfo = React.useMemo(
+    () =>
+      classifyBusinessCategory({
+        rawCategory: matchedPlace?.category || video.placeCategory,
+        name: cardBusinessName,
+        domain: cardDomain || cleanDomain,
+        description: matchedPlace?.description || video.placeDescription
+      }),
+    [matchedPlace?.category, matchedPlace?.description, video.placeCategory, video.placeDescription, cardBusinessName, cardDomain, cleanDomain]
+  );
+  const compactRecency = formatCompactRecency(video.recordedAt, video.createdAtMs);
+  const fullRecency = formatRecordedDate(video.recordedAt, video.createdAtMs);
 
   const renderActionButtons = (isDesktop: boolean) => (
     <>
@@ -578,12 +605,13 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             aria-label="Double tap to like photo review"
           />
 
-          {/* Subtle corner-only vignette — leaves the photo crisp and unobstructed */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/25 md:from-black/10 md:via-transparent md:to-black/15 z-10 pointer-events-none" />
+          {/* Editorial Top & Bottom Scrims — Keeps Full-Bleed Photo Pure While Guaranteeing Crisp Legibility */}
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 via-black/20 to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-[44%] min-h-[210px] bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.74)_42%,rgba(0,0,0,0.26)_74%,transparent_100%)] z-10 pointer-events-none" />
 
-          {/* Top Header Overlay: Business Name / Logo */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-3 md:px-4 pt-3.5 md:pt-4 pointer-events-none">
-            <div className="pointer-events-auto flex items-center gap-2 max-w-[calc(100%-16px)]">
+          {/* Top Bar: Navigation Left + Signature Frosted Category & Recency Badges Right */}
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between gap-2 px-3 md:px-4 pt-3.5 md:pt-4 pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-2 shrink-0">
               {(onGoBack || onCloseEmbed || isEmbed) && (
                 <button
                   type="button"
@@ -616,10 +644,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                       }
                     }
                   }}
-                  className="w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white active:scale-90 transition-all shadow-xl cursor-pointer shrink-0"
+                  className="w-10 h-10 rounded-full bg-black/55 hover:bg-black/80 backdrop-blur-xl border border-white/[0.16] flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer shrink-0"
                   title={t("common.goBack", "Go back")}
                 >
-                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                  <ChevronLeft className="w-5 h-5 stroke-[2.4]" />
                 </button>
               )}
 
@@ -633,7 +661,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   }}
                   onTouchStart={(e) => e.stopPropagation()}
                   onTouchEnd={(e) => e.stopPropagation()}
-                  className={`relative flex ${forceShowMenu ? "" : "md:hidden"} w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 active:scale-90 backdrop-blur-2xl border border-white/20 items-center justify-center text-white shadow-xl transition-all cursor-pointer select-none shrink-0`}
+                  className={`relative flex ${forceShowMenu ? "" : "md:hidden"} w-10 h-10 rounded-full bg-black/55 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/[0.16] items-center justify-center text-white shadow-lg transition-all cursor-pointer select-none shrink-0`}
                   aria-label={t("nav.openMenu", "Open menu")}
                   title={t("nav.openMenu", "Open menu")}
                 >
@@ -645,71 +673,18 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   )}
                 </button>
               )}
+            </div>
 
-              {/* Top Business Header Badge */}
-              <button
-                type="button"
-                id={`pill-top-place-${video.placeId || video.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const targetPlaceId = extractCleanDomain(video.placeWebsite || video.placeId) || video.placeId || video.placeName || video.id;
-                  onOpenPlace(targetPlaceId, video.id);
-                }}
-                onTouchStart={(e) => e.stopPropagation()}
-                className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-[#0a0a0d]/65 hover:bg-[#0a0a0d]/82 backdrop-blur-2xl border border-white/[0.13] hover:border-white/[0.24] text-white transition-all max-w-[300px] sm:max-w-[380px] md:max-w-[440px] text-left cursor-pointer touch-manipulation shadow-[0_12px_32px_rgba(0,0,0,0.55)] active:scale-[0.98] min-w-0 outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent] no-underline"
-              >
-                {(() => {
-                  const cardDom = extractCleanDomain(video.placeWebsite || video.placeId || video.placeName);
-                  const cardName =
-                    businessName ||
-                    formatBusinessName(video?.businessName || video?.placeName || video?.dishOrItem || video?.placeId, cardDom) ||
-                    t("common.businessPlace", "Business Place");
-                  return (
-                    <>
-                      <CopoBrandLogo
-                        domain={cardDom}
-                        name={cardName}
-                        website={video.placeWebsite}
-                        logoUrl={businessLogoUrl || video?.placeLogoUrl}
-                        bannerUrl={businessBannerUrl || video.placeBannerUrl}
-                        loading="eager"
-                        fetchPriority={isActive || isNear ? "high" : "auto"}
-                        className="w-9 h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md self-center"
-                        imageClassName="w-full h-full object-contain rounded-lg"
-                        fallbackTextClassName="font-extrabold text-[11px] text-zinc-950"
-                      />
-                      <div className="min-w-0 flex-1 py-0.5">
-                        <span className="leading-snug font-semibold text-[13px] sm:text-[13.5px] text-white tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] line-clamp-2" dir="auto">
-                          {(() => {
-                            const fullName = (cardName || "").trim();
-                            const words = fullName.split(/\s+/);
-                            const lastWord = words.pop() || "";
-                            const firstPart = words.join(" ");
-                            return (
-                              <span className="text-white" dir="auto">
-                                {firstPart ? firstPart + " " : ""}
-                                <span className="whitespace-nowrap inline-block align-baseline">
-                                  {lastWord}
-                                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0 inline-block align-middle ml-1" />
-                                </span>
-                              </span>
-                            );
-                          })()}
-                        </span>
-                        {!isEmbed && (
-                          <div className="flex items-center gap-1 text-[10.5px] text-[#E8C78A] font-semibold leading-none mt-0.5 tabular-nums">
-                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A] shrink-0" />
-                            <span>{effectiveRating}</span>
-                            <span className="text-zinc-300 font-normal">
-                              ({effectiveReviewCount} {effectiveReviewCount === 1 ? t("common.review", "review") : t("common.reviews", "reviews")})
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
-              </button>
+            {/* Frosted Category + Recency Pills (Exact Visual Twin of Homepage Photo Review Cards) */}
+            <div className="flex items-center gap-1.5 min-w-0 pointer-events-none">
+              <span className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.15] text-[11px] font-medium text-white/95 leading-none tracking-[-0.01em] shadow-sm truncate max-w-[132px]">
+                {cardCategoryInfo.badgeLabel}
+              </span>
+              {compactRecency && (
+                <span className="px-2.5 py-1 rounded-full bg-black/48 backdrop-blur-md border border-white/[0.12] text-[11px] font-medium text-white/85 leading-none tabular-nums shrink-0 shadow-sm">
+                  {compactRecency}
+                </span>
+              )}
             </div>
           </div>
 
@@ -738,69 +713,121 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             </div>
           )}
 
-          {/* Bottom Area: Compact Bottom-Left Pill (Reviewer, Timestamp, Stars, Domain) + Mobile Action Rail */}
-          <div className="relative z-45 w-full flex items-end justify-between gap-2 px-3 md:px-3.5 pt-2 pointer-events-none copo-video-bottom-metadata select-none">
+          {/* Bottom Area: Signature Editorial Photo Review Overlay (Unboxed) + Mobile Action Rail */}
+          <div className="relative z-45 w-full flex items-end justify-between gap-3 px-4 md:px-5 pt-4 pointer-events-none copo-video-bottom-metadata select-none">
             <footer
               id={`copo-video-bottom-info-${video.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="pointer-events-auto w-fit max-w-full min-w-0 inline-flex flex-col gap-1 px-3.5 py-2 rounded-2xl bg-[#0a0a0d]/65 hover:bg-[#0a0a0d]/82 backdrop-blur-2xl border border-white/[0.13] text-white shadow-[0_12px_32px_rgba(0,0,0,0.55)] transition-all"
+              className="pointer-events-auto flex-1 min-w-0 flex flex-col gap-2.5 text-white pb-0.5"
             >
-              <div className="flex flex-col gap-1 min-w-0">
-                {/* Line 1: Reviewer Anonymous ID / Username + Verified Badge + Timestamp */}
-                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenCreator(safeAuthor);
-                    }}
-                    className="font-semibold text-white text-[13px] sm:text-[13.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] flex items-center gap-1.5 no-underline hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer bg-transparent border-0 p-0 text-left w-fit max-w-full outline-none focus:outline-none focus:ring-0 select-none [-webkit-tap-highlight-color:transparent]"
-                    title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
-                  >
-                    <span className="whitespace-nowrap truncate leading-tight no-underline">{safeAuthor.name}</span>
-                    {Boolean(safeAuthor?.passkeyProtected) && (
-                      <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
-                    )}
-                  </button>
-                  {(video.recordedAt || video.createdAtMs) && (
-                    <>
-                      <span className="text-zinc-500 text-[11px] select-none">•</span>
-                      <span className="text-zinc-300 text-[11px] sm:text-[11.5px] font-medium whitespace-nowrap">
-                        {formatRecordedDate(video.recordedAt, video.createdAtMs)}
-                      </span>
-                    </>
-                  )}
+              {/* Line 1: Bold Universal 5-Star Customer Review Rating + Numeric Score */}
+              <div className="flex items-center gap-2" aria-label={`Rated ${wholeStarScore} out of 5 stars`}>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((starIdx) => (
+                    <Star
+                      key={starIdx}
+                      className={`w-[15px] h-[15px] sm:w-4 sm:h-4 ${
+                        starIdx <= wholeStarScore
+                          ? "fill-[#F5B942] text-[#F5B942] drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]"
+                          : "fill-white/15 text-white/25"
+                      }`}
+                    />
+                  ))}
                 </div>
+                <span className="text-[13px] sm:text-[13.5px] font-semibold text-white leading-none tabular-nums drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
+                  {wholeStarScore}/5
+                </span>
+                <span className="text-white/35 text-[11px] leading-none select-none">·</span>
+                <span className="text-[11px] sm:text-[11.5px] font-medium text-white/80 leading-none tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
+                  {t("video.photoReview", "Photo Review")}
+                </span>
+              </div>
 
-                {/* Line 2: Strict Whole-Number Solid Star Rating (1-5) + Clickable Domain */}
-                <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                  <CopoStarRating
-                    rating={wholeStarScore}
-                    starClassName="w-3.5 h-3.5"
-                    filledColorClass="fill-[#E8C78A] text-[#E8C78A] drop-shadow-sm"
-                    emptyColorClass="fill-white/10 text-white/20"
-                  />
-                  {cleanDomain && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const targetPlaceId =
-                          extractCleanDomain(video.placeWebsite || video.placeId) ||
-                          video.placeId ||
-                          video.placeName ||
-                          cleanDomain ||
-                          video.id;
-                        onOpenPlace(targetPlaceId, video.id);
-                      }}
-                      className="inline-flex items-center gap-1 text-zinc-200 hover:text-white active:opacity-75 transition-colors cursor-pointer text-[11.5px] sm:text-[12px] font-semibold truncate max-w-[180px] sm:max-w-[220px]"
-                      title={`${cleanDomain}`}
+              {/* Line 2: Clickable Business Brand Identity (Opens Business Profile) */}
+              <button
+                type="button"
+                id={`pill-top-place-${video.placeId || video.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const targetPlaceId =
+                    extractCleanDomain(video.placeWebsite || video.placeId) ||
+                    video.placeId ||
+                    video.placeName ||
+                    cleanDomain ||
+                    video.id;
+                  onOpenPlace(targetPlaceId, video.id);
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="group/brand flex items-center gap-2.5 w-fit max-w-full min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer touch-manipulation active:scale-[0.98] transition-transform outline-none focus:outline-none select-none [-webkit-tap-highlight-color:transparent]"
+              >
+                <CopoBrandLogo
+                  domain={cardDomain || video.placeId}
+                  name={cardBusinessName}
+                  website={video.placeWebsite}
+                  logoUrl={businessLogoUrl || matchedPlace?.logoUrl || video?.placeLogoUrl}
+                  bannerUrl={businessBannerUrl || matchedPlace?.bannerUrl || video.placeBannerUrl}
+                  loading="eager"
+                  fetchPriority={isActive || isNear ? "high" : "auto"}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-[11px] sm:rounded-[12px] bg-white/95 border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-[0_6px_18px_rgba(0,0,0,0.5)] group-hover/brand:scale-[1.03] transition-transform"
+                  imageClassName="w-full h-full object-contain rounded-md"
+                  fallbackTextClassName="font-extrabold text-[12px] text-zinc-950"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span
+                      className="text-[15.5px] sm:text-[16.5px] font-semibold text-white tracking-[-0.02em] leading-tight truncate drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] group-hover/brand:underline decoration-white/50 underline-offset-2"
+                      dir="auto"
                     >
-                      <Globe className="w-3 h-3 text-zinc-300 shrink-0" />
-                      <span className="truncate">{cleanDomain}</span>
-                    </button>
-                  )}
+                      {cardBusinessName}
+                    </span>
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-zinc-950 shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11.5px] sm:text-[12px] text-white/75 font-medium mt-0.5 min-w-0 truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                    {!isEmbed && (
+                      <span className="inline-flex items-center gap-1 shrink-0 tabular-nums">
+                        <Star className="w-2.5 h-2.5 fill-[#F5B942] text-[#F5B942] shrink-0" />
+                        <span className="text-white/90 font-semibold">{effectiveRating}</span>
+                        <span className="text-white/65">
+                          ({effectiveReviewCount})
+                        </span>
+                      </span>
+                    )}
+                    {!isEmbed && cleanDomain && <span className="text-white/35 shrink-0">·</span>}
+                    {cleanDomain && (
+                      <span className="inline-flex items-center gap-1 truncate text-white/75">
+                        <Globe className="w-3 h-3 text-white/60 shrink-0" />
+                        <span className="truncate">{cleanDomain}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
+              </button>
+
+              {/* Line 3: Explicit Human Reviewer Attribution (Opens Reviewer Profile) */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-wrap text-[12px] sm:text-[12.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenCreator(safeAuthor);
+                  }}
+                  className="inline-flex items-center gap-1.5 min-w-0 max-w-full text-left bg-transparent border-0 p-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all outline-none focus:outline-none select-none [-webkit-tap-highlight-color:transparent]"
+                  title={`${t("video.viewProfile", "View Profile")} - ${safeAuthor.name}`}
+                >
+                  <span className="text-white/65 font-normal shrink-0">{t("feed.reviewBy", "Review by")}</span>
+                  <span className="text-white/95 font-semibold truncate">{safeAuthor.name}</span>
+                  {Boolean(safeAuthor?.passkeyProtected) && (
+                    <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0" />
+                  )}
+                </button>
+                {(video.recordedAt || video.createdAtMs) && fullRecency && (
+                  <>
+                    <span className="text-white/35 select-none">·</span>
+                    <span className="text-white/65 font-normal whitespace-nowrap">
+                      {fullRecency}
+                    </span>
+                  </>
+                )}
               </div>
             </footer>
 

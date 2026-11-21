@@ -2,6 +2,7 @@ import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { classifyBusinessCategory, isGenericCategory } from "../utils/categoryUtils";
+import { formatCompactRecency } from "../utils/dateUtils";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   X,
@@ -106,7 +107,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   onClaimBusiness,
 }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "about">("overview");
+  const [activeTab, setActiveTab] = useState<"reviews" | "about">("reviews");
   const [showHoursDropdown, setShowHoursDropdown] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -147,8 +148,9 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const bannerImgRef = React.useRef<HTMLImageElement>(null);
   const fetchedTargetUrlsRef = React.useRef<Set<string>>(new Set());
 
-  // Reset image errors, photo index, logo errors, and fetched media state synchronously when place identity changes
+  // Reset image errors, photo index, logo errors, active tab, and fetched media state synchronously when place identity changes
   useEffect(() => {
+    setActiveTab("reviews");
     setBannerError(false);
     setPhotoIndex(0);
     setActiveBanner(null);
@@ -191,7 +193,7 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   }, [place?.bannerUrl]);
 
   // Tab switching with scroll to top
-  const handleTabClick = (tab: "overview" | "reviews" | "about") => {
+  const handleTabClick = (tab: "reviews" | "about") => {
     setActiveTab(tab);
     if (contentRef.current) {
       contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -432,16 +434,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const isYoouz = place.id === 'yoouz.com' || (place.name && place.name.toLowerCase() === 'yoouz') || place.brandDomain === 'yoouz.com' || (place.website && place.website.includes('yoouz.com'));
 
+  const rawResolvedAddress = (currentDisplayAddress || displayAddress || "").trim();
+  const isPlaceholderAddress =
+    !rawResolvedAddress ||
+    /^(online|global|worldwide|verified location|n\/a|unknown)$/i.test(rawResolvedAddress) ||
+    /^https?:\/\//i.test(rawResolvedAddress) ||
+    rawResolvedAddress.toLowerCase() === (place.brandDomain || "").toLowerCase();
+
+  // Only treat as a physical storefront when verified street/branch/coordinate data actually exists (never for online-only websites)
   const hasPhysicalLocation = !isYoouz && Boolean(
-    (currentDisplayAddress && currentDisplayAddress.trim() !== "") ||
-    (displayAddress && displayAddress.trim() !== "") ||
-    (place.address && place.address.trim() !== "") ||
-    (place.city && 
-     place.city.trim() !== "" && 
-     !["online", "global", "worldwide", "global headquarters", "n/a"].includes(place.city.toLowerCase().trim())) ||
-    (place.country && place.country.trim() !== "" && !["global", "worldwide"].includes(place.country.toLowerCase().trim())) ||
-    (place.lat && place.lng) ||
-    place.name
+    availableLocations.length > 0 ||
+    (!isPlaceholderAddress && (rawResolvedAddress.includes(",") || /\d/.test(rawResolvedAddress))) ||
+    (Boolean(place.lat && place.lng) && Math.abs(Number(place.lat)) > 0.01 && Math.abs(Number(place.lng)) > 0.01)
   );
 
   // Compute dynamic stats based on actual video reviews
@@ -1281,7 +1285,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const hasGenuineHours = Boolean(
     effectiveHours &&
     effectiveHours.trim() !== "" &&
-    !effectiveHours.toLowerCase().includes("not provided")
+    !effectiveHours.toLowerCase().includes("not provided") &&
+    !effectiveHours.toLowerCase().includes("available 24/7")
   );
 
   const hasGenuinePlusCode = Boolean(
@@ -1830,20 +1835,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         </div>
       </div>
 
-      {/* Flagship Liquid-Glass Segmented Control: Overview | Reviews | About */}
+      {/* Apple / Google 2-Tab Segmented Control: Photo Reviews (Default Proof First) | About */}
       <div className="px-5 py-2.5 bg-[#050506] shrink-0">
-        <div className="grid grid-cols-3 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
-          <button
-            type="button"
-            onClick={() => handleTabClick("overview")}
-            className={`py-1.5 rounded-full text-xs transition-all cursor-pointer text-center ${
-              activeTab === "overview"
-                ? "bg-white text-zinc-950 font-semibold shadow-sm"
-                : "text-zinc-400 hover:text-white font-medium"
-            }`}
-          >
-            {t("place.overview", "Overview")}
-          </button>
+        <div className="grid grid-cols-2 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
           <button
             type="button"
             onClick={() => handleTabClick("reviews")}
@@ -1853,7 +1847,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 : "text-zinc-400 hover:text-white font-medium"
             }`}
           >
-            <span>{t("place.reviews", "Reviews")}</span>
+            <span>{t("place.photoReviews", "Photo Reviews")}</span>
             <span
               className={`text-[11px] tabular-nums ${
                 activeTab === "reviews" ? "text-zinc-600 font-semibold" : "text-zinc-500"
@@ -1880,8 +1874,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         <div 
           ref={contentRef} 
           tabIndex={0}
-          className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] space-y-5 p-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
-          style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+          className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] space-y-4 px-4 pt-2 pb-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
+          style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {copiedNotification && (
             <div className="px-4 py-2 bg-zinc-800 text-white text-xs font-semibold text-center rounded-xl border border-zinc-700 animate-in fade-in">
@@ -1889,62 +1883,73 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === "overview" && (
-            <div className="space-y-5 animate-in fade-in duration-500">
-              {/* Action Buttons Row (Floating Obsidian Glass Circles) */}
-              <div className="py-1 flex items-center justify-between sm:justify-around text-center gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
-                <button
-                  id="btn-directions-place"
-                  onClick={handleOpenDirections}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
-                  title={t("place.directions", "Directions")}
-                >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
-                    <Navigation className="w-[18px] h-[18px] stroke-[1.9]" />
-                  </div>
-                  <span className="font-medium text-[11px]">{t("place.directions", "Directions")}</span>
-                </button>
+          {/* TAB 1 (DEFAULT): PHOTO REVIEWS + CONTEXTUAL QUICK ACTIONS */}
+          {activeTab === "reviews" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Contextual Quick-Action Strip — Only Shows Real Applicable Actions */}
+              <div className="flex items-center justify-around gap-1.5 py-0.5 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar whitespace-nowrap">
+                {hasGenuineWebsite && (
+                  <a
+                    id="btn-website-place"
+                    href={effectiveWebsite}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
+                    title={t("place.website", "Website")}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                      <Globe className="w-[17px] h-[17px] stroke-[1.9]" />
+                    </div>
+                    <span className="font-medium text-[11px]">{t("place.website", "Website")}</span>
+                  </a>
+                )}
 
-                <a
-                  id="btn-call-place"
-                  href={hasGenuinePhone && effectivePhone ? `tel:${effectivePhone}` : (effectiveWebsite || "#")}
-                  onClick={(e) => {
-                    if (!hasGenuinePhone || !effectivePhone) {
-                      e.preventDefault();
-                      if (effectiveWebsite) {
-                        window.open(effectiveWebsite, "_blank");
-                      } else {
-                        setCopiedNotification(t("place.contactNotProvided", "Contact phone not provided."));
-                        setTimeout(() => setCopiedNotification(""), 3000);
-                      }
-                    }
-                  }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
-                  title={t("place.call", "Call")}
-                >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
-                    <Phone className="w-[18px] h-[18px] stroke-[1.9]" />
-                  </div>
-                  <span className="font-medium text-[11px]">{t("place.call", "Call")}</span>
-                </a>
+                {hasPhysicalLocation && !isOnlineOnlyPlatform && (
+                  <button
+                    id="btn-directions-place"
+                    type="button"
+                    onClick={handleOpenDirections}
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
+                    title={t("place.directions", "Directions")}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                      <Navigation className="w-[17px] h-[17px] stroke-[1.9]" />
+                    </div>
+                    <span className="font-medium text-[11px]">{t("place.directions", "Directions")}</span>
+                  </button>
+                )}
+
+                {hasGenuinePhone && effectivePhone && (
+                  <a
+                    id="btn-call-place"
+                    href={`tel:${effectivePhone}`}
+                    className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
+                    title={t("place.call", "Call")}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                      <Phone className="w-[17px] h-[17px] stroke-[1.9]" />
+                    </div>
+                    <span className="font-medium text-[11px]">{t("place.call", "Call")}</span>
+                  </a>
+                )}
 
                 <button
                   id="btn-save-place"
+                  type="button"
                   onClick={() => onToggleGrabPlace && onToggleGrabPlace(place)}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                 >
                   <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all border ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border ${
                       isSaved
                         ? "bg-[#E8C78A]/15 border-[#E8C78A]/45 text-[#E8C78A]"
                         : "bg-white/[0.05] border-white/[0.09] text-zinc-100 group-hover:bg-white/[0.11] group-hover:border-white/[0.18]"
                     }`}
                   >
                     {isSaved ? (
-                      <BookmarkCheck className="w-[18px] h-[18px] fill-current" />
+                      <BookmarkCheck className="w-[17px] h-[17px] fill-current" />
                     ) : (
-                      <Bookmark className="w-[18px] h-[18px] stroke-[1.9]" />
+                      <Bookmark className="w-[17px] h-[17px] stroke-[1.9]" />
                     )}
                   </div>
                   <span className="font-medium text-[11px]">
@@ -1954,21 +1959,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                 <button
                   id="btn-share-place"
+                  type="button"
                   onClick={() => {
                     triggerHaptic("light");
                     handleShare();
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                   title={t("place.shareBusiness", "Share Business")}
                 >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
-                    <Share2 className="w-[18px] h-[18px] stroke-[1.9]" />
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <Share2 className="w-[17px] h-[17px] stroke-[1.9]" />
                   </div>
                   <span className="font-medium text-[11px]">{t("common.share", "Share")}</span>
                 </button>
 
                 <button
                   id="btn-chat-business"
+                  type="button"
                   onClick={() => {
                     triggerHaptic("light");
                     if (!isClaimed) {
@@ -1986,137 +1993,19 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       onStartChat(place.id, place.name, getPlaceLogoUrl(place) || "");
                     }
                   }}
-                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[58px] cursor-pointer"
+                  className="flex flex-col items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-all group shrink-0 min-w-[56px] cursor-pointer"
                   title={`${t("place.chatWith", "Chat with")} ${displayedPlaceName}`}
                 >
-                  <div className="w-11 h-11 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
-                    <MessageSquare className="w-[18px] h-[18px] stroke-[1.9]" />
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] text-zinc-100 border border-white/[0.09] flex items-center justify-center group-hover:bg-white/[0.11] group-hover:border-white/[0.18] transition-all">
+                    <MessageSquare className="w-[17px] h-[17px] stroke-[1.9]" />
                   </div>
                   <span className="font-medium text-[11px]">{t("place.chat", "Chat")}</span>
                 </button>
               </div>
-              
-              {/* Featured Photo Reviews Section */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="text-[12px] font-semibold tracking-[-0.01em] text-zinc-300">
-                    {t("place.featuredReviews", "Featured Reviews")}
-                  </h3>
-                  {rawPlaceVideos.length > 0 && (
-                    <button
-                      onClick={() => handleTabClick("reviews")}
-                      className="text-xs font-medium text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                    >
-                      {t("place.viewAll", "View all")}
-                    </button>
-                  )}
-                </div>
 
-                {rawPlaceVideos.length === 0 ? (
-                  <div className="py-10 rounded-2xl bg-white/[0.02] border border-dashed border-white/[0.1] flex flex-col items-center justify-center gap-3 text-center px-6">
-                    <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
-                      <Camera className="w-5 h-5 text-zinc-400" />
-                    </div>
-                    <p className="text-xs text-zinc-400 font-medium leading-relaxed">
-                      {t("place.noReviewsYetShort", `Be the first to share a live photo review for ${displayedPlaceName}.`)}
-                    </p>
-                    <button
-                      onClick={() => onRecordForPlace(place)}
-                      className="mt-1 px-5 py-2 rounded-full bg-white text-zinc-950 font-semibold text-xs hover:bg-zinc-200 transition-colors cursor-pointer"
-                    >
-                      {t("place.addReview", "Add Review")}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {placeVideos.slice(0, 6).map((v) => {
-                      const displayViews = getDisplayViews(v);
-                      const formattedViews = formatViewCount(displayViews);
-
-                      return (
-                        <div
-                          key={v.id}
-                          onClick={() => onSelectVideo(v.id)}
-                          className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-white/[0.08] hover:border-white/[0.2]"
-                        >
-                          <CopoVideoThumbnail
-                            video={v}
-                            alt={v.placeName}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
-
-                          {/* Whole-Number Rating Badge */}
-                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-1 border border-white/[0.12]">
-                            <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
-                            <span>{getRoundedRating(v.rating || 5)}</span>
-                          </div>
-
-                          {/* Bottom Meta Info - Business Name & Views */}
-                          <div className="absolute bottom-2 left-2 right-2 flex flex-col gap-0.5 pointer-events-none z-10">
-                            <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
-                              {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
-                            </span>
-                            <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium">
-                              <Eye className="w-2.5 h-2.5 shrink-0" />
-                              <span>{formattedViews}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Summary Card */}
-              <div 
-                onClick={() => handleTabClick("about")}
-                className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] cursor-pointer hover:bg-white/[0.06] transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
-                      <Info className="w-4 h-4 text-zinc-300" />
-                    </div>
-                    <h3 className="text-xs font-semibold tracking-[-0.01em] text-white">
-                      {t("place.aboutThisBusiness", "About")}
-                    </h3>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-                </div>
-                <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
-                  {getEffectivePlaceDescription(place)}
-                </p>
-                
-                {/* Micro Metadata Row */}
-                {(() => {
-                  const aboutCat = classifyBusinessCategory({
-                    rawCategory: place.category,
-                    name: displayedPlaceName,
-                    domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
-                    description: place.description
-                  }).specificCategory;
-                  return aboutCat ? (
-                    <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-4 text-[11px] font-medium text-zinc-400">
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="w-3 h-3 text-zinc-500" />
-                        <span>{aboutCat}</span>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: VIDEO REVIEWS - Clean, Content-First Grid */}
-          {activeTab === "reviews" && (
-            <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Only show Sort & Star Filter if there are multiple reviews (2+) */}
+              {/* Sort & Star Filter (shown cleanly when 2+ reviews exist) */}
               {rawPlaceVideos.length > 1 && (
-                <div className="space-y-2.5 pb-1">
-                  {/* Full-Width Balanced Segmented Sort Control */}
+                <div className="space-y-2.5">
                   <div className="grid grid-cols-3 gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-1">
                     <button
                       type="button"
@@ -2162,7 +2051,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     </button>
                   </div>
 
-                  {/* Single-Line Horizontal Star Filter Chips */}
                   {Object.values(starCounts).filter(c => c > 0).length > 1 && (
                     <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5 whitespace-nowrap">
                       <button
@@ -2207,31 +2095,23 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
               )}
 
-              {/* 3-Column Photo Reviews Grid */}
+              {/* Adaptive Photo Reviews Grid (Bold 2-col for 1–4 reviews, 3-col gallery for 5+) */}
               {rawPlaceVideos.length === 0 ? (
-                <div className="flex flex-col items-center gap-5 py-12 px-6 bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.1] text-center">
+                <div className="flex flex-col items-center gap-4 py-12 px-6 bg-white/[0.02] rounded-2xl border border-dashed border-white/[0.1] text-center">
                   <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
                     <Camera className="w-5 h-5 text-zinc-400" />
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-semibold text-white">{t("place.noReviewsYetFor", `No photo reviews yet for ${displayedPlaceName}`)}</h3>
+                    <h3 className="text-sm font-semibold text-white">
+                      {t("place.noReviewsYetFor", `No photo reviews yet for ${displayedPlaceName}`)}
+                    </h3>
                     <p className="text-xs text-zinc-400 max-w-[260px] mx-auto leading-relaxed">
-                      {t("place.beTheFirstForBusiness", `Be the first to share your experience with a live photo review for ${displayedPlaceName}.`)}
+                      {t("place.beTheFirstForBusiness", `Snap the first live camera photo review of ${displayedPlaceName}.`)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => {
-                      triggerHaptic("medium");
-                      onRecordForPlace(place);
-                    }}
-                    className="w-full max-w-[210px] bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs py-2.5 rounded-full shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Camera className="w-4 h-4 text-zinc-950 stroke-[2.2]" />
-                    <span>{t("place.addReview", "Add Review")}</span>
-                  </button>
                 </div>
               ) : placeVideos.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-10 px-6 bg-white/[0.025] rounded-2xl border border-white/[0.08] text-center">
+                <div className="flex flex-col items-center gap-3.5 py-10 px-6 bg-white/[0.025] rounded-2xl border border-white/[0.08] text-center">
                   <div className="w-11 h-11 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
                     <Star className="w-5 h-5 text-zinc-500" />
                   </div>
@@ -2240,7 +2120,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       No {starFilter}★ reviews found
                     </h4>
                     <p className="text-[11px] text-zinc-400">
-                      Try selecting another star rating or view all reviews.
+                      Try another star rating or view all customer photos.
                     </p>
                   </div>
                   <button
@@ -2255,10 +2135,12 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2 pt-0.5">
+                <div className={`grid gap-2.5 ${placeVideos.length <= 4 ? "grid-cols-2" : "grid-cols-3 gap-2"}`}>
                   {placeVideos.map((v) => {
-                    const displayViews = getDisplayViews(v);
-                    const formattedViews = formatViewCount(displayViews);
+                    const isCompact3Col = placeVideos.length > 4;
+                    const wholeStars = getRoundedRating(v.rating || 5);
+                    const recency = formatCompactRecency(v.recordedAt, v.createdAtMs);
+                    const reviewerLabel = v.author?.name || v.authorName || "Customer";
 
                     return (
                       <div
@@ -2266,33 +2148,56 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         onClick={() => {
                           onSelectVideo(v.id);
                         }}
-                        className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-white/[0.08] hover:border-white/[0.2]"
+                        className="relative aspect-[3/4] rounded-[20px] overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border border-white/[0.09] hover:border-white/[0.24]"
                       >
-                        {/* Video Thumbnail */}
                         <CopoVideoThumbnail
                           video={v}
-                          alt={v.caption || v.placeName}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                          alt={`${displayedPlaceName} photo review by ${reviewerLabel}`}
+                          className="w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out pointer-events-none"
                         />
 
-                        {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent pointer-events-none" />
+                        {/* Smooth Editorial Scrim */}
+                        <div className="absolute inset-x-0 bottom-0 h-[56%] bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.72)_46%,rgba(0,0,0,0.22)_78%,transparent_100%)] pointer-events-none" />
 
-                        {/* Whole-Number Rating Badge */}
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-semibold text-white flex items-center gap-0.5 border border-white/[0.12] tabular-nums">
-                          <Star className="w-2.5 h-2.5 fill-[#E8C78A] text-[#E8C78A]" />
-                          <span>{getRoundedRating(v.rating || 5)}</span>
+                        {/* Top Row: Clean Frosted Recency Badge */}
+                        <div className="absolute top-2 inset-x-2 flex items-center justify-end pointer-events-none z-10">
+                          <span className="px-2 py-0.5 rounded-full bg-black/52 backdrop-blur-md border border-white/[0.13] text-[10px] font-medium text-white/90 leading-none tabular-nums">
+                            {recency}
+                          </span>
                         </div>
 
-                        {/* Bottom Meta Info - Business Name & Views */}
-                        <div className="absolute bottom-2 left-2 right-2 flex flex-col justify-end gap-0.5 pointer-events-none z-10">
-                          <span className="text-[10.5px] text-white font-semibold drop-shadow-md truncate">
-                            {v.placeName || formatBusinessName(v.placeId) || place.name || "Business"}
+                        {/* Bottom Unmistakable Customer Review Attribution */}
+                        <div className="absolute bottom-2.5 inset-x-2.5 flex flex-col justify-end gap-1 pointer-events-none z-10">
+                          {isCompact3Col ? (
+                            <div className="flex items-center gap-1" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                              <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942] shrink-0" />
+                              <span className="text-[11px] font-semibold text-white leading-none tabular-nums">
+                                {wholeStars}/5
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((starIdx) => (
+                                  <Star
+                                    key={starIdx}
+                                    className={`w-3 h-3 ${
+                                      starIdx <= wholeStars
+                                        ? "fill-[#F5B942] text-[#F5B942]"
+                                        : "fill-white/15 text-white/25"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[11px] font-semibold text-white/95 leading-none tabular-nums">
+                                {wholeStars}/5
+                              </span>
+                            </div>
+                          )}
+
+                          <span className="text-[10.5px] sm:text-[11px] text-white/85 font-medium drop-shadow-sm truncate leading-tight">
+                            {isCompact3Col ? reviewerLabel : `${t("feed.reviewBy", "Review by")} ${reviewerLabel}`}
                           </span>
-                          <div className="flex items-center gap-1 text-zinc-300 text-[9.5px] font-medium drop-shadow-md tabular-nums">
-                            <Eye className="w-2.5 h-2.5 shrink-0" />
-                            <span>{formattedViews}</span>
-                          </div>
                         </div>
                       </div>
                     );
@@ -2302,92 +2207,145 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             </div>
           )}
 
-          {/* TAB 3: ABOUT - Flagship Obsidian Business Profile */}
+          {/* TAB 2: ABOUT — Unified Apple Maps / Google Business Details Sheet */}
           {activeTab === "about" && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Story / Description Section */}
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-                <p className="text-[13px] text-zinc-300 leading-relaxed font-normal">
-                  {getEffectivePlaceDescription(place)}
-                </p>
-              </div>
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* 1. Clean Editorial Brand Summary (Scraped Website Metadata) */}
+              {(() => {
+                const desc = getEffectivePlaceDescription(place);
+                return desc ? (
+                  <p className="text-[13.5px] text-zinc-300 leading-relaxed px-1 font-normal">
+                    {desc}
+                  </p>
+                ) : null;
+              })()}
 
-              {/* Contact Information Stacked Cards */}
-              <div className="space-y-2">
-                {/* Website Card */}
-                {effectiveWebsite && (
+              {/* 2. Single Unified Hairline-Divided Details Card (Zero Stacked Box Clutter) */}
+              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] divide-y divide-white/[0.06] overflow-hidden">
+                {/* Category */}
+                {(() => {
+                  const aboutCat = classifyBusinessCategory({
+                    rawCategory: place.category,
+                    name: displayedPlaceName,
+                    domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
+                    description: place.description
+                  }).specificCategory;
+                  return aboutCat ? (
+                    <div className="px-4 py-3 flex items-center gap-3">
+                      <Tag className="w-4 h-4 text-zinc-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                          {t("place.category", "Category")}
+                        </span>
+                        <span className="text-[13px] font-medium text-zinc-100 block truncate">
+                          {aboutCat}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Website */}
+                {hasGenuineWebsite && (
                   <a
                     href={effectiveWebsite}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
+                    className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] transition-colors group"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Globe className="w-4 h-4 text-zinc-300" />
+                    <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                        {t("place.website", "Website")}
+                      </span>
+                      <span className="text-[13px] font-medium text-white truncate block group-hover:underline">
+                        {displayWebsiteClean}
+                      </span>
                     </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.website", "Website")}</span>
-                      <span className="text-xs font-semibold text-white truncate block">{displayWebsiteClean}</span>
-                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-200 shrink-0 transition-colors" />
                   </a>
                 )}
 
-                {/* Phone Card */}
+                {/* Phone (Only When Verified/Present) */}
                 {hasGenuinePhone && (
                   <a
                     href={`tel:${effectivePhone}`}
-                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
+                    className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] transition-colors group"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Phone className="w-4 h-4 text-zinc-300" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.call", "Contact")}</span>
-                      <span className="text-xs font-semibold text-white truncate block tabular-nums">
+                    <Phone className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                        {t("place.call", "Phone")}
+                      </span>
+                      <span className="text-[13px] font-medium text-white truncate block tabular-nums">
                         {formatPhoneNumber(effectivePhone)}
                       </span>
                     </div>
+                    <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-200 shrink-0" />
                   </a>
                 )}
 
-                {/* Email Card */}
+                {/* Business Contact Email (Only Public Business Emails, Never Personal) */}
                 {effectiveEmail && (
                   <a
                     href={`mailto:${effectiveEmail}`}
-                    className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5 hover:bg-white/[0.06] transition-all group"
+                    className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] transition-colors group"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                      <Mail className="w-4 h-4 text-zinc-300" />
+                    <Mail className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                        {t("place.email", "Email")}
+                      </span>
+                      <span className="text-[13px] font-medium text-white truncate block">
+                        {effectiveEmail}
+                      </span>
                     </div>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-medium text-zinc-500 block">{t("place.email", "Email")}</span>
-                      <span className="text-xs font-semibold text-white truncate block">{effectiveEmail}</span>
-                    </div>
+                    <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-zinc-200 shrink-0" />
                   </a>
                 )}
 
-                {/* Hours Summary Card */}
-                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center shrink-0">
-                    <Clock className="w-4 h-4 text-zinc-300" />
+                {/* Opening Hours (Only When Genuine Physical Hours Exist — Never Fake "Open Now" / "Closed") */}
+                {hasGenuineHours && (
+                  <div className="px-4 py-3 flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                        {t("place.hours", "Hours")}
+                      </span>
+                      <span className="text-[13px] font-medium text-zinc-100 block">
+                        {effectiveHours}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-medium text-zinc-500 block">{t("place.hours", "Hours")}</span>
-                    <span className={`text-xs font-semibold block ${hasGenuineHours ? "text-zinc-200" : "text-zinc-400"}`}>
-                      {hasGenuineHours ? t("place.openNow", "Open Now") : t("place.closed", "Closed")}
-                    </span>
+                )}
+
+                {/* Physical Address Row (Only When Verified Physical Location Exists) */}
+                {hasPhysicalLocation && !isOnlineOnlyPlatform && rawResolvedAddress && !isPlaceholderAddress && (
+                  <div className="px-4 py-3 flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-none mb-1">
+                        {t("place.locationExperience", "Address")}
+                      </span>
+                      <span className="text-[13px] font-medium text-zinc-100 block leading-snug">
+                        {rawResolvedAddress}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleOpenDirections}
+                      className="px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] border border-white/[0.1] text-white font-medium text-[11px] transition-colors shrink-0 cursor-pointer"
+                    >
+                      {t("place.getDirections", "Directions")}
+                    </button>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Detailed Location & Map Section */}
-              <div className="space-y-2.5">
-                <h4 className="text-xs font-semibold text-zinc-300 px-1">
-                  {t("place.locationExperience", "Location")}
-                </h4>
-                
+              {/* 3. Embedded Map Preview — STRICTLY Only Shown for Verified Physical Locations (Never Online-Only Brands) */}
+              {hasPhysicalLocation && !isOnlineOnlyPlatform && (
                 <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] overflow-hidden">
-                  <div className="h-40 w-full relative">
+                  <div className="h-36 w-full relative">
                     <iframe
                       width="100%"
                       height="100%"
@@ -2397,115 +2355,101 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       src={getGoogleMapsEmbedUrl(effectivePlaceForMaps, displayedPlaceName)}
                       title="Google Maps Location Preview"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-transparent to-transparent pointer-events-none" />
-                  </div>
-                  
-                  <div className="p-3.5 space-y-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <p className="text-xs text-zinc-200 font-medium leading-relaxed">
-                          {currentDisplayAddress || displayAddress}
-                        </p>
-                      </div>
-                      <button 
-                        onClick={handleOpenDirections}
-                        className="px-3.5 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.12] text-white font-medium text-xs transition-all shrink-0 cursor-pointer"
-                      >
-                        {t("place.getDirections", "Directions")}
-                      </button>
-                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050506]/80 via-transparent to-transparent pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={handleOpenDirections}
+                      className="absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-full bg-black/75 hover:bg-black/90 backdrop-blur-md border border-white/15 text-white font-medium text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>{t("place.getDirections", "Directions")}</span>
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Multi-Branch Directory */}
+              {/* 4. Multi-Branch Directory (Only When Multiple Physical Locations Exist) */}
               {availableLocations.length > 1 && (
-                <div className="space-y-2.5 pt-1">
-                  <h4 className="text-xs font-semibold text-zinc-300 px-1">
+                <div className="space-y-2">
+                  <h4 className="text-[11px] font-semibold text-zinc-500 px-1">
                     {t("place.globalNetwork", "Locations")} ({availableLocations.length})
                   </h4>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] divide-y divide-white/[0.06] overflow-hidden">
                     {availableLocations.map((loc: any, idx: number) => {
                       const isSelected = selectedLocationIndex === idx;
                       const branchLabel = loc.name || (loc.city ? `${loc.city} Branch` : `Branch ${idx + 1}`);
                       return (
-                        <div
+                        <button
                           key={idx}
+                          type="button"
                           onClick={() => {
                             setSelectedLocationIndex(idx);
                             triggerHaptic();
                           }}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                            isSelected
-                              ? "bg-white/[0.07] border-white/[0.22]"
-                              : "bg-white/[0.025] border-white/[0.08] hover:bg-white/[0.05]"
+                          className={`w-full px-4 py-3 text-left transition-colors cursor-pointer flex items-center justify-between gap-3 ${
+                            isSelected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
                           }`}
                         >
-                          <div className="min-w-0 space-y-0.5">
+                          <div className="min-w-0">
                             <span className="text-xs font-semibold text-white block truncate">{branchLabel}</span>
-                            <span className="text-[11px] text-zinc-400 block truncate font-normal">{loc.address || loc.city}</span>
+                            <span className="text-[11px] text-zinc-400 block truncate">{loc.address || loc.city}</span>
                           </div>
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
-                            isSelected ? "bg-white text-zinc-950 border-white" : "bg-white/[0.05] border-white/[0.08] text-zinc-400"
-                          }`}>
-                            <MapPin className="w-4 h-4" />
-                          </div>
-                        </div>
+                          <MapPin className={`w-4 h-4 shrink-0 ${isSelected ? "text-white" : "text-zinc-500"}`} />
+                        </button>
                       );
                     })}
                   </div>
                 </div>
               )}
 
-              {/* Claim Business Status & Ownership Card */}
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3 relative overflow-hidden">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.09] flex items-center justify-center shrink-0 text-white">
-                    {isClaimed ? <ShieldCheck className="w-5 h-5 text-white" /> : <Building2 className="w-5 h-5 text-white" />}
-                  </div>
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-xs font-semibold text-white">
-                        {isClaimed ? t("place.businessClaimedTitle", "Business Claimed & Secured") : t("place.ownThisBusiness", "Own This Business?")}
-                      </h4>
-                      {isClaimed && (
-                        <span className="px-2 py-0.5 rounded-full bg-white/[0.08] text-zinc-200 text-[10px] font-medium border border-white/[0.12]">
-                          {t("place.claimedStatus", "Claimed")}
-                        </span>
-                      )}
+              {/* 5. Google Maps–Style Quiet Ownership & Report Utility List (Keeps Add Review as Sole Pure-White Hero CTA) */}
+              <div className="rounded-2xl bg-white/[0.025] border border-white/[0.07] divide-y divide-white/[0.06] overflow-hidden">
+                {(!isClaimed || isUserOwner) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      handleClaimOrEditClick();
+                    }}
+                    className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
+                  >
+                    {isClaimed ? (
+                      <ShieldCheck className="w-4 h-4 text-[#E8C78A] shrink-0" />
+                    ) : (
+                      <Building2 className="w-4 h-4 text-zinc-400 group-hover:text-white shrink-0 transition-colors" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[13px] font-medium text-white block">
+                        {isClaimed
+                          ? t("place.manageBusinessProfile", "Manage Business Profile")
+                          : t("place.ownThisBusiness", "Own this business?")}
+                      </span>
+                      <span className="text-[11px] text-zinc-500 block truncate">
+                        {isClaimed
+                          ? t("place.businessClaimedShort", "Business Claimed · Open business portal")
+                          : t("place.claimBusinessShort", "Claim to verify details & reply to photo reviews")}
+                      </span>
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-normal">
-                      {isClaimed 
-                        ? t("place.businessClaimedDesc", "This business profile is officially claimed and managed through the secure Yoouz business portal. All management rights are reserved.") 
-                        : t("place.claimBusinessDesc", "Claim this business profile to unlock full administrative access, manage customer photo reviews, update business details, and connect directly with patrons.")}
-                    </p>
-                  </div>
-                </div>
-
-                {(!isClaimed || isUserOwner) && (
-                  <div className="pt-1">
-                    <button
-                      onClick={() => {
-                        triggerHaptic("medium");
-                        handleClaimOrEditClick();
-                      }}
-                      className={`w-full py-2.5 px-5 rounded-full font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                        isClaimed
-                          ? "bg-white/[0.07] hover:bg-white/[0.13] text-white border border-white/[0.12]"
-                          : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-[0_6px_20px_rgba(255,255,255,0.12)]"
-                      }`}
-                    >
-                      <span>{isClaimed ? t("place.manageBusinessProfile", "Manage Business Portal") : t("place.claimPageNow", "Claim Business Page")}</span>
-                      <ArrowRight className={`w-3.5 h-3.5 ${isClaimed ? "text-white" : "text-zinc-950"}`} />
-                    </button>
+                    <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white shrink-0 transition-colors" />
+                  </button>
+                ) : (
+                  <div className="px-4 py-3.5 flex items-center gap-3">
+                    <ShieldCheck className="w-4 h-4 text-[#E8C78A] shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[13px] font-medium text-zinc-200 block">
+                        {t("place.claimedStatus", "Business Claimed")}
+                      </span>
+                      <span className="text-[11px] text-zinc-500 block">
+                        {t("place.businessClaimedAnonymous", "Verified & managed through Yoouz Business")}
+                      </span>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {onOpenReport && (
-                <div className="pt-2">
+                {onOpenReport && (
                   <button
                     id="btn-report-business-about"
+                    type="button"
                     onClick={() => {
                       triggerHaptic("medium");
                       onOpenReport({
@@ -2514,15 +2458,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                         placeId: place.id
                       });
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
                   >
-                    <Flag className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    <span>{t("place.reportInaccurate", "Report inaccurate info or flag business")}</span>
+                    <Flag className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 shrink-0 transition-colors" />
+                    <span className="text-[12.5px] font-medium text-zinc-400 group-hover:text-zinc-200 flex-1 transition-colors">
+                      {t("place.reportInaccurate", "Report inaccurate info")}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 transition-colors" />
                   </button>
-                </div>
-              )}
-
-              {/* Footer Credits Removed */}
+                )}
+              </div>
             </div>
           )}
         </div>

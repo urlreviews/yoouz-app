@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { VideoReview, UserProfile, Place } from "../types";
 import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
+import { formatCompactRecency } from "../utils/dateUtils";
+import { classifyBusinessCategory } from "../utils/categoryUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { getRoundedRating } from "./CopoStarRating";
@@ -173,79 +175,102 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
           </button>
         </div>
 
-        {/* 1. VIDEOS TAB */}
+        {/* 1. PHOTOS TAB — Unified Signature Photo Review Card Grid */}
         {activeTab === "videos" && (
           bookmarkedVideos.length > 0 ? (
-            <div className="space-y-3">
-              {bookmarkedVideos.map((video) => (
-                <div
-                  key={`saved-list-${video.id}`}
-                  onClick={() => onSelectVideo(video.id)}
-                  className="group bg-zinc-900 md:bg-zinc-900 rounded-2xl border border-zinc-800 md:border-zinc-800 p-4 hover:bg-zinc-800/80 md:hover:bg-zinc-800/80 cursor-pointer transition-all flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="relative w-12 h-16 rounded-xl overflow-hidden bg-black border border-zinc-800 md:border-zinc-800 shrink-0 shadow-xs">
-                      <CopoVideoThumbnail
-                        video={video}
-                        alt={video.caption}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                      />
-                      <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {bookmarkedVideos.map((video) => {
+                const wholeStars = getRoundedRating(video.rating || 5);
+                const bDomain = extractCleanDomain(video.placeWebsite || video.placeId || "") || getDisplayUrlAsDomain(video);
+                const bName = formatBusinessName(video.placeName || bDomain) || "Business";
+                const recency = formatCompactRecency(video.recordedAt, video.createdAtMs);
+                const catInfo = classifyBusinessCategory({
+                  rawCategory: video.placeCategory,
+                  name: bName,
+                  domain: bDomain
+                });
+                const reviewerName = video.author?.name || video.authorName || "Reviewer";
+
+                return (
+                  <div
+                    key={`saved-list-${video.id}`}
+                    onClick={() => onSelectVideo(video.id)}
+                    className="relative aspect-[3/4] rounded-[20px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_12px_32px_rgba(0,0,0,0.55)] group cursor-pointer transition-all hover:-translate-y-0.5 active:scale-[0.98]"
+                  >
+                    <CopoVideoThumbnail
+                      video={video}
+                      alt={`${bName} photo review by ${reviewerName}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out pointer-events-none"
+                    />
+
+                    {/* Smooth Editorial Bottom Scrim */}
+                    <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.74)_46%,rgba(0,0,0,0.22)_78%,transparent_100%)] pointer-events-none" />
+
+                    {/* Top Row: Category Left + Recency & Unsave Right */}
+                    <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-1.5 z-10 pointer-events-none">
+                      <span className="px-2 py-0.5 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.15] text-[10px] font-medium text-white/95 leading-none truncate max-w-[92px]">
+                        {catInfo.badgeLabel}
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full bg-black/48 backdrop-blur-md border border-white/[0.12] text-[10px] font-medium text-white/85 leading-none tabular-nums">
+                          {recency}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleUnsaveVideo(video.id, e)}
+                          className="pointer-events-auto p-1 rounded-full bg-black/65 hover:bg-red-600/90 text-zinc-200 hover:text-white backdrop-blur-md border border-white/[0.14] transition-colors cursor-pointer"
+                          title="Unsave"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">
-                          {formatBusinessName(video.placeName || getDisplayUrlAsDomain(video))}
-                        </h4>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold border border-zinc-700/50 shrink-0">
-                          {getDisplayUrlAsDomain(video)}
-                        </span>
-                        {video.placeCategory && video.placeCategory !== "Website" && video.placeCategory !== "General" && (
-                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
-                            {video.placeCategory}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-200 mt-1">
-                        <div className="flex items-center text-amber-400 font-bold shrink-0">
-                          <Star className="w-3.5 h-3.5 fill-current mr-0.5" />
-                          <span>{getRoundedRating(video.rating || 5)}</span>
+
+                    {/* Bottom Customer Review Info: 5-Star Rating + Brand Logo & Name + Review by */}
+                    <div className="absolute bottom-2.5 inset-x-2.5 sm:inset-x-3 flex flex-col justify-end gap-1.5 pointer-events-none z-10">
+                      <div className="flex items-center gap-1.5" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((starIdx) => (
+                            <Star
+                              key={starIdx}
+                              className={`w-3 h-3 ${
+                                starIdx <= wholeStars
+                                  ? "fill-[#F5B942] text-[#F5B942]"
+                                  : "fill-white/15 text-white/25"
+                              }`}
+                            />
+                          ))}
                         </div>
-                        <span className="text-zinc-650">|</span>
-                        <div className="flex items-center gap-0.5 truncate text-[11px] font-medium">
-                          <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
-                          <span className="truncate">
-                            {[video.placeAddress, video.placeCity, video.placeCountry].filter(Boolean).join(", ") || video.placeCity || video.placeCountry || "Online"}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <img
-                          src={getSafeAvatarUrl(video.author.avatar, video.author.name, video.author.handle)}
-                          alt={video.author.name}
-                          className="w-4.5 h-4.5 rounded-full border border-zinc-800"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = getSafeAvatarUrl(null, video.author.name, video.author.handle);
-                          }}
-                        /> 
-                        <span className="text-[10px] text-zinc-400 font-semibold">
-                          <span className="text-zinc-200 hover:underline">{video.author.name}</span>
+                        <span className="text-[10.5px] font-semibold text-white/95 leading-none tabular-nums">
+                          {wholeStars}/5
                         </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CopoBrandLogo
+                          domain={bDomain || video.placeId}
+                          name={bName}
+                          logoUrl={video.placeLogoUrl}
+                          className="w-7 h-7 rounded-[8px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 shadow-sm"
+                          imageClassName="w-full h-full object-contain"
+                          fallbackTextClassName="text-[10px] font-bold text-zinc-900"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-white text-[12px] font-semibold tracking-[-0.015em] truncate leading-tight">
+                              {bName}
+                            </span>
+                            <CheckCircle2 className="w-3 h-3 fill-white text-zinc-950 shrink-0" />
+                          </div>
+                          <div className="text-white/75 text-[10px] font-normal truncate mt-0.5">
+                            {t("feed.reviewBy", "Review by")} {reviewerName}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={(e) => handleUnsaveVideo(video.id, e)}
-                      className="p-2 rounded-full hover:bg-red-950/50 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 transition-all cursor-pointer"
-                      title="Unsave"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">

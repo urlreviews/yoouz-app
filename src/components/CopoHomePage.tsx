@@ -1069,7 +1069,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,16px)+96px)] md:pb-8 scroll-smooth">
+    <div className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,12px)+78px)] md:pb-8 scroll-smooth">
       {/* 1. Mobile Frameless Obsidian Header (md:hidden) — Brand Left, Bell + Minimal Menu Right */}
       <header className="w-full max-w-full flex md:hidden items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top,12px))] pb-2.5 shrink-0 select-none z-20 border-b border-white/[0.06] bg-[#050506]/88 backdrop-blur-2xl sticky top-0">
         {searchMode === "review" ? (
@@ -1151,7 +1151,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Stage — Widescreen 1360px Gallery Canvas */}
-      <main className="flex-1 w-full max-w-[1360px] min-w-0 mx-auto px-4 sm:px-6 lg:px-8 pt-4 xs:pt-5 sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative overflow-x-clip">
+      <main className="flex-1 w-full max-w-[1360px] min-w-0 mx-auto px-4 sm:px-6 lg:px-8 pt-[clamp(14px,2.4dvh,28px)] sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative overflow-x-clip">
         {/* Subtle Editorial Radial Top Depth (strictly clipped so it never widens mobile scrollWidth) */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-[260px] overflow-hidden"
@@ -1161,7 +1161,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
-        <div className="w-full text-center max-w-3xl mx-auto mb-4 sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
+        <div className="w-full text-center max-w-3xl mx-auto mb-[clamp(14px,2.2dvh,24px)] sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
           <h1 className="text-[28px] xs:text-[32px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.06] text-balance">
             {searchMode === "review" ? (
               <>Find a business to review.</>
@@ -1183,7 +1183,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 3. Spotlight-Grade Elevated Glass Search Bar */}
         <div
-          className="w-full max-w-[660px] relative mx-auto mb-4 sm:mb-6 z-30"
+          className="w-full max-w-[660px] relative mx-auto mb-[clamp(14px,2.2dvh,22px)] sm:mb-6 z-30"
           ref={dropdownRef}
         >
           <div className="relative">
@@ -1518,7 +1518,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 3.5 Unified Universal Category Filter Rail — Apple/Google Single-Row Precision */}
         <nav
           aria-label="Browse reviews by category"
-          className={`w-full max-w-full overflow-hidden mb-5 sm:mb-7 relative z-20 transition-all duration-200 ${
+          className={`w-full max-w-full overflow-hidden mb-[clamp(16px,2.6dvh,26px)] sm:mb-7 relative z-20 transition-all duration-200 ${
             !isMobile && showDropdown && query.trim().length > 0
               ? "opacity-25 pointer-events-none"
               : "opacity-100"
@@ -1744,7 +1744,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           onSelectVideo(video.id);
                         }
                       }}
-                      className="relative shrink-0 w-[170px] xs:w-[180px] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] h-[296px] xs:h-[312px] sm:h-auto sm:aspect-[3/3.85] rounded-[20px] sm:rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
+                      className="relative shrink-0 w-[clamp(176px,46.5vw,214px)] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] h-[clamp(272px,calc(100dvh-396px),390px)] sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
                     >
                       {/* Clean Neutral Obsidian Fallback */}
                       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] flex flex-col items-center justify-center p-4 text-center z-0">
