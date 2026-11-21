@@ -1069,7 +1069,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col select-none pb-[calc(env(safe-area-inset-bottom,12px)+78px)] md:pb-8 scroll-smooth">
+    <div className="flex-1 h-full min-h-0 w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col select-none md:pb-8 scroll-smooth">
       {/* 1. Mobile Frameless Obsidian Header (md:hidden) — Brand Left, Bell + Minimal Menu Right */}
       <header className="w-full max-w-full flex md:hidden items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top,12px))] pb-2.5 shrink-0 select-none z-20 border-b border-white/[0.06] bg-[#050506]/88 backdrop-blur-2xl sticky top-0">
         {searchMode === "review" ? (
@@ -1148,7 +1148,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Stage — Widescreen 1360px Gallery Canvas */}
-      <main className="flex-1 w-full max-w-[1360px] min-w-0 mx-auto px-4 sm:px-6 lg:px-8 pt-[clamp(14px,2.4dvh,28px)] sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative overflow-x-clip">
+      <main className="flex-1 w-full max-w-[1360px] min-w-0 mx-auto px-4 sm:px-6 lg:px-8 pt-[clamp(10px,1.8dvh,22px)] sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative overflow-x-clip">
         {/* Subtle Editorial Radial Top Depth (strictly clipped so it never widens mobile scrollWidth) */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-[260px] overflow-hidden"
@@ -1158,8 +1158,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </div>
 
         {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
-        <div className="w-full text-center max-w-3xl mx-auto mb-[clamp(14px,2.2dvh,24px)] sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
-          <h1 className="text-[28px] xs:text-[32px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.06] text-balance">
+        <div className="w-full shrink-0 text-center max-w-3xl mx-auto mb-[clamp(10px,1.8dvh,20px)] sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
+          <h1 className="text-[27px] xs:text-[31px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.06] text-balance">
             {searchMode === "review" ? (
               <>Find a business to review.</>
             ) : (
@@ -1168,11 +1168,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </h1>
 
           {searchMode === "review" ? (
-            <p className="text-zinc-400 text-[13px] sm:text-[15.5px] mt-2 sm:mt-2.5 leading-[1.45] sm:leading-relaxed max-w-[345px] sm:max-w-xl mx-auto font-normal tracking-[-0.01em] text-balance">
+            <p className="text-zinc-400 text-[13px] sm:text-[15.5px] mt-1.5 sm:mt-2.5 leading-[1.42] sm:leading-relaxed max-w-[345px] sm:max-w-xl mx-auto font-normal tracking-[-0.01em] text-balance">
               {headerSubtitle || "Pick any hotel, restaurant, brand, or website URL to snap a live camera photo review."}
             </p>
           ) : (
-            <p className="text-zinc-400 text-[13px] sm:text-[15px] md:text-[16px] mt-2 sm:mt-2.5 leading-[1.45] sm:leading-relaxed max-w-[345px] xs:max-w-[370px] sm:max-w-3xl mx-auto font-normal tracking-[-0.01em] text-balance">
+            <p className="text-zinc-400 text-[13px] sm:text-[15px] md:text-[16px] mt-1.5 sm:mt-2.5 leading-[1.42] sm:leading-relaxed max-w-[345px] xs:max-w-[370px] sm:max-w-3xl mx-auto font-normal tracking-[-0.01em] text-balance">
               Real customer photo reviews of hotels, restaurants, products &amp; services — zero fake text.
             </p>
           )}
@@ -1180,7 +1180,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 3. Spotlight-Grade Elevated Glass Search Bar */}
         <div
-          className="w-full max-w-[660px] relative mx-auto mb-[clamp(14px,2.2dvh,22px)] sm:mb-6 z-30"
+          className="w-full shrink-0 max-w-[660px] relative mx-auto mb-[clamp(10px,1.8dvh,18px)] sm:mb-6 z-30"
           ref={dropdownRef}
         >
           <div className="relative">
@@ -1515,7 +1515,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         {/* 3.5 Unified Universal Category Filter Rail — Apple/Google Single-Row Precision */}
         <nav
           aria-label="Browse reviews by category"
-          className={`w-full max-w-full overflow-hidden mb-[clamp(16px,2.6dvh,26px)] sm:mb-7 relative z-20 transition-all duration-200 ${
+          className={`w-full shrink-0 max-w-full overflow-hidden mb-[clamp(12px,2dvh,22px)] sm:mb-7 relative z-20 transition-all duration-200 ${
             !isMobile && showDropdown && query.trim().length > 0
               ? "opacity-25 pointer-events-none"
               : "opacity-100"
@@ -1547,15 +1547,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
         </nav>
 
-        {/* 4. Live Photo Reviews Widescreen Gallery — Smooth Focus Scrim Only While Desktop Dropdown Is Open */}
+        {/* 4. Live Photo Reviews Widescreen Gallery — Pure Flexbox Remaining-Space Architecture on Mobile */}
         <section
-          className={`w-full relative transition-all duration-200 ${
+          className={`w-full flex-1 flex flex-col sm:flex-none relative transition-all duration-200 ${
             !isMobile && showDropdown && query.trim().length > 0
               ? "opacity-25 blur-[1.5px] pointer-events-none"
               : "opacity-100"
           }`}
         >
-          <div className="flex items-center justify-between w-full mb-3 sm:mb-3.5 px-0.5">
+          <div className="flex items-center justify-between w-full shrink-0 mb-2.5 sm:mb-3.5 px-0.5">
             <div className="flex items-baseline gap-2 min-w-0">
               <h2 className="text-[16.5px] sm:text-[18.5px] font-semibold tracking-[-0.02em] text-white truncate">
                 {activeCategoryMeta.headingLabel}
@@ -1686,11 +1686,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </div>
             )
           ) : (
-            <div className="relative w-full max-w-full overflow-hidden">
-              {/* Compact Widescreen 5-Card Row on Desktop, 2+Peek Compact Review Cards on Mobile */}
+            <div className="relative w-full max-w-full overflow-hidden flex-1 min-h-[235px] max-h-[365px] flex flex-col sm:block sm:flex-none sm:min-h-0 sm:max-h-none">
+              {/* Compact Widescreen 5-Card Row on Desktop, Dynamic Remaining-Space 2+Peek Cards on Mobile */}
               <div
                 ref={carouselRef}
-                className="flex items-stretch gap-3 sm:gap-3.5 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
+                className="flex items-stretch gap-2.5 sm:gap-3.5 w-full max-w-full flex-1 min-h-0 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar pb-0 sm:pb-2 snap-x snap-mandatory scroll-smooth"
               >
                 {displayedTrendingVideos.map((video, idx) => {
                   const matchedPlace = places.find((p) => isPlaceReviewMatch(video, p));
@@ -1741,7 +1741,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           onSelectVideo(video.id);
                         }
                       }}
-                      className="relative shrink-0 w-[clamp(176px,46.5vw,214px)] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] h-[clamp(272px,calc(100dvh-396px),390px)] sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
+                      className="relative shrink-0 self-stretch w-[clamp(162px,43.5vw,196px)] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] min-h-[235px] sm:min-h-0 sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
                     >
                       {/* Clean Neutral Obsidian Fallback */}
                       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] flex flex-col items-center justify-center p-4 text-center z-0">
@@ -1784,7 +1784,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       </div>
 
                       {/* Bottom Unmistakable Customer Review Scrim: Full 5-Star Rating Row + Business + Reviewer */}
-                      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.78)_44%,rgba(0,0,0,0.28)_76%,transparent_100%)] pt-20 pb-3 px-2.5 sm:px-3.5 z-20 pointer-events-none">
+                      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.78)_44%,rgba(0,0,0,0.28)_76%,transparent_100%)] pt-14 sm:pt-20 pb-2.5 sm:pb-3 px-2.5 sm:px-3.5 z-20 pointer-events-none">
                         {/* 5-Star Solid Rating Row — Instant Universal Review Signal */}
                         <div className="flex items-center gap-1.5 mb-2" aria-label={`Rated ${wholeStars} out of 5 stars`}>
                           <div className="flex items-center gap-0.5">
@@ -1874,6 +1874,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </div>
         </footer>
       </main>
+
+      {/* Guaranteed Floating-Dock Safe Clearance Spacer (< md) — Prevents overlap on every phone & browser */}
+      <div
+        className="md:hidden w-full shrink-0 h-[max(94px,calc(env(safe-area-inset-bottom,0px)+82px))]"
+        aria-hidden="true"
+      />
     </div>
   );
 };
