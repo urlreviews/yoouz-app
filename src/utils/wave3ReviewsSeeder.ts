@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { getBunnyDb } from "../lib/bunny-db";
 import { VideoReview } from "../types";
+import { classifyBusinessCategory } from "./categoryUtils";
 
 interface Wave3ReviewDef {
   reviewId: string;
@@ -519,14 +520,21 @@ export async function seedWave3MultiUserReviewsOnly(): Promise<{
       const avgRating = Number((sum / ratings.length).toFixed(1));
       const matchedDef = WAVE3_MULTI_REVIEWS.find((d) => d.placeId === placeId);
       const existingPlace = existingPlacesById.get(placeId) || {};
-      const fixedCat = matchedDef?.category || existingPlace.category || "Verified Business";
+      const fixedCat = matchedDef?.category || existingPlace.category || "Business & Services";
+      const catInfo = classifyBusinessCategory({
+        rawCategory: fixedCat,
+        name: existingPlace.name || matchedDef?.placeName || placeId,
+        domain: existingPlace.brandDomain || placeId,
+        description: existingPlace.description
+      });
 
       const updatedPlaceData = {
         ...existingPlace,
         id: placeId,
         name: existingPlace.name || matchedDef?.placeName || placeId,
         brandDomain: existingPlace.brandDomain || placeId,
-        category: fixedCat,
+        category: catInfo.specificCategory,
+        categoryType: catInfo.canonicalId,
         rating: avgRating,
         totalReviews: ratings.length,
         videoReviewCount: ratings.length,

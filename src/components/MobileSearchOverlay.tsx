@@ -25,6 +25,7 @@ import {
 } from "../utils/placeUtils";
 import { KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { isPurgedItem } from "../hooks/useFeedPagination";
+import { classifyBusinessCategory } from "../utils/categoryUtils";
 
 const RECENT_SEARCHES_KEY = "yoouz_recent_searches_v1";
 const MAX_RECENT_SEARCHES = 5;
@@ -596,7 +597,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  placeholder="Search brand, place, or URL..."
+                  placeholder="Search hotel, restaurant, brand, or URL..."
                   className="w-full min-w-0 bg-transparent text-white text-[16px] font-normal focus:outline-none placeholder:text-zinc-500 caret-white select-text"
                   autoComplete="off"
                   autoCorrect="off"
@@ -782,11 +783,25 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                         </div>
                         <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums truncate">
                           {biz.domain && <span className="truncate">{biz.domain}</span>}
+                          {(() => {
+                            const catBadge = classifyBusinessCategory({
+                              rawCategory: biz.place?.category,
+                              name: biz.title,
+                              domain: biz.domain,
+                              description: biz.place?.description
+                            }).badgeLabel;
+                            return catBadge ? (
+                              <>
+                                {biz.domain && <span aria-hidden="true">·</span>}
+                                <span className="shrink-0">{catBadge}</span>
+                              </>
+                            ) : null;
+                          })()}
                           {biz.reviewCount > 0 && (
                             <>
-                              {biz.domain && <span aria-hidden="true">·</span>}
+                              <span aria-hidden="true">·</span>
                               <span className="inline-flex items-center gap-1 text-zinc-300 shrink-0">
-                                <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
+                                <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942]" />
                                 {biz.rating.toFixed(1)}
                               </span>
                               <span aria-hidden="true">·</span>
@@ -927,11 +942,24 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                           </div>
                           <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums truncate">
                             {item.domain && <span className="truncate">{item.domain}</span>}
+                            {!item.isCreator && (() => {
+                              const catBadge = classifyBusinessCategory({
+                                rawCategory: item.category,
+                                name: item.title,
+                                domain: item.domain || item.id
+                              }).badgeLabel;
+                              return catBadge ? (
+                                <>
+                                  {item.domain && <span aria-hidden="true">·</span>}
+                                  <span className="shrink-0">{catBadge}</span>
+                                </>
+                              ) : null;
+                            })()}
                             {stats && stats.reviewCount > 0 && (
                               <>
-                                {item.domain && <span aria-hidden="true">·</span>}
+                                <span aria-hidden="true">·</span>
                                 <span className="inline-flex items-center gap-1 text-zinc-300 shrink-0">
-                                  <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
+                                  <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942]" />
                                   {stats.rating.toFixed(1)}
                                 </span>
                                 <span aria-hidden="true">·</span>
@@ -939,9 +967,6 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                                   {stats.reviewCount} {stats.reviewCount === 1 ? "review" : "reviews"}
                                 </span>
                               </>
-                            )}
-                            {!item.domain && item.category && (
-                              <span className="truncate">{item.category}</span>
                             )}
                           </div>
                         </div>

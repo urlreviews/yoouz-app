@@ -13,7 +13,13 @@ export type MapFilterCategory =
   | "bakery"
   | "civic"
   | "travel"
-  | "museums";
+  | "museums"
+  | "products"
+  | "services"
+  | "beauty"
+  | "shopping"
+  | "auto"
+  | "tech";
 
 export type NavSection =
   | "home"

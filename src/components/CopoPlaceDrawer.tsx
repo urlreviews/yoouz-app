@@ -1,6 +1,7 @@
 import { useCriticalImagesLoaded } from "../hooks/useCriticalImagesLoaded";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { classifyBusinessCategory, isGenericCategory } from "../utils/categoryUtils";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   X,
@@ -932,7 +933,20 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   country: (data.country && (!place.country || place.country === "Worldwide")) ? data.country : (place.country || data.country || ""),
                   phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
                   email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
-                  category: (data.category && (!place.category || place.category === "Website" || place.category === "General" || place.category === "Local Business")) ? data.category : (place.category || data.category || ""),
+                  ...(() => {
+                    const cat = classifyBusinessCategory({
+                      rawCategory: (data.category && !isGenericCategory(data.category) && isGenericCategory(place.category))
+                        ? data.category
+                        : (place.category || data.category || ""),
+                      name: bestPlaceName,
+                      domain: resolvedDomainClean || place.brandDomain || place.website || place.id,
+                      description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || "")
+                    });
+                    return {
+                      category: cat.specificCategory,
+                      categoryType: cat.canonicalId
+                    };
+                  })(),
                   openingHours: data.openingHours || place.openingHours || "",
                   locations: (data.locations && data.locations.length > 0) ? data.locations : (place.locations || []),
                   lat: data.lat || place.lat || 0,
@@ -1685,18 +1699,39 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               );
             })()}
 
-            {/* Official Website / Domain Link under Business Name */}
-            {displayWebsiteClean && (
-              <a
-                href={effectiveWebsite || `https://${displayWebsiteClean}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-400 hover:text-white inline-flex items-center gap-1.5 font-medium text-xs sm:text-[13px] mt-0.5 transition-colors cursor-pointer group no-underline"
-              >
-                <Globe className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0 transition-colors" />
-                <span className="truncate">{displayWebsiteClean}</span>
-              </a>
-            )}
+            {/* Official Website & Normalized Category Sub-Header */}
+            {(() => {
+              const catInfo = classifyBusinessCategory({
+                rawCategory: place.category,
+                name: displayedPlaceName,
+                domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
+                description: place.description
+              });
+              const displayCat = catInfo.specificCategory;
+              return (
+                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-xs sm:text-[13px]">
+                  {displayWebsiteClean && (
+                    <a
+                      href={effectiveWebsite || `https://${displayWebsiteClean}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-zinc-400 hover:text-white inline-flex items-center gap-1.5 font-medium transition-colors cursor-pointer group no-underline min-w-0"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-zinc-500 group-hover:text-white shrink-0 transition-colors" />
+                      <span className="truncate">{displayWebsiteClean}</span>
+                    </a>
+                  )}
+                  {displayWebsiteClean && displayCat && (
+                    <span className="text-zinc-600 select-none" aria-hidden="true">·</span>
+                  )}
+                  {displayCat && (
+                    <span className="text-zinc-400 font-medium truncate">
+                      {displayCat}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Business Follow Button (Secondary Obsidian Glass Pill — Add Review stays sole pure-white Focal CTA) */}
@@ -2055,14 +2090,22 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </p>
                 
                 {/* Micro Metadata Row */}
-                {place.category && (
-                  <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-4 text-[11px] font-medium text-zinc-400">
-                    <div className="flex items-center gap-1.5">
-                      <Tag className="w-3 h-3 text-zinc-500" />
-                      <span>{place.category}</span>
+                {(() => {
+                  const aboutCat = classifyBusinessCategory({
+                    rawCategory: place.category,
+                    name: displayedPlaceName,
+                    domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
+                    description: place.description
+                  }).specificCategory;
+                  return aboutCat ? (
+                    <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-4 text-[11px] font-medium text-zinc-400">
+                      <div className="flex items-center gap-1.5">
+                        <Tag className="w-3 h-3 text-zinc-500" />
+                        <span>{aboutCat}</span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
               </div>
             </div>
           )}

@@ -39,6 +39,7 @@ import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
 import { alignBunnyCuesWithHardwareSilences, AudioSilenceInterval } from "./src/utils/subtitleSync.ts";
+import { classifyBusinessCategory, isGenericCategory } from "./src/utils/categoryUtils.ts";
 
 dotenv.config();
 
@@ -18659,24 +18660,42 @@ ${imageEntries.join('\n')}
         }
       }
 
+      // Normalize and backfill business category & canonical categoryType for all existing records
+      const catInfo = classifyBusinessCategory({
+        rawCategory: doc.category,
+        name: doc.name,
+        domain: cleanDom || doc.brandDomain || doc.website || doc.id,
+        description: doc.description
+      });
+      if (!isOwnerCustomized && (isGenericCategory(doc.category) || !doc.category)) {
+        if (catInfo.specificCategory && doc.category !== catInfo.specificCategory) {
+          doc.category = catInfo.specificCategory;
+          changed = true;
+        }
+      }
+      if (doc.categoryType !== catInfo.canonicalId) {
+        doc.categoryType = catInfo.canonicalId;
+        changed = true;
+      }
+
       return { changed, doc };
     };
 
     const bunnyDb = getBunnyDb();
     if (bunnyDb) {
       try {
-        const rows = await bunnyDb.execute({ sql: `SELECT id, logoUrl, bannerUrl, data FROM places` });
+        const rows = await bunnyDb.execute({ sql: `SELECT id, category, logoUrl, bannerUrl, data FROM places` });
         for (const row of (rows?.rows || []) as any[]) {
           scannedDb++;
           let parsed: any = {};
           try { parsed = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch { continue; }
-          const merged = { id: row.id, logoUrl: row.logoUrl, bannerUrl: row.bannerUrl, ...parsed };
+          const merged = { id: row.id, category: row.category, logoUrl: row.logoUrl, bannerUrl: row.bannerUrl, ...parsed };
           const { changed, doc } = repairRecord(merged);
-          if (changed) {
+          if (changed || (doc.category && doc.category !== row.category)) {
             repairedDb++;
             await bunnyDb.execute({
-              sql: `UPDATE places SET logoUrl = ?, bannerUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-              args: [doc.logoUrl || "", doc.bannerUrl || "", JSON.stringify(doc), String(row.id)]
+              sql: `UPDATE places SET category = ?, logoUrl = ?, bannerUrl = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [doc.category || "", doc.logoUrl || "", doc.bannerUrl || "", JSON.stringify(doc), String(row.id)]
             }).catch(() => {});
           }
         }
@@ -18765,6 +18784,19 @@ ${imageEntries.join('\n')}
           rChanged = true;
         } else if (r.placeLogoUrl && !String(r.placeLogoUrl).includes("b-cdn.net") && (r.placeLogoUrl === r.placeBannerUrl || isGenericOrPlaceholderLogo(r.placeLogoUrl) || (dom && isCrossBrandPortfolioLogoServer(r.placeLogoUrl, dom)))) {
           r.placeLogoUrl = dom.includes(".") ? `/api/favicon?domain=${encodeURIComponent(dom)}` : "";
+          rChanged = true;
+        }
+        const reviewCatInfo = classifyBusinessCategory({
+          rawCategory: r.placeCategory,
+          name: r.placeName || r.businessName,
+          domain: dom || r.placeWebsite || r.placeId,
+        });
+        if (isGenericCategory(r.placeCategory) && reviewCatInfo.specificCategory && r.placeCategory !== reviewCatInfo.specificCategory) {
+          r.placeCategory = reviewCatInfo.specificCategory;
+          rChanged = true;
+        }
+        if (r.categoryType !== reviewCatInfo.canonicalId) {
+          r.categoryType = reviewCatInfo.canonicalId;
           rChanged = true;
         }
         if (rChanged) {
@@ -29461,6 +29493,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     let openingHours = "";
     let lat = 0;
     let lng = 0;
+    const schemaTypesCollected: string[] = [];
     const locations: Array<{ name?: string; city: string; address: string; postalCode?: string; phone?: string; email?: string; openingHours?: string; lat?: number; lng?: number }> = [];
 
     // 1. Check verified known entity locations first
@@ -29560,16 +29593,24 @@ Timestamp: ${new Date(timestamp).toUTCString()}
                   lng = gLng;
                 }
               }
-              // Category extraction
-              if (node['@type'] && (!category || category === 'Website')) {
-                const t = String(node['@type']).toLowerCase();
-                if (t.includes('restaurant') || t.includes('food') || t.includes('cafe') || t.includes('bakery') || t.includes('bar')) category = 'Restaurant & Food';
-                else if (t.includes('hotel') || t.includes('resort') || t.includes('motel') || t.includes('lodging')) category = 'Hotel & Hospitality';
-                else if (t.includes('dentist') || t.includes('dental')) category = 'Dentist & Dental Clinic';
-                else if (t.includes('legal') || t.includes('attorney') || t.includes('law')) category = 'Legal Services';
-                else if (t.includes('store') || t.includes('shop') || t.includes('retail')) category = 'Retail & Shopping';
-                else if (t.includes('medical') || t.includes('pharmacy') || t.includes('clinic')) category = 'Healthcare & Medical';
-                else if (t.includes('automotive') || t.includes('autorepair') || t.includes('carrental')) category = 'Automotive Services';
+              // Category extraction via JSON-LD Schema.org @type
+              if (node['@type']) {
+                const rawTypes = Array.isArray(node['@type']) ? node['@type'] : [node['@type']];
+                for (const rt of rawTypes) {
+                  if (typeof rt === 'string' && rt.trim()) schemaTypesCollected.push(rt.trim());
+                }
+                if (!category || isGenericCategory(category)) {
+                  const t = rawTypes.map((x: any) => String(x)).join(' ').toLowerCase();
+                  if (t.includes('restaurant') || t.includes('food') || t.includes('cafe') || t.includes('bakery') || t.includes('bar')) category = 'Restaurant & Dining';
+                  else if (t.includes('hotel') || t.includes('resort') || t.includes('motel') || t.includes('lodging')) category = 'Hotel & Hospitality';
+                  else if (t.includes('dentist') || t.includes('dental')) category = 'Dentist & Dental Clinic';
+                  else if (t.includes('legal') || t.includes('attorney') || t.includes('law')) category = 'Legal Services';
+                  else if (t.includes('beautysalon') || t.includes('dayspa') || t.includes('hairsalon') || t.includes('healthandbeauty')) category = 'Beauty & Wellness';
+                  else if (t.includes('store') || t.includes('shop') || t.includes('retail')) category = 'Retail & Shopping';
+                  else if (t.includes('medical') || t.includes('pharmacy') || t.includes('clinic')) category = 'Healthcare & Medical';
+                  else if (t.includes('automotive') || t.includes('autorepair') || t.includes('carrental')) category = 'Auto Repair & Mobility';
+                  else if (t.includes('softwareapplication') || t.includes('webapplication')) category = 'Technology & Software';
+                }
               }
               for (const k in node) {
                 if (typeof node[k] === 'object') walk(node[k]);
@@ -30019,21 +30060,20 @@ Timestamp: ${new Date(timestamp).toUTCString()}
         else if (cleanDomain.endsWith(".us") || cleanDomain.endsWith(".ca") || /\bUnited States\b|\bUSA\b/i.test(combinedText) || /,\s*(?:NV|AZ|CA|NY|FL|TX|MA|IL)\b/.test(combinedText)) country = "United States";
       }
 
-      // 12. Industry Category classification
-      if (!category) {
-        const lower = combinedText.toLowerCase();
-        if (/marketing|digital\s*agency|advertising|branding|creative\s*agency|web\s*design|seo\s*agency|media\s*agency|brand\s*agency/i.test(lower)) category = "Marketing & Creative Agency";
-        else if (/optiek|optician|opticien|glasses|brillen|eyewear|lenzen|contactlenzen|oogmeting|oogarts|optometrist/i.test(lower)) category = "Optician & Eyewear";
-        else if (/apotheek|pharmacie|pharmacy|apotheke|farmacia|drugstore/i.test(lower)) category = "Pharmacy & Healthcare";
-        else if (/dentist|dental|teeth|mendozza|cavity|implant|orthodont|tandarts|zahnarzt/i.test(lower)) category = "Dentist & Dental Clinic";
-        else if (/injury|accident|lawyer|attorney|law\s*firm|legal|advocaat|avocat/i.test(lower)) category = "Legal Services";
-        else if (/plumb|heating|plomberie|drain|chauffage|sanitair/i.test(lower)) category = "Plumbing & HVAC";
-        else if (/\b(massage|wellness|facial|psychotherapy|physiotherapy|massage\s*therapy)\b/i.test(lower) || /\bspa\b/i.test(lower)) category = "Spa & Wellness";
-        else if (/restaurant|bistro|cafe|coffee|grill|bakery|kitchen|brasserie/i.test(lower)) category = "Restaurant & Cafe";
-        else if (/hotel|resort|suites/i.test(lower)) category = "Hotel & Hospitality";
-        else if (/car\s*rental|rental\s*car|auto\s*rental/i.test(lower)) category = "Auto & Car Rental";
-        else if (/real\s*estate|property|properties|realtor/i.test(lower)) category = "Real Estate";
-        else if (/doctor|clinic|medical|health|hospital/i.test(lower)) category = "Healthcare & Medical";
+      // 12. Industry Category classification (Universal Schema.org + Metadata + Domain Classifier)
+      if (!category || isGenericCategory(category)) {
+        const metaKeywords = $ ? ($('meta[name="keywords"]').attr('content') || $('meta[property="og:type"]').attr('content') || '') : '';
+        const pageTitle = $ ? ($('title').first().text() || $('meta[property="og:site_name"]').attr('content') || '') : '';
+        const metaDesc = $ ? ($('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '') : '';
+        const classified = classifyBusinessCategory({
+          rawCategory: category,
+          name: pageTitle,
+          domain: cleanDomain,
+          description: `${metaDesc} ${combinedText.slice(0, 1200)}`,
+          schemaTypes: schemaTypesCollected,
+          keywords: metaKeywords
+        });
+        category = classified.specificCategory;
       }
 
       // 13. Opening Hours extraction
@@ -34302,6 +34342,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 || cachedDescBrand
                 || row.name
                 || rawQuery;
+              const cachedCatInfo = classifyBusinessCategory({
+                rawCategory: row.category || pData.category,
+                name: resolvedEntity,
+                domain: matchedDom,
+                description: pData.description
+              });
               return {
                 status: 200,
                 body: {
@@ -34317,7 +34363,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   country: row.country || pData.country || "",
                   phone: pData.phone || "",
                   email: pData.email || "",
-                  category: row.category || pData.category || "Verified Business",
+                  category: cachedCatInfo.specificCategory,
+                  categoryType: cachedCatInfo.canonicalId,
                   openingHours: pData.openingHours || "",
                   locations: pData.locations || [],
                   photos: cachedImageCandidate ? [cachedImageCandidate] : []
@@ -36127,7 +36174,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (!effectiveCountry) effectiveCountry = locInfo.country || (isYoouz ? "Global" : "");
       if (!effectivePhone) effectivePhone = locInfo.phone || "";
       if (!effectiveEmail) effectiveEmail = locInfo.email || "";
-      if (!effectiveCategory) effectiveCategory = locInfo.category || (isYoouz ? "Live Photo Reviews Platform" : "Website");
+      if (!effectiveCategory || isGenericCategory(effectiveCategory)) {
+        effectiveCategory = locInfo.category || (isYoouz ? "Live Photo Reviews Platform" : "");
+      }
 
       if (resolvedEntity) {
         if (!effectiveAddress && resolvedEntity.address) effectiveAddress = resolvedEntity.address;
@@ -36135,13 +36184,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         if (!effectiveCountry && resolvedEntity.country) effectiveCountry = resolvedEntity.country;
         if (!effectivePhone && resolvedEntity.phone) effectivePhone = resolvedEntity.phone;
         if ((!image || image.includes('placeholder') || isLogoOrIconUrl(image)) && resolvedEntity.photo && !isLogoOrIconUrl(resolvedEntity.photo)) image = resolvedEntity.photo;
-        if ((effectiveCategory === 'Website' || !effectiveCategory) && resolvedEntity.category && resolvedEntity.category !== 'Website') {
+        if ((!effectiveCategory || isGenericCategory(effectiveCategory)) && resolvedEntity.category && !isGenericCategory(resolvedEntity.category)) {
           effectiveCategory = resolvedEntity.category;
         }
         if (!locInfo.openingHours && resolvedEntity.openingHours) {
           locInfo.openingHours = resolvedEntity.openingHours;
         }
       }
+
+      const finalCatClassification = classifyBusinessCategory({
+        rawCategory: effectiveCategory,
+        name: title || siteName || cleanDomain,
+        domain: cleanDomain,
+        description,
+        keywords: $ ? ($('meta[name="keywords"]').attr('content') || '') : ''
+      });
+      if (!effectiveCategory || isGenericCategory(effectiveCategory)) {
+        effectiveCategory = isYoouz ? "Live Photo Reviews Platform" : finalCatClassification.specificCategory;
+      }
+      const effectiveCategoryType = finalCatClassification.canonicalId;
 
       if (!description || description.toLowerCase() === "home" || description.toLowerCase() === "welcome" || description.includes("Verified Yoouz business listing") || description === "No description available.") {
         if (isYoouz) {
@@ -36184,7 +36245,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             id: autoPlaceId,
             name: autoPlaceName,
             category: effectiveCategory,
-            categoryType: "all",
+            categoryType: effectiveCategoryType,
             address: effectiveAddress,
             city: effectiveCity,
             country: effectiveCountry,
@@ -36351,12 +36412,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const mergedPhone = effectivePhone || existingDoc.phone || "";
             const mergedEmail = effectiveEmail || existingDoc.email || "";
 
+            const resolvedMergedCategory = (!isGenericCategory(effectiveCategory) && effectiveCategory)
+              ? effectiveCategory
+              : (!isGenericCategory(existingDoc.category) && existingDoc.category)
+                ? existingDoc.category
+                : autoPlaceDoc.category;
+            const resolvedMergedCategoryType = classifyBusinessCategory({
+              rawCategory: resolvedMergedCategory,
+              name: formattedExistingName,
+              domain: cleanDomain,
+              description: existingDoc.description || description
+            }).canonicalId;
+
             const mergedDoc = {
               ...autoPlaceDoc,
               ...existingDoc,
               id: matchedRowId,
               name: formattedExistingName,
-              category: (effectiveCategory && effectiveCategory !== "Website") ? effectiveCategory : (existingDoc.category || autoPlaceDoc.category),
+              category: resolvedMergedCategory,
+              categoryType: resolvedMergedCategoryType,
               logoUrl: mergedLogo,
               avatarUrl: mergedLogo,
               bannerUrl: mergedBanner,
@@ -36382,14 +36456,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 sql: `INSERT INTO places (id, name, address, category, city, country, latitude, longitude, logoUrl, bannerUrl, brandDomain, website, data, updatedAt)
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                       ON CONFLICT(id) DO UPDATE SET
-                        name = ?, logoUrl = ?, bannerUrl = ?, brandDomain = ?, website = ?,
+                        name = ?, category = ?, logoUrl = ?, bannerUrl = ?, brandDomain = ?, website = ?,
                         address = COALESCE(NULLIF(?, ''), places.address),
                         city = COALESCE(NULLIF(?, ''), places.city),
                         country = COALESCE(NULLIF(?, ''), places.country),
                         latitude = ?, longitude = ?, data = ?, updatedAt = CURRENT_TIMESTAMP`,
                 args: [
-                  canonicalRowId, formattedExistingName, mergedAddress, mergedDoc.category || 'Website', mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, JSON.stringify(mergedDoc),
-                  formattedExistingName, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc)
+                  canonicalRowId, formattedExistingName, mergedAddress, mergedDoc.category || 'Business & Services', mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, JSON.stringify(mergedDoc),
+                  formattedExistingName, mergedDoc.category || 'Business & Services', mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc)
                 ]
               }).catch(e => console.error("[Scraper DB Canonical Migrate Error]:", e));
               await bunnyDb.execute({
@@ -36400,6 +36474,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               await bunnyDb.execute({
                 sql: `UPDATE places SET 
                         name = ?,
+                        category = ?,
                         logoUrl = ?,
                         bannerUrl = ?,
                         brandDomain = ?,
@@ -36412,7 +36487,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                         data = ?,
                         updatedAt = CURRENT_TIMESTAMP
                       WHERE LOWER(id) = LOWER(?)`,
-                args: [formattedExistingName, mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), canonicalRowId]
+                args: [formattedExistingName, mergedDoc.category || 'Business & Services', mergedLogo, mergedBanner, mergedDoc.brandDomain, finalUrl, mergedAddress, mergedCity, mergedCountry, mergedDoc.lat, mergedDoc.lng, JSON.stringify(mergedDoc), canonicalRowId]
               }).catch(e => console.error("[Scraper DB Update Error]:", e));
             }
 
@@ -36495,6 +36570,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         phone: effectivePhone,
         email: effectiveEmail,
         category: effectiveCategory,
+        categoryType: effectiveCategoryType,
         openingHours: locInfo.openingHours || "",
         locations: locInfo.locations || [],
         name: title,

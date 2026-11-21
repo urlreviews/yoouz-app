@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, Suspense, lazy } from "react";
 import { flushSync } from "react-dom";
-import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe } from "lucide-react";
+import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe, BedDouble, UtensilsCrossed, Package, Briefcase, Sparkles, ShoppingBag, Car, Cpu } from "lucide-react";
 const MobileSearchOverlay = lazy(() => import("./MobileSearchOverlay").then(m => ({ default: m.MobileSearchOverlay })));
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
@@ -11,6 +11,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { preloadImage, preloadAllReviewPhotos, preloadBusinessAssets } from "../utils/preloadUtils";
+import { CANONICAL_CATEGORIES, CanonicalCategoryId, ConcreteCategoryId, classifyBusinessCategory, selectDiverseTrendingReviews, isGenericCategory } from "../utils/categoryUtils";
 
 interface CopoHomePageProps {
   places: Place[];
@@ -88,6 +89,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [activeCategory, setActiveCategory] = useState<CanonicalCategoryId>("all");
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const handleCancelMobileSearch = () => {
@@ -177,16 +179,70 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       .sort((a, b) => getReviewTime(b) - getReviewTime(a));
   }, [videos]);
 
-  // Tactile domain hint chips (prioritize real trending brand domains, fallback to iconic examples)
+  // Precompute normalized category classification for every trending review (fast O(1) lookup)
+  const reviewCategoryMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof classifyBusinessCategory>>();
+    for (const v of trendingVideos) {
+      const matchedPlace = places.find((p) => isPlaceReviewMatch(v, p));
+      const dom = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || v.placeWebsite || v.placeId || "") || "";
+      const rawCat = (!isGenericCategory(matchedPlace?.category) ? matchedPlace?.category : "") || (!isGenericCategory(v.placeCategory) ? v.placeCategory : "") || matchedPlace?.category || v.placeCategory || "";
+      const info = classifyBusinessCategory({
+        rawCategory: rawCat,
+        name: matchedPlace?.name || v.businessName || v.placeName || "",
+        domain: dom,
+        description: matchedPlace?.description || ""
+      });
+      map.set(v.id, info);
+    }
+    return map;
+  }, [trendingVideos, places]);
+
+  // Filtered & category-diverse trending reviews ("All" interleaves across categories so it never looks like a store)
+  const displayedTrendingVideos = useMemo(() => {
+    return selectDiverseTrendingReviews(
+      trendingVideos,
+      (v) => reviewCategoryMap.get(v.id)?.canonicalId || "services",
+      (v) => getReviewTime(v),
+      activeCategory
+    );
+  }, [trendingVideos, reviewCategoryMap, activeCategory]);
+
+  // Verified places in the currently selected category (used if a category has 0 photo reviews yet)
+  const categoryFallbackPlaces = useMemo(() => {
+    if (activeCategory === "all") return [];
+    const seen = new Set<string>();
+    const out: Array<{ place: Place; badgeLabel: string; specificCategory: string; domain: string }> = [];
+    for (const p of places) {
+      if (!p || !p.id) continue;
+      const dom = extractCleanDomain(p.brandDomain || p.website || p.id) || "";
+      if (!dom || dom.includes("yoouz") || dom.startsWith("web_") || seen.has(dom.toLowerCase())) continue;
+      const info = classifyBusinessCategory({
+        rawCategory: p.category,
+        name: p.name,
+        domain: dom,
+        description: p.description
+      });
+      if (info.canonicalId !== activeCategory) continue;
+      seen.add(dom.toLowerCase());
+      out.push({ place: p, badgeLabel: info.badgeLabel, specificCategory: info.specificCategory, domain: dom });
+      if (out.length >= 6) break;
+    }
+    return out;
+  }, [places, activeCategory]);
+
+  // Tactile domain hint chips for mobile search overlay (strictly category-diverse iconic examples)
   const suggestedDomains = useMemo(() => {
-    const fallback = ["nike.com", "sephora.com", "wolt.com", "hilton.com"];
+    const fallback = ["hilton.com", "wolt.com", "sephora.com", "nike.com"];
     const found: string[] = [];
     const seen = new Set<string>();
-    for (const v of trendingVideos) {
+    const seenCats = new Set<string>();
+    for (const v of displayedTrendingVideos) {
       const matched = places.find((p) => isPlaceReviewMatch(v, p));
       const dom = extractCleanDomain(matched?.brandDomain || matched?.website || v.placeWebsite || v.placeId || "");
-      if (dom && dom.includes(".") && !dom.includes("yoouz") && !seen.has(dom.toLowerCase())) {
+      const cat = reviewCategoryMap.get(v.id)?.canonicalId || "services";
+      if (dom && dom.includes(".") && !dom.includes("yoouz") && !seen.has(dom.toLowerCase()) && !seenCats.has(cat)) {
         seen.add(dom.toLowerCase());
+        seenCats.add(cat);
         found.push(dom.toLowerCase());
       }
       if (found.length >= 4) break;
@@ -199,7 +255,36 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       }
     }
     return found.slice(0, 4);
-  }, [trendingVideos, places]);
+  }, [displayedTrendingVideos, places, reviewCategoryMap]);
+
+  const activeCategoryMeta = useMemo(
+    () => CANONICAL_CATEGORIES.find((c) => c.id === activeCategory) || CANONICAL_CATEGORIES[0],
+    [activeCategory]
+  );
+
+  const renderCategoryIcon = useCallback((id: CanonicalCategoryId, isActive: boolean) => {
+    const cls = `w-3.5 h-3.5 shrink-0 ${isActive ? "text-zinc-950" : "text-zinc-400"}`;
+    switch (id) {
+      case "hotels":
+        return <BedDouble className={cls} />;
+      case "restaurants":
+        return <UtensilsCrossed className={cls} />;
+      case "products":
+        return <Package className={cls} />;
+      case "services":
+        return <Briefcase className={cls} />;
+      case "beauty":
+        return <Sparkles className={cls} />;
+      case "shopping":
+        return <ShoppingBag className={cls} />;
+      case "auto":
+        return <Car className={cls} />;
+      case "tech":
+        return <Cpu className={cls} />;
+      default:
+        return null;
+    }
+  }, []);
 
   const formatCompactRecency = useCallback((video: VideoReview): string => {
     const ts = getReviewTime(video);
@@ -249,7 +334,15 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       el.removeEventListener("scroll", checkScrollState);
       window.removeEventListener("resize", checkScrollState);
     };
-  }, [checkScrollState, trendingVideos.length]);
+  }, [checkScrollState, displayedTrendingVideos.length, activeCategory]);
+
+  // Reset horizontal carousel smoothly when switching categories
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: "smooth" });
+      setTimeout(checkScrollState, 120);
+    }
+  }, [activeCategory, checkScrollState]);
 
   // Carousel scroll controls for desktop
   const scrollCarousel = (direction: "left" | "right") => {
@@ -651,10 +744,19 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       formatBusinessName(cleanDom, cleanDom) ||
       cleanDom;
 
+    const seededCat = classifyBusinessCategory({
+      rawCategory: existing?.category,
+      name: officialName,
+      domain: cleanDom,
+      description: existing?.description
+    });
+
     const placeObj: Place = existing
       ? {
           ...existing,
           name: officialName || existing.name,
+          category: !isGenericCategory(existing.category) ? existing.category : seededCat.specificCategory,
+          categoryType: seededCat.canonicalId,
           brandDomain: cleanDom,
           website: websiteUrl || existing.website || `https://${cleanDom}`
         }
@@ -662,8 +764,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           id: cleanDom,
           name: officialName,
           brandDomain: cleanDom,
-          category: "Verified Business",
-          categoryType: "all",
+          category: seededCat.specificCategory,
+          categoryType: seededCat.canonicalId,
           address: "",
           city: "",
           country: "",
@@ -813,12 +915,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             || formatBusinessName(rawMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description })
             || descBrand
             || trimmed;
+          const resolvedCat = classifyBusinessCategory({
+            rawCategory: meta.category,
+            name: officialName,
+            domain: resolvedDomain,
+            description: meta.description
+          });
           const newPlace: Place = {
             id: resolvedDomain,
             name: officialName,
             brandDomain: resolvedDomain,
-            category: meta.category || "Verified Business",
-            categoryType: "all",
+            category: resolvedCat.specificCategory,
+            categoryType: resolvedCat.canonicalId,
             address: meta.address || "",
             city: meta.city || "",
             country: meta.country || "",
@@ -1042,16 +1150,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       </header>
 
       {/* Main Content Stage — Widescreen 1360px Gallery Canvas */}
-      <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 xs:pt-7 sm:pt-10 md:pt-11 lg:pt-12 flex flex-col justify-start items-center relative">
+      <main className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 xs:pt-5 sm:pt-8 md:pt-9 lg:pt-10 flex flex-col justify-start items-center relative">
         {/* Subtle Editorial Radial Top Depth */}
         <div
           className="absolute top-0 left-1/2 -translate-x-1/2 w-[520px] h-[220px] bg-gradient-to-b from-white/[0.035] via-white/[0.015] to-transparent rounded-full blur-3xl pointer-events-none"
           aria-hidden="true"
         />
 
-        {/* 2. Sculpted Sentence-Case Editorial Hero */}
-        <div className="w-full text-center max-w-3xl mx-auto mb-5 sm:mb-7 relative z-10 px-1 animate-in fade-in duration-300">
-          <h1 className="text-[32px] xs:text-[36px] sm:text-[46px] md:text-[52px] lg:text-[56px] font-bold text-white tracking-[-0.038em] leading-[1.05]">
+        {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
+        <div className="w-full text-center max-w-3xl mx-auto mb-4 sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
+          <h1 className="text-[30px] xs:text-[34px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.05]">
             {searchMode === "review" ? (
               <>Find a business to review.</>
             ) : (
@@ -1060,24 +1168,24 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           </h1>
 
           {searchMode === "review" ? (
-            <p className="text-zinc-400 text-[13.5px] sm:text-[15.5px] mt-2.5 sm:mt-3 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
-              {headerSubtitle || "Pick any brand, place, or website URL to snap a live camera photo review in seconds."}
+            <p className="text-zinc-400 text-[13.5px] sm:text-[15.5px] mt-2 sm:mt-2.5 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
+              {headerSubtitle || "Pick any hotel, restaurant, brand, or website URL to snap a live camera photo review."}
             </p>
           ) : (
             <>
-              <p className="hidden sm:block text-zinc-400 text-[15.5px] md:text-[16.5px] mt-3 leading-relaxed max-w-xl mx-auto font-normal tracking-[-0.01em]">
-                Unedited live camera photo reviews — captured in 3 seconds, zero fake text.
+              <p className="hidden sm:block text-zinc-400 text-[15px] md:text-[16px] mt-2.5 leading-relaxed max-w-2xl mx-auto font-normal tracking-[-0.01em]">
+                Real customer photo reviews of places, hotels, restaurants, products &amp; services — zero fake text.
               </p>
-              <p className="sm:hidden text-zinc-400 text-[14px] mt-2 leading-snug max-w-xs mx-auto font-normal tracking-[-0.01em]">
-                Live camera photo reviews in 3 seconds.
+              <p className="sm:hidden text-zinc-400 text-[13.5px] mt-1.5 leading-snug max-w-[330px] mx-auto font-normal tracking-[-0.01em]">
+                Real photo reviews of places &amp; brands.
               </p>
             </>
           )}
         </div>
 
-        {/* 3. Spotlight-Grade Elevated Glass Search Bar + Tactile Domain Hint Chips (Zero Vertical Layout Jump) */}
+        {/* 3. Spotlight-Grade Elevated Glass Search Bar */}
         <div
-          className="w-full max-w-[660px] relative mx-auto mb-7 sm:mb-9 md:mb-10 z-30"
+          className="w-full max-w-[660px] relative mx-auto mb-4 sm:mb-6 z-30"
           ref={dropdownRef}
         >
           <div className="relative">
@@ -1140,8 +1248,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     onBlur={() => setIsFocused(false)}
                     placeholder={
                       isMobile
-                        ? "Search brand, place, or URL..."
-                        : "Search any brand, place, or paste a website URL..."
+                        ? "Search any place, brand, or URL..."
+                        : "Search any hotel, restaurant, brand, or paste a URL..."
                     }
                     className="w-full min-w-0 bg-transparent text-white text-[14.5px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
                   />
@@ -1277,11 +1385,24 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           </div>
                           <div className="flex items-center gap-1.5 text-[12px] text-zinc-400 truncate font-normal mt-0.5 tabular-nums">
                             {item.domain && <span className="truncate">{item.domain}</span>}
+                            {!item.isCreator && (() => {
+                              const suggCat = classifyBusinessCategory({
+                                rawCategory: item.category,
+                                name: item.title,
+                                domain: item.domain || item.id
+                              }).badgeLabel;
+                              return suggCat ? (
+                                <>
+                                  {item.domain && <span aria-hidden="true">·</span>}
+                                  <span className="text-zinc-400 shrink-0">{suggCat}</span>
+                                </>
+                              ) : null;
+                            })()}
                             {stats && stats.reviewCount > 0 && (
                               <>
-                                {item.domain && <span aria-hidden="true">·</span>}
+                                <span aria-hidden="true">·</span>
                                 <span className="inline-flex items-center gap-1 text-zinc-300 shrink-0">
-                                  <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
+                                  <Star className="w-3 h-3 fill-[#F5B942] text-[#F5B942]" />
                                   {stats.rating.toFixed(1)}
                                 </span>
                                 <span aria-hidden="true">·</span>
@@ -1350,27 +1471,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             )}
           </div>
 
-          {/* Tactile Hairline Domain Chips — Kept in Flow so Zero Layout Jump Occurs When Typing */}
-          <div
-            className={`flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mt-3.5 px-1 transition-opacity duration-150 ${
-              !isMobile && showDropdown && query.trim().length > 0
-                ? "opacity-0 pointer-events-none"
-                : "opacity-100"
-            }`}
-          >
-            <span className="text-[12px] text-zinc-500 font-medium mr-0.5">Try</span>
-            {suggestedDomains.map((dom, i) => (
-              <button
-                key={dom}
-                type="button"
-                onClick={() => resolveAndOpenBusiness(dom)}
-                className={`${i === 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] hover:border-white/[0.18] text-[12px] text-zinc-300 hover:text-white font-medium tracking-[-0.01em] transition-all active:scale-95 cursor-pointer`}
-              >
-                {dom}
-              </button>
-            ))}
-          </div>
-
           {/* Mobile Search Overlay */}
           {isMobile && isMobileSearchOpen && (
             <Suspense fallback={null}>
@@ -1417,7 +1517,40 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </div>
 
-        {/* 4. Live Photo Proof Widescreen Gallery — Smooth Focus Scrim Only While Desktop Dropdown Is Open */}
+        {/* 3.5 Unified Universal Category Filter Rail — Apple/Google Single-Row Precision */}
+        <nav
+          aria-label="Browse reviews by category"
+          className={`w-full max-w-[1360px] mb-5 sm:mb-7 relative z-20 transition-all duration-200 ${
+            !isMobile && showDropdown && query.trim().length > 0
+              ? "opacity-25 pointer-events-none"
+              : "opacity-100"
+          }`}
+        >
+          <div className="flex items-center md:justify-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 py-0.5">
+            {CANONICAL_CATEGORIES.map((cat) => {
+              const isSelected = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  data-category-pill={cat.id}
+                  aria-pressed={isSelected}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-[7px] rounded-full text-[12.5px] sm:text-[13px] tracking-[-0.01em] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer border ${
+                    isSelected
+                      ? "bg-white text-zinc-950 border-white font-semibold shadow-[0_4px_18px_rgba(255,255,255,0.16)]"
+                      : "bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border-white/[0.09] hover:border-white/[0.18] font-medium"
+                  }`}
+                >
+                  {renderCategoryIcon(cat.id, isSelected)}
+                  <span>{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* 4. Live Photo Reviews Widescreen Gallery — Smooth Focus Scrim Only While Desktop Dropdown Is Open */}
         <section
           className={`w-full relative transition-all duration-200 ${
             !isMobile && showDropdown && query.trim().length > 0
@@ -1425,18 +1558,20 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               : "opacity-100"
           }`}
         >
-          <div className="flex items-center justify-between w-full mb-3.5 sm:mb-4 px-0.5">
+          <div className="flex items-center justify-between w-full mb-3 sm:mb-3.5 px-0.5">
             <div className="flex items-baseline gap-2 min-w-0">
-              <h2 className="text-[17px] sm:text-[19px] font-semibold tracking-[-0.02em] text-white truncate">
-                Live Photo Proof
+              <h2 className="text-[16.5px] sm:text-[18.5px] font-semibold tracking-[-0.02em] text-white truncate">
+                {activeCategoryMeta.headingLabel}
               </h2>
-              <span className="hidden sm:inline text-[14px] text-zinc-500 font-normal">
-                · Trending right now
+              <span className="hidden sm:inline text-[13.5px] text-zinc-500 font-normal">
+                {activeCategory === "all"
+                  ? "· Verified customer photos"
+                  : `· ${displayedTrendingVideos.length} live ${displayedTrendingVideos.length === 1 ? "review" : "reviews"}`}
               </span>
             </div>
 
             <div className="flex items-center gap-2.5 shrink-0">
-              {trendingVideos.length > 4 && (
+              {displayedTrendingVideos.length > 4 && (
                 <div className="hidden md:flex items-center gap-1.5">
                   <button
                     type="button"
@@ -1467,60 +1602,115 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                 </div>
               )}
 
-              {trendingVideos.length > 0 && (
+              {activeCategory !== "all" ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (onViewAll) onViewAll();
-                    else if (trendingVideos.length > 0) onSelectVideo(trendingVideos[0].id);
-                  }}
-                  className="inline-flex items-center gap-1 text-[13px] sm:text-[14px] font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                  onClick={() => setActiveCategory("all")}
+                  className="inline-flex items-center gap-1 text-[13px] sm:text-[13.5px] font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 >
-                  <span>Explore all</span>
+                  <span>View all</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+              ) : (
+                displayedTrendingVideos.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onViewAll) onViewAll();
+                      else if (displayedTrendingVideos.length > 0) onSelectVideo(displayedTrendingVideos[0].id);
+                    }}
+                    className="inline-flex items-center gap-1 text-[13px] sm:text-[13.5px] font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <span>Explore all</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )
               )}
             </div>
           </div>
 
-          {trendingVideos.length === 0 ? (
-            <div className="w-full rounded-3xl bg-white/[0.03] border border-white/[0.08] px-5 py-10 text-center flex flex-col items-center justify-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#111114] border border-white/[0.1] flex items-center justify-center">
-                <Camera className="w-5 h-5 text-zinc-300" />
+          {displayedTrendingVideos.length === 0 ? (
+            categoryFallbackPlaces.length > 0 ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {categoryFallbackPlaces.map(({ place, specificCategory, domain }) => (
+                    <button
+                      key={place.id}
+                      type="button"
+                      onClick={() => onOpenPlace(place.id)}
+                      className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] hover:border-white/[0.18] transition-all text-left cursor-pointer group active:scale-[0.99]"
+                    >
+                      <CopoBrandLogo
+                        domain={domain}
+                        name={place.name}
+                        logoUrl={place.logoUrl}
+                        className="w-11 h-11 rounded-[12px] bg-white border border-white/15 flex items-center justify-center shrink-0 overflow-hidden p-1.5 shadow-sm"
+                        imageClassName="w-full h-full object-contain"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[14px] font-semibold text-white truncate">{place.name}</span>
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-[#050506] shrink-0" />
+                        </div>
+                        <div className="text-[12px] text-zinc-400 truncate mt-0.5">
+                          {specificCategory} · {domain}
+                        </div>
+                      </div>
+                      <span className="text-[11.5px] font-medium text-zinc-300 group-hover:text-white px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] shrink-0">
+                        Review
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-white">No live photo reviews yet</p>
-                <p className="text-xs text-zinc-400 max-w-xs mx-auto">
-                  Snap a live camera photo and pick 1 to 5 stars to share the first real review.
-                </p>
+            ) : (
+              <div className="w-full rounded-3xl bg-white/[0.03] border border-white/[0.08] px-5 py-10 text-center flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#111114] border border-white/[0.1] flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-zinc-300" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-white">
+                    {activeCategory === "all" ? "No live photo reviews yet" : `No ${activeCategoryMeta.label.toLowerCase()} photo reviews yet`}
+                  </p>
+                  <p className="text-xs text-zinc-400 max-w-xs mx-auto">
+                    Snap a live camera photo and pick 1 to 5 stars to share the first real review.
+                  </p>
+                </div>
+                {onRecordReview && (
+                  <button
+                    type="button"
+                    onClick={() => onRecordReview(null)}
+                    className="mt-1 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-tight flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Add Review</span>
+                  </button>
+                )}
               </div>
-              {onRecordReview && (
-                <button
-                  type="button"
-                  onClick={() => onRecordReview(null)}
-                  className="mt-1 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-xs tracking-tight flex items-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Add Review</span>
-                </button>
-              )}
-            </div>
+            )
           ) : (
             <div className="relative">
-              {/* Widescreen 5-Card Row on Desktop, 2+Peek Full-Height Row on Mobile */}
+              {/* Compact Widescreen 5-Card Row on Desktop, 2+Peek Compact Review Cards on Mobile */}
               <div
                 ref={carouselRef}
-                className="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
+                className="flex items-stretch gap-3 sm:gap-3.5 overflow-x-auto no-scrollbar pb-2 snap-x snap-mandatory scroll-smooth"
               >
-                {trendingVideos.map((video, idx) => {
+                {displayedTrendingVideos.map((video, idx) => {
                   const matchedPlace = places.find((p) => isPlaceReviewMatch(video, p));
                   const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                   const brandDomain = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || "") || "";
                   const brandLogoUrl = matchedPlace?.logoUrl || video.placeLogoUrl || "";
+                  const catInfo = reviewCategoryMap.get(video.id) || classifyBusinessCategory({
+                    rawCategory: matchedPlace?.category || video.placeCategory,
+                    name: businessName,
+                    domain: brandDomain,
+                    description: matchedPlace?.description
+                  });
 
                   const author = resolveSafeAuthor(video, currentUser);
                   const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
                   const rating = typeof video.rating === "number" ? video.rating : 5;
+                  const wholeStars = getRoundedRating(rating);
                   const posterUrl = resolveVideoPosterUrl(video);
                   const recency = formatCompactRecency(video);
 
@@ -1530,6 +1720,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       role="button"
                       tabIndex={0}
                       data-trending-video-id={video.id}
+                      data-category-id={catInfo.canonicalId}
                       onClick={() => onSelectVideo(video.id)}
                       onPointerEnter={() => {
                         if (posterUrl) preloadImage(posterUrl, "high");
@@ -1553,9 +1744,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           onSelectVideo(video.id);
                         }
                       }}
-                      className="relative shrink-0 w-[176px] xs:w-[192px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)] h-[310px] xs:h-[340px] sm:h-auto sm:aspect-[3/4.35] rounded-[22px] sm:rounded-[24px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.22] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
+                      className="relative shrink-0 w-[170px] xs:w-[180px] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] h-[296px] xs:h-[312px] sm:h-auto sm:aspect-[3/3.85] rounded-[20px] sm:rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
                     >
-                      {/* Clean Neutral Obsidian Fallback (Never loud indigo) */}
+                      {/* Clean Neutral Obsidian Fallback */}
                       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] flex flex-col items-center justify-center p-4 text-center z-0">
                         <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white font-semibold text-base mb-2">
                           {businessName.charAt(0).toUpperCase()}
@@ -1567,7 +1758,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       {posterUrl && (
                         <img
                           src={posterUrl}
-                          alt={`${businessName} review - ${creatorFullName}`}
+                          alt={`${businessName} ${catInfo.badgeLabel.toLowerCase()} photo review by ${creatorFullName}`}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out z-10 pointer-events-none"
                           loading="eager"
                           decoding="sync"
@@ -1585,22 +1776,39 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                         />
                       )}
 
-                      {/* Top-Left Uniform Pill Row: Champagne-Gold Whole Star + Consistent Recency */}
-                      <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex items-center gap-1.5 z-20 pointer-events-none">
-                        <div className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.12] flex items-center gap-1 shadow-sm">
-                          <Star className="w-3 h-3 fill-[#E8C78A] text-[#E8C78A]" />
-                          <span className="text-[11.5px] font-semibold text-white leading-none tabular-nums">
-                            {getRoundedRating(rating)}
-                          </span>
-                        </div>
-                        <div className="px-2 py-1 rounded-full bg-black/45 backdrop-blur-md border border-white/[0.1] text-[10.5px] font-medium text-white/85 leading-none">
+                      {/* Top Row: Clear Category Pill Left + Subtle Recency Pill Right */}
+                      <div className="absolute top-2.5 inset-x-2.5 sm:top-3 sm:inset-x-3 flex items-center justify-between gap-1.5 z-20 pointer-events-none">
+                        <span className="px-2.5 py-1 rounded-full bg-black/58 backdrop-blur-md border border-white/[0.15] text-[10.5px] sm:text-[11px] font-medium text-white/95 leading-none tracking-[-0.01em] shadow-sm truncate max-w-[108px]">
+                          {catInfo.badgeLabel}
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-black/48 backdrop-blur-md border border-white/[0.11] text-[10px] sm:text-[10.5px] font-medium text-white/85 leading-none tabular-nums shrink-0">
                           {recency}
-                        </div>
+                        </span>
                       </div>
 
-                      {/* Seamless Multi-Stop Organic Gradient Scrim (Zero Boxy Seams) + Crisp Mini Brand Logo */}
-                      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.68)_38%,rgba(0,0,0,0.22)_72%,transparent_100%)] pt-20 pb-3 px-2.5 sm:px-3.5 z-20 pointer-events-none">
-                        <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Bottom Unmistakable Customer Review Scrim: Full 5-Star Rating Row + Business + Reviewer */}
+                      <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.78)_44%,rgba(0,0,0,0.28)_76%,transparent_100%)] pt-20 pb-3 px-2.5 sm:px-3.5 z-20 pointer-events-none">
+                        {/* 5-Star Solid Rating Row — Instant Universal Review Signal */}
+                        <div className="flex items-center gap-1.5 mb-2" aria-label={`Rated ${wholeStars} out of 5 stars`}>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((starIdx) => (
+                              <Star
+                                key={starIdx}
+                                className={`w-3 h-3 sm:w-[13px] sm:h-[13px] ${
+                                  starIdx <= wholeStars
+                                    ? "fill-[#F5B942] text-[#F5B942]"
+                                    : "fill-white/15 text-white/25"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[11px] font-semibold text-white/95 leading-none tabular-nums">
+                            {wholeStars}/5
+                          </span>
+                        </div>
+
+                        {/* Business Brand Row + Reviewer Attribution */}
+                        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                           <CopoBrandLogo
                             domain={brandDomain || video.placeId}
                             name={businessName}
@@ -1611,16 +1819,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-white text-[13px] sm:text-[14px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                              <span className="text-white text-[12.5px] sm:text-[13.5px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
                                 {businessName}
                               </span>
                               <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
                             </div>
-                            <div className="text-white/75 text-[10.5px] sm:text-[11.5px] font-normal truncate mt-0.5 flex items-center gap-1">
-                              <span className="truncate">{creatorFullName}</span>
-                              {brandDomain && (
-                                <span className="hidden sm:inline text-white/55 truncate">· {brandDomain}</span>
-                              )}
+                            <div className="text-white/75 text-[10.5px] sm:text-[11px] font-normal truncate mt-0.5">
+                              Review by {creatorFullName}
                             </div>
                           </div>
                         </div>
