@@ -16,7 +16,7 @@ import {
   Camera
 } from "lucide-react";
 import { VideoReview, VideoAuthor, FeedSubTab, Place } from "../types";
-import { formatRecordedDate, formatCompactRecency } from "../utils/dateUtils";
+import { formatRecordedDate } from "../utils/dateUtils";
 import { classifyBusinessCategory } from "../utils/categoryUtils";
 import {
   formatBusinessName,
@@ -322,7 +322,6 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
       }),
     [matchedPlace?.category, matchedPlace?.description, video.placeCategory, video.placeDescription, cardBusinessName, cardDomain, cleanDomain]
   );
-  const compactRecency = formatCompactRecency(video.recordedAt, video.createdAtMs);
   const fullRecency = formatRecordedDate(video.recordedAt, video.createdAtMs);
 
   const renderActionButtons = (isDesktop: boolean) => (
@@ -605,11 +604,11 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             aria-label="Double tap to like photo review"
           />
 
-          {/* Editorial Top & Bottom Scrims — Keeps Full-Bleed Photo Pure While Guaranteeing Crisp Legibility */}
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 via-black/20 to-transparent z-10 pointer-events-none" />
+          {/* Editorial Scrims — Keeps Top 75% Pure Photography While Guaranteeing Crisp Bottom Legibility */}
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/35 to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 h-[44%] min-h-[210px] bg-[linear-gradient(to_top,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.74)_42%,rgba(0,0,0,0.26)_74%,transparent_100%)] z-10 pointer-events-none" />
 
-          {/* Top Bar: Navigation Left + Signature Frosted Category & Recency Badges Right */}
+          {/* Top Bar: Minimal Navigation Only (Zero Floating Pills Obstructing the Photo) */}
           <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between gap-2 px-3 md:px-4 pt-3.5 md:pt-4 pointer-events-none">
             <div className="pointer-events-auto flex items-center gap-2 shrink-0">
               {(onGoBack || onCloseEmbed || isEmbed) && (
@@ -644,7 +643,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                       }
                     }
                   }}
-                  className="w-10 h-10 rounded-full bg-black/55 hover:bg-black/80 backdrop-blur-xl border border-white/[0.16] flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer shrink-0"
+                  className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/[0.15] flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer shrink-0"
                   title={t("common.goBack", "Go back")}
                 >
                   <ChevronLeft className="w-5 h-5 stroke-[2.4]" />
@@ -661,7 +660,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   }}
                   onTouchStart={(e) => e.stopPropagation()}
                   onTouchEnd={(e) => e.stopPropagation()}
-                  className={`relative flex ${forceShowMenu ? "" : "md:hidden"} w-10 h-10 rounded-full bg-black/55 hover:bg-black/80 active:scale-90 backdrop-blur-xl border border-white/[0.16] items-center justify-center text-white shadow-lg transition-all cursor-pointer select-none shrink-0`}
+                  className={`relative flex ${forceShowMenu ? "" : "md:hidden"} w-10 h-10 rounded-full bg-black/50 hover:bg-black/75 active:scale-90 backdrop-blur-xl border border-white/[0.15] items-center justify-center text-white shadow-lg transition-all cursor-pointer select-none shrink-0`}
                   aria-label={t("nav.openMenu", "Open menu")}
                   title={t("nav.openMenu", "Open menu")}
                 >
@@ -675,17 +674,41 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
               )}
             </div>
 
-            {/* Frosted Category + Recency Pills (Exact Visual Twin of Homepage Photo Review Cards) */}
-            <div className="flex items-center gap-1.5 min-w-0 pointer-events-none">
-              <span className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/[0.15] text-[11px] font-medium text-white/95 leading-none tracking-[-0.01em] shadow-sm truncate max-w-[132px]">
-                {cardCategoryInfo.badgeLabel}
-              </span>
-              {compactRecency && (
-                <span className="px-2.5 py-1 rounded-full bg-black/48 backdrop-blur-md border border-white/[0.12] text-[11px] font-medium text-white/85 leading-none tabular-nums shrink-0 shadow-sm">
-                  {compactRecency}
+            {/* Subtle Brand Attribution Mark (Top-Right): Clean for Screenshots, Social Shares & Embeds */}
+            {isEmbed ? (
+              <a
+                href="https://www.yoouz.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="pointer-events-auto flex items-center gap-1.5 opacity-85 hover:opacity-100 transition-opacity select-none no-underline shrink-0 pr-0.5"
+                aria-label="Verified on Yoouz"
+                title="Verified Photo Review on Yoouz"
+              >
+                <span className="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-black/45 backdrop-blur-md border border-white/[0.16] shadow-[0_2px_8px_rgba(0,0,0,0.45)] shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-[11px] h-[11px] fill-white" aria-hidden="true">
+                    <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                  </svg>
                 </span>
-              )}
-            </div>
+                <span className="text-white/90 text-[13px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif] drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
+                  Yoouz
+                </span>
+              </a>
+            ) : (
+              <div
+                className="pointer-events-none flex items-center gap-1.5 opacity-80 select-none shrink-0 pr-0.5"
+                aria-hidden="true"
+              >
+                <span className="flex items-center justify-center w-[20px] h-[20px] rounded-[6px] bg-black/40 backdrop-blur-md border border-white/[0.15] shadow-[0_2px_8px_rgba(0,0,0,0.45)] shrink-0">
+                  <svg viewBox="0 0 24 24" className="w-[11px] h-[11px] fill-white">
+                    <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                  </svg>
+                </span>
+                <span className="text-white/85 text-[13px] font-bold tracking-[-0.03em] leading-none font-['Google_Sans',sans-serif] drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
+                  Yoouz
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Double-tap Heart Animation */}
@@ -738,8 +761,8 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                   {wholeStarScore}/5
                 </span>
                 <span className="text-white/35 text-[11px] leading-none select-none">·</span>
-                <span className="text-[11px] sm:text-[11.5px] font-medium text-white/80 leading-none tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
-                  {t("video.photoReview", "Photo Review")}
+                <span className="text-[11.5px] sm:text-[12px] font-medium text-white/85 leading-none tracking-[-0.01em] drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] truncate">
+                  {cardCategoryInfo.badgeLabel}
                 </span>
               </div>
 
