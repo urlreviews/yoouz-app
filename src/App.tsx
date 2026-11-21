@@ -53,6 +53,7 @@ import { collection, getDocs, getDoc, onSnapshot, query, orderBy, deleteDoc, doc
 import { cleanUndefinedFields, cleanData } from "./utils/cleanData";
 import { getRawVideoBlobFromIndexedDB, deleteVideoBlobFromIndexedDB, clearAllVideoBlobsFromIndexedDB } from "./lib/videoStorage";
 import { isPlaceReviewMatch, isAuthorMatch, synthesizePlaceFromReview, extractCleanDomain, getDisplayViews, formatViewCount, updateUserRegistry, resolveSafeAuthor, getSafeAvatarUrl, KNOWN_COMMUNITY_USERS, getPlaceSlug, formatBusinessName, toTitleCase, getDeletedPlaceIds, isPlaceDeleted, getPlaceVariants, recordDeletedPlacesInLocalStorage, unrecordDeletedPlacesInLocalStorage, isUserDeleted, recordDeletedUsersInLocalStorage, unrecordDeletedUsersInLocalStorage, getDeletedUserIds, isUserDeactivated, recordDeactivatedUsersInLocalStorage, unrecordDeactivatedUsersInLocalStorage, getDeactivatedUserIds, YOOUZ_VIDEOS_CACHE_KEY, getEffectivePlaceDescription, KNOWN_OFFICIAL_NAMES, isValidDomainUrl, isGenericPlaceName, getReviewTime, purgeVideoIdFromClientStorage, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "./utils/placeUtils";
+import { sortReviewsCanonicalLatestFirst } from "./utils/categoryUtils";
 import { getCleanLogoUrl, getPlaceLogoUrl, KNOWN_BRAND_BANNERS, KNOWN_BRAND_LOGOS, YOOUZ_LOGO_DATA_URI, isFaviconUrl, isBadBanner, isWhiteOrInvertedLogo, prewarmBannerImage } from "./utils/logoUtils";
 import { preloadImage, preloadAllReviewPhotos } from "./utils/preloadUtils";
 import { generateGoogleLetterAvatarSvg } from "./lib/avatar";
@@ -5215,10 +5216,12 @@ export function App() {
 
   // Active Feed Videos (Filtered by Fullscreen Context or Drawer state if active, otherwise Home feed)
   const activeFeedVideos = useMemo(() => {
-    // Filter out hidden/blocked videos and deactivated users, strictly sorted latest-first
-    const visibleVideos = [...videos]
-      .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
-      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    // Filter out hidden/blocked videos and deactivated users, strictly matching Homepage canonical latest-first order
+    const visibleVideos = sortReviewsCanonicalLatestFirst(
+      videos.filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName)),
+      (v) => v.id,
+      (v) => getReviewTime(v)
+    );
 
     if (embedTargetId) {
       const cleanSlug = embedTargetId.toLowerCase().trim();
@@ -5720,9 +5723,11 @@ export function App() {
       setActiveSubTab("discover");
       setActiveSection("home");
 
-      const visibleVideos = videos
-        .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
-        .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+      const visibleVideos = sortReviewsCanonicalLatestFirst(
+        videos.filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName)),
+        (v) => v.id,
+        (v) => getReviewTime(v)
+      );
 
       const idx = visibleVideos.findIndex((v) => v.id === videoId);
       if (idx !== -1) {
@@ -5734,8 +5739,8 @@ export function App() {
     }
   };
 
-  // Handle "View All" on Trending Video Reviews: opens full feed starting at the latest video (index 0)
-  // so the user can freely scroll through all videos without being trapped in a single business page.
+  // Handle "View All" on Trending Video Reviews: opens full feed starting at the exact same #1 latest photo review
+  // as the Homepage strip so the user sees 100% consistent order across Home and Explore all.
   const handleViewAllTrending = (startVideoId?: string) => {
     setIsWatchingVideo(true);
     setSelectedPlaceIdForDrawer(null);
@@ -5745,9 +5750,11 @@ export function App() {
     setActiveSection("home");
     setPendingVideoId(null);
 
-    const visibleVideos = videos
-      .filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName))
-      .sort((a, b) => getReviewTime(b) - getReviewTime(a));
+    const visibleVideos = sortReviewsCanonicalLatestFirst(
+      videos.filter((v) => !hiddenVideoIds.includes(v.id) && !isUserDeactivated(v.author || v.userId || v.authorName)),
+      (v) => v.id,
+      (v) => getReviewTime(v)
+    );
 
     if (startVideoId) {
       const idx = visibleVideos.findIndex((v) => v.id === startVideoId);

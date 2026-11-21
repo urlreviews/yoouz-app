@@ -1540,7 +1540,9 @@ export async function seedAuthenticCommunity(options: { force?: boolean } = {}):
       console.warn(`[Seeder] Source image not found: ${sourcePath}`);
     }
 
-    const reviewCreatedAtMs = now - def.daysAgo * 86400 * 1000 - Math.floor(Math.random() * 3600 * 1000);
+    // Anchor seeded baseline reviews to a fixed historical date (2026-11-18) so they never jump ahead of real user reviews
+    const BASELINE_ANCHOR_MS = Date.parse("2026-11-18T18:00:00.000Z");
+    const reviewCreatedAtMs = BASELINE_ANCHOR_MS - def.daysAgo * 86400 * 1000 - Math.floor(Math.random() * 3600 * 1000);
     const photoUrl = `/uploads/photos/${photoFilename}`;
 
     const reviewRecord: VideoReview = {
@@ -1847,7 +1849,9 @@ export async function seedWave2CommunityOnly(): Promise<{
       console.warn(`[Wave2 Seeder] Source image not found: ${sourcePath}`);
     }
 
-    const reviewCreatedAtMs = now - def.daysAgo * 86400 * 1000 - Math.floor(Math.random() * 3600 * 1000);
+    // Anchor seeded baseline reviews to a fixed historical date (2026-11-18) so they never jump ahead of real user reviews
+    const BASELINE_ANCHOR_MS = Date.parse("2026-11-18T18:00:00.000Z");
+    const reviewCreatedAtMs = BASELINE_ANCHOR_MS - def.daysAgo * 86400 * 1000 - Math.floor(Math.random() * 3600 * 1000);
     const photoUrl = `/uploads/photos/${photoFilename}`;
     const starVal = Number(def.rating) || 5;
 

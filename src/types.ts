@@ -261,6 +261,7 @@ export interface VideoReview {
   businessName?: string;
   isLandscape?: boolean;
   aspectRatio?: 'portrait' | 'landscape' | number;
+  categoryType?: string;
 }
 
 export type VideoAuthor = VideoReview["author"];

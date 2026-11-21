@@ -513,17 +513,36 @@ export function isSeededReviewId(id?: string | null): boolean {
 }
 
 /**
+ * Canonical latest-first ordering shared across Homepage "Live Photo Reviews",
+ * "Explore all", and the Discover vertical feed:
+ * - Real customer photo reviews ALWAYS come first in exact newest-first order.
+ * - Baseline community reviews follow in exact newest-first chronological order.
+ * Guarantees 100% identical order and strictly monotonic timestamps (zero time jumps).
+ */
+export function sortReviewsCanonicalLatestFirst<T>(
+  items: T[],
+  getId: (item: T) => string | undefined | null,
+  getTimestampMs: (item: T) => number
+): T[] {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  return [...items].sort((a, b) => {
+    const aOrganic = !isSeededReviewId(getId(a));
+    const bOrganic = !isSeededReviewId(getId(b));
+    if (aOrganic !== bOrganic) return aOrganic ? -1 : 1;
+    return getTimestampMs(b) - getTimestampMs(a);
+  });
+}
+
+/**
  * Ordering for Homepage "Live Photo Reviews" / Trending:
- * 1. EVERY real organic user-snapped photo review ALWAYS appears FIRST at slots #1, #2, #3...
- *    in strict newest-first chronological order (so the latest customer photo is ALWAYS #1).
- * 2. Baseline community reviews follow cleanly interleaved across distinct categories
- *    (Hotels, Dining, Products, Beauty, Auto, Services, Shopping, Tech) so the showcase
- *    immediately communicates multi-category breadth.
+ * Strictly monotonic newest-first chronological order (identical to "Explore all" & Discover):
+ * 1. EVERY real organic user-snapped photo review ALWAYS appears FIRST (#1, #2, #3...) newest-first.
+ * 2. Baseline community reviews follow strictly newest-first (never jumping backwards in time).
  */
 export function selectDiverseTrendingReviews<T>(
   sortedNewestFirst: T[],
   getCategoryId: (item: T) => ConcreteCategoryId,
-  _getTimestampMs: (item: T) => number,
+  getTimestampMs: (item: T) => number,
   activeCategory: CanonicalCategoryId,
   isOrganicItem?: (item: T) => boolean
 ): T[] {
@@ -531,68 +550,20 @@ export function selectDiverseTrendingReviews<T>(
 
   const checkOrganic = isOrganicItem || (() => true);
 
-  // Split into organic real user reviews vs baseline seeded items (preserving newest-first order within each)
+  const filtered =
+    activeCategory === "all"
+      ? sortedNewestFirst
+      : sortedNewestFirst.filter((item) => getCategoryId(item) === activeCategory);
+
   const organicItems: T[] = [];
   const seededItems: T[] = [];
-  for (const item of sortedNewestFirst) {
+  for (const item of filtered) {
     if (checkOrganic(item)) organicItems.push(item);
     else seededItems.push(item);
   }
 
-  if (activeCategory !== "all") {
-    return [
-      ...organicItems.filter((item) => getCategoryId(item) === activeCategory),
-      ...seededItems.filter((item) => getCategoryId(item) === activeCategory),
-    ];
-  }
+  organicItems.sort((a, b) => getTimestampMs(b) - getTimestampMs(a));
+  seededItems.sort((a, b) => getTimestampMs(b) - getTimestampMs(a));
 
-  // On "All": ALWAYS place ALL real user photo reviews first in exact latest-first order!
-  const result: T[] = [...organicItems];
-  const used = new Set<T>(organicItems);
-
-  // Interleave baseline seeded showcase reviews cleanly across categories after the real user reviews
-  const buckets = new Map<ConcreteCategoryId, T[]>();
-  for (const item of seededItems) {
-    const cat = getCategoryId(item);
-    const list = buckets.get(cat);
-    if (list) list.push(item);
-    else buckets.set(cat, [item]);
-  }
-
-  const showcaseOrder: ConcreteCategoryId[] = [
-    "hotels",
-    "restaurants",
-    "products",
-    "beauty",
-    "auto",
-    "services",
-    "shopping",
-    "tech",
-  ];
-
-  let madeProgress = true;
-  while (madeProgress) {
-    madeProgress = false;
-    for (const catId of showcaseOrder) {
-      const list = buckets.get(catId);
-      while (list && list.length > 0) {
-        const candidate = list.shift()!;
-        if (!used.has(candidate)) {
-          used.add(candidate);
-          result.push(candidate);
-          madeProgress = true;
-          break;
-        }
-      }
-    }
-  }
-
-  // Append any leftovers defensively
-  for (const item of seededItems) {
-    if (!used.has(item)) {
-      result.push(item);
-    }
-  }
-
-  return result;
+  return [...organicItems, ...seededItems];
 }

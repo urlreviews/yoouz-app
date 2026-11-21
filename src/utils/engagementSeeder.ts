@@ -560,12 +560,13 @@ export async function seedCommunityEngagementV1(): Promise<{
 
     const seedHash = hashStr(videoId);
     const isSeededReview = Object.prototype.hasOwnProperty.call(REVIEW_AGE_HOURS, videoId);
+    const BASELINE_ANCHOR_MS = Date.parse("2026-11-18T18:00:00.000Z");
     const reviewAgeHours = isSeededReview
       ? REVIEW_AGE_HOURS[videoId]
       : Math.max(1, Math.round((now - (Number(revData.createdAtMs) || Date.parse(String(row.createdAt || revData.createdAt || "")) || now)) / 3600_000));
 
     const baseMs = isSeededReview
-      ? now - reviewAgeHours * 3600_000 - ((seedHash % 24) * 60_000)
+      ? BASELINE_ANCHOR_MS - reviewAgeHours * 3600_000 - ((seedHash % 24) * 60_000)
       : (Number(revData.createdAtMs) || Date.parse(String(row.createdAt || revData.createdAt || "")) || now);
     const isoRevAt = new Date(baseMs).toISOString();
     const sqlRevAt = toSqliteTimestamp(baseMs);
