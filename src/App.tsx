@@ -9720,8 +9720,8 @@ export function App() {
       />
       )}
 
-      {/* Mobile Bottom Navigation Bar: top-level tabs only (hidden on Business Profile, User Profile, Photo Reel & Camera capture) */}
-      {!isSearchActive && !isSearchModalOpen && !embedTargetId && !selectedPlaceIdForDrawer && !selectedAuthorForDrawer && !isWatchingVideo && !isCreateModalOpen && !isPitchRoute && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
+      {/* Mobile Bottom Navigation Bar: visible on Home, Photo Reviews & top-level tabs; hidden on Business Profile, User Profile & Camera capture */}
+      {!isSearchActive && !isSearchModalOpen && !embedTargetId && !selectedPlaceIdForDrawer && !selectedAuthorForDrawer && !isCreateModalOpen && !isPitchRoute && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}
