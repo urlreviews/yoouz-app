@@ -44945,19 +44945,29 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
 
         const finalHtml = meta ? injectLiveInitialState(injectOpenGraphTags(indexTemplate, meta, isCrawler), isCrawler, req.originalUrl || req.url) : indexTemplate;
         
-        // Allow social crawlers (Facebook composer + post-publish validator) to cache the Open Graph object
-        // so the preview card never disappears when clicking "Post"
-        return res.status(meta?.statusCode || 200).set({ 
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': isCrawler 
-            ? 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400' 
-            : 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400',
-          'Vary': 'User-Agent, Accept-Encoding'
-        }).send(finalHtml);
+        // Allow social crawlers (Facebook composer + post-publish validator) to cache the Open Graph object,
+        // while human browsers & CDN edges NEVER serve stale index.html after a publish/deploy.
+        return res.status(meta?.statusCode || 200).set(
+          isCrawler
+            ? {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+                'Vary': 'User-Agent, Accept-Encoding'
+              }
+            : {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'Vary': 'User-Agent, Accept-Encoding'
+              }
+        ).send(finalHtml);
       } catch (err) {
         res.status(200).set({
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=0, s-maxage=60, stale-while-revalidate=86400'
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }).sendFile(path.join(distPath, "index.html"));
       }
     });

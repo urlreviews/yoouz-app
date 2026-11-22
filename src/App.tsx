@@ -9720,8 +9720,8 @@ export function App() {
       />
       )}
 
-      {/* Mobile Bottom Navigation Bar with live unread notification & message badges */}
-      {!isSearchActive && !isSearchModalOpen && !embedTargetId && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
+      {/* Mobile Bottom Navigation Bar: top-level tabs only (hidden on Business Profile, User Profile, Photo Reel & Camera capture) */}
+      {!isSearchActive && !isSearchModalOpen && !embedTargetId && !selectedPlaceIdForDrawer && !selectedAuthorForDrawer && !isWatchingVideo && !isCreateModalOpen && !isPitchRoute && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
           currentUser={currentUser}

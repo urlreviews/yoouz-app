@@ -1879,7 +1879,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           ref={contentRef} 
           tabIndex={0}
           className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] space-y-4 px-4 pt-2 pb-4 focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
-          style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
+          style={{ paddingBottom: 'calc(2.25rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {copiedNotification && (
             <div className="px-4 py-2 bg-zinc-800 text-white text-xs font-semibold text-center rounded-xl border border-zinc-700 animate-in fade-in">

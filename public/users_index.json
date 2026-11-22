@@ -1,5 +1,28 @@
 [
   {
+    "id": "anon_mwrrlzgz_88uqft",
+    "uid": "anon_mwrrlzgz_88uqft",
+    "userId": "anon_mwrrlzgz_88uqft",
+    "email": "",
+    "name": "U/H8FACY",
+    "username": "U/H8FACY",
+    "handle": "@U/H8FACY",
+    "avatar": "",
+    "banner": "",
+    "bio": "",
+    "role": "user",
+    "isAnonymous": true,
+    "passkeyProtected": false,
+    "yoouzPhotoUser": true,
+    "scratchVersion": 6,
+    "linkedProviders": [],
+    "isVerified": false,
+    "isNewUser": false,
+    "memberSince": "Nov 2026",
+    "createdAt": "2026-11-22T11:40:07.069Z",
+    "updatedAt": "2026-11-22T11:40:10.220Z"
+  },
+  {
     "id": "anon_mwrn6l15_cb57g4",
     "uid": "anon_mwrn6l15_cb57g4",
     "userId": "anon_mwrn6l15_cb57g4",
@@ -20,7 +43,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-22T09:36:10.110Z",
-    "updatedAt": "2026-11-22T09:36:28.967Z"
+    "updatedAt": "2026-11-22T09:36:28.967Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwp5nu5d_mwyms3",
@@ -1334,7 +1359,7 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-20T11:45:06.990Z",
-    "updatedAt": "2026-11-22T09:25:01.700Z",
+    "updatedAt": "2026-11-22T11:35:57.419Z",
     "firstName": "U/9D9CY7",
     "lastName": "",
     "location": "",
@@ -1393,7 +1418,7 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-20T13:46:25.553Z",
-    "updatedAt": "2026-11-22T09:12:48.978Z"
+    "updatedAt": "2026-11-22T11:26:41.545Z"
   },
   {
     "id": "anon_mwp4v72f_ubnd34",
@@ -1513,7 +1538,7 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-18T08:21:01.587Z",
-    "updatedAt": "2026-11-21T09:52:58.011Z"
+    "updatedAt": "2026-11-22T11:32:15.128Z"
   },
   {
     "id": "anon_mwrmlyge_u3sp5x",

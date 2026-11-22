@@ -1563,7 +1563,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           ref={contentRef} 
           tabIndex={0}
           className="flex-1 min-h-0 min-w-0 w-full max-w-full overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] focus:outline-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" 
-          style={{ paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
+          style={{ paddingBottom: 'calc(2.25rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* Tab 1 (DEFAULT): PHOTO REVIEWS + QUICK ACTIONS */}
           {activeTab === "reviews" && (
