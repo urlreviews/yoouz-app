@@ -39749,7 +39749,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
     const videoThumbBufferCache = new Map<string, Buffer>();
 
     function generateVideoShareCardBuffer(videoId: string, queryParams: Record<string, any>, baseUrl: string): Promise<Buffer> {
-      const cacheKey = `v18_video_${videoId || 'vid'}_${String(queryParams?.v || '')}`;
+      const cacheKey = `v19_editorial_video_${videoId || 'vid'}_${String(queryParams?.v || '')}`;
       const cachedEntry = ogVideoCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return Promise.resolve(cachedEntry.buf);
@@ -40138,98 +40138,126 @@ app.get('/api/og-preview-v2', async (req, res) => {
         (foundVideo as any)?.passkeyProtected ||
         queryParams.authorVerified === 'true'
       );
-      const videoAuthorPillWidth = Math.min(580, Math.max(290, 102 + videoAuthorWidth + (isAuthorPasskeyVerified ? 38 : 18)));
+
+      // Editorial Category Label (matches Homepage cards & Photo Reels)
+      const rawOgCategory = String(queryParams.category || foundVideo?.placeCategory || (foundVideo as any)?.category || "").trim();
+      const isGenericOgCat = /^(business|local business|other|general|place|website|company|brand|store|shop|review|reviews)$/i.test(rawOgCategory);
+      const reviewCategoryText = (rawOgCategory && !isGenericOgCat) ? rawOgCategory : "Photo review";
+      const safeCategoryDisplay = reviewCategoryText.length > 22 ? `${reviewCategoryText.substring(0, 20)}...` : reviewCategoryText;
+
+      const editorialPlaceDisplay = placeName.length > 28 ? `${placeName.substring(0, 26)}...` : placeName;
+      const editorialPlaceWidth = getTextAdvanceWidth(editorialPlaceDisplay, 34, true);
+      const reviewByText = `Review by ${authorDisplay}`;
+      const reviewByWidth = getTextAdvanceWidth(reviewByText, 21, false);
+
+      const safeRatingInt = Math.min(5, Math.max(1, Math.round(Number(ratingNum) || 5)));
+      const scoreRatioText = `${safeRatingInt}/5`;
+      const scoreRatioWidth = getTextAdvanceWidth(scoreRatioText, 23, true);
+
+      // Crisp 24px-spaced 5-star vector row for editorial bottom lockup
+      const renderEditorialStarsSvg = (startX: number, startY: number, filledCount: number) => {
+        let stars = '';
+        const starPath = "M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z";
+        for (let i = 0; i < 5; i++) {
+          const x = startX + (i * 25);
+          const isFilled = i < filledCount;
+          const color = isFilled ? "#fbbf24" : "rgba(255,255,255,0.26)";
+          stars += `<path d="${starPath}" fill="${color}" transform="translate(${x}, ${startY}) scale(1.18)"/>`;
+        }
+        return stars;
+      };
+
+      const yoouzMarkSvg = `
+        <g transform="translate(1030, 34)">
+          <rect width="122" height="44" rx="12" fill="#09090b" fill-opacity="0.58" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+          <rect x="9" y="9" width="26" height="26" rx="7" fill="#141418" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+          <g transform="translate(14, 14)">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+            </svg>
+          </g>
+          ${renderTextPath('Yoouz', 44, 29, 20, true, '#ffffff')}
+        </g>
+      `;
+
+      const bottomEditorialLockupSvg = `
+        <!-- BOTTOM-LEFT UNBOXED EDITORIAL LOCKUP (Exact match to Homepage Cards & Photo Reels) -->
+        <g>
+          <!-- Row 1: 5 Gold Stars + Score (4/5) + Separator + Category -->
+          ${renderEditorialStarsSvg(48, 434, safeRatingInt)}
+          ${renderTextPath(scoreRatioText, 182, 456, 23, true, '#ffffff')}
+          <circle cx="${182 + scoreRatioWidth + 14}" cy="449" r="2.5" fill="rgba(255,255,255,0.45)"/>
+          ${renderTextPath(safeCategoryDisplay, 182 + scoreRatioWidth + 26, 456, 21, false, '#e4e4e7')}
+
+          <!-- Row 2: White Squircle Brand Logo + Business Name + Verified Check + Review by Author -->
+          <g transform="translate(48, 482)" filter="url(#cardShadow)">
+            ${isYoouzPlace ? `
+              <rect x="0" y="0" width="84" height="84" rx="20" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+              <g transform="translate(12, 12)">
+                <svg width="60" height="60" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
+                </svg>
+              </g>
+            ` : `
+              <rect x="0" y="0" width="84" height="84" rx="20" fill="#ffffff" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+              ${logoPngBase64 ? `
+                <g>
+                  <clipPath id="squircleLogoClipEditorial">
+                    <rect x="0" y="0" width="84" height="84" rx="20"/>
+                  </clipPath>
+                  ${placeLogoIsFullBleed
+                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="84" height="84" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClipEditorial)"/>`
+                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="7" y="7" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipEditorial)"/>`
+                  }
+                </g>
+              ` : `
+                <rect x="0" y="0" width="84" height="84" rx="20" fill="#18181b"/>
+                ${renderTextPath(editorialPlaceDisplay.charAt(0).toUpperCase() || 'B', 42 - (getTextAdvanceWidth(editorialPlaceDisplay.charAt(0).toUpperCase() || 'B', 36, true) / 2), 55, 36, true, '#ffffff')}
+              `}
+            `}
+          </g>
+
+          <!-- Business Name + White Verified Checkmark -->
+          ${renderTextPath(editorialPlaceDisplay, 152, 520, 34, true, '#ffffff')}
+          <g transform="translate(${152 + editorialPlaceWidth + 12}, 497)">
+            <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+            <path d="M6.2 11l3.1 3.1 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+
+          <!-- Quiet Reviewer Attribution (No competing blue avatar circle) -->
+          ${renderTextPath(reviewByText, 152, 554, 21, false, '#d4d4d8')}
+          ${isAuthorPasskeyVerified ? `
+            <g transform="translate(${152 + reviewByWidth + 9}, 538)">
+              <circle cx="8" cy="8" r="8" fill="#ffffff" fill-opacity="0.9"/>
+              <path d="M4.5 8l2.2 2.2 4.6-4.6" stroke="#09090b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </g>
+          ` : ''}
+        </g>
+      `;
 
       if (thumbBuf) {
         const overlaySvg = `
           <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
             <defs>
-              <linearGradient id="vignette" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#000000" stop-opacity="0.84" />
-                <stop offset="22%" stop-color="#000000" stop-opacity="0.10" />
-                <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
-                <stop offset="100%" stop-color="#000000" stop-opacity="0.96" />
+              <linearGradient id="editorialScrim" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.16" />
+                <stop offset="20%" stop-color="#000000" stop-opacity="0.0" />
+                <stop offset="50%" stop-color="#000000" stop-opacity="0.10" />
+                <stop offset="75%" stop-color="#000000" stop-opacity="0.68" />
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.94" />
               </linearGradient>
               <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
-                <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+                <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
               </filter>
             </defs>
             
-            <!-- Vignette backdrop -->
-            <rect width="1200" height="630" fill="url(#vignette)"/>
+            <!-- Measured Bottom-Only Scrim (keeps top 60% of customer photo crystal clear) -->
+            <rect width="1200" height="630" fill="url(#editorialScrim)"/>
 
-            <!-- TOP SAFE-ZONE: Business Squircle Logo & Rating Pill -->
-            <g transform="translate(${topPillX}, 30)" filter="url(#cardShadow)">
-              <rect width="${placePillWidth}" height="108" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-              
-              <!-- Left Squircle Logo Container (82x82, zero double padding on full-bleed artwork) -->
-              ${isYoouzPlace ? `
-                <rect x="13" y="13" width="82" height="82" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
-                <g transform="translate(23, 23)">
-                  <svg width="62" height="62" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
-                  </svg>
-                </g>
-              ` : `
-                <rect x="13" y="13" width="82" height="82" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
-                ${logoPngBase64 ? `
-                  <g transform="translate(13, 13)">
-                    <clipPath id="squircleLogoClip1">
-                      <rect x="0" y="0" width="82" height="82" rx="22"/>
-                    </clipPath>
-                    ${placeLogoIsFullBleed
-                      ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="82" height="82" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip1)"/>`
-                      : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip1)"/>`
-                    }
-                  </g>
-                ` : `
-                  <g transform="translate(13, 13)">
-                    <rect x="0" y="0" width="82" height="82" rx="22" fill="#2563eb"/>
-                    ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 41 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36, true) / 2), 54, 36, true, '#ffffff')}
-                  </g>
-                `}
-              `}
+            <!-- Top-Right Signature Yoouz Attribution Mark -->
+            ${yoouzMarkSvg}
 
-              <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-              ${renderTextPath(safePlaceDisplay, 110, 46, 26, true, '#ffffff')}
-              <g transform="translate(${110 + placeWidth + 10}, 26)">
-                <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-                <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              </g>
-
-              <!-- Line 2: Gold Star + Rating Value + (X reviews) -->
-              <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(110, 61) scale(1.05)"/>
-              ${renderTextPath(placeRatingStr, 136, 80, 22, true, '#fbbf24')}
-              ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
-            </g>
-
-            <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
-            <g transform="translate(${bottomPillX}, 494)" filter="url(#cardShadow)">
-              <rect width="${videoAuthorPillWidth}" height="104" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-              ${authorAvatarPngBase64 ? `
-                <g transform="translate(16, 18)">
-                  <clipPath id="reviewerAvatarClip1">
-                    <circle cx="34" cy="34" r="34"/>
-                  </clipPath>
-                  <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip1)"/>
-                </g>
-              ` : `
-                <!-- Avatar Circle -->
-                <circle cx="50" cy="52" r="34" fill="${avatarBgColor}"/>
-                ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
-              `}
-              
-              <!-- Line 1: By Reviewer Name + Verified Badge (only if passkeyProtected) -->
-              ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
-              ${isAuthorPasskeyVerified ? `
-              <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
-                <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-                <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              </g>` : ''}
-
-              <!-- Line 2: 5 Stars Row -->
-              ${renderFiveStarsRowSvg(100, 58, ratingNum)}
-            </g>
+            ${bottomEditorialLockupSvg}
           </svg>
         `;
 
@@ -40268,106 +40296,31 @@ app.get('/api/og-preview-v2', async (req, res) => {
         return finalVideoCardBuf;
       }
 
-      // Clean cinema fallback card if no video thumbnail is available
+      // Clean cinema fallback card if no photo thumbnail is available
       const fallbackCinemaSvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
             <linearGradient id="bgCinema" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#09090b" />
-              <stop offset="50%" stop-color="#121217" />
-              <stop offset="100%" stop-color="#181820" />
+              <stop offset="50%" stop-color="#111116" />
+              <stop offset="100%" stop-color="#060608" />
             </linearGradient>
-            <radialGradient id="centerWhiteGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12" />
-              <stop offset="60%" stop-color="#ffffff" stop-opacity="0.02" />
+            <radialGradient id="centerWhiteGlow" cx="50%" cy="42%" r="50%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+              <stop offset="65%" stop-color="#ffffff" stop-opacity="0.01" />
               <stop offset="100%" stop-color="#000000" stop-opacity="0.0" />
             </radialGradient>
-            <filter id="fallbackCardShadow" x="-10%" y="-10%" width="120%" height="130%">
-              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+            <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
             </filter>
           </defs>
           <rect width="1200" height="630" fill="url(#bgCinema)"/>
-          <circle cx="600" cy="315" r="320" fill="url(#centerWhiteGlow)"/>
-          <rect x="24" y="24" width="1152" height="582" rx="32" fill="none" stroke="#27272a" stroke-width="2"/>
+          <circle cx="600" cy="260" r="320" fill="url(#centerWhiteGlow)"/>
 
-          <!-- TOP SAFE-ZONE: Business Squircle Logo & Rating Pill -->
-          <g transform="translate(${topPillX}, 30)" filter="url(#fallbackCardShadow)">
-            <rect width="${placePillWidth}" height="108" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-            
-            ${isYoouzPlace ? `
-              <rect x="13" y="13" width="82" height="82" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
-              <g transform="translate(23, 23)">
-                <svg width="62" height="62" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
-                </svg>
-              </g>
-            ` : `
-              <rect x="13" y="13" width="82" height="82" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
-              ${logoPngBase64 ? `
-                <g transform="translate(13, 13)">
-                  <clipPath id="squircleLogoClip2">
-                    <rect x="0" y="0" width="82" height="82" rx="22"/>
-                  </clipPath>
-                  ${placeLogoIsFullBleed
-                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="82" height="82" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClip2)"/>`
-                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="70" height="70" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClip2)"/>`
-                  }
-                </g>
-              ` : `
-                <g transform="translate(13, 13)">
-                  <rect x="0" y="0" width="82" height="82" rx="22" fill="#2563eb"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 41 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 36, true) / 2), 54, 36, true, '#ffffff')}
-                </g>
-              `}
-            `}
+          <!-- Top-Right Signature Yoouz Attribution Mark -->
+          ${yoouzMarkSvg}
 
-            <!-- Line 1: Place Name + Darkmode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 110, 46, 26, true, '#ffffff')}
-            <g transform="translate(${110 + placeWidth + 10}, 26)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
-
-            <!-- Line 2: Gold Star + Rating Value + (X reviews) -->
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(110, 61) scale(1.05)"/>
-            ${renderTextPath(placeRatingStr, 136, 80, 22, true, '#fbbf24')}
-            ${renderTextPath(reviewsLabel, 136 + getTextAdvanceWidth(placeRatingStr, 22, true) + 9, 80, 19, true, '#ffffff')}
-          </g>
-
-          <!-- Centered Dark Squircle Logo Emblem -->
-          <g transform="translate(530, 245)">
-            <rect width="140" height="140" rx="36" fill="#09090b" stroke="rgba(255,255,255,0.25)" stroke-width="2.5"/>
-            <!-- Crisp White Star Icon -->
-            <path d="M70 28 L81.5 57 L112 57 L87.5 75 L97 104 L70 86 L43 104 L52.5 75 L28 57 L58.5 57 Z" fill="#ffffff"/>
-          </g>
-
-          <!-- BOTTOM SAFE-ZONE: Reviewer Profile Pill -->
-          <g transform="translate(${bottomPillX}, 494)" filter="url(#fallbackCardShadow)">
-            <rect width="${videoAuthorPillWidth}" height="104" rx="30" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-            ${authorAvatarPngBase64 ? `
-              <g transform="translate(16, 18)">
-                <clipPath id="reviewerAvatarClip2">
-                  <circle cx="34" cy="34" r="34"/>
-                </clipPath>
-                <image href="${authorAvatarPngBase64}" xlink:href="${authorAvatarPngBase64}" x="0" y="0" width="68" height="68" preserveAspectRatio="xMidYMid slice" clip-path="url(#reviewerAvatarClip2)"/>
-              </g>
-            ` : `
-              <!-- Avatar Circle -->
-              <circle cx="50" cy="52" r="34" fill="${avatarBgColor}"/>
-              ${renderTextPath(authorInitial, initialX, 64, 34, true, avatarTextColor)}
-            `}
-            
-            <!-- Line 1: By Reviewer Name + Darkmode White Verified Badge (only if passkeyProtected) -->
-            ${renderTextPath(authorPrefix, 100, 42, 26, true, '#ffffff')}
-            ${isAuthorPasskeyVerified ? `
-            <g transform="translate(${100 + videoAuthorWidth + 10}, 22)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>` : ''}
-
-            <!-- Line 2: 5 Stars Row -->
-            ${renderFiveStarsRowSvg(100, 58, ratingNum)}
-          </g>
+          ${bottomEditorialLockupSvg}
         </svg>
       `;
 
@@ -40749,7 +40702,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const placeRatingStr = placeAvgRating.toFixed(1);
       const reviewsLabel = `(${placeReviewsCount} ${placeReviewsCount === 1 ? 'review' : 'reviews'})`;
       const resolvedLogoSig = (explicitLogoUrl || placeObj?.logoUrl || KNOWN_BRAND_LOGOS[cleanT] || "").slice(0, 120);
-      const cacheKey = `v18_place_${cleanT || domCacheKey}_${placeName}_${placeReviewsCount}_${placeRatingStr}_${resolvedLogoSig}`;
+      const cacheKey = `v19_editorial_place_${cleanT || domCacheKey}_${placeName}_${placeReviewsCount}_${placeRatingStr}_${resolvedLogoSig}`;
       const cachedEntry = ogPlaceCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
         return cachedEntry.buf;
@@ -40816,104 +40769,113 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // 4. Layout Dimensions & Calculations (Scaled + 4:3/1.5:1 crop-safe x=152)
-      const safePlaceDisplay = placeName.length > 24 ? `${placeName.substring(0, 22)}...` : placeName;
-      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 27, true);
-      
-      const ratingNumWidth = getTextAdvanceWidth(placeRatingStr, 22, true);
-      const starsRowWidth = 5 * 22;
-      const reviewsLabelWidth = getTextAdvanceWidth(reviewsLabel, 19, true);
-      
-      const line2TotalTextWidth = ratingNumWidth + 9 + starsRowWidth + 10 + reviewsLabelWidth;
-      const maxTextWidth = Math.max(placeWidth + 32, line2TotalTextWidth);
-      const businessPillWidth = Math.min(600, Math.max(330, 114 + maxTextWidth + 36));
+      // 4. Flagship Unboxed Editorial Layout Dimensions
+      const safePlaceDisplay = placeName.length > 28 ? `${placeName.substring(0, 26)}...` : placeName;
+      const placeWidth = getTextAdvanceWidth(safePlaceDisplay, 36, true);
+      const ratingNumWidth = getTextAdvanceWidth(placeRatingStr, 23, true);
+      const photoReviewsText = `${placeReviewsCount} ${placeReviewsCount === 1 ? 'photo review' : 'photo reviews'}`;
 
-      // Build 5-Star Vector Row with Fractional Rating Support
-      const starsStartX = 114 + ratingNumWidth + 9;
+      // Build crisp 5-Star Vector Row starting at x=156, y=545
+      const starsStartX = 156;
       const starIconsSvg = [1, 2, 3, 4, 5].map((starIdx, idx) => {
-        const starX = starsStartX + (idx * 22);
+        const starX = starsStartX + (idx * 25);
         const fillAmount = Math.max(0, Math.min(1, placeAvgRating - (starIdx - 1)));
         if (fillAmount >= 0.75) {
-          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 63) scale(0.96)"/>`;
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 545) scale(1.16)"/>`;
         } else if (fillAmount >= 0.25) {
           const clipId = `halfStarClip_${idx}`;
-          const clipWidth = 20 * fillAmount;
+          const clipWidth = 23 * fillAmount;
           return `
             <clipPath id="${clipId}">
-              <rect x="${starX}" y="63" width="${clipWidth}" height="20"/>
+              <rect x="${starX}" y="545" width="${clipWidth}" height="24"/>
             </clipPath>
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 63) scale(0.96)"/>
-            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 63) scale(0.96)" clip-path="url(#${clipId})"/>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="rgba(255,255,255,0.24)" transform="translate(${starX}, 545) scale(1.16)"/>
+            <path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#fbbf24" transform="translate(${starX}, 545) scale(1.16)" clip-path="url(#${clipId})"/>
           `;
         } else {
-          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="#1e293b" stroke="#475569" stroke-width="1.2" transform="translate(${starX}, 63) scale(0.96)"/>`;
+          return `<path d="M10 1.5l2.5 5 5.5.8-4 3.9 1 5.5L10 14l-5 2.7 1-5.5-4-3.9 5.5-.8L10 1.5z" fill="rgba(255,255,255,0.24)" transform="translate(${starX}, 545) scale(1.16)"/>`;
         }
       }).join("\n");
 
-      const reviewsTextStartX = starsStartX + starsRowWidth + 10;
+      const scoreTextX = starsStartX + (5 * 25) + 10;
+      const dotX = scoreTextX + ratingNumWidth + 14;
+      const reviewsTextStartX = dotX + 14;
 
-      // 5. Build Overlay SVG with Vector Paths
+      // 5. Build Unboxed Editorial Overlay SVG
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
             <linearGradient id="placeVignette" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#000000" stop-opacity="0.80" />
-              <stop offset="25%" stop-color="#000000" stop-opacity="0.10" />
-              <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.94" />
+              <stop offset="0%" stop-color="#000000" stop-opacity="0.16" />
+              <stop offset="22%" stop-color="#000000" stop-opacity="0.0" />
+              <stop offset="52%" stop-color="#000000" stop-opacity="0.14" />
+              <stop offset="76%" stop-color="#000000" stop-opacity="0.72" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0.95" />
             </linearGradient>
             <filter id="placeCardShadow" x="-10%" y="-10%" width="120%" height="130%">
-              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
             </filter>
           </defs>
 
-          <!-- Ambient dark gradient vignette -->
+          <!-- Measured bottom-only scrim -->
           <rect width="1200" height="630" fill="url(#placeVignette)"/>
 
-          <!-- BOTTOM SAFE-ZONE: Prominent Business Profile Pill (Left-aligned x=48) -->
-          <g transform="translate(48, 474)" filter="url(#placeCardShadow)">
-            <rect width="${businessPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-            
-            <!-- Left Squircle Logo Container (86x86) -->
+          <!-- Top-Right Signature Yoouz Attribution Mark -->
+          <g transform="translate(1030, 34)">
+            <rect width="122" height="44" rx="12" fill="#09090b" fill-opacity="0.58" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+            <rect x="9" y="9" width="26" height="26" rx="7" fill="#141418" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+            <g transform="translate(14, 14)">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+              </svg>
+            </g>
+            ${renderTextPath('Yoouz', 44, 29, 20, true, '#ffffff')}
+          </g>
+
+          <!-- BOTTOM-LEFT UNBOXED EDITORIAL BUSINESS LOCKUP -->
+          <g transform="translate(48, 490)" filter="url(#placeCardShadow)">
             ${isYoouzPlace ? `
-              <rect x="14" y="14" width="86" height="86" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
-              <g transform="translate(25, 25)">
-                <svg width="64" height="64" viewBox="0 0 24 24">
+              <rect x="0" y="0" width="88" height="88" rx="22" fill="#09090b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+              <g transform="translate(14, 14)">
+                <svg width="60" height="60" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#ffffff" />
                 </svg>
               </g>
             ` : `
-              <rect x="14" y="14" width="86" height="86" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+              <rect x="0" y="0" width="88" height="88" rx="22" fill="#ffffff" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
               ${logoPngBase64 ? `
-                <g transform="translate(14, 14)">
+                <g>
                   <clipPath id="squircleLogoClipBiz">
-                    <rect x="0" y="0" width="86" height="86" rx="22"/>
+                    <rect x="0" y="0" width="88" height="88" rx="22"/>
                   </clipPath>
                   ${logoIsFullBleed
-                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="86" height="86" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClipBiz)"/>`
-                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="6" y="6" width="74" height="74" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>`
+                    ? `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="0" y="0" width="88" height="88" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleLogoClipBiz)"/>`
+                    : `<image href="${logoPngBase64}" xlink:href="${logoPngBase64}" x="7" y="7" width="74" height="74" preserveAspectRatio="xMidYMid meet" clip-path="url(#squircleLogoClipBiz)"/>`
                   }
                 </g>
               ` : `
-                <g transform="translate(14, 14)">
-                  <rect x="0" y="0" width="86" height="86" rx="22" fill="#2563eb"/>
-                  ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 43 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 38, true) / 2), 57, 38, true, '#ffffff')}
-                </g>
+                <rect x="0" y="0" width="88" height="88" rx="22" fill="#18181b"/>
+                ${renderTextPath(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 44 - (getTextAdvanceWidth(safePlaceDisplay.charAt(0).toUpperCase() || 'B', 38, true) / 2), 58, 38, true, '#ffffff')}
               `}
             `}
-
-            <!-- Line 1: Place Name + Dark Mode White Verified Badge -->
-            ${renderTextPath(safePlaceDisplay, 114, 48, 27, true, '#ffffff')}
-            <g transform="translate(${114 + placeWidth + 10}, 27)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>
-
-            <!-- Line 2: Rating Score Number + Full 5-Star Row + (X reviews) -->
-            ${renderTextPath(placeRatingStr, 114, 81, 22, true, '#ffffff')}
-            ${starIconsSvg}
-            ${renderTextPath(reviewsLabel, reviewsTextStartX, 81, 19, true, '#ffffff')}
           </g>
+
+          <!-- Line 1: Place Name + White Verified Badge -->
+          ${renderTextPath(safePlaceDisplay, 156, 528, 36, true, '#ffffff')}
+          <g transform="translate(${156 + placeWidth + 12}, 504)">
+            <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+            <path d="M6.2 11l3.1 3.1 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>
+
+          <!-- Line 2: 5-Star Row + Rating + Photo Reviews Count (or domain subtitle if 0 reviews) -->
+          ${placeReviewsCount > 0 ? `
+            ${starIconsSvg}
+            ${renderTextPath(placeRatingStr, scoreTextX, 567, 23, true, '#ffffff')}
+            <circle cx="${dotX}" cy="560" r="2.5" fill="rgba(255,255,255,0.45)"/>
+            ${renderTextPath(photoReviewsText, reviewsTextStartX, 567, 21, false, '#d4d4d8')}
+          ` : `
+            ${renderTextPath(`${cleanT ? `${cleanT} · ` : ''}Live photo reviews`, 156, 566, 22, false, '#d4d4d8')}
+          `}
         </svg>
       `;
 
@@ -41057,7 +41019,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       const rawName = (query.name as string) || (query.handle as string) || "Creator";
       const rawHandle = String((query.handle as string) || rawName).replace(/^@+/, "").replace(/-dot-/gi, ".");
       const cleanLower = rawHandle.toLowerCase();
-      const cacheKey = `v18_creator_${cleanLower}`;
+      const cacheKey = `v19_editorial_creator_${cleanLower}`;
 
       const cachedEntry = ogCreatorCardCache.get(cacheKey);
       if (cachedEntry && (Date.now() - cachedEntry.ts) < 1000 * 60 * 30) {
@@ -41218,66 +41180,70 @@ app.get('/api/og-preview-v2', async (req, res) => {
         } catch(e) {}
       }
 
-      // Calculations for Bottom Author Pill (Scaled + crop-safe x=152)
-      const safeAuthorDisplay = displayName.length > 24 ? `${displayName.substring(0, 22)}...` : displayName;
+      // Calculations for Unboxed Editorial Author Lockup
+      const safeAuthorDisplay = displayName.length > 28 ? `${displayName.substring(0, 26)}...` : displayName;
       const isCreatorPasskeyVerified = Boolean(
         (profile as any)?.passkeyProtected ||
         query.authorVerified === 'true'
       );
-      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 28, true);
-      const subWidth = getTextAdvanceWidth(subtitleText, 19, true);
-      const maxTextWidth = Math.max(authorWidth + (isCreatorPasskeyVerified ? 32 : 12), subWidth);
-      const authorPillWidth = Math.min(580, Math.max(310, 114 + maxTextWidth + 36));
+      const authorWidth = getTextAdvanceWidth(safeAuthorDisplay, 36, true);
 
       const overlaySvg = `
         <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" text-rendering="geometricPrecision" shape-rendering="geometricPrecision">
           <defs>
             <linearGradient id="profileVignette" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#000000" stop-opacity="0.80" />
-              <stop offset="25%" stop-color="#000000" stop-opacity="0.10" />
-              <stop offset="65%" stop-color="#000000" stop-opacity="0.30" />
-              <stop offset="100%" stop-color="#000000" stop-opacity="0.94" />
+              <stop offset="0%" stop-color="#000000" stop-opacity="0.16" />
+              <stop offset="22%" stop-color="#000000" stop-opacity="0.0" />
+              <stop offset="52%" stop-color="#000000" stop-opacity="0.14" />
+              <stop offset="76%" stop-color="#000000" stop-opacity="0.72" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0.95" />
             </linearGradient>
             <filter id="profileCardShadow" x="-10%" y="-10%" width="120%" height="130%">
-              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.85"/>
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
             </filter>
           </defs>
 
-          <!-- Ambient dark gradient vignette -->
+          <!-- Measured bottom-only scrim -->
           <rect width="1200" height="630" fill="url(#profileVignette)"/>
 
-          <!-- BOTTOM SAFE-ZONE: Single Author Profile Pill (Left-aligned x=48) -->
-          <g transform="translate(48, 474)" filter="url(#profileCardShadow)">
-            <rect width="${authorPillWidth}" height="114" rx="32" fill="#000000" fill-opacity="0.94" stroke="rgba(255,255,255,0.34)" stroke-width="2"/>
-            
-            <!-- Left Squircle Avatar Container (86x86) -->
+          <!-- Top-Right Signature Yoouz Attribution Mark -->
+          <g transform="translate(1030, 34)">
+            <rect width="122" height="44" rx="12" fill="#09090b" fill-opacity="0.58" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"/>
+            <rect x="9" y="9" width="26" height="26" rx="7" fill="#141418" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+            <g transform="translate(14, 14)">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" fill="#ffffff" />
+              </svg>
+            </g>
+            ${renderTextPath('Yoouz', 44, 29, 20, true, '#ffffff')}
+          </g>
+
+          <!-- BOTTOM-LEFT UNBOXED EDITORIAL AUTHOR LOCKUP -->
+          <g transform="translate(48, 490)" filter="url(#profileCardShadow)">
             ${avatarPngBase64 ? `
-              <rect x="14" y="14" width="86" height="86" rx="22" fill="#18181b" stroke="rgba(255,255,255,0.32)" stroke-width="1.5"/>
-              <g transform="translate(14, 14)">
+              <rect x="0" y="0" width="88" height="88" rx="22" fill="#18181b" stroke="rgba(255,255,255,0.28)" stroke-width="1.5"/>
+              <g>
                 <clipPath id="squircleUserClip">
-                  <rect x="0" y="0" width="86" height="86" rx="22"/>
+                  <rect x="0" y="0" width="88" height="88" rx="22"/>
                 </clipPath>
-                <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="86" height="86" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
+                <image href="${avatarPngBase64}" xlink:href="${avatarPngBase64}" x="0" y="0" width="88" height="88" preserveAspectRatio="xMidYMid slice" clip-path="url(#squircleUserClip)"/>
               </g>
             ` : `
-              <!-- Dynamic signature avatar matching user profile (e.g. Blue for Ben Blue, Light Green for Steven Akan) -->
-              <rect x="14" y="14" width="86" height="86" rx="22" fill="${avatarBgColor}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-              <g transform="translate(14, 14)">
-                ${renderTextPath(initial, 43 - (getTextAdvanceWidth(initial, 38, true) / 2), 57, 38, true, avatarTextColor)}
-              </g>
+              <rect x="0" y="0" width="88" height="88" rx="22" fill="${avatarBgColor}" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+              ${renderTextPath(initial, 44 - (getTextAdvanceWidth(initial, 38, true) / 2), 58, 38, true, avatarTextColor)}
             `}
-
-            <!-- Line 1: User Display Name + Verified Badge (only if passkeyProtected) -->
-            ${renderTextPath(safeAuthorDisplay, 114, 51, 28, true, '#ffffff')}
-            ${isCreatorPasskeyVerified ? `
-            <g transform="translate(${114 + authorWidth + 10}, 30)">
-              <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-              <path d="M5.6 10l2.8 2.8 5.8-5.8" stroke="#09090b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </g>` : ''}
-
-            <!-- Line 2: Subtitle (Reviewer Profile) -->
-            ${renderTextPath(subtitleText, 114, 82, 19, true, '#cbd5e1')}
           </g>
+
+          <!-- Line 1: User Display Name + Verified Badge (only if passkeyProtected) -->
+          ${renderTextPath(safeAuthorDisplay, 156, 530, 36, true, '#ffffff')}
+          ${isCreatorPasskeyVerified ? `
+          <g transform="translate(${156 + authorWidth + 12}, 506)">
+            <circle cx="11" cy="11" r="11" fill="#ffffff"/>
+            <path d="M6.2 11l3.1 3.1 6.3-6.3" stroke="#09090b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </g>` : ''}
+
+          <!-- Line 2: Clean Subtitle -->
+          ${renderTextPath(subtitleText, 156, 566, 22, false, '#d4d4d8')}
         </svg>
       `;
 

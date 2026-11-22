@@ -373,14 +373,20 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
     ? `${appOrigin}/api/og-image/v18/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png`
     : `${appOrigin}/api/og-image/v18/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png`;
 
+  const rawReviewCategory = isVideoMode && video
+    ? String(video.placeCategory || (video as any)?.category || "").trim()
+    : "";
+  const isGenericCat = /^(business|local business|other|general|place|website|company|brand|store|shop|review|reviews)$/i.test(rawReviewCategory);
+  const reviewCategoryLabel = rawReviewCategory && !isGenericCat ? rawReviewCategory : "Photo review";
+
   const previewImageUrl = isVideoMode && video
-    ? `${appOrigin}/api/og-card/v18/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&author=${encodeURIComponent(resolvedAuthorName)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=35`
+    ? `${appOrigin}/api/og-card/v18/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}&placeDomain=${encodeURIComponent(resolvedDomain || title)}&placeRating=${placeStats.scoreStr}&placeReviewsCount=${placeStats.count}&rating=${video.rating || 5}&category=${encodeURIComponent(reviewCategoryLabel)}&author=${encodeURIComponent(resolvedAuthorName)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}${localPreviewBg && localPreviewBg.startsWith('http') ? `&thumbUrl=${encodeURIComponent(localPreviewBg)}` : ''}&v=48`
     : (isBusiness || propIsBusinessProfile)
-    ? `${appOrigin}/api/og-image/v18/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=43`
-    : `${appOrigin}/api/og-image/v18/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}&v=47`;
+    ? `${appOrigin}/api/og-image/v18/reviews/${encodeURIComponent((cleanShareDom || resolvedDomain || title).replace(/\./g, '-dot-'))}.png?type=place&name=${encodeURIComponent(title)}&domain=${encodeURIComponent(resolvedDomain || title)}&rating=${placeStats.scoreStr}&reviewsCount=${placeStats.count}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}${effectiveShareBanner ? `&bannerUrl=${encodeURIComponent(effectiveShareBanner)}` : ''}&v=48`
+    : `${appOrigin}/api/og-image/v18/creator/${encodeURIComponent(cleanShareHandle.replace(/\./g, '-dot-'))}.png?type=creator&name=${encodeURIComponent(title)}&handle=${encodeURIComponent(cleanShareHandle)}&authorVerified=${isAuthorPasskeyVerified ? 'true' : 'false'}&v=48`;
 
   const isSquarePreview = isBusiness || (!isVideoMode && resolvedAvatarUrl);
-  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} • Verified` : "") : "Live Photo Review");
+  const resolvedSubtitle = subtitle || (isBusiness ? (resolvedDomain ? `${resolvedDomain} · Live photo reviews` : "") : "Live Photo Review");
 
   const resolvedTouchIcon = isVideoMode && video
     ? `${appOrigin}/api/touch-icon/v18/video/${encodeURIComponent(video.id)}.png?placeName=${encodeURIComponent(title)}${resolvedDomain ? `&placeDomain=${encodeURIComponent(resolvedDomain)}` : ''}${resolvedLogoUrl ? `&logoUrl=${encodeURIComponent(resolvedLogoUrl)}` : ''}&v=15`
@@ -878,248 +884,272 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
         {/* VIEW 1: Main Flagship Obsidian Share Sheet */}
         {activeView === "sheet" && (
-          <div className="p-4 sm:p-5 flex flex-col space-y-4 animate-in fade-in duration-150">
-            {/* FULL SOCIAL PREVIEW CARD (Mobile & Desktop) */}
-            <div className="relative w-full rounded-2xl overflow-hidden border border-white/[0.1] bg-[#050506] shadow-xl select-none group">
+          <div className="px-4 pt-2 pb-4 sm:p-5 flex flex-col space-y-4 animate-in fade-in duration-150">
+            {/* Clean Sheet Header (Apple / Google Restraint) */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2
+                  id="yoouz-share-modal-title"
+                  className="text-[15px] font-semibold tracking-[-0.015em] text-white leading-tight truncate"
+                >
+                  {isVideoMode
+                    ? t("shareModal.sharePhotoReview", "Share photo review")
+                    : isBusiness || propIsBusinessProfile
+                      ? t("shareModal.shareBusiness", "Share business")
+                      : t("shareModal.shareProfile", "Share profile")}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t("common.close", "Close")}
+                className="w-9 h-9 -mr-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4 stroke-[2.2]" />
+              </button>
+            </div>
+
+            {/* WYSIWYG 16:9 SOCIAL PREVIEW CARD (1-to-1 match with OpenGraph card shared on WhatsApp, iMessage, X, LinkedIn) */}
+            <div className="relative w-full rounded-[20px] overflow-hidden border border-white/[0.09] bg-[#050506] shadow-[0_16px_40px_rgba(0,0,0,0.65)] select-none group">
               {propIsCreatorProfile || (!isVideoMode && !isBusiness && !propIsBusinessProfile) ? (
-                /* DEDICATED USER / REVIEWER PROFILE CARD (Single clean author squircle on bottom, matching profile header & banner) */
-                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
-                  {/* Banner Background: User's custom banner or signature dark blue grid banner */}
+                /* USER / REVIEWER PROFILE CARD — Flagship Unboxed Editorial Layout */
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#08080B]">
                   {(resolvedBannerUrl || propBannerUrl) ? (
-                    <div className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex items-center justify-center">
-                      <img
-                        src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110"
-                        referrerPolicy="no-referrer"
-                      />
-                      <img
-                        src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
-                        alt={title}
-                        className="relative z-1 w-full h-full object-cover filter brightness-95"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
+                    <img
+                      src={getProxiedImageUrl(resolvedBannerUrl || propBannerUrl || "")}
+                      alt={title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
-                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.18),transparent_70%)]" />
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#0e0f14] via-[#090a0e] to-[#050507]">
+                      <div className="absolute inset-0 opacity-[0.12] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:36px_36px]" />
                     </div>
                   )}
 
-                  {/* Dark Vignette Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
+                  {/* Measured Bottom-Only Scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/35 to-black/15 pointer-events-none" />
 
-                  {/* BOTTOM BAR: Single Author Info with Frosted Glass Pill matching Screenshot 1 & 2 */}
-                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
-                    <div className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
-                      {/* Profile Squircle Avatar Matching Profile Header */}
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-zinc-900 shadow-xs flex items-center justify-center shrink-0">
-                        {resolvedAvatarUrl ? (
-                          <img
-                            src={getProxiedImageUrl(resolvedAvatarUrl)}
-                            alt={title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const dynamicColor = getAvatarColor(title, propHandle || resolvedDomain || title).bg.replace('#', '');
-                              (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=${dynamicColor}&color=fff&bold=true&size=128`;
-                            }}
-                          />
-                        ) : (
-                          <div 
-                            className="w-full h-full flex items-center justify-center text-white text-sm font-bold"
-                            style={{ backgroundColor: getAvatarColor(title, propHandle || resolvedDomain || title).bg }}
-                          >
-                            {title.charAt(0).toUpperCase()}
-                          </div>
+                  {/* Top-Right Signature Yoouz Attribution Mark */}
+                  <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg bg-black/45 backdrop-blur-md border border-white/[0.12] pointer-events-none">
+                    <span className="w-4 h-4 rounded-[5px] bg-[#141418] border border-white/[0.15] flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-white" aria-hidden="true">
+                        <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                      </svg>
+                    </span>
+                    <span className="text-[11px] font-bold tracking-[-0.02em] text-white/95 leading-none font-['Google_Sans',sans-serif]">
+                      Yoouz
+                    </span>
+                  </div>
+
+                  {/* Bottom-Left Single Unboxed Editorial Lockup */}
+                  <div className="absolute bottom-3.5 left-3.5 right-3.5 z-10 flex items-center gap-3 pointer-events-none">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[12px] overflow-hidden ring-1 ring-white/20 bg-zinc-900 shadow-lg flex items-center justify-center shrink-0">
+                      {resolvedAvatarUrl ? (
+                        <img
+                          src={getProxiedImageUrl(resolvedAvatarUrl)}
+                          alt={title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const dynamicColor = getAvatarColor(title, propHandle || resolvedDomain || title).bg.replace('#', '');
+                            (e.currentTarget as HTMLImageElement).src = `/api/avatar?name=${encodeURIComponent(title)}&background=${dynamicColor}&color=fff&bold=true&size=128`;
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-white text-sm font-bold"
+                          style={{ backgroundColor: getAvatarColor(title, propHandle || resolvedDomain || title).bg }}
+                        >
+                          {title.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-white text-[15px] font-bold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                          {title}
+                        </span>
+                        {isAuthorPasskeyVerified && (
+                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         )}
                       </div>
-                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
-                          {isAuthorPasskeyVerified && (
-                            <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-zinc-300 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5 opacity-90">
-                          {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
-                        </p>
-                      </div>
+                      <p className="text-zinc-300/90 text-[12px] leading-tight truncate font-medium mt-0.5">
+                        {resolvedSubtitle || t("profile.reviewerProfile", "Reviewer Profile")}
+                      </p>
                     </div>
                   </div>
                 </div>
               ) : !isVideoMode && (isBusiness || propIsBusinessProfile) ? (
-                /* DEDICATED BUSINESS PROFILE SHARE CARD (Full Cover Banner + Single Bottom Business Squircle Logo & Info) */
-                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
-                  {/* Banner Background: Business cover banner or cinematic gradient */}
+                /* BUSINESS PROFILE SHARE CARD — Flagship Unboxed Editorial Layout */
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#08080B]">
                   {(resolvedBannerUrl || localPreviewBg) ? (
-                    <div className="absolute inset-0 w-full h-full bg-zinc-900 overflow-hidden flex items-center justify-center">
-                      <img
-                        src={getProxiedImageUrl(resolvedBannerUrl || localPreviewBg || "")}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110"
-                        referrerPolicy="no-referrer"
-                      />
-                      <img
-                        src={getProxiedImageUrl(resolvedBannerUrl || localPreviewBg || "")}
-                        alt={title}
-                        className="relative z-1 w-full h-full object-cover filter brightness-95"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
+                    <img
+                      src={getProxiedImageUrl(resolvedBannerUrl || localPreviewBg || "")}
+                      alt={title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center overflow-hidden">
-                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(37,99,235,0.18),transparent_70%)]" />
+                    <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#0e0f14] via-[#090a0e] to-[#050507]">
+                      <div className="absolute inset-0 opacity-[0.12] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:36px_36px]" />
                     </div>
                   )}
 
-                  {/* Ambient dark gradient vignette to ensure absolute legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-black/60 pointer-events-none" />
+                  {/* Measured Bottom-Only Scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/35 to-black/15 pointer-events-none" />
 
-                  {/* BOTTOM BAR: Sleek Business Profile Pill with Squircle Logo, Verified Badge, Rating & Reviews */}
-                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
-                    <div className="flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-2xl bg-black/90 backdrop-blur-md border border-white/25 shadow-xl min-w-0">
-                      {/* Business Squircle Logo Container Matching Profile Header */}
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/30 bg-white shadow-xs flex items-center justify-center p-[2px] shrink-0">
-                        <CopoBrandLogo
-                          domain={resolvedDomain || title}
-                          name={title}
-                          website={resolvedWebsite}
-                          logoUrl={resolvedLogoUrl}
-                          bannerUrl={resolvedBannerUrl}
-                          className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                          imageClassName="w-full h-full object-contain rounded-lg"
-                          fallbackTextClassName="font-black text-xs text-zinc-950"
-                        />
+                  {/* Top-Right Signature Yoouz Attribution Mark */}
+                  <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg bg-black/45 backdrop-blur-md border border-white/[0.12] pointer-events-none">
+                    <span className="w-4 h-4 rounded-[5px] bg-[#141418] border border-white/[0.15] flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-white" aria-hidden="true">
+                        <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                      </svg>
+                    </span>
+                    <span className="text-[11px] font-bold tracking-[-0.02em] text-white/95 leading-none font-['Google_Sans',sans-serif]">
+                      Yoouz
+                    </span>
+                  </div>
+
+                  {/* Bottom-Left Single Unboxed Editorial Lockup */}
+                  <div className="absolute bottom-3.5 left-3.5 right-3.5 z-10 flex items-center gap-3 pointer-events-none">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[12px] overflow-hidden ring-1 ring-white/25 bg-white shadow-lg flex items-center justify-center p-[2px] shrink-0">
+                      <CopoBrandLogo
+                        domain={resolvedDomain || title}
+                        name={title}
+                        website={resolvedWebsite}
+                        logoUrl={resolvedLogoUrl}
+                        bannerUrl={resolvedBannerUrl}
+                        className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
+                        imageClassName="w-full h-full object-contain rounded-[9px]"
+                        fallbackTextClassName="font-black text-xs text-zinc-950"
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-white text-[15px] font-bold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                          {title}
+                        </span>
+                        <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                       </div>
-                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                        {/* Line 1: Business Name + Dark Mode White Verified Checkmark */}
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-white text-xs sm:text-[13px] font-bold whitespace-nowrap leading-tight">{title}</span>
-                          <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                        </div>
-                        {/* Line 2: Rating Score Number + 5-Star Row + Total Reviews */}
-                        <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11.5px] leading-tight whitespace-nowrap font-medium mt-0.5">
-                          <span className="text-white font-bold text-xs">{placeStats.scoreStr}</span>
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            {[1, 2, 3, 4, 5].map((starIdx) => {
-                              const fillAmount = Math.max(0, Math.min(1, placeStats.avgRating - (starIdx - 1)));
-                              return (
-                                <div key={starIdx} className="relative w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0">
-                                  {/* Background unfilled star */}
-                                  <Star className="w-full h-full text-zinc-600 fill-zinc-800/80 stroke-zinc-600" />
-                                  {/* Foreground filled star */}
-                                  {fillAmount > 0 && (
-                                    <div 
-                                      className="absolute inset-0 overflow-hidden" 
-                                      style={{ width: `${Math.round(fillAmount * 100)}%` }}
-                                    >
-                                      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#E8C78A] fill-[#E8C78A] shrink-0" />
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <span className="text-white font-medium">({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})</span>
-                        </div>
+                      <div className="flex items-center gap-1.5 text-[12px] leading-tight whitespace-nowrap font-medium mt-0.5 tabular-nums">
+                        {placeStats.count > 0 ? (
+                          <>
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              {[1, 2, 3, 4, 5].map((starIdx) => {
+                                const fillAmount = Math.max(0, Math.min(1, placeStats.avgRating - (starIdx - 1)));
+                                return (
+                                  <div key={starIdx} className="relative w-3 h-3 shrink-0">
+                                    <Star className="w-full h-full text-white/25 fill-white/15 stroke-white/25" />
+                                    {fillAmount > 0 && (
+                                      <div
+                                        className="absolute inset-0 overflow-hidden"
+                                        style={{ width: `${Math.round(fillAmount * 100)}%` }}
+                                      >
+                                        <Star className="w-3 h-3 text-[#FBBF24] fill-[#FBBF24] shrink-0" />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <span className="text-white font-semibold">{placeStats.scoreStr}</span>
+                            <span className="text-white/40" aria-hidden="true">·</span>
+                            <span className="text-zinc-300/90">
+                              {placeStats.count} {placeStats.count === 1 ? "photo review" : "photo reviews"}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-zinc-300/90 truncate">
+                            {resolvedDomain ? `${resolvedDomain} · Live photo reviews` : "Live photo reviews"}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                /* VIDEO REVIEW SHARE CARD */
-                <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
-                  {/* Clean background thumbnail without duplicate image stacking */}
+                /* PHOTO REVIEW SHARE CARD — Flagship Unboxed Editorial Layout (Exact match to Reels & Homepage) */
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#08080B]">
+                  {/* Bright, vivid, unobstructed customer photo */}
                   <img
                     src={getProxiedImageUrl(localPreviewBg || previewImageUrl)}
                     alt={title}
-                    className="absolute inset-0 w-full h-full object-cover filter brightness-95"
+                    referrerPolicy="no-referrer"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
 
-                  {/* Ambient dark gradient vignette to ensure absolute legibility of all badges */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/60 pointer-events-none" />
+                  {/* Measured Bottom-Only Scrim — top 60% of the real photo stays crystal clear */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/42 to-black/10 pointer-events-none" />
 
-                  {/* TOP BAR: Place pill with Business Logo, Place Name, Rating & Reviews Count */}
-                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center max-w-[96%] pointer-events-none">
-                    <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl bg-black/70 backdrop-blur-xl border border-white/[0.15] shadow-lg min-w-0">
-                      {/* Business Squircle Logo Container with crisp white framing */}
-                      <div className="w-9 h-9 rounded-xl bg-white border border-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-xs">
+                  {/* Top-Right Signature Yoouz Attribution Mark (Matches Photo Reel mark) */}
+                  <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-lg bg-black/45 backdrop-blur-md border border-white/[0.12] pointer-events-none">
+                    <span className="w-4 h-4 rounded-[5px] bg-[#141418] border border-white/[0.15] flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-white" aria-hidden="true">
+                        <path d="M12 3.8l2.32 4.7 5.18 0.75-3.75 3.65 0.88 5.16L12 15.62l-4.63 2.44 0.88-5.16-3.75-3.65 5.18-0.75L12 3.8z" />
+                      </svg>
+                    </span>
+                    <span className="text-[11px] font-bold tracking-[-0.02em] text-white/95 leading-none font-['Google_Sans',sans-serif]">
+                      Yoouz
+                    </span>
+                  </div>
+
+                  {/* Bottom-Left Single Unified Editorial Lockup (Zero Pill Boxes, Zero Conflicting Ratings) */}
+                  <div className="absolute bottom-3.5 left-3.5 right-3.5 z-10 flex flex-col gap-2 pointer-events-none">
+                    {/* Line 1: Exact Review Star Rating + Score + Category */}
+                    <div className="flex items-center gap-1.5 leading-none tabular-nums">
+                      <div className="flex items-center gap-[2px]">
+                        {[1, 2, 3, 4, 5].map((starIdx) => {
+                          const isFilled = starIdx <= Math.min(5, Math.max(1, Math.round(Number(video?.rating || ratingVal || 5))));
+                          return (
+                            <Star
+                              key={starIdx}
+                              className={`w-3.5 h-3.5 ${
+                                isFilled
+                                  ? "text-[#FBBF24] fill-[#FBBF24]"
+                                  : "text-white/25 fill-white/15"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                      <span className="text-[12px] font-bold text-white tracking-[-0.01em]">
+                        {Math.min(5, Math.max(1, Math.round(Number(video?.rating || ratingVal || 5))))}/5
+                      </span>
+                      <span className="text-white/40 text-[11px]" aria-hidden="true">·</span>
+                      <span className="text-[11.5px] font-medium text-zinc-200/90 truncate">
+                        {reviewCategoryLabel}
+                      </span>
+                    </div>
+
+                    {/* Line 2: Business Squircle Logo + Brand Name + Quiet Reviewer Attribution */}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-9 h-9 rounded-[10px] bg-white ring-1 ring-white/25 overflow-hidden flex items-center justify-center shrink-0 p-[2px] shadow-md">
                         <CopoBrandLogo
                           domain={resolvedDomain || (video?.placeWebsite ? extractCleanDomain(video.placeWebsite) : "") || (video?.placeId ? extractCleanDomain(video.placeId) : "") || title}
                           name={title}
                           website={resolvedWebsite || video?.placeWebsite}
                           logoUrl={resolvedLogoUrl || video?.placeLogoUrl || (video as any)?.placeAvatarUrl || (video as any)?.businessLogo}
                           className="w-full h-full flex items-center justify-center overflow-hidden bg-transparent"
-                          imageClassName="w-full h-full object-contain rounded-lg"
+                          imageClassName="w-full h-full object-contain rounded-[8px]"
                           fallbackTextClassName="font-black text-[10px] text-zinc-950"
                         />
                       </div>
-                      {/* Text Column */}
-                      <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                        <div className="flex items-center gap-1 min-w-0">
-                          <span className="text-white text-xs sm:text-[13px] font-semibold whitespace-nowrap leading-tight">{title}</span>
+                      <div className="flex flex-col min-w-0 justify-center">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-white text-[14.5px] font-bold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                            {title}
+                          </span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
                         </div>
-                        <div className="flex items-center gap-1 leading-tight mt-0.5 whitespace-nowrap">
-                          <span className="text-[#E8C78A] text-xs font-bold">★</span>
-                          <span className="text-[#E8C78A] text-xs font-semibold">{placeStats.scoreStr}</span>
-                          <span className="text-zinc-300 text-[11px] font-medium ml-0.5">
-                            ({placeStats.count} {placeStats.count === 1 ? 'review' : 'reviews'})
-                          </span>
+                        <div className="flex items-center gap-1 text-[11.5px] text-zinc-300/90 font-medium leading-tight mt-0.5 truncate">
+                          <span className="truncate">Review by {resolvedAuthorName}</span>
+                          {isAuthorPasskeyVerified && (
+                            <CheckCircle className="w-3 h-3 fill-white/90 text-black shrink-0" />
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* BOTTOM BAR: Author Info (Sleek Compact 2-Row: By Name, 5 Stars) */}
-                  <div className="absolute bottom-2.5 left-2.5 z-10 pointer-events-none max-w-[96%]">
-                    {isVideoMode && video ? (
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl bg-black/70 backdrop-blur-xl border border-white/[0.15] shadow-xl min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/25 bg-zinc-800 shrink-0 shadow-xs flex items-center justify-center">
-                          <img
-                            src={getSafeAvatarUrl(resolvedAvatarUrl, resolvedAuthorName, safeAuthor?.handle)}
-                            alt={resolvedAuthorName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.src = generateGoogleLetterAvatarSvg(resolvedAuthorName, 128, safeAuthor?.handle || resolvedAuthorName);
-                            }}
-                          />
-                        </div>
-                        <div className="flex flex-col min-w-0 justify-center pr-0.5">
-                          {/* Line 1: By AuthorName + Passkey Verified badge */}
-                          <div className="flex items-center gap-1 min-w-0">
-                            <span className="text-white text-xs font-semibold whitespace-nowrap leading-tight">{resolvedAuthorName}</span>
-                            {isAuthorPasskeyVerified && (
-                              <CheckCircle className="w-3.5 h-3.5 fill-white text-black shrink-0" />
-                            )}
-                          </div>
-                          {/* Line 2: 5 Stars */}
-                          <div className="flex items-center gap-1.5 leading-none mt-0.5">
-                            <div className="flex items-center gap-0.5">
-                              {[1, 2, 3, 4, 5].map((starIdx) => (
-                                <span
-                                  key={starIdx}
-                                  className={`text-[11px] ${starIdx <= Math.round(Number(video.rating || 5)) ? 'text-[#E8C78A]' : 'text-zinc-600'}`}
-                                >
-                                  ★
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Clean Business Location Pill */
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-xs text-white shadow-xs min-w-0">
-                        <MapPin className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                        <span className="font-semibold truncate max-w-[220px]">
-                          {resolvedSubtitle || t("place.businessLocation", "Business Location")}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1130,7 +1160,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
             {/* Row 1: APPS Shelf (Evenly spaced non-clipped horizontal scroll) */}
             <div>
-              <div className="flex items-start gap-3 overflow-x-auto no-scrollbar py-1 px-0.5">
+              <div className="flex items-start gap-3 overflow-x-auto no-scrollbar py-0.5 px-0.5">
                 {primaryShelfApps.map((app) => (
                   <button
                     key={app.id}
@@ -1154,7 +1184,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
 
             {/* Row 2: ACTION BUTTONS (Evenly distributed 5-column glass circles) */}
             <div>
-              <div className="grid grid-cols-5 gap-2 py-1">
+              <div className="grid grid-cols-5 gap-2 py-0.5">
                 {actionButtons.map((action) => (
                   <button
                     key={action.id}
@@ -1174,11 +1204,11 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
             </div>
 
             {/* Bottom Done Button */}
-            <div className="pt-1">
+            <div className="pt-0.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.1] text-zinc-200 hover:text-white font-medium text-xs transition-colors cursor-pointer text-center"
+                className="w-full min-h-[44px] py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.11] active:scale-[0.99] border border-white/[0.1] text-zinc-200 hover:text-white font-medium text-[13px] transition-all cursor-pointer text-center"
               >
                 {t("common.done", "Done")}
               </button>
@@ -1240,14 +1270,14 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-1">
                     {t("shareModal.favorites", "Favorites")}
                   </span>
-                  <div className="bg-zinc-850/70 border border-zinc-800 rounded-2xl divide-y divide-zinc-800 overflow-hidden">
+                  <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl divide-y divide-white/[0.07] overflow-hidden">
                     <button
                       type="button"
                       onClick={handleNativeShare}
-                      className="w-full flex items-center justify-between p-3 hover:bg-zinc-800/60 transition cursor-pointer text-left"
+                      className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-750 flex items-center justify-center text-white shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center text-white shrink-0">
                           <Share2 className="w-4 h-4" />
                         </div>
                         <span className="text-xs font-medium text-white">{t("shareModal.systemShare", "System Share (AirDrop / Nearby)")}</span>
@@ -1260,7 +1290,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                         key={app.id}
                         type="button"
                         onClick={app.onClick}
-                        className="w-full flex items-center justify-between p-3 hover:bg-zinc-800/60 transition cursor-pointer text-left"
+                        className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${app.bgClass}`}>
@@ -1280,13 +1310,13 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-1">
                   {searchQuery ? t("shareModal.searchResults", "Search Results") : t("shareModal.suggestions", "Suggestions")}
                 </span>
-                <div className="bg-zinc-850/70 border border-zinc-800 rounded-2xl divide-y divide-zinc-800 overflow-hidden">
+                <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl divide-y divide-white/[0.07] overflow-hidden">
                   {filteredApps.map((app) => (
                     <button
                       key={app.id}
                       type="button"
                       onClick={app.onClick}
-                      className="w-full flex items-center justify-between p-3 hover:bg-zinc-800/60 transition cursor-pointer text-left"
+                      className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${app.bgClass}`}>
@@ -1301,10 +1331,10 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="w-full flex items-center justify-between p-3 hover:bg-zinc-800/60 transition cursor-pointer text-left"
+                    className="w-full flex items-center justify-between p-3 hover:bg-white/[0.05] transition cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-750 flex items-center justify-center text-white shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center text-white shrink-0">
                         {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
                       </div>
                       <span className="text-xs font-medium text-white">
@@ -1349,7 +1379,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                 {t("shareModal.directLink", "Direct Link")}
               </span>
-              <div className="flex items-center gap-2 bg-zinc-850 border border-zinc-700/80 rounded-xl p-2">
+              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.09] rounded-xl p-2">
                 <input
                   type="text"
                   readOnly
@@ -1359,7 +1389,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-750 hover:bg-zinc-700 text-xs font-semibold text-white flex items-center gap-1 shrink-0 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-white/[0.1] hover:bg-white/[0.16] text-xs font-semibold text-white flex items-center gap-1 shrink-0 transition cursor-pointer"
                 >
                   {copied ? (
                     <>
@@ -1381,12 +1411,12 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                 {t("shareModal.embedLayout", "Embed Layout")}
               </span>
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-xl">
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-white/[0.04] border border-white/[0.08] rounded-xl">
                 <button
                   type="button"
                   onClick={() => setEmbedLayout("reel")}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "reel" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
+                    embedLayout === "reel" ? "bg-white/[0.12] text-white border border-white/[0.12] shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>9:16 Reel</span>
@@ -1395,7 +1425,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   type="button"
                   onClick={() => setEmbedLayout("card")}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "card" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
+                    embedLayout === "card" ? "bg-white/[0.12] text-white border border-white/[0.12] shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>Card</span>
@@ -1404,7 +1434,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   type="button"
                   onClick={() => setEmbedLayout("widget")}
                   className={`py-1.5 px-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
-                    embedLayout === "widget" ? "bg-zinc-800 text-white border border-zinc-700/80 shadow-md" : "text-zinc-400 hover:text-white"
+                    embedLayout === "widget" ? "bg-white/[0.12] text-white border border-white/[0.12] shadow-md" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   <span>Full Width</span>
@@ -1424,7 +1454,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                   </span>
                 )}
               </div>
-              <div className="bg-zinc-850 border border-zinc-700/80 rounded-xl p-2.5">
+              <div className="bg-white/[0.04] border border-white/[0.09] rounded-xl p-2.5">
                 <pre className="text-[10.5px] font-mono text-zinc-300 overflow-x-auto whitespace-pre-wrap break-all max-h-20">
                   {iframeEmbedCode}
                 </pre>
@@ -1477,7 +1507,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
                 </div>
               </div>
 
-              <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-lg group">
+              <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-white/[0.1] bg-zinc-950 shadow-lg group">
                 {/* Fallback local thumbnail if server image is loading or unavailable */}
                 {localPreviewBg && (
                   <img
