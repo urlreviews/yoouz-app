@@ -11,6 +11,7 @@ import { AEOBlock } from "./components/AEOBlock";
 import { CopoHomePage } from "./components/CopoHomePage";
 import { GlobalUploadToast } from "./components/GlobalUploadToast";
 import { CopoMobileBottomNav } from "./components/CopoMobileBottomNav";
+import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
 import { getThreadPartnerDetails } from "./utils/threadPartner";
 import type { PasskeyModalMode } from "./components/PasskeyQrModal";
 import type { AuthIntent } from "./components/CopoGoogleAuthModal";
@@ -35,7 +36,6 @@ const CopoNotificationsView = lazy(() => import("./components/CopoNotificationsV
 const CopoMessagesView = lazy(() => import("./components/CopoMessagesView").then(m => ({ default: m.CopoMessagesView })));
 const CopoFollowingView = lazy(() => import("./components/CopoFollowingView").then(m => ({ default: m.CopoFollowingView })));
 const CopoDiscoverView = lazy(() => import("./components/CopoDiscoverView").then(m => ({ default: m.CopoDiscoverView })));
-const CopoMobileNavDrawer = lazy(() => import("./components/CopoMobileNavDrawer").then(m => ({ default: m.CopoMobileNavDrawer })));
 const CopoAdminPanel = lazy(() => import("./components/CopoAdminPanel").then(m => ({ default: m.CopoAdminPanel })));
 const CopoGoogleAuthModal = lazy(() => import("./components/CopoGoogleAuthModal").then(m => ({ default: m.CopoGoogleAuthModal })));
 const CopoLegalModal = lazy(() => import("./components/CopoLegalModal").then(m => ({ default: m.CopoLegalModal })));
@@ -8172,6 +8172,50 @@ export function App() {
     return url.origin + url.pathname + url.search;
   }, [activeSection, activeSubTab]);
 
+  // Background chunk pre-warmer: silently warm interactive drawers, players, and views
+  // right after initial paint so every button tap opens at 0ms with zero black flash.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let cancelled = false;
+
+    const wave1Timer = window.setTimeout(() => {
+      if (cancelled) return;
+      void import("./components/CopoVideoPlayer");
+      void import("./components/CopoPlaceDrawer");
+      void import("./components/CopoCreatorDrawer");
+      void import("./components/CopoMobileSearchView");
+      void import("./components/CopoCreateModal");
+      void import("./components/CopoCommentsDrawer");
+      void import("./components/CopoShareModal");
+      void import("./components/CopoNotificationsView");
+      void import("./components/CopoMessagesView");
+    }, 220);
+
+    const wave2Timer = window.setTimeout(() => {
+      if (cancelled) return;
+      void import("./components/CopoBookmarksView");
+      void import("./components/CopoFollowingView");
+      void import("./components/CopoMoreView");
+      void import("./components/CopoDiscoverView");
+      void import("./components/CopoMobileDiscoverView");
+      void import("./components/CopoBusinessDashboardView");
+      void import("./components/PasskeyQrModal");
+      void import("./components/MobilePasskeyHandoffModal");
+      void import("./components/CopoReportModal");
+      void import("./components/CopoLegalModal");
+      void import("./components/CopoNotificationSettingsModal");
+      void import("./components/CopoGoogleAuthModal");
+      void import("./components/CopoComparisonModal");
+      void import("./components/CopoMapView");
+    }, 850);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(wave1Timer);
+      window.clearTimeout(wave2Timer);
+    };
+  }, []);
+
   if (embedTargetId) {
     return (
       <div
@@ -8243,9 +8287,11 @@ export function App() {
             }
           }}
         />
+        </Suspense>
 
         {/* Place Drawer */}
         {selectedPlaceIdForDrawer && (activeDrawerPlace || drawerPlace) && (
+          <Suspense fallback={null}>
           <CopoPlaceDrawer
             key={(activeDrawerPlace || drawerPlace)!.id}
             place={activeDrawerPlace || drawerPlace}
@@ -8277,10 +8323,12 @@ export function App() {
               setActiveSection('business');
             }}
           />
+          </Suspense>
         )}
 
         {/* Creator Drawer */}
         {selectedAuthorForDrawer && (
+          <Suspense fallback={null}>
           <CopoCreatorDrawer
             author={selectedAuthorForDrawer}
             allVideos={videos}
@@ -8312,9 +8360,11 @@ export function App() {
             onOpenPlace={handleOpenPlaceDrawer}
             onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
           />
+          </Suspense>
         )}
 
         {activeCommentVideo && (
+          <Suspense fallback={null}>
           <CopoCommentsDrawer
             video={activeCommentVideo}
             videos={videos}
@@ -8343,47 +8393,59 @@ export function App() {
               });
             }}
           />
+          </Suspense>
         )}
 
         {/* Share Video Modal */}
-        <CopoShareModal
-          video={activeShareVideo}
-          currentUser={currentUser}
-          onClose={() => setActiveShareVideo(null)}
-          onOpenReport={(v) => {
-            setActiveShareVideo(null);
-            handleOpenReport({ type: "video", video: v });
-          }}
-          onShareIncrement={handleShareIncrement}
-        />
+        {Boolean(activeShareVideo) && (
+          <Suspense fallback={null}>
+          <CopoShareModal
+            video={activeShareVideo}
+            currentUser={currentUser}
+            onClose={() => setActiveShareVideo(null)}
+            onOpenReport={(v) => {
+              setActiveShareVideo(null);
+              handleOpenReport({ type: "video", video: v });
+            }}
+            onShareIncrement={handleShareIncrement}
+          />
+          </Suspense>
+        )}
 
         {/* Report Modal */}
-        <CopoReportModal
-          isOpen={isReportModalOpen}
-          target={activeReportTarget}
-          currentUser={currentUser}
-          onClose={() => {
-            setIsReportModalOpen(false);
-            setActiveReportTarget(null);
-          }}
-          onBlockOrHide={handleBlockOrHide}
-        />
+        {isReportModalOpen && (
+          <Suspense fallback={null}>
+          <CopoReportModal
+            isOpen={isReportModalOpen}
+            target={activeReportTarget}
+            currentUser={currentUser}
+            onClose={() => {
+              setIsReportModalOpen(false);
+              setActiveReportTarget(null);
+            }}
+            onBlockOrHide={handleBlockOrHide}
+          />
+          </Suspense>
+        )}
 
-
-
-        <CopoGoogleAuthModal
-          isOpen={isAuthModalOpen}
-          intent={authIntent}
-          onClose={() => setIsAuthModalOpen(false)}
-          onOpenHelp={() => setIsAuthModalOpen(false)}
-          onOpenLegal={(tab) => handleOpenLegal(tab)}
-          onSuccess={(user) => {
-            setCurrentUser(user);
-            setIsAuthModalOpen(false);
-          }}
-        />
+        {isAuthModalOpen && (
+          <Suspense fallback={null}>
+          <CopoGoogleAuthModal
+            isOpen={isAuthModalOpen}
+            intent={authIntent}
+            onClose={() => setIsAuthModalOpen(false)}
+            onOpenHelp={() => setIsAuthModalOpen(false)}
+            onOpenLegal={(tab) => handleOpenLegal(tab)}
+            onSuccess={(user) => {
+              setCurrentUser(user);
+              setIsAuthModalOpen(false);
+            }}
+          />
+          </Suspense>
+        )}
 
         {/* Mobile Navigation Drawer (Hamburger Menu) */}
+        {isMobileNavDrawerOpen && (
         <CopoMobileNavDrawer
           isOpen={isMobileNavDrawerOpen}
           onClose={() => setIsMobileNavDrawerOpen(false)}
@@ -8446,9 +8508,11 @@ export function App() {
           onOpenEditProfile={handleGoToProfile}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
         />
+        )}
 
         {/* Mobile Search Overlay */}
         {isSearchModalOpen && (
+          <Suspense fallback={null}>
           <CopoMobileSearchView
             key={searchResetKey}
             places={places}
@@ -8480,8 +8544,10 @@ export function App() {
             onOpenNotifications={handleOpenNotifications}
             unreadNotifsCount={effectiveUnreadNotifsCount}
           />
+          </Suspense>
         )}
         {isCreateModalOpen && (
+          <Suspense fallback={null}>
           <CopoCreateModal
             isOpen={isCreateModalOpen}
             onClose={() => {
@@ -8508,8 +8574,8 @@ export function App() {
               setBackgroundUpload(null);
             }}
           />
+          </Suspense>
         )}
-        </Suspense>
         <input
           ref={globalNativeCameraInputRef}
           id="yoouz-global-native-camera"
@@ -8663,8 +8729,8 @@ export function App() {
       )}
 
       {/* 2. Workspace Stage: Optional Left Business/Creator Profile Panel + Main Stage */}
-      <Suspense fallback={null}>
       <div className="flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-row relative overflow-hidden overscroll-none">
+        <Suspense fallback={null}>
         {isPlaceView ? (
           <CopoPlaceDrawer
             key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
@@ -8730,11 +8796,13 @@ export function App() {
             onOpenPasskeyModal={(mode) => setPasskeyQrModalMode(mode)}
           />
         ) : null}
+        </Suspense>
 
       {/* Main Stage Content Switcher */}
       <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-col relative overflow-hidden overscroll-none bg-[#050506]">
         {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
+          <Suspense fallback={null}>
             <CopoVideoPlayer
               key={currentFeedContextKey}
               commentsOpen={Boolean(activeCommentVideo)}
@@ -8847,6 +8915,7 @@ export function App() {
               onRecordView={handleRecordVideoView}
               unreadCount={effectiveUnreadNotifsCount + calculateUnreadMessagesCount(messages, currentUser)}
             />
+          </Suspense>
         )}
 
         {/* Premium Minimalist Homepage & Search View */}
@@ -8883,6 +8952,7 @@ export function App() {
 
         {/* Search Test Sandbox Route (/searchtest) */}
         {window.location.pathname.startsWith("/searchtest") ? (
+          <Suspense fallback={null}>
           <CopoSearchTestView
             places={places}
             videos={videos}
@@ -8891,6 +8961,7 @@ export function App() {
               handleOpenCreateReview(place);
             }}
           />
+          </Suspense>
         ) : !isPlaceView && !isCreatorView && (
           <>
             {activeSection === "record_review" && (
@@ -8929,6 +9000,7 @@ export function App() {
 
             {/* Discover Reviewers / Creators Directory View */}
             {activeSection === "discover" && (
+              <Suspense fallback={null}>
               <CopoDiscoverView
                 videos={videos}
                 allUsers={allRegisteredUsers}
@@ -8942,20 +9014,24 @@ export function App() {
                   ensureAnonymousUser(false);
                 }}
               />
+              </Suspense>
             )}
 
             {/* Map View (Map pins & place video cards) */}
             {activeSection === "map" && (
+              <Suspense fallback={null}>
               <CopoMapView
                 places={places}
                 videos={videos}
                 onOpenPlace={handleOpenPlaceDrawer}
                 onSelectVideo={handleSelectVideoById}
               />
+              </Suspense>
             )}
 
             {/* Live Embed Tester View */}
             {activeSection === "testembed" && (
+              <Suspense fallback={null}>
               <CopoTestEmbedView
                 places={places}
                 videos={videos}
@@ -8966,10 +9042,12 @@ export function App() {
                   } catch (e) {}
                 }}
               />
+              </Suspense>
             )}
 
             {/* Live Search Sandbox Test View (/searchtest) */}
             {activeSection === "searchtest" && (
+              <Suspense fallback={null}>
               <CopoSearchTestView
                 places={places}
                 videos={videos}
@@ -8980,11 +9058,13 @@ export function App() {
                   setPlaces((prev) => [newPlace, ...prev.filter((p) => p.id !== newPlace.id)]);
                 }}
               />
+              </Suspense>
             )}
 
 
             {/* Admin View */}
             {activeSection === "admin" && (
+              <Suspense fallback={null}>
               <CopoAdminPanel
                 currentUser={currentUser}
                 videos={videos}
@@ -9059,10 +9139,12 @@ export function App() {
                   window.history.pushState(null, "", buildLocalizedPath("/", language));
                 }}
               />
+              </Suspense>
             )}
 
             {/* Notifications View */}
             {activeSection === "notifications" && (
+              <Suspense fallback={null}>
               <CopoNotificationsView
                 notifications={notifications}
                 currentUser={currentUser}
@@ -9116,10 +9198,12 @@ export function App() {
                   setNotifications([]);
                 }}
               />
+              </Suspense>
             )}
 
             {/* Direct Messages View */}
             {activeSection === "messages" && (
+              <Suspense fallback={null}>
               <CopoMessagesView
                 messages={messages}
                 currentUser={currentUser}
@@ -9202,10 +9286,12 @@ export function App() {
                 }}
                 onSelectVideo={handleSelectVideoById}
               />
+              </Suspense>
             )}
 
             {/* Bookmarks / Bucket List View */}
             {activeSection === "bookmarks" && (
+              <Suspense fallback={null}>
               <CopoBookmarksView
                 bookmarkedVideos={bookmarkedVideos}
                 savedPlaces={savedPlaces}
@@ -9225,10 +9311,12 @@ export function App() {
                 onRemovePlace={handleToggleGrabPlace}
                 onRemoveCreator={handleToggleSaveCreator}
               />
+              </Suspense>
             )}
 
             {/* Following Directory View */}
             {activeSection === "following" && (
+              <Suspense fallback={null}>
               <CopoFollowingView
                 places={places}
                 videos={videos}
@@ -9247,6 +9335,7 @@ export function App() {
                 onToggleFollow={handleToggleFollow}
                 onToggleFollowPlace={handleToggleFollowPlace}
               />
+              </Suspense>
             )}
 
             {/* Profile hydrating placeholder (zero-friction auto-provision) */}
@@ -9260,6 +9349,7 @@ export function App() {
             {/* Pricing View */}
             {/* Business Dashboard View */}
             {activeSection === "business" && (
+              <Suspense fallback={null}>
               <CopoBusinessDashboardView 
                 onNavigate={(sec) => {
                   if (sec === "home") {
@@ -9405,8 +9495,10 @@ export function App() {
                 }}
                 onSaveNotificationSettings={handleSaveNotificationSettings}
               />
+              </Suspense>
             )}
             {activeSection === "more" && (
+              <Suspense fallback={null}>
               <CopoMoreView
                 currentUser={currentUser}
                 onOpenLegal={handleOpenLegal}
@@ -9443,6 +9535,7 @@ export function App() {
                 onDeactivateProfile={handleDeactivateProfile}
                 onDeleteProfile={handleDeleteProfile}
               />
+              </Suspense>
             )}
           </>
         )}
@@ -9451,6 +9544,7 @@ export function App() {
 
       {/* Video Comments Drawer */}
       {activeCommentVideo && (
+        <Suspense fallback={null}>
         <CopoCommentsDrawer
           video={activeCommentVideo}
           videos={videos}
@@ -9483,10 +9577,12 @@ export function App() {
             });
           }}
         />
+        </Suspense>
       )}
 
       {/* Share Video Modal */}
       {Boolean(activeShareVideo) && (
+        <Suspense fallback={null}>
         <CopoShareModal
           video={activeShareVideo}
           currentUser={currentUser}
@@ -9497,10 +9593,12 @@ export function App() {
           }}
           onShareIncrement={handleShareIncrement}
         />
+        </Suspense>
       )}
 
       {/* Special Yoouz In-App Reporting Flow (TikTok / FB / YouTube style -> report@yoouz.com) */}
       {isReportModalOpen && (
+        <Suspense fallback={null}>
         <CopoReportModal
           isOpen={isReportModalOpen}
           target={activeReportTarget}
@@ -9511,6 +9609,7 @@ export function App() {
           }}
           onBlockOrHide={handleBlockOrHide}
         />
+        </Suspense>
       )}
 
       {/* Mobile Navigation Drawer */}
@@ -9637,6 +9736,7 @@ export function App() {
 
       {/* Mobile Search Overlay */}
       {isSearchModalOpen && (
+        <Suspense fallback={null}>
         <CopoMobileSearchView
           key={searchResetKey}
           places={places}
@@ -9694,10 +9794,12 @@ export function App() {
           onOpenNotifications={handleOpenNotifications}
           unreadNotifsCount={effectiveUnreadNotifsCount}
         />
+        </Suspense>
       )}
 
       {/* Mobile Discover Overlay */}
       {isDiscoverModalOpen && (
+        <Suspense fallback={null}>
         <CopoMobileDiscoverView
           videos={videos}
           allUsers={allRegisteredUsers}
@@ -9722,10 +9824,12 @@ export function App() {
           onNavigateHome={() => setIsDiscoverModalOpen(false)}
           onClose={() => setIsDiscoverModalOpen(false)}
         />
+        </Suspense>
       )}
 
       {/* Google Sign-In Modal */}
       {isAuthModalOpen && (
+        <Suspense fallback={null}>
         <CopoGoogleAuthModal
           isOpen={isAuthModalOpen}
         intent={authIntent}
@@ -9806,29 +9910,35 @@ export function App() {
           setAuthIntent('general');
         }}
         />
+        </Suspense>
       )}
 
       {/* Terms & Conditions / Privacy Policy Legal Modal */}
       {isLegalModalOpen && (
+        <Suspense fallback={null}>
         <CopoLegalModal
           isOpen={isLegalModalOpen}
           onClose={() => setIsLegalModalOpen(false)}
           initialTab={legalModalTab}
         />
+        </Suspense>
       )}
 
       {/* User Notification Preferences Modal */}
       {isNotificationSettingsOpen && (
+        <Suspense fallback={null}>
         <CopoNotificationSettingsModal
           isOpen={isNotificationSettingsOpen}
           onClose={() => setIsNotificationSettingsOpen(false)}
           settings={currentUser?.notificationSettings}
           onSave={handleSaveNotificationSettings}
         />
+        </Suspense>
       )}
 
       {/* Competitor Comparison (GEO & Conversion) Modal */}
       {isComparisonModalOpen && (
+        <Suspense fallback={null}>
         <CopoComparisonModal
           isOpen={isComparisonModalOpen}
           onClose={() => setIsComparisonModalOpen(false)}
@@ -9837,6 +9947,7 @@ export function App() {
             setIsCreateModalOpen(true);
           }}
         />
+        </Suspense>
       )}
 
       {/* Persistent Root Native Mobile Camera Input — always mounted for synchronous 0ms iOS/Android launch */}
@@ -9853,6 +9964,7 @@ export function App() {
 
       {/* Add Photo Review Modal */}
       {isCreateModalOpen && (
+        <Suspense fallback={null}>
         <CopoCreateModal
           isOpen={isCreateModalOpen}
           onClose={() => {
@@ -9889,9 +10001,11 @@ export function App() {
             setBackgroundUpload(null);
           }}
         />
+        </Suspense>
       )}
 
       {Boolean(passkeyQrModalMode) && (
+        <Suspense fallback={null}>
         <PasskeyQrModal
           isOpen={Boolean(passkeyQrModalMode)}
           initialMode={passkeyQrModalMode || "save"}
@@ -9906,9 +10020,11 @@ export function App() {
             handlePasskeySyncSuccess(user);
           }}
         />
+        </Suspense>
       )}
 
       {Boolean(mobilePasskeyHandoffToken) && (
+        <Suspense fallback={null}>
         <MobilePasskeyHandoffModal
           token={mobilePasskeyHandoffToken}
           currentPhoneUserId={currentUser?.id || (currentUser as any)?.uid || ""}
@@ -9917,8 +10033,8 @@ export function App() {
             handlePasskeySyncSuccess(user);
           }}
         />
+        </Suspense>
       )}
-      </Suspense>
 
       {/* Background Upload Top Progress Bar (Non-blocking for video captions & text) */}
       {backgroundUpload?.isPublishing && (

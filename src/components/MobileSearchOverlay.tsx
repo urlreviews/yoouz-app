@@ -120,7 +120,6 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
   searchMode = "general",
   places = [],
   videos = [],
-  suggestedDomains = [],
   onQuickSelectDomain,
   onSelectTrendingPlace
 }) => {
@@ -404,26 +403,6 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
     });
   };
 
-  const handleTapDomainChip = (domain: string) => {
-    const clean = domain.trim().toLowerCase();
-    const title = KNOWN_OFFICIAL_NAMES[clean] || formatBusinessName(clean, clean) || clean;
-    recordRecent({
-      title,
-      domain: clean,
-      logoUrl: KNOWN_BRAND_LOGOS[clean] || `/api/favicon?domain=${encodeURIComponent(clean)}`
-    });
-    if (onQuickSelectDomain) {
-      onQuickSelectDomain(clean);
-    } else {
-      onSelectSuggestion({
-        id: clean,
-        title,
-        domain: clean,
-        logoUrl: KNOWN_BRAND_LOGOS[clean] || `/api/favicon?domain=${encodeURIComponent(clean)}`
-      });
-    }
-  };
-
   const handleTapRecent = (entry: RecentSearchEntry) => {
     recordRecent(entry);
     if (entry.domain && onQuickSelectDomain) {
@@ -497,7 +476,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-10 h-10 -mr-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] flex items-center justify-center text-zinc-200 hover:text-white active:scale-95 transition-all cursor-pointer shrink-0"
+                className="w-11 h-11 -mr-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] flex items-center justify-center text-zinc-200 hover:text-white active:scale-95 transition-all cursor-pointer shrink-0"
                 aria-label="Close"
               >
                 <X className="w-4.5 h-4.5 stroke-[2.1]" />
@@ -527,8 +506,8 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
-                    placeholder="Search brand, place, or website URL..."
-                    className="w-full min-w-0 bg-transparent text-white text-[16px] font-normal focus:outline-none placeholder:text-zinc-500 caret-white select-text"
+                    placeholder="Search place, brand, or URL"
+                    className="w-full min-w-0 bg-transparent text-white text-[16px] font-normal focus:outline-none placeholder:text-zinc-400/85 caret-white select-text"
                     autoComplete="off"
                     autoCorrect="off"
                     autoCapitalize="off"
@@ -597,8 +576,8 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  placeholder="Search hotel, restaurant, brand, or URL..."
-                  className="w-full min-w-0 bg-transparent text-white text-[16px] font-normal focus:outline-none placeholder:text-zinc-500 caret-white select-text"
+                  placeholder="Search place, brand, or URL"
+                  className="w-full min-w-0 bg-transparent text-white text-[16px] font-normal focus:outline-none placeholder:text-zinc-400/85 caret-white select-text"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
@@ -646,39 +625,11 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
       >
         {!hasQuery ? (
           /* ================= ZERO-STATE SPOTLIGHT DISCOVERY ================= */
-          <div className="space-y-6">
+          <div className="space-y-5">
             {isReviewMode && (
-              <p className="text-[13.5px] text-zinc-400 leading-snug px-0.5 -mt-1">
-                Pick a brand below or enter any website URL to capture a live photo review.
+              <p className="text-[13px] text-zinc-400 leading-snug px-0.5 -mt-1">
+                Pick a business below or enter any website URL to open the live camera.
               </p>
-            )}
-
-            {/* Quick Try Interactive Domain Chips */}
-            {suggestedDomains.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between px-0.5 mb-2.5">
-                  <h3 className="text-[13px] font-semibold text-zinc-400 tracking-[-0.01em]">
-                    {isReviewMode ? "Quick pick" : "Try searching"}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {suggestedDomains.map((dom) => (
-                    <button
-                      key={dom}
-                      type="button"
-                      onClick={() => handleTapDomainChip(dom)}
-                      className="min-h-[40px] px-3.5 py-2 rounded-full bg-white/[0.045] hover:bg-white/[0.09] active:bg-white/[0.12] border border-white/[0.1] hover:border-white/[0.2] text-[13.5px] font-medium text-zinc-200 hover:text-white tracking-[-0.01em] inline-flex items-center gap-2 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                    >
-                      <span>{dom}</span>
-                      {isReviewMode ? (
-                        <Camera className="w-3.5 h-3.5 text-zinc-400" />
-                      ) : (
-                        <ArrowRight className="w-3.5 h-3.5 text-zinc-500" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
             )}
 
             {/* Recent Searches (Persisted in localStorage) */}
@@ -748,9 +699,11 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   <h3 className="text-[13px] font-semibold text-zinc-400 tracking-[-0.01em]">
                     {isReviewMode ? "Popular to review" : "Trending on Yoouz"}
                   </h3>
-                  <span className="text-[12px] text-zinc-500 font-normal">
-                    {isReviewMode ? "Tap to open camera" : "Live photo proof"}
-                  </span>
+                  {isReviewMode && (
+                    <span className="text-[12px] text-zinc-500 font-normal">
+                      Tap to open camera
+                    </span>
+                  )}
                 </div>
                 <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl divide-y divide-white/[0.06] overflow-hidden">
                   {trendingBusinesses.map((biz) => (
@@ -825,23 +778,6 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                 </div>
               </div>
             )}
-
-            {/* Universal Any-Website Guidance Card */}
-            <div className="bg-white/[0.025] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#121216] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300">
-                <Globe className="w-4.5 h-4.5 stroke-[1.8]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[13.5px] font-semibold text-zinc-200 leading-snug">
-                  {isReviewMode ? "Review any brand or website" : "Look up any website worldwide"}
-                </p>
-                <p className="text-[12.5px] text-zinc-400 leading-snug mt-0.5">
-                  {isReviewMode
-                    ? "Type a store name or paste any URL like zara.com to open the camera immediately."
-                    : "Type any business name or paste a URL like zara.com to see live photo proof."}
-                </p>
-              </div>
-            </div>
           </div>
         ) : (
           /* ================= LIVE TYPING & AUTOCOMPLETE RESULTS ================= */

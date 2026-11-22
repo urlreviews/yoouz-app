@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, Suspense, lazy } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe, BedDouble, UtensilsCrossed, Package, Briefcase, Sparkles, ShoppingBag, Car, Cpu } from "lucide-react";
-const MobileSearchOverlay = lazy(() => import("./MobileSearchOverlay").then(m => ({ default: m.MobileSearchOverlay })));
+import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe, ShieldCheck, BedDouble, UtensilsCrossed, Package, Briefcase, Sparkles, ShoppingBag, Car, Cpu } from "lucide-react";
+import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -1243,10 +1243,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     onBlur={() => setIsFocused(false)}
                     placeholder={
                       isMobile
-                        ? "Search any place, brand, or URL..."
-                        : "Search any hotel, restaurant, brand, or paste a URL..."
+                        ? "Search place, brand, or URL"
+                        : "Search any hotel, restaurant, brand, or paste a URL"
                     }
-                    className="w-full min-w-0 bg-transparent text-white text-[16px] sm:text-[15.5px] placeholder:text-zinc-500 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
+                    className="w-full min-w-0 bg-transparent text-white text-[16px] sm:text-[15.5px] placeholder:text-zinc-400/85 placeholder:truncate focus:outline-none font-normal pr-2 py-2 truncate caret-white select-text"
                   />
                 </div>
 
@@ -1468,7 +1468,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
           {/* Mobile Search Overlay */}
           {isMobile && isMobileSearchOpen && (
-            <Suspense fallback={null}>
             <MobileSearchOverlay
               query={query}
               setQuery={setQuery}
@@ -1508,7 +1507,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               }}
               isLoading={isLoadingSuggest}
             />
-            </Suspense>
           )}
         </div>
 
@@ -1835,13 +1833,30 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           )}
         </section>
 
-        {/* Whisper-Quiet Minimal Desktop Footer (About / Privacy / Terms live cleanly here) */}
-        <footer className="hidden md:flex items-center justify-between w-full mt-auto pt-10 pb-2 border-t border-white/[0.06] text-[12px] text-zinc-500">
-          <div className="flex items-center gap-2">
-            <span>{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</span>
-            <span className="text-zinc-700">·</span>
-            <span className="text-zinc-400">{t("legal.tagline", "Real Photos. Real Proof.")}</span>
+        {/* Whisper-Quiet Minimal Desktop Footer — Copyright Left, Mechanism-Based Trust Signals Center, Legal Right */}
+        <footer className="hidden md:flex items-center justify-between gap-4 w-full mt-auto pt-8 pb-2 border-t border-white/[0.06] text-[12px] text-zinc-500">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="whitespace-nowrap">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</span>
           </div>
+
+          <div
+            className="hidden lg:flex items-center justify-center gap-5 text-[11.5px] text-zinc-400/90 tracking-[-0.01em]"
+            aria-label="Yoouz trust standards"
+          >
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Camera className="w-[13px] h-[13px] text-zinc-500 stroke-[1.7] shrink-0" />
+              <span>Live photos only</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <ShieldCheck className="w-[13px] h-[13px] text-zinc-500 stroke-[1.7] shrink-0" />
+              <span>Real customer proof</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <Globe className="w-[13px] h-[13px] text-zinc-500 stroke-[1.7] shrink-0" />
+              <span>Open &amp; global</span>
+            </span>
+          </div>
+
           <div className="flex items-center gap-4 shrink-0">
             <button
               type="button"
