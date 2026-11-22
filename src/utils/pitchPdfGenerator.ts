@@ -12,13 +12,18 @@ function resolveDiskAssetPath(webPath: string): string {
   return path.join(process.cwd(), "public", clean);
 }
 
-async function prepareCrispPngBuffer(webPath: string): Promise<Buffer | null> {
+async function prepareCrispPngBuffer(
+  webPath?: string,
+  maxW = 1400,
+  maxH = 1000
+): Promise<Buffer | null> {
+  if (!webPath) return null;
   try {
     const absPath = resolveDiskAssetPath(webPath);
     if (!fs.existsSync(absPath)) return null;
     return await sharp(absPath)
-      .resize(1600, 1200, { fit: "inside", withoutEnlargement: true })
-      .png({ quality: 92 })
+      .resize(maxW, maxH, { fit: "inside", withoutEnlargement: true })
+      .png({ quality: 90 })
       .toBuffer();
   } catch {
     return null;
@@ -26,19 +31,28 @@ async function prepareCrispPngBuffer(webPath: string): Promise<Buffer | null> {
 }
 
 export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
-  const imageBuffers = await Promise.all(
-    PITCH_CHAPTERS.map((ch) => prepareCrispPngBuffer(ch.imagePath))
+  const preparedImages = await Promise.all(
+    PITCH_CHAPTERS.map(async (ch) => {
+      const primary =
+        ch.frameMode !== "data"
+          ? await prepareCrispPngBuffer(ch.imagePath, 1300, 900)
+          : null;
+      const mobile =
+        ch.frameMode !== "data" && ch.mobileImagePath
+          ? await prepareCrispPngBuffer(ch.mobileImagePath, 600, 1200)
+          : null;
+      return { primary, mobile };
+    })
   );
 
   return new Promise((resolve, reject) => {
     try {
-      // A4 Landscape (841.89 x 595.28 pt) — clean wide executive slide ratio
       const doc = new PDFDocument({
         size: "A4",
         layout: "landscape",
         margin: 0,
         info: {
-          Title: "Yoouz Investor Pitch Deck (20 Chapters · Live Photo Proof)",
+          Title: "Yoouz Investor Pitch Deck (22 Chapters · Live Photo Proof)",
           Author: "Yoouz",
           Subject: "Institutional Investor Presentation — 1 Live Camera Photo = 1,000 Words",
         },
@@ -71,7 +85,11 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           .font("Helvetica")
           .fontSize(8)
           .fillColor("#A1A1AA")
-          .text("INVESTOR PITCH DECK  ·  1 LIVE PHOTO = 1,000 WORDS", 78, 14);
+          .text(
+            `INVESTOR PITCH DECK  ·  ${chapter.actLabel.toUpperCase()}  ·  1 LIVE PHOTO = 1,000 WORDS`,
+            78,
+            14
+          );
 
         doc
           .font("Helvetica-Bold")
@@ -83,37 +101,83 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           });
 
         // Kicker & Headline
-        doc.font("Helvetica-Bold").fontSize(8).fillColor("#F59E0B").text(chapter.kicker, 28, 50);
+        doc.font("Helvetica-Bold").fontSize(8).fillColor("#F59E0B").text(chapter.kicker, 28, 49);
 
         doc
           .font("Helvetica-Bold")
-          .fontSize(15)
+          .fontSize(14.5)
           .fillColor("#FFFFFF")
-          .text(chapter.headline, 28, 63, { width: pageW - 56, lineGap: 1.4 });
+          .text(chapter.headline, 28, 62, { width: pageW - 56, lineGap: 1.3 });
 
-        const subY = Math.max(88, doc.y + 4);
+        const subY = Math.max(85, doc.y + 4);
         doc
           .font("Helvetica")
-          .fontSize(8.4)
+          .fontSize(8.2)
           .fillColor("#D4D4D8")
-          .text(chapter.subheadline, 28, subY, { width: pageW - 56, lineGap: 1.4 });
+          .text(chapter.subheadline, 28, subY, { width: pageW - 56, lineGap: 1.35 });
 
-        // Content Two-Column Split below header: Left Visual Proof Frame, Right 4 Callout Cards
-        const bodyTop = Math.max(134, doc.y + 10);
-        const bodyBottomMargin = 62;
+        // Content Two-Column Split below header
+        const bodyTop = Math.max(130, doc.y + 9);
+        const bodyBottomMargin = 60;
         const bodyH = pageH - bodyTop - bodyBottomMargin;
 
-        const leftW = 456;
+        const leftW = 468;
         const rightX = 28 + leftW + 14;
         const rightW = pageW - rightX - 28;
 
-        // Left Visual Proof Box (100% Fit Without Distortion or Cropping)
+        // Left Visual Proof Box
         doc.roundedRect(28, bodyTop, leftW, bodyH, 8).fillAndStroke("#111215", "#27272A");
-
         const innerH = bodyH - 22;
 
         if (chapter.page === 2) {
-          // Slide 02: Market Opportunity (TAM / SAM / SOM) — 3 Clean Dark-Mode Metric Cards
+          // Slide 02: Why Live Photo Beats Text & Video
+          const pad = 12;
+          const tX = 28 + pad;
+          const tY = bodyTop + pad;
+          const tW = leftW - pad * 2;
+          const tH = innerH - pad * 2;
+          const headerH = 28;
+          const rowH = Math.floor((tH - headerH) / 5);
+          const colW = [110, 128, 102, 104];
+
+          doc.roundedRect(tX, tY, tW, tH, 6).fillAndStroke("#09090B", "#27272A");
+          doc.rect(tX, tY, tW, headerH).fill("#18181B");
+          doc.rect(tX + colW[0], tY, colW[1], tH).fillAndStroke("#141519", "#3F3F46");
+
+          const headers = ["DIMENSION", "LIVE PHOTO (YOOUZ)", "LEGACY TEXT", "VIDEO REVIEWS"];
+          let cx = tX;
+          headers.forEach((h, hIdx) => {
+            doc
+              .font("Helvetica-Bold")
+              .fontSize(6.7)
+              .fillColor(hIdx === 1 ? "#F59E0B" : "#E4E4E7")
+              .text(h, cx + 6, tY + 10, { width: colW[hIdx] - 12, lineBreak: false });
+            cx += colW[hIdx];
+          });
+
+          const rows = [
+            ["Capture Time", "3 Seconds (1 Snap)", "2–5 Min Typing", "60–120s + Retakes"],
+            ["AI & Bot Immunity", "100% Hardware Gate", "0% — LLM Flooded", "High Shyness Friction"],
+            ["Buyer Scan Speed", "0.2s Glance (Silent)", "Slow Paragraph Read", "Requires Audio / Time"],
+            ["Edge Asset Cost", "~120 KB (~95%+ GM)", "Tiny, Low Trust", "30 MB+ Streaming Burn"],
+            ["Google Visual SEO", "Native Google Images", "Generic Text Snippet", "Heavy Slow Embeds"],
+          ];
+
+          rows.forEach((r, rIdx) => {
+            const ry = tY + headerH + rIdx * rowH;
+            doc.rect(tX, ry, tW, 0.6).fill("#27272A");
+            let rcx = tX;
+            r.forEach((cell, cIdx) => {
+              doc
+                .font(cIdx <= 1 ? "Helvetica-Bold" : "Helvetica")
+                .fontSize(6.9)
+                .fillColor(cIdx === 0 ? "#FFFFFF" : cIdx === 1 ? "#F59E0B" : "#A1A1AA")
+                .text(cell, rcx + 6, ry + 10, { width: colW[cIdx] - 12, lineGap: 1.1 });
+              rcx += colW[cIdx];
+            });
+          });
+        } else if (chapter.page === 3) {
+          // Slide 03: Market Opportunity (TAM / SAM / SOM)
           const pad = 12;
           const cardGap = 8;
           const cH = Math.floor((innerH - pad * 2 - cardGap * 2) / 3);
@@ -122,24 +186,24 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               tag: "01 · TOTAL ADDRESSABLE MARKET (TAM)",
               badge: "Global Scope",
               val: "$15.8B+",
-              sub: "Global Online Review & Local Discovery Market",
-              desc: "Consumer review platforms, reputation management SaaS, local search discovery & e-commerce proof widgets across 75+ languages.",
+              sub: "Global Online Review & Local Discovery Economy",
+              desc: "Consumer review platforms, reputation SaaS, local search discovery & e-commerce proof widgets across 75+ languages.",
               highlight: false,
             },
             {
               tag: "02 · SERVICEABLE AVAILABLE MARKET (SAM)",
               badge: "85M+ Venues",
               val: "$4.2B+",
-              sub: "Addressable SMB & Multi-Location Venues Worldwide",
-              desc: "Restaurants, cafes, hotels, clinics, salons, legal firms & D2C brands actively competing on visual trust & local rankings.",
+              sub: "Addressable Multi-Location & SMB Storefronts Worldwide",
+              desc: "Restaurants, hotels, clinics, salons, legal firms & D2C brands actively competing on visual proof & local rankings.",
               highlight: false,
             },
             {
               tag: "03 · INITIAL PRE-SEED TARGET (SOM)",
               badge: "Immediate Wedge",
               val: "1,000 Venues (~$1.2M+ ARR)",
-              sub: "Initial 1,000-Venue Pre-Seed Target Cohort",
-              desc: "High-frequency hospitality, dining & retail merchants onboarded via free counter QR standees and self-serve SaaS claiming.",
+              sub: "Initial High-Velocity Hospitality, Dining & Retail Cohort",
+              desc: "Onboarded via free counter QR standees and self-serve claiming at $49–$149/mo SaaS with $0 paid-ad CAC.",
               highlight: true,
             },
           ];
@@ -151,17 +215,17 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .fillAndStroke("#09090B", item.highlight ? "#FFFFFF" : "#27272A");
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.2)
+              .fontSize(7.1)
               .fillColor("#A1A1AA")
               .text(item.tag, 28 + pad + 12, cy + 9, { width: 260, lineBreak: false });
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.2)
+              .fontSize(7.1)
               .fillColor("#F59E0B")
               .text(item.badge, 28 + leftW - pad - 110, cy + 9, { width: 98, align: "right" });
             doc
               .font("Helvetica-Bold")
-              .fontSize(16)
+              .fontSize(15.5)
               .fillColor("#FFFFFF")
               .text(item.val, 28 + pad + 12, cy + 22, { width: leftW - pad * 2 - 24, lineBreak: false });
             doc
@@ -171,79 +235,46 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .text(item.sub, 28 + pad + 12, cy + 43, { width: leftW - pad * 2 - 24, lineBreak: false });
             doc
               .font("Helvetica")
-              .fontSize(7.4)
+              .fontSize(7.3)
               .fillColor("#D4D4D8")
               .text(item.desc, 28 + pad + 12, cy + 56, {
                 width: leftW - pad * 2 - 24,
                 lineGap: 1.2,
               });
           });
-        } else if (chapter.page === 3) {
-          // Slide 03: Competitive Landscape Matrix — 5 Criteria Table
+        } else if (chapter.page === 4) {
+          // Slide 04: Competitive Moat Matrix
           const pad = 12;
           const tableX = 28 + pad;
           const tableY = bodyTop + pad;
           const tableW = leftW - pad * 2;
           const tableH = innerH - pad * 2;
-          const headerH = 28;
-          const rowH = Math.floor((tableH - headerH) / 5);
+          const headerH = 26;
+          const rowH = Math.floor((tableH - headerH) / 6);
+          const colW = [110, 140, 98, 96];
 
-          const colW = [112, 134, 96, 90];
           doc.roundedRect(tableX, tableY, tableW, tableH, 6).fillAndStroke("#09090B", "#27272A");
           doc.rect(tableX, tableY, tableW, headerH).fill("#18181B");
+          doc.rect(tableX + colW[0], tableY, colW[1], tableH).fillAndStroke("#141519", "#3F3F46");
 
-          // Highlight Yoouz Column
-          doc
-            .rect(tableX + colW[0], tableY, colW[1], tableH)
-            .fillAndStroke("#141519", "#3F3F46");
-
-          const headers = [
-            "CRITERIA",
-            "YOOUZ (LIVE PHOTO)",
-            "GOOGLE MAPS REVIEWS",
-            "TRUSTPILOT & YELP",
-          ];
+          const headers = ["STRUCTURAL MOAT", "YOOUZ (LIVE PHOTO)", "GOOGLE MAPS", "TRUSTPILOT / YELP"];
           let cx = tableX;
           headers.forEach((h, hIdx) => {
             doc
               .font("Helvetica-Bold")
-              .fontSize(6.8)
+              .fontSize(6.6)
               .fillColor(hIdx === 1 ? "#F59E0B" : "#E4E4E7")
-              .text(h, cx + 6, tableY + 10, { width: colW[hIdx] - 12, lineBreak: false });
+              .text(h, cx + 6, tableY + 9, { width: colW[hIdx] - 12, lineBreak: false });
             cx += colW[hIdx];
           });
 
           const rows = [
-            [
-              "1. AI & Fake Review Immunity",
-              "100% Live OS Camera Only (0% Gallery)",
-              "Fails — AI text bots & stock uploads",
-              "Fails — Bot spam & broker extortion",
-            ],
-            [
-              "2. 3-Second Live Capture",
-              "Yes — 1 Photo + 1–5 Whole Stars in 3s",
-              "No — Multi-sentence text essays",
-              "No — Tedious paragraph essays",
-            ],
-            [
-              "3. Zero Signup / No App Download",
-              "Yes — Auto U/XXXXXX + Optional Passkey",
-              "No — Mandatory Google login wall",
-              "No — High-friction email forms",
-            ],
-            [
-              "4. In-Store Counter QR Loop",
-              "Yes — Opens Business Front Page -> 1-Tap",
-              "Broken — Drops users at login walls",
-              "None — Zero physical merchant loop",
-            ],
-            [
-              "5. Google Page-1 Visual SEO",
-              "Yes — Original JPEGs + 75+ Lang Schema",
-              "Generic text snippets / walled garden",
-              "Walled gardens selling ad placement",
-            ],
+            ["1. AI & Bot Immunity", "100% Live Hardware Camera", "LLM text spam & stock pics", "Paid bot farms & brokers"],
+            ["2. Creation Velocity", "3 Seconds (Photo + Stars)", "Slow text essays", "Multi-step written forms"],
+            ["3. Login Friction", "Zero Signup (Auto U/ID)", "Mandatory Google login", "Mandatory email signup"],
+            ["4. Counter QR Loop", "Opens Profile -> 1-Tap Snap", "Breaks at login screen", "Zero physical POS loop"],
+            ["5. Viral Share Cards", "1200×630 Unboxed + ★ Yoouz", "Plain map pin link", "Text-only link preview"],
+            ["6. Global Visual SEO", "75+ Lang JPEGs + Schema", "Walled garden snippets", "Pay-to-play ad walls"],
           ];
 
           rows.forEach((r, rIdx) => {
@@ -253,17 +284,14 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             r.forEach((cell, cIdx) => {
               doc
                 .font(cIdx <= 1 ? "Helvetica-Bold" : "Helvetica")
-                .fontSize(6.9)
+                .fontSize(6.7)
                 .fillColor(cIdx === 0 ? "#FFFFFF" : cIdx === 1 ? "#F59E0B" : "#A1A1AA")
-                .text(cell, rcx + 6, ry + 8, {
-                  width: colW[cIdx] - 12,
-                  lineGap: 1.1,
-                });
+                .text(cell, rcx + 6, ry + 7, { width: colW[cIdx] - 12, lineGap: 1.05 });
               rcx += colW[cIdx];
             });
           });
-        } else if (chapter.page === 4) {
-          // Slide 04: Go-To-Market & $0 CAC Distribution Playbook — 2x2 Grid
+        } else if (chapter.page === 5) {
+          // Slide 05: $0 CAC Distribution Playbook — 2x2 Grid
           const pad = 12;
           const gap = 8;
           const boxW = Math.floor((leftW - pad * 2 - gap) / 2);
@@ -272,30 +300,30 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             {
               num: "01",
               tag: "Offline Foot Traffic",
-              title: "Free Print-Ready Counter QR Standees",
-              desc: "Local cafes, restaurants, clinics & shops place Yoouz QR cards on tables and counters. Guests scan -> land on business front page -> snap a 3s photo at $0 CAC.",
-              foot: "CAC: $0 · Merchant-Funded Display",
+              title: "Free Counter & Table QR Standees",
+              desc: "Cafes, hotels, restaurants & shops place print-ready Yoouz QR kits at tables and checkouts. Guests scan -> see peer photos -> snap in 3s.",
+              foot: "CAC: $0 · Merchant-Funded Distribution",
             },
             {
               num: "02",
               tag: "Zero Cold-Start Supply",
-              title: "Autonomous Indexing of Brands & Venues",
-              desc: "Any searched URL or street business is auto-scraped on demand—extracting logos, cover banners, and clean review routes before merchants ever sign up.",
-              foot: "194+ Profiles Live in Production Beta",
+              title: "Autonomous Brand & Venue Indexer",
+              desc: "Any searched website or local venue auto-builds a rich page with official logo, banner & clean /reviews/{slug} URL before merchants sign up.",
+              foot: "543+ Indexed Profiles Live Today",
             },
             {
               num: "03",
-              tag: "Global Search Moat",
-              title: "Google Page-1 SEO Across 75+ Languages",
-              desc: "Original customer JPEGs + Schema.org AggregateRating JSON-LD auto-publish across 75+ localized routes (/es, /fr, /de, /ar, /ja) to capture organic search traffic.",
-              foot: "75+ Native Hreflang Language Routes",
+              tag: "Visual SEO + Share Cards",
+              title: "75+ Lang SEO & Viral Share Cards",
+              desc: "Original JPEGs + AggregateRating Schema rank on Google Page 1 across 75+ languages while every shared link renders a crisp ★ Yoouz card.",
+              foot: "Compounding Organic Search & Messaging",
             },
             {
               num: "04",
-              tag: "B2B SaaS Monetization",
-              title: "Self-Serve Claiming Into Paid SaaS",
-              desc: "Business owners discover their active Yoouz profile ranking on Google with real customer photos, claim ownership at yoouz.com/business, and upgrade to $49–$149/mo.",
-              foot: "High-Intent Inbound SaaS Conversion",
+              tag: "B2B SaaS Conversion",
+              title: "Inbound Self-Serve SaaS Claiming",
+              desc: "Business owners discover live customer photos and search impressions on their free profile, claim at yoouz.com/business, and upgrade to $49–$149/mo.",
+              foot: "High-Intent Inbound Merchant Pull",
             },
           ];
 
@@ -315,27 +343,27 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .text(st.num, bx + 10, by + 14.5, { width: 22, align: "center" });
             doc
               .font("Helvetica-Bold")
-              .fontSize(6.8)
+              .fontSize(6.7)
               .fillColor("#F59E0B")
               .text(st.tag, bx + 38, by + 14, { width: boxW - 48, align: "right" });
             doc
               .font("Helvetica-Bold")
-              .fontSize(8.8)
+              .fontSize(8.7)
               .fillColor("#FFFFFF")
-              .text(st.title, bx + 10, by + 36, { width: boxW - 20, lineGap: 1.1 });
+              .text(st.title, bx + 10, by + 35, { width: boxW - 20, lineGap: 1.1 });
             doc
               .font("Helvetica")
-              .fontSize(7.2)
+              .fontSize(7.1)
               .fillColor("#D4D4D8")
-              .text(st.desc, bx + 10, by + 62, { width: boxW - 20, lineGap: 1.2 });
+              .text(st.desc, bx + 10, by + 60, { width: boxW - 20, lineGap: 1.2 });
             doc
               .font("Helvetica-Bold")
-              .fontSize(6.8)
+              .fontSize(6.7)
               .fillColor("#A1A1AA")
-              .text(st.foot, bx + 10, by + boxH - 18, { width: boxW - 20, lineBreak: false });
+              .text(st.foot, bx + 10, by + boxH - 17, { width: boxW - 20, lineBreak: false });
           });
-        } else if (chapter.page === 5) {
-          // Slide 05: Business Model & SaaS Economics — 3 Pricing Cards + ~95%+ Margin Bar
+        } else if (chapter.page === 6) {
+          // Slide 06: B2B SaaS Pricing Ladder + ~95%+ Margin Bar
           const pad = 12;
           const gap = 8;
           const bannerH = 44;
@@ -346,12 +374,12 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               tier: "TIER 01 · DISCOVERY",
               price: "$0",
               unit: "/ forever",
-              name: "Free Auto-Indexed Discovery",
+              name: "Free Auto-Indexed",
               bullets: [
-                "· Auto-built profile, logo & banner",
+                "· Auto-built logo & banner",
                 "· Unlimited 3s customer photos",
-                "· 1–5 whole-star score aggregation",
-                "· 75+ language Google SEO indexing",
+                "· 1–5 whole-star score",
+                "· 75+ language Google SEO",
               ],
               highlight: false,
             },
@@ -361,10 +389,10 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               unit: "/ month",
               name: "Claimed Business Pro",
               bullets: [
-                "· Anonymous Verified Claimed badge",
-                "· Official pinned owner replies",
+                "· Anonymous Claimed shield",
+                "· Official pinned replies",
                 "· Direct customer chat inbox",
-                "· Counter QR standee kit + analytics",
+                "· QR standee kit + analytics",
               ],
               highlight: true,
             },
@@ -372,12 +400,12 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               tier: "TIER 03 · GROWTH",
               price: "$149",
               unit: "/ month",
-              name: "Growth & Website Widget",
+              name: "Growth & Embed Suite",
               bullets: [
-                "· Unlimited 1-line website embeds",
-                "· Google AggregateRating JSON-LD",
-                "· Multi-location brand management",
-                "· Priority discovery feed placement",
+                "· Unlimited 1-line embeds",
+                "· AggregateRating JSON-LD",
+                "· Multi-location dashboard",
+                "· Priority discovery boost",
               ],
               highlight: false,
             },
@@ -391,7 +419,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .fillAndStroke("#09090B", t.highlight ? "#FFFFFF" : "#27272A");
             doc
               .font("Helvetica-Bold")
-              .fontSize(6.8)
+              .fontSize(6.7)
               .fillColor(t.highlight ? "#F59E0B" : "#A1A1AA")
               .text(t.tier, tx + 10, ty + 10, { width: colW - 20, lineBreak: false });
             doc
@@ -424,7 +452,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             .fillAndStroke("#141519", "#3F3F46");
           doc
             .font("Helvetica-Bold")
-            .fontSize(8)
+            .fontSize(7.8)
             .fillColor("#F59E0B")
             .text("~95%+ SOFTWARE GROSS MARGIN ARCHITECTURE", 28 + pad + 12, by + 9, {
               width: leftW - pad * 2 - 24,
@@ -432,36 +460,36 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             });
           doc
             .font("Helvetica")
-            .fontSize(7.2)
+            .fontSize(7.1)
             .fillColor("#D4D4D8")
             .text(
-              "~120 KB Sharp-compressed JPEGs on Bunny.net global CDN + Cloud SQL PostgreSQL (<$0.01 per 1,000 views).",
+              "~120 KB Sharp-compressed JPEGs on Bunny.net global edge CDN + Cloud SQL PostgreSQL (<$0.01 per 1,000 impressions).",
               28 + pad + 12,
               by + 23,
               { width: leftW - pad * 2 - 24, lineBreak: false }
             );
-        } else if (chapter.page === 6) {
-          // Slide 06: Founder Edge, Live Production Status & Pre-Seed Ask
+        } else if (chapter.page === 7) {
+          // Slide 07: Founder Edge, Live Traction & Pre-Seed Allocation
           const pad = 12;
           const cardGap = 8;
           const cH = Math.floor((innerH - pad * 2 - cardGap * 2) / 3);
           const blocks = [
             {
               kicker: "01 · FOUNDER DOMAIN & ENGINEERING EDGE",
-              title: "15 Years Luxury Hospitality Management + Solo Full-Stack Execution",
-              desc: "15 years of frontline luxury hospitality management combined with solo full-stack engineering that shipped the entire Yoouz production platform in-house with $0 agency burn.",
+              title: "15 Years Luxury Hospitality Management + Solo Full-Stack Builder",
+              desc: "Deep frontline hospitality operational mastery paired with solo full-stack engineering that shipped the entire consumer PWA, B2B portal, SEO & Bunny.net CDN stack with $0 agency burn.",
               highlight: false,
             },
             {
-              kicker: "02 · TRANSPARENT LIVE PRODUCTION STATUS",
-              title: "Active Production Beta (194+ Indexed Profiles · 40+ Live Reviews)",
-              desc: "Our 194+ indexed profiles and 40+ live photo reviews represent an active production beta at yoouz.com with early pilot venues testing QR standees, Passkeys, and website embeds.",
+              kicker: "02 · LIVE PRODUCTION TRACTION ON YOOUZ.COM",
+              title: "543+ Indexed Brands · 62 Live Customer Photo Reviews · Claimed Portals",
+              desc: "Live production proof spanning Apple, Sephora, IKEA, NIVEA, Philips, Sony, Wolt, Zara, Hotel Julien & Lerner & Rowe—plus active Passkeys, 1200×630 OG cards & embed widgets.",
               highlight: false,
             },
             {
-              kicker: "03 · PRE-SEED RAISE & USE OF FUNDS BREAKDOWN",
-              title: "45% First 500 Venues · 35% Global SEO Scale · 20% Core Product Growth",
-              desc: "1) Onboarding First 500 Venues via physical QR standee kits (45%)  ·  2) Global SEO & Indexing Scale across 75+ languages (35%)  ·  3) Core Product & SaaS Claiming Growth (20%).",
+              kicker: "03 · PRE-SEED CAPITAL ALLOCATION",
+              title: "45% First 500 Venues · 35% Global SEO Scale · 20% Product & SaaS Velocity",
+              desc: "45% Counter QR kit rollout across first 500 venues  ·  35% Autonomous indexing & 75+ language Google Page-1 SEO  ·  20% Shopify/Webflow 1-click embeds & self-serve billing.",
               highlight: true,
             },
           ];
@@ -473,28 +501,153 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
               .fillAndStroke("#09090B", b.highlight ? "#FFFFFF" : "#27272A");
             doc
               .font("Helvetica-Bold")
-              .fontSize(7.2)
+              .fontSize(7.1)
               .fillColor("#F59E0B")
               .text(b.kicker, 28 + pad + 12, cy + 9, { width: leftW - pad * 2 - 24, lineBreak: false });
             doc
               .font("Helvetica-Bold")
-              .fontSize(9.5)
+              .fontSize(9.2)
               .fillColor("#FFFFFF")
               .text(b.title, 28 + pad + 12, cy + 23, { width: leftW - pad * 2 - 24, lineBreak: false });
             doc
               .font("Helvetica")
-              .fontSize(7.4)
+              .fontSize(7.3)
               .fillColor("#D4D4D8")
-              .text(b.desc, 28 + pad + 12, cy + 39, {
+              .text(b.desc, 28 + pad + 12, cy + 38, {
                 width: leftW - pad * 2 - 24,
-                lineGap: 1.3,
+                lineGap: 1.25,
               });
           });
+        } else if (chapter.page === 21) {
+          // Slide 21: Ultra-Lean Cloud Architecture (Bunny.net + Cloud SQL)
+          const pad = 12;
+          const gap = 8;
+          const boxH = Math.floor((innerH - pad * 2 - gap * 3) / 4);
+          const layers = [
+            {
+              step: "LAYER 01 · CLIENT CAPTURE",
+              title: "Native Hardware Camera + Passwordless WebAuthn Passkey",
+              desc: "Strict capture='environment' shutter (0% gallery uploads) + iOS Face ID / Android Biometric FIDO2 identity.",
+            },
+            {
+              step: "LAYER 02 · MEDIA PIPELINE",
+              title: "Express + Sharp Server-Side EXIF Scrubber & 1200×630 OG Engine",
+              desc: "Strips private GPS headers automatically, compresses HDR photos to ~120 KB JPEGs, and composites live social share cards.",
+            },
+            {
+              step: "LAYER 03 · GLOBAL EDGE CDN",
+              title: "Bunny.net Edge Storage & Pull Zone (119+ Global PoPs)",
+              desc: "Sub-100ms photo delivery worldwide at fractions of a cent per 1,000 impressions—enabling ~95%+ software gross margins.",
+            },
+            {
+              step: "LAYER 04 · RELATIONAL CORE",
+              title: "Cloud SQL (PostgreSQL) + Drizzle ORM + SSR 75-Lang SEO",
+              desc: "ACID relational tables for 543+ brands, atomic like counters, comments, messages, and Schema.org JSON-LD injection.",
+            },
+          ];
+
+          layers.forEach((l, idx) => {
+            const ly = bodyTop + pad + idx * (boxH + gap);
+            doc
+              .roundedRect(28 + pad, ly, leftW - pad * 2, boxH, 6)
+              .fillAndStroke("#09090B", idx === 2 ? "#FFFFFF" : "#27272A");
+            doc
+              .font("Helvetica-Bold")
+              .fontSize(6.9)
+              .fillColor("#F59E0B")
+              .text(l.step, 28 + pad + 12, ly + 8, { width: leftW - pad * 2 - 24, lineBreak: false });
+            doc
+              .font("Helvetica-Bold")
+              .fontSize(8.8)
+              .fillColor("#FFFFFF")
+              .text(l.title, 28 + pad + 12, ly + 20, { width: leftW - pad * 2 - 24, lineBreak: false });
+            doc
+              .font("Helvetica")
+              .fontSize(7.1)
+              .fillColor("#D4D4D8")
+              .text(l.desc, 28 + pad + 12, ly + 33, { width: leftW - pad * 2 - 24, lineGap: 1.15 });
+          });
+        } else if (chapter.page === 22) {
+          // Slide 22: Live Active Portfolio Table + 18-Month Roadmap
+          const pad = 12;
+          const tX = 28 + pad;
+          const tY = bodyTop + pad;
+          const tW = leftW - pad * 2;
+          const tH = innerH - pad * 2;
+          const headerH = 24;
+          const visibleRows = ANONYMOUS_CLAIMED_ENTITIES.slice(0, 8);
+          const rowH = Math.floor((tH - headerH) / visibleRows.length);
+          const colW = [110, 96, 108, 130];
+
+          doc.roundedRect(tX, tY, tW, tH, 6).fillAndStroke("#09090B", "#27272A");
+          doc.rect(tX, tY, tW, headerH).fill("#18181B");
+
+          const headers = ["BRAND / ENTITY", "DOMAIN", "STATUS (ANONYMOUS)", "LIVE PROOF HIGHLIGHTS"];
+          let cx = tX;
+          headers.forEach((h, hIdx) => {
+            doc
+              .font("Helvetica-Bold")
+              .fontSize(6.5)
+              .fillColor(hIdx === 2 ? "#F59E0B" : "#E4E4E7")
+              .text(h, cx + 6, tY + 8, { width: colW[hIdx] - 10, lineBreak: false });
+            cx += colW[hIdx];
+          });
+
+          visibleRows.forEach((ent, rIdx) => {
+            const ry = tY + headerH + rIdx * rowH;
+            doc.rect(tX, ry, tW, 0.5).fill("#27272A");
+            const cells = [ent.name, ent.domain, ent.status, ent.highlights];
+            let rcx = tX;
+            cells.forEach((cell, cIdx) => {
+              doc
+                .font(cIdx === 0 || cIdx === 2 ? "Helvetica-Bold" : "Helvetica")
+                .fontSize(6.6)
+                .fillColor(cIdx === 0 ? "#FFFFFF" : cIdx === 2 ? "#F59E0B" : "#D4D4D8")
+                .text(cell, rcx + 6, ry + 7, {
+                  width: colW[cIdx] - 10,
+                  lineBreak: false,
+                  ellipsis: true,
+                });
+              rcx += colW[cIdx];
+            });
+          });
         } else {
-          const imgBuf = imageBuffers[i];
-          if (imgBuf) {
+          // Live Product Screenshot Stage — Side-by-Side Desktop + Mobile when both exist!
+          const imgs = preparedImages[i];
+          if (imgs?.primary && imgs?.mobile) {
+            const stagePad = 10;
+            const mobileW = 108;
+            const gap = 10;
+            const deskW = leftW - stagePad * 2 - mobileW - gap;
+            const stageH = bodyH - 36;
+
+            // Desktop screenshot frame
+            doc
+              .roundedRect(28 + stagePad, bodyTop + 8, deskW, stageH, 6)
+              .fillAndStroke("#09090B", "#27272A");
             try {
-              doc.image(imgBuf, 36, bodyTop + 8, {
+              doc.image(imgs.primary, 28 + stagePad + 3, bodyTop + 11, {
+                fit: [deskW - 6, stageH - 6],
+                align: "center",
+                valign: "center",
+              });
+            } catch {}
+
+            // Mobile iPhone frame right beside Desktop
+            const mobX = 28 + stagePad + deskW + gap;
+            doc
+              .roundedRect(mobX, bodyTop + 8, mobileW, stageH, 10)
+              .fillAndStroke("#050507", "#3F3F46");
+            try {
+              doc.image(imgs.mobile, mobX + 4, bodyTop + 12, {
+                fit: [mobileW - 8, stageH - 8],
+                align: "center",
+                valign: "center",
+              });
+            } catch {}
+          } else if (imgs?.primary) {
+            try {
+              doc.image(imgs.primary, 36, bodyTop + 8, {
                 fit: [leftW - 16, bodyH - 34],
                 align: "center",
                 valign: "center",
@@ -507,7 +660,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
         doc.rect(28, bodyTop + bodyH - 22, leftW, 22).fill("#09090B");
         doc
           .font("Helvetica")
-          .fontSize(7)
+          .fontSize(6.9)
           .fillColor("#A1A1AA")
           .text(chapter.imageCaption, 36, bodyTop + bodyH - 15, {
             width: leftW - 16,
@@ -515,143 +668,89 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             ellipsis: true,
           });
 
-        // Right Column: 4 Numbered Explanation Cards (plus compact extras on Chapters 8, 11, 19, 20)
+        // Right Column: 4 Numbered Callout Cards + Optional Compact Button Guide Strip
         let curY = bodyTop;
-        const gapY = 7;
-        const hasExtraBox =
-          chapter.page === 8 ||
-          chapter.page === 11 ||
-          chapter.page === 19 ||
-          chapter.page === 20;
-        const extraH = chapter.page === 20 ? 62 : hasExtraBox ? 54 : 0;
-        const calloutAreaH = bodyH - (hasExtraBox ? extraH + gapY : 0);
+        const gapY = 6.5;
+        const hasGuide = Boolean(chapter.buttonGuide && chapter.buttonGuide.length > 0);
+        const guideH = hasGuide ? 52 : 0;
+        const calloutAreaH = bodyH - (hasGuide ? guideH + gapY : 0);
         const cardH = Math.floor((calloutAreaH - gapY * 3) / 4);
 
         for (let cIdx = 0; cIdx < chapter.callouts.length; cIdx++) {
           const c = chapter.callouts[cIdx];
           doc.roundedRect(rightX, curY, rightW, cardH, 7).fillAndStroke("#111215", "#27272A");
 
-          doc.roundedRect(rightX + 9, curY + 9, 20, 18, 4).fill("#FFFFFF");
+          doc.roundedRect(rightX + 9, curY + 8, 20, 17, 4).fill("#FFFFFF");
           doc
             .font("Helvetica-Bold")
-            .fontSize(8.5)
+            .fontSize(8)
             .fillColor("#09090B")
-            .text(c.id, rightX + 9, curY + 13.5, { width: 20, align: "center" });
+            .text(c.id, rightX + 9, curY + 12.5, { width: 20, align: "center" });
 
           doc
             .font("Helvetica-Bold")
-            .fontSize(8.6)
+            .fontSize(8.3)
             .fillColor("#FFFFFF")
-            .text(c.title, rightX + 36, curY + 9, { width: rightW - 46, lineBreak: false, ellipsis: true });
+            .text(c.title, rightX + 35, curY + 8, {
+              width: rightW - 44,
+              lineBreak: false,
+              ellipsis: true,
+            });
 
           doc
             .font("Helvetica")
-            .fontSize(7.5)
+            .fontSize(7.25)
             .fillColor("#D4D4D8")
-            .text(c.description, rightX + 36, curY + 23, {
-              width: rightW - 46,
-              height: cardH - 28,
-              lineGap: 1.2,
+            .text(c.description, rightX + 35, curY + 21, {
+              width: rightW - 44,
+              height: Math.max(24, cardH - 25),
+              lineGap: 1.15,
             });
 
           curY += cardH + gapY;
         }
 
-        if (hasExtraBox) {
-          doc.roundedRect(rightX, curY, rightW, extraH, 7).fillAndStroke("#141519", "#3F3F46");
-          if (chapter.page === 8) {
-            doc
-              .font("Helvetica-Bold")
-              .fontSize(7.4)
-              .fillColor("#F59E0B")
-              .text("QR FLOW: 1. Scan Standee  ->  2. Business Front Page Opens  ->  3. Tap Add Review", rightX + 10, curY + 9, {
-                width: rightW - 20,
-              });
-            const subBoxY = Math.max(curY + 23, doc.y + 4);
-            doc
-              .font("Helvetica")
-              .fontSize(7.2)
-              .fillColor("#D4D4D8")
-              .text(
-                "Shoppers inspect real photos and whole-star scores before opening the hardware camera—driving peak review completion.",
-                rightX + 10,
-                subBoxY,
-                { width: rightW - 20, lineGap: 1.2 }
-              );
-          } else if (chapter.page === 11) {
-            doc
-              .font("Helvetica-Bold")
-              .fontSize(7.3)
-              .fillColor("#F59E0B")
-              .text("ZERO SIGN-UP: 1. Snap 3s Photo -> 2. Auto U/A4B6C8 -> 3. Optional 1-Time Passkey", rightX + 10, curY + 9, {
-                width: rightW - 20,
-              });
-            const subBoxY = Math.max(curY + 23, doc.y + 4);
-            doc
-              .font("Helvetica")
-              .fontSize(7.2)
-              .fillColor("#D4D4D8")
-              .text(
-                "Users never create an account, email, or password upfront—after their first review, 1 optional Face ID tap locks their handle forever.",
-                rightX + 10,
-                subBoxY,
-                { width: rightW - 20, lineGap: 1.2 }
-              );
-          } else if (chapter.page === 19) {
-            const domains = ANONYMOUS_CLAIMED_ENTITIES.slice(0, 6)
-              .map((e) => e.domain)
-              .join("  ·  ");
-            doc
-              .font("Helvetica-Bold")
-              .fontSize(7.5)
-              .fillColor("#FFFFFF")
-              .text("ACTIVE PORTFOLIO (100% ANONYMOUS OWNER BADGES)", rightX + 10, curY + 9, {
-                width: rightW - 20,
-              });
-            const subBoxY = Math.max(curY + 23, doc.y + 4);
-            doc
-              .font("Helvetica")
-              .fontSize(7.3)
-              .fillColor("#D4D4D8")
-              .text(domains, rightX + 10, subBoxY, { width: rightW - 20, lineGap: 1.2 });
-          } else if (chapter.page === 20) {
-            doc
-              .font("Helvetica-Bold")
-              .fontSize(7.3)
-              .fillColor("#FFFFFF")
-              .text("SAAS PRICING:  $0 Free  |  $49/mo Claimed Pro  |  $149/mo Growth & Embed", rightX + 10, curY + 10, {
-                width: rightW - 20,
-              });
-            const subBoxY = Math.max(curY + 25, doc.y + 5);
-            doc
-              .font("Helvetica")
-              .fontSize(7.2)
-              .fillColor("#F59E0B")
-              .text(
-                "~95%+ Gross Margin via Bunny.net CDN (~120 KB photos) & Cloud SQL PostgreSQL.",
-                rightX + 10,
-                subBoxY,
-                { width: rightW - 20, lineGap: 1.2 }
-              );
-          }
-        }
-
-        // Bottom 3-Column Metrics Strip
-        const metricY = pageH - 50;
-        const metricW = (pageW - 56 - 16) / 3;
-        chapter.metrics.forEach((m, mIdx) => {
-          const mx = 28 + mIdx * (metricW + 8);
-          doc.roundedRect(mx, metricY, metricW, 38, 6).fillAndStroke("#111215", "#27272A");
+        if (hasGuide && chapter.buttonGuide) {
+          doc.roundedRect(rightX, curY, rightW, guideH, 7).fillAndStroke("#141519", "#3F3F46");
           doc
             .font("Helvetica-Bold")
             .fontSize(6.8)
-            .fillColor("#A1A1AA")
-            .text(m.label.toUpperCase(), mx + 10, metricY + 7, { width: metricW - 20 });
+            .fillColor("#F59E0B")
+            .text("INTERACTIVE CONTROLS ON THIS SCREEN", rightX + 10, curY + 7, {
+              width: rightW - 20,
+              lineBreak: false,
+            });
+          const summaryControls = chapter.buttonGuide
+            .slice(0, 3)
+            .map((b) => `${b.control}: ${b.action}`)
+            .join("  ·  ");
+          doc
+            .font("Helvetica")
+            .fontSize(6.75)
+            .fillColor("#D4D4D8")
+            .text(summaryControls, rightX + 10, curY + 19, {
+              width: rightW - 20,
+              height: guideH - 22,
+              lineGap: 1.15,
+            });
+        }
+
+        // Bottom 3-Column Metrics Strip
+        const metricY = pageH - 48;
+        const metricW = (pageW - 56 - 16) / 3;
+        chapter.metrics.forEach((m, mIdx) => {
+          const mx = 28 + mIdx * (metricW + 8);
+          doc.roundedRect(mx, metricY, metricW, 36, 6).fillAndStroke("#111215", "#27272A");
           doc
             .font("Helvetica-Bold")
-            .fontSize(8.4)
+            .fontSize(6.6)
+            .fillColor("#A1A1AA")
+            .text(m.label.toUpperCase(), mx + 10, metricY + 6, { width: metricW - 20 });
+          doc
+            .font("Helvetica-Bold")
+            .fontSize(8.2)
             .fillColor("#FFFFFF")
-            .text(`${m.value}  ·  ${m.detail}`, mx + 10, metricY + 20, {
+            .text(`${m.value}  ·  ${m.detail}`, mx + 10, metricY + 18.5, {
               width: metricW - 20,
               lineBreak: false,
               ellipsis: true,
@@ -672,7 +771,13 @@ export async function writeVisualPitchPdfFiles(): Promise<Buffer> {
     path.join(process.cwd(), "public", "Yoouz_Visual_Investor_Pitch_Deck.pdf"),
     path.join(process.cwd(), "public", "Yoouz_Investor_Pitch_Memorandum.pdf"),
     path.join(process.cwd(), "public", "Yoouz_Institutional_Investor_Memorandum.pdf"),
-    path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"),
+    path.join(
+      process.cwd(),
+      "public",
+      "assets",
+      "aistudio",
+      "Yoouz_Institutional_Investor_Memorandum_pdf_ce4b9c13.pdf"
+    ),
   ];
   for (const t of targets) {
     try {
