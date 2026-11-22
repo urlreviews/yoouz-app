@@ -1,45 +1,16 @@
 [
   {
-    "id": "sephora.com",
-    "name": "Sephora",
-    "category": "Beauty & Cosmetics",
-    "categoryType": "all",
-    "address": "350 Mission St, San Francisco, CA 94105",
-    "city": "San Francisco",
-    "country": "Japan",
-    "lat": 0,
-    "lng": 0,
-    "rating": 4,
-    "totalReviews": 2,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 1,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
-    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/sephora.com.webp"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (877) 737-4672",
-    "email": "customerservice@sephora.com",
-    "website": "https://www.sephora.com/",
-    "priceRange": "N/A",
-    "plusCode": "",
-    "locations": [],
-    "description": "Discover the latest in beauty at Sephora! Explore an unrivaled selection of makeup, skincare, hair, fragrance & more from classic & emerging brands.",
-    "popularKeywords": [],
-    "amenities": [],
-    "topDishes": [],
-    "brandDomain": "sephora.com",
+    "id": "uniqlo.com",
+    "category": "Apparel & Clothing",
+    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "name": "Uniqlo US",
+    "brandDomain": "uniqlo.com",
+    "categoryType": "shopping",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
     "ratingCount": 2,
-    "videoReviewCount": 2,
     "starCounts": {
       "1": 0,
       "2": 0,
@@ -47,11 +18,463 @@
       "4": 0,
       "5": 1
     },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "city": "Gent",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://uniqlo.com",
+    "priceRange": "N/A",
     "isSavedToProfile": true,
-    "createdAt": "2026-11-20 11:47:40",
+    "plusCode": "",
+    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/uniqlo.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "createdAt": "2026-11-13 21:33:01",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "locations": []
+  },
+  {
+    "id": "fourseasons.com",
+    "category": "Luxury Hotel & Lounge",
+    "logoUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/fourseasons.com.webp",
+    "name": "Four Seasons",
+    "categoryType": "hotels",
+    "address": "Abu Dhabi Global Market St. – Second, Al Maryah Island",
+    "city": "Online",
+    "country": "United Arab Emirates",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
+    "brandDomain": "fourseasons.com",
+    "ogImage": "/uploads/brand-assets/banners/fourseasons.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/fourseasons.com.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fpress.fourseasons.com%2Fcontent%2Fdam%2Ffourseasons%2Fimages%2Fweb%2FHIS%2FHIS_004_aspect16x9.jpg%2Fjcr%3Acontent%2Frenditions%2Fcq5dam.web.press.722.keepaspectratio.jpeg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 971 (2) 333 2222",
+    "email": "",
+    "website": "https://fourseasons.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Four Seasons is a premier hospitality destination in United Arab Emirates, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "createdAt": "2026-11-13 12:45:23",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
+  },
+  {
+    "id": "hilton.com",
+    "category": "Hotel & Hospitality",
+    "logoUrl": "/uploads/brand-assets/logos/hilton.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/hilton.com.webp",
+    "name": "Hilton Hotels",
+    "categoryType": "hotels",
+    "address": "",
+    "city": "Online",
+    "country": "Switzerland",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/hilton.com.webp",
+    "brandDomain": "hilton.com",
+    "ogImage": "/uploads/brand-assets/banners/hilton.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/hilton.com.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F01%2FHiltonxPTPA-Hero.jpg%3Fw%3D1920%26h%3D1351%26crop%3D1%26q%3D75"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://hilton.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Hilton Hotels is a premier hospitality destination in Switzerland, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "createdAt": "2026-11-12 11:53:36"
+  },
+  {
+    "id": "batterymart.com",
+    "category": "Auto & Electronics",
+    "logoUrl": "/uploads/brand-assets/logos/batterymart.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/batterymart.com.webp",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/batterymart.com.webp",
+    "categoryType": "auto",
+    "name": "Batterymart",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://batterymart.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Batterymart is a dependable automotive and transportation service provider in United States, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "batterymart.com",
+    "createdAt": "2026-11-07 12:33:35",
+    "isClaimed": false,
+    "isVerified": false,
+    "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg",
+    "isSavedToProfile": true,
+    "isFollowed": false,
+    "reviews": [],
+    "photos": [
+      "/uploads/brand-assets/banners/batterymart.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/batterymart.com.webp"
+  },
+  {
+    "id": "nike.com",
+    "category": "Sportswear & Footwear",
+    "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
+    "name": "Nike",
+    "brandDomain": "nike.com",
+    "categoryType": "products",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "ogImage": "/uploads/brand-assets/banners/nike.com.webp",
+    "address": "One Bowerman Dr",
+    "city": "Beaverton, OR",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (800) 806-6453",
+    "email": "",
+    "website": "https://nike.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Nike · sportswear & footwear · Beaverton, OR, United States",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-10-28 12:53:18",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "photos": [
+      "/uploads/brand-assets/banners/nike.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/nike.com.svg",
+    "domain": "nike.com",
+    "reviewCount": 0,
+    "reviews": [],
+    "locations": [],
+    "postalCode": "97005",
+    "zipCode": "97005",
+    "zip": "97005"
+  },
+  {
+    "id": "praktijk-nexus.nl",
+    "category": "Spa & Wellness",
+    "logoUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
+    "categoryType": "beauty",
+    "name": "Praktijk Nexus",
+    "city": "Gent",
+    "country": "Netherlands",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "praktijk-nexus.nl",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://praktijk-nexus.nl",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Praktijk Nexus is a dedicated wellness and therapy center in Gent, Netherlands, providing restorative treatments, professional care, and personalized wellness services.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/praktijk-nexus.nl.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
+    "createdAt": "2026-10-24 20:47:22",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "pintoartmuseum.ph",
+    "category": "Art Museum & Cultural Center",
+    "logoUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+    "name": "Pinto Art Museum",
+    "categoryType": "hotels",
+    "address": "",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
+    "brandDomain": "pintoartmuseum.ph",
+    "ogImage": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://pintoartmuseum.ph",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Pinto Art Museum · art museum & cultural center · Rome, Italy",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "createdAt": "2026-10-23 15:23:20",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "propercoffee.app",
+    "category": "Restaurant & Cafe",
+    "logoUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/propercoffee.app.webp",
+    "name": "Art Coffee Gallery Aberdeen",
+    "categoryType": "restaurants",
+    "address": "to show what's worth your time nearby. Nothing is stored on our servers.",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
+    "brandDomain": "propercoffee.app",
+    "ogImage": "/uploads/brand-assets/banners/propercoffee.app.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/propercoffee.app.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://propercoffee.app",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Art Coffee Gallery Aberdeen is a dining destination in London, United Kingdom, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [
+      {
+        "city": "London",
+        "postalCode": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "openingHours": ""
+      }
+    ],
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "createdAt": "2026-10-23 09:11:16",
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "reviews": []
   },
   {
     "id": "multipharma.be",
@@ -166,7 +589,11 @@
     "photos": [
       "/uploads/brand-assets/banners/upperview-regalia.com.webp"
     ],
-    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp"
+    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "createdAt": "2026-11-13 11:28:14",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "autowerkplaatsbrugge.be",
@@ -373,7 +800,11 @@
     "photos": [
       "/uploads/brand-assets/banners/noma.dk.webp"
     ],
-    "avatarUrl": "/uploads/brand-assets/logos/noma.dk.webp"
+    "avatarUrl": "/uploads/brand-assets/logos/noma.dk.webp",
+    "createdAt": "2026-11-13 10:55:35",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "hotel-julien.com",
@@ -427,7 +858,11 @@
     "photos": [
       "/uploads/brand-assets/banners/hotel-julien.com.webp"
     ],
-    "avatarUrl": "/uploads/brand-assets/logos/hotel-julien.com.svg"
+    "avatarUrl": "/uploads/brand-assets/logos/hotel-julien.com.svg",
+    "createdAt": "2026-11-13 15:06:15",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "jollibee.com.ph",
@@ -531,7 +966,11 @@
     "photos": [
       "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp"
     ],
-    "avatarUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp"
+    "avatarUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
+    "createdAt": "2026-11-09 07:56:11",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "dunkindonuts.com",
@@ -644,7 +1083,11 @@
     "photos": [
       "/uploads/brand-assets/banners/healis.be.webp"
     ],
-    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg"
+    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
   },
   {
     "id": "flipper.net",
@@ -1397,6 +1840,65 @@
     "isFollowed": false
   },
   {
+    "id": "sephora.com",
+    "category": "Beauty & Cosmetics",
+    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
+    "name": "Sephora",
+    "categoryType": "all",
+    "address": "350 Mission St, San Francisco, CA 94105",
+    "city": "San Francisco",
+    "country": "Japan",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/sephora.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (877) 737-4672",
+    "email": "customerservice@sephora.com",
+    "website": "https://sephora.com",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Sephora · beauty & cosmetics · San Francisco, Japan",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "sephora.com",
+    "ratingCount": 2,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 1
+    },
+    "isSavedToProfile": true,
+    "createdAt": "2026-11-20 11:47:40",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "ikea.com",
     "category": "Home & Furniture Retail",
     "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Fwww.ikea.com%2Fglobal%2Fassets%2Flogos%2Fbrand%2Fikea.svg",
@@ -1503,125 +2005,6 @@
       }
     ],
     "isSavedToProfile": true
-  },
-  {
-    "id": "calvinklein.com",
-    "category": "Apparel & Fashion",
-    "logoUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/calvinklein.com.webp",
-    "name": "Calvin Klein® USA",
-    "categoryType": "shopping",
-    "address": "",
-    "city": "Rome",
-    "country": "Italy",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
-    "brandDomain": "calvinklein.com",
-    "ogImage": "/uploads/brand-assets/banners/calvinklein.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/calvinklein.com.webp",
-      "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://calvinklein.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Calvin Klein® USA · apparel & fashion · Rome, Italy",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "createdAt": "2026-11-13 21:39:54"
-  },
-  {
-    "id": "uniqlo.com",
-    "category": "Apparel & Clothing",
-    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "name": "Uniqlo US",
-    "brandDomain": "uniqlo.com",
-    "categoryType": "shopping",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 2,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 1,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "city": "Gent",
-    "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://uniqlo.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/uniqlo.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "createdAt": "2026-11-13 21:33:01",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "locations": []
   },
   {
     "id": "dominos.com",
@@ -1810,66 +2193,6 @@
     "isFollowed": false
   },
   {
-    "id": "fourseasons.com",
-    "category": "Luxury Hotel & Lounge",
-    "logoUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/fourseasons.com.webp",
-    "name": "Four Seasons",
-    "categoryType": "hotels",
-    "address": "Abu Dhabi Global Market St. – Second, Al Maryah Island",
-    "city": "Online",
-    "country": "United Arab Emirates",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/fourseasons.com.webp",
-    "brandDomain": "fourseasons.com",
-    "ogImage": "/uploads/brand-assets/banners/fourseasons.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/fourseasons.com.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fpress.fourseasons.com%2Fcontent%2Fdam%2Ffourseasons%2Fimages%2Fweb%2FHIS%2FHIS_004_aspect16x9.jpg%2Fjcr%3Acontent%2Frenditions%2Fcq5dam.web.press.722.keepaspectratio.jpeg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 971 (2) 333 2222",
-    "email": "",
-    "website": "https://fourseasons.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Four Seasons is a premier hospitality destination in United Arab Emirates, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "createdAt": "2026-11-13 12:45:23",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "villaggiohotels.ae",
     "category": "Hotel & Hospitality",
     "logoUrl": "/uploads/brand-assets/logos/villaggiohotels.ae.webp",
@@ -1937,65 +2260,6 @@
       "/uploads/brand-assets/banners/villaggiohotels.ae.webp"
     ],
     "avatarUrl": "/uploads/brand-assets/logos/villaggiohotels.ae.webp"
-  },
-  {
-    "id": "delta.com",
-    "category": "Airlines & Travel",
-    "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
-    "name": "Delta Air Lines",
-    "brandDomain": "delta.com",
-    "categoryType": "hotels",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/delta.com.webp",
-    "city": "",
-    "country": "",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://delta.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Delta Air Lines · airlines & travel · delta.com",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-11-13 11:16:44",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "photos": [
-      "/uploads/brand-assets/banners/delta.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/delta.com.svg",
-    "locations": []
   },
   {
     "id": "cellercanroca.com",
@@ -2115,57 +2379,6 @@
     "locations": []
   },
   {
-    "id": "hilton.com",
-    "category": "Hotel & Hospitality",
-    "logoUrl": "/uploads/brand-assets/logos/hilton.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/hilton.com.webp",
-    "name": "Hilton Hotels",
-    "categoryType": "hotels",
-    "address": "",
-    "city": "Online",
-    "country": "Switzerland",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/hilton.com.webp",
-    "brandDomain": "hilton.com",
-    "ogImage": "/uploads/brand-assets/banners/hilton.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/hilton.com.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fstories-editor.hilton.com%2Fwp-content%2Fuploads%2F2024%2F01%2FHiltonxPTPA-Hero.jpg%3Fw%3D1920%26h%3D1351%26crop%3D1%26q%3D75"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://hilton.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Hilton Hotels is a premier hospitality destination in Switzerland, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "createdAt": "2026-11-12 11:53:36"
-  },
-  {
     "id": "brightandbeautifulhome.com",
     "category": "Home Services & Cleaning",
     "logoUrl": "/uploads/brand-assets/logos/brightandbeautifulhome.com.webp",
@@ -2228,67 +2441,6 @@
     "avatarUrl": "/uploads/brand-assets/logos/brightandbeautifulhome.com.webp"
   },
   {
-    "id": "batterymart.com",
-    "category": "Auto & Electronics",
-    "logoUrl": "/uploads/brand-assets/logos/batterymart.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/batterymart.com.webp",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/batterymart.com.webp",
-    "categoryType": "auto",
-    "name": "Batterymart",
-    "city": "Online",
-    "country": "United States",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://batterymart.com",
-    "priceRange": "N/A",
-    "plusCode": "",
-    "locations": [],
-    "description": "Batterymart is a dependable automotive and transportation service provider in United States, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "brandDomain": "batterymart.com",
-    "createdAt": "2026-11-07 12:33:35",
-    "isClaimed": false,
-    "isVerified": false,
-    "image": "https://www.batterymart.com/merchant2/graphics/00000001/17/bmart-bm-front.jpg",
-    "isSavedToProfile": true,
-    "isFollowed": false,
-    "reviews": [],
-    "photos": [
-      "/uploads/brand-assets/banners/batterymart.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/batterymart.com.webp"
-  },
-  {
     "id": "benchdepot.com",
     "category": "Industrial & Office",
     "logoUrl": "/uploads/brand-assets/logos/benchdepot.com.webp",
@@ -2342,130 +2494,6 @@
     ],
     "avatarUrl": "/uploads/brand-assets/logos/benchdepot.com.webp",
     "createdAt": "2026-11-06 16:45:17",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
-    "id": "nike.com",
-    "category": "Sportswear & Footwear",
-    "logoUrl": "/uploads/brand-assets/logos/nike.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/nike.com.webp",
-    "name": "Nike",
-    "brandDomain": "nike.com",
-    "categoryType": "products",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "ogImage": "/uploads/brand-assets/banners/nike.com.webp",
-    "address": "One Bowerman Dr",
-    "city": "Beaverton, OR",
-    "country": "United States",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (800) 806-6453",
-    "email": "",
-    "website": "https://nike.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Nike · sportswear & footwear · Beaverton, OR, United States",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-10-28 12:53:18",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "photos": [
-      "/uploads/brand-assets/banners/nike.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/nike.com.svg",
-    "domain": "nike.com",
-    "reviewCount": 0,
-    "reviews": [],
-    "locations": [],
-    "postalCode": "97005",
-    "zipCode": "97005",
-    "zip": "97005"
-  },
-  {
-    "id": "praktijk-nexus.nl",
-    "category": "Spa & Wellness",
-    "logoUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/praktijk-nexus.nl.webp",
-    "categoryType": "beauty",
-    "name": "Praktijk Nexus",
-    "city": "Gent",
-    "country": "Netherlands",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "praktijk-nexus.nl",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://praktijk-nexus.nl",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Praktijk Nexus is a dedicated wellness and therapy center in Gent, Netherlands, providing restorative treatments, professional care, and personalized wellness services.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/praktijk-nexus.nl.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/praktijk-nexus.nl.webp",
-    "createdAt": "2026-10-24 20:47:22",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false,
@@ -2653,68 +2681,6 @@
     "reviews": []
   },
   {
-    "id": "bk.com",
-    "category": "Fast Food Restaurant",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/uploads/brand-assets/banners/bk.com.webp",
-    "name": "Burger King",
-    "categoryType": "restaurants",
-    "address": "",
-    "city": "Online",
-    "country": "United States",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
-    "brandDomain": "bk.com",
-    "ogImage": "/uploads/brand-assets/banners/bk.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/bk.com.webp",
-      "https://upload.wikimedia.org/wikipedia/commons/c/c8/Whopper.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "1-305-378-3000",
-    "email": "",
-    "website": "https://bk.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Burger King is a dining destination in United States, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "createdAt": "2026-10-23 17:00:45",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
-  },
-  {
     "id": "mcdonalds.com",
     "category": "Fast Food Restaurant",
     "logoUrl": "/uploads/brand-assets/logos/mcdonalds.com.svg",
@@ -2839,58 +2805,6 @@
     }
   },
   {
-    "id": "pintoartmuseum.ph",
-    "category": "Art Museum & Cultural Center",
-    "logoUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-    "name": "Pinto Art Museum",
-    "categoryType": "hotels",
-    "address": "",
-    "city": "Rome",
-    "country": "Italy",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
-    "brandDomain": "pintoartmuseum.ph",
-    "ogImage": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://pintoartmuseum.ph",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Pinto Art Museum · art museum & cultural center · Rome, Italy",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "createdAt": "2026-10-23 15:23:20",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
     "id": "7-eleven.com",
     "category": "Convenience Store",
     "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
@@ -2950,76 +2864,6 @@
     "locations": [],
     "selectedName": "7-11",
     "hours": "Available 24/7",
-    "reviews": []
-  },
-  {
-    "id": "propercoffee.app",
-    "category": "Restaurant & Cafe",
-    "logoUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/propercoffee.app.webp",
-    "name": "Art Coffee Gallery Aberdeen",
-    "categoryType": "restaurants",
-    "address": "to show what's worth your time nearby. Nothing is stored on our servers.",
-    "city": "London",
-    "country": "United Kingdom",
-    "lat": 51.5074,
-    "lng": -0.1278,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
-    "brandDomain": "propercoffee.app",
-    "ogImage": "/uploads/brand-assets/banners/propercoffee.app.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/propercoffee.app.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://propercoffee.app",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Art Coffee Gallery Aberdeen is a dining destination in London, United Kingdom, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [
-      {
-        "city": "London",
-        "postalCode": "",
-        "address": "",
-        "phone": "",
-        "email": "",
-        "openingHours": ""
-      }
-    ],
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "createdAt": "2026-10-23 09:11:16",
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
     "reviews": []
   },
   {
@@ -3212,6 +3056,127 @@
     "zip": "Mamo TCV"
   },
   {
+    "id": "delta.com",
+    "category": "Airlines & Travel",
+    "logoUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/delta.com.webp",
+    "name": "Delta Air Lines",
+    "brandDomain": "delta.com",
+    "categoryType": "hotels",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/delta.com.webp",
+    "city": "",
+    "country": "",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://delta.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Delta Air Lines · airlines & travel · delta.com",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-11-13 11:16:44",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "photos": [
+      "/uploads/brand-assets/banners/delta.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/delta.com.svg",
+    "locations": []
+  },
+  {
+    "id": "bk.com",
+    "category": "Fast Food Restaurant",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/bk.com.webp",
+    "name": "Burger King",
+    "categoryType": "restaurants",
+    "address": "",
+    "city": "Online",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20120%20120%22%20width%3D%22120%22%20height%3D%22120%22%3E%0A%20%20%3Crect%20width%3D%22120%22%20height%3D%22120%22%20rx%3D%2226%22%20fill%3D%22%23FAF2E7%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2014%2040%20C%2019%2013%2C%20101%2013%2C%20106%2040%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M31.7%2054.2Q31.7%2055.2%2031.3%2055.9Q30.9%2056.6%2030.2%2057.1Q29.5%2057.6%2028.5%2057.8Q27.6%2058%2026.5%2058L19.8%2058L19.8%2044.6L25.9%2044.6Q27.1%2044.6%2028.1%2044.8Q29%2045%2029.6%2045.4Q30.3%2045.8%2030.6%2046.5Q30.9%2047.1%2030.9%2048Q30.9%2049.1%2030.3%2049.9Q29.7%2050.7%2028.4%2050.9Q30%2051.1%2030.8%2052Q31.7%2052.8%2031.7%2054.2M28.1%2048.3Q28.1%2047.4%2027.5%2047.1Q26.9%2046.7%2025.8%2046.7L22.6%2046.7L22.6%2050L25.8%2050Q27%2050%2027.6%2049.6Q28.1%2049.2%2028.1%2048.3M28.9%2054Q28.9%2053.4%2028.7%2053.1Q28.5%2052.7%2028.1%2052.5Q27.7%2052.3%2027.2%2052.2Q26.7%2052.1%2026.2%2052.1L22.6%2052.1L22.6%2055.9L26.3%2055.9Q26.8%2055.9%2027.3%2055.8Q27.8%2055.7%2028.1%2055.5Q28.5%2055.3%2028.7%2054.9Q28.9%2054.5%2028.9%2054%20M39.2%2058.2Q37.9%2058.2%2036.9%2057.9Q35.8%2057.6%2035.1%2057Q34.3%2056.3%2033.9%2055.3Q33.5%2054.3%2033.5%2053L33.5%2044.6L36.3%2044.6L36.3%2052.8Q36.3%2053.6%2036.5%2054.2Q36.7%2054.8%2037.1%2055.2Q37.5%2055.6%2038%2055.8Q38.6%2056%2039.2%2056Q39.9%2056%2040.5%2055.8Q41.1%2055.6%2041.5%2055.2Q41.9%2054.8%2042.1%2054.2Q42.4%2053.5%2042.4%2052.7L42.4%2044.6L45.2%2044.6L45.2%2052.8Q45.2%2054.2%2044.7%2055.2Q44.3%2056.2%2043.5%2056.9Q42.7%2057.6%2041.6%2057.9Q40.5%2058.2%2039.2%2058.2%20M59.7%2058L56.6%2058L53.5%2052.9L50.2%2052.9L50.2%2058L47.4%2058L47.4%2044.6L54.1%2044.6Q55.3%2044.6%2056.3%2044.9Q57.2%2045.1%2057.8%2045.7Q58.5%2046.2%2058.8%2046.9Q59.1%2047.7%2059.1%2048.6Q59.1%2049.3%2058.9%2050Q58.6%2050.6%2058.2%2051.1Q57.8%2051.6%2057.3%2051.9Q56.8%2052.2%2056.1%2052.4L59.7%2058M56.3%2048.7Q56.3%2047.7%2055.6%2047.2Q55%2046.8%2053.8%2046.8L50.2%2046.8L50.2%2050.7L53.9%2050.7Q54.5%2050.7%2054.9%2050.6Q55.4%2050.4%2055.7%2050.2Q56%2049.9%2056.1%2049.5Q56.3%2049.1%2056.3%2048.7%20M67.5%2056Q68.1%2056%2068.7%2055.9Q69.3%2055.8%2069.7%2055.6Q70.2%2055.5%2070.6%2055.3Q71%2055.1%2071.2%2054.9L71.2%2053L68%2053L68%2050.9L73.8%2050.9L73.8%2055.9Q73.3%2056.3%2072.7%2056.7Q72.1%2057.2%2071.2%2057.5Q70.4%2057.8%2069.5%2058Q68.5%2058.2%2067.4%2058.2Q65.7%2058.2%2064.4%2057.7Q63.1%2057.2%2062.3%2056.2Q61.4%2055.3%2061%2054Q60.6%2052.7%2060.6%2051.2Q60.6%2049.7%2061.1%2048.4Q61.5%2047.1%2062.3%2046.2Q63.2%2045.3%2064.5%2044.9Q65.8%2044.4%2067.5%2044.4Q68.8%2044.4%2069.8%2044.6Q70.7%2044.9%2071.5%2045.3Q72.2%2045.8%2072.7%2046.4Q73.2%2047.1%2073.5%2047.9L70.9%2048.7Q70.8%2048.2%2070.5%2047.9Q70.2%2047.5%2069.8%2047.2Q69.3%2046.9%2068.8%2046.8Q68.2%2046.6%2067.5%2046.6Q66.5%2046.6%2065.7%2046.9Q64.9%2047.3%2064.4%2047.9Q63.9%2048.5%2063.7%2049.3Q63.5%2050.2%2063.5%2051.2Q63.5%2052.3%2063.7%2053.2Q64%2054%2064.5%2054.7Q65%2055.3%2065.7%2055.6Q66.5%2056%2067.5%2056%20M87%2058L76%2058L76%2044.6L86.6%2044.6L86.6%2046.8L78.8%2046.8L78.8%2050.1L86%2050.1L86%2052.3L78.8%2052.3L78.8%2055.8L87%2055.8%20M101.1%2058L97.9%2058L94.8%2052.9L91.5%2052.9L91.5%2058L88.7%2058L88.7%2044.6L95.4%2044.6Q96.7%2044.6%2097.6%2044.9Q98.6%2045.1%2099.2%2045.7Q99.8%2046.2%20100.1%2046.9Q100.4%2047.7%20100.4%2048.6Q100.4%2049.3%20100.2%2050Q100%2050.6%2099.6%2051.1Q99.2%2051.6%2098.7%2051.9Q98.1%2052.2%2097.5%2052.4L101.1%2058M97.6%2048.7Q97.6%2047.7%2097%2047.2Q96.3%2046.8%2095.1%2046.8L91.5%2046.8L91.5%2050.7L95.2%2050.7Q95.8%2050.7%2096.3%2050.6Q96.7%2050.4%2097%2050.2Q97.3%2049.9%2097.5%2049.5Q97.6%2049.1%2097.6%2048.7%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M49.2%2077L45.9%2077L41.1%2070.8L39.4%2072.1L39.4%2077L36.6%2077L36.6%2063.6L39.4%2063.6L39.4%2069.7L45.5%2063.6L48.8%2063.6L43%2069.3%20M53.7%2077L50.9%2077L50.9%2063.6L53.7%2063.6%20M68%2077L64.7%2077L58.9%2066.7Q58.9%2067.1%2058.9%2067.5Q59%2067.9%2059%2068.3Q59%2068.7%2059%2069.1L59%2077L56.5%2077L56.5%2063.6L59.7%2063.6L65.7%2074Q65.6%2073.6%2065.6%2073.2Q65.5%2072.8%2065.5%2072.3Q65.5%2071.9%2065.5%2071.4L65.5%2063.6L68%2063.6%20M77.2%2075Q77.8%2075%2078.4%2074.9Q78.9%2074.8%2079.4%2074.6Q79.9%2074.5%2080.3%2074.3Q80.6%2074.1%2080.9%2073.9L80.9%2072L77.6%2072L77.6%2069.9L83.5%2069.9L83.5%2074.9Q83%2075.3%2082.4%2075.7Q81.7%2076.2%2080.9%2076.5Q80.1%2076.8%2079.1%2077Q78.2%2077.2%2077.1%2077.2Q75.3%2077.2%2074%2076.7Q72.8%2076.2%2071.9%2075.2Q71.1%2074.3%2070.7%2073Q70.3%2071.7%2070.3%2070.2Q70.3%2068.7%2070.7%2067.4Q71.1%2066.1%2072%2065.2Q72.8%2064.3%2074.1%2063.9Q75.4%2063.4%2077.2%2063.4Q78.4%2063.4%2079.4%2063.6Q80.4%2063.9%2081.1%2064.3Q81.9%2064.8%2082.4%2065.4Q82.9%2066.1%2083.2%2066.9L80.6%2067.7Q80.4%2067.2%2080.1%2066.9Q79.8%2066.5%2079.4%2066.2Q79%2065.9%2078.4%2065.8Q77.9%2065.6%2077.2%2065.6Q76.1%2065.6%2075.4%2065.9Q74.6%2066.3%2074.1%2066.9Q73.6%2067.5%2073.4%2068.3Q73.1%2069.2%2073.1%2070.2Q73.1%2071.3%2073.4%2072.2Q73.6%2073%2074.1%2073.7Q74.6%2074.3%2075.4%2074.6Q76.1%2075%2077.2%2075%22%20fill%3D%22%23D62300%22%20stroke%3D%22%23D62300%22%20stroke-width%3D%220.9%22%20stroke-linejoin%3D%22round%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2018%2083%20C%2028%20104%2C%2092%20104%2C%20102%2083%20Z%22%20fill%3D%22%23F47F24%22%2F%3E%0A%3C%2Fsvg%3E",
+    "brandDomain": "bk.com",
+    "ogImage": "/uploads/brand-assets/banners/bk.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/bk.com.webp",
+      "https://upload.wikimedia.org/wikipedia/commons/c/c8/Whopper.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "1-305-378-3000",
+    "email": "",
+    "website": "https://bk.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Burger King is a dining destination in United States, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "createdAt": "2026-10-23 17:00:45",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "placeLogoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Burger_King_2020.svg"
+  },
+  {
     "id": "refalo.legal",
     "category": "Legal Services",
     "logoUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
@@ -3269,6 +3234,66 @@
     "isVerified": false,
     "isFollowed": false,
     "reviews": []
+  },
+  {
+    "id": "calvinklein.com",
+    "category": "Apparel & Fashion",
+    "logoUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/calvinklein.com.webp",
+    "name": "Calvin Klein® USA",
+    "categoryType": "shopping",
+    "address": "",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
+    "brandDomain": "calvinklein.com",
+    "ogImage": "/uploads/brand-assets/banners/calvinklein.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/calvinklein.com.webp",
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg/1280px-Calvin_Klein_Collection_flagship_store_654_Madison_Avenue_New_York_City_USA.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://calvinklein.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Calvin Klein® USA · apparel & fashion · Rome, Italy",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "createdAt": "2026-11-13 21:39:54"
   },
   {
     "id": "guard-slip-cafe-by-lgip.bayombong",

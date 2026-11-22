@@ -4858,7 +4858,7 @@ async function startServer() {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `${disposition}; filename="Yoouz_Visual_Investor_Pitch_Deck.pdf"`);
     res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex");
-    res.setHeader("Cache-Control", forceRefresh ? "no-cache, no-store, must-revalidate" : "public, max-age=300");
+    res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
 
     if (!forceRefresh) {
       if (cachedPitchPdfBuffer && cachedPitchPdfBuffer.length > 10000) {
@@ -16184,7 +16184,10 @@ ${imageEntries.join('\n')}
     setHeaders: (res, filePath) => {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Accept-Ranges", "bytes");
-      if (/\.(jpe?g|png|webp|avif|gif|svg|ico|woff2?|mp4|webm|mov)$/i.test(filePath)) {
+      if (filePath.includes(`${path.sep}pitch-assets${path.sep}`) || filePath.includes('/pitch-assets/')) {
+        res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      } else if (/\.(jpe?g|png|webp|avif|gif|svg|ico|woff2?|mp4|webm|mov)$/i.test(filePath)) {
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
         res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       }
@@ -44908,6 +44911,9 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
+        } else if (filePath.includes(`${path.sep}pitch-assets${path.sep}`) || filePath.includes('/pitch-assets/')) {
+          res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         } else if (/\.(js|css|jpe?g|png|webp|avif|gif|svg|ico|woff2?)$/i.test(filePath)) {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
           res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');

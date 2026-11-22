@@ -1266,7 +1266,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
 
     const loadPdf = async () => {
       try {
-        const res = await fetch("/api/pitch/raw-pdf", { cache: "no-store" });
+        const res = await fetch("/api/pitch/raw-pdf?v=4", { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const arrayBuf = await res.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuf });
@@ -1514,7 +1514,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
           )}
 
           <a
-            href="/api/pitch/raw-pdf"
+            href="/api/pitch/raw-pdf?download=1&v=4"
             download="Yoouz_Visual_Investor_Pitch_Deck.pdf"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-black hover:bg-zinc-200 text-xs font-semibold transition-colors shadow-sm"
           >
@@ -1896,7 +1896,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <a
-                    href="/api/pitch/raw-pdf"
+                    href="/api/pitch/raw-pdf?download=1&v=4"
                     download="Yoouz_Visual_Investor_Pitch_Deck.pdf"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-black hover:bg-zinc-200 text-sm font-semibold transition-colors"
                   >
@@ -1935,7 +1935,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 <div className="py-16 text-center space-y-3">
                   <p className="text-sm text-red-400">Unable to preview PDF inline: {pdfError}</p>
                   <a
-                    href="/api/pitch/raw-pdf"
+                    href="/api/pitch/raw-pdf?download=1&v=4"
                     download="Yoouz_Visual_Investor_Pitch_Deck.pdf"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black text-sm font-semibold"
                   >

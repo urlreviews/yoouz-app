@@ -160,8 +160,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "One Live Camera Photo Replaces 1,000 Words of Fake Text Reviews.",
     subheadline:
       "Generative AI has destroyed trust in text reviews across Google, Yelp, and Trustpilot overnight. Yoouz replaces fakeable essays and camera-roll uploads with a single unspoofable primitive: 1 live hardware camera photo + 1 to 5 solid whole stars captured in 3 seconds—with zero signup wall.",
-    imagePath: "/pitch-assets/v3/home-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/home-mobile.png",
+    imagePath: "/pitch-assets/v4/home-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/home-mobile.png",
     frameMode: "dual",
     imageCaption: "Live Production Desktop (1440px) — yoouz.com Universal Search, Category Pills & Live Photo Proof Feed",
     mobileCaption: "Live Production Mobile PWA (390px) — Dark Obsidian Feed + Floating Liquid-Glass Camera Dock",
@@ -216,8 +216,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Text Is Dead to AI. Video Is Too Heavy to Record. Live Photo Hits the Golden Sweet Spot.",
     subheadline:
       "Legacy platforms bet on text (now flooded by LLM spam). Video review startups failed because 98% of customers refuse to speak on camera in public and streaming costs crush margins. One live photo delivers instant visual proof in 0.2 seconds at 1/250th the infrastructure cost.",
-    imagePath: "/pitch-assets/v3/reel-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/reel-mobile.png",
+    imagePath: "/pitch-assets/v4/reel-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/reel-mobile.png",
     frameMode: "data",
     imageCaption: "Format Economics & Behavioral Comparison — Why 3-Second Live Photo Proof Beats Legacy Text and Heavy Video Platforms",
     callouts: [
@@ -265,7 +265,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Capturing the $15.8B+ Global Shift From Fake Text Reviews to Verifiable Visual Proof.",
     subheadline:
       "Every local storefront, hotel, restaurant, clinic, and D2C brand depends on customer reviews to win discovery and checkout conversion. As AI spam erodes legacy platforms, Yoouz enters with an unspoofable global visual standard—starting with our high-velocity 1,000-venue Pre-Seed cohort.",
-    imagePath: "/pitch-assets/v3/home-desktop.png",
+    imagePath: "/pitch-assets/v4/home-desktop.png",
     frameMode: "data",
     imageCaption: "Yoouz Market Sizing — $15.8B+ Global TAM, $4.2B+ Addressable SMB SAM, and 1,000-Venue Pre-Seed SOM (~$1.2M+ ARR)",
     callouts: [
@@ -313,7 +313,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Why Incumbents Cannot Copy Yoouz Without Cannibalizing Their Legacy Databases.",
     subheadline:
       "Google Maps, Trustpilot, and Yelp are locked into billions of legacy text reviews, mandatory login walls, and pay-to-play ad models. Yoouz is purpose-built from the ground up around 3-second hardware camera proof, passwordless Passkeys, and $0 CAC physical QR loops.",
-    imagePath: "/pitch-assets/v3/business-hub-desktop.png",
+    imagePath: "/pitch-assets/v4/business-hub-desktop.png",
     frameMode: "data",
     imageCaption: "Structural Architecture Matrix — Yoouz Live Photo Protocol vs. Google Maps, Trustpilot & Yelp Across 6 Moats",
     callouts: [
@@ -361,7 +361,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Four Compounding Organic Growth Loops Scaling Globally With $0 Paid Ads.",
     subheadline:
       "Instead of burning venture capital on Google or Meta ads, Yoouz turns merchant physical foot traffic, autonomous web scraping, 75+ language visual SEO, and unboxed social share cards into a self-reinforcing B2B2C acquisition engine.",
-    imagePath: "/pitch-assets/v3/qr-modal-desktop.png",
+    imagePath: "/pitch-assets/v4/qr-modal-desktop.png",
     frameMode: "data",
     imageCaption: "Yoouz $0 CAC Distribution Flywheel — Counter QR Standees -> Auto-Indexed Profiles -> 75+ Language Visual SEO -> Inbound SaaS Claiming",
     callouts: [
@@ -409,7 +409,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Predictable B2B Recurring SaaS With ~95%+ Software Gross Margins.",
     subheadline:
       "Every business starts on our $0 Free Auto-Indexed tier to maximize global directory coverage and SEO density, then upgrades self-serve to $49/mo Claimed Business Pro or $149/mo Growth & Website Widget—backed by ultra-lean ~120 KB Bunny.net photo delivery.",
-    imagePath: "/pitch-assets/v3/business-portal-desktop.png",
+    imagePath: "/pitch-assets/v4/business-portal-desktop.png",
     frameMode: "data",
     imageCaption: "Yoouz B2B SaaS Tier Architecture — $0 Free Discovery, $49/mo Claimed Pro & $149/mo Growth Widget (~95%+ Gross Margin)",
     callouts: [
@@ -457,8 +457,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "15 Years Luxury Hospitality Mastery + Solo Full-Stack Execution. Live at yoouz.com Today.",
     subheadline:
       "Not a slideware concept—Yoouz is fully engineered and live in production today with 543+ indexed businesses, 62 live customer photo reviews across global brands, native WebAuthn Passkeys, dynamic 1200×630 OG share cards, and a full self-serve B2B Business Portal.",
-    imagePath: "/pitch-assets/v3/business-portal-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/business-portal-mobile.png",
+    imagePath: "/pitch-assets/v4/business-portal-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/business-portal-mobile.png",
     frameMode: "data",
     imageCaption: "Founder-Led Production Execution & Pre-Seed Capital Allocation — Scaling From Active Production Beta to First 500–1,000 Venues",
     callouts: [
@@ -510,8 +510,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Zero Sign-Up Wall: Real Customer Photo Proof Immediately Above the Fold.",
     subheadline:
       "Visitors on Desktop (1440px) and Mobile PWA (390px) land straight on a clean obsidian discovery canvas—combining universal URL/brand search, instant vertical category pills, and a high-contrast grid of verified live photo reviews.",
-    imagePath: "/pitch-assets/v3/home-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/home-mobile.png",
+    imagePath: "/pitch-assets/v4/home-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/home-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop Home Discovery (yoouz.com) — Top Navigation Bar, Search Hero, Category Pills & 5-Column Photo Proof Grid",
     mobileCaption: "Mobile PWA Home (390px) — Zero-Obstruction 2-Column Photo Grid & Floating Liquid-Glass Camera Dock",
@@ -567,8 +567,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Type Any Brand, Street Venue, or Website URL—Auto-Built in Seconds.",
     subheadline:
       "Businesses never have to register to appear on Yoouz. Typing any brand name or pasting any global domain (e.g. zara.com, sephora.com, or a neighborhood restaurant) resolves a structured business profile with official logo, cover banner, and live photo proof automatically.",
-    imagePath: "/pitch-assets/v3/search-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/search-mobile.png",
+    imagePath: "/pitch-assets/v4/search-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/search-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop Live Search Dropdown — Instant Type-Ahead Across Brands, Domains, Categories & Whole-Star Ratings",
     mobileCaption: "Mobile Full-Screen Search Overlay — Clean Unclipped Input, Instant Trending Brands & Global URL Lookup",
@@ -623,8 +623,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Edge-to-Edge Live Photo Proof With Real-Time Likes, Comments, Saves & Attribution.",
     subheadline:
       "Tapping any review card opens Yoouz's signature full-bleed Photo Reel. Every frame displays the unedited customer photograph, top-right ★ Yoouz platform mark, verified business header, solid 5-star rating, and a 5-button engagement rail persisted directly to Cloud SQL.",
-    imagePath: "/pitch-assets/v3/reel-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/reel-mobile.png",
+    imagePath: "/pitch-assets/v4/reel-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/reel-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop Photo Reel — Full-Height Verified Photo Canvas, Brand Pill Overlay, ★ Yoouz Mark & Floating Action Rail",
     mobileCaption: "Mobile Full-Bleed Photo Reel — Swipe-Up Vertical Feed, Top-Right ★ Yoouz Attribution & Thumb-First Rail",
@@ -680,9 +680,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Every Shared Link Renders a Crisp Unboxed Photo Card Across WhatsApp, iMessage & X.",
     subheadline:
       "When a user taps Share, Yoouz presents an Apple-grade native bottom sheet previewing the exact unboxed 1200×630 OpenGraph image rendered live by our server—featuring the real photo edge-to-edge, solid gold stars, business squircle logo, and the ★ Yoouz mark.",
-    imagePath: "/pitch-assets/v3/share-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/share-mobile.png",
-    secondaryImagePath: "/pitch-assets/v3/og-card-sample.png",
+    imagePath: "/pitch-assets/v4/share-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/share-mobile.png",
+    secondaryImagePath: "/pitch-assets/v4/og-card-sample.png",
     frameMode: "dual",
     imageCaption: "Desktop Share Modal — Clean Unboxed Preview Card + 1-Click WhatsApp, WA Business, Messages, Mail, Telegram & Utility Actions",
     mobileCaption: "Mobile iOS-Style Share Sheet — Exact Visual Match to the Live 1200×630 Server-Rendered OG Card",
@@ -737,8 +737,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "One Unified Conversion Hub Turning Real Customer Photos Into Website Clicks, Calls & Visits.",
     subheadline:
       "Every auto-indexed or claimed business receives a flagship public storefront at yoouz.com/reviews/{domain}—pairing a widescreen cover banner, squircle brand logo, aggregate rating box, prominent white Add Review CTA, and six direct customer action buttons.",
-    imagePath: "/pitch-assets/v3/business-hub-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/business-hub-mobile.png",
+    imagePath: "/pitch-assets/v4/business-hub-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/business-hub-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop Business Storefront (yoouz.com/reviews/sephora.com) — Split Hub Header + Interactive Photo Proof Gallery",
     mobileCaption: "Mobile Business Storefront (390px) — Cover Banner, Squircle Logo, Add Review Pill & 6 Direct Action Icons",
@@ -794,8 +794,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Print-Ready Counter QR Kits That Open Social Proof First—Then Capture in 1 Tap.",
     subheadline:
       "Every business profile on Yoouz automatically generates a customizable, print-ready QR code modal. Placing it on dining tables, hotel desks, receipts, or packaging turns everyday physical foot traffic into verified live photo reviews at $0 CAC.",
-    imagePath: "/pitch-assets/v3/qr-modal-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/business-hub-mobile.png",
+    imagePath: "/pitch-assets/v4/qr-modal-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/business-hub-mobile.png",
     frameMode: "dual",
     imageCaption: "Live Business QR Standee Modal (Desktop) — Instant Scannable QR Code, Print Standee Export & Brand Customization",
     mobileCaption: "Mobile Scan Destination — Lands on the Full Business Front Page First So Guests See Peer Photos Before Tapping Add Review",
@@ -849,9 +849,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     kicker: "14 · LIVE PRODUCT TOUR · ANTI-SPOOFING INSTANT CAMERA PROTOCOL",
     headline: "1 Tap Opens the Phone Camera Instantly—Front or Back. Zero Gallery Uploads.",
     subheadline:
-      "There is zero intermediate 'Open Camera' gate. Tapping Add Review launches the phone's native hardware camera immediately—letting customers shoot the building, meal, product, or a selfie together with the place using either the front or rear lens, then tap 1–5 solid whole stars and publish in under 3 seconds.",
-    imagePath: "/pitch-assets/v3/business-hub-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/camera-mobile.png",
+      "Tapping Add Review opens the phone's native hardware camera automatically—letting customers shoot the building, meal, product, or a selfie together with the place using either the front or rear lens, then tap 1–5 solid whole stars and publish in under 3 seconds.",
+    imagePath: "/pitch-assets/v4/business-hub-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/camera-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop QR Handoff & Business Context — Guides Desktop Shoppers Straight Into Mobile Native Camera Capture",
     mobileCaption: "Instant Post-Shutter Rating & Publish Stage — Camera Opens Directly on Tap, Followed by 1–5 Whole Stars & Publish",
@@ -906,9 +906,9 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Zero Email. Zero Passwords. Auto U/XXXXXX Handle Locked Forever With 1 Face ID Glance.",
     subheadline:
       "Reviewers never hit a signup form before posting. Publishing their first 3-second photo automatically creates a persistent U/XXXXXX profile—followed by a non-intrusive, 1-time optional iOS Face ID / Android Biometric Passkey prompt that binds their identity to hardware and awards the Verified checkmark.",
-    imagePath: "/pitch-assets/v3/profile-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/profile-mobile.png",
-    secondaryImagePath: "/pitch-assets/v3/iphone-passkey-prompt.png",
+    imagePath: "/pitch-assets/v4/profile-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/profile-mobile.png",
+    secondaryImagePath: "/pitch-assets/v4/iphone-passkey-prompt.png",
     frameMode: "dual",
     imageCaption: "Live Member Profile (Desktop) — Auto-Provisioned U/XXXXXX Handle, Photo Reviews, Saved Places, Following & Passkey Shield",
     mobileCaption: "Native iOS Face ID Passkey Sheet ('Passkey for yoouz.com') + Mobile Profile View — 1-Tap Hardware Lock",
@@ -963,8 +963,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Zero-Flash Instant Navigation Drawer & 1-Tap Home Screen Install—No App Store Tax.",
     subheadline:
       "Engineered to feel indistinguishable from a native iOS/Android app right inside Safari and Chrome. Opening the top-right menu drawer renders instantaneously with zero black-screen flash, housing Passkey controls, activity shortcuts, Yoouz for Business, and 1-tap PWA install.",
-    imagePath: "/pitch-assets/v3/home-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/drawer-mobile.png",
+    imagePath: "/pitch-assets/v4/home-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/drawer-mobile.png",
     frameMode: "dual",
     imageCaption: "Unified Cross-Platform Architecture — Desktop Shell & Instant Mobile PWA Slide-Out Menu Drawer",
     mobileCaption: "Mobile Navigation Drawer (390px) — Zero-Flash Instant Open, Passkey Shortcut, Business Portal & PWA Install",
@@ -1020,8 +1020,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Built-In Direct Chat Connecting High-Intent Shoppers With Businesses & Real Reviewers.",
     subheadline:
       "Closing the gap between visual discovery and real-world purchase. Shoppers message verified businesses directly to check availability or book—or ask fellow reviewers quick follow-up questions—inside a private, spam-protected in-app inbox.",
-    imagePath: "/pitch-assets/v3/messages-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/messages-mobile.png",
+    imagePath: "/pitch-assets/v4/messages-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/messages-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop Direct Messages Workspace (yoouz.com/messages) — Split Conversation List & Real-Time Chat Thread",
     mobileCaption: "Mobile Direct Messages Inbox (390px) — Clean Obsidian Messaging Stream With Instant Unread Badges",
@@ -1076,7 +1076,7 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "1-Line Live Photo Review Carousel That Turns Any Merchant Website Into Visual Proof.",
     subheadline:
       "Merchants on the $149/mo Growth tier paste one lightweight iframe snippet into Shopify, Webflow, WordPress, or custom checkouts. Every new customer photo auto-syncs live onto their site alongside Google AggregateRating Schema.org JSON-LD. Test the working widget below.",
-    imagePath: "/pitch-assets/v3/embed-standalone.png",
+    imagePath: "/pitch-assets/v4/embed-standalone.png",
     frameMode: "embed",
     imageCaption: "Live Working Yoouz Website Embed Sandbox — Switch Between Sephora, Apple & Wolt to Test Real-Time Customer Photo Carousels",
     callouts: [
@@ -1130,8 +1130,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Claim in Minutes: Real-Time Impressions, Rating Trends, Owner Replies & Strict Privacy.",
     subheadline:
       "At yoouz.com/business, domain owners and venue managers claim their pre-indexed brand hub to unlock a full SaaS command center—tracking 7D/30D/90D photo review impressions, responding officially to reviews, exporting QR standees, and keeping personal owner emails 100% hidden from public view.",
-    imagePath: "/pitch-assets/v3/business-portal-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/business-portal-mobile.png",
+    imagePath: "/pitch-assets/v4/business-portal-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/business-portal-mobile.png",
     frameMode: "dual",
     imageCaption: "Desktop B2B Business Dashboard (yoouz.com/business) — Live Impressions Chart, Verified Reviews KPI, Rating Score & Sidebar Suite",
     mobileCaption: "Mobile B2B Merchant Portal (390px) — Full 7D/30D/90D/All Analytics, Reviews, Messages & QR Code Dock",
@@ -1190,8 +1190,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Engineered for Google Page 1: Original Photo Indexing Across 75+ Localized Languages.",
     subheadline:
       "Search engines and AI answer engines heavily reward fresh, original user-generated photographs backed by clean Schema.org markup. Every Yoouz business profile automatically generates localized routes (/es, /fr, /de, /ar, /ja, and 70+ more) with full hreflang sitemaps and dynamic OG tags.",
-    imagePath: "/pitch-assets/v3/seo-localized-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/seo-localized-mobile.png",
+    imagePath: "/pitch-assets/v4/seo-localized-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/seo-localized-mobile.png",
     frameMode: "dual",
     imageCaption: "Live Spanish Localized Route (yoouz.com/es/reviews/sephora.com) — Full UI, Schema.org & Metadata Translation",
     mobileCaption: "Mobile Localized SEO Page (/es/reviews/sephora.com) — Native RTL/LTR Support Across 75+ Global Languages",
@@ -1244,8 +1244,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Built for Global Scale & ~95%+ Gross Margins: Bunny.net Global Edge + Cloud SQL PostgreSQL.",
     subheadline:
       "No bloated third-party BaaS tax, no expensive video transcoding pipelines, and no legacy database lock-in. Yoouz runs on a razor-lean full-stack TypeScript/Express server, Cloud SQL (PostgreSQL) relational persistence, and Bunny.net global edge storage.",
-    imagePath: "/pitch-assets/v3/home-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/reel-mobile.png",
+    imagePath: "/pitch-assets/v4/home-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/reel-mobile.png",
     frameMode: "data",
     imageCaption: "Production Stack Blueprint — Express SSR + Sharp EXIF Pipeline + Bunny.net Global Edge CDN + Cloud SQL PostgreSQL",
     callouts: [
@@ -1293,8 +1293,8 @@ export const PITCH_CHAPTERS: PitchChapter[] = [
     headline: "Production-Ready Global Trust Infrastructure—Scaling to 1,000+ Venues & $1.2M+ ARR.",
     subheadline:
       "Yoouz has already de-risked the hardest engineering, visual craft, SEO, and anti-spoofing hurdles in production. Pre-Seed capital accelerates physical QR standee distribution, 75+ language SEO capture, and self-serve B2B SaaS conversion.",
-    imagePath: "/pitch-assets/v3/business-hub-desktop.png",
-    mobileImagePath: "/pitch-assets/v3/business-portal-mobile.png",
+    imagePath: "/pitch-assets/v4/business-hub-desktop.png",
+    mobileImagePath: "/pitch-assets/v4/business-portal-mobile.png",
     frameMode: "data",
     imageCaption: "Live Active Portfolio (100% Anonymous Owner Badges) + 18-Month Pre-Seed Execution Milestones",
     callouts: [
