@@ -18,34 +18,53 @@ import type { AuthIntent } from "./components/CopoGoogleAuthModal";
 import type { InAppToastPayload } from "./components/InAppNotificationToast";
 import type { ReportTarget } from "./components/CopoReportModal";
 
-const CopoVideoPlayer = lazy(() => import("./components/CopoVideoPlayer").then(m => ({ default: m.CopoVideoPlayer })));
-const CopoMobileSearchView = lazy(() => import("./components/CopoMobileSearchView").then(m => ({ default: m.CopoMobileSearchView })));
-const CopoMobileDiscoverView = lazy(() => import("./components/CopoMobileDiscoverView").then(m => ({ default: m.CopoMobileDiscoverView })));
-const CopoMapView = lazy(() => import("./components/CopoMapView").then(m => ({ default: m.CopoMapView })));
-const CopoPlaceDrawer = lazy(() => import("./components/CopoPlaceDrawer").then(m => ({ default: m.CopoPlaceDrawer })));
-const CopoCreatorDrawer = lazy(() => import("./components/CopoCreatorDrawer").then(m => ({ default: m.CopoCreatorDrawer })));
-const CopoCommentsDrawer = lazy(() => import("./components/CopoCommentsDrawer").then(m => ({ default: m.CopoCommentsDrawer })));
-const CopoShareModal = lazy(() => import("./components/CopoShareModal").then(m => ({ default: m.CopoShareModal })));
-const CopoCreateModal = lazy(() => import("./components/CopoCreateModal").then(m => ({ default: m.CopoCreateModal })));
-const PasskeyQrModal = lazy(() => import("./components/PasskeyQrModal").then(m => ({ default: m.PasskeyQrModal })));
-const MobilePasskeyHandoffModal = lazy(() => import("./components/MobilePasskeyHandoffModal").then(m => ({ default: m.MobilePasskeyHandoffModal })));
-const CopoBusinessDashboardView = lazy(() => import("./components/CopoBusinessDashboardView").then(m => ({ default: m.CopoBusinessDashboardView })));
-const CopoMoreView = lazy(() => import("./components/CopoMoreView").then(m => ({ default: m.CopoMoreView })));
-const CopoBookmarksView = lazy(() => import("./components/CopoBookmarksView").then(m => ({ default: m.CopoBookmarksView })));
-const CopoNotificationsView = lazy(() => import("./components/CopoNotificationsView").then(m => ({ default: m.CopoNotificationsView })));
-const CopoMessagesView = lazy(() => import("./components/CopoMessagesView").then(m => ({ default: m.CopoMessagesView })));
-const CopoFollowingView = lazy(() => import("./components/CopoFollowingView").then(m => ({ default: m.CopoFollowingView })));
-const CopoDiscoverView = lazy(() => import("./components/CopoDiscoverView").then(m => ({ default: m.CopoDiscoverView })));
-const CopoAdminPanel = lazy(() => import("./components/CopoAdminPanel").then(m => ({ default: m.CopoAdminPanel })));
-const CopoGoogleAuthModal = lazy(() => import("./components/CopoGoogleAuthModal").then(m => ({ default: m.CopoGoogleAuthModal })));
-const CopoLegalModal = lazy(() => import("./components/CopoLegalModal").then(m => ({ default: m.CopoLegalModal })));
-const CopoComparisonModal = lazy(() => import("./components/CopoComparisonModal").then(m => ({ default: m.CopoComparisonModal })));
-const CopoReportModal = lazy(() => import("./components/CopoReportModal").then(m => ({ default: m.CopoReportModal })));
-const CopoNotificationSettingsModal = lazy(() => import("./components/CopoNotificationSettingsModal").then(m => ({ default: m.CopoNotificationSettingsModal })));
-const CopoEmbedView = lazy(() => import("./components/CopoEmbedView").then(m => ({ default: m.CopoEmbedView })));
-const CopoTestEmbedView = lazy(() => import("./components/CopoTestEmbedView").then(m => ({ default: m.CopoTestEmbedView })));
-const CopoSearchTestView = lazy(() => import("./components/CopoSearchTestView").then(m => ({ default: m.CopoSearchTestView })));
-const YoouzInvestorPitchView = lazy(() => import("./components/YoouzInvestorPitchView").then(m => ({ default: m.YoouzInvestorPitchView })));
+const lazyWithRetry = <T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 2
+) =>
+  lazy(async () => {
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await factory();
+      } catch (err) {
+        lastError = err;
+        if (attempt < retries) {
+          await new Promise((resolve) => window.setTimeout(resolve, 350 * (attempt + 1)));
+        }
+      }
+    }
+    throw lastError;
+  });
+
+const CopoVideoPlayer = lazyWithRetry(() => import("./components/CopoVideoPlayer").then(m => ({ default: m.CopoVideoPlayer })));
+const CopoMobileSearchView = lazyWithRetry(() => import("./components/CopoMobileSearchView").then(m => ({ default: m.CopoMobileSearchView })));
+const CopoMobileDiscoverView = lazyWithRetry(() => import("./components/CopoMobileDiscoverView").then(m => ({ default: m.CopoMobileDiscoverView })));
+const CopoMapView = lazyWithRetry(() => import("./components/CopoMapView").then(m => ({ default: m.CopoMapView })));
+const CopoPlaceDrawer = lazyWithRetry(() => import("./components/CopoPlaceDrawer").then(m => ({ default: m.CopoPlaceDrawer })));
+const CopoCreatorDrawer = lazyWithRetry(() => import("./components/CopoCreatorDrawer").then(m => ({ default: m.CopoCreatorDrawer })));
+const CopoCommentsDrawer = lazyWithRetry(() => import("./components/CopoCommentsDrawer").then(m => ({ default: m.CopoCommentsDrawer })));
+const CopoShareModal = lazyWithRetry(() => import("./components/CopoShareModal").then(m => ({ default: m.CopoShareModal })));
+const CopoCreateModal = lazyWithRetry(() => import("./components/CopoCreateModal").then(m => ({ default: m.CopoCreateModal })));
+const PasskeyQrModal = lazyWithRetry(() => import("./components/PasskeyQrModal").then(m => ({ default: m.PasskeyQrModal })));
+const MobilePasskeyHandoffModal = lazyWithRetry(() => import("./components/MobilePasskeyHandoffModal").then(m => ({ default: m.MobilePasskeyHandoffModal })));
+const CopoBusinessDashboardView = lazyWithRetry(() => import("./components/CopoBusinessDashboardView").then(m => ({ default: m.CopoBusinessDashboardView })));
+const CopoMoreView = lazyWithRetry(() => import("./components/CopoMoreView").then(m => ({ default: m.CopoMoreView })));
+const CopoBookmarksView = lazyWithRetry(() => import("./components/CopoBookmarksView").then(m => ({ default: m.CopoBookmarksView })));
+const CopoNotificationsView = lazyWithRetry(() => import("./components/CopoNotificationsView").then(m => ({ default: m.CopoNotificationsView })));
+const CopoMessagesView = lazyWithRetry(() => import("./components/CopoMessagesView").then(m => ({ default: m.CopoMessagesView })));
+const CopoFollowingView = lazyWithRetry(() => import("./components/CopoFollowingView").then(m => ({ default: m.CopoFollowingView })));
+const CopoDiscoverView = lazyWithRetry(() => import("./components/CopoDiscoverView").then(m => ({ default: m.CopoDiscoverView })));
+const CopoAdminPanel = lazyWithRetry(() => import("./components/CopoAdminPanel").then(m => ({ default: m.CopoAdminPanel })));
+const CopoGoogleAuthModal = lazyWithRetry(() => import("./components/CopoGoogleAuthModal").then(m => ({ default: m.CopoGoogleAuthModal })));
+const CopoLegalModal = lazyWithRetry(() => import("./components/CopoLegalModal").then(m => ({ default: m.CopoLegalModal })));
+const CopoComparisonModal = lazyWithRetry(() => import("./components/CopoComparisonModal").then(m => ({ default: m.CopoComparisonModal })));
+const CopoReportModal = lazyWithRetry(() => import("./components/CopoReportModal").then(m => ({ default: m.CopoReportModal })));
+const CopoNotificationSettingsModal = lazyWithRetry(() => import("./components/CopoNotificationSettingsModal").then(m => ({ default: m.CopoNotificationSettingsModal })));
+const CopoEmbedView = lazyWithRetry(() => import("./components/CopoEmbedView").then(m => ({ default: m.CopoEmbedView })));
+const CopoTestEmbedView = lazyWithRetry(() => import("./components/CopoTestEmbedView").then(m => ({ default: m.CopoTestEmbedView })));
+const CopoSearchTestView = lazyWithRetry(() => import("./components/CopoSearchTestView").then(m => ({ default: m.CopoSearchTestView })));
+const YoouzInvestorPitchView = lazyWithRetry(() => import("./components/YoouzInvestorPitchView").then(m => ({ default: m.YoouzInvestorPitchView })));
 import { prefetchVideo } from "./utils/videoPrefetcher";
 import { resolvePlayableVideoSource, resolveVideoPosterUrl } from "./utils/videoUtils";
 import { auth, db, logOutUser, onAuthStateChanged, handleRedirectResult, handleBunnyDBError, OperationType } from "./lib/bunnydb";
@@ -8173,46 +8192,57 @@ export function App() {
   }, [activeSection, activeSubTab]);
 
   // Background chunk pre-warmer: silently warm interactive drawers, players, and views
-  // right after initial paint so every button tap opens at 0ms with zero black flash.
+  // in gentle 2-at-a-time micro-batches with full error handling so every tap opens at 0ms
+  // without saturating connection pools or emitting unhandled rejections during reloads.
   useEffect(() => {
     if (typeof window === "undefined") return;
     let cancelled = false;
 
-    const wave1Timer = window.setTimeout(() => {
-      if (cancelled) return;
-      void import("./components/CopoVideoPlayer");
-      void import("./components/CopoPlaceDrawer");
-      void import("./components/CopoCreatorDrawer");
-      void import("./components/CopoMobileSearchView");
-      void import("./components/CopoCreateModal");
-      void import("./components/CopoCommentsDrawer");
-      void import("./components/CopoShareModal");
-      void import("./components/CopoNotificationsView");
-      void import("./components/CopoMessagesView");
-    }, 220);
+    const preloadQueue: Array<() => Promise<unknown>> = [
+      () => import("./components/CopoMoreView"),
+      () => import("./components/CopoVideoPlayer"),
+      () => import("./components/CopoPlaceDrawer"),
+      () => import("./components/CopoMobileSearchView"),
+      () => import("./components/CopoCreateModal"),
+      () => import("./components/CopoCreatorDrawer"),
+      () => import("./components/CopoCommentsDrawer"),
+      () => import("./components/CopoShareModal"),
+      () => import("./components/CopoNotificationsView"),
+      () => import("./components/CopoMessagesView"),
+      () => import("./components/CopoBookmarksView"),
+      () => import("./components/CopoFollowingView"),
+      () => import("./components/CopoDiscoverView"),
+      () => import("./components/CopoMobileDiscoverView"),
+      () => import("./components/CopoBusinessDashboardView"),
+      () => import("./components/PasskeyQrModal"),
+      () => import("./components/MobilePasskeyHandoffModal"),
+      () => import("./components/CopoReportModal"),
+      () => import("./components/CopoLegalModal"),
+      () => import("./components/CopoNotificationSettingsModal"),
+      () => import("./components/CopoGoogleAuthModal"),
+      () => import("./components/CopoComparisonModal"),
+      () => import("./components/CopoMapView"),
+    ];
 
-    const wave2Timer = window.setTimeout(() => {
-      if (cancelled) return;
-      void import("./components/CopoBookmarksView");
-      void import("./components/CopoFollowingView");
-      void import("./components/CopoMoreView");
-      void import("./components/CopoDiscoverView");
-      void import("./components/CopoMobileDiscoverView");
-      void import("./components/CopoBusinessDashboardView");
-      void import("./components/PasskeyQrModal");
-      void import("./components/MobilePasskeyHandoffModal");
-      void import("./components/CopoReportModal");
-      void import("./components/CopoLegalModal");
-      void import("./components/CopoNotificationSettingsModal");
-      void import("./components/CopoGoogleAuthModal");
-      void import("./components/CopoComparisonModal");
-      void import("./components/CopoMapView");
-    }, 850);
+    const runPacedPrewarm = async () => {
+      for (let i = 0; i < preloadQueue.length; i += 2) {
+        if (cancelled) return;
+        const batch = preloadQueue.slice(i, i + 2);
+        await Promise.allSettled(batch.map((load) => load().catch(() => undefined)));
+        if (cancelled) return;
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+      }
+    };
+
+    const startTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        void runPacedPrewarm();
+      }
+    }, 300);
 
     return () => {
       cancelled = true;
-      window.clearTimeout(wave1Timer);
-      window.clearTimeout(wave2Timer);
+      window.clearTimeout(startTimer);
     };
   }, []);
 
