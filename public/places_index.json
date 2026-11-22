@@ -1,5 +1,327 @@
 [
   {
+    "id": "sephora.com",
+    "name": "Sephora",
+    "category": "Beauty & Cosmetics",
+    "categoryType": "all",
+    "address": "350 Mission St, San Francisco, CA 94105",
+    "city": "San Francisco",
+    "country": "Japan",
+    "lat": 0,
+    "lng": 0,
+    "rating": 4,
+    "totalReviews": 2,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 1,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
+    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/sephora.com.webp"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (877) 737-4672",
+    "email": "customerservice@sephora.com",
+    "website": "https://www.sephora.com/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Discover the latest in beauty at Sephora! Explore an unrivaled selection of makeup, skincare, hair, fragrance & more from classic & emerging brands.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "sephora.com",
+    "ratingCount": 2,
+    "videoReviewCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 1
+    },
+    "isSavedToProfile": true,
+    "createdAt": "2026-11-20 11:47:40",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
+    "id": "multipharma.be",
+    "category": "Pharmacy & Healthcare",
+    "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/multipharma.be.webp",
+    "name": "Multipharma",
+    "categoryType": "all",
+    "address": "Rue du Marché aux Poulets 37",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "brandDomain": "multipharma.be",
+    "ogImage": "/uploads/brand-assets/banners/multipharma.be.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/multipharma.be.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 2 511 35 90",
+    "email": "",
+    "website": "https://multipharma.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Multipharma is a dependable automotive and transportation service provider in Brussels, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "createdAt": "2026-11-14 08:37:19",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "upperview-regalia.com",
+    "category": "Hotel & Hospitality",
+    "logoUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
+    "rating": 4,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
+    "categoryType": "all",
+    "name": "Upper View Regalia Hotel",
+    "city": "Online",
+    "country": "Malaysia",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "upperview-regalia.com",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://upperview-regalia.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Upper View Regalia Hotel is a premier hospitality destination in Malaysia, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/upperview-regalia.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp"
+  },
+  {
+    "id": "autowerkplaatsbrugge.be",
+    "category": "Auto Repair & Garage",
+    "logoUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+    "name": "Auto Werkplaats Brugge",
+    "categoryType": "all",
+    "address": "Maalsesteenweg 359A",
+    "city": "St-Kruis (Brugge)",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
+    "brandDomain": "autowerkplaatsbrugge.be",
+    "ogImage": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 50 37 67 46",
+    "email": "",
+    "website": "https://autowerkplaatsbrugge.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Auto Werkplaats Brugge is a dependable automotive and transportation service provider in St-Kruis (Brugge), Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "isSkeleton": true,
+    "isSynthetic": true,
+    "locations": []
+  },
+  {
+    "id": "zara.com",
+    "category": "Fashion & Apparel",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
+    "name": "Zara",
+    "categoryType": "all",
+    "address": "Online",
+    "city": "Online",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
+    "brandDomain": "zara.com",
+    "ogImage": "/uploads/brand-assets/banners/zara.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/zara.com.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "1800 800 080",
+    "email": "",
+    "website": "https://zara.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Zara · fashion & apparel · United States",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1
+  },
+  {
+    "id": "booksandbeans.co.uk",
+    "category": "Cafe & Bookstore",
+    "logoUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
+    "name": "Books And Beans",
+    "categoryType": "all",
+    "address": "",
+    "city": "Gent",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
+    "brandDomain": "booksandbeans.co.uk",
+    "ogImage": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2026%2F06%2FCakes-and-Drinks-Sum-Up-Menu-New-Update-31_Page_1-3-scaled.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://booksandbeans.co.uk",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Books And Beans is a dining destination in Gent, United Kingdom, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "createdAt": "2026-10-23 09:10:31",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "noma.dk",
     "category": "Restaurant & Dining",
     "logoUrl": "/uploads/brand-assets/logos/noma.dk.webp",
@@ -797,56 +1119,6 @@
     "isFollowed": false
   },
   {
-    "id": "guesswatches.com",
-    "category": "Watches & Accessories",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "name": "GUESS Watches",
-    "website": "https://guesswatches.com",
-    "brandDomain": "guesswatches.com",
-    "rating": 3,
-    "totalReviews": 1,
-    "city": "Online",
-    "country": "",
-    "address": "",
-    "phone": "",
-    "email": "",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
-    ],
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
-    "categoryType": "all",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-11-20 18:42:07",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "philips.nl",
     "category": "Consumer Electronics",
     "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fphilips.nl%2Fc-resources%2Ffavicons%2Fapple-touch-icon-152x152.png",
@@ -1017,17 +1289,28 @@
     "isFollowed": false
   },
   {
-    "id": "sephora.com",
-    "name": "Sephora",
-    "category": "Beauty & Cosmetics",
+    "id": "guesswatches.com",
+    "category": "Watches & Accessories",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "name": "GUESS Watches",
+    "website": "https://guesswatches.com",
+    "brandDomain": "guesswatches.com",
+    "rating": 3,
+    "totalReviews": 1,
+    "city": "Online",
+    "country": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
+    ],
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
     "categoryType": "all",
-    "address": "350 Mission St, San Francisco, CA 94105",
-    "city": "San Francisco",
-    "country": "Japan",
     "lat": 0,
     "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -1035,22 +1318,12 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
-    "ogImage": "/uploads/brand-assets/banners/sephora.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/sephora.com.webp"
-    ],
     "openingHours": "Available 24/7",
     "isOpen": true,
-    "phone": "+1 (877) 737-4672",
-    "email": "customerservice@sephora.com",
-    "website": "https://sephora.com",
     "priceRange": "N/A",
+    "isSavedToProfile": true,
     "plusCode": "",
-    "locations": [],
-    "description": "Sephora · beauty & cosmetics · San Francisco, Japan",
+    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -1059,18 +1332,8 @@
     ],
     "amenities": [],
     "topDishes": [],
-    "brandDomain": "sephora.com",
-    "ratingCount": 2,
     "videoReviewCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 1,
-      "4": 0,
-      "5": 1
-    },
-    "isSavedToProfile": true,
-    "createdAt": "2026-11-20 11:47:40",
+    "createdAt": "2026-11-20 18:42:07",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -1240,274 +1503,6 @@
       }
     ],
     "isSavedToProfile": true
-  },
-  {
-    "id": "autowerkplaatsbrugge.be",
-    "category": "Auto Repair & Garage",
-    "logoUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-    "name": "Auto Werkplaats Brugge",
-    "categoryType": "all",
-    "address": "Maalsesteenweg 359A",
-    "city": "St-Kruis (Brugge)",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
-    "brandDomain": "autowerkplaatsbrugge.be",
-    "ogImage": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 50 37 67 46",
-    "email": "",
-    "website": "https://autowerkplaatsbrugge.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Auto Werkplaats Brugge is a dependable automotive and transportation service provider in St-Kruis (Brugge), Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "isSkeleton": true,
-    "isSynthetic": true,
-    "locations": []
-  },
-  {
-    "id": "multipharma.be",
-    "category": "Pharmacy & Healthcare",
-    "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/multipharma.be.webp",
-    "name": "Multipharma",
-    "categoryType": "all",
-    "address": "Rue du Marché aux Poulets 37",
-    "city": "Brussels",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
-    "brandDomain": "multipharma.be",
-    "ogImage": "/uploads/brand-assets/banners/multipharma.be.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/multipharma.be.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 2 511 35 90",
-    "email": "",
-    "website": "https://multipharma.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Multipharma is a dependable automotive and transportation service provider in Brussels, Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "locations": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "createdAt": "2026-11-14 08:37:19",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
-    "id": "upperview-regalia.com",
-    "category": "Hotel & Hospitality",
-    "logoUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
-    "rating": 4,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
-    "categoryType": "all",
-    "name": "Upper View Regalia Hotel",
-    "city": "Online",
-    "country": "Malaysia",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "upperview-regalia.com",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://upperview-regalia.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Upper View Regalia Hotel is a premier hospitality destination in Malaysia, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/upperview-regalia.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp"
-  },
-  {
-    "id": "zara.com",
-    "category": "Fashion & Apparel",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
-    "name": "Zara",
-    "categoryType": "all",
-    "address": "Online",
-    "city": "Online",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
-    "brandDomain": "zara.com",
-    "ogImage": "/uploads/brand-assets/banners/zara.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/zara.com.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fmir-s3-cdn-cf.behance.net%2Fproject_modules%2Fmax_3840%2Ff33c0d154328061.633ff20e30c20.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "1800 800 080",
-    "email": "",
-    "website": "https://zara.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Zara · fashion & apparel · United States",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1
-  },
-  {
-    "id": "booksandbeans.co.uk",
-    "category": "Cafe & Bookstore",
-    "logoUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
-    "name": "Books And Beans",
-    "categoryType": "all",
-    "address": "",
-    "city": "Gent",
-    "country": "United Kingdom",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
-    "brandDomain": "booksandbeans.co.uk",
-    "ogImage": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fbooksandbeans.co.uk%2Fwp-content%2Fuploads%2F2026%2F06%2FCakes-and-Drinks-Sum-Up-Menu-New-Update-31_Page_1-3-scaled.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://booksandbeans.co.uk",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Books And Beans is a dining destination in Gent, United Kingdom, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-10-23 09:10:31",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
   },
   {
     "id": "calvinklein.com",
@@ -3556,8 +3551,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=webflow.com",
-    "logoUrl": "/api/favicon?domain=webflow.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -8566,8 +8561,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=nfx.com",
-    "logoUrl": "/api/favicon?domain=nfx.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -8624,8 +8619,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=2b.vc",
-    "logoUrl": "/api/favicon?domain=2b.vc",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -8958,8 +8953,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
-    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -9626,8 +9621,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
-    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -10097,8 +10092,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=researchgate.net",
-    "logoUrl": "/api/favicon?domain=researchgate.net",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [

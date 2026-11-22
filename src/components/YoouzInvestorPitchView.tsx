@@ -793,7 +793,7 @@ const ChapterDataVisual: React.FC<{ page: number }> = ({ page }) => {
         icon: Camera,
         layer: "01 · Capture & Identity Edge",
         title: "Native Hardware Shutter + FIDO2 / WebAuthn Passkeys",
-        detail: "Strict capture='environment' mobile camera protocol (0% gallery uploads) paired with device Secure Enclave Face ID / Biometric Passkeys.",
+        detail: "Instant native mobile camera launch (front or rear lens, 0% gallery uploads) paired with device Secure Enclave Face ID / Biometric Passkeys.",
         badge: "0% Spoofing · $0 SMS OTP",
       },
       {
@@ -1685,7 +1685,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                       {
                         val: "62",
                         label: "Live Photo Reviews",
-                        sub: "Apple, Sephora, IKEA, Wolt...",
+                        sub: "Apple, Noma, Zara, Sephora...",
                       },
                       {
                         val: "~95%+",

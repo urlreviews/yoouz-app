@@ -483,7 +483,7 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
             {
               kicker: "02 · LIVE PRODUCTION TRACTION ON YOOUZ.COM",
               title: "543+ Indexed Brands · 62 Live Customer Photo Reviews · Claimed Portals",
-              desc: "Live production proof spanning Apple, Sephora, IKEA, NIVEA, Philips, Sony, Wolt, Zara, Hotel Julien & Lerner & Rowe—plus active Passkeys, 1200×630 OG cards & embed widgets.",
+              desc: "Live production proof spanning Apple, Noma, Books And Beans, Zara, Sephora, Auto Werkplaats Brugge, Wolt & Hotel Julien—plus active Passkeys, 1200×630 OG cards & embed widgets.",
               highlight: false,
             },
             {
@@ -526,8 +526,8 @@ export async function generateVisualPitchPdfBuffer(): Promise<Buffer> {
           const layers = [
             {
               step: "LAYER 01 · CLIENT CAPTURE",
-              title: "Native Hardware Camera + Passwordless WebAuthn Passkey",
-              desc: "Strict capture='environment' shutter (0% gallery uploads) + iOS Face ID / Android Biometric FIDO2 identity.",
+              title: "Instant Native Hardware Camera + Passwordless WebAuthn Passkey",
+              desc: "1-tap instant phone camera (front or rear lens, 0% gallery uploads) + iOS Face ID / Android Biometric FIDO2 identity.",
             },
             {
               step: "LAYER 02 · MEDIA PIPELINE",
