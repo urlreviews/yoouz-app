@@ -31,6 +31,9 @@ import {
   ExternalLink,
   MousePointerClick,
   Star,
+  Play,
+  Film,
+  Clock,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Place, VideoReview } from "../types";
@@ -1224,6 +1227,244 @@ const ChapterDeviceStage: React.FC<{
 };
 
 // ============================================================================
+// EXECUTIVE BRIEFING FILM THEATER (APPLE KEYNOTE / GOOGLE INVESTOR BRIEFING)
+// ============================================================================
+const PITCH_VIDEO_CHAPTERS = [
+  { time: 0, label: "0:00", title: "The Trust Crisis" },
+  { time: 29, label: "0:29", title: "3-Second Live Photo" },
+  { time: 55, label: "0:55", title: "Why Photo Wins" },
+  { time: 80, label: "1:20", title: "$15.8B Market" },
+  { time: 111, label: "1:51", title: "Competitive Moat" },
+  { time: 138, label: "2:18", title: "$0 CAC Growth" },
+  { time: 166, label: "2:46", title: "SaaS & 95% Margin" },
+  { time: 194, label: "3:14", title: "Live Product" },
+  { time: 221, label: "3:41", title: "Global Scale" },
+];
+
+const InvestorKeynoteVideoTheater: React.FC<{
+  sectionRef: React.RefObject<HTMLElement | null>;
+  playTrigger: number;
+}> = ({ sectionRef, playTrigger }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState<number>(1);
+
+  const startPlaybackAt = (seconds?: number) => {
+    setHasStarted(true);
+    const v = videoRef.current;
+    if (!v) return;
+    if (typeof seconds === "number") {
+      try {
+        v.currentTime = seconds;
+      } catch {
+        // Ignore seek error before metadata loads
+      }
+    }
+    v.playbackRate = playbackRate;
+    void v.play().catch(() => {});
+  };
+
+  useEffect(() => {
+    if (playTrigger > 0) {
+      startPlaybackAt(0);
+    }
+  }, [playTrigger]);
+
+  const handleSpeedChange = (rate: number) => {
+    setPlaybackRate(rate);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = rate;
+    }
+  };
+
+  const activeChapterIdx = (() => {
+    let idx = 0;
+    for (let i = 0; i < PITCH_VIDEO_CHAPTERS.length; i++) {
+      if (currentTime >= PITCH_VIDEO_CHAPTERS[i].time) idx = i;
+    }
+    return idx;
+  })();
+
+  return (
+    <section
+      ref={sectionRef}
+      id="pitch-keynote-film"
+      className="scroll-mt-20 relative rounded-3xl border border-white/12 bg-gradient-to-b from-[#0E0E13] via-[#09090D] to-[#060609] p-5 sm:p-8 lg:p-10 overflow-hidden shadow-[0_36px_110px_rgba(0,0,0,0.92)]"
+    >
+      {/* Subtle studio ambient glow */}
+      <div className="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[540px] h-[220px] rounded-full bg-amber-500/[0.06] blur-3xl" />
+
+      {/* Top Briefing Header */}
+      <div className="relative z-10 flex flex-wrap items-end justify-between gap-4 mb-5 sm:mb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-400 mb-2">
+            <Film className="w-3.5 h-3.5" />
+            <span>Executive Pitch Briefing · Narrated HD Film</span>
+          </div>
+          <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
+            Watch the Complete Yoouz Thesis in 4 Minutes.
+          </h2>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 max-w-2xl leading-relaxed">
+            Prefer an executive walkthrough before diving into the 22 chapters? Watch our narrated overview covering the AI trust crisis, 3-second live photo protocol, $15.8B market, 95%+ SaaS margins, and live production traction.
+          </p>
+        </div>
+
+        {/* Speed Selector + Direct Download */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div
+            className="flex items-center rounded-xl bg-black/70 border border-white/10 p-1"
+            role="group"
+            aria-label="Playback Speed"
+          >
+            {[1, 1.25, 1.5].map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                onClick={() => handleSpeedChange(rate)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all cursor-pointer ${
+                  playbackRate === rate
+                    ? "bg-white text-black shadow-sm"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                {rate}x
+              </button>
+            ))}
+          </div>
+
+          <a
+            href="/api/pitch/video?download=1&v=2"
+            download="Yoouz_Investor_Pitch_Briefing.mp4"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/12 text-xs font-medium text-zinc-200 transition-colors"
+            title="Download Pitch Video (MP4)"
+          >
+            <Download className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">MP4</span>
+          </a>
+        </div>
+      </div>
+
+      {/* 16:9 Cinema Frame */}
+      <div className="relative z-10 w-full aspect-video rounded-2xl overflow-hidden bg-black border border-white/14 shadow-[0_28px_80px_rgba(0,0,0,0.95)] group">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-contain bg-black"
+          controls={hasStarted}
+          playsInline
+          preload="metadata"
+          onPlay={() => setHasStarted(true)}
+          onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        >
+          <source src="/api/pitch/video?v=2" type="video/mp4" />
+          <source src="/assets/aistudio/Yoouz_Pitch__29fdcffc.mp4" type="video/mp4" />
+        </video>
+
+        {/* Obsidian Apple-Keynote Poster Curtain (dismissed seamlessly on play) */}
+        {!hasStarted && (
+          <button
+            type="button"
+            onClick={() => startPlaybackAt(0)}
+            aria-label="Play 4-Minute Yoouz Investor Pitch Video"
+            className="absolute inset-0 z-20 w-full h-full bg-[#060609] text-left cursor-pointer focus:outline-none overflow-hidden"
+          >
+            {/* Darkened live product showcase backdrop so poster matches obsidian Keynote aesthetic */}
+            <picture>
+              <source srcSet="/pitch-assets/v4/home-desktop.webp" type="image/webp" />
+              <img
+                src="/pitch-assets/v4/home-desktop.png"
+                alt="Yoouz Investor Pitch Briefing Cover"
+                className="w-full h-full object-cover object-top scale-[1.02] opacity-30 transition-transform duration-700 group-hover:scale-[1.04]"
+              />
+            </picture>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/72 to-[#050507]/45" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.10)_0%,rgba(5,5,7,0.45)_62%,rgba(5,5,7,0.88)_100%)]" />
+
+            {/* Top-left & Top-right Cinema Badges */}
+            <div className="absolute top-3 left-3 sm:top-6 sm:left-6 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-black/80 backdrop-blur-xl border border-white/15 text-[10px] sm:text-[11px] font-semibold text-white">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                YOOUZ · INVESTOR FILM
+              </span>
+            </div>
+            <div className="absolute top-3 right-3 sm:top-6 sm:right-6">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-black/80 backdrop-blur-xl border border-white/15 text-[10px] sm:text-[11px] font-mono font-semibold text-zinc-200 tabular-nums">
+                <Clock className="w-3 h-3 text-amber-400" />
+                04:09 · HD
+              </span>
+            </div>
+
+            {/* Center Frosted Apple-Style Play Medallion */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-5 pt-4 sm:pt-0 text-center">
+              <div className="relative flex items-center justify-center">
+                <span className="absolute -inset-3 rounded-full bg-white/10 blur-xl opacity-70 group-hover:opacity-100 transition-opacity" />
+                <div className="relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-white text-black flex items-center justify-center shadow-[0_12px_48px_rgba(255,255,255,0.28)] transition-transform duration-300 group-hover:scale-105">
+                  <Play className="w-5 h-5 sm:w-8 sm:h-8 fill-black ml-0.5 sm:ml-1" />
+                </div>
+              </div>
+              <p className="mt-3 sm:mt-5 text-sm sm:text-2xl font-bold tracking-tight text-white drop-shadow-sm">
+                Play Executive Pitch Walkthrough
+              </p>
+              <p className="mt-1.5 text-xs sm:text-sm text-zinc-300 max-w-lg hidden sm:block">
+                Narrated 9-chapter overview · Live production proof · $15.8B visual trust market
+              </p>
+            </div>
+
+            {/* Bottom Caption Strip (Desktop/Tablet) */}
+            <div className="hidden sm:flex absolute bottom-5 inset-x-6 items-center justify-between text-[11px] text-zinc-400">
+              <span className="font-medium text-zinc-300">
+                Click anywhere to play · Jump to any chapter below
+              </span>
+              <span className="font-mono text-amber-300/90">1080p · Audio + Captions</span>
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Interactive 9-Chapter Timestamp Jump Strip */}
+      <div className="relative z-10 mt-4 sm:mt-5">
+        <div className="flex items-center justify-between mb-2.5 px-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+            Jump to Film Chapter
+          </span>
+          <span className="text-[11px] font-mono text-zinc-500">
+            9 chapters · 04:09 total
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-1.5 sm:gap-2">
+          {PITCH_VIDEO_CHAPTERS.map((chap, idx) => {
+            const isCurrent = hasStarted && activeChapterIdx === idx;
+            return (
+              <button
+                key={chap.time}
+                type="button"
+                onClick={() => startPlaybackAt(chap.time)}
+                className={`text-left px-2.5 py-2 rounded-xl border transition-all cursor-pointer ${
+                  isCurrent
+                    ? "bg-white text-black border-white shadow-sm"
+                    : "bg-white/[0.03] hover:bg-white/[0.08] border-white/[0.08] text-zinc-300 hover:text-white"
+                }`}
+              >
+                <div
+                  className={`text-[10px] font-mono font-bold tabular-nums ${
+                    isCurrent ? "text-black/70" : "text-amber-400"
+                  }`}
+                >
+                  {chap.label}
+                </div>
+                <div className="text-[11px] font-semibold leading-tight mt-0.5 line-clamp-1">
+                  {chap.title}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ============================================================================
 // MAIN COMPONENT: YoouzInvestorPitchView
 // ============================================================================
 export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
@@ -1237,6 +1478,7 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
+  const [videoPlayTrigger, setVideoPlayTrigger] = useState<number>(0);
 
   // PDF Viewer state
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -1246,9 +1488,24 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const videoSectionRef = useRef<HTMLElement | null>(null);
   const chapterRefs = useRef<Record<number, HTMLElement | null>>({});
 
   const totalChapters = PITCH_CHAPTERS.length;
+
+  const scrollToKeynoteFilm = (autoPlay = true) => {
+    setMobileMenuOpen(false);
+    if (viewMode !== "interactive") {
+      setViewMode("interactive");
+      window.setTimeout(() => {
+        videoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (autoPlay) setVideoPlayTrigger((n) => n + 1);
+      }, 120);
+      return;
+    }
+    videoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (autoPlay) setVideoPlayTrigger((n) => n + 1);
+  };
 
   // Responsive sidebar default
   useEffect(() => {
@@ -1541,6 +1798,25 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
         {sidebarOpen && (
           <aside className="hidden lg:flex w-[290px] xl:w-[310px] shrink-0 border-r border-white/[0.08] bg-[#09090C] flex-col overflow-y-auto">
             <div className="p-4 space-y-5">
+              {/* Pinned Executive Briefing Film Shortcut */}
+              <button
+                type="button"
+                onClick={() => scrollToKeynoteFilm(true)}
+                className="w-full text-left p-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-500/8 to-transparent border border-amber-400/25 hover:border-amber-400/50 transition-all flex items-center gap-3 group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                  <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-white leading-tight truncate">
+                    Pitch Briefing Film
+                  </div>
+                  <div className="text-[10px] font-mono text-amber-300 mt-0.5">
+                    04:09 · Narrated HD
+                  </div>
+                </div>
+              </button>
+
               {PITCH_ACTS.map((act) => {
                 const actChapters = PITCH_CHAPTERS.filter((c) => c.act === act.id);
                 return (
@@ -1605,6 +1881,19 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                 </button>
               </div>
               <div className="space-y-5">
+                <button
+                  type="button"
+                  onClick={() => scrollToKeynoteFilm(true)}
+                  className="w-full text-left p-3 rounded-xl bg-amber-500/12 border border-amber-400/25 flex items-center gap-3 cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0">
+                    <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white">Pitch Briefing Film</div>
+                    <div className="text-[10px] font-mono text-amber-300">04:09 · Narrated HD</div>
+                  </div>
+                </button>
                 {PITCH_ACTS.map((act) => (
                   <div key={act.id}>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-2 px-2">
@@ -1717,8 +2006,17 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       type="button"
+                      onClick={() => scrollToKeynoteFilm(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs sm:text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+                    >
+                      <Play className="w-4 h-4 fill-black" />
+                      Watch 4-Min Pitch Film
+                      <span className="font-mono text-[11px] text-black/60">4:09</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => scrollToChapter(1)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black hover:bg-zinc-200 text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-xs sm:text-sm font-semibold text-white transition-colors cursor-pointer"
                     >
                       Start 60s Investment Thesis
                       <ArrowRight className="w-4 h-4" />
@@ -1726,22 +2024,30 @@ export const YoouzInvestorPitchView: React.FC<YoouzInvestorPitchViewProps> = ({
                     <button
                       type="button"
                       onClick={() => scrollToChapter(8)}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-xs sm:text-sm font-medium text-white transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] border border-white/12 text-xs sm:text-sm font-medium text-zinc-200 transition-colors cursor-pointer"
                     >
                       <Columns2 className="w-4 h-4 text-amber-400" />
-                      Desktop + Mobile Product Tour (08–19)
+                      Desktop + Mobile Tour (08–19)
                     </button>
                     <button
                       type="button"
                       onClick={() => scrollToChapter(18)}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 text-xs sm:text-sm font-medium text-white transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] border border-white/12 text-xs sm:text-sm font-medium text-zinc-200 transition-colors cursor-pointer"
                     >
                       <QrCode className="w-4 h-4 text-amber-400" />
-                      Test Live Embed Sandbox
+                      Test Live Embed
                     </button>
                   </div>
                 </div>
               </section>
+
+              {/* ========================================================= */}
+              {/* EXECUTIVE KEYNOTE PITCH FILM (4:09 NARRATED WALKTHROUGH)  */}
+              {/* ========================================================= */}
+              <InvestorKeynoteVideoTheater
+                sectionRef={videoSectionRef}
+                playTrigger={videoPlayTrigger}
+              />
 
               {/* ========================================================= */}
               {/* ALL 22 CHAPTERS (3 ACTS)                                  */}

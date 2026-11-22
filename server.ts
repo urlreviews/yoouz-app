@@ -4900,10 +4900,10 @@ async function startServer() {
 
   const resolveLocalPitchVideoPath = (): string | null => {
     const candidates = [
-      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
-      path.join(process.cwd(), "dist", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
-      path.join(_dirname, "public", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
-      path.join(_dirname, "dist", "assets", "aistudio", "Yoouz_vid__2bf6b810.mp4"),
+      path.join(process.cwd(), "public", "assets", "aistudio", "Yoouz_Pitch__29fdcffc.mp4"),
+      path.join(process.cwd(), "dist", "assets", "aistudio", "Yoouz_Pitch__29fdcffc.mp4"),
+      path.join(_dirname, "public", "assets", "aistudio", "Yoouz_Pitch__29fdcffc.mp4"),
+      path.join(_dirname, "dist", "assets", "aistudio", "Yoouz_Pitch__29fdcffc.mp4"),
     ];
     for (const p of candidates) {
       if (fs.existsSync(p)) return p;
@@ -4920,7 +4920,7 @@ async function startServer() {
     const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
     const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
     const pullZoneDomain = (process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net").replace(/\/$/, "");
-    const remotePath = "pitch/yoouz-investor-pitch-2026.mp4";
+    const remotePath = "pitch/yoouz-investor-pitch-v2-2026.mp4";
     const cdnUrl = `${pullZoneDomain}/${remotePath}`;
 
     try {
@@ -5004,11 +5004,11 @@ async function startServer() {
 
       res.setHeader("Content-Type", "video/mp4");
       res.setHeader("Accept-Ranges", "bytes");
-      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cache-Control", "public, max-age=300, must-revalidate");
       if (isDownload) {
-        res.setHeader("Content-Disposition", 'attachment; filename="Yoouz_Investor_Pitch_Walkthrough.mp4"');
+        res.setHeader("Content-Disposition", 'attachment; filename="Yoouz_Investor_Pitch_Briefing.mp4"');
       } else {
-        res.setHeader("Content-Disposition", 'inline; filename="Yoouz_Investor_Pitch_Walkthrough.mp4"');
+        res.setHeader("Content-Disposition", 'inline; filename="Yoouz_Investor_Pitch_Briefing.mp4"');
       }
 
       if (range) {
