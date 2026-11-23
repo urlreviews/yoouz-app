@@ -1741,13 +1741,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       }}
                       className="relative shrink-0 self-stretch w-[clamp(162px,43.5vw,196px)] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] min-h-[235px] sm:min-h-0 sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
                     >
-                      {/* Clean Neutral Obsidian Fallback */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] flex flex-col items-center justify-center p-4 text-center z-0">
-                        <div className="w-11 h-11 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white font-semibold text-base mb-2">
-                          {businessName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-xs font-medium text-zinc-400 line-clamp-2">{businessName}</span>
-                      </div>
+                      {/* Clean Neutral Obsidian Canvas — zero fake letter flash while photo decodes */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] z-0" />
 
                       {/* Full-Bleed Live Photo Review */}
                       {posterUrl && (

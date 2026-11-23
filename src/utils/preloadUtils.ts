@@ -1,3 +1,5 @@
+import { getProxiedImageUrl, KNOWN_BRAND_LOGOS } from './logoUtils';
+
 // Persistent in-memory decoded image cache shared with pre-hydration SSR bootstrap.
 // Pinning HTMLImageElement references in a bounded Map prevents Chrome/Safari GC
 // from evicting decoded GPU bitmaps across route/drawer transitions.
@@ -155,6 +157,19 @@ export const preloadBusinessAssets = (logoUrl?: string | null, bannerUrl?: strin
   if (avatarUrl) preloadImage(avatarUrl, 'auto');
 };
 
+const resolvePreloadLogoUrl = (review: any): string => {
+  if (!review) return '';
+  const dom = String(review.brandDomain || review.placeId || '').toLowerCase().replace(/^www\./, '').trim();
+  if (dom && KNOWN_BRAND_LOGOS[dom]) {
+    return getProxiedImageUrl(KNOWN_BRAND_LOGOS[dom]) || KNOWN_BRAND_LOGOS[dom];
+  }
+  const raw = review.placeLogoUrl || review.logoUrl || '';
+  if (raw && typeof raw === 'string' && raw.trim()) {
+    return getProxiedImageUrl(raw.trim()) || raw.trim();
+  }
+  return dom && dom.includes('.') ? `/api/favicon?domain=${encodeURIComponent(dom)}` : '';
+};
+
 /**
  * Preload all photos and media associated with a review.
  */
@@ -162,8 +177,9 @@ export const preloadReviewAssets = (review: any) => {
   if (!review) return;
   const photo = review.photoUrl || review.photoDataUrl || review.thumbnailUrl;
   if (photo) preloadImage(photo, 'high');
-  if (review.placeLogoUrl) preloadImage(review.placeLogoUrl, 'high');
-  if (review.placeBannerUrl) preloadImage(review.placeBannerUrl, 'auto');
+  const logo = resolvePreloadLogoUrl(review);
+  if (logo) preloadImage(logo, 'high');
+  if (review.placeBannerUrl) preloadImage(getProxiedImageUrl(review.placeBannerUrl) || review.placeBannerUrl, 'auto');
   if (review.author?.avatar) preloadImage(review.author.avatar, 'auto');
 };
 
@@ -171,7 +187,7 @@ export const preloadReviewAssets = (review: any) => {
  * Batch preload an array of image URLs smoothly in parallel waves
  * without starving network sockets.
  */
-export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto', immediateCount = 14) => {
+export const preloadImageBatch = (urls: (string | null | undefined)[], priority: 'high' | 'auto' = 'auto', immediateCount = 20) => {
   const valid = Array.from(
     new Set(
       urls
@@ -193,11 +209,11 @@ export const preloadImageBatch = (urls: (string | null | undefined)[], priority:
       preloadImage(valid[cursor], 'auto');
     }
     if (cursor < valid.length) {
-      setTimeout(pump, 60);
+      setTimeout(pump, 50);
     }
   };
   if (valid.length > immediateCount) {
-    setTimeout(pump, 75);
+    setTimeout(pump, 60);
   }
 };
 
@@ -206,7 +222,7 @@ export const preloadImageBatch = (urls: (string | null | undefined)[], priority:
  * so navigating to Homepage, Feed, Business Profiles, User Profiles, or Bookmarks
  * renders every single image instantaneously on frame 0 with zero loading flash.
  */
-export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 16) => {
+export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 20) => {
   if (!Array.isArray(reviews) || reviews.length === 0 || typeof window === 'undefined') return;
   const highUrls: string[] = [];
   const bgUrls: string[] = [];
@@ -214,18 +230,19 @@ export const preloadAllReviewPhotos = (reviews: any[], priorityCount = 16) => {
     const r = reviews[i];
     if (!r) continue;
     const p = r.photoUrl || r.photoDataUrl || r.thumbnailUrl;
-    const logo = r.placeLogoUrl;
-    const banner = r.placeBannerUrl;
+    const logo = resolvePreloadLogoUrl(r);
+    const bannerRaw = r.placeBannerUrl || r.bannerUrl;
+    const banner = bannerRaw && typeof bannerRaw === 'string' ? (getProxiedImageUrl(bannerRaw.trim()) || bannerRaw.trim()) : '';
     const avatar = r.author?.avatar || r.author?.avatarUrl;
-    if (i < 8) {
+    if (i < 10) {
+      if (logo) highUrls.push(logo);
       if (p && typeof p === 'string' && p.trim()) highUrls.push(p.trim());
-      if (logo && typeof logo === 'string' && logo.trim()) highUrls.push(logo.trim());
-      if (banner && typeof banner === 'string' && banner.trim()) bgUrls.push(banner.trim());
+      if (banner) bgUrls.push(banner);
       if (avatar && typeof avatar === 'string' && avatar.trim()) bgUrls.push(avatar.trim());
     } else {
+      if (logo) bgUrls.push(logo);
       if (p && typeof p === 'string' && p.trim()) bgUrls.push(p.trim());
-      if (logo && typeof logo === 'string' && logo.trim()) bgUrls.push(logo.trim());
-      if (banner && typeof banner === 'string' && banner.trim()) bgUrls.push(banner.trim());
+      if (banner) bgUrls.push(banner);
       if (avatar && typeof avatar === 'string' && avatar.trim()) bgUrls.push(avatar.trim());
     }
   }

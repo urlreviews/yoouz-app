@@ -289,6 +289,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
   const displayName = (name || cleanDomain || "Business").trim();
   const brandInitial = (displayName.replace(/^(https?:\/\/)?(www\.)?/, "").charAt(0) || "B").toUpperCase();
   const hasVisibleLogo = Boolean(instantVisible || imgLoaded || loadedSrc);
+  const allCandidatesFailed = candidateUrls.length === 0 || candidateIdx >= candidateUrls.length;
+  const showLetterFallback = !hasVisibleLogo && allCandidatesFailed;
   const contrastFilterClass = needsDarkContrast ? "brightness-[0.08]" : "";
 
   return (
@@ -350,8 +352,8 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           }}
         />
       ) : null}
-      {/* Crisp brand initial fallback only when no logo candidate is available */}
-      {!hasVisibleLogo && (
+      {/* Crisp brand initial fallback ONLY when every real logo candidate has genuinely failed — NEVER flash a fake letter while loading */}
+      {showLetterFallback && (
         <div className="absolute inset-0 flex items-center justify-center z-0">
           <div className="w-full h-full flex items-center justify-center bg-zinc-100 text-zinc-900 font-black select-none">
             <span className={fallbackTextClassName || "text-zinc-900 tracking-wider"}>{brandInitial}</span>

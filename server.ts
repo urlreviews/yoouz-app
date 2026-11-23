@@ -38199,18 +38199,48 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     return sendDefaultFavicon(cleanDomain);
   });
 
-  // Bounded in-memory RAM cache for proxied business banners & logos (<1ms repeat hits)
+  // Bounded in-memory RAM + persistent disk cache for proxied business banners & logos (<1ms repeat hits)
   const proxyImageRamCache = new Map<string, { buf: Buffer; contentType: string; etag: string; cachedAt: number }>();
-  const MAX_PROXY_IMAGE_RAM = 200;
-  const PROXY_IMAGE_TTL_MS = 6 * 60 * 60 * 1000;
+  const proxyDiskCacheDir = path.join(serverUploadsDir, "brand-cache", "proxy");
+  try { fs.mkdirSync(proxyDiskCacheDir, { recursive: true }); } catch {}
+  const MAX_PROXY_IMAGE_RAM = 400;
+  const PROXY_IMAGE_TTL_MS = 24 * 60 * 60 * 1000;
+  const getProxyDiskHash = (cacheKey: string) => crypto.createHash("sha1").update(cacheKey).digest("hex");
   const cacheProxyImage = (cacheKey: string, buf: Buffer, contentType: string) => {
-    if (!buf || buf.length < 64 || buf.length > 1500000) return;
+    if (!buf || buf.length < 64 || buf.length > 2_000_000) return;
     if (proxyImageRamCache.size >= MAX_PROXY_IMAGE_RAM && !proxyImageRamCache.has(cacheKey)) {
       const oldest = proxyImageRamCache.keys().next().value;
       if (oldest) proxyImageRamCache.delete(oldest);
     }
     const etag = `"yz-px-${buf.length}-${cacheKey.length}"`;
     proxyImageRamCache.set(cacheKey, { buf, contentType, etag, cachedAt: Date.now() });
+    try {
+      const hash = getProxyDiskHash(cacheKey);
+      fs.writeFileSync(path.join(proxyDiskCacheDir, `${hash}.bin`), buf);
+      fs.writeFileSync(path.join(proxyDiskCacheDir, `${hash}.meta`), contentType);
+    } catch {}
+  };
+  const readProxyImageFromDisk = (cacheKey: string): { buf: Buffer; contentType: string; etag: string; cachedAt: number } | null => {
+    try {
+      const hash = getProxyDiskHash(cacheKey);
+      const binPath = path.join(proxyDiskCacheDir, `${hash}.bin`);
+      const metaPath = path.join(proxyDiskCacheDir, `${hash}.meta`);
+      if (fs.existsSync(binPath) && fs.existsSync(metaPath)) {
+        const buf = fs.readFileSync(binPath);
+        const contentType = fs.readFileSync(metaPath, "utf8").trim() || "image/png";
+        if (buf.length >= 64) {
+          const etag = `"yz-px-${buf.length}-${cacheKey.length}"`;
+          const entry = { buf, contentType, etag, cachedAt: Date.now() };
+          if (proxyImageRamCache.size >= MAX_PROXY_IMAGE_RAM) {
+            const oldest = proxyImageRamCache.keys().next().value;
+            if (oldest) proxyImageRamCache.delete(oldest);
+          }
+          proxyImageRamCache.set(cacheKey, entry);
+          return entry;
+        }
+      }
+    } catch {}
+    return null;
   };
 
   // High-performance image proxy to bypass browser tracking blockers (Firefox ETP, Safari ITP, AdBlockers)
@@ -38253,10 +38283,32 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (!targetUrl.startsWith('https://') && !targetUrl.startsWith('/') && !targetUrl.startsWith('data:')) {
         targetUrl = 'https://' + targetUrl;
       }
+
+      // 0. Instant <1ms RAM hit if this is a brand logo/icon whose host is already pre-localized in brand-assets/logos
+      const lowerTargetFast = targetUrl.toLowerCase();
+      const isLikelyLogoReq = req.query.isLogo === '1' || lowerTargetFast.includes('logo') || lowerTargetFast.includes('apple-touch-icon') || lowerTargetFast.includes('favicon');
+      if (isLikelyLogoReq && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+        try {
+          const fastHost = new URL(targetUrl).hostname.replace(/^www\./i, '').toLowerCase();
+          const slugHost = fastHost.replace(/[^a-z0-9.-]/g, '_');
+          const localized = loadBrandAssetIntoRam("logos", `${slugHost}.svg`) || loadBrandAssetIntoRam("logos", `${slugHost}.webp`);
+          if (localized) {
+            res.setHeader('Content-Type', localized.contentType);
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('ETag', localized.etag);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            if (req.headers['if-none-match'] === localized.etag) {
+              return res.status(304).end();
+            }
+            return res.status(200).send(localized.buf);
+          }
+        } catch {}
+      }
       
-      // Serve immediately from RAM cache (<1ms) if available
+      // 1. Serve immediately from RAM or persistent disk cache (<1ms) if available
       const proxyCacheKey = `${targetUrl}|${req.query.isLogo === '1' ? 'L' : 'B'}`;
-      const hit = proxyImageRamCache.get(proxyCacheKey);
+      const hit = proxyImageRamCache.get(proxyCacheKey) || readProxyImageFromDisk(proxyCacheKey);
       if (hit && Date.now() - hit.cachedAt < PROXY_IMAGE_TTL_MS) {
         res.setHeader('Content-Type', hit.contentType);
         res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
@@ -38298,52 +38350,54 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
             'Referer': sameOriginReferer
           },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(8000) : undefined
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isLikelyLogoReq ? 3200 : 5200) : undefined
         });
         contentType = (response.headers.get('content-type') || '').toLowerCase();
       } catch (directFetchErr) {
         response = null;
       }
       
-      // Strict Image Validation: If upstream server returned 403/HTML or failed, try wsrv.nl / Photon CDN / Wayback Machine 2im_ archive before fallback
+      // Strict Image Validation: If upstream server returned 403/HTML or failed, race CDN mirrors in parallel (fast <2.5s failover)
       if (!response || !response.ok || contentType.includes('text/html') || contentType.includes('text/plain') || (!contentType.includes('image') && !contentType.includes('svg') && !contentType.includes('octet-stream'))) {
         if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
           const cleanTarget = targetUrl.replace(/^https?:\/\//, '');
           const cdnMirrors = [
             `https://i0.wp.com/${cleanTarget}`,
-            `https://wsrv.nl/?url=${encodeURIComponent(targetUrl)}`,
-            `https://web.archive.org/web/2im_/https://${cleanTarget}`
+            `https://wsrv.nl/?url=${encodeURIComponent(targetUrl)}`
           ];
-          for (const mirrorUrl of cdnMirrors) {
-            try {
-              const mResp = await fetch(mirrorUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                  'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-                },
-                redirect: 'follow',
-                signal: (AbortSignal as any).timeout ? AbortSignal.timeout(5000) : undefined
-              });
-              const mType = (mResp.headers.get('content-type') || mResp.headers.get('x-archive-guessed-content-type') || '').toLowerCase();
-              if (mResp.ok && !mType.includes('text/html') && !mType.includes('text/plain') && (mType.includes('image') || mType.includes('octet-stream') || mType === '')) {
+          try {
+            const fastest = await Promise.any(
+              cdnMirrors.map(async (mirrorUrl) => {
+                const mResp = await fetch(mirrorUrl, {
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                  },
+                  redirect: 'follow',
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+                });
+                const mType = (mResp.headers.get('content-type') || '').toLowerCase();
+                if (!mResp.ok || mType.includes('text/html') || mType.includes('text/plain') || (!mType.includes('image') && !mType.includes('octet-stream') && mType !== '')) {
+                  throw new Error("invalid mirror response");
+                }
                 const inferredMime = mType.includes('image')
                   ? mType
                   : (cleanTarget.endsWith('.png') ? 'image/png' : (cleanTarget.endsWith('.webp') ? 'image/webp' : (cleanTarget.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg')));
                 const buf = Buffer.from(await mResp.arrayBuffer());
-                if (buf.length > 100) {
-                  cacheProxyImage(proxyCacheKey, buf, inferredMime);
-                  res.setHeader('Content-Type', inferredMime);
-                  res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
-                  res.setHeader('Access-Control-Allow-Origin', '*');
-                  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-                  return res.send(buf);
-                }
-              }
-            } catch (eMirror) {}
-          }
+                if (buf.length <= 100) throw new Error("empty mirror buffer");
+                return { buf, inferredMime };
+              })
+            );
+            cacheProxyImage(proxyCacheKey, fastest.buf, fastest.inferredMime);
+            res.setHeader('Content-Type', fastest.inferredMime);
+            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+            return res.send(fastest.buf);
+          } catch {}
         }
 
-        // Automatic recovery for failed logo/icon assets: probe authentic domain icons
+        // Automatic recovery for failed logo/icon assets: probe authentic domain icons and CACHE the winning result
         try {
           const lowerTarget = targetUrl.toLowerCase();
           const isLogoOrIcon = lowerTarget.includes('logo') || lowerTarget.includes('icon') || lowerTarget.includes('brand') || req.query.isLogo === '1';
@@ -38368,14 +38422,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
                   },
-                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
                 });
                 const fbType = (fbResp.headers.get('content-type') || '').toLowerCase();
                 if (fbResp.ok && (fbType.includes('image') || fbType.includes('octet-stream') || fbUrl.endsWith('.ico'))) {
                   const fbBuf = Buffer.from(await fbResp.arrayBuffer());
                   if (fbBuf.length > 100) {
-                    res.setHeader('Content-Type', fbType.includes('image') ? fbType : (fbUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'));
-                    res.setHeader('Cache-Control', 'public, max-age=604800');
+                    const resolvedFbType = fbType.includes('image') ? fbType : (fbUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
+                    cacheProxyImage(proxyCacheKey, fbBuf, resolvedFbType);
+                    res.setHeader('Content-Type', resolvedFbType);
+                    res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
                     res.setHeader('Access-Control-Allow-Origin', '*');
                     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
                     return res.send(fbBuf);
@@ -43225,7 +43281,8 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         };
       });
 
-      // Collect top visible hero photos/logos (deferred until after first paint so Vite/JS downloads are never throttled)
+      // Collect top visible hero logos & photos using the EXACT URLs CopoBrandLogo & CopoHomePage render
+      // Warm them immediately during HTML parse so frame-0 paint hits 100% browser memory cache
       const preloadAssets: string[] = [];
       const seenPreload = new Set<string>();
       const pushAsset = (u?: string) => {
@@ -43234,6 +43291,25 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         if (!clean || clean.startsWith('data:') || clean.startsWith('blob:') || seenPreload.has(clean)) return;
         seenPreload.add(clean);
         preloadAssets.push(clean);
+      };
+      const resolveServerPreloadLogo = (v: any): string => {
+        const dom = String(v?.brandDomain || v?.placeId || '').toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0].trim();
+        if (dom) {
+          const slugDom = dom.replace(/[^a-z0-9.-]/g, '_');
+          if (loadBrandAssetIntoRam("logos", `${slugDom}.svg`)) return `/uploads/brand-assets/logos/${slugDom}.svg`;
+          if (loadBrandAssetIntoRam("logos", `${slugDom}.webp`)) return `/uploads/brand-assets/logos/${slugDom}.webp`;
+        }
+        const raw = typeof v?.placeLogoUrl === 'string' ? v.placeLogoUrl.trim() : '';
+        if (!raw || raw.startsWith('data:') || raw.startsWith('blob:')) return '';
+        if (raw.startsWith('/')) return raw;
+        if (/b-cdn\.net|bunnycdn\.com|wikimedia\.org|googleusercontent\.com/i.test(raw)) return raw;
+        if (raw.startsWith('http://') || raw.startsWith('https://')) {
+          const httpsRaw = raw.startsWith('http://') ? 'https://' + raw.slice(7) : raw;
+          return httpsRaw.toLowerCase().includes('.svg')
+            ? `/api/proxy-image?v=3&url=${encodeURIComponent(httpsRaw)}`
+            : `/api/proxy-image?url=${encodeURIComponent(httpsRaw)}`;
+        }
+        return dom && dom.includes('.') ? `/api/favicon?domain=${encodeURIComponent(dom)}` : '';
       };
 
       if (targetUrlOrVideoId) {
@@ -43250,20 +43326,23 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
             (ahandle && ahandle.length > 2 && cleanTarget.includes(ahandle)) ||
             (uid && uid.length > 3 && cleanTarget.includes(uid))
           ) {
+            pushAsset(resolveServerPreloadLogo(v));
             pushAsset(v.photoUrl || v.thumbnailUrl);
-            pushAsset(v.placeLogoUrl);
           }
         }
       }
 
+      // Logos first (1–6KB each — paint instantaneously), then visible hero photos
+      for (const v of liveVideos.slice(0, 10)) {
+        pushAsset(resolveServerPreloadLogo(v));
+      }
       for (const v of liveVideos.slice(0, 8)) {
         pushAsset(v.photoUrl || v.thumbnailUrl);
-        pushAsset(v.placeLogoUrl);
       }
 
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
-      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 24)).replace(/</g, '\\u003c');
-      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var start=function(){var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}img.decoding='async';cache.set(u,img);img.onload=function(){ready.add(u);};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<Math.min(6,urls.length);i++){warm(urls[i]);}};setTimeout(start,120);}catch(e){}})();`;
+      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 20)).replace(/</g, '\\u003c');
+      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}img.decoding='sync';try{img.fetchPriority='high';}catch(e){}cache.set(u,img);img.onload=function(){ready.add(u);};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<urls.length;i++){warm(urls[i]);}}catch(e){}})();`;
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};${prewarmBootstrap}</script>`;
       if (/<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>/i.test(html)) {
         return html.replace(/(<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>)/i, `${scriptTag}\n$1`);
