@@ -524,7 +524,7 @@ export async function seedCommunityEngagementV1(): Promise<{
       const avatar = String(row.avatar || d.avatar || "");
       return { id, email, name, handle: handle.startsWith("@") ? handle : `@${handle}`, avatar };
     })
-    .filter((u) => u.id && u.email && !u.email.includes("4samet"));
+    .filter((u) => u.id && u.email && !u.email.endsWith("@yoouz.com"));
 
   const userById = new Map(communityUsers.map((u) => [u.id, u]));
 

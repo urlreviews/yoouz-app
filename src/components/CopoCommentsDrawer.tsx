@@ -118,7 +118,7 @@ export const resolveCommentUserMeta = (
   let email = (comment.authorEmail || comment.userEmail || comment.userId || "").trim().toLowerCase();
 
   // System alias normalization
-  if (email && (email.includes("4samet") || email.includes("bizriv"))) {
+  if (email && email.includes("bizriv")) {
     name = "Biz Riv";
     handle = "@bizriv";
   }
@@ -126,7 +126,7 @@ export const resolveCommentUserMeta = (
   if (!name || name === "Reviewer" || name === "Copo Reviewer" || name === "User" || name === "Guest") {
     if (handle) {
       const cleanH = handle.replace(/^@+/, "").toLowerCase();
-      if (cleanH.includes("bizriv") || cleanH.includes("4samet")) {
+      if (cleanH.includes("bizriv")) {
         name = "Biz Riv";
         handle = "@bizriv";
       }

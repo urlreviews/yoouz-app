@@ -246,7 +246,7 @@ function syncRemoteToLocalBackground(remoteClient: Client, localClient: Client):
             const cols = Object.keys(r).filter((k) => isNaN(Number(k)));
             if (cols.length === 0) continue;
             // Skip deleted system/duplicate user IDs during background sync
-            if (tbl === "users" && ["usr_yoouz_admin", "usr_samet", "usr_steven_akan", "usr_ben_blue", "admin@users.yoouz.com", "4samet@users.yoouz.com", "stevenakan@users.yoouz.com", "benblue@users.yoouz.com"].includes(String(r.id))) {
+            if (tbl === "users" && ["usr_yoouz_admin", "usr_steven_akan", "usr_ben_blue", "admin@users.yoouz.com", "stevenakan@users.yoouz.com", "benblue@users.yoouz.com"].includes(String(r.id))) {
               continue;
             }
             if (tbl === "videoReviews") {

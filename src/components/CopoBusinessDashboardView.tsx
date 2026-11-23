@@ -1023,7 +1023,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
   }, [placeVideos]);
 
   // QR Standee Studio State
-  const [qrCustomHeading, setQrCustomHeading] = useState('LEAVE A 60-SECOND VIDEO REVIEW');
+  const [qrCustomHeading, setQrCustomHeading] = useState('LEAVE A LIVE PHOTO REVIEW');
   const [qrTableLabel, setQrTableLabel] = useState('');
   const [qrLinkCopied, setQrLinkCopied] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);

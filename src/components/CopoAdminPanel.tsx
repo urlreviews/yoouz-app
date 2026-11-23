@@ -1320,7 +1320,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       const arr = JSON.parse(stored);
       const filtered = (Array.isArray(arr) ? arr : []).filter((k: string) => {
         const s = String(k).toLowerCase();
-        return !s.includes("4samet") && !s.includes("admin@yoouz.com");
+        return !s.includes("admin@yoouz.com");
       });
       return new Set(filtered.map((k: string) => String(k).toLowerCase()));
     } catch {
@@ -1886,14 +1886,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
        const cleanName = u.name ? u.name.toLowerCase().trim() : "";
        if (
          rawEmail === "admin@users.yoouz.com" ||
-         rawEmail === "4samet@users.yoouz.com" ||
-         rawEmail === "4samet@gmail.com" ||
-         rawEmail === "avr6566gd@gmail.com" ||
          rawEmail === "stevenakan@users.yoouz.com" ||
-         rawEmail === "aouisesmee@gmail.com" ||
          rawEmail === "benblue@users.yoouz.com" ||
          cleanName === "yoouz admin" ||
-         cleanName === "samet" ||
          cleanName === "steven akan" ||
          cleanName === "ben blue" ||
          cleanName === "u/testa1" ||

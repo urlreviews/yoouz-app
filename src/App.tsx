@@ -1054,6 +1054,20 @@ export function App() {
     return null;
   });
   const [selectedAuthorForDrawer, setSelectedAuthorForDrawer] = useState<VideoAuthor | null>(null);
+  const [pendingCreatorSlug, setPendingCreatorSlug] = useState<string | null>(() => {
+    try {
+      const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname || "/");
+      const m =
+        pathWithoutLocale.match(/^\/@([^\/]+)$/) ||
+        pathWithoutLocale.match(/^\/u\/([^\/]+)$/) ||
+        pathWithoutLocale.match(/^\/profile\/([^\/]+)$/) ||
+        pathWithoutLocale.match(/^\/creator\/([^\/]+)$/) ||
+        pathWithoutLocale.match(/^\/user\/([^\/]+)$/);
+      return m ? decodeURIComponent(m[1]) : null;
+    } catch {
+      return null;
+    }
+  });
   const [pendingVideoId, setPendingVideoId] = useState<string | null>(() => getInitialVideoIdFromLocation());
   const [placeReviewSort, setPlaceReviewSort] = useState<"latest" | "oldest" | "highest" | "lowest" | "popular">("latest");
   const [placeStarFilter, setPlaceStarFilter] = useState<number | "all">("all");
@@ -1485,7 +1499,7 @@ export function App() {
           }
         }
         if (!creatorParam && !videoParam) {
-          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/) || pathname.match(/^\/user\/([^\/]+)/);
+          const cMatch = pathname.match(/^\/@([^\/]+)/) || pathname.match(/^\/u\/([^\/]+)/) || pathname.match(/^\/profile\/([^\/]+)/) || pathname.match(/^\/creator\/([^\/]+)/) || pathname.match(/^\/user\/([^\/]+)/);
           if (cMatch) {
             creatorParam = cMatch[1];
           }
@@ -1674,7 +1688,9 @@ export function App() {
 
             const rawClean = rawParam.replace(/^@+/, "").toLowerCase().trim();
             const rawCompact = rawClean.replace(/[^a-z0-9]/g, "");
+            const rawCompactNoPrefix = rawCompact.replace(/^u/, "");
             const rawSlug = rawClean.replace(/\s+/g, "-").replace(/[^a-z0-9_-]/g, "");
+            setPendingCreatorSlug(rawClean);
 
             const matchingVid = videosRef.current.find((v) => {
               if (!v.author) return false;
@@ -1691,12 +1707,14 @@ export function App() {
                 authorName === rawClean ||
                 nameSlug === rawSlug ||
                 (rawCompact.length > 2 && (nameCompact === rawCompact || handleCompact === rawCompact)) ||
+                (rawCompactNoPrefix.length >= 5 && (nameCompact === `u${rawCompactNoPrefix}` || handleCompact === `u${rawCompactNoPrefix}`)) ||
                 (userEmail && userEmail === rawClean)
               );
             });
 
             if (matchingVid && matchingVid.author) {
               setSelectedAuthorForDrawer(matchingVid.author);
+              setPendingCreatorSlug(null);
               setSelectedPlaceIdForDrawer(null);
               setCurrentVideoIndex(0);
             } else if (KNOWN_COMMUNITY_USERS[rawClean] || KNOWN_COMMUNITY_USERS[rawSlug] || KNOWN_COMMUNITY_USERS[rawCompact]) {
@@ -1711,6 +1729,7 @@ export function App() {
                 isVerified: false,
                 isFollowed: false
               });
+              setPendingCreatorSlug(null);
               setSelectedPlaceIdForDrawer(null);
               setCurrentVideoIndex(0);
             } else {
@@ -1725,12 +1744,14 @@ export function App() {
                       const uHandle = (u.handle || "").replace(/^@+/, "").trim().toLowerCase();
                       const uEmail = (u.email || "").split("@")[0].toLowerCase();
                       const uCompact = uName.replace(/[^a-z0-9]/g, "");
+                      const uHandleCompact = uHandle.replace(/[^a-z0-9]/g, "");
                       return (
                         uName === rawClean ||
                         uNameSlug === rawSlug ||
                         uHandle === rawClean ||
                         uEmail === rawClean ||
-                        (rawCompact.length > 2 && (uCompact === rawCompact || uHandle.replace(/[^a-z0-9]/g, "") === rawCompact))
+                        (rawCompact.length > 2 && (uCompact === rawCompact || uHandleCompact === rawCompact)) ||
+                        (rawCompactNoPrefix.length >= 5 && (uCompact === `u${rawCompactNoPrefix}` || uHandleCompact === `u${rawCompactNoPrefix}`))
                       );
                     });
                     if (matched && matched.name && matched.name.toLowerCase() !== "reviewer") {
@@ -1748,10 +1769,12 @@ export function App() {
                         isVerified: false,
                         isFollowed: false
                       });
+                      setPendingCreatorSlug(null);
                       setSelectedPlaceIdForDrawer(null);
                       setCurrentVideoIndex(0);
                     } else {
                       // No authentic creator found; never fabricate mock pages
+                      setPendingCreatorSlug(null);
                       setSelectedAuthorForDrawer(null);
                       setSelectedPlaceIdForDrawer(null);
                       try { window.history.replaceState(null, "", buildLocalizedPath("/", language)); } catch (e) {}
@@ -1759,12 +1782,14 @@ export function App() {
                   }
                 })
                 .catch(() => {
+                  setPendingCreatorSlug(null);
                   setSelectedAuthorForDrawer(null);
                   setSelectedPlaceIdForDrawer(null);
                 });
             }
           }
         } else {
+          setPendingCreatorSlug(null);
           setSelectedPlaceIdForDrawer(null);
           setSelectedAuthorForDrawer(null);
           const triggerAddReview =
@@ -4762,33 +4787,18 @@ export function App() {
         }
       });
 
+      // Recompute in-memory aggregates strictly when loaded reviews show higher count or updated rating.
+      // Never fire background POST writes to BunnyDB from passive page visits (prevents socket saturation & zeroing out paginated places).
       next.forEach((p, index) => {
         const matchingV = videos.filter(v => !isPlaceDeleted(v.placeId || v.placeWebsite || v.placeName, currentDeleted) && isPlaceReviewMatch(v, p));
         const computedCount = matchingV.length;
-        const computedRating = matchingV.length > 0 
-          ? Number((matchingV.reduce((acc, v) => acc + (v.rating || 5), 0) / matchingV.length).toFixed(1))
-          : 0.0;
+        if (computedCount === 0) return;
+        const computedRating = Number((matchingV.reduce((acc, v) => acc + (v.rating || 5), 0) / computedCount).toFixed(1));
+        const nextCount = Math.max(Number(p.totalReviews || 0), computedCount);
 
-        if (p.totalReviews !== computedCount || p.videoReviewCount !== computedCount || Math.abs((Number(p.rating) || 0) - computedRating) > 0.01) {
-          next[index] = { ...p, totalReviews: computedCount, videoReviewCount: computedCount, rating: computedRating };
+        if (p.totalReviews !== nextCount || p.videoReviewCount !== nextCount || Math.abs((Number(p.rating) || 0) - computedRating) > 0.01) {
+          next[index] = { ...p, totalReviews: nextCount, videoReviewCount: nextCount, rating: computedRating };
           modified = true;
-
-          // Sync to BunnyDB if review count or rating changed
-          if (p.id) {
-            fetch(`/api/nosql/places/${encodeURIComponent(p.id)}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                data: {
-                  ...next[index],
-                  totalReviews: computedCount,
-                  videoReviewCount: computedCount,
-                  rating: computedRating
-                }, 
-                merge: true 
-              })
-            }).catch(() => {});
-          }
         }
       });
 
@@ -5450,6 +5460,9 @@ export function App() {
       if (pendingVideoId && (!currentVid || currentVid.id !== pendingVideoId)) {
         return;
       }
+      if (pendingCreatorSlug && !selectedAuthorForDrawer) {
+        return;
+      }
 
       let metaDesc = "A picture is worth a thousand words. Live camera photo reviews and 1–5 whole-star ratings with zero fake uploads on Yoouz.";
 
@@ -5614,7 +5627,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId, embedTargetId, isPitchRoute]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId, pendingCreatorSlug, embedTargetId, isPitchRoute]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load

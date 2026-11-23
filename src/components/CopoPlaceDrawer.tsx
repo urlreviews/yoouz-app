@@ -1253,7 +1253,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const raw = activeBranch?.email || place.email || knownLoc?.email || rawPlaceVideos.find(v => v.placeEmail && v.placeEmail.trim() !== "")?.placeEmail || "";
     if (!raw || !raw.trim()) return "";
     const lower = raw.trim().toLowerCase();
-    if (lower.includes("4samet")) {
+    // Never expose personal webmail or internal system addresses on public business profiles
+    if (/@(gmail\.com|googlemail\.com|yahoo\.com|hotmail\.com|outlook\.com|icloud\.com|live\.com|users\.yoouz\.com)$/i.test(lower)) {
       return "";
     }
     return raw.trim();
@@ -1505,7 +1506,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         id="google-maps-business-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-50 md:z-20"}`}
+        className={`fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] rounded-none text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform ${isEditModalOpen ? "z-[90] md:z-[90]" : "z-[70] md:z-20"}`}
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {

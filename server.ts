@@ -9501,7 +9501,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
         canonicalMap.set('yoouz.com', {
           id: 'yoouz.com',
           name: 'Yoouz',
-          category: 'Video Reviews & Discovery Platform',
+          category: 'Live Photo Reviews & Discovery Platform',
           categoryType: 'business',
           address: '',
           city: '',
@@ -9525,11 +9525,15 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       }
       items = Array.from(canonicalMap.values());
 
-      // Re-evaluate accurate video review count per place from reviews_index / videoReviews
+      // Re-evaluate accurate photo review count per place from reviews_index and strip bloated inline review payloads
       try {
         const allRevs = readReviewsIndex();
         items.forEach((p: any) => {
           if (!p || !p.id) return;
+          // Strip legacy embedded review arrays (which contain 400KB+ stale base64 blobs); reviews are served via /api/videos/feed
+          if (Array.isArray(p.reviews) && p.reviews.length > 0) {
+            p.reviews = [];
+          }
           const pDomain = cleanDomainName(p.website || p.brandDomain || p.id || p.name);
           const matchedReviews = allRevs.filter((v: any) => {
             if (!v) return false;
@@ -9849,6 +9853,10 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
           const safeKnownL = (knownL && !knownL.includes("/api/favicon")) ? `/api/proxy-image?url=${encodeURIComponent(knownL)}` : `/api/favicon?domain=${encodeURIComponent(domKey)}`;
           rec.logoUrl = safeKnownL;
           rec.avatarUrl = safeKnownL;
+        }
+        // Strip legacy embedded review arrays (400KB+ base64 bloat) from place records; reviews come from /api/videos/feed
+        if (Array.isArray(rec.reviews) && rec.reviews.length > 0) {
+          rec.reviews = [];
         }
         return rec;
       };
@@ -23940,12 +23948,14 @@ app.post("/api/videos/save-review", async (req, res) => {
           || (!isGenericOrPlaceholderLogo(pData.avatarUrl) && !isFaviconUrl(pData.avatarUrl) ? pData.avatarUrl : "")
           || (KNOWN_BRAND_LOGOS[placeId] ? KNOWN_BRAND_LOGOS[placeId] : "");
 
+        const { reviews: _strippedReviews, ...leanPlaceData } = pData;
         return {
           id: row.id,
           name: row.name,
           address: row.address,
           category: row.category,
-          ...pData,
+          ...leanPlaceData,
+          reviews: [],
           logoUrl: effectiveLogo,
           avatarUrl: effectiveLogo,
           bannerUrl: effectiveBanner,
@@ -27286,6 +27296,77 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
+  const isSafePublicHostname = (rawHost: string): boolean => {
+    const host = String(rawHost || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
+    if (!host || host.length > 253) return false;
+    if (
+      host === "localhost" ||
+      host === "0.0.0.0" ||
+      host === "::1" ||
+      host === "::" ||
+      host.endsWith(".localhost") ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      host.endsWith(".lan") ||
+      host === "metadata.google.internal" ||
+      host === "metadata"
+    ) {
+      return false;
+    }
+    // Block IPv4 loopback, private, link-local, CGNAT, and multicast ranges
+    const ipv4Match = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [a, b, c, d] = ipv4Match.slice(1).map(Number);
+      if (a > 255 || b > 255 || c > 255 || d > 255) return false;
+      if (
+        a === 0 ||
+        a === 10 ||
+        a === 127 ||
+        (a === 169 && b === 254) ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        (a === 100 && b >= 64 && b <= 127) ||
+        a >= 224
+      ) {
+        return false;
+      }
+    }
+    // Block IPv6 private/link-local/loopback/IPv4-mapped literals
+    if (host.includes(":")) {
+      if (
+        host === "::1" ||
+        host.startsWith("fe80:") ||
+        host.startsWith("fc") ||
+        host.startsWith("fd") ||
+        host.startsWith("::ffff:")
+      ) {
+        return false;
+      }
+    }
+    // Require a valid public domain label or public IP
+    if (!host.includes(".")) return false;
+    return true;
+  };
+
+  const isSafePublicHttpUrl = (rawUrl: string): boolean => {
+    try {
+      const parsed = new URL(rawUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+      if (parsed.username || parsed.password) return false;
+      return isSafePublicHostname(parsed.hostname);
+    } catch {
+      return false;
+    }
+  };
+
+  const escapeXmlText = (raw: string): string =>
+    String(raw || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
   // 3. Website Meta Tag Live HTML Crawl Verification
   app.post("/api/business/verify-website-tag", async (req, res) => {
     try {
@@ -27297,6 +27378,9 @@ app.post("/api/videos/save-review", async (req, res) => {
       let targetUrl = website.trim();
       if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
         targetUrl = `https://${targetUrl}`;
+      }
+      if (!isSafePublicHttpUrl(targetUrl)) {
+        return res.status(400).json({ error: "Please provide a valid public website URL." });
       }
 
       const expectedContent = expectedTag || `verify_${placeId || 'business'}`;
@@ -29494,29 +29578,12 @@ Timestamp: ${new Date(timestamp).toUTCString()}
     }
   });
 
-  app.get('/api/check-env'
-, (req, res) => res.json({ db: !!process.env.DATABASE_URL, url: process.env.DATABASE_URL }));
-  
-  app.get('/api/download-source', (req, res) => {
-    try {
-      const path = require('path');
-      const fs = require('fs');
-      const { execSync } = require('child_process');
-      const zipPath = path.join(process.cwd(), "project.zip");
-      if (fs.existsSync(zipPath)) {
-        fs.unlinkSync(zipPath);
-      }
-      execSync("zip -r project.zip . -x 'node_modules/*' 'dist/*' '.git/*' '.next/*' 'uploads/*' '*.zip'");
-      res.download(zipPath, "project.zip", () => {
-        try {
-          if (fs.existsSync(zipPath)) {
-            fs.unlinkSync(zipPath);
-          }
-        } catch (e) {}
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  app.get('/api/check-env', (_req, res) => {
+    res.json({ ok: true, db: Boolean(process.env.DATABASE_URL) });
+  });
+
+  app.get('/api/download-source', (_req, res) => {
+    res.status(404).json({ error: "Not available" });
   });
   
   function isValidPhoneNumber(raw?: string | null): boolean {
@@ -34491,36 +34558,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     return res?.domain || "";
   }
 
-  // Debug endpoint to check Firecrawl connectivity
-  app.get('/api/debug-firecrawl', async (req, res) => {
-    const results: any = {
-      timestamp: new Date().toISOString(),
-      firecrawl_url: FIRECRAWL_BASE_URL,
-      env_url: process.env.FIRECRAWL_API_URL || "not set",
-      checks: {}
-    };
-
-    try {
-      const rootCheck = await fetch(`${FIRECRAWL_BASE_URL}/`, { signal: AbortSignal.timeout(3000) })
-        .then(r => ({ status: r.status, ok: r.ok }))
-        .catch(e => ({ error: e.message }));
-      results.checks.root = rootCheck;
-
-      const scrapeCheck = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'https://example.com' }),
-        signal: AbortSignal.timeout(5000)
-      })
-      .then(r => ({ status: r.status, ok: r.ok }))
-      .catch(e => ({ error: e.message }));
-      results.checks.scrape_endpoint = scrapeCheck;
-
-    } catch (err) {
-      results.error = err.message;
-    }
-
-    res.json(results);
+  // Internal debug route disabled in production runtime
+  app.get('/api/debug-firecrawl', (_req, res) => {
+    res.status(404).json({ error: "Not available" });
   });
 
   const IN_FLIGHT_URL_METADATA = new Map<string, Promise<{ status: number; body: any }>>();
@@ -37962,7 +38002,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       return res.status(200).send(cleanSvg);
     };
 
-    if (!cleanDomain) {
+    if (!cleanDomain || !isSafePublicHostname(cleanDomain)) {
       return sendDefaultFavicon("B");
     }
 
@@ -38324,15 +38364,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       } catch (e) {}
 
       targetUrl = targetUrl.trim();
-      if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl === 'data:;') {
+      if (!targetUrl || targetUrl === 'undefined' || targetUrl === 'null' || targetUrl.toLowerCase().startsWith('data:')) {
         return sendFallbackImage();
       }
 
       if (targetUrl.startsWith('http://')) {
         targetUrl = 'https://' + targetUrl.slice(7);
       }
-      if (!targetUrl.startsWith('https://') && !targetUrl.startsWith('/') && !targetUrl.startsWith('data:')) {
+      if (!targetUrl.startsWith('https://') && !targetUrl.startsWith('/')) {
         targetUrl = 'https://' + targetUrl;
+      }
+
+      // Only permit public http(s) origins (blocks localhost, private LANs, and metadata endpoints)
+      if (!isSafePublicHttpUrl(targetUrl)) {
+        return sendFallbackImage();
       }
 
       // 0. Instant <1ms RAM hit if this is a brand logo/icon whose host is already pre-localized in brand-assets/logos
@@ -38345,6 +38390,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const localized = loadBrandAssetIntoRam("logos", `${slugHost}.svg`) || loadBrandAssetIntoRam("logos", `${slugHost}.webp`);
           if (localized) {
             res.setHeader('Content-Type', localized.contentType);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            if (localized.contentType.includes('svg')) {
+              res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+            }
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
             res.setHeader('ETag', localized.etag);
             res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38362,6 +38411,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const hit = proxyImageRamCache.get(proxyCacheKey) || readProxyImageFromDisk(proxyCacheKey);
       if (hit && Date.now() - hit.cachedAt < PROXY_IMAGE_TTL_MS) {
         res.setHeader('Content-Type', hit.contentType);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        if (hit.contentType.includes('svg')) {
+          res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+        }
         res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
         res.setHeader('ETag', hit.etag);
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38370,22 +38423,6 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           return res.status(304).end();
         }
         return res.status(200).send(hit.buf);
-      }
-
-      // If it is already a data URI or SVG
-      if (targetUrl.startsWith('data:image/svg+xml;utf8,')) {
-        const svgContent = decodeURIComponent(targetUrl.replace('data:image/svg+xml;utf8,', ''));
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=604800');
-        return res.send(svgContent);
-      }
-      if (targetUrl.startsWith('data:image')) {
-        const parts = targetUrl.split(',');
-        const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/png';
-        const buffer = Buffer.from(parts[1], 'base64');
-        res.setHeader('Content-Type', mime);
-        res.setHeader('Cache-Control', 'public, max-age=604800');
-        return res.send(buffer);
       }
 
       let response: any = null;
@@ -38506,6 +38543,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       }
 
       res.setHeader('Content-Type', contentType);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      if (contentType.includes('svg')) {
+        res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+      }
       res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -39505,80 +39546,33 @@ const isPlaceCard = type === 'place';
   // Open Graph Image Endpoint (Generates PNG for Facebook, X/Twitter, WhatsApp, LinkedIn, etc.)
   
 
-app.get('/api/debug-metadata', async (req, res) => {
-  const targetUrl = String(req.query.url || '');
-  if (!targetUrl) return res.send("Please provide ?url=...");
-  
-  try {
-    const urlObj = new URL(targetUrl);
-    
-    // Mock a request object for resolveMetadataForRequest
-    const mockReq = {
-      headers: {
-        'x-forwarded-proto': urlObj.protocol.replace(':', ''),
-        'x-forwarded-host': urlObj.host,
-        host: urlObj.host
-      },
-      protocol: urlObj.protocol.replace(':', ''),
-      originalUrl: urlObj.pathname + urlObj.search,
-      url: urlObj.pathname + urlObj.search
-    };
-    
-    const meta = await resolveMetadataForRequest(mockReq as any);
-    const htmlTags = injectOpenGraphTags("<html><head><title>Test</title></head><body></body></html>", meta);
-    
-    // Return a beautiful preview
-    res.setHeader('Content-Type', 'text/html');
-    res.send(`
-      <html>
-        <head>
-          <style>
-            body { font-family: system-ui, sans-serif; background: #09090b; color: #fff; padding: 40px; }
-            .card { background: #18181b; padding: 24px; border-radius: 12px; border: 1px solid #27272a; margin-bottom: 24px; }
-            pre { background: #000; padding: 16px; border-radius: 8px; overflow-x: auto; color: #a1a1aa; }
-            img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #27272a; }
-            h2 { color: #f4f4f5; margin-top: 0; }
-          </style>
-        </head>
-        <body>
-          <h1>URL Metadata Preview</h1>
-          
-          <div class="card">
-            <h2>Generated Open Graph Image</h2>
-            <img src="${meta.imageUrl}" />
-          </div>
-
-          <div class="card">
-            <h2>Generated HTML Tags</h2>
-            <pre>${htmlTags.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-          </div>
-          
-          <div class="card">
-            <h2>Raw JSON Metadata Object</h2>
-            <pre>${JSON.stringify(meta, null, 2)}</pre>
-          </div>
-        </body>
-      </html>
-    `);
-  } catch (err: any) {
-    res.status(500).send(err.message);
-  }
+app.get('/api/debug-metadata', (_req, res) => {
+  res.status(404).json({ error: "Not available" });
 });
 
 app.get('/api/og-preview-v2', async (req, res) => {
-  let placeName = String(req.query.placeName || "Awesome Coffee Shop");
-  let authorName = String(req.query.author || "Alex Johnson");
-  let rating = parseFloat(String(req.query.rating || "5"));
-  let thumbUrl = String(req.query.thumbUrl || "");
+  const rawPlaceName = String(req.query.placeName || "Awesome Coffee Shop").slice(0, 80);
+  const rawAuthorName = String(req.query.author || "Alex Johnson").slice(0, 60);
+  const placeName = escapeXmlText(rawPlaceName.substring(0, 22) + (rawPlaceName.length > 22 ? '...' : ''));
+  const authorName = escapeXmlText(rawAuthorName);
+  const authorInitial = escapeXmlText(rawAuthorName.charAt(0) || "Y");
+  const parsedRating = parseFloat(String(req.query.rating || "5"));
+  const rating = Number.isFinite(parsedRating) ? Math.min(5, Math.max(1, parsedRating)) : 5;
+  const thumbUrl = String(req.query.thumbUrl || "").trim();
 
-  // Helper to fetch and convert image to base64
+  // Helper to fetch and convert image to base64 (public URLs only)
   let thumbBase64 = "";
-  if (thumbUrl) {
+  if (thumbUrl && isSafePublicHttpUrl(thumbUrl)) {
     try {
-      const response = await fetch(thumbUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      thumbBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+      const response = await fetch(thumbUrl, { signal: AbortSignal.timeout(4000) });
+      const ct = (response.headers.get("content-type") || "").toLowerCase();
+      if (response.ok && ct.startsWith("image/")) {
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        if (buffer.length > 0 && buffer.length <= 5 * 1024 * 1024) {
+          thumbBase64 = `data:${ct.split(";")[0]};base64,${buffer.toString('base64')}`;
+        }
+      }
     } catch (e) {
       console.warn("Could not load thumbUrl");
     }
@@ -39647,8 +39641,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
       </g>
 
       <!-- Huge Place Name -->
-      <!-- We split placeName artificially for demo if it's too long, but SVG text doesn't auto-wrap. Let's just do a big bold line -->
-      <text x="0" y="240" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">${placeName.substring(0, 22)}${placeName.length > 22 ? '...' : ''}</text>
+      <text x="0" y="240" font-family="system-ui, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">${placeName}</text>
       
       <!-- Tagline -->
       <text x="0" y="300" font-family="system-ui, sans-serif" font-size="26" font-weight="600" fill="#a1a1aa">Authentic Live Photo Review</text>
@@ -39658,7 +39651,7 @@ app.get('/api/og-preview-v2', async (req, res) => {
         <g clip-path="url(#avatarClip)">
            <rect width="56" height="56" fill="#27272a"/>
            <!-- Initials fallback for avatar -->
-           <text x="28" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${authorName.charAt(0)}</text>
+           <text x="28" y="36" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${authorInitial}</text>
         </g>
         <text x="76" y="24" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#ffffff">${authorName}</text>
         <text x="76" y="48" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#a1a1aa">Photo Reviewer</text>

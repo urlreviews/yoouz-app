@@ -46,16 +46,10 @@ export function isLegacyDeletedIdentity(raw?: string): boolean {
   return (
     s.includes("steven akan") ||
     compact.includes("stevenakan") ||
-    s.includes("avr6566gd") ||
     s.includes("avt ertuop") ||
     compact.includes("avtertuop") ||
     s.includes("ben blue") ||
     compact.includes("benblue") ||
-    s.includes("aouisesmee") ||
-    s.includes("aouisesme") ||
-    s.includes("aouisemee") ||
-    s.includes("aouiseme") ||
-    s.includes("louis42111") ||
     s === "biz riv" ||
     compact === "bizriv" ||
     s === "mlio66hdr9trvofdgddgwm30rku2"

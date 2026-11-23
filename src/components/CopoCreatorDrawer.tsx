@@ -1198,7 +1198,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         id="google-maps-creator-panel"
         tabIndex={0}
         style={dragOffsetY > 0 ? { transform: `translateY(${dragOffsetY}px)`, transition: 'none' } : undefined}
-        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-50 md:z-20 w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform"
+        className="fixed inset-x-0 bottom-0 md:bottom-auto md:inset-auto md:relative z-[70] md:z-20 w-full max-w-full md:w-[360px] lg:w-[420px] h-[100dvh] md:h-full max-h-[100dvh] bg-[#050506] text-white flex flex-col shadow-none md:shadow-2xl border-r border-white/[0.08] shrink-0 overflow-hidden overscroll-none outline-none animate-in slide-in-from-bottom md:slide-in-from-left duration-200 transition-transform"
         onWheel={(e) => {
           e.stopPropagation();
           if (contentRef.current && !contentRef.current.contains(e.target as Node)) {
