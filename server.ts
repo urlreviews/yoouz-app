@@ -26322,114 +26322,151 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
-  // Live Camera Photo Upload Endpoint (EXIF metadata stripped server-side via sharp, stored on Bunny Storage rev1)
-  app.post("/api/photos/upload", async (req, res) => {
-    try {
-      const { imageBase64, placeId = "place", userId = "anon", reviewId = "" } = req.body || {};
-      if (!imageBase64 || typeof imageBase64 !== "string") {
-        return res.status(400).json({ error: "Missing captured photo data." });
-      }
+  let reviewPhotosTableEnsured = false;
 
-      const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
-      const rawBuffer = Buffer.from(base64Data, "base64");
-      if (!rawBuffer || rawBuffer.length < 100) {
-        return res.status(400).json({ error: "Captured photo is empty or invalid." });
-      }
-
-      // Apply EXIF rotation and strip ALL EXIF/GPS/camera metadata automatically
-      const cleanJpegBuffer = await sharp(rawBuffer)
-        .rotate()
-        .resize({ width: 1600, withoutEnlargement: true })
-        .jpeg({ quality: 90, mozjpeg: true })
-        .toBuffer();
-
-      const safePlace = String(placeId).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
-      const safeRev = String(reviewId || `photo_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48);
-      const filename = `${safeRev}_${safePlace}_${Date.now()}.jpg`;
-
-      const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
-      const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
-      const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net";
-      const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
-
-      const photoDataUrl = `data:image/jpeg;base64,${cleanJpegBuffer.toString("base64")}`;
-
-      const localDir = path.join(serverUploadsDir, "photos");
-      const publicDir = path.join(process.cwd(), "public", "uploads", "photos");
-      if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
-      if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
-      fs.writeFileSync(path.join(localDir, filename), cleanJpegBuffer);
-      fs.writeFileSync(path.join(publicDir, filename), cleanJpegBuffer);
-      // Immediately warm RAM WebP + JPEG cache for instant 0ms serving
-      buildPhotoRamEntry(filename, cleanJpegBuffer, "image/jpeg").catch(() => {});
-
-      // Persist durably to BOTH local SQLite & remote BunnyDB review_photos table so photos always survive container redeploys
+  // Live Camera Photo Upload Endpoint (Supports ultra-fast raw binary OR JSON base64, EXIF stripped via sharp, 2048px Retina progressive JPEG on Bunny CDN rev1)
+  app.post(
+    "/api/photos/upload",
+    express.raw({ type: ["image/*", "application/octet-stream"], limit: "25mb" }),
+    async (req, res) => {
       try {
-        const bunnyDb = getBunnyDb();
-        if (bunnyDb) {
-          await executeDurableBunnyDb(`CREATE TABLE IF NOT EXISTS review_photos (
-            filename TEXT PRIMARY KEY,
-            reviewId TEXT,
-            dataUrl TEXT,
-            mimeType TEXT DEFAULT 'image/jpeg',
-            createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-            updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
-          )`);
-          await executeDurableBunnyDb({
-            sql: `INSERT INTO review_photos (filename, reviewId, dataUrl, mimeType)
-                  VALUES (?, ?, ?, 'image/jpeg')
-                  ON CONFLICT(filename) DO UPDATE SET dataUrl = excluded.dataUrl, updatedAt = CURRENT_TIMESTAMP`,
-            args: [filename, safeRev, photoDataUrl]
-          });
-        }
-      } catch (dbErr) {
-        console.warn("Notice persisting photo to review_photos table:", dbErr);
-      }
+        let rawBuffer: Buffer | null = null;
+        let placeId = "place";
+        let userId = "anon";
+        let reviewId = "";
 
-      if (bunnyAccessKey && bunnyStorageZone) {
-        try {
-          const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
-          const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/photos/${filename}`;
-          const uploadRes = await fetch(bunnyUrl, {
-            method: "PUT",
-            headers: {
-              "AccessKey": bunnyAccessKey,
-              "Content-Type": "image/jpeg",
-              "Content-Length": cleanJpegBuffer.length.toString()
-            },
-            body: cleanJpegBuffer
-          });
-          if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
-            const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, "");
-            const cdnUrl = `${cdnBase}/photos/${filename}`;
-            return res.json({
-              success: true,
-              photoUrl: cdnUrl,
-              thumbnailUrl: cdnUrl,
-              url: cdnUrl,
-              photoDataUrl,
-              filename
-            });
+        if (Buffer.isBuffer(req.body) && req.body.length > 0) {
+          rawBuffer = req.body;
+          placeId = String(req.query.placeId || req.headers["x-place-id"] || "place");
+          userId = String(req.query.userId || req.headers["x-user-id"] || "anon");
+          reviewId = String(req.query.reviewId || req.headers["x-review-id"] || "");
+        } else {
+          const bodyObj = (req.body && typeof req.body === "object") ? req.body : {};
+          const imageBase64 = bodyObj.imageBase64;
+          placeId = String(bodyObj.placeId || "place");
+          userId = String(bodyObj.userId || "anon");
+          reviewId = String(bodyObj.reviewId || "");
+          if (!imageBase64 || typeof imageBase64 !== "string") {
+            return res.status(400).json({ error: "Missing captured photo data." });
           }
-        } catch (bunnyErr) {
-          console.warn("Bunny photo upload notice, falling back to local disk:", bunnyErr);
+          const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+          rawBuffer = Buffer.from(base64Data, "base64");
         }
-      }
 
-      const localUrl = `/uploads/photos/${filename}`;
-      return res.json({
-        success: true,
-        photoUrl: localUrl,
-        thumbnailUrl: localUrl,
-        url: localUrl,
-        photoDataUrl,
-        filename
-      });
-    } catch (err: any) {
-      console.error("photo upload error:", err);
-      return res.status(500).json({ error: err.message || "Failed to process and upload photo" });
+        if (!rawBuffer || rawBuffer.length < 100) {
+          return res.status(400).json({ error: "Captured photo is empty or invalid." });
+        }
+
+        // Apply hardware EXIF rotation, strip 100% of EXIF/GPS metadata, and preserve crisp 2048px Retina resolution (Front & Back cameras)
+        const cleanJpegBuffer = await sharp(rawBuffer)
+          .rotate()
+          .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 90, progressive: true, chromaSubsampling: "4:2:0" })
+          .toBuffer();
+
+        const safePlace = String(placeId).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
+        const safeRev = String(reviewId || `photo_${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 48);
+        const filename = `${safeRev}_${safePlace}_${Date.now()}.jpg`;
+
+        const bunnyAccessKey = process.env.BUNNY_STORAGE_API_KEY;
+        const bunnyStorageZone = process.env.BUNNY_STORAGE_ZONE_NAME || "rev1";
+        const bunnyPullZoneUrl = process.env.BUNNY_PULL_ZONE_URL || "https://rev1.b-cdn.net";
+        const bunnyRegion = process.env.BUNNY_STORAGE_REGION || "";
+
+        const localDir = path.join(serverUploadsDir, "photos");
+        const publicDir = path.join(process.cwd(), "public", "uploads", "photos");
+
+        // Warm RAM cache + persist local disk in parallel with direct Bunny Storage CDN upload
+        const localSavePromise = (async () => {
+          try {
+            await fs.promises.mkdir(localDir, { recursive: true });
+            await fs.promises.mkdir(publicDir, { recursive: true });
+            await Promise.all([
+              fs.promises.writeFile(path.join(localDir, filename), cleanJpegBuffer),
+              fs.promises.writeFile(path.join(publicDir, filename), cleanJpegBuffer),
+              buildPhotoRamEntry(filename, cleanJpegBuffer, "image/jpeg").catch(() => {})
+            ]);
+          } catch (diskErr) {
+            console.warn("Local photo disk mirror notice:", diskErr);
+          }
+        })();
+
+        // Fire-and-forget durable DB backup off the critical user upload path so Post feels instant
+        const persistDurableDbBackup = async () => {
+          try {
+            const bunnyDb = getBunnyDb();
+            if (!bunnyDb) return;
+            if (!reviewPhotosTableEnsured) {
+              await executeDurableBunnyDb(`CREATE TABLE IF NOT EXISTS review_photos (
+                filename TEXT PRIMARY KEY,
+                reviewId TEXT,
+                dataUrl TEXT,
+                mimeType TEXT DEFAULT 'image/jpeg',
+                createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+              )`);
+              reviewPhotosTableEnsured = true;
+            }
+            const photoDataUrl = `data:image/jpeg;base64,${cleanJpegBuffer.toString("base64")}`;
+            await executeDurableBunnyDb({
+              sql: `INSERT INTO review_photos (filename, reviewId, dataUrl, mimeType)
+                    VALUES (?, ?, ?, 'image/jpeg')
+                    ON CONFLICT(filename) DO UPDATE SET dataUrl = excluded.dataUrl, updatedAt = CURRENT_TIMESTAMP`,
+              args: [filename, safeRev, photoDataUrl]
+            });
+          } catch (dbErr) {
+            console.warn("Background review_photos backup notice:", dbErr);
+          }
+        };
+
+        let resolvedUrl = "";
+        if (bunnyAccessKey && bunnyStorageZone) {
+          try {
+            const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
+            const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/photos/${filename}`;
+            const uploadRes = await fetch(bunnyUrl, {
+              method: "PUT",
+              headers: {
+                "AccessKey": bunnyAccessKey,
+                "Content-Type": "image/jpeg",
+                "Content-Length": cleanJpegBuffer.length.toString()
+              },
+              body: cleanJpegBuffer
+            });
+            if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
+              const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, "");
+              resolvedUrl = `${cdnBase}/photos/${filename}`;
+            }
+          } catch (bunnyErr) {
+            console.warn("Bunny photo upload notice, falling back to local disk:", bunnyErr);
+          }
+        }
+
+        if (!resolvedUrl) {
+          await localSavePromise;
+          resolvedUrl = `/uploads/photos/${filename}`;
+        } else {
+          void localSavePromise;
+        }
+
+        // Persist durable backup in background without blocking the response
+        void persistDurableDbBackup();
+
+        // Return lean JSON (never echo back 600KB+ base64 payload over cellular)
+        return res.json({
+          success: true,
+          photoUrl: resolvedUrl,
+          thumbnailUrl: resolvedUrl,
+          url: resolvedUrl,
+          filename,
+          bytes: cleanJpegBuffer.length
+        });
+      } catch (err: any) {
+        console.error("photo upload error:", err);
+        return res.status(500).json({ error: err.message || "Failed to process and upload photo" });
+      }
     }
-  });
+  );
 
   // Business Profile Cover Banner & Logo Upload Endpoint (Direct to Bunny CDN Storage)
   app.post("/api/business/upload-image", async (req, res) => {

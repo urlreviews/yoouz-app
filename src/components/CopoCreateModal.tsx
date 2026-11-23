@@ -105,6 +105,9 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   const isPublishingRef = useRef(false);
   const optimizedBlobPromiseRef = useRef<Promise<Blob> | null>(null);
+  const draftReviewIdRef = useRef<string>("");
+  const preUploadAbortRef = useRef<AbortController | null>(null);
+  const preUploadPromiseRef = useRef<Promise<{ photoUrl: string; reviewId: string } | null> | null>(null);
   const lastConsumedInitialFileRef = useRef<File | null>(null);
 
   // Track viewport size cleanly
@@ -123,13 +126,59 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   const userClearedPlaceRef = useRef(false);
   const wasOpenRef = useRef(false);
 
-  // Instant 0ms preview display while optimizing JPEG resolution silently in background
+  const cancelSpeculativePreUpload = () => {
+    if (preUploadAbortRef.current) {
+      try {
+        preUploadAbortRef.current.abort();
+      } catch {}
+      preUploadAbortRef.current = null;
+    }
+    preUploadPromiseRef.current = null;
+  };
+
+  // Raw binary upload (zero +33% Base64 bloat, zero FileReader overhead)
+  const uploadBinaryPhoto = async (
+    blob: Blob,
+    reviewId: string,
+    placeId: string,
+    userId: string,
+    signal?: AbortSignal
+  ): Promise<{ photoUrl: string; reviewId: string }> => {
+    const qs = new URLSearchParams({
+      reviewId,
+      placeId: placeId || "place",
+      userId: userId || "anon"
+    }).toString();
+
+    const uploadResp = await fetch(`/api/photos/upload?${qs}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": blob.type && blob.type.startsWith("image/") ? blob.type : "image/jpeg"
+      },
+      body: blob,
+      signal
+    });
+
+    if (!uploadResp.ok) {
+      const errPayload = await uploadResp.json().catch(() => ({}));
+      throw new Error(errPayload?.error || "Photo upload failed");
+    }
+    const uploadJson = await uploadResp.json();
+    const photoUrl = uploadJson?.photoUrl || uploadJson?.url || "";
+    if (!photoUrl) {
+      throw new Error("Server did not return a valid photo URL");
+    }
+    return { photoUrl, reviewId };
+  };
+
+  // Instant 0ms preview display + speculative background upload while user picks 1-5 stars
   const acceptCapturedFile = (file: File) => {
     if (file.type && !file.type.startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name || "")) {
       setErrorMessage("Please take a photo using your phone camera.");
       return;
     }
 
+    cancelSpeculativePreUpload();
     setErrorMessage(null);
     setIsProcessingPhoto(false);
     triggerHaptic("medium");
@@ -146,7 +195,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setCapturedPhotoBlob(file);
     setRating(0);
 
-    // Compress/normalize to crisp 2000px JPEG silently in background while user taps 1-5 stars
+    const draftReviewId = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    draftReviewIdRef.current = draftReviewId;
+    const abortController = new AbortController();
+    preUploadAbortRef.current = abortController;
+
+    // 1. Optimize to crisp 2048px Retina JPEG silently in background
     const bgOptimize = optimizeCapturedPhoto(file)
       .then((preparedBlob) => {
         setCapturedPhotoBlob(preparedBlob);
@@ -154,6 +208,16 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       })
       .catch(() => file);
     optimizedBlobPromiseRef.current = bgOptimize;
+
+    // 2. Speculatively pre-upload binary JPEG to Bunny CDN while user taps 1-5 stars (makes Post feel ~0.2s instant!)
+    const targetPlaceId = selectedPlace?.id || preselectedPlace?.id || "place";
+    const targetUserId = currentUser?.id || (currentUser as any)?.uid || "anon";
+    preUploadPromiseRef.current = bgOptimize
+      .then((preparedBlob) => {
+        if (abortController.signal.aborted) return null;
+        return uploadBinaryPhoto(preparedBlob, draftReviewId, targetPlaceId, targetUserId, abortController.signal);
+      })
+      .catch(() => null);
   };
 
   // Reset modal flow only on open transition, never when preselectedPlace asynchronously enriches
@@ -171,6 +235,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       setUsernameMessage("");
       setLinkStatusMsg(null);
       optimizedBlobPromiseRef.current = null;
+      cancelSpeculativePreUpload();
 
       if (initialCapturedFile) {
         lastConsumedInitialFileRef.current = initialCapturedFile;
@@ -216,6 +281,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   }, [isOpen, preselectedPlace]);
 
   const handleCloseModal = () => {
+    cancelSpeculativePreUpload();
     if (capturedPhotoUrl) {
       try {
         URL.revokeObjectURL(capturedPhotoUrl);
@@ -230,7 +296,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
   };
 
   const optimizeCapturedPhoto = async (file: File): Promise<Blob> => {
-    const maxEdge = 2000;
+    // 2048px Retina max edge matches server output 1:1 (zero double-downscale softness for Front & Back cameras)
+    const maxEdge = 2048;
     const objectUrl = URL.createObjectURL(file);
     try {
       const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -252,10 +319,12 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       canvas.height = targetH;
       const ctx = canvas.getContext("2d");
       if (!ctx) return file;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, 0, 0, targetW, targetH);
 
       const jpegBlob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92)
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.93)
       );
       return jpegBlob || file;
     } catch {
@@ -419,34 +488,74 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     setPublishStage("Uploading live photo...");
     onStartBackgroundUpload?.(selectedPlace.name, 20);
 
-    const reviewId = `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const reviewId = draftReviewIdRef.current || `rev-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-    // Ensure active user (silently provision anonymous on publish if missing)
-    let activeAuthUser = currentUser && Number((currentUser as any)?.scratchVersion || 0) >= 6 ? currentUser : null;
-    if (!activeAuthUser) {
-      try {
-        const stored = localStorage.getItem("copo_user_profile");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && Number(parsed.scratchVersion || 0) >= 6) {
-            activeAuthUser = parsed;
+    // Run anonymous user provisioning IN PARALLEL with awaiting speculative photo pre-upload
+    const resolveAuthUserPromise = (async (): Promise<UserProfile | null> => {
+      let activeAuthUser = currentUser && Number((currentUser as any)?.scratchVersion || 0) >= 6 ? currentUser : null;
+      if (!activeAuthUser) {
+        try {
+          const stored = localStorage.getItem("copo_user_profile");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && Number(parsed.scratchVersion || 0) >= 6) {
+              activeAuthUser = parsed;
+            }
           }
-        }
-      } catch {}
-    }
-    if (!activeAuthUser) {
-      try {
-        const anonRes = await fetch("/api/auth/anonymous", { method: "POST" });
-        if (anonRes.ok) {
-          const anonData = await anonRes.json();
-          if (anonData?.user) {
-            activeAuthUser = anonData.user;
-            onUpdateUserProfile?.(anonData.user);
-            localStorage.setItem("copo_user_profile", JSON.stringify(anonData.user));
-            window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: anonData.user }));
+        } catch {}
+      }
+      if (!activeAuthUser) {
+        try {
+          const anonRes = await fetch("/api/auth/anonymous", { method: "POST" });
+          if (anonRes.ok) {
+            const anonData = await anonRes.json();
+            if (anonData?.user) {
+              activeAuthUser = anonData.user;
+              onUpdateUserProfile?.(anonData.user);
+              localStorage.setItem("copo_user_profile", JSON.stringify(anonData.user));
+              window.dispatchEvent(new CustomEvent("copo-profile-updated", { detail: anonData.user }));
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
+      return activeAuthUser;
+    })();
+
+    let activeAuthUser: UserProfile | null = null;
+    let uploadedPhotoUrl = "";
+    try {
+      const [resolvedUser, preUploaded] = await Promise.all([
+        resolveAuthUserPromise,
+        preUploadPromiseRef.current?.catch(() => null) || Promise.resolve(null)
+      ]);
+      activeAuthUser = resolvedUser;
+
+      if (preUploaded && preUploaded.photoUrl) {
+        // Speculative background upload already finished while user tapped stars — instant 0ms handoff!
+        uploadedPhotoUrl = preUploaded.photoUrl;
+        setPublishProgress(80);
+        onUpdateBackgroundUpload?.(80);
+      } else {
+        setPublishProgress(45);
+        onUpdateBackgroundUpload?.(45);
+        setPublishStage("Uploading high-res photo...");
+        const readyPhotoBlob = (await optimizedBlobPromiseRef.current?.catch(() => null)) || capturedPhotoBlob;
+        const uploaded = await uploadBinaryPhoto(
+          readyPhotoBlob,
+          reviewId,
+          selectedPlace.id,
+          activeAuthUser?.id || (activeAuthUser as any)?.uid || "anon"
+        );
+        uploadedPhotoUrl = uploaded.photoUrl;
+      }
+    } catch (uploadErr: any) {
+      setIsPublishing(false);
+      isPublishingRef.current = false;
+      setPublishProgress(0);
+      onCompleteBackgroundUpload?.();
+      setErrorMessage(uploadErr?.message || "Failed to upload photo. Please check your connection and try again.");
+      triggerHaptic("heavy");
+      return;
     }
 
     const placeDomain = extractCleanDomain(selectedPlace.website || selectedPlace.name || selectedPlace.id);
@@ -480,56 +589,8 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       activeAuthUser
     );
 
-    let uploadedPhotoUrl = "";
-    let uploadedPhotoDataUrl = "";
-    try {
-      const readyPhotoBlob = (await optimizedBlobPromiseRef.current?.catch(() => null)) || capturedPhotoBlob;
-      const imageBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === "string") resolve(reader.result);
-          else reject(new Error("Could not encode captured photo."));
-        };
-        reader.onerror = () => reject(new Error("Could not read captured photo."));
-        reader.readAsDataURL(readyPhotoBlob);
-      });
-
-      setPublishProgress(55);
-      onUpdateBackgroundUpload?.(55);
-      setPublishStage("Stripping metadata & securing photo...");
-
-      const uploadResp = await fetch("/api/photos/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64,
-          reviewId,
-          placeId: selectedPlace.id,
-          userId: activeAuthUser?.id || activeAuthUser?.uid || "anon"
-        })
-      });
-      if (!uploadResp.ok) {
-        const errPayload = await uploadResp.json().catch(() => ({}));
-        throw new Error(errPayload?.error || "Photo upload failed");
-      }
-      const uploadJson = await uploadResp.json();
-      uploadedPhotoUrl = uploadJson.photoUrl || "";
-      uploadedPhotoDataUrl = uploadJson.photoDataUrl || imageBase64;
-      if (!uploadedPhotoUrl) {
-        throw new Error("Server did not return a valid photo URL");
-      }
-    } catch (uploadErr: any) {
-      setIsPublishing(false);
-      isPublishingRef.current = false;
-      setPublishProgress(0);
-      onCompleteBackgroundUpload?.();
-      setErrorMessage(uploadErr?.message || "Failed to upload photo. Please check your connection and try again.");
-      triggerHaptic("heavy");
-      return;
-    }
-
-    setPublishProgress(85);
-    onUpdateBackgroundUpload?.(85);
+    setPublishProgress(88);
+    onUpdateBackgroundUpload?.(88);
     setPublishStage("Publishing photo review...");
 
     const finalReview: VideoReview = {
@@ -537,7 +598,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
       mediaType: "photo",
       photoUrl: uploadedPhotoUrl,
       thumbnailUrl: uploadedPhotoUrl,
-      photoDataUrl: uploadedPhotoDataUrl,
+      photoDataUrl: "",
       videoUrl: "",
       userId: activeAuthUser?.id || activeAuthUser?.email || "guest",
       userEmail: activeAuthUser?.email || "",
@@ -599,6 +660,7 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(leanReviewForPersist),
+        keepalive: true,
         signal: AbortSignal.timeout(15000)
       });
     } catch {}
