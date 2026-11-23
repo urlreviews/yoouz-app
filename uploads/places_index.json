@@ -1,11 +1,130 @@
 [
   {
+    "id": "multipharma.be",
+    "category": "Pharmacy & Healthcare",
+    "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/multipharma.be.webp",
+    "name": "Multipharma",
+    "categoryType": "services",
+    "address": "Rue du Marché aux Poulets 37",
+    "city": "Brussels",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
+    "brandDomain": "multipharma.be",
+    "ogImage": "/uploads/brand-assets/banners/multipharma.be.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/multipharma.be.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 2 511 35 90",
+    "email": "",
+    "website": "https://multipharma.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Multipharma is a dependable automotive and transportation service provider in Brussels, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "locations": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "createdAt": "2026-11-14 08:37:19",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "upperview-regalia.com",
+    "category": "Hotel & Hospitality",
+    "logoUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
+    "rating": 4,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
+    "categoryType": "hotels",
+    "name": "Upper View Regalia Hotel",
+    "city": "Online",
+    "country": "Malaysia",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "upperview-regalia.com",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://upperview-regalia.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Upper View Regalia Hotel is a premier hospitality destination in Malaysia, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/upperview-regalia.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
+    "createdAt": "2026-11-13 11:28:14",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "zara.com",
     "category": "Fashion & Apparel",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M9.8%2062L9.8%2060.3L21%2043.3L17.4%2043.3Q15.4%2043.3%2014.3%2043.4Q13.1%2043.5%2012.6%2043.6L12.1%2046.8L10.8%2046.8L10.8%2041.7L26.4%2041.7L26.4%2043.3L15.1%2060.4L19.4%2060.4Q20.3%2060.4%2021.3%2060.4Q22.2%2060.3%2023%2060.2Q23.8%2060.2%2024.3%2060.1Q24.9%2060%2025.2%2059.9L26.1%2056.1L27.4%2056.1L27%2062%20M31.4%2060.5L34%2060.9L34%2062L27.8%2062L27.8%2060.9L29.3%2060.5L36.5%2041.5L40.9%2041.5L48.1%2060.5L49.7%2060.9L49.7%2062L40.6%2062L40.6%2060.9L43%2060.5L41%2055.2L33.2%2055.2L31.4%2060.5M40.5%2053.6L37.2%2044.6L33.9%2053.6%20M58.8%2053.4L56.3%2053.4L56.3%2060.5L58.9%2060.9L58.9%2062L49.1%2062L49.1%2060.9L51.5%2060.5L51.5%2043.2L48.9%2042.8L48.9%2041.7L58.6%2041.7Q61.2%2041.7%2062.9%2042.1Q64.6%2042.5%2065.6%2043.3Q66.6%2044%2067.1%2045.1Q67.5%2046.1%2067.5%2047.4Q67.5%2048.3%2067.3%2049.2Q67.1%2050.1%2066.6%2050.8Q66.2%2051.5%2065.4%2052.1Q64.6%2052.6%2063.4%2053L68.9%2060.5L71.1%2060.9L71.1%2062L64.5%2062L58.8%2053.4M62.8%2047.4Q62.8%2046.2%2062.6%2045.4Q62.3%2044.6%2061.8%2044.2Q61.3%2043.7%2060.4%2043.5Q59.6%2043.4%2058.4%2043.4L56.3%2043.4L56.3%2051.7L58.5%2051.7Q59.7%2051.7%2060.5%2051.5Q61.4%2051.3%2061.9%2050.7Q62.4%2050.2%2062.6%2049.4Q62.8%2048.6%2062.8%2047.4%20M73.2%2060.5L75.8%2060.9L75.8%2062L69.6%2062L69.6%2060.9L71.1%2060.5L78.3%2041.5L82.7%2041.5L89.9%2060.5L91.4%2060.9L91.4%2062L82.4%2062L82.4%2060.9L84.8%2060.5L82.8%2055.2L75%2055.2L73.2%2060.5M82.2%2053.6L79%2044.6L75.6%2053.6%22%20fill%3D%22%23000000%22%2F%3E%0A%3C%2Fsvg%3E",
     "bannerUrl": "/uploads/brand-assets/banners/zara.com.webp",
     "name": "Zara",
-    "categoryType": "all",
+    "categoryType": "shopping",
     "address": "Online",
     "city": "Online",
     "country": "United States",
@@ -63,12 +182,67 @@
     "isFollowed": false
   },
   {
+    "id": "autowerkplaatsbrugge.be",
+    "category": "Auto Repair & Garage",
+    "logoUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+    "name": "Auto Werkplaats Brugge",
+    "categoryType": "auto",
+    "address": "Maalsesteenweg 359A",
+    "city": "St-Kruis (Brugge)",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "rating": 5,
+    "totalReviews": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
+    "brandDomain": "autowerkplaatsbrugge.be",
+    "ogImage": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 50 37 67 46",
+    "email": "",
+    "website": "https://autowerkplaatsbrugge.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Auto Werkplaats Brugge is a dependable automotive and transportation service provider in St-Kruis (Brugge), Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "isSkeleton": true,
+    "isSynthetic": true,
+    "locations": []
+  },
+  {
     "id": "booksandbeans.co.uk",
     "category": "Cafe & Bookstore",
     "logoUrl": "/uploads/brand-assets/logos/booksandbeans.co.uk.webp",
     "bannerUrl": "/uploads/brand-assets/banners/booksandbeans.co.uk.webp",
     "name": "Books And Beans",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "Gent",
     "country": "United Kingdom",
@@ -131,7 +305,7 @@
     },
     "address": "",
     "ogImage": "/uploads/brand-assets/banners/noma.dk.webp",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "name": "Noma",
     "city": "Copenhagen K",
     "country": "Denmark",
@@ -189,7 +363,7 @@
     },
     "address": "",
     "ogImage": "/uploads/brand-assets/banners/hotel-julien.com.webp",
-    "categoryType": "all",
+    "categoryType": "beauty",
     "name": "Hotel Julien",
     "city": "Antwerp",
     "country": "Belgium",
@@ -230,12 +404,70 @@
     "isFollowed": false
   },
   {
+    "id": "soluxecleaning.co.uk",
+    "category": "Home Services & Cleaning",
+    "logoUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
+    "categoryType": "services",
+    "name": "Soluxe Cleaning",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "soluxecleaning.co.uk",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://soluxecleaning.co.uk",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Soluxe Cleaning provides professional, reliable emergency and maintenance services in London, United Kingdom, dedicated to quality workmanship and prompt client care.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
+    "createdAt": "2026-11-09 07:56:11",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "jollibee.com.ph",
     "category": "Fast Food Restaurant",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2256%22%20r%3D%2222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2250%22%20cy%3D%2257%22%20r%3D%2220%22%20fill%3D%22%23f8a51d%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2040%2038%20C%2036%2034%2036%2024%2044%2022%20C%2048%2018%2058%2018%2060%2023%20C%2066%2022%2070%2030%2066%2038%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2242%22%20y%3D%2234%22%20width%3D%2222%22%20height%3D%226%22%20rx%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Crect%20x%3D%2243%22%20y%3D%2238%22%20width%3D%2220%22%20height%3D%222%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2036%2044%20C%2040%2040%2060%2040%2064%2044%20C%2064%2048%2036%2048%2036%2044%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2243%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2257%22%20cy%3D%2254%22%20rx%3D%223.5%22%20ry%3D%225%22%20fill%3D%22%2318181b%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2244.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2258.5%22%20cy%3D%2252.5%22%20r%3D%221.5%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2237%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Ccircle%20cx%3D%2263%22%20cy%3D%2258%22%20r%3D%223%22%20fill%3D%22%23e21b23%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M%2042%2062%20Q%2050%2070%2058%2062%22%20stroke%3D%22%2318181b%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%2F%3E%0A%20%20%3Cellipse%20cx%3D%2250%22%20cy%3D%2258%22%20rx%3D%223%22%20ry%3D%222%22%20fill%3D%22%23ffffff%22%2F%3E%0A%3C%2Fsvg%3E",
     "bannerUrl": "/uploads/brand-assets/banners/jollibee.com.ph.webp",
     "name": "Jollibee",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "Online",
     "country": "Philippines",
@@ -281,71 +513,13 @@
     "createdAt": "2026-10-19 09:57:41"
   },
   {
-    "id": "soluxecleaning.co.uk",
-    "category": "Home Services & Cleaning",
-    "logoUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
-    "rating": 5,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp",
-    "categoryType": "all",
-    "name": "Soluxe Cleaning",
-    "city": "London",
-    "country": "United Kingdom",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "soluxecleaning.co.uk",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://soluxecleaning.co.uk",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Soluxe Cleaning provides professional, reliable emergency and maintenance services in London, United Kingdom, dedicated to quality workmanship and prompt client care.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/soluxecleaning.co.uk.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
-    "createdAt": "2026-11-09 07:56:11",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "dunkindonuts.com",
     "category": "Coffee & Bakery",
     "logoUrl": "/uploads/brand-assets/logos/dunkindonuts.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/dunkindonuts.com.webp",
     "name": "Dunkin' Donuts",
     "brandDomain": "dunkindonuts.com",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "rating": 5,
     "totalReviews": 1,
     "videoReviewCount": 1,
@@ -414,7 +588,7 @@
       "5": 1
     },
     "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
-    "categoryType": "all",
+    "categoryType": "services",
     "name": "Healis",
     "address": "Winkelom 83B/1",
     "city": "Geel",
@@ -456,70 +630,12 @@
     "isFollowed": false
   },
   {
-    "id": "flipper.net",
-    "category": "Tech & Gadgets",
-    "logoUrl": "/uploads/brand-assets/logos/flipper.net.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/flipper.net.webp",
-    "rating": 5,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/flipper.net.webp",
-    "categoryType": "all",
-    "name": "Flipper Zero",
-    "city": "Online",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "flipper.net",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "business@flipper.net",
-    "website": "https://flipper.net",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Flipper Zero provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/flipper.net.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/flipper.net.webp",
-    "createdAt": "2026-10-23 07:15:15",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "wolt.com",
     "category": "Food & Delivery",
     "logoUrl": "/uploads/brand-assets/logos/wolt.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/wolt.com.webp",
     "name": "Wolt",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "address": "",
     "city": "Online",
     "country": "Finland",
@@ -574,6 +690,64 @@
     "isFollowed": false
   },
   {
+    "id": "flipper.net",
+    "category": "Tech & Gadgets",
+    "logoUrl": "/uploads/brand-assets/logos/flipper.net.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/flipper.net.webp",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/flipper.net.webp",
+    "categoryType": "tech",
+    "name": "Flipper Zero",
+    "city": "Online",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "flipper.net",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "business@flipper.net",
+    "website": "https://flipper.net",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Flipper Zero provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/flipper.net.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/flipper.net.webp",
+    "createdAt": "2026-10-23 07:15:15",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "makicafe.com",
     "category": "Restaurant & Food",
     "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
@@ -591,7 +765,7 @@
     },
     "address": "",
     "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
-    "categoryType": "all",
+    "categoryType": "restaurants",
     "name": "Maki Cafe",
     "city": "Rockville",
     "country": "US",
@@ -638,7 +812,7 @@
     "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
     "name": "Apple",
     "brandDomain": "apple.com",
-    "categoryType": "all",
+    "categoryType": "tech",
     "rating": 4.5,
     "totalReviews": 2,
     "videoReviewCount": 2,
@@ -711,7 +885,7 @@
       "/api/proxy-image?url=https%3A%2F%2Fwww.hocoofficial.com%2Fcdn%2Fshop%2Ffiles%2Ffd34920ad2aad030b97ba5e495883654_876361e7-4fed-47e8-b2a3-20cc155b823a.jpg%3Fv%3D1765554168"
     ],
     "avatarUrl": "/uploads/brand-assets/logos/hocoofficial.com.webp",
-    "categoryType": "all",
+    "categoryType": "services",
     "lat": 0,
     "lng": 0,
     "ratingCount": 1,
@@ -817,7 +991,7 @@
     "logoUrl": "/uploads/brand-assets/logos/sony.com.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fstore.sony.com.tw%2Fresource%2Ffile%2Fproduct_files%2FILCE-7CM2-S%2F02.jpg",
     "name": "Sony",
-    "categoryType": "all",
+    "categoryType": "products",
     "address": "",
     "city": "",
     "country": "",
@@ -932,56 +1106,6 @@
     "isFollowed": false
   },
   {
-    "id": "guesswatches.com",
-    "category": "Watches & Accessories",
-    "logoUrl": "/uploads/brand-assets/logos/guesswatches.com.webp",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "name": "GUESS Watches",
-    "website": "https://guesswatches.com",
-    "brandDomain": "guesswatches.com",
-    "rating": 3,
-    "totalReviews": 1,
-    "city": "Online",
-    "country": "",
-    "address": "",
-    "phone": "",
-    "email": "",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/guesswatches.com.webp",
-    "categoryType": "all",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-11-20 18:42:07",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "philips.nl",
     "category": "Consumer Electronics",
     "logoUrl": "/uploads/brand-assets/logos/philips.nl.webp",
@@ -1002,7 +1126,7 @@
     ],
     "avatarUrl": "/uploads/brand-assets/logos/philips.nl.webp",
     "videoReviewCount": 1,
-    "categoryType": "all",
+    "categoryType": "products",
     "lat": 0,
     "lng": 0,
     "ratingDistribution": {
@@ -1034,10 +1158,10 @@
   {
     "id": "nivea.com",
     "category": "Skincare & Beauty",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2050%2050%22%3E%3Ccircle%20cx%3D%2225%22%20cy%3D%2225%22%20r%3D%2224.5%22%20style%3D%22fill%3A%230032a0%22%3E%3C%2Fcircle%3E%3Cpath%20d%3D%22M13.828%2020.722h-2.1v4.457c-1.84-1.65-3.676-3.3-5.561-4.947v9.046h2.1v-4.457c1.752%201.555%203.633%203.3%205.562%204.947Zm4.657%208.553h-2.1v-8.553h2.1Zm5.443.49c-1.488-2.8-2.978-6.017-4.466-9.046h2.364l2.1%204.634%202.022-4.634h2.316c-1.442%203.037-2.888%206.242-4.333%209.049Zm10.977-7.174h-3.554v1.476h3.558v1.866h-3.558V27.4h3.558v1.866h-5.66v-8.55h5.66Zm5.336-2.359c-1.445%202.852-2.89%205.927-4.335%209.046H38.1l.437-1.025h3.421l.439%201.025h2.273c-1.498-3.119-2.986-6.238-4.429-9.046Zm-1.089%206.416%201.089-2.488%201.052%202.488Z%22%20style%3D%22fill%3A%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "logoUrl": "/uploads/brand-assets/logos/nivea.com.svg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3",
     "name": "NIVEA Global",
-    "categoryType": "all",
+    "categoryType": "beauty",
     "address": "Rome",
     "city": "Rome",
     "country": "Israel",
@@ -1052,7 +1176,7 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2050%2050%22%3E%3Ccircle%20cx%3D%2225%22%20cy%3D%2225%22%20r%3D%2224.5%22%20style%3D%22fill%3A%230032a0%22%3E%3C%2Fcircle%3E%3Cpath%20d%3D%22M13.828%2020.722h-2.1v4.457c-1.84-1.65-3.676-3.3-5.561-4.947v9.046h2.1v-4.457c1.752%201.555%203.633%203.3%205.562%204.947Zm4.657%208.553h-2.1v-8.553h2.1Zm5.443.49c-1.488-2.8-2.978-6.017-4.466-9.046h2.364l2.1%204.634%202.022-4.634h2.316c-1.442%203.037-2.888%206.242-4.333%209.049Zm10.977-7.174h-3.554v1.476h3.558v1.866h-3.558V27.4h3.558v1.866h-5.66v-8.55h5.66Zm5.336-2.359c-1.445%202.852-2.89%205.927-4.335%209.046H38.1l.437-1.025h3.421l.439%201.025h2.273c-1.498-3.119-2.986-6.238-4.429-9.046Zm-1.089%206.416%201.089-2.488%201.052%202.488Z%22%20style%3D%22fill%3A%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
+    "avatarUrl": "/uploads/brand-assets/logos/nivea.com.svg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3",
     "photos": [
       "/api/proxy-image?url=https%3A%2F%2Fimg.nivea.com%2F-%2Fmedia%2Fmiscellaneous%2Fmedia-center-items%2Fb%2F7%2F7%2F6957207d0f364068a9f28538949a0484-original.png%3Frx%3D515%26ry%3D0%26rw%3D1081%26rh%3D600%26hash%3D3322E438EE5913DF3B810A172B72C5E3"
@@ -1152,12 +1276,120 @@
     "isFollowed": false
   },
   {
+    "id": "guesswatches.com",
+    "category": "Watches & Accessories",
+    "logoUrl": "/uploads/brand-assets/logos/guesswatches.com.webp",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "name": "GUESS Watches",
+    "website": "https://guesswatches.com",
+    "brandDomain": "guesswatches.com",
+    "rating": 3,
+    "totalReviews": 1,
+    "city": "Online",
+    "country": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/guesswatches.com.webp",
+    "categoryType": "products",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "createdAt": "2026-11-20 18:42:07",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
+    "id": "lernerandrowe.com",
+    "category": "Legal Services",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "name": "Lerner And Rowe Injury Attorneys",
+    "address": "2701 E Camelback Rd #140",
+    "city": "Phoenix, AZ",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "ogImage": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
+    "categoryType": "services",
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "lernerandrowe.com",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (602) 977-1900",
+    "email": "",
+    "website": "https://lernerandrowe.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Lerner And Rowe Injury Attorneys is a dedicated law practice in Phoenix, AZ, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/lernerandrowe.com.webp"
+    ],
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "createdAt": "2026-11-14 08:51:35",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "sephora.com",
     "category": "Beauty & Cosmetics",
     "logoUrl": "/uploads/brand-assets/logos/sephora.com.webp",
     "bannerUrl": "/uploads/brand-assets/banners/sephora.com.webp",
     "name": "Sephora",
-    "categoryType": "all",
+    "categoryType": "beauty",
     "address": "350 Mission St, San Francisco, CA 94105",
     "city": "Online",
     "country": "Japan",
@@ -1211,64 +1443,6 @@
     "isFollowed": false
   },
   {
-    "id": "lernerandrowe.com",
-    "category": "Legal Services",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "bannerUrl": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
-    "rating": 5,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "name": "Lerner And Rowe Injury Attorneys",
-    "address": "2701 E Camelback Rd #140",
-    "city": "Phoenix, AZ",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "ogImage": "/uploads/brand-assets/banners/lernerandrowe.com.webp",
-    "categoryType": "all",
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "lernerandrowe.com",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (602) 977-1900",
-    "email": "",
-    "website": "https://lernerandrowe.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Lerner And Rowe Injury Attorneys is a dedicated law practice in Phoenix, AZ, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/lernerandrowe.com.webp"
-    ],
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23f59e0b%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20font-family%3D%22'Arial%20Black'%2C%20Impact%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2234%22%20fill%3D%22%23000000%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ELR%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "createdAt": "2026-11-14 08:51:35",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "ikea.com",
     "category": "Home & Furniture Retail",
     "logoUrl": "/uploads/brand-assets/logos/ikea.com.svg",
@@ -1288,7 +1462,7 @@
       "/api/proxy-image?url=https%3A%2F%2Fwww.ikea.com%2Fglobal%2Fen%2Fmedia%2FIKEA_com_Global_Thumbnail_3765094b99.jpg"
     ],
     "avatarUrl": "/uploads/brand-assets/logos/ikea.com.svg",
-    "categoryType": "all",
+    "categoryType": "shopping",
     "lat": 0,
     "lng": 0,
     "ratingDistribution": {
@@ -3203,180 +3377,6 @@
     "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
   },
   {
-    "id": "multipharma.be",
-    "category": "Pharmacy & Healthcare",
-    "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/multipharma.be.webp",
-    "name": "Multipharma",
-    "categoryType": "services",
-    "address": "Rue du Marché aux Poulets 37",
-    "city": "Brussels",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
-    "brandDomain": "multipharma.be",
-    "ogImage": "/uploads/brand-assets/banners/multipharma.be.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/multipharma.be.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fwww.multipharma.be%2Fdw%2Fimage%2Fv2%2FBDGN_PRD%2Fon%2Fdemandware.static%2F-%2FLibrary-Sites-MultipharmaSharedLibrary%2Fdefault%2Fdw8cdbc244%2FHome%2FCategory%2520Landing%2520Pages%2FPrivate%2520label%2Fpl-umbrella-hp-big-desktop-v2-nl.jpg%3Fsw%3D1440%26sfrm%3Dpng"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 2 511 35 90",
-    "email": "",
-    "website": "https://multipharma.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Multipharma is a dependable automotive and transportation service provider in Brussels, Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "locations": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "createdAt": "2026-11-14 08:37:19",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
-    "id": "autowerkplaatsbrugge.be",
-    "category": "Auto Repair & Garage",
-    "logoUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-    "name": "Auto Werkplaats Brugge",
-    "categoryType": "auto",
-    "address": "Maalsesteenweg 359A",
-    "city": "St-Kruis (Brugge)",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "rating": 5,
-    "totalReviews": 1,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/autowerkplaatsbrugge.be.webp",
-    "brandDomain": "autowerkplaatsbrugge.be",
-    "ogImage": "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/autowerkplaatsbrugge.be.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fwww.autowerkplaatsbrugge.be%2Fassets%2Fimg%2Fawb.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 50 37 67 46",
-    "email": "",
-    "website": "https://autowerkplaatsbrugge.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Auto Werkplaats Brugge is a dependable automotive and transportation service provider in St-Kruis (Brugge), Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "isSkeleton": true,
-    "isSynthetic": true,
-    "locations": []
-  },
-  {
-    "id": "upperview-regalia.com",
-    "category": "Hotel & Hospitality",
-    "logoUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
-    "rating": 4,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/upperview-regalia.com.webp",
-    "categoryType": "hotels",
-    "name": "Upper View Regalia Hotel",
-    "city": "Online",
-    "country": "Malaysia",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "upperview-regalia.com",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://upperview-regalia.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Upper View Regalia Hotel is a premier hospitality destination in Malaysia, offering comfortable accommodations, top-tier amenities, and attentive guest service.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/upperview-regalia.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/upperview-regalia.com.webp",
-    "createdAt": "2026-11-13 11:28:14",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
     "id": "northzone.com",
     "category": "Finance & Venture Capital",
     "logoUrl": "https://cdn.prod.website-files.com/6a42cde2da0ec82a02565414/6a79b7679bc27cb64ffb0157_Webclip.png",
@@ -3646,8 +3646,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=webflow.com",
-    "logoUrl": "/api/favicon?domain=webflow.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -8656,8 +8656,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=nfx.com",
-    "logoUrl": "/api/favicon?domain=nfx.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -8714,8 +8714,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=2b.vc",
-    "logoUrl": "/api/favicon?domain=2b.vc",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -9048,8 +9048,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
-    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -9716,8 +9716,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
-    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -10187,8 +10187,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=researchgate.net",
-    "logoUrl": "/api/favicon?domain=researchgate.net",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [

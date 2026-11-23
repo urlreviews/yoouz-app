@@ -43397,14 +43397,15 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           if (loadBrandAssetIntoRam("logos", `${slugDom}.webp`)) return `/uploads/brand-assets/logos/${slugDom}.webp`;
         }
         const raw = typeof v?.placeLogoUrl === 'string' ? v.placeLogoUrl.trim() : '';
-        if (!raw || raw.startsWith('data:') || raw.startsWith('blob:')) return '';
-        if (raw.startsWith('/')) return raw;
-        if (/b-cdn\.net|bunnycdn\.com|wikimedia\.org|googleusercontent\.com/i.test(raw)) return raw;
-        if (raw.startsWith('http://') || raw.startsWith('https://')) {
-          const httpsRaw = raw.startsWith('http://') ? 'https://' + raw.slice(7) : raw;
-          return httpsRaw.toLowerCase().includes('.svg')
-            ? `/api/proxy-image?v=3&url=${encodeURIComponent(httpsRaw)}`
-            : `/api/proxy-image?url=${encodeURIComponent(httpsRaw)}`;
+        if (raw && !raw.startsWith('data:') && !raw.startsWith('blob:')) {
+          if (raw.startsWith('/')) return raw;
+          if (/b-cdn\.net|bunnycdn\.com|wikimedia\.org|googleusercontent\.com/i.test(raw)) return raw;
+          if (raw.startsWith('http://') || raw.startsWith('https://')) {
+            const httpsRaw = raw.startsWith('http://') ? 'https://' + raw.slice(7) : raw;
+            return httpsRaw.toLowerCase().includes('.svg')
+              ? `/api/proxy-image?v=3&url=${encodeURIComponent(httpsRaw)}`
+              : `/api/proxy-image?url=${encodeURIComponent(httpsRaw)}`;
+          }
         }
         return dom && dom.includes('.') ? `/api/favicon?domain=${encodeURIComponent(dom)}` : '';
       };
@@ -43472,17 +43473,66 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         outHtml = outHtml.replace(/<\/head>/i, `    ${headPreloadLinks.join('\n    ')}\n  </head>`);
       }
 
-      // 2. Hydrate #yoouz-boot-shell 5 empty skeleton cards on Homepage with REAL live ?v=card <img> tags
-      // so Frame-0 (before JS/React executes!) displays the actual live photo reviews with zero blank loading state!
+      // 2. Hydrate #yoouz-boot-shell 5 cards on Homepage with COMPLETE live photo review cards
+      // (photo + category pill + recency + 5-star rating + real brand logo + business name + verified check + reviewer)
+      // so Frame-0 (before JS/React executes!) is 100% indistinguishable from hydrated CopoHomePage!
       const ybsCardsPattern = /<div class="ybs-cards">[\s\S]*?<\/div><!--\s*\/ybs-cards\s*-->/i;
       if (isHomepageRoute && topHeroVideos.length > 0 && ybsCardsPattern.test(outHtml)) {
+        const formatSsrBadge = (v: any): string => {
+          const cat = String(v?.placeCategory || '').toLowerCase();
+          const dom = String(v?.brandDomain || v?.placeId || '').toLowerCase();
+          if (/furniture|retail|shopping|store|department|apparel|fashion/.test(cat) || /ikea/.test(dom)) return 'Shopping';
+          if (/skincare|beauty|cosmetic|salon|spa/.test(cat) || /nivea|sephora/.test(dom)) return 'Skincare';
+          if (/hotel|resort|lodging|airline|travel/.test(cat)) return 'Hotel';
+          if (/restaurant|cafe|coffee|bakery|food|dining/.test(cat)) return 'Restaurant';
+          if (/auto|car|garage|mechanic/.test(cat)) return 'Auto';
+          if (/software|tech|app|saas/.test(cat) && !/electronics/.test(cat)) return 'Tech';
+          if (/watch|electronics|product|gadget|appliance|footwear/.test(cat)) return 'Product';
+          if (/service|legal|clinic|dentist|finance|clean/.test(cat)) return 'Service';
+          return 'Product';
+        };
+        const formatSsrRecency = (v: any): string => {
+          const ms = Number(v?.createdAtMs) || (v?.createdAt ? Date.parse(String(v.createdAt)) : 0);
+          if (!ms || Number.isNaN(ms)) return 'New';
+          const diffMin = Math.max(1, Math.floor((Date.now() - ms) / 60000));
+          if (diffMin < 60) return `${diffMin}m`;
+          const diffHr = Math.floor(diffMin / 60);
+          if (diffHr < 24) return `${diffHr}h`;
+          const diffDay = Math.floor(diffHr / 24);
+          if (diffDay < 30) return `${diffDay}d`;
+          return `${Math.floor(diffDay / 30)}mo`;
+        };
+        const buildStarsSvg = (wholeStars: number): string => {
+          let htmlStars = '';
+          for (let s = 1; s <= 5; s++) {
+            const filled = s <= wholeStars;
+            htmlStars += `<svg viewBox="0 0 24 24" width="12.5" height="12.5" fill="${filled ? '#F5B942' : 'rgba(255,255,255,0.16)'}" stroke="${filled ? '#F5B942' : 'rgba(255,255,255,0.26)'}" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+          }
+          return htmlStars;
+        };
+        const verifiedSvg = `<svg viewBox="0 0 24 24" width="13.5" height="13.5" style="flex-shrink:0;" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffffff"/><path d="m9 12 2 2 4-4" fill="none" stroke="#09090b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
         const ssrCardsHtml = topHeroVideos
           .map((v: any) => {
             const cardSrc = toServerCardPhotoUrl(v.photoUrl || v.thumbnailUrl);
             if (!cardSrc) return '<div class="ybs-card"></div>';
             const isExt = /^https?:\/\//i.test(cardSrc);
             const refAttr = isExt ? ' referrerpolicy="no-referrer"' : '';
-            return `<div class="ybs-card"><img class="ybs-card-img" src="${escapeAttr(cardSrc)}" alt="" loading="eager" decoding="sync" fetchpriority="high"${refAttr} /><div class="ybs-card-scrim"></div></div>`;
+            const logoSrc = resolveServerPreloadLogo(v);
+            const logoExt = logoSrc && /^https?:\/\//i.test(logoSrc);
+            const logoRefAttr = logoExt ? ' referrerpolicy="no-referrer"' : '';
+            const rawName = String(v.businessName || v.placeName || v.placeId || 'Business').trim();
+            const safeName = escapeAttr(rawName);
+            const rawReviewer = String(v.author?.name || v.authorName || 'Reviewer').trim();
+            const safeReviewer = escapeAttr(rawReviewer);
+            const wholeStars = Math.max(1, Math.min(5, Math.round(Number(v.rating) || 5)));
+            const badge = escapeAttr(formatSsrBadge(v));
+            const age = escapeAttr(formatSsrRecency(v));
+            const logoHtml = logoSrc
+              ? `<div class="ybs-biz-logo"><img src="${escapeAttr(logoSrc)}" alt="" loading="eager" decoding="sync" fetchpriority="high"${logoRefAttr} /></div>`
+              : `<div class="ybs-biz-logo"></div>`;
+
+            return `<div class="ybs-card"><img class="ybs-card-img" src="${escapeAttr(cardSrc)}" alt="" loading="eager" decoding="sync" fetchpriority="high"${refAttr} /><div class="ybs-card-top"><span class="ybs-card-cat">${badge}</span><span class="ybs-card-age">${age}</span></div><div class="ybs-card-bot"><div class="ybs-stars-row"><div class="ybs-stars">${buildStarsSvg(wholeStars)}</div><span class="ybs-score">${wholeStars}/5</span></div><div class="ybs-biz-row">${logoHtml}<div class="ybs-biz-meta"><div class="ybs-biz-name-row"><span class="ybs-biz-name">${safeName}</span>${verifiedSvg}</div><div class="ybs-rev-by">Review by ${safeReviewer}</div></div></div></div></div>`;
           })
           .join('');
         outHtml = outHtml.replace(
