@@ -490,7 +490,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   };
 
   const handleRestorePasskeyInline = async () => {
-    if (isDesktopPasskeyViewport() && onOpenPasskeyModal) {
+    if (onOpenPasskeyModal) {
       onOpenPasskeyModal("restore");
       return;
     }
@@ -1314,6 +1314,31 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                       >
                         <Edit3 className="w-4 h-4 text-zinc-300" />
                         <span>{t("profile.editProfile", "Edit Profile")}</span>
+                      </button>
+
+                      {!isPasskeyProtected && (
+                        <button
+                          onClick={() => {
+                            setIsSettingsMenuOpen(false);
+                            handleRegisterPasskeyInline();
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-xs font-medium text-[#E8C78A] hover:bg-[#E8C78A]/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <KeyRound className="w-4 h-4 text-[#E8C78A]" />
+                          <span>{t("profile.savePasskey", "Save Passkey")}</span>
+                        </button>
+                      )}
+
+                      <button
+                        id="btn-creator-restore-passkey"
+                        onClick={() => {
+                          setIsSettingsMenuOpen(false);
+                          handleRestorePasskeyInline();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-medium text-zinc-200 hover:bg-white/[0.07] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <RefreshCw className="w-4 h-4 text-zinc-300" />
+                        <span>{t("profile.restoreAccount", "Restore Account with Passkey")}</span>
                       </button>
 
                       <button

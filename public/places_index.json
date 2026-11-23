@@ -1551,6 +1551,65 @@
     "isSavedToProfile": true
   },
   {
+    "id": "uniqlo.com",
+    "category": "Apparel & Clothing",
+    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "name": "Uniqlo US",
+    "brandDomain": "uniqlo.com",
+    "categoryType": "shopping",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "city": "Gent",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://uniqlo.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/uniqlo.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "createdAt": "2026-11-13 21:33:01",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "locations": []
+  },
+  {
     "id": "calvinklein.com",
     "category": "Apparel & Fashion",
     "logoUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
@@ -1609,65 +1668,6 @@
     "isVerified": false,
     "isFollowed": false,
     "createdAt": "2026-11-13 21:39:54"
-  },
-  {
-    "id": "uniqlo.com",
-    "category": "Apparel & Clothing",
-    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "name": "Uniqlo US",
-    "brandDomain": "uniqlo.com",
-    "categoryType": "shopping",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 2,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 1,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "city": "Gent",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://uniqlo.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/uniqlo.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "createdAt": "2026-11-13 21:33:01",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "locations": []
   },
   {
     "id": "dominos.com",
@@ -3646,8 +3646,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=webflow.com",
+    "logoUrl": "/api/favicon?domain=webflow.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -8656,8 +8656,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "avatarUrl": "/api/favicon?domain=nfx.com",
+    "logoUrl": "/api/favicon?domain=nfx.com",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -8714,8 +8714,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "avatarUrl": "/api/favicon?domain=2b.vc",
+    "logoUrl": "/api/favicon?domain=2b.vc",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -9048,8 +9048,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
+    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -9716,8 +9716,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
+    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -10187,8 +10187,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "avatarUrl": "/api/favicon?domain=researchgate.net",
+    "logoUrl": "/api/favicon?domain=researchgate.net",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [

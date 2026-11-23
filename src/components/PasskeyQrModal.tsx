@@ -79,7 +79,7 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
         let userId = String(latestUser?.id || (latestUser as any)?.uid || "").trim();
         let handle = String((latestUser as any)?.handle || latestUser?.name || "").trim();
 
-        if (!userId && ensureProvisionedRef.current) {
+        if (targetMode === "save" && !userId && ensureProvisionedRef.current) {
           const provisioned = await ensureProvisionedRef.current();
           if (reqId !== requestIdRef.current) return;
           if (provisioned?.id) {
@@ -280,8 +280,8 @@ export const PasskeyQrModal: React.FC<PasskeyQrModalProps> = ({
           )}
         </div>
 
-        {/* Mode Switcher: Save Passkey vs Restore Account */}
-        {status !== "completed" && (
+        {/* Mode Switcher: Save Passkey vs Restore Account (only shown when an active account exists to back up) */}
+        {status !== "completed" && Boolean(currentUser) && (
           <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.05] border border-white/[0.08] mx-auto">
             <button
               type="button"

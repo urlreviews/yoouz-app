@@ -47,6 +47,7 @@ const CopoCommentsDrawer = lazyWithRetry(() => import("./components/CopoComments
 const CopoShareModal = lazyWithRetry(() => import("./components/CopoShareModal").then(m => ({ default: m.CopoShareModal })));
 const CopoCreateModal = lazyWithRetry(() => import("./components/CopoCreateModal").then(m => ({ default: m.CopoCreateModal })));
 const PasskeyQrModal = lazyWithRetry(() => import("./components/PasskeyQrModal").then(m => ({ default: m.PasskeyQrModal })));
+const GuestProfileSheet = lazyWithRetry(() => import("./components/GuestProfileSheet").then(m => ({ default: m.GuestProfileSheet })));
 const MobilePasskeyHandoffModal = lazyWithRetry(() => import("./components/MobilePasskeyHandoffModal").then(m => ({ default: m.MobilePasskeyHandoffModal })));
 const CopoBusinessDashboardView = lazyWithRetry(() => import("./components/CopoBusinessDashboardView").then(m => ({ default: m.CopoBusinessDashboardView })));
 const CopoMoreView = lazyWithRetry(() => import("./components/CopoMoreView").then(m => ({ default: m.CopoMoreView })));
@@ -1092,6 +1093,7 @@ export function App() {
     focusActiveSearchInput();
   };
   const [passkeyQrModalMode, setPasskeyQrModalMode] = useState<PasskeyModalMode | null>(null);
+  const [isGuestProfileSheetOpen, setIsGuestProfileSheetOpen] = useState(false);
   const [mobilePasskeyHandoffToken, setMobilePasskeyHandoffToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     try {
@@ -1112,8 +1114,9 @@ export function App() {
       }
     } catch {}
   }, []);
-  const handlePasskeySyncSuccess = useCallback((updatedUser: any) => {
+  const handlePasskeySyncSuccess = useCallback((updatedUser: any, syncMode?: PasskeyModalMode) => {
     if (!updatedUser) return;
+    setIsGuestProfileSheetOpen(false);
     setCurrentUser(updatedUser);
     setAllRegisteredUsers((prev) => {
       const uid = updatedUser.id || updatedUser.uid;
@@ -1124,6 +1127,34 @@ export function App() {
       }
       return [updatedUser, ...prev];
     });
+    if (syncMode === "restore") {
+      const rawHandle = updatedUser?.username || updatedUser?.name || updatedUser?.email?.split("@")[0] || "me";
+      const cleanHandleSlug = String(rawHandle)
+        .replace(/^@+/, "")
+        .replace(/^U\//i, "u_")
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9_-]/g, "") || "me";
+      try {
+        window.history.pushState(null, "", buildLocalizedPath("/@" + cleanHandleSlug, language));
+      } catch {}
+      setSelectedPlaceIdForDrawer(null);
+      setSelectedAuthorForDrawer({
+        id: updatedUser.id || updatedUser.uid,
+        userId: updatedUser.id || updatedUser.uid,
+        email: updatedUser.email,
+        handle: updatedUser.handle || `@${cleanHandleSlug}`,
+        name: updatedUser.name || rawHandle,
+        avatar: updatedUser.avatar || "",
+        banner: updatedUser.banner || "",
+        isVerified: Boolean(updatedUser.isVerified || updatedUser.passkeyProtected),
+        passkeyProtected: Boolean(updatedUser.passkeyProtected),
+        isFollowed: false,
+        bio: updatedUser.bio || "",
+        location: updatedUser.location || ""
+      } as any);
+      return;
+    }
     setSelectedAuthorForDrawer((prev) => {
       if (!prev) return prev;
       const isViewingSelf =
@@ -1144,7 +1175,7 @@ export function App() {
         isVerified: Boolean(updatedUser.isVerified || updatedUser.passkeyProtected)
       } as any;
     });
-  }, [currentUser]);
+  }, [currentUser, language]);
   const handleOpenReviewPicker = () => {
     flushSync(() => {
       setPreselectedPlaceForRecording(null);
@@ -5857,12 +5888,7 @@ export function App() {
     }
   }, [activeSection, currentUser]);
 
-  const handleGoToProfile = async () => {
-    const activeUser = currentUser || (await ensureAnonymousUser(false));
-    if (!activeUser) {
-      setActiveSection("home");
-      return;
-    }
+  const openUserProfileDrawer = (activeUser: UserProfile) => {
     const rawHandle = activeUser?.username || activeUser?.name || activeUser?.email?.split("@")[0] || "me";
     const cleanHandleSlug = rawHandle
       .replace(/^@+/, "")
@@ -5878,12 +5904,24 @@ export function App() {
       handle: activeUser?.handle || `@${cleanHandleSlug}`,
       name: activeUser?.name || rawHandle,
       avatar: activeUser?.avatar || "",
-      isVerified: false,
+      banner: activeUser?.banner || "",
+      isVerified: Boolean((activeUser as any)?.isVerified || (activeUser as any)?.passkeyProtected),
       isFollowed: false,
       bio: activeUser?.bio || "",
       location: activeUser?.location || ""
-    });
+    } as any);
     setActiveSection("home");
+  };
+
+  const handleGoToProfile = async () => {
+    const activeUser = currentUser || (await restoreExistingSessionOnly());
+    if (!activeUser) {
+      // Never mint a duplicate anonymous handle just for clicking Profile; let returning users restore via Passkey cleanly
+      setActiveSection("home");
+      setIsGuestProfileSheetOpen(true);
+      return;
+    }
+    openUserProfileDrawer(activeUser);
   };
 
   // Close Drawers completely (reset to previous section or global feed)
@@ -10034,6 +10072,30 @@ export function App() {
         </Suspense>
       )}
 
+      {isGuestProfileSheetOpen && (
+        <Suspense fallback={null}>
+        <GuestProfileSheet
+          isOpen={isGuestProfileSheetOpen}
+          onClose={() => setIsGuestProfileSheetOpen(false)}
+          onRestorePasskey={() => {
+            setIsGuestProfileSheetOpen(false);
+            setPasskeyQrModalMode("restore");
+          }}
+          onAddReview={() => {
+            setIsGuestProfileSheetOpen(false);
+            handleOpenReviewPicker();
+          }}
+          onCreateProfileNow={async () => {
+            const created = await ensureAnonymousUser(false);
+            setIsGuestProfileSheetOpen(false);
+            if (created) {
+              openUserProfileDrawer(created);
+            }
+          }}
+        />
+        </Suspense>
+      )}
+
       {Boolean(passkeyQrModalMode) && (
         <Suspense fallback={null}>
         <PasskeyQrModal
@@ -10046,8 +10108,8 @@ export function App() {
             return { id: ensured.id || (ensured as any).uid, name: ensured.name };
           }}
           onClose={() => setPasskeyQrModalMode(null)}
-          onSuccess={(user) => {
-            handlePasskeySyncSuccess(user);
+          onSuccess={(user, mode) => {
+            handlePasskeySyncSuccess(user, mode);
           }}
         />
         </Suspense>
