@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   MessageSquare,
   Camera,
+  ImagePlus,
   Edit3,
   Trash2,
   MoreVertical,
@@ -55,7 +56,7 @@ import { SearchableComboSelector } from "./SearchableComboSelector";
 import { countries } from "../utils/countries";
 import { locationData } from "../utils/locationData";
 import { Country, State, City } from "country-state-city";
-import { generateGoogleLetterAvatarSvg, getFirstLetter, getAvatarColor } from "../lib/avatar";
+import { generateGoogleLetterAvatarSvg, getFirstLetter, getAvatarColor, getAdaptiveBannerPalette } from "../lib/avatar";
 import { triggerHaptic } from "../utils/haptics";
 import { useSwipeDownToDismiss } from "../hooks/useSwipeDownToDismiss";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -215,6 +216,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
   const [editBio, setEditBio] = useState("");
   const [editAvatar, setEditAvatar] = useState("");
   const [editBanner, setEditBanner] = useState("");
+  const [bannerRemoved, setBannerRemoved] = useState(false);
   const [bannerError, setBannerError] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editCity, setEditCity] = useState("");
@@ -262,6 +264,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       setEditBio(currentUser.bio || "");
       setInlineBioInput(currentUser.bio || "");
       setEditBanner(currentUser.banner || "");
+      setBannerRemoved(false);
       setEditAvatar(currentUser.avatar || "");
       const loc = currentUser.location || "";
       setEditLocation(loc);
@@ -737,14 +740,31 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     ? currentUser.avatar
     : (liveUserProfile?.avatar || safeCreator.avatar || author.avatar);
 
-  const effectiveBanner = isOwner && currentUser?.banner 
-    ? currentUser.banner 
-    : (liveUserProfile?.banner || safeCreator.banner || author?.banner);
+  const effectiveBanner = isOwner
+    ? (liveUserProfile?.banner !== undefined
+        ? liveUserProfile.banner
+        : currentUser?.banner !== undefined
+          ? currentUser.banner
+          : (safeCreator.banner || author?.banner || ""))
+    : (liveUserProfile?.banner || safeCreator.banner || author?.banner || "");
 
   const rawDisplayName = isOwner && currentUser?.name
     ? currentUser.name
     : (liveUserProfile?.name || safeCreator.name || author.name || "Reviewer");
   const displayName = rawDisplayName.includes("@") ? rawDisplayName.split("@")[0] : rawDisplayName;
+
+  const adaptiveBannerPalette = getAdaptiveBannerPalette(
+    displayName || author.name || "User",
+    author.handle || displayName || author.name || "User"
+  );
+
+  useEffect(() => {
+    if (isEditModalOpen) {
+      setEditBanner(effectiveBanner || "");
+      setBannerRemoved(false);
+      setBannerError("");
+    }
+  }, [isEditModalOpen]);
 
   const rawLocation = isOwner && currentUser?.location
     ? currentUser.location
@@ -959,6 +979,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           try {
             const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
             setEditBanner(compressedBase64);
+            setBannerRemoved(false);
           } catch (err) {
             setBannerError("Failed to process image.");
           }
@@ -1034,7 +1055,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     const combinedLocation = locParts.join(", ");
 
     let finalAvatar = editAvatar || currentUser?.avatar;
-    let finalBanner = editBanner || currentUser?.banner;
+    let finalBanner = bannerRemoved ? "" : (editBanner || currentUser?.banner || "");
 
     // If user selected a new photo (base64), upload it directly to Bunny CDN storage
     if (editAvatar && editAvatar.startsWith('data:image/')) {
@@ -1245,10 +1266,14 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_38%,rgba(0,0,0,0.22)_100%)] z-20 pointer-events-none" />
             </div>
           ) : (
-            <div className="absolute inset-0 w-full h-full bg-[#0a0a0e] overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.08),transparent_68%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(232,199,138,0.06),transparent_55%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.55)_45%,transparent_100%)]" />
+            <div
+              className="absolute inset-0 w-full h-full overflow-hidden"
+              style={{
+                backgroundColor: adaptiveBannerPalette.baseColor,
+                backgroundImage: adaptiveBannerPalette.backgroundImage
+              }}
+            >
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
             </div>
           )}
 
@@ -2003,27 +2028,90 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               </div>
 
               {/* Banner Photo Uploader */}
-              <div className="flex flex-col items-center gap-3">
-                <div className="relative group cursor-pointer w-full" onClick={() => bannerInputRef.current?.click()}>
-                  <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-zinc-700 shadow-md relative bg-zinc-950">
-                    {editBanner || currentUser?.banner ? (
-                      <img src={getProxiedImageUrl(editBanner || currentUser?.banner)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-900" />
-                    )}
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                      <Camera className="w-6 h-6" />
+              {(() => {
+                const activePreviewBanner = bannerRemoved ? "" : (editBanner || currentUser?.banner || "");
+                const editActiveName = editName || displayName || currentUser?.name || author.name || "User";
+                const editBannerPalette = getAdaptiveBannerPalette(
+                  editActiveName,
+                  (currentUser as any)?.handle || author.handle || editActiveName
+                );
+                return (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="relative group cursor-pointer w-full" onClick={() => bannerInputRef.current?.click()}>
+                      <div
+                        className="w-full h-32 rounded-2xl overflow-hidden border shadow-md relative transition-all duration-200 group-hover:border-white/30"
+                        style={{
+                          backgroundColor: editBannerPalette.baseColor,
+                          borderColor: activePreviewBanner ? "rgba(255,255,255,0.16)" : editBannerPalette.borderTint
+                        }}
+                      >
+                        {activePreviewBanner ? (
+                          <>
+                            <img
+                              src={getProxiedImageUrl(activePreviewBanner)}
+                              alt="Cover banner preview"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <Camera className="w-6 h-6" />
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className="w-full h-full relative flex flex-col items-center justify-center gap-1.5"
+                            style={{ backgroundImage: editBannerPalette.previewBackgroundImage }}
+                          >
+                            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                            <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/45 backdrop-blur-xl border border-white/15 text-white shadow-lg group-hover:bg-black/60 group-hover:scale-[1.02] transition-all">
+                              <ImagePlus className="w-4 h-4 text-white/90" />
+                              <span className="text-xs font-semibold tracking-tight">
+                                {t("profile.addCoverPhoto", "Add Cover Photo")}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {activePreviewBanner && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditBanner("");
+                            setBannerRemoved(true);
+                            setBannerError("");
+                            if (bannerInputRef.current) bannerInputRef.current.value = "";
+                          }}
+                          className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-black/65 hover:bg-black/85 backdrop-blur-xl text-zinc-200 hover:text-white rounded-full text-[11px] font-semibold flex items-center gap-1 border border-white/15 shadow-lg transition-all cursor-pointer z-10"
+                          title={t("profile.resetCoverBanner", "Reset to default studio header")}
+                        >
+                          <X className="w-3 h-3" />
+                          <span>{t("profile.resetBanner", "Reset")}</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="absolute bottom-2 right-2 p-2 bg-zinc-900/85 hover:bg-zinc-800 backdrop-blur-xl text-white rounded-full shadow-lg transition-colors cursor-pointer border border-white/15 z-10"
+                        title={t("profile.uploadCoverBanner", "Upload cover photo")}
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerChange} />
                     </div>
+                    <div className="text-center">
+                      <span className="text-xs font-bold text-zinc-200">{t("profile.coverBanner", "Cover Banner")}</span>
+                      <p className="text-[10px] text-zinc-400">
+                        {activePreviewBanner
+                          ? t("profile.uploadCustomBanner", "Click to upload a custom JPG or PNG")
+                          : t("profile.defaultAdaptiveBannerHint", "Optional · Auto-styled to match your profile color")}
+                      </p>
+                    </div>
+                    {bannerError && <p className="text-xs text-zinc-200 font-semibold">{bannerError}</p>}
                   </div>
-                  <button type="button" className="absolute bottom-2 right-2 p-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-700"><Camera className="w-3.5 h-3.5" /></button>
-                  <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={handleBannerChange} />
-                </div>
-                <div className="text-center">
-                  <span className="text-xs font-bold text-zinc-200">{t("profile.coverBanner", "Cover Banner")}</span>
-                  <p className="text-[10px] text-zinc-200">{t("profile.uploadCustomBanner", "Click to upload a custom JPG or PNG")}</p>
-                </div>
-                {bannerError && <p className="text-xs text-zinc-200 font-semibold">{bannerError}</p>}
-              </div>
+                );
+              })()}
               {/* Name Field */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-200">{t("profile.displayName", "Display Name")}</label>

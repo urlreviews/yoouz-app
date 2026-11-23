@@ -109,3 +109,74 @@ export function generateGoogleLetterAvatarSvg(nameOrSeed: string, size = 128, co
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '').trim();
+  const full = clean.length === 3
+    ? clean.split('').map((c) => c + c).join('')
+    : clean;
+  const num = parseInt(full, 16);
+  if (Number.isNaN(num)) {
+    return { r: 94, g: 114, b: 148 };
+  }
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  };
+}
+
+export interface AdaptiveBannerPalette {
+  accentHex: string;
+  baseColor: string;
+  backgroundImage: string;
+  previewBackgroundImage: string;
+  borderTint: string;
+}
+
+/**
+ * Generates an Apple Contact Poster / Google Material You inspired
+ * obsidian studio gradient derived deterministically from the user's avatar color.
+ */
+export function getAdaptiveBannerPalette(nameOrSeed?: string, colorSeed?: string): AdaptiveBannerPalette {
+  const avatarColor = getAvatarColor(nameOrSeed, colorSeed);
+  const { r, g, b } = hexToRgb(avatarColor.bg);
+
+  // Lift for dark OLED studio luminance so deeper hues (brown, indigo) feel rich and intentional
+  const hiR = Math.min(255, Math.round(r + (255 - r) * 0.30));
+  const hiG = Math.min(255, Math.round(g + (255 - g) * 0.30));
+  const hiB = Math.min(255, Math.round(b + (255 - b) * 0.30));
+
+  const deepR = Math.round(r * 0.52);
+  const deepG = Math.round(g * 0.52);
+  const deepB = Math.round(b * 0.52);
+
+  const baseRgb = `${r}, ${g}, ${b}`;
+  const hiRgb = `${hiR}, ${hiG}, ${hiB}`;
+  const deepRgb = `${deepR}, ${deepG}, ${deepB}`;
+
+  const backgroundImage = [
+    `linear-gradient(180deg, rgba(5, 5, 6, 0.04) 0%, rgba(5, 5, 6, 0.16) 58%, #050506 100%)`,
+    `radial-gradient(ellipse 88% 120% at 20% 22%, rgba(${hiRgb}, 0.72) 0%, rgba(${baseRgb}, 0.38) 46%, transparent 78%)`,
+    `radial-gradient(circle at 86% 18%, rgba(${hiRgb}, 0.42) 0%, rgba(${baseRgb}, 0.20) 46%, transparent 74%)`,
+    `radial-gradient(ellipse 75% 44% at 50% -14%, rgba(255, 255, 255, 0.16) 0%, transparent 66%)`,
+    `linear-gradient(155deg, rgba(${baseRgb}, 0.56) 0%, rgba(${deepRgb}, 0.34) 55%, #050506 100%)`,
+  ].join(', ');
+
+  const previewBackgroundImage = [
+    `linear-gradient(180deg, rgba(5, 5, 6, 0.02) 0%, rgba(5, 5, 6, 0.34) 100%)`,
+    `radial-gradient(ellipse 88% 125% at 22% 24%, rgba(${hiRgb}, 0.70) 0%, rgba(${baseRgb}, 0.36) 48%, transparent 80%)`,
+    `radial-gradient(circle at 84% 22%, rgba(${hiRgb}, 0.44) 0%, rgba(${baseRgb}, 0.20) 46%, transparent 74%)`,
+    `radial-gradient(ellipse 72% 46% at 50% -12%, rgba(255, 255, 255, 0.16) 0%, transparent 66%)`,
+    `linear-gradient(155deg, rgba(${baseRgb}, 0.54) 0%, rgba(${deepRgb}, 0.32) 60%, #09090D 100%)`,
+  ].join(', ');
+
+  return {
+    accentHex: avatarColor.bg,
+    baseColor: '#07070A',
+    backgroundImage,
+    previewBackgroundImage,
+    borderTint: `rgba(${hiRgb}, 0.36)`,
+  };
+}
+
