@@ -121,7 +121,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
           isConflict: true,
           reason: t(
             'businessAuth.reviewerConflictReview',
-            'This email is associated with a customer reviewer who has posted video reviews. Business accounts must use a dedicated business email to protect review integrity.'
+            'This email is associated with a customer reviewer who has posted photo reviews. Business accounts must use a dedicated business email to protect review integrity.'
           )
         };
       }

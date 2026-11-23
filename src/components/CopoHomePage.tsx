@@ -6,7 +6,7 @@ import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
-import { resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
 import { useLanguage } from "../i18n/LanguageContext";
 import { getRoundedRating } from "./CopoStarRating";
 import { isPurgedItem } from "../hooks/useFeedPagination";
@@ -1707,6 +1707,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   const rating = typeof video.rating === "number" ? video.rating : 5;
                   const wholeStars = getRoundedRating(rating);
                   const posterUrl = resolveVideoPosterUrl(video);
+                  const cardPosterUrl = toCardPhotoUrl(posterUrl);
+                  const isAboveFoldCard = idx < 6;
                   const recency = formatCompactRecency(video);
 
                   return (
@@ -1744,19 +1746,22 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                       {/* Clean Neutral Obsidian Canvas — zero fake letter flash while photo decodes */}
                       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] z-0" />
 
-                      {/* Full-Bleed Live Photo Review */}
-                      {posterUrl && (
+                      {/* Full-Bleed Live Photo Review (Retina 560px WebP card variant for 0ms paint) */}
+                      {cardPosterUrl && (
                         <img
-                          src={posterUrl}
+                          src={cardPosterUrl}
                           alt={`${businessName} ${catInfo.badgeLabel.toLowerCase()} photo review by ${creatorFullName}`}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.035] transition-transform duration-500 ease-out z-10 pointer-events-none"
-                          loading="eager"
-                          decoding="sync"
-                          fetchPriority={idx < 8 ? "high" : "auto"}
-                          referrerPolicy={/^https?:\/\//i.test(posterUrl) ? "no-referrer" : undefined}
+                          loading={isAboveFoldCard ? "eager" : "lazy"}
+                          decoding={isAboveFoldCard ? "sync" : "async"}
+                          fetchPriority={isAboveFoldCard ? "high" : "low"}
+                          referrerPolicy={/^https?:\/\//i.test(cardPosterUrl) ? "no-referrer" : undefined}
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
+                            if (!target.dataset.triedFull && posterUrl && cardPosterUrl !== posterUrl) {
+                              target.dataset.triedFull = "true";
+                              target.src = posterUrl;
+                            } else if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
                               target.dataset.triedProxy = "true";
                               target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
                             } else {

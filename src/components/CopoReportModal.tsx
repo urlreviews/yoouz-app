@@ -213,7 +213,7 @@ export const CopoReportModal: React.FC<CopoReportModalProps> = ({
       targetType: target.type,
       videoId: target.video?.id || null,
       videoCaption: target.video?.caption || null,
-      videoUrl: target.video?.id ? `${window.location.origin}/video/${target.video.id}` : null,
+      videoUrl: target.video?.id ? `${window.location.origin}/review/${target.video.id}` : null,
       videoHolder: {
         name: holderName,
         handle: holderHandle,

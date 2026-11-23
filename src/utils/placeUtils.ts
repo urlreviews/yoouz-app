@@ -4983,7 +4983,7 @@ export function generateSmartReviewTitle(
   const numRating = Number(rating) || 5;
 
   if (!rawText || rawText.length < 5) {
-    return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : "Verified Video Review";
+    return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : "Verified Photo Review";
   }
 
   // 1. Remove spoken introductory filler phrases:
@@ -5059,7 +5059,7 @@ export function generateSmartReviewTitle(
     return cleanPlace ? `${cleanPlace}: ${firstSentence}` : firstSentence;
   }
 
-  return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Video Review");
+  return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Photo Review");
 }
 
 

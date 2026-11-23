@@ -2418,10 +2418,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const vCaption = v.caption || `Verified Photo Review for ${placeTitle}`;
       const vDate = v.createdAtMs ? new Date(v.createdAtMs).toISOString() : new Date().toISOString();
       const vThumb = v.photoUrl || v.thumbnailUrl || 'https://yoouz.com/og-banner.png';
-      const vUrl = v.photoUrl || v.videoUrl || `https://www.yoouz.com/video/${v.id}`;
+      const vUrl = v.photoUrl || v.videoUrl || `https://www.yoouz.com/review/${v.id}`;
       graphItems.push({
         "@type": "ImageObject",
-        "@id": `https://www.yoouz.com/video/${v.id}#photo`,
+        "@id": `https://www.yoouz.com/review/${v.id}#photo`,
         "name": `Verified Photo Review of ${placeTitle} by ${vAuthor}`,
         "description": vCaption,
         "thumbnailUrl": [vThumb],

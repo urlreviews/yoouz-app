@@ -3,7 +3,7 @@ import { Search, Globe, Loader2, Camera, Star, CheckCircle, MapPin, Building2, P
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
 import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan } from "../utils/placeUtils";
-import { resolveVideoPosterUrl } from "../utils/videoUtils";
+import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoLocationSearchBar } from "./CopoLocationSearchBar";
@@ -1008,6 +1008,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                     const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
                     const rating = typeof video.rating === "number" ? video.rating : 5.0;
                     const posterUrl = resolveVideoPosterUrl(video);
+                    const cardPosterUrl = toCardPhotoUrl(posterUrl);
+                    const isAboveFold = idx < 6;
 
                     return (
                       <div
@@ -1016,17 +1018,20 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                         className="relative shrink-0 w-[165px] xs:w-[185px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] h-[305px] xs:h-[340px] sm:h-auto sm:aspect-[9/16] rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800/80 hover:border-zinc-700 shadow-lg group cursor-pointer select-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 snap-start"
                       >
                         {/* Video Thumbnail */}
-                        {posterUrl ? (
+                        {cardPosterUrl ? (
                           <img
-                            src={posterUrl}
+                            src={cardPosterUrl}
                             alt={`${businessName} review - ${creatorFullName}`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
-                            loading="eager"
-                            decoding="sync"
-                            fetchPriority={idx < 8 ? "high" : "auto"}
+                            loading={isAboveFold ? "eager" : "lazy"}
+                            decoding={isAboveFold ? "sync" : "async"}
+                            fetchPriority={isAboveFold ? "high" : "low"}
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
-                              if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
+                              if (!target.dataset.triedFull && posterUrl && cardPosterUrl !== posterUrl) {
+                                target.dataset.triedFull = "true";
+                                target.src = posterUrl;
+                              } else if (!target.dataset.triedProxy && posterUrl.startsWith("http")) {
                                 target.dataset.triedProxy = "true";
                                 target.src = `/api/proxy-image?url=${encodeURIComponent(posterUrl)}`;
                               }

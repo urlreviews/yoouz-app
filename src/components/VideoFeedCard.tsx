@@ -28,7 +28,7 @@ import {
 } from "../utils/placeUtils";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { getProxiedImageUrl } from "../utils/logoUtils";
-import { resolveVideoPosterUrl, resolveVideoPosterCascade } from "../utils/videoUtils";
+import { resolveVideoPosterUrl, resolveVideoPosterCascade, toCardPhotoUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { SEOTags } from "./SEOTags";
 import { triggerHaptic } from "../utils/haptics";
@@ -295,7 +295,10 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
 
   const isExplicitVideoUrl =
     typeof window !== "undefined" &&
-    (window.location.pathname.includes("/video/") || window.location.pathname.startsWith("/v/"));
+    (window.location.pathname.includes("/review/") ||
+      window.location.pathname.includes("/reviews/") ||
+      window.location.pathname.includes("/video/") ||
+      window.location.pathname.startsWith("/v/"));
 
   const cleanDomain = getDisplayUrlAsDomain(video) || "yoouz.com";
 
@@ -576,16 +579,36 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
             id={slotId || `video-slot-${video.id}`}
             ref={slotRef}
             data-video-slot="true"
-            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-gradient-to-br from-zinc-900 via-[#0a0a0d] to-black pointer-events-none"
+            className="absolute inset-0 w-full h-full overflow-hidden z-0 bg-gradient-to-br from-zinc-950 via-[#0a0a0d] to-black pointer-events-none"
           >
-            {/* Rich Brand Backdrop (Never Black) */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-zinc-900 via-[#0a0a0d] to-zinc-950 z-0">
-              <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white font-semibold text-2xl mb-3 shadow-2xl">
-                {(businessName || video.placeName || "B").charAt(0).toUpperCase()}
+            {/* Only show brand fallback backdrop if no real photo exists */}
+            {!hasRealPhoto && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-zinc-900 via-[#0a0a0d] to-zinc-950 z-0">
+                <div className="w-16 h-16 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white font-semibold text-2xl mb-3 shadow-2xl">
+                  {(businessName || video.placeName || "B").charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-semibold text-white tracking-tight">{businessName || formatBusinessName(video.placeName) || "Business Place"}</span>
+                <span className="text-xs font-medium text-zinc-400 mt-1">Live Photo Review</span>
               </div>
-              <span className="text-sm font-semibold text-white tracking-tight">{businessName || formatBusinessName(video.placeName) || "Business Place"}</span>
-              <span className="text-xs font-medium text-zinc-400 mt-1">Live Photo Review</span>
-            </div>
+            )}
+
+            {/* Instant 0ms RAM-Cached Card Underlay so full-screen opens with zero blank frame before 2K HD sharpens on top */}
+            {hasRealPhoto && (() => {
+              const cardUnderlayUrl = toCardPhotoUrl(photoUrl);
+              if (!cardUnderlayUrl || cardUnderlayUrl === photoUrl) return null;
+              return (
+                <img
+                  src={cardUnderlayUrl}
+                  alt=""
+                  aria-hidden="true"
+                  loading="eager"
+                  decoding="sync"
+                  fetchPriority="high"
+                  referrerPolicy={/^https?:\/\//i.test(cardUnderlayUrl) ? "no-referrer" : undefined}
+                  className="absolute inset-0 w-full h-full object-cover z-[5] pointer-events-none"
+                />
+              );
+            })()}
 
             {hasRealPhoto ? (
               <img

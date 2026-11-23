@@ -399,11 +399,29 @@
         overflow: hidden;
       }
       .ybs-card {
-        flex: 0 0 clamp(176px, 46.5vw, 214px);
-        height: clamp(272px, calc(100dvh - 396px), 390px);
+        position: relative;
+        overflow: hidden;
+        flex: 0 0 clamp(162px, 43.5vw, 196px);
+        min-height: 235px;
+        height: clamp(235px, calc(100dvh - 410px), 340px);
         border-radius: 22px;
         background: linear-gradient(180deg, #16161a 0%, #0b0b0e 100%);
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.09);
+      }
+      .ybs-card img.ybs-card-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .ybs-card-scrim {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 46%;
+        background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.68) 48%, transparent 100%);
+        pointer-events: none;
       }
       .ybs-pill {
         height: 30px;
@@ -429,7 +447,7 @@
         .ybs-hero-t { font-size: 52px; margin-bottom: 10px; }
         .ybs-hero-s { font-size: 16px; max-width: 768px; margin-bottom: 28px; }
         .ybs-cards { gap: 16px; }
-        .ybs-card { flex: 1 1 0; height: auto; aspect-ratio: 3 / 4.35; border-radius: 24px; }
+        .ybs-card { flex: 1 1 0; min-height: 0; height: auto; aspect-ratio: 3 / 3.85; border-radius: 22px; }
       }
     </style>
   </head>
@@ -480,7 +498,7 @@
             <div class="ybs-card"></div>
             <div class="ybs-card"></div>
             <div class="ybs-card"></div>
-          </div>
+          </div><!-- /ybs-cards -->
         </div><!-- /ybs-main -->
         <div class="ybs-m-dock"></div>
       </div><!-- /yoouz-boot-shell -->

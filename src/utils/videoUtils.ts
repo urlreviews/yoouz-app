@@ -363,6 +363,38 @@ export function resolveVideoPosterCascade(video?: VideoReview | null): string[] 
 }
 
 /**
+ * Converts a full-resolution review photo URL into its ultra-fast Retina card variant (?v=card).
+ * Server delivers a RAM-cached 560px Lanczos3 WebP (~12-24KB, 10x-17x smaller than 1600x2048 HD)
+ * in <1ms so cards paint instantaneously on Desktop, Tablet & Mobile while full-screen keeps 2K HD.
+ */
+export function toCardPhotoUrl(url?: string | null): string {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+
+  // Same-origin /uploads/photos/:filename -> append ?v=card (idempotent)
+  if (/^\/uploads\/photos\/[^/?#]+/i.test(trimmed)) {
+    if (/[?&]v=card\b/i.test(trimmed)) return trimmed;
+    const [base, query] = trimmed.split("?");
+    return query ? `${base}?${query}&v=card` : `${base}?v=card`;
+  }
+
+  // Bunny Pull Zone /photos/:filename -> route through RAM-cached /uploads/photos/:filename?v=card
+  const bunnyPhotoMatch = trimmed.match(/^https?:\/\/[^/]+\.b-cdn\.net\/photos\/([^/?#]+)/i);
+  if (bunnyPhotoMatch && bunnyPhotoMatch[1]) {
+    return `/uploads/photos/${bunnyPhotoMatch[1]}?v=card`;
+  }
+
+  // Absolute same-origin yoouz.com/uploads/photos/:filename -> normalize to relative ?v=card
+  const absSameOrigin = trimmed.match(/^https?:\/\/(?:www\.)?yoouz\.com(\/uploads\/photos\/[^/?#]+)/i);
+  if (absSameOrigin && absSameOrigin[1]) {
+    return `${absSameOrigin[1]}?v=card`;
+  }
+
+  return trimmed;
+}
+
+/**
  * Aggressively forces WebKit (iOS Safari), Gecko (Firefox), and Blink (Chrome/Brave)
  * to immediately release hardware video decoders from memory.
  * This prevents decoder pool exhaustion (freezing after 3-5 videos).

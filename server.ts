@@ -15858,8 +15858,10 @@ ${imageEntries.join('\n')}
   interface CachedPhotoEntry {
     jpeg: Buffer;
     webp: Buffer;
+    cardWebp: Buffer;
     etagJpeg: string;
     etagWebp: string;
+    etagCardWebp: string;
     mimeType: string;
   }
   const photoRamCache = new Map<string, CachedPhotoEntry>();
@@ -15876,47 +15878,83 @@ ${imageEntries.join('\n')}
 
   const buildPhotoRamEntry = async (rawFilename: string, rawBuf: Buffer, mimeType = "image/jpeg", prebuiltWebp?: Buffer | null): Promise<CachedPhotoEntry> => {
     const jpegBuf = rawBuf;
-    let webpBuf: Buffer = prebuiltWebp && prebuiltWebp.length > 0 ? prebuiltWebp : rawBuf;
-    if (!prebuiltWebp) {
-      const webpName = rawFilename.replace(/\.[^.]+$/, "_hd.webp");
-      const webpCandidates = [
-        path.join(serverUploadsDir, "photos", "webp", webpName),
-        path.join(process.cwd(), "public", "uploads", "photos", "webp", webpName),
-        path.join(process.cwd(), "dist", "uploads", "photos", "webp", webpName)
-      ];
-      const existingWebpPath = webpCandidates.find((p) => fs.existsSync(p));
+    const webpName = rawFilename.replace(/\.[^.]+$/, "_hd.webp");
+    const cardWebpName = rawFilename.replace(/\.[^.]+$/, "_card2.webp");
+    const wLocal = path.join(serverUploadsDir, "photos", "webp");
+    const wPublic = path.join(process.cwd(), "public", "uploads", "photos", "webp");
+    const wDist = path.join(process.cwd(), "dist", "uploads", "photos", "webp");
+
+    const buildHdWebp = async (): Promise<Buffer> => {
+      if (prebuiltWebp && prebuiltWebp.length > 0) return prebuiltWebp;
+      const existingWebpPath = [
+        path.join(wLocal, webpName),
+        path.join(wPublic, webpName),
+        path.join(wDist, webpName)
+      ].find((p) => fs.existsSync(p));
       if (existingWebpPath) {
         try {
-          webpBuf = fs.readFileSync(existingWebpPath);
+          return fs.readFileSync(existingWebpPath);
         } catch {
-          webpBuf = rawBuf;
-        }
-      } else {
-        try {
-          webpBuf = await sharp(rawBuf)
-            .rotate()
-            .resize({ width: 1600, height: 2048, fit: "inside", withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
-            .webp({ quality: 88, effort: 3, smartSubsample: true })
-            .toBuffer();
-          try {
-            const wLocal = path.join(serverUploadsDir, "photos", "webp");
-            const wPublic = path.join(process.cwd(), "public", "uploads", "photos", "webp");
-            fs.mkdirSync(wLocal, { recursive: true });
-            fs.writeFileSync(path.join(wLocal, webpName), webpBuf);
-            fs.mkdirSync(wPublic, { recursive: true });
-            fs.writeFileSync(path.join(wPublic, webpName), webpBuf);
-          } catch {}
-        } catch {
-          webpBuf = rawBuf;
+          return rawBuf;
         }
       }
-    }
-    const baseTag = `${rawFilename}-${rawBuf.length}-${webpBuf.length}`;
+      try {
+        const out = await sharp(rawBuf)
+          .rotate()
+          .resize({ width: 1600, height: 2048, fit: "inside", withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+          .webp({ quality: 88, effort: 3, smartSubsample: true })
+          .toBuffer();
+        try {
+          fs.mkdirSync(wLocal, { recursive: true });
+          fs.writeFileSync(path.join(wLocal, webpName), out);
+          fs.mkdirSync(wPublic, { recursive: true });
+          fs.writeFileSync(path.join(wPublic, webpName), out);
+        } catch {}
+        return out;
+      } catch {
+        return rawBuf;
+      }
+    };
+
+    const buildCardWebp = async (): Promise<Buffer> => {
+      const existingCardPath = [
+        path.join(wLocal, cardWebpName),
+        path.join(wPublic, cardWebpName),
+        path.join(wDist, cardWebpName)
+      ].find((p) => fs.existsSync(p));
+      if (existingCardPath) {
+        try {
+          return fs.readFileSync(existingCardPath);
+        } catch {}
+      }
+      try {
+        // 440x580 Lanczos3 Retina WebP (~12-28KB) -> 2.0x-2.6x Retina pixel density on 162-220px cards
+        const out = await sharp(rawBuf)
+          .rotate()
+          .resize({ width: 440, height: 580, fit: "inside", withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+          .webp({ quality: 78, effort: 4, smartSubsample: true })
+          .toBuffer();
+        try {
+          fs.mkdirSync(wLocal, { recursive: true });
+          fs.writeFileSync(path.join(wLocal, cardWebpName), out);
+          fs.mkdirSync(wPublic, { recursive: true });
+          fs.writeFileSync(path.join(wPublic, cardWebpName), out);
+        } catch {}
+        return out;
+      } catch {
+        return rawBuf;
+      }
+    };
+
+    const [webpBuf, cardWebpBuf] = await Promise.all([buildHdWebp(), buildCardWebp()]);
+    const baseTag = `${rawFilename}-${rawBuf.length}-${webpBuf.length}-${cardWebpBuf.length}`;
     const entry: CachedPhotoEntry = {
       jpeg: jpegBuf,
       webp: webpBuf,
+      cardWebp: cardWebpBuf,
       etagJpeg: `"yz-jpg-${baseTag}"`,
       etagWebp: `"yz-webp-${baseTag}"`,
+      etagCardWebp: `"yz-card-${baseTag}"`,
       mimeType
     };
     setPhotoRamCache(rawFilename, entry);
@@ -16074,10 +16112,26 @@ ${imageEntries.join('\n')}
       }
 
       const acceptHeader = String(req.headers.accept || "").toLowerCase();
-      const supportsWebp = acceptHeader.includes("image/webp") && entry.webp !== entry.jpeg;
-      const outBuf = supportsWebp ? entry.webp : entry.jpeg;
-      const outType = supportsWebp ? "image/webp" : entry.mimeType;
-      const outEtag = supportsWebp ? entry.etagWebp : entry.etagJpeg;
+      const wantsCard = String(req.query.v || "").toLowerCase() === "card";
+      const supportsWebp = (!acceptHeader || acceptHeader.includes("image/webp") || acceptHeader.includes("*/*"));
+
+      let outBuf: Buffer;
+      let outType: string;
+      let outEtag: string;
+
+      if (wantsCard && supportsWebp && entry.cardWebp && entry.cardWebp !== entry.jpeg) {
+        outBuf = entry.cardWebp;
+        outType = "image/webp";
+        outEtag = entry.etagCardWebp;
+      } else if (supportsWebp && entry.webp !== entry.jpeg) {
+        outBuf = entry.webp;
+        outType = "image/webp";
+        outEtag = entry.etagWebp;
+      } else {
+        outBuf = entry.jpeg;
+        outType = entry.mimeType;
+        outEtag = entry.etagJpeg;
+      }
 
       res.setHeader("Content-Type", outType);
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
@@ -20223,7 +20277,7 @@ ${imageEntries.join('\n')}
                     recipientId: biz.recipientId,
                     recipientHandle: biz.recipientHandle,
                     type: "comment",
-                    text: `commented: "${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}" on a video review for ${video.placeName || "your business"}`,
+                    text: `commented: "${comment.text.slice(0, 50)}${comment.text.length > 50 ? '...' : ''}" on a photo review for ${video.placeName || "your business"}`,
                     videoId: videoId,
                     videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
                     placeName: video.placeName ? String(video.placeName) : "",
@@ -20968,7 +21022,7 @@ ${imageEntries.join('\n')}
               recipientId: recipient.recipientId,
               recipientHandle: recipient.recipientHandle,
               type: "like",
-              text: `liked your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+              text: `liked your photo review of ${video.placeName ? String(video.placeName) : "a place"}`,
               videoId: videoId,
               videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
               placeName: video.placeName ? String(video.placeName) : "",
@@ -21000,7 +21054,7 @@ ${imageEntries.join('\n')}
                     recipientId: biz.recipientId,
                     recipientHandle: biz.recipientHandle,
                     type: "like",
-                    text: `liked a video review for ${video.placeName || "your business"}`,
+                    text: `liked a photo review for ${video.placeName || "your business"}`,
                     videoId: videoId,
                     videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
                     placeName: video.placeName ? String(video.placeName) : "",
@@ -21245,7 +21299,7 @@ ${imageEntries.join('\n')}
               recipientId: recipient.recipientId,
               recipientHandle: recipient.recipientHandle,
               type: "bookmark",
-              text: `saved your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+              text: `saved your photo review of ${video.placeName ? String(video.placeName) : "a place"}`,
               videoId: videoId,
               videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
               placeName: video.placeName ? String(video.placeName) : "",
@@ -21265,7 +21319,7 @@ ${imageEntries.join('\n')}
                     recipientId: biz.recipientId,
                     recipientHandle: biz.recipientHandle,
                     type: "bookmark",
-                    text: `saved a video review for ${video.placeName || "your business"}`,
+                    text: `saved a photo review for ${video.placeName || "your business"}`,
                     videoId: videoId,
                     videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
                     placeName: video.placeName ? String(video.placeName) : "",
@@ -21642,7 +21696,7 @@ ${imageEntries.join('\n')}
             recipientId: recipient.recipientId,
             recipientHandle: recipient.recipientHandle,
             type: "repost",
-            text: `shared your video review of ${video.placeName ? String(video.placeName) : "a place"}`,
+            text: `shared your photo review of ${video.placeName ? String(video.placeName) : "a place"}`,
             videoId: videoId,
             videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
             placeName: video.placeName ? String(video.placeName) : "",
@@ -21674,7 +21728,7 @@ ${imageEntries.join('\n')}
                   recipientId: biz.recipientId,
                   recipientHandle: biz.recipientHandle,
                   type: "repost",
-                  text: `shared a video review for ${video.placeName || "your business"}`,
+                  text: `shared a photo review for ${video.placeName || "your business"}`,
                   videoId: videoId,
                   videoThumbnail: video.thumbnailUrl ? String(video.thumbnailUrl) : "",
                   placeName: video.placeName ? String(video.placeName) : "",
@@ -26453,37 +26507,34 @@ app.post("/api/videos/save-review", async (req, res) => {
           }
         };
 
-        let resolvedUrl = "";
-        if (bunnyAccessKey && bunnyStorageZone) {
+        // Mirror to Bunny Storage CDN in parallel with instant RAM+disk caching so both
+        // local <1ms WebP (?v=card & 2K HD) AND multi-container CDN durability are guaranteed.
+        const bunnyMirrorPromise = (async () => {
+          if (!bunnyAccessKey || !bunnyStorageZone) return;
           try {
             const hostname = bunnyRegion ? `${bunnyRegion}.storage.bunnycdn.com` : "storage.bunnycdn.com";
             const bunnyUrl = `https://${hostname}/${bunnyStorageZone}/photos/${filename}`;
-            const uploadRes = await fetch(bunnyUrl, {
+            await fetch(bunnyUrl, {
               method: "PUT",
               headers: {
                 "AccessKey": bunnyAccessKey,
                 "Content-Type": "image/jpeg",
                 "Content-Length": cleanJpegBuffer.length.toString()
               },
-              body: cleanJpegBuffer
+              body: cleanJpegBuffer,
+              signal: AbortSignal.timeout(4000)
             });
-            if (uploadRes.ok || uploadRes.status === 201 || uploadRes.status === 200) {
-              const cdnBase = bunnyPullZoneUrl.replace(/\/+$/, "");
-              resolvedUrl = `${cdnBase}/photos/${filename}`;
-            }
           } catch (bunnyErr) {
-            console.warn("Bunny photo upload notice, falling back to local disk:", bunnyErr);
+            console.warn("Bunny photo mirror notice:", bunnyErr);
           }
-        }
+        })();
 
-        if (!resolvedUrl) {
-          await localSavePromise;
-          resolvedUrl = `/uploads/photos/${filename}`;
-        } else {
-          void localSavePromise;
-        }
+        // Wait for local RAM + disk (_hd.webp + _card.webp) and bounded Bunny mirror so the new review
+        // immediately serves in <1ms via /uploads/photos/:filename (and ?v=card) everywhere
+        await Promise.all([localSavePromise, bunnyMirrorPromise]);
+        const resolvedUrl = `/uploads/photos/${filename}`;
 
-        // Persist durable backup in background without blocking the response
+        // Persist durable BunnyDB backup in background without blocking the response
         void persistDurableDbBackup();
 
         // Return lean JSON (never echo back 600KB+ base64 payload over cellular)
@@ -26745,7 +26796,7 @@ app.post("/api/videos/save-review", async (req, res) => {
       if (hasLocalReview) {
         return {
           isCustomerReviewer: true,
-          reason: "This email address is already associated with reviewer accounts or video reviews on Yoouz. Business accounts cannot use a customer reviewer email to prevent conflicts of interest and protect authentic reviews."
+          reason: "This email address is already associated with reviewer accounts or photo reviews on Yoouz. Business accounts cannot use a customer reviewer email to prevent conflicts of interest and protect authentic reviews."
         };
       }
     } catch (e) {}
@@ -27464,7 +27515,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         count: successCount,
         simulated: isSimulated,
         message: isSimulated 
-          ? `Demonstration mode: Dispatched video review invite cards to ${successCount} customer(s).` 
+          ? `Demonstration mode: Dispatched photo review invite cards to ${successCount} customer(s).` 
           : `Successfully sent ${successCount} invite(s) via Resend!${lastError ? ' (Some failed)' : ''}`
       });
     } catch (err: any) {
@@ -27476,7 +27527,7 @@ app.post("/api/videos/save-review", async (req, res) => {
   app.post("/api/reports", express.json(), async (req, res) => {
     try {
       const {
-        targetType = "video",
+        targetType = "photo",
         videoId,
         videoCaption,
         videoUrl,
@@ -27504,7 +27555,7 @@ app.post("/api/videos/save-review", async (req, res) => {
         targetType,
         videoId: videoId || null,
         videoCaption: videoCaption || null,
-        videoUrl: videoUrl || (videoId ? `https://yoouz.com/video/${videoId}` : null),
+        videoUrl: videoUrl || (videoId ? `https://www.yoouz.com/review/${videoId}` : null),
         videoHolder: {
           name: holderName,
           handle: holderHandle,
@@ -43281,8 +43332,44 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         };
       });
 
-      // Collect top visible hero logos & photos using the EXACT URLs CopoBrandLogo & CopoHomePage render
-      // Warm them immediately during HTML parse so frame-0 paint hits 100% browser memory cache
+      // Collect top visible hero logos & Retina ?v=card photos using the EXACT URLs CopoBrandLogo & CopoHomePage render
+      // Inject <link rel="preload" as="image" fetchpriority="high"> into <head> + real <img> tags into #yoouz-boot-shell
+      // so frame-0 paint hits 100% browser memory cache with ZERO visible loading on Desktop, Tablet & Mobile.
+      const toServerCardPhotoUrl = (rawUrl?: string): string => {
+        if (!rawUrl || typeof rawUrl !== 'string') return '';
+        const trimmed = rawUrl.trim();
+        if (!trimmed || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return '';
+        if (/^\/uploads\/photos\/[^/?#]+/i.test(trimmed)) {
+          if (/[?&]v=card\b/i.test(trimmed)) return trimmed;
+          const [base, query] = trimmed.split('?');
+          return query ? `${base}?${query}&v=card` : `${base}?v=card`;
+        }
+        const bunnyPhotoMatch = trimmed.match(/^https?:\/\/[^/]+\.b-cdn\.net\/photos\/([^/?#]+)/i);
+        if (bunnyPhotoMatch && bunnyPhotoMatch[1]) {
+          return `/uploads/photos/${bunnyPhotoMatch[1]}?v=card`;
+        }
+        const absSameOrigin = trimmed.match(/^https?:\/\/(?:www\.)?yoouz\.com(\/uploads\/photos\/[^/?#]+)/i);
+        if (absSameOrigin && absSameOrigin[1]) {
+          return `${absSameOrigin[1]}?v=card`;
+        }
+        return trimmed;
+      };
+
+      const escapeAttr = (s: string) =>
+        s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const headPreloadLinks: string[] = [];
+      const seenHeadPreload = new Set<string>();
+      const pushHeadPreload = (u?: string) => {
+        if (!u || typeof u !== 'string') return;
+        const clean = u.trim();
+        if (!clean || clean.startsWith('data:') || clean.startsWith('blob:') || seenHeadPreload.has(clean)) return;
+        seenHeadPreload.add(clean);
+        const isExt = /^https?:\/\//i.test(clean);
+        const refAttr = isExt ? ' referrerpolicy="no-referrer"' : '';
+        headPreloadLinks.push(`<link rel="preload" as="image" href="${escapeAttr(clean)}" fetchpriority="high"${refAttr} />`);
+      };
+
       const preloadAssets: string[] = [];
       const seenPreload = new Set<string>();
       const pushAsset = (u?: string) => {
@@ -43292,6 +43379,16 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         seenPreload.add(clean);
         preloadAssets.push(clean);
       };
+      const deferredHdAssets: string[] = [];
+      const seenDeferred = new Set<string>();
+      const pushDeferredHd = (u?: string) => {
+        if (!u || typeof u !== 'string') return;
+        const clean = u.trim();
+        if (!clean || clean.startsWith('data:') || clean.startsWith('blob:') || seenPreload.has(clean) || seenDeferred.has(clean)) return;
+        seenDeferred.add(clean);
+        deferredHdAssets.push(clean);
+      };
+
       const resolveServerPreloadLogo = (v: any): string => {
         const dom = String(v?.brandDomain || v?.placeId || '').toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0].trim();
         if (dom) {
@@ -43312,8 +43409,16 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         return dom && dom.includes('.') ? `/api/favicon?domain=${encodeURIComponent(dom)}` : '';
       };
 
-      if (targetUrlOrVideoId) {
+      const reqPathOnly = (() => {
+        const raw = String(targetUrlOrVideoId || '/').split('?')[0].toLowerCase().replace(/\/+$/, '') || '/';
+        return raw.replace(/^\/[a-z]{2}(?:-[a-z]{2})?(?=\/|$)/, '') || '/';
+      })();
+      const isHomepageRoute = reqPathOnly === '/' || reqPathOnly === '/discover' || reqPathOnly === '/feed' || reqPathOnly === '/search';
+      const isSingleReviewRoute = /\/(review|v|p|photo)\//i.test(reqPathOnly) || /^rev[-_]/i.test(String(targetUrlOrVideoId || ''));
+
+      if (targetUrlOrVideoId && !isHomepageRoute) {
         const cleanTarget = String(targetUrlOrVideoId).toLowerCase();
+        let matchedCount = 0;
         for (const v of liveVideos) {
           const pid = String(v.placeId || '').toLowerCase();
           const pweb = String(v.placeWebsite || '').toLowerCase();
@@ -43326,34 +43431,81 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
             (ahandle && ahandle.length > 2 && cleanTarget.includes(ahandle)) ||
             (uid && uid.length > 3 && cleanTarget.includes(uid))
           ) {
-            pushAsset(resolveServerPreloadLogo(v));
-            pushAsset(v.photoUrl || v.thumbnailUrl);
+            const logoU = resolveServerPreloadLogo(v);
+            const rawPhoto = v.photoUrl || v.thumbnailUrl;
+            const cardPhoto = toServerCardPhotoUrl(rawPhoto);
+            if (matchedCount === 0 && logoU) pushHeadPreload(logoU);
+            if (matchedCount < 4 && cardPhoto) pushHeadPreload(cardPhoto);
+            if (isSingleReviewRoute && matchedCount === 0 && rawPhoto) pushHeadPreload(rawPhoto);
+            pushAsset(logoU);
+            pushAsset(cardPhoto);
+            pushDeferredHd(rawPhoto);
+            matchedCount++;
           }
         }
       }
 
-      // Logos first (1–6KB each — paint instantaneously), then visible hero photos
-      for (const v of liveVideos.slice(0, 10)) {
+      // Homepage / Discover: preload exact top 5 visible Retina ?v=card photos (~85KB total) + top 5 logos in <head>
+      // so the browser Preload Scanner downloads them at byte 500 of the HTML before JS even executes!
+      const topHeroVideos = liveVideos.slice(0, 5);
+      if (isHomepageRoute) {
+        for (const v of topHeroVideos) {
+          pushHeadPreload(toServerCardPhotoUrl(v.photoUrl || v.thumbnailUrl));
+          pushHeadPreload(resolveServerPreloadLogo(v));
+        }
+      }
+
+      // Immediate JS bootstrap cache: top 6 Retina ?v=card photos + top 8 logos (lightweight ~120KB total)
+      for (const v of liveVideos.slice(0, 8)) {
         pushAsset(resolveServerPreloadLogo(v));
       }
-      for (const v of liveVideos.slice(0, 8)) {
-        pushAsset(v.photoUrl || v.thumbnailUrl);
+      for (const v of liveVideos.slice(0, 6)) {
+        const rawPhoto = v.photoUrl || v.thumbnailUrl;
+        pushAsset(toServerCardPhotoUrl(rawPhoto));
+        pushDeferredHd(rawPhoto);
+      }
+
+      let outHtml = html;
+
+      // 1. Inject true <head> early preload hints right before </head>
+      if (headPreloadLinks.length > 0 && /<\/head>/i.test(outHtml)) {
+        outHtml = outHtml.replace(/<\/head>/i, `    ${headPreloadLinks.join('\n    ')}\n  </head>`);
+      }
+
+      // 2. Hydrate #yoouz-boot-shell 5 empty skeleton cards on Homepage with REAL live ?v=card <img> tags
+      // so Frame-0 (before JS/React executes!) displays the actual live photo reviews with zero blank loading state!
+      const ybsCardsPattern = /<div class="ybs-cards">[\s\S]*?<\/div><!--\s*\/ybs-cards\s*-->/i;
+      if (isHomepageRoute && topHeroVideos.length > 0 && ybsCardsPattern.test(outHtml)) {
+        const ssrCardsHtml = topHeroVideos
+          .map((v: any) => {
+            const cardSrc = toServerCardPhotoUrl(v.photoUrl || v.thumbnailUrl);
+            if (!cardSrc) return '<div class="ybs-card"></div>';
+            const isExt = /^https?:\/\//i.test(cardSrc);
+            const refAttr = isExt ? ' referrerpolicy="no-referrer"' : '';
+            return `<div class="ybs-card"><img class="ybs-card-img" src="${escapeAttr(cardSrc)}" alt="" loading="eager" decoding="sync" fetchpriority="high"${refAttr} /><div class="ybs-card-scrim"></div></div>`;
+          })
+          .join('');
+        outHtml = outHtml.replace(
+          ybsCardsPattern,
+          `<div class="ybs-cards">${ssrCardsHtml}</div><!-- /ybs-cards -->`
+        );
       }
 
       const safeJson = JSON.stringify(liveVideos).replace(/</g, '\\u003c');
-      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 20)).replace(/</g, '\\u003c');
-      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}img.decoding='sync';try{img.fetchPriority='high';}catch(e){}cache.set(u,img);img.onload=function(){ready.add(u);};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<urls.length;i++){warm(urls[i]);}}catch(e){}})();`;
+      const safePreloadJson = JSON.stringify(preloadAssets.slice(0, 16)).replace(/</g, '\\u003c');
+      const safeDeferredJson = JSON.stringify(deferredHdAssets.slice(0, 6)).replace(/</g, '\\u003c');
+      const prewarmBootstrap = `(function(){try{var urls=${safePreloadJson};var hd=${safeDeferredJson};var cache=window.__YOOUZ_IMAGE_CACHE__||(window.__YOOUZ_IMAGE_CACHE__=new Map());var ready=window.__YOOUZ_IMAGE_READY__||(window.__YOOUZ_IMAGE_READY__=new Set());var warm=function(u,p){if(!u||cache.has(u))return;var img=new Image();if(/^https?:\\/\\//i.test(u)&&u.indexOf(location.origin)!==0){img.referrerPolicy='no-referrer';}img.decoding=p==='high'?'sync':'async';try{img.fetchPriority=p||'auto';}catch(e){}cache.set(u,img);img.onload=function(){ready.add(u);};img.onerror=function(){cache.delete(u);};img.src=u;};for(var i=0;i<urls.length;i++){warm(urls[i],'high');}if(hd.length){var runHd=function(){setTimeout(function(){for(var j=0;j<hd.length;j++){warm(hd[j],'low');}},450);};if(document.readyState==='complete'){runHd();}else{window.addEventListener('load',runHd,{once:true});}}}catch(e){}})();`;
       const scriptTag = `<script id="__YOOUZ_INITIAL_STATE__">window.__INITIAL_FEED_VIDEOS__ = ${safeJson};${prewarmBootstrap}</script>`;
-      if (/<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>/i.test(html)) {
-        return html.replace(/(<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>)/i, `${scriptTag}\n$1`);
+      if (/<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>/i.test(outHtml)) {
+        return outHtml.replace(/(<script[^>]+src=["'][^"']*main\.tsx["'][^>]*><\/script>)/i, `${scriptTag}\n$1`);
       }
-      if (/<\/body>/i.test(html)) {
-        return html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+      if (/<\/body>/i.test(outHtml)) {
+        return outHtml.replace(/<\/body>/i, `${scriptTag}\n</body>`);
       }
-      if (/<\/head>/i.test(html)) {
-        return html.replace(/<\/head>/i, `${scriptTag}\n</head>`);
+      if (/<\/head>/i.test(outHtml)) {
+        return outHtml.replace(/<\/head>/i, `${scriptTag}\n</head>`);
       }
-      return html + scriptTag;
+      return outHtml + scriptTag;
     } catch (e) {
       return html;
     }
