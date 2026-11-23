@@ -230,7 +230,13 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
           const uploadRes = await fetch("/api/business/upload-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64: base64, imageType: "logo", placeId: targetId })
+            body: JSON.stringify({
+              imageBase64: base64,
+              imageType: "logo",
+              placeId: targetId,
+              mimeType: file.type || "image/png",
+              previousUrl: editLogoUrl || place?.logoUrl || undefined
+            })
           });
           if (uploadRes.ok) {
             const data = await uploadRes.json();
@@ -260,7 +266,13 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
           const uploadRes = await fetch("/api/business/upload-image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageBase64: base64, imageType: "banner", placeId: targetId })
+            body: JSON.stringify({
+              imageBase64: base64,
+              imageType: "banner",
+              placeId: targetId,
+              mimeType: file.type || "image/jpeg",
+              previousUrl: editBannerUrl || place?.bannerUrl || undefined
+            })
           });
           if (uploadRes.ok) {
             const data = await uploadRes.json();
@@ -1519,7 +1531,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-40 sm:h-44 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
+          className="relative h-44 sm:h-48 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Mobile Pull Handle Indicator Overlay */}
           <div 
@@ -1611,7 +1623,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
             </div>
           )}
-          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.72)_38%,rgba(0,0,0,0.22)_100%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
@@ -1660,8 +1672,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             />
               );
             })()}
-            {/* Seamless Obsidian bottom melt over banner photo */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.72)_38%,rgba(0,0,0,0.22)_100%)] z-20 pointer-events-none" />
+            {/* Seamless Obsidian edge-only bottom melt — preserves 100% crisp full-brightness hero banner */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] z-20 pointer-events-none" />
           </div>
         ) : null}
 

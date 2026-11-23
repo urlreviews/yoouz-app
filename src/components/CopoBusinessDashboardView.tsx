@@ -571,29 +571,60 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setLogoError("Please select a valid image file.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setLogoError("Image file must be under 8MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setLogoError("Image file must be under 15MB.");
       return;
     }
     setLogoError("");
     setIsUploadingLogo(true);
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
+      const rawDataUrl = event.target?.result as string;
+      const targetId = selectedPlaceId || currentPlace.id || 'yoouz.com';
+
+      // Pass crisp vector SVG logos directly without rasterizing
+      if (file.type === "image/svg+xml" || rawDataUrl?.startsWith("data:image/svg+xml")) {
+        try {
+          const uploadRes = await fetch("/api/business/upload-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              imageBase64: rawDataUrl,
+              imageType: "logo",
+              mimeType: "image/svg+xml",
+              placeId: targetId,
+              previousUrl: profileLogoUrl || undefined
+            })
+          });
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            setProfileLogoUrl(data.imageUrl || rawDataUrl);
+          } else {
+            setProfileLogoUrl(rawDataUrl);
+          }
+        } catch {
+          setLogoError("Failed to upload image.");
+        } finally {
+          setIsUploadingLogo(false);
+        }
+        return;
+      }
+
       const img = new Image();
       img.onload = async () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 400;
-        const MAX_HEIGHT = 400;
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
         let width = img.width;
         let height = img.height;
         if (width > height) {
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * (MAX_WIDTH / width));
             width = MAX_WIDTH;
           }
         } else {
           if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+            width = Math.round(width * (MAX_HEIGHT / height));
             height = MAX_HEIGHT;
           }
         }
@@ -601,17 +632,19 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressed = canvas.toDataURL("image/jpeg", 0.88);
-            // Upload directly to Bunny CDN Storage
-            const targetId = selectedPlaceId || currentPlace.id || 'yoouz.com';
+            // Preserve crisp edges & full transparency for brand logos using lossless PNG
+            const highResLogo = canvas.toDataURL("image/png");
             const uploadRes = await fetch("/api/business/upload-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                imageBase64: compressed,
+                imageBase64: highResLogo,
                 imageType: "logo",
+                mimeType: "image/png",
                 placeId: targetId,
                 previousUrl: profileLogoUrl || undefined
               })
@@ -621,10 +654,10 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
               if (data.imageUrl) {
                 setProfileLogoUrl(data.imageUrl);
               } else {
-                setProfileLogoUrl(compressed);
+                setProfileLogoUrl(highResLogo);
               }
             } else {
-              setProfileLogoUrl(compressed);
+              setProfileLogoUrl(highResLogo);
             }
           } catch (err) {
             setLogoError("Failed to upload image.");
@@ -636,7 +669,7 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         }
       };
       img.onerror = () => setIsUploadingLogo(false);
-      img.src = event.target?.result as string;
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -648,8 +681,8 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       setBannerError("Please select a valid image file.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setBannerError("Image file must be under 8MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setBannerError("Image file must be under 15MB.");
       return;
     }
     setBannerError("");
@@ -659,18 +692,18 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
       const img = new Image();
       img.onload = async () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 800;
+        const MAX_WIDTH = 2048;
+        const MAX_HEIGHT = 2048;
         let width = img.width;
         let height = img.height;
         if (width > height) {
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * (MAX_WIDTH / width));
             width = MAX_WIDTH;
           }
         } else {
           if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+            width = Math.round(width * (MAX_HEIGHT / height));
             height = MAX_HEIGHT;
           }
         }
@@ -678,17 +711,20 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressed = canvas.toDataURL("image/jpeg", 0.88);
-            // Upload directly to Bunny CDN Storage
+            const highResBanner = canvas.toDataURL("image/jpeg", 0.94);
+            // Upload directly to Bunny CDN Storage at 2K Retina quality
             const targetId = selectedPlaceId || currentPlace.id || 'yoouz.com';
             const uploadRes = await fetch("/api/business/upload-image", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                imageBase64: compressed,
+                imageBase64: highResBanner,
                 imageType: "banner",
+                mimeType: "image/jpeg",
                 placeId: targetId,
                 previousUrl: profileBannerUrl
               })
@@ -699,11 +735,11 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
                 setProfileBannerUrl(data.imageUrl);
                 setBannerPreviewFailed(false);
               } else {
-                setProfileBannerUrl(compressed);
+                setProfileBannerUrl(highResBanner);
                 setBannerPreviewFailed(false);
               }
             } else {
-              setProfileBannerUrl(compressed);
+              setProfileBannerUrl(highResBanner);
               setBannerPreviewFailed(false);
             }
           } catch (err) {
@@ -1988,12 +2024,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     // If profileBannerUrl is still base64 data, upload to Bunny Storage CDN now
     if (finalBannerUrl && finalBannerUrl.startsWith('data:image/')) {
       try {
+        const bMime = finalBannerUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
         const uRes = await fetch('/api/business/upload-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageBase64: finalBannerUrl,
             imageType: 'banner',
+            mimeType: bMime,
             placeId: targetPlaceId
           })
         });
@@ -2010,12 +2048,14 @@ export const CopoBusinessDashboardView: React.FC<CopoBusinessDashboardViewProps>
     // If profileLogoUrl is still base64 data, upload to Bunny Storage CDN now
     if (finalLogoUrl && finalLogoUrl.startsWith('data:image/')) {
       try {
+        const lMime = finalLogoUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/png';
         const uRes = await fetch('/api/business/upload-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageBase64: finalLogoUrl,
             imageType: 'logo',
+            mimeType: lMime,
             placeId: targetPlaceId
           })
         });

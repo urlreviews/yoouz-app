@@ -945,8 +945,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       setBannerError("Please select a valid image file.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setBannerError("Image file must be under 8MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setBannerError("Image file must be under 15MB.");
       return;
     }
     setBannerError("");
@@ -955,19 +955,19 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Banners can be wider
-        const MAX_WIDTH = 1024;
-        const MAX_HEIGHT = 1024;
+        // Full 2K Retina resolution for crisp banners on 2x/3x mobile and desktop displays
+        const MAX_WIDTH = 2048;
+        const MAX_HEIGHT = 2048;
         let width = img.width;
         let height = img.height;
         if (width > height) {
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * (MAX_WIDTH / width));
             width = MAX_WIDTH;
           }
         } else {
           if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+            width = Math.round(width * (MAX_HEIGHT / height));
             height = MAX_HEIGHT;
           }
         }
@@ -975,9 +975,11 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.94);
             setEditBanner(compressedBase64);
             setBannerRemoved(false);
           } catch (err) {
@@ -998,30 +1000,31 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      setAvatarError("Image file must be under 8MB.");
+    if (file.size > 15 * 1024 * 1024) {
+      setAvatarError("Image file must be under 15MB.");
       return;
     }
 
     setAvatarError("");
+    const preservePng = file.type === "image/png" || file.type === "image/webp";
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 256;
-        const MAX_HEIGHT = 256;
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
         let width = img.width;
         let height = img.height;
 
         if (width > height) {
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * (MAX_WIDTH / width));
             width = MAX_WIDTH;
           }
         } else {
           if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+            width = Math.round(width * (MAX_HEIGHT / height));
             height = MAX_HEIGHT;
           }
         }
@@ -1030,9 +1033,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            const compressedBase64 = preservePng
+              ? canvas.toDataURL("image/png")
+              : canvas.toDataURL("image/jpeg", 0.94);
             setEditAvatar(compressedBase64);
           } catch (err) {
             setAvatarError("Failed to process image.");
@@ -1061,11 +1068,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     if (editAvatar && editAvatar.startsWith('data:image/')) {
       setIsSavingProfile(true);
       try {
+        const avatarMime = editAvatar.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
         const uploadRes = await fetch('/api/user/upload-avatar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageBase64: editAvatar,
+            mimeType: avatarMime,
             userId: currentUser?.email || currentUser?.name || 'user'
           })
         });
@@ -1084,11 +1093,13 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     if (editBanner && editBanner.startsWith('data:image/')) {
       setIsSavingProfile(true);
       try {
+        const bannerMime = editBanner.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
         const uploadBannerRes = await fetch('/api/user/upload-banner', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             imageBase64: editBanner,
+            mimeType: bannerMime,
             type: 'banner',
             userId: `${currentUser?.email || currentUser?.name || 'user'}_banner`
           })
@@ -1220,7 +1231,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         {/* Top Header Banner */}
         <div 
           {...swipeProps}
-          className="relative h-36 sm:h-40 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
+          className="relative h-40 sm:h-44 w-full shrink-0 flex items-center justify-center bg-[#050506] touch-pan-y"
         >
           {/* Top-Left Back Button (Both Desktop & Mobile) */}
           <button
@@ -1236,34 +1247,23 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
           </button>
 
           {effectiveBanner ? (
-            <div className="absolute inset-0 w-full h-full bg-[#0a0a0d] relative overflow-hidden flex items-center justify-center group">
+            <div className="absolute inset-0 w-full h-full bg-[#0a0a0d] overflow-hidden flex items-center justify-center group">
               {(() => {
                 const resolvedBanner = getProxiedImageUrl(effectiveBanner);
                 const extRef = /^https?:\/\//i.test(resolvedBanner) ? "no-referrer" : undefined;
                 return (
-                  <>
-                    <img
-                      src={resolvedBanner}
-                      alt=""
-                      loading="eager"
-                      decoding="sync"
-                      fetchPriority="high"
-                      className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-50 scale-125"
-                      referrerPolicy={extRef}
-                    />
-                    <img
-                      src={resolvedBanner}
-                      alt="Banner"
-                      loading="eager"
-                      decoding="sync"
-                      fetchPriority="high"
-                      className="relative z-10 w-full h-full object-cover p-0"
-                      referrerPolicy={extRef}
-                    />
-                  </>
+                  <img
+                    src={resolvedBanner}
+                    alt="Banner"
+                    loading="eager"
+                    decoding="sync"
+                    fetchPriority="high"
+                    className="relative z-10 w-full h-full object-cover p-0"
+                    referrerPolicy={extRef}
+                  />
                 );
               })()}
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_38%,rgba(0,0,0,0.22)_100%)] z-20 pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] z-20 pointer-events-none" />
             </div>
           ) : (
             <div

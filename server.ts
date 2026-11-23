@@ -15878,7 +15878,7 @@ ${imageEntries.join('\n')}
     const jpegBuf = rawBuf;
     let webpBuf: Buffer = prebuiltWebp && prebuiltWebp.length > 0 ? prebuiltWebp : rawBuf;
     if (!prebuiltWebp) {
-      const webpName = rawFilename.replace(/\.[^.]+$/, ".webp");
+      const webpName = rawFilename.replace(/\.[^.]+$/, "_hd.webp");
       const webpCandidates = [
         path.join(serverUploadsDir, "photos", "webp", webpName),
         path.join(process.cwd(), "public", "uploads", "photos", "webp", webpName),
@@ -15895,8 +15895,8 @@ ${imageEntries.join('\n')}
         try {
           webpBuf = await sharp(rawBuf)
             .rotate()
-            .resize({ width: 720, withoutEnlargement: true })
-            .webp({ quality: 74, effort: 3, smartSubsample: true })
+            .resize({ width: 1600, height: 2048, fit: "inside", withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+            .webp({ quality: 88, effort: 3, smartSubsample: true })
             .toBuffer();
           try {
             const wLocal = path.join(serverUploadsDir, "photos", "webp");
@@ -24960,10 +24960,10 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   });
 
-  // Avatar & Banner Upload Endpoint (Direct to Bunny Storage rev1)
+  // Avatar & Banner Upload Endpoint (Retina Sharp-Normalized Direct to Bunny Storage rev1)
   app.post(["/api/user/upload-avatar", "/api/user/upload-banner"], async (req, res) => {
     try {
-      const { imageBase64, mimeType = 'image/jpeg', userId, type, assetType } = req.body || {};
+      const { imageBase64, mimeType, userId, type, assetType } = req.body || {};
       if (!imageBase64 || typeof imageBase64 !== 'string') {
         return res.status(400).json({ error: "Missing image data." });
       }
@@ -24972,11 +24972,45 @@ app.post("/api/videos/save-review", async (req, res) => {
       const folder = isBanner ? "banners" : "avatars";
       const prefix = isBanner ? "banner" : "avatar";
 
-      // Strip data uri prefix if present
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
+      const detectedMime = imageBase64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1]?.toLowerCase() || (typeof mimeType === 'string' ? mimeType.toLowerCase() : 'image/jpeg');
+      const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+      const rawBuffer = Buffer.from(base64Data, 'base64');
 
-      const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+      // Normalize via sharp: auto EXIF-rotate, strip private EXIF/GPS metadata, preserve crisp 2K Retina quality
+      let buffer = rawBuffer;
+      let finalMime = detectedMime;
+      let ext = finalMime.includes('png') ? '.png' : finalMime.includes('webp') ? '.webp' : '.jpg';
+      try {
+        const meta = await sharp(rawBuffer).metadata();
+        if (isBanner) {
+          buffer = await sharp(rawBuffer)
+            .rotate()
+            .resize({ width: 2048, height: 2048, fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+            .jpeg({ quality: 92, progressive: true, chromaSubsampling: '4:4:4' })
+            .toBuffer();
+          finalMime = 'image/jpeg';
+          ext = '.jpg';
+        } else if (meta.hasAlpha || detectedMime.includes('png')) {
+          buffer = await sharp(rawBuffer)
+            .rotate()
+            .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+            .png({ compressionLevel: 6, adaptiveFiltering: true })
+            .toBuffer();
+          finalMime = 'image/png';
+          ext = '.png';
+        } else {
+          buffer = await sharp(rawBuffer)
+            .rotate()
+            .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+            .jpeg({ quality: 92, progressive: true, chromaSubsampling: '4:4:4' })
+            .toBuffer();
+          finalMime = 'image/jpeg';
+          ext = '.jpg';
+        }
+      } catch (sharpErr) {
+        console.warn("User upload sharp fallback to original buffer:", sharpErr);
+      }
+
       const cleanUserId = (userId || 'user').replace(/[^a-zA-Z0-9_-]/g, '_');
       const filename = `${prefix}_${cleanUserId}_${Date.now()}${ext}`;
 
@@ -24993,7 +25027,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           method: 'PUT',
           headers: {
             'AccessKey': bunnyAccessKey,
-            'Content-Type': mimeType,
+            'Content-Type': finalMime,
             'Content-Length': buffer.length.toString()
           },
           body: buffer
@@ -26468,10 +26502,10 @@ app.post("/api/videos/save-review", async (req, res) => {
     }
   );
 
-  // Business Profile Cover Banner & Logo Upload Endpoint (Direct to Bunny CDN Storage)
+  // Business Profile Cover Banner & Logo Upload Endpoint (Retina Sharp-Normalized Direct to Bunny CDN Storage)
   app.post("/api/business/upload-image", async (req, res) => {
     try {
-      const { imageBase64, imageType = 'banner', placeId, mimeType = 'image/jpeg', previousUrl } = req.body;
+      const { imageBase64, imageType = 'banner', placeId, mimeType, previousUrl } = req.body || {};
       if (!imageBase64 || typeof imageBase64 !== 'string') {
         return res.status(400).json({ error: "Missing image data." });
       }
@@ -26481,11 +26515,49 @@ app.post("/api/videos/save-review", async (req, res) => {
         purgeBunnyAsset(previousUrl).catch(e => console.warn("Could not purge previous asset:", e));
       }
 
-      // Strip data uri prefix if present
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
+      const detectedMime = imageBase64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1]?.toLowerCase() || (typeof mimeType === 'string' ? mimeType.toLowerCase() : (imageType === 'logo' ? 'image/png' : 'image/jpeg'));
+      const base64Data = imageBase64.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, '');
+      const rawBuffer = Buffer.from(base64Data, 'base64');
 
-      const ext = mimeType.includes('png') ? '.png' : mimeType.includes('webp') ? '.webp' : '.jpg';
+      let buffer = rawBuffer;
+      let finalMime = detectedMime;
+      let ext = detectedMime.includes('svg') ? '.svg' : detectedMime.includes('png') ? '.png' : detectedMime.includes('webp') ? '.webp' : '.jpg';
+
+      if (imageType === 'logo' && detectedMime.includes('svg')) {
+        // Preserve crisp infinite-resolution vector SVG logos while stripping any unsafe script tags
+        const cleanSvg = rawBuffer
+          .toString('utf8')
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+        buffer = Buffer.from(cleanSvg, 'utf8');
+        finalMime = 'image/svg+xml';
+        ext = '.svg';
+      } else {
+        try {
+          if (imageType === 'logo') {
+            // Lossless 1024px PNG preserves sharp brand typography & full transparency on Retina displays
+            buffer = await sharp(rawBuffer)
+              .rotate()
+              .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+              .png({ compressionLevel: 6, adaptiveFiltering: true })
+              .toBuffer();
+            finalMime = 'image/png';
+            ext = '.png';
+          } else {
+            // Crisp 2K Retina progressive JPEG for hero business banners
+            buffer = await sharp(rawBuffer)
+              .rotate()
+              .resize({ width: 2048, height: 2048, fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 })
+              .jpeg({ quality: 92, progressive: true, chromaSubsampling: '4:4:4' })
+              .toBuffer();
+            finalMime = 'image/jpeg';
+            ext = '.jpg';
+          }
+        } catch (sharpErr) {
+          console.warn("Business upload sharp fallback to original buffer:", sharpErr);
+        }
+      }
+
       const cleanPlaceId = (placeId || 'yoouz.com').replace(/[^a-zA-Z0-9_.-]/g, '_');
       const subFolder = imageType === 'logo' ? 'logos' : 'banners';
       const filename = `${imageType}_${cleanPlaceId}_${Date.now()}${ext}`;
@@ -26503,7 +26575,7 @@ app.post("/api/videos/save-review", async (req, res) => {
           method: 'PUT',
           headers: {
             'AccessKey': bunnyAccessKey,
-            'Content-Type': mimeType,
+            'Content-Type': finalMime,
             'Content-Length': buffer.length.toString()
           },
           body: buffer
@@ -38055,6 +38127,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     // High-resolution authentic brand favicon from website root / Google gstatic / s2 service fetched server-side
+    // Always prefers crisp >= 64px icons (up to 256px) and only falls back to smaller icons if no hi-res asset exists
     if (cleanDomain && cleanDomain.includes(".")) {
       const faviconEndpoints = [
         `https://${cleanDomain}/apple-touch-icon.png`,
@@ -38063,6 +38136,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         `https://${cleanDomain}/favicon.ico`,
         `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`
       ];
+      let bestSmallFallback: { buf: Buffer; outType: string; maxDim: number } | null = null;
       for (const favUrl of faviconEndpoints) {
         try {
           const favResp = await fetch(favUrl, {
@@ -38076,13 +38150,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (favResp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
             const favBuf = Buffer.from(await favResp.arrayBuffer());
             if (favBuf.length > 180) {
+              const outType = cType.includes('image') ? cType : "image/png";
               if (!favUrl.endsWith('.ico') && !cType.includes('icon') && !cType.includes('svg')) {
                 const meta = await sharp(favBuf).metadata().catch(() => null);
+                const maxDim = Math.max(meta?.width || 0, meta?.height || 0);
                 if (meta && ((meta.width || 0) <= 16 || (meta.height || 0) <= 16)) {
                   continue;
                 }
+                if (meta && maxDim > 16 && maxDim < 64) {
+                  if (!bestSmallFallback || maxDim > bestSmallFallback.maxDim) {
+                    bestSmallFallback = { buf: favBuf, outType, maxDim };
+                  }
+                  continue;
+                }
               }
-              const outType = cType.includes('image') ? cType : "image/png";
               const etag = `"yz-fv-${favBuf.length}-${slug}"`;
               if (faviconRamCache.size >= 300) {
                 const oldest = faviconRamCache.keys().next().value;
@@ -38102,6 +38183,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           }
         } catch (favErr) {}
+      }
+      if (bestSmallFallback) {
+        const etag = `"yz-fv-${bestSmallFallback.buf.length}-${slug}"`;
+        faviconRamCache.set(cleanDomain, { buf: bestSmallFallback.buf, contentType: bestSmallFallback.outType, etag, cachedAt: Date.now() });
+        res.setHeader("Content-Type", bestSmallFallback.outType);
+        res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
+        res.setHeader("ETag", etag);
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        return res.status(200).send(bestSmallFallback.buf);
       }
     }
 
@@ -38263,8 +38354,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               KNOWN_BRAND_LOGOS[`www.${host}`],
               `https://${host}/apple-touch-icon.png`,
               `https://${host}/apple-touch-icon-precomposed.png`,
+              `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${host}&size=256`,
+              `https://www.google.com/s2/favicons?domain=${host}&sz=256`,
               `https://${host}/favicon.ico`,
-              `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${host}&size=128`,
               `https://icons.duckduckgo.com/ip3/${host}.ico`
             ].filter(Boolean) as string[];
 
@@ -42445,16 +42537,16 @@ async function validateAndNormalizeBannerBuffer(rawBuf: Buffer | null): Promise<
     const meta = await sharp(rawBuf, { density: 300 }).metadata();
     if (!meta || !meta.width || !meta.height) return null;
     if (meta.width < 120 || meta.height < 60) return null;
-    // Pre-downscale massive multi-megabyte photos (e.g. 4K+ Wikimedia JPEGs) and flatten alpha banners onto #09090b
-    if (meta.hasAlpha || meta.width > 1600 || rawBuf.length > 500_000) {
+    // Pre-downscale massive multi-megabyte photos (e.g. 4K+ Wikimedia JPEGs) while keeping crisp 2K Retina resolution
+    if (meta.hasAlpha || meta.width > 2048 || rawBuf.length > 900_000) {
       let pipeline = sharp(rawBuf, { density: 300 }).rotate();
       if (meta.hasAlpha) {
         pipeline = pipeline.flatten({ background: { r: 9, g: 9, b: 11 } });
       }
-      if (meta.width > 1600) {
-        pipeline = pipeline.resize(1200, 630, { fit: 'cover', position: 'center', kernel: sharp.kernel.lanczos3 });
+      if (meta.width > 2048) {
+        pipeline = pipeline.resize(2048, 2048, { fit: 'inside', withoutEnlargement: true, kernel: sharp.kernel.lanczos3 });
       }
-      return await pipeline.jpeg({ quality: 90 }).toBuffer();
+      return await pipeline.jpeg({ quality: 92, progressive: true }).toBuffer();
     }
     return rawBuf;
   } catch {

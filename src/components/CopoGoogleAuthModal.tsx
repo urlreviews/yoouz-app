@@ -217,24 +217,25 @@ export const CopoAuthPrompt: React.FC<{
     }
 
     setAvatarError("");
+    const preservePng = file.type === "image/png" || file.type === "image/webp";
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 256;
-        const MAX_HEIGHT = 256;
+        const MAX_WIDTH = 1024;
+        const MAX_HEIGHT = 1024;
         let width = img.width;
         let height = img.height;
 
         if (width > height) {
           if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
+            height = Math.round(height * (MAX_WIDTH / width));
             width = MAX_WIDTH;
           }
         } else {
           if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
+            width = Math.round(width * (MAX_HEIGHT / height));
             height = MAX_HEIGHT;
           }
         }
@@ -243,9 +244,13 @@ export const CopoAuthPrompt: React.FC<{
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            const compressedBase64 = preservePng
+              ? canvas.toDataURL("image/png")
+              : canvas.toDataURL("image/jpeg", 0.94);
             setAvatar(compressedBase64);
           } catch (err) {
             setAvatarError("Failed to process image.");
@@ -257,7 +262,7 @@ export const CopoAuthPrompt: React.FC<{
     reader.readAsDataURL(file);
   };
 
-  // Banner file upload & canvas compression
+  // Banner file upload & Retina canvas normalization
   const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -267,8 +272,8 @@ export const CopoAuthPrompt: React.FC<{
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setBannerError(t("profile.bannerTooLarge", "Banner file must be under 10MB."));
+    if (file.size > 15 * 1024 * 1024) {
+      setBannerError(t("profile.bannerTooLarge", "Banner file must be under 15MB."));
       return;
     }
 
@@ -278,8 +283,8 @@ export const CopoAuthPrompt: React.FC<{
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 400;
+        const MAX_WIDTH = 2048;
+        const MAX_HEIGHT = 2048;
         let width = img.width;
         let height = img.height;
 
@@ -296,9 +301,11 @@ export const CopoAuthPrompt: React.FC<{
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
           ctx.drawImage(img, 0, 0, width, height);
           try {
-            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.85);
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.94);
             setBanner(compressedBase64);
           } catch (err) {
             setBannerError("Failed to process banner.");
@@ -466,16 +473,19 @@ export const CopoAuthPrompt: React.FC<{
       const combinedLocation = locParts.join(", ");
 
       let finalAvatar = (avatar || "").trim() || tempUser?.avatar || currentUser?.avatar;
+      let finalBanner = (banner || "").trim() || tempUser?.banner || currentUser?.banner || "";
 
       // If user uploaded a custom photo (data:image/jpeg/png...), upload to Bunny CDN / storage
       if (finalAvatar && finalAvatar.startsWith('data:image/')) {
         console.log("[Auth] Uploading avatar...");
         try {
+          const avatarMime = finalAvatar.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
           const uploadRes = await fetch('/api/user/upload-avatar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               imageBase64: finalAvatar,
+              mimeType: avatarMime,
               userId: cleanEmail
             })
           });
@@ -485,6 +495,28 @@ export const CopoAuthPrompt: React.FC<{
           }
         } catch (uploadErr) {
           console.warn("Avatar upload to Bunny CDN notice:", uploadErr);
+        }
+      }
+
+      if (finalBanner && finalBanner.startsWith('data:image/')) {
+        try {
+          const bannerMime = finalBanner.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
+          const uploadBannerRes = await fetch('/api/user/upload-banner', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: finalBanner,
+              mimeType: bannerMime,
+              type: 'banner',
+              userId: `${cleanEmail}_banner`
+            })
+          });
+          const bannerData = await uploadBannerRes.json();
+          if (bannerData.bannerUrl || bannerData.url) {
+            finalBanner = bannerData.bannerUrl || bannerData.url;
+          }
+        } catch (bannerErr) {
+          console.warn("Banner upload to Bunny CDN notice:", bannerErr);
         }
       }
 
@@ -504,7 +536,7 @@ export const CopoAuthPrompt: React.FC<{
         country: finalCountry,
         location: combinedLocation,
         avatar: finalAvatar,
-        banner: (banner || "").trim() || tempUser?.banner || currentUser?.banner || "",
+        banner: finalBanner,
         bio: (bio || "").trim(),
         role: 'user',
         isNewUser: false,

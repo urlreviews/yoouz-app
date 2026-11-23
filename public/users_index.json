@@ -20,7 +20,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-23T10:24:31.145Z",
-    "updatedAt": "2026-11-23T10:24:31.207Z"
+    "updatedAt": "2026-11-23T10:24:31.207Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwt4btp0_6wnxnh",
@@ -43,7 +45,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-23T10:23:54.133Z",
-    "updatedAt": "2026-11-23T10:23:54.198Z"
+    "updatedAt": "2026-11-23T10:23:54.198Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwt475k5_um0071",
@@ -66,7 +70,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-23T10:20:16.230Z",
-    "updatedAt": "2026-11-23T10:20:16.230Z"
+    "updatedAt": "2026-11-23T10:20:16.230Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwt44auf_4u0anw",
@@ -89,7 +95,9 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-23T10:18:03.193Z",
-    "updatedAt": "2026-11-23T10:18:03.193Z"
+    "updatedAt": "2026-11-23T10:18:03.193Z",
+    "status": "verified",
+    "isRegisteredAccount": true
   },
   {
     "id": "anon_mwt3zkp6_v6399a",
@@ -1562,7 +1570,7 @@
     "isNewUser": false,
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-20T13:46:25.553Z",
-    "updatedAt": "2026-11-22T20:42:16.682Z"
+    "updatedAt": "2026-11-23T11:32:13.561Z"
   },
   {
     "id": "anon_mwp4v72f_ubnd34",
@@ -1733,5 +1741,30 @@
     "memberSince": "Nov 2026",
     "createdAt": "2026-11-22T09:22:38.701Z",
     "updatedAt": "2026-11-22T09:22:38.701Z"
+  },
+  {
+    "id": "anon_mwt5y2f0_r8ocu6",
+    "uid": "anon_mwt5y2f0_r8ocu6",
+    "email": "",
+    "name": "U/TJ5CLL",
+    "role": "user",
+    "status": "verified",
+    "isVerified": false,
+    "isRegisteredAccount": true,
+    "userId": "anon_mwt5y2f0_r8ocu6",
+    "username": "U/TJ5CLL",
+    "handle": "@U/TJ5CLL",
+    "avatar": "",
+    "banner": "",
+    "bio": "",
+    "isAnonymous": true,
+    "passkeyProtected": false,
+    "yoouzPhotoUser": true,
+    "scratchVersion": 6,
+    "linkedProviders": [],
+    "isNewUser": false,
+    "memberSince": "Nov 2026",
+    "createdAt": "2026-11-23T11:09:11.560Z",
+    "updatedAt": "2026-11-23T11:09:25.053Z"
   }
 ]

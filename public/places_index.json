@@ -1,5 +1,558 @@
 [
   {
+    "id": "havanna.com",
+    "category": "Cafe & Confectionery",
+    "logoUrl": "/uploads/brand-assets/logos/havanna.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/havanna.com.webp",
+    "name": "Havanna",
+    "categoryType": "restaurants",
+    "address": "",
+    "city": "Online",
+    "country": "Argentina",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/havanna.com.webp",
+    "brandDomain": "havanna.com",
+    "ogImage": "/uploads/brand-assets/banners/havanna.com.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/havanna.com.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fsejafranqueado.havanna.com.br%2Fwp-content%2Fuploads%2F2026%2F04%2Ffestiva-pistache.jpg.jpeg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://havanna.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Havanna is a dining destination in Argentina, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [],
+    "createdAt": "2026-10-23 16:55:25",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
+    "id": "pintoartmuseum.ph",
+    "category": "Art Museum & Cultural Center",
+    "logoUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+    "name": "Pinto Art Museum",
+    "categoryType": "hotels",
+    "address": "",
+    "city": "Rome",
+    "country": "Italy",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
+    "brandDomain": "pintoartmuseum.ph",
+    "ogImage": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://pintoartmuseum.ph",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Pinto Art Museum · art museum & cultural center · Rome, Italy",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "createdAt": "2026-10-23 15:23:20",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "7-eleven.com",
+    "category": "Convenience Store",
+    "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/7-eleven.com.webp",
+    "name": "7-Eleven",
+    "brandDomain": "7-eleven.com",
+    "categoryType": "shopping",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "to find stores",
+    "ogImage": "/uploads/brand-assets/banners/7-eleven.com.webp",
+    "city": "Online",
+    "country": "Japan",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://7-eleven.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "7-Eleven · convenience store · Japan",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-10-23 10:15:16",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "photos": [
+      "/uploads/brand-assets/banners/7-eleven.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
+    "locations": [],
+    "selectedName": "7-11",
+    "hours": "Available 24/7",
+    "reviews": []
+  },
+  {
+    "id": "propercoffee.app",
+    "category": "Restaurant & Cafe",
+    "logoUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/propercoffee.app.webp",
+    "name": "Art Coffee Gallery Aberdeen",
+    "categoryType": "restaurants",
+    "address": "to show what's worth your time nearby. Nothing is stored on our servers.",
+    "city": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "rating": 0,
+    "totalReviews": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
+    "brandDomain": "propercoffee.app",
+    "ogImage": "/uploads/brand-assets/banners/propercoffee.app.webp",
+    "photos": [
+      "/uploads/brand-assets/banners/propercoffee.app.webp",
+      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://propercoffee.app",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Art Coffee Gallery Aberdeen is a dining destination in London, United Kingdom, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 0,
+    "locations": [
+      {
+        "city": "London",
+        "postalCode": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "openingHours": ""
+      }
+    ],
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "createdAt": "2026-10-23 09:11:16",
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "reviews": []
+  },
+  {
+    "id": "nevadalegalservices.org",
+    "category": "Legal Services",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "name": "Nevada Legal Services",
+    "address": "701 E Bridger Ave #400",
+    "city": "Las Vegas, NV",
+    "country": "United States",
+    "lat": 36.1685,
+    "lng": -115.1408,
+    "ogImage": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
+    "categoryType": "services",
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "nevadalegalservices.org",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (702) 386-0404",
+    "email": "",
+    "website": "https://nevadalegalservices.org",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Nevada Legal Services is a dedicated law practice in Las Vegas, NV, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-10-22 21:38:56",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "photos": [
+      "/uploads/brand-assets/banners/nevadalegalservices.org.webp"
+    ],
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E"
+  },
+  {
+    "id": "izci.be",
+    "category": "Auto Repair & Garage",
+    "logoUrl": "/uploads/brand-assets/logos/izci.be.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/izci.be.webp",
+    "name": "Bosch Car Service Izci",
+    "brandDomain": "izci.be",
+    "categoryType": "auto",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/izci.be.webp",
+    "city": "Phoenix, AZ",
+    "country": "United States",
+    "lat": 33.4484,
+    "lng": -112.074,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://izci.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Bosch Car Service Izci is a dependable automotive and transportation service provider in Phoenix, AZ, United States, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "photos": [
+      "/uploads/brand-assets/banners/izci.be.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/izci.be.svg",
+    "reviews": [],
+    "locations": [],
+    "domain": "izci.be",
+    "reviewCount": 4,
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "postalCode": "maanden",
+    "zipCode": "maanden",
+    "zip": "maanden"
+  },
+  {
+    "id": "mamotcv.com",
+    "category": "Legal Services",
+    "logoUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/mamotcv.com.webp",
+    "name": "Mamo TCV",
+    "brandDomain": "mamotcv.com",
+    "categoryType": "services",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/mamotcv.com.webp",
+    "city": "Las Vegas, NV",
+    "country": "United States",
+    "lat": 36.1699,
+    "lng": -115.1398,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://mamotcv.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Mamo TCV is a dedicated law practice in Las Vegas, NV, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "photos": [
+      "/uploads/brand-assets/banners/mamotcv.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
+    "reviews": [],
+    "locations": [],
+    "postalCode": "Mamo TCV",
+    "zipCode": "Mamo TCV",
+    "zip": "Mamo TCV"
+  },
+  {
+    "id": "refalo.legal",
+    "category": "Legal Services",
+    "logoUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/refalo.legal.webp",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/refalo.legal.webp",
+    "categoryType": "services",
+    "name": "Refalo Legal",
+    "city": "Online",
+    "country": "Netherlands",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "refalo.legal",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "00356 21223515",
+    "email": "",
+    "website": "https://refalo.legal",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Refalo Legal is a dedicated law practice in Netherlands, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/refalo.legal.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": []
+  },
+  {
+    "id": "guard-slip-cafe-by-lgip.bayombong",
+    "category": "Cafe",
+    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
+    "bannerUrl": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
+    "categoryType": "restaurants",
+    "name": "Guard Slip Cafe By Lgip",
+    "city": "Bayombong",
+    "country": "Philippines",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://guard-slip-cafe-by-lgip.bayombong",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Guard Slip Cafe By Lgip is a dining destination in Bayombong, Philippines, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "guard-slip-cafe-by-lgip.bayombong",
+    "isSavedToProfile": true,
+    "createdAt": "2026-10-19 11:31:25",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "reviews": [],
+    "photos": [
+      "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp"
+    ],
+    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+  },
+  {
     "id": "multipharma.be",
     "category": "Pharmacy & Healthcare",
     "logoUrl": "/uploads/brand-assets/logos/multipharma.be.webp",
@@ -455,6 +1008,64 @@
     "createdAt": "2026-10-19 09:57:41"
   },
   {
+    "id": "healis.be",
+    "category": "Pharmacy & Healthcare",
+    "logoUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/healis.be.webp",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
+    "categoryType": "all",
+    "name": "Healis",
+    "address": "Winkelom 83B/1",
+    "city": "Geel",
+    "country": "Belgium",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "healis.be",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+32 14 86 00 00",
+    "email": "",
+    "website": "https://healis.be",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Healis is a dependable automotive and transportation service provider in Geel, Belgium, delivering reliable vehicle solutions and quality customer support.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/healis.be.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
+    "createdAt": "2026-10-22 15:59:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "soluxecleaning.co.uk",
     "category": "Home Services & Cleaning",
     "logoUrl": "/uploads/brand-assets/logos/soluxecleaning.co.uk.webp",
@@ -570,64 +1181,6 @@
     "isVerified": false,
     "isFollowed": false,
     "locations": []
-  },
-  {
-    "id": "healis.be",
-    "category": "Pharmacy & Healthcare",
-    "logoUrl": "/uploads/brand-assets/logos/healis.be.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/healis.be.webp",
-    "rating": 5,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "ogImage": "/uploads/brand-assets/banners/healis.be.webp",
-    "categoryType": "all",
-    "name": "Healis",
-    "address": "Winkelom 83B/1",
-    "city": "Geel",
-    "country": "Belgium",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "healis.be",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+32 14 86 00 00",
-    "email": "",
-    "website": "https://healis.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Healis is a dependable automotive and transportation service provider in Geel, Belgium, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/healis.be.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/healis.be.svg",
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
   },
   {
     "id": "flipper.net",
@@ -746,123 +1299,6 @@
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
-  },
-  {
-    "id": "makicafe.com",
-    "category": "Restaurant & Food",
-    "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/makicafe.com.webp",
-    "rating": 5,
-    "totalReviews": 1,
-    "videoReviewCount": 1,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
-    "categoryType": "all",
-    "name": "Maki Cafe",
-    "city": "Rockville",
-    "country": "US",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "makicafe.com",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://makicafe.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Maki Cafe is a dining destination in Rockville, US, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/makicafe.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
-    "createdAt": "2026-11-07 12:23:22",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
-    "id": "apple.com",
-    "category": "Consumer Electronics & Tech",
-    "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
-    "name": "Apple",
-    "brandDomain": "apple.com",
-    "categoryType": "all",
-    "rating": 4.5,
-    "totalReviews": 2,
-    "videoReviewCount": 2,
-    "ratingCount": 2,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "ogImage": "/uploads/brand-assets/banners/apple.com.webp",
-    "address": "One Apple Park Way",
-    "city": "Cupertino, CA",
-    "country": "United States",
-    "lat": 0,
-    "lng": 0,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (800) 692-7753",
-    "email": "",
-    "website": "https://apple.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Apple provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/apple.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/apple.com.svg",
-    "createdAt": "2026-11-14 08:37:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "locations": []
   },
   {
     "id": "hocoofficial.com",
@@ -984,6 +1420,123 @@
       }
     ],
     "isSavedToProfile": true
+  },
+  {
+    "id": "makicafe.com",
+    "category": "Restaurant & Food",
+    "logoUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "bannerUrl": "/uploads/brand-assets/banners/makicafe.com.webp",
+    "rating": 5,
+    "totalReviews": 1,
+    "videoReviewCount": 1,
+    "ratingCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/makicafe.com.webp",
+    "categoryType": "all",
+    "name": "Maki Cafe",
+    "city": "Rockville",
+    "country": "US",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "brandDomain": "makicafe.com",
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://makicafe.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Maki Cafe is a dining destination in Rockville, US, reviewed through verified live customer photos on Yoouz.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/makicafe.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/makicafe.com.webp",
+    "createdAt": "2026-11-07 12:23:22",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
+    "id": "apple.com",
+    "category": "Consumer Electronics & Tech",
+    "logoUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/apple.com.webp",
+    "name": "Apple",
+    "brandDomain": "apple.com",
+    "categoryType": "all",
+    "rating": 4.5,
+    "totalReviews": 2,
+    "videoReviewCount": 2,
+    "ratingCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "ogImage": "/uploads/brand-assets/banners/apple.com.webp",
+    "address": "One Apple Park Way",
+    "city": "Cupertino, CA",
+    "country": "United States",
+    "lat": 0,
+    "lng": 0,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "+1 (800) 692-7753",
+    "email": "",
+    "website": "https://apple.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Apple provides innovative digital solutions, modern technology services, and trusted professional capabilities.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/apple.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/apple.com.svg",
+    "createdAt": "2026-11-14 08:37:00",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "locations": []
   },
   {
     "id": "sony.com",
@@ -1156,6 +1709,56 @@
     "isFollowed": false
   },
   {
+    "id": "guesswatches.com",
+    "category": "Watches & Accessories",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "name": "GUESS Watches",
+    "website": "https://guesswatches.com",
+    "brandDomain": "guesswatches.com",
+    "rating": 3,
+    "totalReviews": 1,
+    "city": "Online",
+    "country": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
+    ],
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
+    "categoryType": "all",
+    "lat": 0,
+    "lng": 0,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "videoReviewCount": 1,
+    "createdAt": "2026-11-20 18:42:07",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false
+  },
+  {
     "id": "nivea.com",
     "category": "Skincare & Beauty",
     "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2050%2050%22%3E%3Ccircle%20cx%3D%2225%22%20cy%3D%2225%22%20r%3D%2224.5%22%20style%3D%22fill%3A%230032a0%22%3E%3C%2Fcircle%3E%3Cpath%20d%3D%22M13.828%2020.722h-2.1v4.457c-1.84-1.65-3.676-3.3-5.561-4.947v9.046h2.1v-4.457c1.752%201.555%203.633%203.3%205.562%204.947Zm4.657%208.553h-2.1v-8.553h2.1Zm5.443.49c-1.488-2.8-2.978-6.017-4.466-9.046h2.364l2.1%204.634%202.022-4.634h2.316c-1.442%203.037-2.888%206.242-4.333%209.049Zm10.977-7.174h-3.554v1.476h3.558v1.866h-3.558V27.4h3.558v1.866h-5.66v-8.55h5.66Zm5.336-2.359c-1.445%202.852-2.89%205.927-4.335%209.046H38.1l.437-1.025h3.421l.439%201.025h2.273c-1.498-3.119-2.986-6.238-4.429-9.046Zm-1.089%206.416%201.089-2.488%201.052%202.488Z%22%20style%3D%22fill%3A%23fff%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E",
@@ -1271,56 +1874,6 @@
     },
     "isSavedToProfile": true,
     "createdAt": "2026-11-20 18:39:19",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false
-  },
-  {
-    "id": "guesswatches.com",
-    "category": "Watches & Accessories",
-    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
-    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "name": "GUESS Watches",
-    "website": "https://guesswatches.com",
-    "brandDomain": "guesswatches.com",
-    "rating": 3,
-    "totalReviews": 1,
-    "city": "Online",
-    "country": "",
-    "address": "",
-    "phone": "",
-    "email": "",
-    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440",
-    "photos": [
-      "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2FLanding_Page_Promo_Large_2750x1200_Desktop_F26_Holiday_Taylor.png%3Fv%3D1794318567%26width%3D1440"
-    ],
-    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fguesswatches.com%2Fcdn%2Fshop%2Ffiles%2F2021-GUESS-LOGO-RED-RGB_small.svg%3Fv%3D1793648311",
-    "categoryType": "all",
-    "lat": 0,
-    "lng": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "GUESS Watches and Gc Watches provide quality timepieces for fashion conscious men and women.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 1,
-    "createdAt": "2026-11-20 18:42:07",
     "isClaimed": false,
     "isVerified": false,
     "isFollowed": false
@@ -1551,65 +2104,6 @@
     "isSavedToProfile": true
   },
   {
-    "id": "uniqlo.com",
-    "category": "Apparel & Clothing",
-    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "name": "Uniqlo US",
-    "brandDomain": "uniqlo.com",
-    "categoryType": "shopping",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 2,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 1,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
-    "city": "Gent",
-    "country": "Belgium",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://uniqlo.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/uniqlo.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
-    "createdAt": "2026-11-13 21:33:01",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "locations": []
-  },
-  {
     "id": "calvinklein.com",
     "category": "Apparel & Fashion",
     "logoUrl": "/uploads/brand-assets/logos/calvinklein.com.webp",
@@ -1668,6 +2162,65 @@
     "isVerified": false,
     "isFollowed": false,
     "createdAt": "2026-11-13 21:39:54"
+  },
+  {
+    "id": "uniqlo.com",
+    "category": "Apparel & Clothing",
+    "logoUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "bannerUrl": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "name": "Uniqlo US",
+    "brandDomain": "uniqlo.com",
+    "categoryType": "shopping",
+    "rating": 0,
+    "totalReviews": 0,
+    "videoReviewCount": 0,
+    "ratingCount": 2,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "address": "",
+    "ogImage": "/uploads/brand-assets/banners/uniqlo.com.webp",
+    "city": "Gent",
+    "country": "Belgium",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://uniqlo.com",
+    "priceRange": "N/A",
+    "isSavedToProfile": true,
+    "plusCode": "",
+    "description": "Uniqlo US · apparel & clothing · Gent, Belgium",
+    "popularKeywords": [
+      {
+        "tag": "Verified",
+        "count": 1
+      }
+    ],
+    "amenities": [],
+    "topDishes": [],
+    "photos": [
+      "/uploads/brand-assets/banners/uniqlo.com.webp"
+    ],
+    "avatarUrl": "/uploads/brand-assets/logos/uniqlo.com.svg",
+    "createdAt": "2026-11-13 21:33:01",
+    "isClaimed": false,
+    "isVerified": false,
+    "isFollowed": false,
+    "locations": []
   },
   {
     "id": "dominos.com",
@@ -1865,8 +2418,8 @@
     "address": "Abu Dhabi Global Market St. – Second, Al Maryah Island",
     "city": "Online",
     "country": "United Arab Emirates",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "rating": 0,
     "totalReviews": 0,
     "ratingDistribution": {
@@ -2170,8 +2723,8 @@
     "address": "",
     "city": "Online",
     "country": "Switzerland",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "rating": 0,
     "totalReviews": 0,
     "ratingDistribution": {
@@ -2295,8 +2848,8 @@
     "name": "Batterymart",
     "city": "Online",
     "country": "United States",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -2423,8 +2976,8 @@
     "address": "One Bowerman Dr",
     "city": "Beaverton, OR",
     "country": "United States",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "openingHours": "Available 24/7",
     "isOpen": true,
     "phone": "+1 (800) 806-6453",
@@ -2480,8 +3033,8 @@
     "name": "Praktijk Nexus",
     "city": "Gent",
     "country": "Netherlands",
-    "lat": 0,
-    "lng": 0,
+    "lat": 40.7128,
+    "lng": -74.006,
     "ratingDistribution": {
       "stars5": 1,
       "stars4": 0,
@@ -2795,7 +3348,7 @@
     "priceRange": "N/A",
     "isSavedToProfile": true,
     "plusCode": "",
-    "description": "McDonald's is a dining destination in Chicago, IL, United States, reviewed through verified live customer photos on Yoouz.",
+    "description": "McDonald's is a popular dining destination in Chicago, IL, United States, renowned for delicious cuisine, warm hospitality, and authentic guest experiences.",
     "popularKeywords": [
       {
         "tag": "Verified",
@@ -2822,559 +3375,6 @@
     "isVerified": false,
     "isFollowed": false,
     "reviews": []
-  },
-  {
-    "id": "havanna.com",
-    "category": "Cafe & Confectionery",
-    "logoUrl": "/uploads/brand-assets/logos/havanna.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/havanna.com.webp",
-    "name": "Havanna",
-    "categoryType": "restaurants",
-    "address": "",
-    "city": "Online",
-    "country": "Argentina",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/havanna.com.webp",
-    "brandDomain": "havanna.com",
-    "ogImage": "/uploads/brand-assets/banners/havanna.com.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/havanna.com.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fsejafranqueado.havanna.com.br%2Fwp-content%2Fuploads%2F2026%2F04%2Ffestiva-pistache.jpg.jpeg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://havanna.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Havanna is a dining destination in Argentina, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [],
-    "createdAt": "2026-10-23 16:55:25",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    }
-  },
-  {
-    "id": "pintoartmuseum.ph",
-    "category": "Art Museum & Cultural Center",
-    "logoUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-    "name": "Pinto Art Museum",
-    "categoryType": "hotels",
-    "address": "",
-    "city": "Rome",
-    "country": "Italy",
-    "lat": 0,
-    "lng": 0,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/pintoartmuseum.ph.webp",
-    "brandDomain": "pintoartmuseum.ph",
-    "ogImage": "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/pintoartmuseum.ph.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fpintoartmuseum.ph%2FPinto_Art_Museum%2Fimages%2Fgallery%2Fhero_1.jpg"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://pintoartmuseum.ph",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Pinto Art Museum · art museum & cultural center · Rome, Italy",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "createdAt": "2026-10-23 15:23:20",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
-    "id": "7-eleven.com",
-    "category": "Convenience Store",
-    "logoUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/7-eleven.com.webp",
-    "name": "7-Eleven",
-    "brandDomain": "7-eleven.com",
-    "categoryType": "shopping",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 2,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 1,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "to find stores",
-    "ogImage": "/uploads/brand-assets/banners/7-eleven.com.webp",
-    "city": "Online",
-    "country": "Japan",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://7-eleven.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "7-Eleven · convenience store · Japan",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-10-23 10:15:16",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "photos": [
-      "/uploads/brand-assets/banners/7-eleven.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/7-eleven.com.svg",
-    "locations": [],
-    "selectedName": "7-11",
-    "hours": "Available 24/7",
-    "reviews": []
-  },
-  {
-    "id": "propercoffee.app",
-    "category": "Restaurant & Cafe",
-    "logoUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/propercoffee.app.webp",
-    "name": "Art Coffee Gallery Aberdeen",
-    "categoryType": "restaurants",
-    "address": "to show what's worth your time nearby. Nothing is stored on our servers.",
-    "city": "London",
-    "country": "United Kingdom",
-    "lat": 0,
-    "lng": 0,
-    "rating": 0,
-    "totalReviews": 0,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "avatarUrl": "/uploads/brand-assets/logos/propercoffee.app.webp",
-    "brandDomain": "propercoffee.app",
-    "ogImage": "/uploads/brand-assets/banners/propercoffee.app.webp",
-    "photos": [
-      "/uploads/brand-assets/banners/propercoffee.app.webp",
-      "/api/proxy-image?url=https%3A%2F%2Fpropercoffee.app%2Fog-image.png"
-    ],
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://propercoffee.app",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Art Coffee Gallery Aberdeen is a dining destination in London, United Kingdom, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "videoReviewCount": 0,
-    "locations": [
-      {
-        "city": "London",
-        "postalCode": "",
-        "address": "",
-        "phone": "",
-        "email": "",
-        "openingHours": ""
-      }
-    ],
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "createdAt": "2026-10-23 09:11:16",
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "reviews": []
-  },
-  {
-    "id": "nevadalegalservices.org",
-    "category": "Legal Services",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E",
-    "bannerUrl": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "name": "Nevada Legal Services",
-    "address": "701 E Bridger Ave #400",
-    "city": "Las Vegas, NV",
-    "country": "United States",
-    "lat": 36.1685,
-    "lng": -115.1408,
-    "ogImage": "/uploads/brand-assets/banners/nevadalegalservices.org.webp",
-    "categoryType": "services",
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "nevadalegalservices.org",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "+1 (702) 386-0404",
-    "email": "",
-    "website": "https://nevadalegalservices.org",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Nevada Legal Services is a dedicated law practice in Las Vegas, NV, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-10-22 21:38:56",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "photos": [
-      "/uploads/brand-assets/banners/nevadalegalservices.org.webp"
-    ],
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20width%3D%22100%22%20height%3D%22100%22%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2220%22%20fill%3D%22%231e3a8a%22%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2290%22%20height%3D%2290%22%20rx%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%233b82f6%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2250%22%20y%3D%2260%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Segoe%20UI'%2C%20Roboto%2C%20sans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2232%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ENLS%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E"
-  },
-  {
-    "id": "izci.be",
-    "category": "Auto Repair & Garage",
-    "logoUrl": "/uploads/brand-assets/logos/izci.be.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/izci.be.webp",
-    "name": "Bosch Car Service Izci",
-    "brandDomain": "izci.be",
-    "categoryType": "auto",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0,
-      "5": 1
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/izci.be.webp",
-    "city": "Phoenix, AZ",
-    "country": "United States",
-    "lat": 33.4484,
-    "lng": -112.074,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://izci.be",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Bosch Car Service Izci is a dependable automotive and transportation service provider in Phoenix, AZ, United States, delivering reliable vehicle solutions and quality customer support.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "photos": [
-      "/uploads/brand-assets/banners/izci.be.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/izci.be.svg",
-    "reviews": [],
-    "locations": [],
-    "domain": "izci.be",
-    "reviewCount": 4,
-    "latitude": 40.7128,
-    "longitude": -74.006,
-    "postalCode": "maanden",
-    "zipCode": "maanden",
-    "zip": "maanden"
-  },
-  {
-    "id": "mamotcv.com",
-    "category": "Legal Services",
-    "logoUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
-    "bannerUrl": "/uploads/brand-assets/banners/mamotcv.com.webp",
-    "name": "Mamo TCV",
-    "brandDomain": "mamotcv.com",
-    "categoryType": "services",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/mamotcv.com.webp",
-    "city": "Las Vegas, NV",
-    "country": "United States",
-    "lat": 36.1699,
-    "lng": -115.1398,
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://mamotcv.com",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Mamo TCV is a dedicated law practice in Las Vegas, NV, United States, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "photos": [
-      "/uploads/brand-assets/banners/mamotcv.com.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/mamotcv.com.webp",
-    "reviews": [],
-    "locations": [],
-    "postalCode": "Mamo TCV",
-    "zipCode": "Mamo TCV",
-    "zip": "Mamo TCV"
-  },
-  {
-    "id": "refalo.legal",
-    "category": "Legal Services",
-    "logoUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
-    "bannerUrl": "/uploads/brand-assets/banners/refalo.legal.webp",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/refalo.legal.webp",
-    "categoryType": "services",
-    "name": "Refalo Legal",
-    "city": "Online",
-    "country": "Netherlands",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "brandDomain": "refalo.legal",
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "00356 21223515",
-    "email": "",
-    "website": "https://refalo.legal",
-    "priceRange": "N/A",
-    "isSavedToProfile": true,
-    "plusCode": "",
-    "description": "Refalo Legal is a dedicated law practice in Netherlands, offering expert legal counsel, professional representation, and trusted advisory services for clients.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "photos": [
-      "/uploads/brand-assets/banners/refalo.legal.webp"
-    ],
-    "avatarUrl": "/uploads/brand-assets/logos/refalo.legal.svg",
-    "createdAt": "2026-10-22 15:59:00",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": []
-  },
-  {
-    "id": "guard-slip-cafe-by-lgip.bayombong",
-    "category": "Cafe",
-    "logoUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E",
-    "bannerUrl": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
-    "rating": 0,
-    "totalReviews": 0,
-    "videoReviewCount": 0,
-    "ratingCount": 1,
-    "starCounts": {
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 1,
-      "5": 0
-    },
-    "address": "",
-    "ogImage": "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp",
-    "categoryType": "restaurants",
-    "name": "Guard Slip Cafe By Lgip",
-    "city": "Bayombong",
-    "country": "Philippines",
-    "lat": 40.7128,
-    "lng": -74.006,
-    "ratingDistribution": {
-      "stars5": 1,
-      "stars4": 0,
-      "stars3": 0,
-      "stars2": 0,
-      "stars1": 0
-    },
-    "openingHours": "Available 24/7",
-    "isOpen": true,
-    "phone": "",
-    "email": "",
-    "website": "https://guard-slip-cafe-by-lgip.bayombong",
-    "priceRange": "N/A",
-    "plusCode": "",
-    "locations": [],
-    "description": "Guard Slip Cafe By Lgip is a dining destination in Bayombong, Philippines, reviewed through verified live customer photos on Yoouz.",
-    "popularKeywords": [
-      {
-        "tag": "Verified",
-        "count": 1
-      }
-    ],
-    "amenities": [],
-    "topDishes": [],
-    "brandDomain": "guard-slip-cafe-by-lgip.bayombong",
-    "isSavedToProfile": true,
-    "createdAt": "2026-10-19 11:31:25",
-    "isClaimed": false,
-    "isVerified": false,
-    "isFollowed": false,
-    "reviews": [],
-    "photos": [
-      "/uploads/brand-assets/banners/guard-slip-cafe-by-lgip.bayombong.webp"
-    ],
-    "avatarUrl": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20128%20128%22%20width%3D%22128%22%20height%3D%22128%22%3E%0A%20%20%20%20%3Crect%20width%3D%22128%22%20height%3D%22128%22%20fill%3D%22%23546E7A%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2250%25%22%20y%3D%2254%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23FFFFFF%22%20font-family%3D%22-apple-system%2C%20BlinkMacSystemFont%2C%20'Google%20Sans'%2C%20'Segoe%20UI'%2C%20Roboto%2C%20Helvetica%2C%20Arial%2C%20sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2267px%22%3EG%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
   },
   {
     "id": "northzone.com",
