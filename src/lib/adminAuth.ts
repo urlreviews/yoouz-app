@@ -32,9 +32,17 @@ export function getAdminAuthHeaders(extra?: HeadersInit): Record<string, string>
   return headers;
 }
 
-export function adminFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  return fetch(input, {
+export async function adminFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const res = await fetch(input, {
     ...init,
     headers: getAdminAuthHeaders(init?.headers)
   });
+  if (res.status === 401 && adminBearerToken) {
+    adminBearerToken = null;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("yoouz-admin-unauthorized"));
+    }
+  }
+  return res;
 }
+

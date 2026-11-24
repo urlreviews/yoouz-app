@@ -192,6 +192,71 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     };
   }, [isAuthenticated]);
 
+  // Automatically return to sign-in screen if the admin session expires (401)
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+      setAuthError("Your admin session expired. Please sign in again.");
+    };
+    window.addEventListener("yoouz-admin-unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("yoouz-admin-unauthorized", handleUnauthorized);
+  }, []);
+
+  // Global Search Input Ref (Cmd+K / Ctrl+K shortcut)
+  const adminSearchInputRef = useRef<HTMLInputElement>(null);
+
+  // Desktop keyboard shortcuts: Escape dismisses modals, Cmd/Ctrl+K focuses search
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        adminSearchInputRef.current?.focus();
+        adminSearchInputRef.current?.select();
+        return;
+      }
+      if (e.key !== "Escape") return;
+      if (adminConfirmDialog && !isAdminConfirmRunning) {
+        setAdminConfirmDialog(null);
+      } else if (pendingIncompleteIds && !isPurgingIncomplete) {
+        setPendingIncompleteIds(null);
+      } else if (confirmMasterResetModal && !isMasterResetting) {
+        setConfirmMasterResetModal(false);
+      } else if (previewVideo) {
+        setPreviewVideo(null);
+      } else if (inspectChatModal) {
+        setInspectChatModal(null);
+      } else if (selectedLikeDetailModal) {
+        setSelectedLikeDetailModal(null);
+      } else if (selectedBookmarkDetailModal) {
+        setSelectedBookmarkDetailModal(null);
+      } else if (selectedShareDetailModal) {
+        setSelectedShareDetailModal(null);
+      } else if (selectedItemJsonModal) {
+        setSelectedItemJsonModal(null);
+      } else if (inspectTableModal) {
+        setInspectTableModal(null);
+      } else if (editCommentModal) {
+        setEditCommentModal(null);
+        setEditCommentText("");
+      } else if (editPlaceModal) {
+        setEditPlaceModal(null);
+      } else if (editVideoModal) {
+        setEditVideoModal(null);
+      } else if (editUserModal) {
+        setEditUserModal(null);
+      } else if (editAgencyModal) {
+        setEditAgencyModal(null);
+      } else if (isAddPlaceOpen) {
+        setIsAddPlaceOpen(false);
+      } else if (isAddAgencyOpen) {
+        setIsAddAgencyOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
+
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [searchQuery, setSearchQuery] = useState("");
@@ -371,13 +436,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteLike = async (likeId: string) => {
     setIsDeletingLikeId(likeId);
     try {
-      const res = await adminFetch(`/api/admin/likes/${likeId}`, { method: "DELETE" });
+      const targetLike = adminLikes.find((l) => l.id === likeId);
+      const res = await adminFetch(`/api/admin/likes/${encodeURIComponent(likeId)}`, { method: "DELETE" });
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const targetVideoId = data?.videoId || targetLike?.videoId;
+        const nextLikesCount = typeof data?.likesCount === "number" ? data.likesCount : undefined;
         showToast("Like removed successfully");
         setAdminLikes((prev) => prev.filter((l) => l.id !== likeId));
         setConfirmDeleteLikeId(null);
         if (selectedLikeDetailModal?.id === likeId) {
           setSelectedLikeDetailModal(null);
+        }
+        if (targetVideoId) {
+          setDbVideos((prev) =>
+            prev.map((v) =>
+              String(v.id) === String(targetVideoId)
+                ? { ...v, likes: nextLikesCount ?? Math.max(0, (v.likes || 1) - 1), likesCount: nextLikesCount ?? Math.max(0, (v.likes || 1) - 1) }
+                : v
+            )
+          );
+          window.dispatchEvent(new CustomEvent("copo-video-liked", { detail: { videoId: targetVideoId, likesCount: nextLikesCount } }));
         }
         if (typeof fetchLiveStats === "function") {
           fetchLiveStats();
@@ -398,6 +477,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (res.ok) {
         showToast("All likes purged successfully");
         setAdminLikes([]);
+        setDbVideos((prev) => prev.map((v) => ({ ...v, likes: 0, likesCount: 0 })));
         setConfirmPurgeAllLikes(false);
         if (typeof fetchLiveStats === "function") {
           fetchLiveStats();
@@ -448,13 +528,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteBookmark = async (bookmarkId: string) => {
     setIsDeletingBookmarkId(bookmarkId);
     try {
-      const res = await adminFetch(`/api/admin/bookmarks/${bookmarkId}`, { method: "DELETE" });
+      const targetBm = adminBookmarks.find((b) => b.id === bookmarkId);
+      const res = await adminFetch(`/api/admin/bookmarks/${encodeURIComponent(bookmarkId)}`, { method: "DELETE" });
       if (res.ok) {
-        showToast("Bookmark removed successfully");
+        const data = await res.json().catch(() => ({}));
+        const targetVideoId = data?.videoId || targetBm?.videoId;
+        const nextBmCount = typeof data?.bookmarksCount === "number" ? data.bookmarksCount : undefined;
+        showToast("Saved bookmark removed successfully");
         setAdminBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
         setConfirmDeleteBookmarkId(null);
         if (selectedBookmarkDetailModal?.id === bookmarkId) {
           setSelectedBookmarkDetailModal(null);
+        }
+        if (targetVideoId) {
+          setDbVideos((prev) =>
+            prev.map((v) =>
+              String(v.id) === String(targetVideoId)
+                ? { ...v, bookmarks: nextBmCount ?? Math.max(0, (v.bookmarksCount || 1) - 1), bookmarksCount: nextBmCount ?? Math.max(0, (v.bookmarksCount || 1) - 1) }
+                : v
+            )
+          );
+          window.dispatchEvent(new CustomEvent("copo-video-bookmarked", { detail: { videoId: targetVideoId, bookmarksCount: nextBmCount } }));
         }
         if (typeof fetchLiveStats === "function") {
           fetchLiveStats();
@@ -473,8 +567,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     try {
       const res = await adminFetch("/api/admin/bookmarks/purge-all", { method: "POST" });
       if (res.ok) {
-        showToast("All bookmarks purged successfully");
+        showToast("All saved bookmarks purged successfully");
         setAdminBookmarks([]);
+        setDbVideos((prev) => prev.map((v) => ({ ...v, bookmarks: 0, bookmarksCount: 0 })));
         setConfirmPurgeAllBookmarks(false);
         if (typeof fetchLiveStats === "function") {
           fetchLiveStats();
@@ -3051,7 +3146,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setIsPingingEdge(true);
     const start = performance.now();
     try {
-      await adminFetch("/api/admin/stats");
+      await adminFetch("/api/admin/live-stats", { cache: "no-store" });
       const latency = Math.round(performance.now() - start);
       setPingEdgeResult({ latencyMs: latency, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) });
       showToast(`Edge node ping response: ${latency}ms`);
@@ -3124,32 +3219,32 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const isSetup = authMode === "setup";
     const isLoadingStatus = authMode === "loading";
     return (
-      <div className="flex-1 w-full h-full min-h-screen flex items-center justify-center bg-zinc-950 p-4 relative z-50">
-        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl relative z-10 text-white">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
+      <div className="flex-1 w-full h-full min-h-screen flex items-center justify-center bg-[#050506] p-4 relative z-50">
+        <div className="w-full max-w-sm bg-[#0c0c0f] border border-white/[0.08] rounded-3xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.8)] relative z-10 text-white">
+          <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto mb-5">
+            <Shield className="w-5 h-5 text-white" />
           </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-black text-white tracking-tight">
-              {isSetup ? "Set Up Admin Access" : "Yoouz Admin Control"}
+          <div className="text-center mb-7">
+            <h1 className="text-xl font-semibold text-white tracking-tight">
+              {isSetup ? "Set Up Admin Access" : "Yoouz Admin"}
             </h1>
-            <p className="text-sm text-zinc-400 mt-1.5 leading-relaxed">
+            <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
               {isSetup
-                ? "Create your owner passcode to lock admin controls. You can also set ADMIN_PASSCODE in environment settings at any time."
-                : "Sign in with your admin passcode to manage places, reviews, and users."}
+                ? "Create your owner passcode to lock admin controls."
+                : "Enter your admin passcode to manage places, reviews, and users."}
             </p>
           </div>
 
           {isLoadingStatus ? (
             <div className="py-8 flex items-center justify-center">
-              <div className="w-6 h-6 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
             </div>
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                  {isSetup ? "Create Admin Passcode (8+ chars)" : "Admin Passcode"}
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5">
+                  {isSetup ? "Create Admin Passcode (8+ characters)" : "Admin Passcode"}
                 </label>
                 <div className="relative">
                   <input
@@ -3162,22 +3257,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     placeholder={isSetup ? "Choose a strong passcode" : "Enter admin passcode"}
                     autoFocus
                     autoComplete={isSetup ? "new-password" : "current-password"}
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 pr-12 text-base transition-all font-medium select-text"
+                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 pr-11 text-sm transition-colors select-text"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? "Hide passcode" : "Show passcode"}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {isSetup && (
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
+                  <label className="block text-[11px] font-medium text-zinc-400 mb-1.5">
                     Confirm Passcode
                   </label>
                   <input
@@ -3189,13 +3284,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }}
                     placeholder="Re-enter passcode"
                     autoComplete="new-password"
-                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 text-base transition-all font-medium select-text"
+                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 text-sm transition-colors select-text"
                   />
                 </div>
               )}
 
               {authError && (
-                <div className="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
+                <div className="flex items-center gap-1.5 text-rose-400 text-xs font-medium">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {authError}
                 </div>
               )}
@@ -3203,27 +3298,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <button
                 type="submit"
                 disabled={isAuthSubmitting}
-                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:opacity-60 text-zinc-950 font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-base cursor-pointer"
+                className="w-full py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-60 text-zinc-950 font-semibold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm cursor-pointer"
               >
                 <Lock className="w-4 h-4" />
                 {isAuthSubmitting
                   ? "Verifying..."
                   : isSetup
                   ? "Claim Admin Access"
-                  : "Access Dashboard"}
+                  : "Sign In"}
               </button>
 
               {authSource === "env" && !isSetup && (
                 <p className="text-[11px] text-center text-zinc-500">
-                  Protected by server-configured ADMIN_PASSCODE
+                  Protected by server-configured passcode
                 </p>
               )}
 
-              <div className="pt-2 flex items-center justify-center text-xs text-zinc-400">
+              <div className="pt-1 flex items-center justify-center text-xs text-zinc-500">
                 <button
                   type="button"
                   onClick={onExit}
-                  className="text-zinc-400 hover:text-white transition-colors cursor-pointer text-center font-medium"
+                  className="text-zinc-400 hover:text-white transition-colors cursor-pointer font-medium"
                 >
                   Return to App
                 </button>
@@ -3236,7 +3331,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   }
 
   return (
-    <div className="flex-1 w-full h-full min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans absolute inset-0 z-50 overflow-hidden select-none">
+    <div className="flex-1 w-full h-full min-h-screen flex flex-col bg-[#050506] text-zinc-100 font-sans absolute inset-0 z-50 overflow-hidden select-none">
       {/* Reusable Obsidian Admin Confirmation Modal */}
       {adminConfirmDialog && (
         <div
@@ -3246,7 +3341,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           onClick={() => !isAdminConfirmRunning && setAdminConfirmDialog(null)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-5"
+            className="w-full max-w-sm rounded-2xl bg-[#0c0c0f] border border-white/[0.1] p-6 shadow-2xl space-y-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-2">
@@ -3323,420 +3418,273 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       {/* Toast Banner */}
       {toastMessage && (
-        <div className="fixed top-5 right-6 z-50 bg-zinc-900/95 backdrop-blur border border-zinc-800 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
-          <div className="w-2.5 h-2.5 rounded-full bg-white shrink-0 animate-ping" />
-          <span className="text-sm font-medium">{toastMessage}</span>
-          <button onClick={() => setToastMessage(null)} className="text-zinc-200 hover:text-white ml-2 cursor-pointer">
-            <X className="w-4 h-4" />
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 right-5 z-50 bg-[#121216]/95 backdrop-blur-xl border border-white/[0.12] text-white px-4 py-2.5 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.65)] flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="text-[13px] font-medium tracking-tight">{toastMessage}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            aria-label="Dismiss notification"
+            className="text-zinc-400 hover:text-white ml-1 p-0.5 rounded-md hover:bg-white/[0.06] transition-colors cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Top Application Bar */}
-      <header className="h-16 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-20">
-        <div className="flex items-center gap-4">
+      <header className="h-14 border-b border-white/[0.08] bg-[#050506]/90 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+        <div className="flex items-center gap-3 min-w-0">
           <button
+            type="button"
             onClick={onExit}
-            className="px-3.5 py-2 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-all border border-zinc-800 hover:border-zinc-700 cursor-pointer flex items-center gap-2 text-xs font-bold shadow-sm"
+            className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 text-xs font-medium shrink-0"
             title="Return to Yoouz Live Feed"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Exit</span>
           </button>
 
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-md">
-              <Shield className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.09] flex items-center justify-center shrink-0">
+              <Shield className="w-3.5 h-3.5 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black tracking-tight text-white">Yoouz</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800 uppercase tracking-wide">
-                  Admin
-                </span>
-              </div>
+            <div className="flex items-center gap-1.5 min-w-0 text-[13px]">
+              <span className="font-semibold tracking-tight text-white">Yoouz</span>
+              <span className="text-zinc-600">/</span>
+              <span className="text-zinc-400 font-medium truncate">
+                {({
+                  overview: "Overview",
+                  videos: "Photo Reviews",
+                  businesses: "Businesses",
+                  places: "Places",
+                  users: "Users",
+                  creators: "Creators",
+                  comments: "Comments",
+                  likes: "Likes",
+                  bookmarks: "Bookmarks",
+                  messages: "Messages",
+                  broadcast: "Broadcast",
+                  search: "Search Intel",
+                  indexing: "Google Indexing",
+                  agencies: "Partner Agencies",
+                  health: "System Health",
+                  database: "Database"
+                } as Record<AdminTab, string>)[activeTab]}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Global Search Bar */}
-        <div className="flex-1 max-w-md mx-6 relative hidden md:block">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="flex-1 max-w-md mx-4 relative hidden md:block">
+          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            ref={adminSearchInputRef}
             type="text"
             placeholder="Search reviews, places, users, comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-zinc-900/80 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 transition-all"
+            className="w-full pl-9 pr-14 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-colors"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
+              type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
+          ) : (
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 border border-white/[0.08] rounded px-1.5 py-0.5 bg-white/[0.02]">
+              ⌘K
+            </kbd>
           )}
         </div>
 
-        {/* Header Right Actions */}
-        <div className="flex items-center gap-2.5">
+        {/* Header Right Actions (Single canonical controls — no duplicates) */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
+            type="button"
+            onClick={() => setIsAddPlaceOpen(true)}
+            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-zinc-950 text-xs font-semibold cursor-pointer"
+            title="New Business"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>New</span>
+          </button>
+
+          <button
+            type="button"
             onClick={fetchLiveStats}
             disabled={isLoadingLiveStats}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
-            title="Click to refresh live stats directly from BunnyDB & CDN Storage"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            title="Sync live stats from database and CDN storage"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-            <span className="hidden xl:inline text-zinc-400">Edge:</span>
-            <span className="text-emerald-400 font-mono font-bold">
-              {liveStats ? `${liveStats.latencyMs}ms` : "Live"}
+            <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isLoadingLiveStats ? "animate-spin text-white" : ""}`} />
+            <span className="tabular-nums">
+              {isLoadingLiveStats ? "Syncing..." : liveStats ? `${liveStats.latencyMs}ms` : "Refresh"}
             </span>
-            <RefreshCw className={`w-3 h-3 ml-0.5 text-zinc-400 hover:text-white ${isLoadingLiveStats ? "animate-spin text-amber-400" : ""}`} />
           </button>
 
           <button
-            onClick={handleExportDataJSON}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-            title="Download JSON Database Backup"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Export
-          </button>
-
-          <button
+            type="button"
             onClick={handleLogout}
-            className="px-3 py-1.5 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl text-xs font-bold transition-all border border-zinc-800/80 hover:border-zinc-700 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer"
+            title="Lock Admin Session"
           >
-            Lock
+            <Lock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Lock</span>
           </button>
         </div>
       </header>
 
       {/* Main Admin Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden bg-zinc-950">
-        {/* Sidebar Nav Tabs */}
-        <aside className="w-64 border-r border-zinc-800/80 bg-zinc-950 px-4 py-5 flex flex-col justify-between shrink-0 hidden md:flex overflow-y-auto select-none">
-          <div className="flex flex-col gap-1.5">
-            <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Navigation</div>
-
-            {/* 1. Overview */}
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "overview"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <BarChart3 className="w-5 h-5 shrink-0 text-white" />
-                <span>Overview</span>
+      <div className="flex-1 flex overflow-hidden bg-[#050506]">
+        {/* Grouped Obsidian Sidebar */}
+        <aside className="w-60 border-r border-white/[0.08] bg-[#050506] px-3 py-4 flex flex-col justify-between shrink-0 hidden md:flex overflow-y-auto select-none">
+          <nav aria-label="Admin Navigation" className="space-y-5">
+            {(
+              [
+                {
+                  title: "Core",
+                  items: [
+                    { id: "overview" as AdminTab, label: "Overview", icon: BarChart3 },
+                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: metrics.totalVideos },
+                    { id: "businesses" as AdminTab, label: "Businesses", icon: Briefcase, count: metrics.totalBusinesses },
+                    { id: "places" as AdminTab, label: "Places", icon: Building2, count: metrics.totalPhysicalPlaces }
+                  ]
+                },
+                {
+                  title: "Community",
+                  items: [
+                    { id: "users" as AdminTab, label: "Users", icon: Users, count: metrics.totalUsers },
+                    { id: "creators" as AdminTab, label: "Creators", icon: Award, count: metrics.totalCreators },
+                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.comments ?? allComments.length) },
+                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.likes ?? adminLikes.length) },
+                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.bookmarks ?? adminBookmarks.length) },
+                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: adminChats.length }
+                  ]
+                },
+                {
+                  title: "Growth & Tools",
+                  items: [
+                    { id: "broadcast" as AdminTab, label: "Broadcast", icon: Bell },
+                    { id: "search" as AdminTab, label: "Search Intel", icon: Search },
+                    { id: "indexing" as AdminTab, label: "Google Indexing", icon: Globe },
+                    { id: "agencies" as AdminTab, label: "Partner Agencies", icon: Building2 }
+                  ]
+                },
+                {
+                  title: "System",
+                  items: [
+                    {
+                      id: "health" as AdminTab,
+                      label: "Health",
+                      icon: CheckCircle2,
+                      count: healthData?.unresolvedCount > 0 ? healthData.unresolvedCount : undefined,
+                      alert: healthData?.unresolvedCount > 0
+                    },
+                    { id: "database" as AdminTab, label: "Database", icon: Database }
+                  ]
+                }
+              ] as Array<{
+                title: string;
+                items: Array<{
+                  id: AdminTab;
+                  label: string;
+                  icon: React.ComponentType<{ className?: string }>;
+                  count?: number;
+                  alert?: boolean;
+                }>;
+              }>
+            ).map((group) => (
+              <div key={group.title} className="space-y-0.5">
+                <div className="px-2.5 pb-1.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">
+                  {group.title}
+                </div>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-white/[0.09] text-white font-medium"
+                          : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] font-normal"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : item.alert ? "text-rose-400" : "text-zinc-500"}`} />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                      {item.count !== undefined && (
+                        <span className={`text-[11px] tabular-nums font-medium shrink-0 ${
+                          item.alert ? "text-rose-400" : isActive ? "text-zinc-200" : "text-zinc-500"
+                        }`}>
+                          {item.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            </button>
+            ))}
+          </nav>
 
-            {/* 2. Health */}
+          {/* Single Primary Sidebar Action */}
+          <div className="pt-4 mt-4 border-t border-white/[0.08]">
             <button
-              onClick={() => setActiveTab("health")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "health"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <CheckCircle2 className={`w-5 h-5 shrink-0 ${healthData?.overallStatus === 'healthy' ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
-                <span>Health</span>
-              </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${
-                healthData?.unresolvedCount > 0
-                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                  : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-              }`}>
-                {healthData?.unresolvedCount > 0 ? `${healthData.unresolvedCount}` : "100%"}
-              </span>
-            </button>
-
-            {/* 3. Creators */}
-            <button
-              onClick={() => setActiveTab("creators")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "creators"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Award className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>Creators</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-amber-400 border border-zinc-800">
-                {metrics.totalCreators}
-              </span>
-            </button>
-
-            {/* 4. Users */}
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "users"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Users className="w-5 h-5 shrink-0 text-white" />
-                <span>Users</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {metrics.totalUsers}
-              </span>
-            </button>
-
-            {/* 5. Businesses */}
-            <button
-              onClick={() => setActiveTab("businesses")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "businesses"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Briefcase className="w-5 h-5 shrink-0 text-white" />
-                <span>Businesses</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {metrics.totalBusinesses}
-              </span>
-            </button>
-
-            {/* 6. Places */}
-            <button
-              onClick={() => setActiveTab("places")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "places"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Building2 className="w-5 h-5 shrink-0 text-white" />
-                <span>Places</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {metrics.totalPhysicalPlaces}
-              </span>
-            </button>
-
-            {/* 7. Videos */}
-            <button
-              onClick={() => setActiveTab("videos")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "videos"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Video className="w-5 h-5 shrink-0 text-white" />
-                <span>Photo Reviews</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {metrics.totalVideos}
-              </span>
-            </button>
-
-            {/* 8. Comments */}
-            <button
-              onClick={() => setActiveTab("comments")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "comments"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <MessageSquare className="w-5 h-5 shrink-0 text-white" />
-                <span>Comments</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.comments ?? allComments.length)}
-              </span>
-            </button>
-
-            {/* 9. Likes */}
-            <button
-              onClick={() => setActiveTab("likes")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "likes"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Heart className="w-5 h-5 shrink-0 text-rose-400" />
-                <span>Likes</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-rose-400 border border-zinc-800">
-                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.likes ?? adminLikes.length)}
-              </span>
-            </button>
-
-            {/* 10. Bookmarks */}
-            <button
-              onClick={() => setActiveTab("bookmarks")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "bookmarks"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Bookmark className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>Bookmarks</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-amber-400 border border-zinc-800">
-                {isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.bookmarks ?? adminBookmarks.length)}
-              </span>
-            </button>
-
-            {/* 9. Messages */}
-            <button
-              onClick={() => setActiveTab("messages")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "messages"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Mail className="w-5 h-5 shrink-0 text-white" />
-                <span>Messages</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-zinc-900 text-zinc-300 border border-zinc-800">
-                {adminChats.length}
-              </span>
-            </button>
-
-            {/* 10. Broadcast */}
-            <button
-              onClick={() => setActiveTab("broadcast")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "broadcast"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Bell className="w-5 h-5 shrink-0 text-white" />
-                <span>Broadcast</span>
-              </div>
-            </button>
-
-            {/* 11. Database */}
-            <button
-              onClick={() => setActiveTab("database")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "database"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Database className="w-5 h-5 shrink-0 text-white" />
-                <span>Database</span>
-              </div>
-            </button>
-
-            {/* 12. Search Intel */}
-            <button
-              onClick={() => setActiveTab("search")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "search"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Search className="w-5 h-5 shrink-0 text-white" />
-                <span>Search Intel</span>
-              </div>
-            </button>
-
-            {/* 12b. Google Search Console & Indexing */}
-            <button
-              onClick={() => setActiveTab("indexing")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "indexing"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Globe className="w-5 h-5 shrink-0 text-emerald-400" />
-                <span>Google Indexing</span>
-              </div>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/80">
-                100% OK
-              </span>
-            </button>
-
-            {/* 13. Partner Agencies */}
-            <button
-              onClick={() => setActiveTab("agencies")}
-              className={`w-full flex items-center justify-between transition-all duration-150 cursor-pointer ${
-                activeTab === "agencies"
-                  ? "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left bg-zinc-900 border border-zinc-700/80 text-white font-bold shadow-xs"
-                  : "gap-3.5 px-4 py-3 rounded-full text-[15px] text-left text-white hover:bg-zinc-900/90 font-medium"
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <Briefcase className="w-5 h-5 shrink-0 text-white" />
-                <span>Partner Agencies</span>
-              </div>
-            </button>
-          </div>
-
-          {/* Quick System Badge & Actions */}
-          <div className="pt-4 mt-4 border-t border-zinc-800/80 space-y-2.5">
-            <button
+              type="button"
               onClick={() => setIsAddPlaceOpen(true)}
-              className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-[15px] tracking-tight shadow-lg active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-[13px] tracking-tight active:scale-[0.98] transition-all cursor-pointer"
             >
-              <Plus className="w-5 h-5 stroke-[2.5]" />
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Business</span>
             </button>
           </div>
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto bg-zinc-950 p-6 lg:p-8 relative text-white">
-          {/* Mobile Tab Nav */}
-          <div className="md:hidden flex overflow-x-auto gap-2 pb-4 mb-4 border-b border-zinc-800 no-scrollbar">
+        <main className="flex-1 overflow-y-auto bg-[#050506] p-4 sm:p-6 lg:p-8 relative text-white">
+          {/* Mobile Tab Nav (Complete parity with all 16 desktop sections) */}
+          <div className="md:hidden flex overflow-x-auto gap-1.5 pb-3.5 mb-5 border-b border-white/[0.08] no-scrollbar">
             {(
               [
                 ["overview", "Overview"],
-                ["health", "Health 🟢"],
-                ["creators", `Creators (${metrics.totalCreators})`],
-                ["users", `Users (${metrics.totalUsers})`],
+                ["videos", `Photo Reviews (${metrics.totalVideos})`],
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
-                ["videos", `Videos (${metrics.totalVideos})`],
+                ["users", `Users (${metrics.totalUsers})`],
+                ["creators", `Creators (${metrics.totalCreators})`],
                 ["comments", `Comments (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.comments ?? allComments.length)})`],
                 ["likes", `Likes (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.likes ?? adminLikes.length)})`],
                 ["bookmarks", `Bookmarks (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.bookmarks ?? adminBookmarks.length)})`],
                 ["messages", `Messages (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.chats ?? adminChats.length)})`],
                 ["broadcast", "Broadcast"],
-                ["database", "Database"],
-                ["agencies", "Agencies"]
+                ["search", "Search Intel"],
+                ["indexing", "Google Indexing"],
+                ["agencies", "Agencies"],
+                ["health", "Health"],
+                ["database", "Database"]
               ] as const
             ).map(([tabKey, label]) => (
               <button
                 key={tabKey}
+                type="button"
                 onClick={() => setActiveTab(tabKey as AdminTab)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                  activeTab === tabKey ? "bg-white text-zinc-950 shadow-md" : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+                className={`px-3 py-2 min-h-[38px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  activeTab === tabKey
+                    ? "bg-white text-zinc-950 font-semibold"
+                    : "bg-white/[0.04] text-zinc-400 border border-white/[0.08] hover:text-white"
                 }`}
               >
                 {label}
@@ -3785,107 +3733,91 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: SYSTEM HEALTH & BUG MONITOR */}
           {activeTab === "health" && (
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Header Title */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-black text-white tracking-tight">System Health & Diagnostic Center</h2>
-                    <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                      healthData?.overallStatus === 'healthy'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    <h2 className="text-xl font-semibold text-white tracking-tight">System Health</h2>
+                    <span className={`text-xs font-medium ${
+                      healthData?.overallStatus === "healthy" ? "text-emerald-400" : "text-rose-400"
                     }`}>
-                      <span className={`w-2 h-2 rounded-full ${healthData?.overallStatus === 'healthy' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                      {healthData?.overallStatus === 'healthy' ? 'ALL SYSTEMS GREEN 🟢' : 'ATTENTION REQUIRED 🔴'}
+                      {healthData?.overallStatus === "healthy" ? "All Systems Operational" : "Attention Required"}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Automated sub-system diagnostics, real-time UI error tracing, and step-by-step testing instructions for all features.
+                    Automated subsystem diagnostics, runtime error logs, and integrity maintenance actions.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={fetchHealthDiagnostic}
                     disabled={isHealthLoading}
-                    className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isHealthLoading ? 'animate-spin' : ''}`} />
-                    Run Diagnostic Suite
+                    <RefreshCw className={`w-3.5 h-3.5 ${isHealthLoading ? "animate-spin" : ""}`} />
+                    Run Diagnostics
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleClearErrorLog()}
-                    className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer"
+                    className="px-3.5 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white font-medium rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Clear All Error Logs
+                    Clear Error Logs
                   </button>
                 </div>
               </div>
 
-              {/* Telemetry Quick Bar & Issue Monitors */}
+              {/* Telemetry Quick Bar */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Latency & CDN */}
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Edge Latency</div>
-                    <div className="text-xl font-black text-white font-mono mt-0.5">
-                      {liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "12ms"}
+                    <div className="text-[11px] font-medium text-zinc-400">Edge Latency</div>
+                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
+                      {liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "—"}
                     </div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Bunny CDN & libSQL Active
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5">Bunny CDN & libSQL</div>
                   </div>
-                  <Server className="w-6 h-6 text-zinc-500" />
+                  <Server className="w-5 h-5 text-zinc-500" />
                 </div>
 
-                {/* SSE Streams */}
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Realtime SSE Stream</div>
-                    <div className="text-xl font-black text-white font-mono mt-0.5">
+                    <div className="text-[11px] font-medium text-zinc-400">Realtime SSE Stream</div>
+                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
                       {clientHealthSummary?.issue39Errors || 0} Errors
                     </div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Auto-Reconnect Guard #39
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5">Auto-Reconnect Guard</div>
                   </div>
-                  <Radio className="w-6 h-6 text-emerald-400" />
+                  <Radio className="w-5 h-5 text-zinc-500" />
                 </div>
 
-                {/* Universal Telemetry */}
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">App Telemetry</div>
-                    <div className="text-xl font-black text-white font-mono mt-0.5">
+                    <div className="text-[11px] font-medium text-zinc-400">Client Exceptions</div>
+                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
                       {clientHealthSummary?.issue40Errors || 0} Issues
                     </div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Zero-Error Guard #40
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5">Runtime Guard</div>
                   </div>
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  <ShieldCheck className="w-5 h-5 text-zinc-500" />
                 </div>
 
-                {/* Notifications & Duplication Guard */}
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-between">
+                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Notification Guard</div>
-                    <div className="text-xl font-black text-white font-mono mt-0.5">
-                      0 Duplicates
+                    <div className="text-[11px] font-medium text-zinc-400">Notifications</div>
+                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
+                      {liveStats?.totals?.notifications ?? 0} Total
                     </div>
-                    <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      Multi-Channel Guard #47
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5">Deduplication Check</div>
                   </div>
                   <button
+                    type="button"
                     onClick={handleDeduplicateNotifications}
                     disabled={isDeduplicatingNotifs}
-                    className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer disabled:opacity-50"
+                    className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50"
                     title="Clean duplicate notifications"
                   >
                     <RefreshCw className={`w-4 h-4 ${isDeduplicatingNotifs ? "animate-spin" : ""}`} />
@@ -4284,249 +4216,191 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB 1: OVERVIEW & KPIS */}
           {activeTab === "overview" && (
             <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header Title & Quick Action Bar */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-zinc-900/80 p-5 rounded-3xl border border-zinc-800 shadow-xl backdrop-blur-md">
+              {/* Clean Obsidian Overview Header (zero duplicate quick-action clutter) */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1">
                 <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-black text-white tracking-tight">Platform Command Center</h2>
-                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-mono">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                      BunnyDB {liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "12ms"}
-                    </span>
-                  </div>
+                  <h1 className="text-2xl font-semibold text-white tracking-tight">Overview</h1>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Real-time authoritative telemetry, verified photo reviews, claimed merchant entities, and live user interactions.
+                    Live database metrics across verified photo reviews, claimed businesses, places, and community activity.
                   </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    href="/testembed"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer border border-amber-600/20"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 fill-current" />
-                    <span>Live Tester</span>
-                  </a>
-                  <button
-                    onClick={executeSeedCommunityReviews}
-                    disabled={isSeedingCommunity}
-                    className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-amber-600/20 active:scale-95"
-                    title="Auto-seed 20 authentic accounts and business-matched camera reviews"
-                  >
-                    <Sparkles className={`w-3.5 h-3.5 fill-current ${isSeedingCommunity ? "animate-spin" : ""}`} />
-                    <span>{isSeedingCommunity ? "Seeding..." : "Auto-Seed Community (20)"}</span>
-                  </button>
-                  <button
-                    onClick={() => setIsAddPlaceOpen(true)}
-                    className="px-3.5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Business</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("broadcast")}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 hover:text-white font-bold rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Bell className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Broadcast</span>
-                  </button>
-                  <button
-                    onClick={fetchLiveStats}
-                    disabled={isLoadingLiveStats}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-zinc-700 cursor-pointer"
-                    title="Sync tables & CDN"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLiveStats ? "animate-spin text-amber-400" : "text-emerald-400"}`} />
-                    <span>{isLoadingLiveStats ? "Syncing..." : "Sync Live DB"}</span>
-                  </button>
-                </div>
+                {liveStats?.latencyMs !== undefined && (
+                  <div className="text-xs text-zinc-500 tabular-nums">
+                    BunnyDB · {liveStats.latencyMs}ms
+                  </div>
+                )}
               </div>
 
-              {/* 6 Hero Interactive KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+              {/* 6 Clean Single-Elevation KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 {/* 1. Claimed Businesses */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setActiveTab("businesses")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-violet-500/50 shadow-md hover:shadow-violet-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-violet-400">Businesses</span>
-                    <div className="p-1.5 rounded-lg bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 transition-colors">
-                      <Briefcase className="w-4 h-4" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Businesses</span>
+                    <Briefcase className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalBusinesses}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      Claimed & Verified
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Claimed & verified</div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-violet-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>Manage Businesses</span>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>Manage</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
 
                 {/* 2. Photo Reviews */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setActiveTab("videos")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Photo Reviews</span>
-                    <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 group-hover:bg-rose-500/20 transition-colors">
-                      <Video className="w-4 h-4" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Photo Reviews</span>
+                    <Camera className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {liveStats?.totals?.videoReviews ?? metrics.totalVideos}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1 truncate">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                      <span className="text-amber-300 font-bold">{metrics.avgRating}</span>
-                      <span>Avg Rating</span>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 flex items-center gap-1 truncate tabular-nums">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                      <span className="text-zinc-300 font-medium">{metrics.avgRating}</span>
+                      <span>avg rating</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-rose-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>Inspect Reviews</span>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>Inspect</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
 
                 {/* 3. Places Directory */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setActiveTab("places")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-sky-500/50 shadow-md hover:shadow-sky-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400">Places Directory</span>
-                    <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20 transition-colors">
-                      <Building2 className="w-4 h-4" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Places</span>
+                    <Building2 className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalPhysicalPlaces}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      Venues & Locations
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Indexed venues</div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-sky-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>Browse Venues</span>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>Browse</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
 
-                {/* 4. Creators & Reviewers */}
-                <div
+                {/* 4. Creators */}
+                <button
+                  type="button"
                   onClick={() => setActiveTab("creators")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-amber-500/50 shadow-md hover:shadow-amber-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Creators</span>
-                    <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20 transition-colors">
-                      <Award className="w-4 h-4" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Creators</span>
+                    <Award className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalCreators}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos} Authored Reviews
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos} authored reviews
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-amber-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>View Creators</span>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>View all</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
 
-                {/* 5. Community Users */}
-                <div
+                {/* 5. Users */}
+                <button
+                  type="button"
                   onClick={() => setActiveTab("users")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/50 shadow-md hover:shadow-emerald-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Community</span>
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-                      <Users className="w-4 h-4" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Users</span>
+                    <Users className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {liveStats?.totals?.users ?? metrics.totalCommunityUsers}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      Registered Accounts
-                    </div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Registered accounts</div>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 group-hover:text-emerald-300 font-semibold pt-2 border-t border-zinc-800/80 transition-colors">
-                    <span>Manage Users</span>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>Manage</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
 
                 {/* 6. Interactions */}
                 <div
                   onClick={() => setActiveTab("likes")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-400">Interactions</span>
-                    <div className="p-1.5 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 group-hover:bg-fuchsia-500/20 transition-colors">
-                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
-                    </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[11px] font-medium text-zinc-400">Interactions</span>
+                    <Heart className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
-                  <div className="my-2.5">
-                    <div className="text-3xl font-black text-white tracking-tight font-mono">
+                  <div className="my-3">
+                    <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {(liveStats?.totals?.likes ?? metrics.totalLikes) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? metrics.totalComments) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 truncate">
-                      {liveStats?.totals?.likes ?? metrics.totalLikes} Likes • {liveStats?.totals?.bookmarks ?? adminBookmarks.length} Saved • {liveStats?.totals?.comments ?? metrics.totalComments} Comments
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                      {liveStats?.totals?.likes ?? metrics.totalLikes} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved · {liveStats?.totals?.comments ?? metrics.totalComments} comments
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 pt-2 border-t border-zinc-800/80 text-[10px] font-semibold">
+                  <div className="flex items-center gap-1 pt-2.5 border-t border-white/[0.06] text-[10px] font-medium">
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); setActiveTab("likes"); }}
-                      className="flex-1 py-1 px-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
                     >
-                      <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
-                      <span>Likes →</span>
+                      Likes
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); setActiveTab("bookmarks"); }}
-                      className="flex-1 py-1 px-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
                     >
-                      <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400" />
-                      <span>Saved →</span>
+                      Saved
                     </button>
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); setActiveTab("comments"); }}
-                      className="flex-1 py-1 px-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-center transition-colors cursor-pointer flex items-center justify-center gap-1"
+                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
                     >
-                      <MessageSquare className="w-3 h-3 text-zinc-400" />
-                      <span>Comments →</span>
+                      Comments
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* 2-Column Split Action Hub */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Column 1: Recent Photo Reviews */}
-                <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
+                <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4 flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                       <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-rose-400" />
-                        <h3 className="font-bold text-white text-sm">Recent Photo Reviews</h3>
+                        <Camera className="w-4 h-4 text-zinc-400" />
+                        <h3 className="font-semibold text-white text-sm tracking-tight">Recent Photo Reviews</h3>
                       </div>
 
                       {/* Filter Chips */}
@@ -4998,22 +4872,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
           )}
 
-          {/* TAB 2: VIDEOS MANAGEMENT */}
+          {/* TAB 2: PHOTO REVIEWS MANAGEMENT */}
           {activeTab === "videos" && (
             <div className="max-w-7xl mx-auto space-y-5">
               {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/90 backdrop-blur-md p-4 rounded-2xl border border-zinc-800 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
+                <div className="flex flex-wrap items-center gap-2">
                   {/* Select All Checkbox */}
                   {filteredVideos.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 transition-colors">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] transition-colors">
                       <input
                         type="checkbox"
                         checked={selectedVideoIds.length === filteredVideos.length && filteredVideos.length > 0}
                         onChange={handleSelectAllVideos}
-                        className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-white focus:ring-0 cursor-pointer accent-white"
+                        className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-0 cursor-pointer accent-white"
                       />
-                      <span>Select All ({filteredVideos.length})</span>
+                      <span className="tabular-nums">Select All ({filteredVideos.length})</span>
                     </label>
                   )}
 
@@ -5021,146 +4895,153 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <select
                     value={videoRatingFilter}
                     onChange={(e) => setVideoRatingFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer"
+                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
                   >
-                    <option value="all">All Star Ratings</option>
-                    <option value="5">★★★★★ (5 Stars)</option>
-                    <option value="4">★★★★☆ (4 Stars)</option>
-                    <option value="3">★★★☆☆ (3 Stars)</option>
-                    <option value="2">★★☆☆☆ (2 Stars)</option>
-                    <option value="1">★☆☆☆☆ (1 Star)</option>
+                    <option value="all">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
                   </select>
 
                   {/* Sort Filter Dropdown */}
                   <select
                     value={videoSortFilter}
                     onChange={(e) => setVideoSortFilter(e.target.value as any)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer"
+                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
                   >
-                    <option value="newest">Sort: Newest First</option>
-                    <option value="highest_rated">Sort: Highest Rated</option>
-                    <option value="lowest_rated">Sort: Lowest Rated</option>
-                    <option value="most_likes">Sort: Most Liked</option>
-                    <option value="most_comments">Sort: Most Comments</option>
+                    <option value="newest">Newest First</option>
+                    <option value="highest_rated">Highest Rated</option>
+                    <option value="lowest_rated">Lowest Rated</option>
+                    <option value="most_likes">Most Liked</option>
+                    <option value="most_comments">Most Comments</option>
                   </select>
 
                   {/* View Mode Toggle */}
-                  <div className="flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                  <div className="flex items-center bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.08]">
                     <button
+                      type="button"
                       onClick={() => setViewMode("grid")}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${viewMode === "grid" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-zinc-200"}`}
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${viewMode === "grid" ? "bg-white/[0.12] text-white" : "text-zinc-400 hover:text-zinc-200"}`}
                       title="Grid View"
                     >
-                      <LayoutGrid className="w-4 h-4" />
+                      <LayoutGrid className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setViewMode("table")}
-                      className={`p-1.5 rounded-lg transition-colors cursor-pointer ${viewMode === "table" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-zinc-200"}`}
+                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${viewMode === "table" ? "bg-white/[0.12] text-white" : "text-zinc-400 hover:text-zinc-200"}`}
                       title="Table View"
                     >
-                      <List className="w-4 h-4" />
+                      <List className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Bulk Actions & Total Counter */}
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs text-zinc-400 font-mono hidden sm:inline-block">
-                    Showing <span className="text-white font-bold">{filteredVideos.length}</span> of {activeVideos.length} reviews
+                {/* Maintenance & Bulk Actions (Each action lives strictly ONCE here) */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-zinc-500 tabular-nums hidden sm:inline-block mr-1">
+                    <span className="text-zinc-200 font-medium">{filteredVideos.length}</span> of {activeVideos.length}
                   </span>
 
                   {selectedVideoIds.length > 0 && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {confirmBulkDeleteVideos ? (
-                        <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Delete {selectedVideoIds.length} videos?</span>
+                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                          <span className="text-xs font-medium text-rose-200">Delete {selectedVideoIds.length}?</span>
                           <button
+                            type="button"
                             onClick={executeBulkDeleteVideos}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
                           >
-                            <Check className="w-3.5 h-3.5" /> Confirm
+                            <Check className="w-3 h-3" /> Confirm
                           </button>
                           <button
+                            type="button"
                             onClick={() => setConfirmBulkDeleteVideos(false)}
-                            className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                            className="p-0.5 text-zinc-400 hover:text-white cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => setConfirmBulkDeleteVideos(true)}
-                          className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Selected ({selectedVideoIds.length})
+                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedVideoIds.length})
                         </button>
                       )}
                     </div>
                   )}
 
-                  {/* Purge All Videos Button */}
+                  <button
+                    type="button"
+                    onClick={handleSyncReviewBusinessNames}
+                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Synchronize photo review business names with verified official brand names"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-zinc-400" /> Sync Names
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSyncBunnyLibrary}
+                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Clean up any legacy orphaned stream entries"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-zinc-400" /> Clean Legacy
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePurgeIncompleteUploads}
+                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Remove incomplete review records where media upload was interrupted"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-zinc-400" /> Clean Incomplete
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={executeSeedCommunityReviews}
+                    disabled={isSeedingCommunity}
+                    className="px-2.5 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.1] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+                    title="Seed 20 sample community accounts and business-matched photo reviews"
+                  >
+                    <Plus className={`w-3.5 h-3.5 ${isSeedingCommunity ? "animate-spin" : ""}`} />
+                    <span>{isSeedingCommunity ? "Seeding..." : "Seed Sample (20)"}</span>
+                  </button>
+
                   {confirmPurgeAllVideos ? (
-                    <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 p-1 px-2.5 rounded-xl animate-in slide-in-from-right-2">
-                      <span className="text-xs font-bold text-red-300">Purge ALL cloud reviews?</span>
+                    <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                      <span className="text-xs font-medium text-rose-200">Purge ALL?</span>
                       <button
+                        type="button"
                         onClick={executePurgeAllVideos}
-                        className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer"
+                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md cursor-pointer"
                       >
-                        Yes, Wipe All
+                        Wipe All
                       </button>
                       <button
+                        type="button"
                         onClick={() => setConfirmPurgeAllVideos(false)}
-                        className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                        className="p-0.5 text-zinc-400 hover:text-white cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => setConfirmPurgeAllVideos(true)}
-                      className="px-3 py-1.5 bg-zinc-950 hover:bg-red-950/60 text-zinc-400 hover:text-red-300 border border-zinc-800 hover:border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      <Trash2 className="w-3.5 h-3.5" /> Purge All Reviews
+                      <Trash2 className="w-3.5 h-3.5" /> Purge All
                     </button>
                   )}
-
-                  {/* Auto-Seed Community Reviews Button */}
-                  <button
-                    onClick={executeSeedCommunityReviews}
-                    disabled={isSeedingCommunity}
-                    className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
-                    title="Auto-seed 20 authentic accounts and business-matched camera reviews"
-                  >
-                    <Sparkles className={`w-3.5 h-3.5 fill-current ${isSeedingCommunity ? "animate-spin" : ""}`} />
-                    <span>{isSeedingCommunity ? "Seeding..." : "Auto-Seed Community (20)"}</span>
-                  </button>
-
-                  {/* Sync & Fix Business Names */}
-                  <button
-                    onClick={handleSyncReviewBusinessNames}
-                    className="px-3 py-1.5 bg-zinc-950 hover:bg-emerald-950/50 text-zinc-300 hover:text-emerald-300 border border-zinc-800 hover:border-emerald-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Scan and synchronize all photo review business names with verified official brand names"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-emerald-400" /> Sync Business Names
-                  </button>
-
-                  {/* Purge Legacy Bunny Stream Videos */}
-                  <button
-                    onClick={handleSyncBunnyLibrary}
-                    className="px-3 py-1.5 bg-zinc-950 hover:bg-blue-950/50 text-zinc-300 hover:text-blue-300 border border-zinc-800 hover:border-blue-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Purge any remaining legacy videos from Bunny Stream (live photo reviews use CDN storage directly)"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Purge Legacy Stream
-                  </button>
-
-                  {/* Purge Incomplete / Interrupted Uploads */}
-                  <button
-                    onClick={handlePurgeIncompleteUploads}
-                    className="px-3 py-1.5 bg-zinc-950 hover:bg-amber-950/50 text-amber-300 hover:text-amber-200 border border-zinc-800 hover:border-amber-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-                    title="Purge incomplete review records where the client video stream failed to upload"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-amber-400" /> Purge Incomplete Uploads
-                  </button>
                 </div>
               </div>
 
@@ -5255,9 +5136,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <Bookmark className="w-3.5 h-3.5 text-amber-500/70 group-hover/bkmk:fill-amber-500 group-hover/bkmk:text-amber-500" />
                             <span>{video.bookmarksCount || (video as any).bookmarks || 0}</span>
                           </button>
-                          <span className="flex items-center gap-1 font-mono">
-                            <MessageSquare className="w-3.5 h-3.5 text-zinc-500" /> {video.commentsCount || (video.comments || []).length}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveTab("comments");
+                              if (video.placeName) setSearchQuery(video.placeName);
+                            }}
+                            className="flex items-center gap-1 font-mono tabular-nums hover:text-blue-400 transition-colors cursor-pointer"
+                            title={`Click to view comments on ${video.placeName}`}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
+                            <span>{video.commentsCount || (video.comments || []).length}</span>
+                          </button>
                           <span className="flex items-center gap-1 font-mono">
                             <Eye className="w-3.5 h-3.5 text-zinc-500" /> {video.viewsCount || video.views || 0}
                           </span>
@@ -5473,30 +5364,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: REGISTERED & CLAIMED BUSINESSES */}
           {activeTab === "businesses" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Select All Checkbox */}
+            <div className="max-w-7xl mx-auto space-y-5">
+              {/* Action Toolbar (Deduplicated: Add Business is in Sidebar; Audit Followers is in Health; Repair Names is in Places) */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
+                <div className="flex flex-wrap items-center gap-2.5">
                   {filteredBusinesses.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-zinc-200 mr-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
                       <input
                         type="checkbox"
                         checked={selectedBusinessIds.length === filteredBusinesses.length && filteredBusinesses.length > 0}
                         onChange={handleSelectAllBusinesses}
-                        className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
+                        className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-0 cursor-pointer accent-white"
                       />
-                      <span>Select All ({filteredBusinesses.length})</span>
+                      <span className="tabular-nums">Select All ({filteredBusinesses.length})</span>
                     </label>
                   )}
 
-                  {/* Business Category Filter */}
                   <select
                     value={businessCategoryFilter}
                     onChange={(e) => setBusinessCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
                   >
-                    <option value="all">All Business Categories</option>
+                    <option value="all">All Categories</option>
                     {uniqueBusinessCategories.map((c) => (
                       <option key={c} value={c}>
                         {c}
@@ -5505,98 +5394,75 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </select>
                 </div>
 
-                {/* Right Buttons */}
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
-                    Showing <span className="text-white font-bold">{filteredBusinesses.length}</span> claimed {filteredBusinesses.length === 1 ? "business" : "businesses"}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleRepairAllBusinessNames}
-                    disabled={isRepairingBrandNames}
-                    className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-white rounded-xl text-xs font-bold border border-emerald-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                    title="Audit and repair compound word separation across all business names"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{isRepairingBrandNames ? "Repairing..." : "Repair Names"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleAuditFollowers}
-                    disabled={isAuditingFollowers}
-                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold border border-zinc-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                  >
-                    <Users className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>{isAuditingFollowers ? "Auditing..." : "Audit Followers"}</span>
-                  </button>
-
-                  {allBusinesses.length > 0 && (
-                    <div>
-                      {confirmPurgeAllBusinesses ? (
-                        <div className="flex items-center gap-2 bg-red-950/60 border border-red-700 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Purge ALL {allBusinesses.length} claimed businesses?</span>
-                          <button
-                            onClick={executePurgeAllBusinesses}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer shadow"
-                          >
-                            <Check className="w-3.5 h-3.5" /> Purge All
-                          </button>
-                          <button
-                            onClick={() => setConfirmPurgeAllBusinesses(false)}
-                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmPurgeAllBusinesses(true)}
-                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                          title="Purge all claimed businesses permanently from database"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge
-                        </button>
-                      )}
-                    </div>
-                  )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-zinc-500 tabular-nums mr-1">
+                    <span className="text-zinc-200 font-medium">{filteredBusinesses.length}</span> claimed {filteredBusinesses.length === 1 ? "business" : "businesses"}
+                  </span>
 
                   {selectedBusinessIds.length > 0 && (
                     <div>
                       {confirmBulkDeleteBusinesses ? (
-                        <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Delete {selectedBusinessIds.length} businesses?</span>
+                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                          <span className="text-xs font-medium text-rose-200">Delete {selectedBusinessIds.length}?</span>
                           <button
+                            type="button"
                             onClick={executeBulkDeleteBusinesses}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
                           >
-                            <Check className="w-3.5 h-3.5" /> Yes
+                            <Check className="w-3 h-3" /> Yes
                           </button>
                           <button
+                            type="button"
                             onClick={() => setConfirmBulkDeleteBusinesses(false)}
-                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => setConfirmBulkDeleteBusinesses(true)}
-                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Selected ({selectedBusinessIds.length})
+                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedBusinessIds.length})
                         </button>
                       )}
                     </div>
                   )}
 
-                  <button
-                    onClick={() => setIsAddPlaceOpen(true)}
-                    className="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Register Business
-                  </button>
+                  {allBusinesses.length > 0 && (
+                    <div>
+                      {confirmPurgeAllBusinesses ? (
+                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                          <span className="text-xs font-medium text-rose-200">Purge ALL {allBusinesses.length}?</span>
+                          <button
+                            type="button"
+                            onClick={executePurgeAllBusinesses}
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3 h-3" /> Purge All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmPurgeAllBusinesses(false)}
+                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmPurgeAllBusinesses(true)}
+                          className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Purge all claimed businesses permanently from database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Purge All
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -5798,28 +5664,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: PLACES & VENUES DIRECTORY */}
           {activeTab === "places" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Select All Checkbox */}
+            <div className="max-w-7xl mx-auto space-y-5">
+              {/* Action Toolbar (Canonical home for Repair Names & Flush Metadata Cache) */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
+                <div className="flex flex-wrap items-center gap-2.5">
                   {filteredPhysicalPlaces.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-zinc-200 mr-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
                       <input
                         type="checkbox"
                         checked={selectedPlaceIds.length === filteredPhysicalPlaces.length && filteredPhysicalPlaces.length > 0}
                         onChange={handleSelectAllPlaces}
-                        className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white"
+                        className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-0 cursor-pointer accent-white"
                       />
-                      <span>Select All ({filteredPhysicalPlaces.length})</span>
+                      <span className="tabular-nums">Select All ({filteredPhysicalPlaces.length})</span>
                     </label>
                   )}
 
-                  {/* Category Filter */}
                   <select
                     value={placeCategoryFilter}
                     onChange={(e) => setPlaceCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
+                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
                   >
                     <option value="all">All Place Categories</option>
                     {uniquePlaceCategories.map((c) => (
@@ -5830,99 +5694,97 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </select>
                 </div>
 
-                {/* Right Buttons */}
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
-                    Showing <span className="text-white font-bold">{filteredPhysicalPlaces.length}</span> venues
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-zinc-500 tabular-nums mr-1">
+                    <span className="text-zinc-200 font-medium">{filteredPhysicalPlaces.length}</span> venues
+                  </span>
 
                   <button
                     type="button"
                     onClick={handleFlushMetadataAndAssetCache}
                     disabled={isFlushingMetadataCache}
-                    className="px-3 py-1.5 bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 hover:text-white rounded-xl text-xs font-bold border border-amber-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                    title="Flush all in-memory search metadata caches and sanitize place banner/logo domain references"
+                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white rounded-lg text-xs font-medium border border-white/[0.08] transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Flush search metadata caches and sanitize place asset references"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isFlushingMetadataCache ? 'animate-spin' : ''}`} />
-                    <span>{isFlushingMetadataCache ? "Flushing..." : "Flush Metadata Cache"}</span>
+                    <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isFlushingMetadataCache ? "animate-spin" : ""}`} />
+                    <span>{isFlushingMetadataCache ? "Flushing..." : "Flush Cache"}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleRepairAllBusinessNames}
                     disabled={isRepairingBrandNames}
-                    className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-white rounded-xl text-xs font-bold border border-emerald-800/60 transition flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                    title="Audit and repair compound word separation across all places"
+                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white rounded-lg text-xs font-medium border border-white/[0.08] transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Audit and repair brand name formatting across all places and businesses"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <Building2 className="w-3.5 h-3.5 text-zinc-400" />
                     <span>{isRepairingBrandNames ? "Repairing..." : "Repair Names"}</span>
                   </button>
-
-                  {allPhysicalPlaces.length > 0 && (
-                    <div>
-                      {confirmPurgeAllPlaces ? (
-                        <div className="flex items-center gap-2 bg-red-950/60 border border-red-700 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Purge ALL {allPhysicalPlaces.length} places permanently?</span>
-                          <button
-                            onClick={executePurgeAllPlaces}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer shadow"
-                          >
-                            <Check className="w-3.5 h-3.5" /> Purge All
-                          </button>
-                          <button
-                            onClick={() => setConfirmPurgeAllPlaces(false)}
-                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmPurgeAllPlaces(true)}
-                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                          title="Purge all directory places permanently from database"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge Places
-                        </button>
-                      )}
-                    </div>
-                  )}
 
                   {selectedPlaceIds.length > 0 && (
                     <div>
                       {confirmBulkDeletePlaces ? (
-                        <div className="flex items-center gap-2 bg-red-950/40 border border-red-800/60 px-3 py-1.5 rounded-xl animate-in slide-in-from-right-2">
-                          <span className="text-xs font-bold text-red-300">Delete {selectedPlaceIds.length} places?</span>
+                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                          <span className="text-xs font-medium text-rose-200">Delete {selectedPlaceIds.length}?</span>
                           <button
+                            type="button"
                             onClick={executeBulkDeletePlaces}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
                           >
-                            <Check className="w-3.5 h-3.5" /> Yes
+                            <Check className="w-3 h-3" /> Yes
                           </button>
                           <button
+                            type="button"
                             onClick={() => setConfirmBulkDeletePlaces(false)}
-                            className="p-1 text-zinc-200 hover:text-white cursor-pointer"
+                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => setConfirmBulkDeletePlaces(true)}
-                          className="px-3 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete Selected ({selectedPlaceIds.length})
+                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedPlaceIds.length})
                         </button>
                       )}
                     </div>
                   )}
 
-                  <button
-                    onClick={() => setIsAddPlaceOpen(true)}
-                    className="px-4 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add New Place
-                  </button>
+                  {allPhysicalPlaces.length > 0 && (
+                    <div>
+                      {confirmPurgeAllPlaces ? (
+                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
+                          <span className="text-xs font-medium text-rose-200">Purge ALL {allPhysicalPlaces.length}?</span>
+                          <button
+                            type="button"
+                            onClick={executePurgeAllPlaces}
+                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3 h-3" /> Purge All
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmPurgeAllPlaces(false)}
+                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmPurgeAllPlaces(true)}
+                          className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Purge all directory places permanently from database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Purge All
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -6502,7 +6364,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
                           <span className="text-xs text-red-200 font-bold">Purge ALL {allComments.length} comments?</span>
                           <button
-                            onClick={() => {
+                            type="button"
+                            onClick={async () => {
+                              const totalToPurge = allComments.length;
+                              try {
+                                await adminFetch("/api/admin/comments/purge-all", { method: "POST" });
+                              } catch {}
                               allComments.forEach((item) => {
                                 if (onDeleteComment) {
                                   onDeleteComment(
@@ -6514,7 +6381,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               });
                               setSelectedCommentKeys([]);
                               setConfirmPurgeAllComments(false);
-                              showToast(`All ${allComments.length} comments purged permanently.`);
+                              showToast(`All ${totalToPurge} comments purged permanently.`);
                               setTimeout(fetchLiveStats, 400);
                             }}
                             className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
@@ -8773,165 +8640,151 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 7: DATABASE & CLOUD SUITE */}
           {activeTab === "database" && (
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Connectivity & Edge Cluster Ribbon */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-md">
+            <div className="max-w-5xl mx-auto space-y-5">
+              {/* Connectivity & Edge Cluster Header */}
+              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold">
-                      <Database className="w-5 h-5" />
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] text-zinc-200 flex items-center justify-center shrink-0">
+                      <Database className="w-4 h-4" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-white tracking-tight">Database & Edge Cloud Integrations</h2>
+                      <h2 className="text-lg font-semibold text-white tracking-tight">Database & Edge Storage</h2>
                       <p className="text-xs text-zinc-400">
-                        libSQL Edge distributed database engine + Bunny CDN persistent object storage telemetry.
+                        BunnyDB libSQL edge tables and Bunny CDN persistent object storage.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={fetchLiveStats}
-                      disabled={isLoadingLiveStats}
-                      className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-zinc-700 cursor-pointer shadow-sm"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingLiveStats ? "animate-spin text-amber-400" : "text-zinc-400"}`} />
-                      <span>{isLoadingLiveStats ? "Syncing..." : "Sync Tables"}</span>
-                    </button>
-
-                    <button
+                      type="button"
                       onClick={handlePingEdge}
                       disabled={isPingingEdge}
-                      className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-zinc-700 cursor-pointer shadow-sm"
-                      title="Test roundtrip latency to libSQL edge nodes"
+                      className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] disabled:opacity-50 text-zinc-200 hover:text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 border border-white/[0.08] cursor-pointer"
+                      title="Measure roundtrip latency to edge database nodes"
                     >
-                      <Zap className={`w-3.5 h-3.5 text-amber-400 ${isPingingEdge ? "animate-bounce" : ""}`} />
+                      <Zap className="w-3.5 h-3.5 text-zinc-400" />
                       <span>{isPingingEdge ? "Pinging..." : "Ping Edge"}</span>
                     </button>
 
-                    <span className="text-xs font-mono bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800 text-emerald-400 font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                      {liveStats ? `CONNECTED (${liveStats.latencyMs}ms)` : pingEdgeResult ? `CONNECTED (${pingEdgeResult.latencyMs}ms)` : "CONNECTED"}
+                    <span className="text-xs tabular-nums bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/[0.08] text-emerald-400 font-medium">
+                      {liveStats ? `Connected · ${liveStats.latencyMs}ms` : pingEdgeResult ? `Connected · ${pingEdgeResult.latencyMs}ms` : "Connected"}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Database Tables Live Row Parity (10 Tables) */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
+              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl">🐰</span>
-                    <h3 className="font-bold text-white text-base">Bunny.net Database Tables Live Row Parity</h3>
-                  </div>
-                  <span className="text-xs px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold">
-                    10 Database Tables Verified
-                  </span>
+                  <h3 className="font-semibold text-white text-sm tracking-tight">BunnyDB Tables</h3>
+                  <span className="text-[11px] text-zinc-500">Click any table to inspect or edit rows</span>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Real-time row counts directly from Bunny.net libSQL tables. Any create, update, or deletion reflects here immediately.
-                </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-1">
-                  {[
-                    { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, icon: "📸" },
-                    { name: "places", label: "Places Directory", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, icon: "📍" },
-                    { name: "users", label: "User Profiles", count: liveStats?.totals?.users ?? metrics.totalUsers, icon: "👤" },
-                    { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, icon: "💬" },
-                    { name: "likes", label: "Likes & Reactions", count: liveStats?.totals?.likes ?? metrics.totalLikes, icon: "❤️" },
-                    { name: "shares", label: "Shares & Recommendations", count: liveStats?.totals?.shares ?? metrics.totalShares, icon: "↗️" },
-                    { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? metrics.totalBookmarks, icon: "🔖" },
-                    { name: "chats", label: "Direct Messages", count: liveStats?.totals?.chats ?? adminChats.length, icon: "✉️" },
-                    { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, icon: "🔔" },
-                    { name: "businessClaims", label: "Business Claims", count: liveStats?.totals?.businessClaims ?? 0, icon: "🏢" }
-                  ].map((t) => (
-                    <button
-                      key={t.name}
-                      onClick={() => setInspectTableModal(t.name)}
-                      className="p-3 bg-zinc-950 hover:bg-zinc-800 rounded-2xl border border-zinc-800 hover:border-zinc-700 flex flex-col justify-between transition-all cursor-pointer text-left group"
-                    >
-                      <div className="flex items-center justify-between gap-1 w-full">
-                        <span className="font-mono text-[11px] text-zinc-300 font-bold truncate group-hover:text-white">
-                          {t.icon} {t.name}
-                        </span>
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                      </div>
-                      <div className="mt-2.5 flex items-baseline justify-between w-full">
-                        {isLoadingLiveStats && !liveStats ? (
-                          <div className="h-6 w-12 bg-zinc-800/80 animate-pulse rounded-md mt-0.5" />
-                        ) : (
-                          <span className="text-lg font-black text-white font-mono">{t.count}</span>
-                        )}
-                        <span className="text-[10px] text-zinc-500">rows</span>
-                      </div>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+                  {(
+                    [
+                      { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, Icon: Camera },
+                      { name: "places", label: "Places", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, Icon: MapPin },
+                      { name: "users", label: "Users", count: liveStats?.totals?.users ?? metrics.totalUsers, Icon: Users },
+                      { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, Icon: MessageSquare },
+                      { name: "likes", label: "Likes", count: liveStats?.totals?.likes ?? metrics.totalLikes, Icon: Heart },
+                      { name: "shares", label: "Shares", count: liveStats?.totals?.shares ?? metrics.totalShares, Icon: Share2 },
+                      { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? metrics.totalBookmarks, Icon: Bookmark },
+                      { name: "chats", label: "Messages", count: liveStats?.totals?.chats ?? adminChats.length, Icon: Mail },
+                      { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, Icon: Bell },
+                      { name: "businessClaims", label: "Business Claims", count: liveStats?.totals?.businessClaims ?? 0, Icon: Building2 }
+                    ] as const
+                  ).map((t) => {
+                    const TableIcon = t.Icon;
+                    return (
+                      <button
+                        key={t.name}
+                        type="button"
+                        onClick={() => setInspectTableModal(t.name)}
+                        className="p-3 bg-white/[0.02] hover:bg-white/[0.06] rounded-xl border border-white/[0.07] hover:border-white/[0.15] flex flex-col justify-between transition-colors cursor-pointer text-left group"
+                      >
+                        <div className="flex items-center justify-between gap-1.5 w-full">
+                          <span className="text-[11px] text-zinc-400 font-medium truncate group-hover:text-white transition-colors">
+                            {t.label}
+                          </span>
+                          <TableIcon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                        </div>
+                        <div className="mt-2.5 flex items-baseline justify-between w-full">
+                          {isLoadingLiveStats && !liveStats ? (
+                            <div className="h-5 w-10 bg-white/[0.08] animate-pulse rounded mt-0.5" />
+                          ) : (
+                            <span className="text-lg font-semibold text-white tabular-nums">{t.count}</span>
+                          )}
+                          <span className="text-[10px] font-mono text-zinc-500 truncate max-w-[68px]">{t.name}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Bunny CDN Video Storage Telemetry */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
+              {/* Bunny CDN Media Storage Telemetry */}
+              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <HardDrive className="w-5 h-5 text-emerald-400" />
-                    <h3 className="font-bold text-white text-base">Bunny CDN Video Storage Details</h3>
-                  </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={handlePurgeCdnCache}
-                      disabled={isPurgingCdnCache}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-zinc-700 cursor-pointer flex items-center gap-1.5 shadow-sm"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isPurgingCdnCache ? "animate-spin" : ""}`} />
-                      <span>{isPurgingCdnCache ? "Purging Edge..." : "Purge CDN Cache"}</span>
-                    </button>
-                    <span className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg font-bold">
-                      rev1/videos/ Zone
-                    </span>
+                    <HardDrive className="w-4 h-4 text-zinc-400" />
+                    <h3 className="font-semibold text-white text-sm tracking-tight">Bunny CDN Media Storage</h3>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handlePurgeCdnCache}
+                    disabled={isPurgingCdnCache}
+                    className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] disabled:opacity-50 text-zinc-200 hover:text-white rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isPurgingCdnCache ? "animate-spin" : ""}`} />
+                    <span>{isPurgingCdnCache ? "Purging Edge..." : "Purge CDN Cache"}</span>
+                  </button>
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Raw video files uploaded during review creation are stored in the Bunny Edge Storage cluster. Permanent video or account deletion purges the file from this storage bucket.
-                </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Storage Zone</span>
-                    <span className="font-mono text-sm font-bold text-white">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
+                    <span className="text-zinc-500 block mb-1">Storage Zone</span>
+                    <span className="font-mono text-sm font-medium text-white">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
                   </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Video Files in CDN</span>
-                    <span className="font-mono text-sm font-bold text-white">{liveStats?.storage?.filesCount ?? 0} media files</span>
+                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
+                    <span className="text-zinc-500 block mb-1">Media Files in CDN</span>
+                    <span className="text-sm font-semibold text-white tabular-nums">{liveStats?.storage?.filesCount ?? 0} files</span>
                   </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Total Allocated Size</span>
-                    <span className="font-mono text-sm font-bold text-emerald-400">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
+                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
+                    <span className="text-zinc-500 block mb-1">Allocated Size</span>
+                    <span className="text-sm font-semibold text-white tabular-nums">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Backup & Tools */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
-                <h3 className="font-bold text-white text-base">Database Backup, Recovery & Maintenance</h3>
-                <p className="text-sm text-zinc-200">
-                  Export complete collections as formatted JSON for external backups, archiving, or offline analysis.
-                </p>
+              {/* Backup & Recovery (Single canonical home for JSON Export & Master Reset) */}
+              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
+                <div>
+                  <h3 className="font-semibold text-white text-sm tracking-tight">Backup & Recovery</h3>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Export all database collections as a portable JSON snapshot, or perform a full system reset.
+                  </p>
+                </div>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2">
+                <div className="flex flex-wrap items-center gap-2.5">
                   <button
+                    type="button"
                     onClick={handleExportDataJSON}
-                    className="px-5 py-3 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-2xl text-sm transition-all flex items-center gap-2 shadow-lg cursor-pointer active:scale-98"
+                    className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-xl text-xs transition-colors flex items-center gap-2 cursor-pointer"
                   >
-                    <Download className="w-4 h-4" /> Download Complete JSON Backup
+                    <Download className="w-3.5 h-3.5" /> Export JSON Backup
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => setConfirmMasterResetModal(true)}
                     disabled={isMasterResetting}
-                    className="px-5 py-3 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 border border-red-800/40 font-bold rounded-2xl text-sm transition-all flex items-center gap-2 shadow-lg cursor-pointer disabled:opacity-50 active:scale-98"
+                    className="px-4 py-2.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 font-medium rounded-xl text-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    <RefreshCw className="w-4 h-4" />
-                    Master System Reset (Wipe All Data)
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Master System Reset
                   </button>
                 </div>
               </div>
@@ -9094,9 +8947,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                         confirmLabel: "Delete Row",
                                         onConfirm: async () => {
                                           try {
-                                            const res = await fetch(`/api/nosql/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                            let res: Response;
+                                            if (targetTable === "likes" || targetTable === "bookmarks" || targetTable === "shares") {
+                                              res = await adminFetch(`/api/admin/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                            } else {
+                                              res = await fetch(`/api/nosql/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                            }
                                             if (res.ok) {
                                               showToast(`Deleted row ${itemId}`);
+                                              if (targetTable === "likes") fetchAdminLikes();
+                                              if (targetTable === "bookmarks") fetchAdminBookmarks();
+                                              if (targetTable === "shares") fetchAdminShares();
+                                              if (targetTable === "chats") fetchAdminChats();
                                               fetchTableData(targetTable);
                                               fetchLiveStats();
                                             } else {
@@ -9774,10 +9636,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       {/* VIDEO PREVIEW MODAL */}
       {/* ========================================================================= */}
       {previewVideo && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreviewVideo(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]"
+          >
             {/* Close Button */}
             <button
+              type="button"
+              aria-label="Close review preview"
               onClick={() => setPreviewVideo(null)}
               className="absolute top-4 right-4 z-30 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-800 text-zinc-200 hover:text-white transition-colors border border-zinc-700 cursor-pointer"
             >
@@ -9905,7 +9777,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   />
                   <div>
                     <h4 className="font-bold text-sm text-white">{previewVideo.author?.name || "Reviewer"}</h4>
-                    <p className="text-xs text-zinc-200">@{previewVideo.author?.name || "user"}</p>
+                    <p className="text-xs text-zinc-400">
+                      {previewVideo.author?.handle || previewVideo.author?.name || "Anonymous"}
+                    </p>
                   </div>
                 </div>
 
@@ -10698,14 +10572,35 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }
 
                     try {
-                      await fetch(`/api/nosql/videoReviews/${video.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          data: { comments: nextComments },
-                          merge: true
-                        })
-                      });
+                      await Promise.allSettled([
+                        fetch(`/api/nosql/videoReviews/${encodeURIComponent(video.id)}`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            data: { comments: nextComments },
+                            merge: true
+                          })
+                        }),
+                        isReply && parentCommentId
+                          ? fetch(`/api/nosql/comments/${encodeURIComponent(parentCommentId)}`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                data: {
+                                  replies: (nextComments.find((c) => c.id === parentCommentId)?.replies || [])
+                                },
+                                merge: true
+                              })
+                            })
+                          : fetch(`/api/nosql/comments/${encodeURIComponent(comment.id)}`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                data: { text: clean },
+                                merge: true
+                              })
+                            })
+                      ]);
                     } catch (e) {
                       console.warn("Failed to persist edited comment:", e);
                     }

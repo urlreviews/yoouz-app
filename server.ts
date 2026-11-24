@@ -4745,7 +4745,8 @@ async function startServer() {
     const isAdminPath =
       req.path.startsWith("/api/admin") ||
       (req.path.startsWith("/api/system") && req.path !== "/api/system/report-error") ||
-      req.path === "/api/storage/delete-file";
+      req.path === "/api/storage/delete-file" ||
+      req.path === "/api/business/reset-account";
     if (isAdminPath) {
       const origin = String(req.headers.origin || "").trim();
       const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").trim().toLowerCase();
@@ -5520,6 +5521,7 @@ async function startServer() {
   });
 
   app.use("/api/storage/delete-file", requireAdminAuthMiddleware);
+  app.use("/api/business/reset-account", requireAdminAuthMiddleware);
 
   const ALLOWED_NOSQL_COLLECTIONS = new Set([
     "users",
@@ -12425,20 +12427,27 @@ app.delete('/api/admin/likes/:id', async (req, res) => {
       args: [id]
     });
 
+    let updatedLikesCount: number | undefined;
     if (videoId) {
       const countRes = await bunnyDb.execute({
         sql: "SELECT COUNT(*) as total FROM likes WHERE videoId = ?",
         args: [videoId]
       });
       const dbLikes = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+      updatedLikesCount = dbLikes;
       await bunnyDb.execute({
         sql: "UPDATE videoReviews SET likesCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
         args: [dbLikes, videoId]
       });
+      if (typeof feedCache !== "undefined" && feedCache?.videos) {
+        feedCache.videos = feedCache.videos.map((v: any) =>
+          String(v.id) === String(videoId) ? { ...v, likes: dbLikes, likesCount: dbLikes } : v
+        );
+      }
     }
 
-    broadcastSseEvent({ type: "like_deleted", likeId: id, videoId });
-    res.json({ success: true, id, videoId });
+    broadcastSseEvent({ type: "like_deleted", likeId: id, videoId, likesCount: updatedLikesCount });
+    res.json({ success: true, id, videoId, likesCount: updatedLikesCount });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -12451,6 +12460,9 @@ app.post('/api/admin/likes/purge-all', express.json(), async (_req, res) => {
     if (bunnyDb) {
       await bunnyDb.execute("DELETE FROM likes");
       await bunnyDb.execute("UPDATE videoReviews SET likesCount = 0");
+    }
+    if (typeof feedCache !== "undefined" && feedCache?.videos) {
+      feedCache.videos = feedCache.videos.map((v: any) => ({ ...v, likes: 0, likesCount: 0 }));
     }
     broadcastSseEvent({ type: "likes_purged" });
     res.json({ success: true });
@@ -12498,20 +12510,27 @@ app.delete('/api/admin/bookmarks/:id', async (req, res) => {
       args: [id]
     });
 
+    let updatedBookmarksCount: number | undefined;
     if (videoId) {
       const countRes = await bunnyDb.execute({
         sql: "SELECT COUNT(*) as total FROM bookmarks WHERE videoId = ?",
         args: [videoId]
       });
       const dbBookmarks = countRes && countRes.rows && countRes.rows.length > 0 ? Number(countRes.rows[0].total) : 0;
+      updatedBookmarksCount = dbBookmarks;
       await bunnyDb.execute({
         sql: "UPDATE videoReviews SET bookmarksCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
         args: [dbBookmarks, videoId]
       });
+      if (typeof feedCache !== "undefined" && feedCache?.videos) {
+        feedCache.videos = feedCache.videos.map((v: any) =>
+          String(v.id) === String(videoId) ? { ...v, bookmarks: dbBookmarks, bookmarksCount: dbBookmarks } : v
+        );
+      }
     }
 
-    broadcastSseEvent({ type: "bookmark_deleted", bookmarkId: id, videoId });
-    res.json({ success: true, id, videoId });
+    broadcastSseEvent({ type: "bookmark_deleted", bookmarkId: id, videoId, bookmarksCount: updatedBookmarksCount });
+    res.json({ success: true, id, videoId, bookmarksCount: updatedBookmarksCount });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -12525,8 +12544,38 @@ app.post('/api/admin/bookmarks/purge-all', express.json(), async (_req, res) => 
       await bunnyDb.execute("DELETE FROM bookmarks");
       await bunnyDb.execute("UPDATE videoReviews SET bookmarksCount = 0");
     }
+    if (typeof feedCache !== "undefined" && feedCache?.videos) {
+      feedCache.videos = feedCache.videos.map((v: any) => ({ ...v, bookmarks: 0, bookmarksCount: 0 }));
+    }
     broadcastSseEvent({ type: "bookmarks_purged" });
     res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Notifications List (for Database Inspector)
+app.get('/api/admin/notifications', async (_req, res) => {
+  try {
+    const items = await getNoSqlCollectionItems('notifications');
+    items.sort((a: any, b: any) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
+    res.json({ success: true, notifications: items });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Edge & Cache Purge
+app.post('/api/admin/cdn/purge', express.json(), async (_req, res) => {
+  try {
+    if (typeof feedCache !== "undefined" && feedCache) {
+      feedCache.ts = 0;
+    }
+    if (typeof placesApiCache !== "undefined" && placesApiCache) {
+      placesApiCache.ts = 0;
+    }
+    broadcastSseEvent({ type: "cache_purged", timestamp: Date.now() });
+    res.json({ success: true, purgedAt: new Date().toISOString() });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
