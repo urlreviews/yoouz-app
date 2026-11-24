@@ -4742,7 +4742,10 @@ async function startServer() {
   // Scoped Cross-Origin Resource Sharing (CORS) Middleware
   // Public APIs & embeds allow cross-origin reads; authenticated /api/admin/* endpoints restrict CORS to same-origin
   app.use((req, res, next) => {
-    const isAdminPath = req.path.startsWith("/api/admin");
+    const isAdminPath =
+      req.path.startsWith("/api/admin") ||
+      (req.path.startsWith("/api/system") && req.path !== "/api/system/report-error") ||
+      req.path === "/api/storage/delete-file";
     if (isAdminPath) {
       const origin = String(req.headers.origin || "").trim();
       const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").trim().toLowerCase();
@@ -5497,15 +5500,26 @@ async function startServer() {
     return res.json({ success: true });
   });
 
-  app.use("/api/admin", (req, res, next) => {
-    if (req.path.startsWith("/auth/")) return next();
+  const requireAdminAuthMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const authHeader = String(req.headers.authorization || "");
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
     if (!verifyAdminBearerToken(token)) {
       return res.status(401).json({ error: "Admin authentication required." });
     }
     next();
+  };
+
+  app.use("/api/admin", (req, res, next) => {
+    if (req.path.startsWith("/auth/")) return next();
+    return requireAdminAuthMiddleware(req, res, next);
   });
+
+  app.use("/api/system", (req, res, next) => {
+    if (req.path === "/report-error") return next();
+    return requireAdminAuthMiddleware(req, res, next);
+  });
+
+  app.use("/api/storage/delete-file", requireAdminAuthMiddleware);
 
   const ALLOWED_NOSQL_COLLECTIONS = new Set([
     "users",

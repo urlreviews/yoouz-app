@@ -1608,7 +1608,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               <h2 className="text-[16.5px] sm:text-[18.5px] font-semibold tracking-[-0.02em] text-white truncate">
                 {activeCategoryMeta.headingLabel}
               </h2>
-              <span className="hidden sm:inline text-[13.5px] text-zinc-500 font-normal">
+              <span className="hidden sm:inline text-[13.5px] text-zinc-400 font-normal">
                 {activeCategory === "all"
                   ? "· Verified customer photos"
                   : `· ${displayedTrendingVideos.length} live ${displayedTrendingVideos.length === 1 ? "review" : "reviews"}`}
@@ -1918,7 +1918,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         </section>
 
         {/* Whisper-Quiet Minimal Desktop Footer — Copyright Left, Mechanism-Based Trust Signals Center, Legal Right */}
-        <footer className="hidden md:flex items-center justify-between gap-4 w-full mt-auto pt-8 pb-2 border-t border-white/[0.06] text-[12px] text-zinc-500">
+        <footer className="hidden md:flex items-center justify-between gap-4 w-full mt-auto pt-8 pb-2 border-t border-white/[0.06] text-[12px] text-zinc-400">
           <div className="flex items-center gap-2 shrink-0">
             <span className="whitespace-nowrap">{t("legal.allRightsReserved", "© 2026 Yoouz. All rights reserved.")}</span>
           </div>

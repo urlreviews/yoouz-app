@@ -1106,7 +1106,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchHealthDiagnostic = async () => {
     setIsHealthLoading(true);
     try {
-      const res = await fetch("/api/system/health-check");
+      const res = await adminFetch("/api/system/health-check");
       const data = await res.json();
       if (data && data.success) {
         setHealthData(data);
@@ -1119,6 +1119,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchHealthDiagnostic();
     fetchAdminChats();
     const interval = setInterval(() => {
@@ -1132,7 +1133,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       clearInterval(interval);
       unsubscribe();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const videoUploadAlertLogs = useMemo(() => {
     return (healthData?.logs || []).filter((l: any) =>
@@ -1149,7 +1150,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleClearErrorLog = async (id?: string) => {
     resolveAllAppErrors();
     try {
-      const res = await fetch("/api/system/clear-error-logs", {
+      const res = await adminFetch("/api/system/clear-error-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
@@ -1168,7 +1169,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleSyncCommentsCache = async () => {
     setIsSyncingComments(true);
     try {
-      const res = await fetch("/api/system/sync-comments-cache", {
+      const res = await adminFetch("/api/system/sync-comments-cache", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1190,7 +1191,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleReconcileUserProfiles = async () => {
     setIsReconcilingProfiles(true);
     try {
-      const res = await fetch("/api/system/reconcile-user-profiles", {
+      const res = await adminFetch("/api/system/reconcile-user-profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1212,7 +1213,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleAuditFollowers = async () => {
     setIsAuditingFollowers(true);
     try {
-      const res = await fetch("/api/system/audit-followers", {
+      const res = await adminFetch("/api/system/audit-followers", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1234,7 +1235,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleResyncBusinessBanners = async () => {
     setIsResyncingBanners(true);
     try {
-      const res = await fetch("/api/system/resync-business-banners", {
+      const res = await adminFetch("/api/system/resync-business-banners", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1257,7 +1258,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleResyncMapsPreviews = async () => {
     setIsResyncingMaps(true);
     try {
-      const res = await fetch("/api/system/resync-maps-previews", {
+      const res = await adminFetch("/api/system/resync-maps-previews", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });

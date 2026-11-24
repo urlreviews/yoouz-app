@@ -1,5 +1,16 @@
 [
   {
+    "id": "err-1795546616848-r64us",
+    "timestamp": "2026-11-24T18:56:56.848Z",
+    "message": "ping",
+    "component": "Global Application",
+    "category": "uncaught",
+    "url": "",
+    "userAgent": "",
+    "status": "unresolved",
+    "testSteps": "1. Navigate to the application\n2. Perform action leading to: ping"
+  },
+  {
     "id": "err-1792054480938-8acdp",
     "timestamp": "2026-10-15T08:54:40.938Z",
     "message": "Video upload error: ENOENT: no such file or directory, stat '/app/applet/uploads/default-review.mp4'",
