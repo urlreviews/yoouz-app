@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, laz
 import { flushSync } from "react-dom";
 import { Place, VideoReview, ReviewComment, NavSection, FeedSubTab, CopoNotification, CopoMessage, VideoAuthor, UserProfile, NotificationPreferences, DEFAULT_NOTIFICATION_PREFERENCES } from "./types";
 import { isValidLatLng, sanitizeLatLng } from "./utils/geo";
+import { adminFetch, hasAdminToken } from "./lib/adminAuth";
 import { CopoSidebar } from "./components/CopoSidebar";
 import { SEOTags } from "./components/SEOTags";
 import { AEOBlock } from "./components/AEOBlock";
@@ -1438,6 +1439,8 @@ export function App() {
   const [comparisonCompetitor, setComparisonCompetitor] = useState<string>('yelp');
   const [deleteSuccessToast, setDeleteSuccessToast] = useState<boolean>(false);
   const [deactivateSuccessToast, setDeactivateSuccessToast] = useState<boolean>(false);
+  const [pendingDeleteVideoId, setPendingDeleteVideoId] = useState<string | null>(null);
+  const [isDeletingReview, setIsDeletingReview] = useState<boolean>(false);
 
   const forceLogoutUser = (reason?: string) => {
     try {
@@ -2098,13 +2101,8 @@ export function App() {
     
     // 7. Call backend deletion APIs (purges BunnyDB, files, Bunny CDN, memory cache & broadcasts SSE)
     try {
-      await Promise.allSettled([
+      const deleteRequests: Promise<Response>[] = [
         fetch("/api/videos/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId: targetId })
-        }),
-        fetch("/api/admin/videos/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: targetId })
@@ -2112,7 +2110,17 @@ export function App() {
         fetch(`/api/nosql/videoReviews/${encodeURIComponent(targetId)}`, {
           method: "DELETE"
         })
-      ]);
+      ];
+      if (hasAdminToken()) {
+        deleteRequests.push(
+          adminFetch("/api/admin/videos/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId: targetId })
+          })
+        );
+      }
+      await Promise.allSettled(deleteRequests);
     } catch (e) {
       console.warn("Server delete API notice:", e);
     }
@@ -2195,7 +2203,7 @@ export function App() {
     // 7. Call backend admin API & video delete endpoints
     try {
       await Promise.allSettled([
-        fetch("/api/admin/videos/bulk-delete", {
+        adminFetch("/api/admin/videos/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoIds: targetIds })
@@ -2257,7 +2265,7 @@ export function App() {
 
     // 3. Clear backend uploads and database on server
     try {
-      await fetch("/api/admin/videos/purge-all", { method: "POST" });
+      await adminFetch("/api/admin/videos/purge-all", { method: "POST" });
     } catch (e) {}
   };
 
@@ -2268,7 +2276,7 @@ export function App() {
 
     setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, [id, ...variants])));
 
-    fetch(`/api/admin/places/delete`, {
+    adminFetch(`/api/admin/places/delete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, variants })
@@ -2290,7 +2298,7 @@ export function App() {
     setPlaces(prev => prev.filter(p => !isPlaceDeleted(p, allVariants)));
 
     try {
-      await fetch('/api/admin/places/bulk-delete', {
+      await adminFetch('/api/admin/places/bulk-delete', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids, variants: allVariants })
@@ -2309,7 +2317,7 @@ export function App() {
     } catch (e) {}
 
     try {
-      await fetch('/api/admin/places/purge-all', {
+      await adminFetch('/api/admin/places/purge-all', {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -2365,7 +2373,7 @@ export function App() {
       if (userToDelete.role === "Business" && (userToDelete.id || userToDelete.uid)) {
         handleAdminDeletePlace(userToDelete.id || userToDelete.uid);
       }
-      fetch("/api/admin/users/delete", {
+      adminFetch("/api/admin/users/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -7650,13 +7658,22 @@ export function App() {
     setIsCreateModalOpen(true);
   };
 
-  // Handle Deleting a Video Review
-  const handleDeleteVideo = async (videoId: string) => {
+  // Handle Deleting a Video Review (opens sleek in-app confirmation modal)
+  const handleDeleteVideo = (videoId: string) => {
     if (!videoId) return;
-    if (!window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
-      return;
+    setPendingDeleteVideoId(videoId);
+  };
+
+  const handleConfirmDeleteVideo = async () => {
+    if (!pendingDeleteVideoId || isDeletingReview) return;
+    const targetId = pendingDeleteVideoId;
+    setIsDeletingReview(true);
+    try {
+      await handleAdminDeleteVideo(targetId);
+    } finally {
+      setIsDeletingReview(false);
+      setPendingDeleteVideoId(null);
     }
-    await handleAdminDeleteVideo(videoId);
   };
 
   // Helper to robustly check if a place is saved in user's profile
@@ -10183,6 +10200,51 @@ export function App() {
               className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-300 rounded-full"
               style={{ width: `${backgroundUpload.progress}%` }}
             />
+          </div>
+        </div>
+      )}
+
+      {pendingDeleteVideoId && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-review-modal-title"
+          className="fixed inset-0 z-[120] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => !isDeletingReview && setPendingDeleteVideoId(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !isDeletingReview) setPendingDeleteVideoId(null);
+          }}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[#111113] border border-white/[0.1] p-6 shadow-2xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-2">
+              <h3 id="delete-review-modal-title" className="text-lg font-bold text-white tracking-tight">
+                Delete review?
+              </h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                This will permanently remove your review photo and rating. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-1">
+              <button
+                type="button"
+                disabled={isDeletingReview}
+                onClick={() => setPendingDeleteVideoId(null)}
+                className="px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-zinc-200 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingReview}
+                onClick={handleConfirmDeleteVideo}
+                className="px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                {isDeletingReview ? "Deleting..." : "Delete Review"}
+              </button>
+            </div>
           </div>
         </div>
       )}

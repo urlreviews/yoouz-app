@@ -4721,8 +4721,17 @@ function isQuotaError(err: any): boolean {
 
 async function startServer() {
   const app = express();
+  app.disable("x-powered-by");
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const isProd = process.env.NODE_ENV === "production";
+
+  // Baseline Defense-in-Depth HTTP Security Headers (iframe-safe for embed widgets & preview)
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "geolocation=(self), camera=(self), microphone=()");
+    next();
+  });
 
   // Immediate Zero-Latency Health Checks for Container Orchestrator and Bunny Edge Network
   app.get(["/health", "/healthz", "/ping", "/api/health"], (_req, res) => {
@@ -4730,13 +4739,30 @@ async function startServer() {
     return res.status(200).send("OK");
   });
 
-  // Global Cross-Origin Resource Sharing (CORS) Middleware
-  // Ensures flawless API, asset, and video streaming across all domains (yoouz.com, preview, dev, and mobile webviews)
+  // Scoped Cross-Origin Resource Sharing (CORS) Middleware
+  // Public APIs & embeds allow cross-origin reads; authenticated /api/admin/* endpoints restrict CORS to same-origin
   app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Range");
-    res.header("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
+    const isAdminPath = req.path.startsWith("/api/admin");
+    if (isAdminPath) {
+      const origin = String(req.headers.origin || "").trim();
+      const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").trim().toLowerCase();
+      if (origin && host) {
+        try {
+          const parsedOrigin = new URL(origin);
+          if (parsedOrigin.host.toLowerCase() === host) {
+            res.header("Access-Control-Allow-Origin", origin);
+            res.header("Vary", "Origin");
+          }
+        } catch {}
+      }
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    } else {
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH");
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Range");
+      res.header("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
+    }
     if (req.method === "OPTIONS") {
       return res.status(204).end();
     }
@@ -5301,6 +5327,223 @@ async function startServer() {
 
   app.use(express.json({ limit: "150mb" }));
   app.use(express.urlencoded({ extended: true, limit: "150mb" }));
+
+  // =========================================================================
+  // SERVER-SIDE ADMIN AUTHENTICATION & ACCESS CONTROL (/api/admin/*)
+  // =========================================================================
+  const ADMIN_SESSION_SECRET =
+    (process.env.ADMIN_SESSION_SECRET && process.env.ADMIN_SESSION_SECRET.trim()) ||
+    crypto.randomBytes(32).toString("hex");
+  const ADMIN_TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const ADMIN_CRED_FILE = path.resolve(process.cwd(), ".yoouz-admin-cred.json");
+  const revokedAdminTokens = new Set<string>();
+
+  interface StoredAdminCred {
+    salt: string;
+    hash: string;
+    claimedAt: string;
+  }
+
+  const readClaimedAdminCred = async (): Promise<StoredAdminCred | null> => {
+    try {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        const rs = await bunnyDb.execute({
+          sql: `SELECT data FROM nosql_items WHERE id = ? LIMIT 1`,
+          args: ["__yoouz_admin_cred_v1"]
+        });
+        if (rs.rows.length > 0) {
+          const raw = (rs.rows[0] as any)?.data;
+          const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+          if (parsed?.salt && parsed?.hash) return parsed as StoredAdminCred;
+        }
+      }
+    } catch {}
+    try {
+      if (fs.existsSync(ADMIN_CRED_FILE)) {
+        const parsed = JSON.parse(fs.readFileSync(ADMIN_CRED_FILE, "utf8"));
+        if (parsed?.salt && parsed?.hash) return parsed as StoredAdminCred;
+      }
+    } catch {}
+    return null;
+  };
+
+  const writeClaimedAdminCred = async (cred: StoredAdminCred): Promise<void> => {
+    try {
+      const bunnyDb = getBunnyDb();
+      if (bunnyDb) {
+        await bunnyDb.execute({
+          sql: `INSERT INTO nosql_items (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
+          args: ["__yoouz_admin_cred_v1", JSON.stringify(cred)]
+        });
+      }
+    } catch {}
+    try {
+      fs.writeFileSync(ADMIN_CRED_FILE, JSON.stringify(cred), { mode: 0o600 });
+    } catch {}
+  };
+
+  const hashAdminPasscode = (passcode: string, saltHex?: string): { salt: string; hash: string } => {
+    const salt = saltHex || crypto.randomBytes(16).toString("hex");
+    const derived = crypto.scryptSync(passcode, salt, 64).toString("hex");
+    return { salt, hash: derived };
+  };
+
+  const safeCompareStrings = (a: string, b: string): boolean => {
+    const bufA = Buffer.from(a, "utf8");
+    const bufB = Buffer.from(b, "utf8");
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  };
+
+  const issueAdminBearerToken = (): string => {
+    const payload = Buffer.from(
+      JSON.stringify({
+        role: "admin",
+        iat: Date.now(),
+        exp: Date.now() + ADMIN_TOKEN_TTL_MS,
+        jti: crypto.randomBytes(12).toString("hex")
+      }),
+      "utf8"
+    ).toString("base64url");
+    const sig = crypto.createHmac("sha256", ADMIN_SESSION_SECRET).update(payload).digest("base64url");
+    return `${payload}.${sig}`;
+  };
+
+  const verifyAdminBearerToken = (rawToken: string): boolean => {
+    if (!rawToken || revokedAdminTokens.has(rawToken)) return false;
+    const parts = rawToken.split(".");
+    if (parts.length !== 2) return false;
+    const [payload, sig] = parts;
+    const expectedSig = crypto.createHmac("sha256", ADMIN_SESSION_SECRET).update(payload).digest("base64url");
+    if (!safeCompareStrings(sig, expectedSig)) return false;
+    try {
+      const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+      return decoded?.role === "admin" && typeof decoded?.exp === "number" && decoded.exp > Date.now();
+    } catch {
+      return false;
+    }
+  };
+
+  app.get("/api/admin/auth/status", async (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const envPass = String(process.env.ADMIN_PASSCODE || "").trim();
+    if (envPass) {
+      return res.json({ configured: true, source: "env" });
+    }
+    const claimed = await readClaimedAdminCred();
+    if (claimed) {
+      return res.json({ configured: true, source: "claimed" });
+    }
+    return res.json({ configured: false, source: "none" });
+  });
+
+  app.post("/api/admin/auth/setup", async (req, res) => {
+    try {
+      const envPass = String(process.env.ADMIN_PASSCODE || "").trim();
+      if (envPass) {
+        return res.status(409).json({ error: "Admin passcode is already configured via server environment." });
+      }
+      const existing = await readClaimedAdminCred();
+      if (existing) {
+        return res.status(409).json({ error: "Admin passcode has already been claimed." });
+      }
+      const passcode = String(req.body?.passcode || "").trim();
+      if (passcode.length < 8) {
+        return res.status(400).json({ error: "Passcode must be at least 8 characters." });
+      }
+      const { salt, hash } = hashAdminPasscode(passcode);
+      await writeClaimedAdminCred({ salt, hash, claimedAt: new Date().toISOString() });
+      const token = issueAdminBearerToken();
+      return res.json({ success: true, token });
+    } catch (err: any) {
+      return res.status(500).json({ error: "Failed to initialize admin access." });
+    }
+  });
+
+  app.post("/api/admin/auth/login", async (req, res) => {
+    try {
+      const passcode = String(req.body?.passcode || "").trim();
+      if (!passcode) {
+        return res.status(400).json({ error: "Passcode is required." });
+      }
+      const envPass = String(process.env.ADMIN_PASSCODE || "").trim();
+      if (envPass) {
+        // Configured env secret always overrides any claimed fallback hash
+        if (!safeCompareStrings(passcode, envPass)) {
+          return res.status(401).json({ error: "Invalid admin passcode." });
+        }
+        return res.json({ success: true, token: issueAdminBearerToken() });
+      }
+      const claimed = await readClaimedAdminCred();
+      if (!claimed) {
+        return res.status(409).json({ error: "Admin passcode not yet set up. Please complete first-run setup." });
+      }
+      const { hash } = hashAdminPasscode(passcode, claimed.salt);
+      if (!safeCompareStrings(hash, claimed.hash)) {
+        return res.status(401).json({ error: "Invalid admin passcode." });
+      }
+      return res.json({ success: true, token: issueAdminBearerToken() });
+    } catch {
+      return res.status(500).json({ error: "Authentication failed." });
+    }
+  });
+
+  app.post("/api/admin/auth/logout", (req, res) => {
+    const authHeader = String(req.headers.authorization || "");
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (token) revokedAdminTokens.add(token);
+    return res.json({ success: true });
+  });
+
+  app.use("/api/admin", (req, res, next) => {
+    if (req.path.startsWith("/auth/")) return next();
+    const authHeader = String(req.headers.authorization || "");
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!verifyAdminBearerToken(token)) {
+      return res.status(401).json({ error: "Admin authentication required." });
+    }
+    next();
+  });
+
+  const ALLOWED_NOSQL_COLLECTIONS = new Set([
+    "users",
+    "places",
+    "business_profiles",
+    "videoReviews",
+    "videos",
+    "video_reviews",
+    "chats",
+    "notifications",
+    "comments",
+    "likes",
+    "shares",
+    "bookmarks",
+    "follows",
+    "following",
+    "followers",
+    "saved_creators",
+    "saved_places",
+    "contact_requests",
+    "reports",
+    "agencies",
+    "passkeys",
+    "nosql_items"
+  ]);
+
+  const isValidNoSqlCollection = (col: string): boolean =>
+    typeof col === "string" && ALLOWED_NOSQL_COLLECTIONS.has(col);
+
+  const isValidNoSqlId = (id: string): boolean =>
+    typeof id === "string" &&
+    id.length > 0 &&
+    id.length <= 256 &&
+    !id.includes("..") &&
+    !id.includes("/") &&
+    !id.includes("\\") &&
+    !id.includes("\0") &&
+    !id.startsWith("__yoouz_admin_");
 
   app.use((req, res, next) => {
     if (!req.url.startsWith("/src/") && !req.url.startsWith("/api/system/report-error")) {
@@ -9741,6 +9984,9 @@ app.get('/api/nosql/:collection/:id', async (req, res) => {
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
     const { collection: colName, id } = req.params;
+    if (!isValidNoSqlCollection(colName) || !isValidNoSqlId(id)) {
+      return res.status(400).json({ error: "Invalid collection or document ID" });
+    }
 
     if ((colName === 'videoReviews' || colName === 'videos' || colName === 'video_reviews') && isDeletedReviewServer(id)) {
       return res.status(404).json({ error: "Video review not found (permanently deleted)" });
@@ -10205,6 +10451,9 @@ function mergeDeep(target: any, source: any): any {
 const handleSaveNoSqlDoc = async (req: any, res: any) => {
   try {
     const { collection: colName, id } = req.params;
+    if (!isValidNoSqlCollection(colName) || !isValidNoSqlId(id)) {
+      return res.status(400).json({ error: "Invalid collection or document ID" });
+    }
     let data = req.body?.data;
     let merge = req.body?.merge;
     if (data === undefined && req.body && typeof req.body === 'object') {
@@ -11589,6 +11838,9 @@ app.post('/api/admin/users/purge-all', express.json(), async (req, res) => {
 app.delete('/api/nosql/:collection/:id', async (req, res) => {
   try {
     const { collection: colName, id } = req.params;
+    if (!isValidNoSqlCollection(colName) || !isValidNoSqlId(id)) {
+      return res.status(400).json({ error: "Invalid collection or document ID" });
+    }
 
     if (colName === 'videoReviews' || colName === 'videos') {
       await purgeVideoFromAllStores(id);
@@ -37997,6 +38249,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const sendDefaultFavicon = (domainName: string) => {
       const cleanSvg = generateCustomBrandLogo(domainName);
       res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'");
       res.setHeader("Cache-Control", "no-cache, max-age=60");
       res.setHeader("Access-Control-Allow-Origin", "*");
       return res.status(200).send(cleanSvg);
@@ -38013,6 +38267,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       loadBrandAssetIntoRam("logos", `${slug}.webp`);
     if (preLocalizedLogo) {
       res.setHeader("Content-Type", preLocalizedLogo.contentType);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      if (preLocalizedLogo.contentType.includes("svg")) {
+        res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'");
+      }
       res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       res.setHeader("ETag", preLocalizedLogo.etag);
       res.setHeader("Access-Control-Allow-Origin", "*");
@@ -38440,6 +38698,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           },
           signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isLikelyLogoReq ? 3200 : 5200) : undefined
         });
+        if (response?.url && !isSafePublicHttpUrl(response.url)) {
+          return sendFallbackImage();
+        }
         contentType = (response.headers.get('content-type') || '').toLowerCase();
       } catch (directFetchErr) {
         response = null;
@@ -38478,6 +38739,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             );
             cacheProxyImage(proxyCacheKey, fastest.buf, fastest.inferredMime);
             res.setHeader('Content-Type', fastest.inferredMime);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            if (fastest.inferredMime.includes('svg')) {
+              res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'");
+            }
             res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { VideoReview, Place, ReviewComment, UserProfile } from "../types";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
+import { adminFetch, hasAdminToken, setAdminToken } from "../lib/adminAuth";
 import {
   Shield,
   Video,
@@ -160,24 +161,36 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   onBroadcastNotification,
   onExit
 }) => {
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      const email = currentUser?.email?.toLowerCase().trim();
-      const role = currentUser?.role?.toLowerCase();
-      // Always allow admin access for logged in users or session
-      if (role === 'admin' || email || sessionStorage.getItem("yoouz_admin_auth") === "true") {
-        sessionStorage.setItem("yoouz_admin_auth", "true");
-        return true;
-      }
-      return sessionStorage.getItem("yoouz_admin_auth") === "true";
-    } catch {
-      return true; // Default to true so admin never blocks user
-    }
-  });
+  // Authentication State (server-verified in-memory Bearer token only — never stored in localStorage/sessionStorage)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => hasAdminToken());
+  const [authMode, setAuthMode] = useState<"loading" | "setup" | "login">("loading");
+  const [authSource, setAuthSource] = useState<"env" | "claimed" | "none">("none");
   const [passwordInput, setPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+
+  // Check whether an admin passcode is configured on the server
+  useEffect(() => {
+    if (isAuthenticated) return;
+    let cancelled = false;
+    setAuthMode("loading");
+    fetch("/api/admin/auth/status", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        const configured = Boolean(data?.configured);
+        setAuthSource(data?.source || (configured ? "claimed" : "none"));
+        setAuthMode(configured ? "login" : "setup");
+      })
+      .catch(() => {
+        if (!cancelled) setAuthMode("login");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -275,7 +288,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       } else if (tableName === "bookmarks") {
         endpoint = `/api/admin/bookmarks?_t=${Date.now()}`;
       }
-      const res = await fetch(endpoint, { cache: "no-store" });
+      const res = await (endpoint.startsWith("/api/admin/") ? adminFetch(endpoint, { cache: "no-store" }) : fetch(endpoint, { cache: "no-store" }));
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -336,7 +349,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchAdminLikes = useCallback(async () => {
     setIsLoadingLikes(true);
     try {
-      const res = await fetch(`/api/admin/likes?_t=${Date.now()}`);
+      const res = await adminFetch(`/api/admin/likes?_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setAdminLikes(Array.isArray(data) ? data : []);
@@ -351,7 +364,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteLike = async (likeId: string) => {
     setIsDeletingLikeId(likeId);
     try {
-      const res = await fetch(`/api/admin/likes/${likeId}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/likes/${likeId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Like removed successfully");
         setAdminLikes((prev) => prev.filter((l) => l.id !== likeId));
@@ -374,7 +387,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handlePurgeAllLikes = async () => {
     try {
-      const res = await fetch("/api/admin/likes/purge-all", { method: "POST" });
+      const res = await adminFetch("/api/admin/likes/purge-all", { method: "POST" });
       if (res.ok) {
         showToast("All likes purged successfully");
         setAdminLikes([]);
@@ -413,7 +426,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchAdminBookmarks = useCallback(async () => {
     setIsLoadingBookmarks(true);
     try {
-      const res = await fetch(`/api/admin/bookmarks?_t=${Date.now()}`);
+      const res = await adminFetch(`/api/admin/bookmarks?_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setAdminBookmarks(Array.isArray(data) ? data : []);
@@ -428,7 +441,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteBookmark = async (bookmarkId: string) => {
     setIsDeletingBookmarkId(bookmarkId);
     try {
-      const res = await fetch(`/api/admin/bookmarks/${bookmarkId}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/bookmarks/${bookmarkId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Bookmark removed successfully");
         setAdminBookmarks((prev) => prev.filter((b) => b.id !== bookmarkId));
@@ -451,7 +464,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handlePurgeAllBookmarks = async () => {
     try {
-      const res = await fetch("/api/admin/bookmarks/purge-all", { method: "POST" });
+      const res = await adminFetch("/api/admin/bookmarks/purge-all", { method: "POST" });
       if (res.ok) {
         showToast("All bookmarks purged successfully");
         setAdminBookmarks([]);
@@ -469,7 +482,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handlePurgeAllShares = async () => {
     try {
-      const res = await fetch("/api/admin/shares/purge-all", { method: "POST" });
+      const res = await adminFetch("/api/admin/shares/purge-all", { method: "POST" });
       if (res.ok) {
         showToast("All shares purged successfully");
         setAdminShares([]);
@@ -488,7 +501,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchAdminShares = useCallback(async () => {
     setIsLoadingShares(true);
     try {
-      const res = await fetch(`/api/admin/shares?_t=${Date.now()}`);
+      const res = await adminFetch(`/api/admin/shares?_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setAdminShares(Array.isArray(data) ? data : []);
@@ -503,7 +516,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteShare = async (shareId: string) => {
     setIsDeletingShareId(shareId);
     try {
-      const res = await fetch(`/api/admin/shares/${shareId}`, { method: "DELETE" });
+      const res = await adminFetch(`/api/admin/shares/${shareId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Share record removed successfully");
         setAdminShares((prev) => prev.filter((s) => s.id !== shareId));
@@ -537,7 +550,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     if (!input) return;
     setIsTestingBrand(true);
     try {
-      const res = await fetch("/api/admin/test-parse-brand-name", {
+      const res = await adminFetch("/api/admin/test-parse-brand-name", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input })
@@ -558,7 +571,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchSearchIntel = async () => {
     setIsFetchingSearchIntel(true);
     try {
-      const res = await fetch("/api/admin/search-intel");
+      const res = await adminFetch("/api/admin/search-intel");
       if (res.ok) {
         const data = await res.json();
         setSearchIntelLogs(data.logs || []);
@@ -590,7 +603,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         sessionStorage.removeItem("yoouz_search_cache");
       } catch (e) {}
 
-      const res = await fetch("/api/admin/flush-metadata-cache", {
+      const res = await adminFetch("/api/admin/flush-metadata-cache", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -614,7 +627,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleRepairAllBusinessNames = async () => {
     setIsRepairingBrandNames(true);
     try {
-      const res = await fetch("/api/admin/repair-business-names", {
+      const res = await adminFetch("/api/admin/repair-business-names", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -679,7 +692,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchAdminAgencies = useCallback(async () => {
     setIsLoadingAdminAgencies(true);
     try {
-      const res = await fetch(`/api/admin/agencies?_t=${Date.now()}`);
+      const res = await adminFetch(`/api/admin/agencies?_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setAdminAgencies(Array.isArray(data.agencies) ? data.agencies : []);
@@ -694,7 +707,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleAddAgency = async () => {
     if (!newAgency.name) return;
     try {
-      const res = await fetch("/api/admin/agencies", {
+      const res = await adminFetch("/api/admin/agencies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newAgency)
@@ -721,7 +734,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleUpdateAgency = async () => {
     if (!editAgencyModal || !editAgencyModal.name) return;
     try {
-      const res = await fetch(`/api/admin/agencies/${editAgencyModal.id}`, {
+      const res = await adminFetch(`/api/admin/agencies/${editAgencyModal.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editAgencyModal)
@@ -739,7 +752,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteAgency = async (id: string) => {
     if (!confirm("Are you sure you want to delete this agency?")) return;
     try {
-      const res = await fetch(`/api/admin/agencies/${id}`, {
+      const res = await adminFetch(`/api/admin/agencies/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {
@@ -754,7 +767,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const fetchAdminChats = async () => {
     setIsLoadingChats(true);
     try {
-      const res = await fetch("/api/admin/chats");
+      const res = await adminFetch("/api/admin/chats");
       const data = await res.json();
       if (data && data.success && Array.isArray(data.chats)) {
         setAdminChats(data.chats);
@@ -781,7 +794,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeduplicateChats = async () => {
     setIsDeduplicatingChats(true);
     try {
-      const res = await fetch("/api/admin/chats/deduplicate", {
+      const res = await adminFetch("/api/admin/chats/deduplicate", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -802,7 +815,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handlePurgeEmptyChats = async () => {
     if (!confirm("Are you sure you want to purge all empty/orphan chat threads with 0 messages?")) return;
     try {
-      const res = await fetch("/api/admin/chats/purge-empty", {
+      const res = await adminFetch("/api/admin/chats/purge-empty", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -849,7 +862,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handlePurgeAllChats = async () => {
     try {
-      const res = await fetch("/api/admin/chats/purge-all", { method: "POST" });
+      const res = await adminFetch("/api/admin/chats/purge-all", { method: "POST" });
       const data = await res.json();
       if (data && data.success) {
         setAdminChats([]);
@@ -908,7 +921,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeleteMessageFromThread = async (msgIdOrIndex: string | number) => {
     if (!inspectChatModal) return;
     try {
-      const res = await fetch("/api/admin/chats/delete-message", {
+      const res = await adminFetch("/api/admin/chats/delete-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -940,7 +953,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleEditMessageInThread = async (msgIdOrIndex: string | number) => {
     if (!inspectChatModal || !editingMessageText.trim()) return;
     try {
-      const res = await fetch("/api/admin/chats/edit-message", {
+      const res = await adminFetch("/api/admin/chats/edit-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1246,7 +1259,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleVerifyShareCards = async () => {
     setIsVerifyingShareCards(true);
     try {
-      const res = await fetch("/api/admin/verify-social-share-cards", {
+      const res = await adminFetch("/api/admin/verify-social-share-cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1269,7 +1282,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleDeduplicateNotifications = async () => {
     setIsDeduplicatingNotifs(true);
     try {
-      const res = await fetch("/api/admin/notifications/deduplicate", {
+      const res = await adminFetch("/api/admin/notifications/deduplicate", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1486,7 +1499,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setIsLoadingLiveStats(true);
     try {
       const tasks = [
-        fetch("/api/admin/users", { cache: "no-store" })
+        adminFetch("/api/admin/users", { cache: "no-store" })
           .then(async (res) => {
             if (res.ok) {
               const usersData = await res.json();
@@ -1501,7 +1514,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             }
           })
           .catch(() => {}),
-        fetch("/api/admin/live-stats", { cache: "no-store" })
+        adminFetch("/api/admin/live-stats", { cache: "no-store" })
           .then(async (res) => {
             if (res.ok) {
               const data = await res.json();
@@ -1538,7 +1551,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             }
           })
           .catch(() => {}),
-        fetch("/api/admin/chats", { cache: "no-store" })
+        adminFetch("/api/admin/chats", { cache: "no-store" })
           .then(async (res) => {
             if (res.ok) {
               const chatsData = await res.json();
@@ -1692,7 +1705,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
     // 3. Request deletion on server across all databases
     try {
-      const res = await fetch("/api/admin/users/delete", {
+      const res = await adminFetch("/api/admin/users/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1731,7 +1744,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       });
       recordDeletedUsersInLocalStorage(allKeys);
 
-      const res = await fetch("/api/admin/users/purge-all", {
+      const res = await adminFetch("/api/admin/users/purge-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -1747,21 +1760,59 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  // Auth Handler
-  const handleLogin = (e?: React.FormEvent) => {
+  // Server-Backed Auth Handler (supports first-run setup & sign-in)
+  const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsAuthenticated(true);
+    const trimmed = passwordInput.trim();
+    if (!trimmed) {
+      setAuthError("Please enter an admin passcode.");
+      return;
+    }
+    if (authMode === "setup") {
+      if (trimmed.length < 8) {
+        setAuthError("Passcode must be at least 8 characters.");
+        return;
+      }
+      if (trimmed !== confirmPasswordInput.trim()) {
+        setAuthError("Passcodes do not match.");
+        return;
+      }
+    }
+
+    setIsAuthSubmitting(true);
     setAuthError("");
     try {
-      sessionStorage.setItem("yoouz_admin_auth", "true");
-    } catch {}
+      const endpoint = authMode === "setup" ? "/api/admin/auth/setup" : "/api/admin/auth/login";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passcode: trimmed })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.token) {
+        setAuthError(data?.error || (res.status === 401 ? "Invalid admin passcode." : "Authentication failed."));
+        return;
+      }
+      setAdminToken(String(data.token));
+      setPasswordInput("");
+      setConfirmPasswordInput("");
+      setIsAuthenticated(true);
+    } catch {
+      setAuthError("Unable to reach server. Please try again.");
+    } finally {
+      setIsAuthSubmitting(false);
+    }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
     try {
-      sessionStorage.removeItem("yoouz_admin_auth");
+      await adminFetch("/api/admin/auth/logout", { method: "POST" });
     } catch {}
+    setAdminToken(null);
+    setPasswordInput("");
+    setConfirmPasswordInput("");
+    setAuthError("");
+    setIsAuthenticated(false);
   };
 
   const activeKeysSet = useMemo(() => {
@@ -2612,7 +2663,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // 5. Guarantee backend deletion across all endpoints and sync Bunny Stream library
     try {
       await Promise.allSettled([
-        fetch("/api/admin/videos/delete", {
+        adminFetch("/api/admin/videos/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: strId })
@@ -2623,7 +2674,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           body: JSON.stringify({ videoId: strId })
         }),
         fetch(`/api/nosql/videoReviews/${encodeURIComponent(strId)}`, { method: "DELETE" }),
-        fetch("/api/admin/bunny/sync-library", { method: "POST" })
+        adminFetch("/api/admin/bunny/sync-library", { method: "POST" })
       ]);
     } catch (e) {}
 
@@ -2657,7 +2708,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // 4. Direct backend endpoints
     try {
       await Promise.allSettled([
-        fetch("/api/admin/videos/bulk-delete", {
+        adminFetch("/api/admin/videos/bulk-delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoIds: idsToDelete })
@@ -2665,7 +2716,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         ...idsToDelete.map((id) =>
           fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
         ),
-        fetch("/api/admin/bunny/sync-library", { method: "POST" })
+        adminFetch("/api/admin/bunny/sync-library", { method: "POST" })
       ]);
     } catch (e) {}
 
@@ -2689,8 +2740,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // 3. Direct backend call
     try {
       await Promise.allSettled([
-        fetch("/api/admin/videos/purge-all", { method: "POST" }),
-        fetch("/api/admin/bunny/sync-library", { method: "POST" })
+        adminFetch("/api/admin/videos/purge-all", { method: "POST" }),
+        adminFetch("/api/admin/bunny/sync-library", { method: "POST" })
       ]);
     } catch (e) {}
 
@@ -2702,7 +2753,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setIsSeedingCommunity(true);
     showToast("Auto-seeding 20 authentic accounts & business photo reviews...");
     try {
-      const res = await fetch("/api/admin/seed-photo-reviews", {
+      const res = await adminFetch("/api/admin/seed-photo-reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
@@ -2867,7 +2918,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handleSyncBunnyLibrary = async () => {
     try {
-      const res = await fetch("/api/admin/bunny/sync-library", { method: "POST" });
+      const res = await adminFetch("/api/admin/bunny/sync-library", { method: "POST" });
       const data = await res.json();
       if (data.success) {
         showToast(data.message || `Synchronized! Purged ${data.purgedCount} orphaned videos.`);
@@ -2880,7 +2931,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const handlePurgeIncompleteUploads = async () => {
+  const [pendingIncompleteIds, setPendingIncompleteIds] = useState<string[] | null>(null);
+  const [isPurgingIncomplete, setIsPurgingIncomplete] = useState(false);
+
+  const handlePurgeIncompleteUploads = () => {
     const incompleteIds = videos
       .filter(v => v && v.mediaType !== "photo" && !v.photoUrl && !v.bunnyVideoId && (!v.videoUrl || v.videoUrl.includes("/api/videos/stream/") || v.videoUrl.includes("sample-review.mp4")) && (!v.videoData || !v.videoData.startsWith("data:video")))
       .map(v => v.id);
@@ -2890,14 +2944,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       return;
     }
 
-    if (!window.confirm(`Found ${incompleteIds.length} incomplete video upload(s) without valid video files. Do you want to purge them?`)) {
-      return;
-    }
+    setPendingIncompleteIds(incompleteIds);
+  };
 
+  const handleConfirmPurgeIncompleteUploads = async () => {
+    if (!pendingIncompleteIds || pendingIncompleteIds.length === 0) return;
+    setIsPurgingIncomplete(true);
     let purgedCount = 0;
-    for (const vidId of incompleteIds) {
+    for (const vidId of pendingIncompleteIds) {
       try {
-        await fetch("/api/admin/videos/delete", {
+        await adminFetch("/api/admin/videos/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ videoId: vidId })
@@ -2907,6 +2963,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       } catch (e) {}
     }
 
+    setIsPurgingIncomplete(false);
+    setPendingIncompleteIds(null);
     showToast(`Purged ${purgedCount} incomplete upload record(s).`);
     setTimeout(fetchLiveStats, 500);
   };
@@ -2951,7 +3009,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handlePurgeCdnCache = async () => {
     setIsPurgingCdnCache(true);
     try {
-      const res = await fetch("/api/admin/cdn/purge", { method: "POST" });
+      const res = await adminFetch("/api/admin/cdn/purge", { method: "POST" });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         showToast("CDN Edge Cache purged successfully across all edge POPs!");
@@ -2970,7 +3028,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setIsPingingEdge(true);
     const start = performance.now();
     try {
-      await fetch("/api/admin/stats");
+      await adminFetch("/api/admin/stats");
       const latency = Math.round(performance.now() - start);
       setPingEdgeResult({ latencyMs: latency, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) });
       showToast(`Edge node ping response: ${latency}ms`);
@@ -3016,7 +3074,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const handleMasterReset = async () => {
     setIsMasterResetting(true);
     try {
-      const res = await fetch("/api/admin/system/master-reset", { method: "POST" });
+      const res = await adminFetch("/api/admin/system/master-reset", { method: "POST" });
       const data = await res.json();
       if (res.ok && data.success) {
         try {
@@ -3038,8 +3096,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  // Login Screen
+  // Login / First-Run Setup Screen
   if (!isAuthenticated) {
+    const isSetup = authMode === "setup";
+    const isLoadingStatus = authMode === "loading";
     return (
       <div className="flex-1 w-full h-full min-h-screen flex items-center justify-center bg-zinc-950 p-4 relative z-50">
         <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl relative z-10 text-white">
@@ -3048,55 +3108,105 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-black text-white tracking-tight">Yoouz Admin Control</h1>
-            <p className="text-sm text-zinc-200 mt-1">Authenticate to manage database, places, videos, and users</p>
+            <h1 className="text-2xl font-black text-white tracking-tight">
+              {isSetup ? "Set Up Admin Access" : "Yoouz Admin Control"}
+            </h1>
+            <p className="text-sm text-zinc-400 mt-1.5 leading-relaxed">
+              {isSetup
+                ? "Create your owner passcode to lock admin controls. You can also set ADMIN_PASSCODE in environment settings at any time."
+                : "Sign in with your admin passcode to manage places, reviews, and users."}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-200 mb-2">Admin Passcode</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Enter admin password"
-                  autoFocus
-                  className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 pr-12 text-base transition-all font-medium select-text"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-200 hover:text-white cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+          {isLoadingStatus ? (
+            <div className="py-8 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
+            </div>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
+                  {isSetup ? "Create Admin Passcode (8+ chars)" : "Admin Passcode"}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      if (authError) setAuthError("");
+                    }}
+                    placeholder={isSetup ? "Choose a strong passcode" : "Enter admin passcode"}
+                    autoFocus
+                    autoComplete={isSetup ? "new-password" : "current-password"}
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 pr-12 text-base transition-all font-medium select-text"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide passcode" : "Show passcode"}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
-              {authError && (
-                <div className="flex items-center gap-1.5 text-zinc-200 text-xs font-semibold mt-2">
-                  <AlertTriangle className="w-3.5 h-3.5" /> {authError}
+
+              {isSetup && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
+                    Confirm Passcode
+                  </label>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPasswordInput}
+                    onChange={(e) => {
+                      setConfirmPasswordInput(e.target.value);
+                      if (authError) setAuthError("");
+                    }}
+                    placeholder="Re-enter passcode"
+                    autoComplete="new-password"
+                    className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-zinc-500 text-base transition-all font-medium select-text"
+                  />
                 </div>
               )}
-            </div>
 
-            <button
-              type="submit"
-              className="w-full py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-2xl transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2 text-base cursor-pointer"
-            >
-              <Lock className="w-4 h-4" />
-              Access Dashboard
-            </button>
+              {authError && (
+                <div className="flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {authError}
+                </div>
+              )}
 
-            <div className="pt-2 flex items-center justify-center text-xs text-zinc-400">
               <button
-                type="button"
-                onClick={onExit}
-                className="text-zinc-400 hover:text-white transition-colors cursor-pointer text-center font-medium"
+                type="submit"
+                disabled={isAuthSubmitting}
+                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:opacity-60 text-zinc-950 font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-base cursor-pointer"
               >
-                Return to App
+                <Lock className="w-4 h-4" />
+                {isAuthSubmitting
+                  ? "Verifying..."
+                  : isSetup
+                  ? "Claim Admin Access"
+                  : "Access Dashboard"}
               </button>
-            </div>
-          </form>
+
+              {authSource === "env" && !isSetup && (
+                <p className="text-[11px] text-center text-zinc-500">
+                  Protected by server-configured ADMIN_PASSCODE
+                </p>
+              )}
+
+              <div className="pt-2 flex items-center justify-center text-xs text-zinc-400">
+                <button
+                  type="button"
+                  onClick={onExit}
+                  className="text-zinc-400 hover:text-white transition-colors cursor-pointer text-center font-medium"
+                >
+                  Return to App
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -3104,6 +3214,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   return (
     <div className="flex-1 w-full h-full min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans absolute inset-0 z-50 overflow-hidden select-none">
+      {/* Incomplete Uploads Confirmation Modal */}
+      {pendingIncompleteIds && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => !isPurgingIncomplete && setPendingIncompleteIds(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-white tracking-tight">Purge Incomplete Uploads</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                Found {pendingIncompleteIds.length} incomplete video upload(s) without valid media files. Permanently remove them?
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isPurgingIncomplete}
+                onClick={() => setPendingIncompleteIds(null)}
+                className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPurgingIncomplete}
+                onClick={handleConfirmPurgeIncompleteUploads}
+                className="px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                {isPurgingIncomplete ? "Purging..." : "Purge Records"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast Banner */}
       {toastMessage && (
         <div className="fixed top-5 right-6 z-50 bg-zinc-900/95 backdrop-blur border border-zinc-800 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
