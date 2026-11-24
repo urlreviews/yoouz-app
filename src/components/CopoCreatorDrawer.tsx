@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { registerFaceIdPasskey, restoreAccountWithPasskey, isDesktopPasskeyViewport } from "../lib/passkeyAuth";
 import { VideoAuthor, VideoReview, UserProfile } from "../types";
-import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName, isPlaceReviewMatch } from "../utils/placeUtils";
+import { isAuthorMatch, getDisplayUrlAsDomain, getDisplayViews, formatViewCount, KNOWN_COMMUNITY_USERS, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, resolveSafeAuthor, getPlaceSlug, normalizeLocationString, getReviewTime, formatCityCountry, extractCleanDomain, formatBusinessName, isPlaceReviewMatch } from "../utils/placeUtils";
 import { formatCompactRecency } from "../utils/dateUtils";
 import { classifyBusinessCategory } from "../utils/categoryUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
@@ -1693,8 +1693,8 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     const wholeStars = getRoundedRating(v.rating || 5);
                     const recency = formatCompactRecency(v.recordedAt, v.createdAtMs);
                     const matchedPlace = places.find((p) => isPlaceReviewMatch(v, p));
-                    const bName = matchedPlace?.name || v.businessName || v.placeName || formatBusinessName(v.placeId) || "Business";
                     const bDomain = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || v.placeWebsite || v.placeId || "") || "";
+                    const bName = (bDomain && KNOWN_OFFICIAL_NAMES[bDomain.toLowerCase()]) || matchedPlace?.name || v.businessName || v.placeName || formatBusinessName(v.placeId) || "Business";
                     const bLogo = matchedPlace?.logoUrl || v.placeLogoUrl || "";
                     const catInfo = classifyBusinessCategory({
                       rawCategory: matchedPlace?.category || v.placeCategory,

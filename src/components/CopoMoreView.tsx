@@ -635,7 +635,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       <main className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-9 pb-8 space-y-7 sm:space-y-9">
         {/* Editorial Hero Header + Liquid-Glass Segmented Control */}
         <section aria-label="Knowledge Navigation" className="space-y-6">
-          <div className="flex items-start gap-3.5 max-w-2xl">
+          <div className="flex items-start gap-3.5 max-w-3xl">
             {!isBusinessSuiteEmbedded && (
               <button
                 type="button"
@@ -654,10 +654,10 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
               </button>
             )}
             <div className="space-y-2">
-              <h1 className="text-[26px] sm:text-[34px] font-semibold tracking-[-0.03em] text-white leading-[1.1]">
+              <h1 className="text-[26px] sm:text-[34px] font-semibold tracking-[-0.03em] text-white leading-[1.1] [text-wrap:balance]">
                 {t("trustCenter.title", "Knowledge & Trust Center")}
               </h1>
-              <p className="text-sm sm:text-[15px] text-zinc-400 leading-relaxed font-normal">
+              <p className="text-sm sm:text-[15px] text-zinc-400 leading-relaxed font-normal [text-wrap:balance]">
                 {t("trustCenter.heroSubtitle", "How Yoouz verifies live camera proof, protects privacy, and empowers transparent businesses.")}
               </p>
             </div>
@@ -760,7 +760,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.theYoouzStandard", "The Yoouz Standard")}</span>
                   </div>
-                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15]">
+                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15] [text-wrap:balance]">
                     {t("trustCenter.trustEvolutionTitle", "The Evolution of Trust: From Static Text to Visual Proof")}
                   </h2>
                   <p className="text-sm text-zinc-300 leading-relaxed font-normal">
@@ -1099,8 +1099,8 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                         </button>
 
                         {isOpen && (
-                          <div className="mt-3 pt-1 text-[13.5px] text-zinc-300 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
-                            <p className="bg-white/[0.03] p-4 rounded-2xl border border-white/[0.07]">
+                          <div className="mt-2.5 pr-10 text-[13.5px] text-zinc-400 leading-relaxed font-normal animate-in slide-in-from-top-1 duration-150">
+                            <p>
                               {t(`trustCenter.faq_${faq.id.replace(/-/g, "_")}_a`, faq.answer)}
                             </p>
                           </div>
@@ -1124,7 +1124,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <Building2 className="w-3.5 h-3.5" />
                     <span>{t("trustCenter.forBusinesses", "Business Verification Portal")}</span>
                   </div>
-                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15]">
+                  <h2 className="text-2xl sm:text-[32px] font-semibold text-white tracking-[-0.03em] leading-[1.15] [text-wrap:balance]">
                     {t("trustCenter.businessHeroTitle", "Claim Your Business Domain & Engage Directly")}
                   </h2>
                   <p className="text-sm text-zinc-400 leading-relaxed">

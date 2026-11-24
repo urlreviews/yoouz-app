@@ -88,6 +88,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isDropdownDismissedRef = useRef(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [activeCategory, setActiveCategory] = useState<CanonicalCategoryId>("all");
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -120,9 +121,17 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     setSelectedIndex(-1);
   }, [suggestions]);
 
-  // Global keyboard shortcut to focus search (/ or Cmd+K)
+  // Global keyboard shortcut to focus search (/ or Cmd+K) and dismiss dropdown (Escape)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && showDropdown) {
+        e.preventDefault();
+        isDropdownDismissedRef.current = true;
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+        searchInputRef.current?.blur();
+        return;
+      }
       const activeEl = document.activeElement;
       const isInput = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || (activeEl as HTMLElement).isContentEditable);
       
@@ -133,7 +142,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [showDropdown]);
 
   // Auto-focus search input synchronously when requested (e.g. tapping Search or Review on mobile, tablet, or desktop)
   useLayoutEffect(() => {
@@ -682,7 +691,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     const dedupedLocal = dedupeSuggestions(localMatches);
     const rankedLocal = rankSuggestions(dedupedLocal, qSearchClean || trimmed).slice(0, 6);
     setSuggestions(rankedLocal);
-    setShowDropdown(true);
+    if (!isDropdownDismissedRef.current && document.activeElement === searchInputRef.current) {
+      setShowDropdown(true);
+    }
 
     setIsLoadingSuggest(true);
     let cancelled = false;
@@ -696,7 +707,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           const merged = dedupeSuggestions([...dedupedLocal, ...serverList]);
           const rankedMerged = rankSuggestions(merged, qSearchClean || trimmed).slice(0, 6);
           setSuggestions(rankedMerged);
-          setShowDropdown(true);
+          if (!isDropdownDismissedRef.current && document.activeElement === searchInputRef.current) {
+            setShowDropdown(true);
+          }
         }
       } catch (e) {
       } finally {
@@ -714,6 +727,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        isDropdownDismissedRef.current = true;
         setShowDropdown(false);
       }
     };
@@ -1033,9 +1047,21 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      isDropdownDismissedRef.current = true;
+      if (showDropdown) {
+        e.preventDefault();
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+      }
+      e.currentTarget.blur();
+      return;
+    }
+
     if (!showDropdown || suggestions.length === 0) {
       if (e.key === "ArrowDown" && suggestions.length > 0) {
         e.preventDefault();
+        isDropdownDismissedRef.current = false;
         setShowDropdown(true);
         setSelectedIndex(0);
       }
@@ -1061,10 +1087,6 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         e.preventDefault();
         handleSelectSuggestion(suggestions[selectedIndex]);
       }
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      setShowDropdown(false);
-      setSelectedIndex(-1);
     }
   };
 
@@ -1244,10 +1266,14 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     data-form-type="other"
                     aria-autocomplete="none"
                     value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={(e) => {
+                      isDropdownDismissedRef.current = false;
+                      setQuery(e.target.value);
+                    }}
                     onKeyDown={handleInputKeyDown}
                     onFocus={() => {
                       setIsFocused(true);
+                      isDropdownDismissedRef.current = false;
                       if (isMobile && !isMobileSearchOpen) {
                         flushSync(() => {
                           setIsMobileSearchOpen(true);
@@ -1716,8 +1742,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               >
                 {displayedTrendingVideos.map((video, idx) => {
                   const matchedPlace = places.find((p) => isPlaceReviewMatch(video, p));
-                  const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                   const brandDomain = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || "") || "";
+                  const businessName = (brandDomain && KNOWN_OFFICIAL_NAMES[brandDomain.toLowerCase()]) || matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                   const brandLogoUrl = matchedPlace?.logoUrl || video.placeLogoUrl || "";
                   const catInfo = reviewCategoryMap.get(video.id) || classifyBusinessCategory({
                     rawCategory: matchedPlace?.category || video.placeCategory,

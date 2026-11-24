@@ -1002,7 +1002,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                 >
                   {trendingVideos.map((video, idx) => {
                     const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
-                    const businessName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
+                    const bDom = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || "") || "";
+                    const businessName = (bDom && KNOWN_OFFICIAL_NAMES[bDom.toLowerCase()]) || matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
 
                     const author = resolveSafeAuthor(video, null);
                     const creatorFullName = author?.name || (author?.firstName ? `${author.firstName} ${author.lastName || ""}`.trim() : "") || video.authorName || "Reviewer";
@@ -1291,7 +1292,8 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {placeVideos.map(video => {
                   const matchedPlace = places.find(p => isPlaceReviewMatch(video, p));
-                  const bName = matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
+                  const bDom = extractCleanDomain(matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || "") || "";
+                  const bName = (bDom && KNOWN_OFFICIAL_NAMES[bDom.toLowerCase()]) || matchedPlace?.name || video.businessName || video.placeName || formatBusinessName(video.placeId) || "Business";
                   const rating = typeof video.rating === "number" ? video.rating : 5.0;
                   const posterUrl = video.photoUrl || video.thumbnailUrl || video.videoUrl || "";
 

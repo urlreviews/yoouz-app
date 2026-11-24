@@ -24,7 +24,8 @@ import {
   extractCleanDomain,
   getSafeAvatarUrl,
   getDisplayUrlAsDomain,
-  isPlaceReviewMatch
+  isPlaceReviewMatch,
+  KNOWN_OFFICIAL_NAMES
 } from "../utils/placeUtils";
 import { isPurgedItem } from "../hooks/useFeedPagination";
 import { getProxiedImageUrl } from "../utils/logoUtils";
@@ -312,7 +313,9 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   const cardDomain = extractCleanDomain(
     matchedPlace?.brandDomain || matchedPlace?.website || video.placeWebsite || video.placeId || video.placeName
   );
+  const officialBrandName = cardDomain ? KNOWN_OFFICIAL_NAMES[cardDomain.toLowerCase()] : undefined;
   const cardBusinessName =
+    officialBrandName ||
     businessName ||
     matchedPlace?.name ||
     formatBusinessName(video?.businessName || video?.placeName || video?.dishOrItem || video?.placeId, cardDomain) ||
