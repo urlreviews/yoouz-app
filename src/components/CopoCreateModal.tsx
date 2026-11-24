@@ -123,6 +123,18 @@ export const CopoCreateModal: React.FC<CopoCreateModalProps> = ({
     return () => window.removeEventListener("resize", updateDevice);
   }, []);
 
+  // Dismiss modal cleanly on Escape key (desktop keyboard standard)
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isPublishingRef.current) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   const userClearedPlaceRef = useRef(false);
   const wasOpenRef = useRef(false);
 

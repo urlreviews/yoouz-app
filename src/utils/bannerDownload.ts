@@ -62,6 +62,6 @@ export async function downloadYoouzBanner(format: 'svg' | 'png' = 'svg') {
   } catch (err) {
     console.error('Error downloading Yoouz brand banner:', err);
     // Direct link fallback
-    window.open('/yoouz-brand-banner.svg', '_blank');
+    window.open('/yoouz-brand-banner.svg', '_blank', 'noopener,noreferrer');
   }
 }

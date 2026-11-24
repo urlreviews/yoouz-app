@@ -114,7 +114,7 @@ export const GoogleDirectionsModal: React.FC<GoogleDirectionsModalProps> = ({
           <button
             onClick={() => {
               const url = getGoogleMapsDirectionsUrl(destination, displayName);
-              window.open(url, "_blank");
+              window.open(url, "_blank", "noopener,noreferrer");
             }}
             className="w-full py-3 rounded-2xl bg-white hover:bg-zinc-200 text-black font-black text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-98"
           >

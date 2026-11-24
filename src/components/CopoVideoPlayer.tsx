@@ -934,6 +934,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         return;
       }
 
+      if (e.key === "Escape" && moreMenuVideo !== null) {
+        e.preventDefault();
+        setMoreMenuVideo(null);
+        return;
+      }
+
       if (
         moreMenuVideo !== null ||
         document.querySelector("#copo-create-review-modal, #copo-auth-modal, #yoouz-report-modal-overlay, #yoouz-share-modal-overlay") !== null
@@ -941,7 +947,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         return;
       }
 
-      if (e.key === "ArrowUp" || e.key === "PageUp") {
+      if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "k" || e.key === "K") {
         e.preventDefault();
         handlePrev();
       } else if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j" || e.key === "J") {

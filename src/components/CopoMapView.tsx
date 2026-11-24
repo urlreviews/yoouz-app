@@ -359,7 +359,7 @@ export const CopoMapView: React.FC<CopoMapViewProps> = ({
                   <button
                     onClick={() => {
                       const url = getGoogleMapsDirectionsUrl(selectedPlace);
-                      window.open(url, "_blank");
+                      window.open(url, "_blank", "noopener,noreferrer");
                     }}
                     className="flex flex-col items-center gap-1 text-[11px] text-zinc-200 hover:text-white hover:scale-105 transition-all cursor-pointer"
                   >

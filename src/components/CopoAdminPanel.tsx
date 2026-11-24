@@ -265,6 +265,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   });
 
   const [confirmMasterResetModal, setConfirmMasterResetModal] = useState(false);
+  const [adminConfirmDialog, setAdminConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => Promise<void> | void;
+  } | null>(null);
+  const [isAdminConfirmRunning, setIsAdminConfirmRunning] = useState(false);
   const [isPurgingCdnCache, setIsPurgingCdnCache] = useState(false);
   const [isPingingEdge, setIsPingingEdge] = useState(false);
   const [pingEdgeResult, setPingEdgeResult] = useState<{ latencyMs: number; timestamp: string } | null>(null);
@@ -583,12 +590,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (activeTab === "search") {
       fetchSearchIntel();
       const interval = setInterval(fetchSearchIntel, 10000);
       return () => clearInterval(interval);
     }
-  }, [activeTab]);
+  }, [activeTab, isAuthenticated]);
 
   const handleFlushMetadataAndAssetCache = async () => {
     setIsFlushingMetadataCache(true);
@@ -749,19 +757,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const handleDeleteAgency = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this agency?")) return;
-    try {
-      const res = await adminFetch(`/api/admin/agencies/${id}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        showToast("Agency deleted successfully!");
-        fetchAdminAgencies();
+  const handleDeleteAgency = (id: string) => {
+    setAdminConfirmDialog({
+      title: "Delete agency?",
+      message: "This will permanently remove the agency record from Yoouz.",
+      confirmLabel: "Delete Agency",
+      onConfirm: async () => {
+        try {
+          const res = await adminFetch(`/api/admin/agencies/${id}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            showToast("Agency deleted successfully!");
+            fetchAdminAgencies();
+          }
+        } catch (e) {
+          showToast("Error deleting agency");
+        }
       }
-    } catch (e) {
-      showToast("Error deleting agency");
-    }
+    });
   };
 
   const fetchAdminChats = async () => {
@@ -780,6 +794,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     if (activeTab === "messages") {
       fetchAdminChats();
     }
@@ -789,7 +804,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     if (activeTab === "bookmarks" || activeTab === "overview") {
       fetchAdminBookmarks();
     }
-  }, [activeTab, fetchAdminLikes, fetchAdminBookmarks]);
+  }, [activeTab, isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
 
   const handleDeduplicateChats = async () => {
     setIsDeduplicatingChats(true);
@@ -812,21 +827,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const handlePurgeEmptyChats = async () => {
-    if (!confirm("Are you sure you want to purge all empty/orphan chat threads with 0 messages?")) return;
-    try {
-      const res = await adminFetch("/api/admin/chats/purge-empty", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        showToast(`Purged ${data.deletedCount || 0} empty thread(s).`);
-        fetchAdminChats();
+  const handlePurgeEmptyChats = () => {
+    setAdminConfirmDialog({
+      title: "Purge empty chat threads?",
+      message: "Remove all orphan chat threads that contain zero messages.",
+      confirmLabel: "Purge Threads",
+      onConfirm: async () => {
+        try {
+          const res = await adminFetch("/api/admin/chats/purge-empty", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            showToast(`Purged ${data.deletedCount || 0} empty thread(s).`);
+            fetchAdminChats();
+          }
+        } catch (e) {
+          showToast("Failed to purge empty threads.");
+        }
       }
-    } catch (e) {
-      showToast("Failed to purge empty threads.");
-    }
+    });
   };
 
   const handleDeleteAdminChat = async (chatId: string) => {
@@ -1582,6 +1603,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   // Cross-component deletion reactivity
   useEffect(() => {
+    if (!isAuthenticated) return;
     const handleDeleted = (e: any) => {
       const vidId = e?.detail?.videoId;
       if (vidId) {
@@ -1634,7 +1656,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       window.removeEventListener("copo-new-comment", handleComment);
       window.removeEventListener("copo-profile-updated", handleProfileUpdated);
     };
-  }, [fetchAdminLikes, fetchAdminBookmarks]);
+  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -3214,6 +3236,52 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   return (
     <div className="flex-1 w-full h-full min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans absolute inset-0 z-50 overflow-hidden select-none">
+      {/* Reusable Obsidian Admin Confirmation Modal */}
+      {adminConfirmDialog && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => !isAdminConfirmRunning && setAdminConfirmDialog(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-white tracking-tight">{adminConfirmDialog.title}</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">{adminConfirmDialog.message}</p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isAdminConfirmRunning}
+                onClick={() => setAdminConfirmDialog(null)}
+                className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isAdminConfirmRunning}
+                onClick={async () => {
+                  setIsAdminConfirmRunning(true);
+                  try {
+                    await adminConfirmDialog.onConfirm();
+                  } finally {
+                    setIsAdminConfirmRunning(false);
+                    setAdminConfirmDialog(null);
+                  }
+                }}
+                className="px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-white text-sm font-semibold transition-colors cursor-pointer"
+              >
+                {isAdminConfirmRunning ? "Working..." : adminConfirmDialog.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Incomplete Uploads Confirmation Modal */}
       {pendingIncompleteIds && (
         <div
@@ -9016,20 +9084,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <span>Raw JSON</span>
                                   </button>
                                   <button
-                                    onClick={async () => {
-                                      if (!confirm(`Are you sure you want to delete row ${itemId} from ${inspectTableModal}?`)) return;
-                                      try {
-                                        const res = await fetch(`/api/nosql/${inspectTableModal}/${itemId}`, { method: "DELETE" });
-                                        if (res.ok) {
-                                          showToast(`Deleted row ${itemId}`);
-                                          fetchTableData(inspectTableModal);
-                                          fetchLiveStats();
-                                        } else {
-                                          showToast("Failed to delete row");
+                                    type="button"
+                                    onClick={() => {
+                                      const targetTable = inspectTableModal;
+                                      setAdminConfirmDialog({
+                                        title: "Delete database row?",
+                                        message: `Permanently delete row ${itemId} from ${targetTable}?`,
+                                        confirmLabel: "Delete Row",
+                                        onConfirm: async () => {
+                                          try {
+                                            const res = await fetch(`/api/nosql/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                            if (res.ok) {
+                                              showToast(`Deleted row ${itemId}`);
+                                              fetchTableData(targetTable);
+                                              fetchLiveStats();
+                                            } else {
+                                              showToast("Failed to delete row");
+                                            }
+                                          } catch (e) {
+                                            showToast("Error deleting row");
+                                          }
                                         }
-                                      } catch (e) {
-                                        showToast("Error deleting row");
-                                      }
+                                      });
                                     }}
                                     className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-lg cursor-pointer transition-colors"
                                     title="Delete Row"

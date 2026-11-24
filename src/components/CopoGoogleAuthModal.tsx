@@ -441,7 +441,6 @@ export const CopoAuthPrompt: React.FC<{
   // STEP 3: Complete Profile & Persist
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    console.log("[Auth] handleSaveProfile starting");
     
     const fName = (firstName || "").trim();
     const lName = (lastName || "").trim();
@@ -460,7 +459,6 @@ export const CopoAuthPrompt: React.FC<{
 
     try {
       const cleanEmail = (email || tempUser?.email || currentUser?.email || "").trim().toLowerCase();
-      console.log("[Auth] Clean email:", cleanEmail);
       if (!cleanEmail) {
         throw new Error("Missing email address.");
       }
@@ -477,7 +475,6 @@ export const CopoAuthPrompt: React.FC<{
 
       // If user uploaded a custom photo (data:image/jpeg/png...), upload to Bunny CDN / storage
       if (finalAvatar && finalAvatar.startsWith('data:image/')) {
-        console.log("[Auth] Uploading avatar...");
         try {
           const avatarMime = finalAvatar.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1] || 'image/jpeg';
           const uploadRes = await fetch('/api/user/upload-avatar', {
@@ -542,14 +539,12 @@ export const CopoAuthPrompt: React.FC<{
         isNewUser: false,
         isVerified: false
       };
-      console.log("[Auth] User object prepared:", updatedUser);
 
       // Add a 30s timeout to the fetch call to prevent permanent loading spinner
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
-        console.log("[Auth] Sending fetch to /api/auth/update-profile");
         const response = await fetch("/api/auth/update-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -558,7 +553,6 @@ export const CopoAuthPrompt: React.FC<{
         });
 
         clearTimeout(timeoutId);
-        console.log("[Auth] Fetch finished. Response status:", response.status);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -566,7 +560,6 @@ export const CopoAuthPrompt: React.FC<{
         }
 
         const result = await response.json();
-        console.log("[Auth] Profile update result received:", result);
         
         // Use the server-returned user object if available, as it may have been normalized
         const finalUser = result.user || updatedUser;
@@ -589,7 +582,6 @@ export const CopoAuthPrompt: React.FC<{
       setErrorMessage(err.message || "Failed to save profile. Please try again.");
     } finally {
       setIsLoading(false);
-      console.log("[Auth] handleSaveProfile finished");
     }
   };
 

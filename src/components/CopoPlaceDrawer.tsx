@@ -1483,7 +1483,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
   const handleOpenDirections = () => {
     const url = getGoogleMapsDirectionsUrl(effectivePlaceForMaps, displayedPlaceName);
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const { dragOffsetY, swipeProps } = useSwipeDownToDismiss({

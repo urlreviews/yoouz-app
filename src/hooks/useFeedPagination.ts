@@ -185,8 +185,7 @@ const PROTECTED_FEED_PLACES = new Set([
 const PROTECTED_FEED_CREATORS = new Set([
   "edjo francis ramos",
   "edjofrancisramos",
-  "@edjofrancisramos",
-  "edjofrancisramos18@gmail.com"
+  "@edjofrancisramos"
 ]);
 
 export const AUTHENTIC_PROTECTED_REVIEW_IDS = new Set([
