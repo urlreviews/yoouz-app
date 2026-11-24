@@ -12,7 +12,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { VideoReview, UserProfile, Place } from "../types";
-import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain, getSafeAvatarUrl } from "../utils/placeUtils";
+import { getDisplayUrlAsDomain, formatCityCountry, formatBusinessName, extractCleanDomain, getSafeAvatarUrl, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { formatCompactRecency } from "../utils/dateUtils";
 import { classifyBusinessCategory } from "../utils/categoryUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -100,7 +100,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
   };
 
   return (
-    <div className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white p-4 md:p-8 select-none" style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))' }}>
+    <div className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white p-4 md:p-8 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pb-12 select-none">
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Header Section */}
@@ -109,18 +109,16 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
+                className="w-10 h-10 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95 border border-white/[0.1]"
                 title="Back to Feed"
+                aria-label="Back to Feed"
               >
                 <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
               </button>
             )}
-            <div className="w-10 h-10 rounded-full bg-white/[0.05] text-white flex items-center justify-center border border-white/[0.1]">
-              <Bookmark className="w-5 h-5 fill-current" />
-            </div>
             <div>
-              <h1 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("bookmarks.savedTitle", "Saved")}</h1>
-              <p className="text-xs text-zinc-400 font-medium">
+              <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em]">{t("bookmarks.savedTitle", "Saved")}</h1>
+              <p className="text-xs text-zinc-400 font-normal mt-0.5">
                 {t("bookmarks.savedSubtitle", "Your saved photo reviews, places & reviewers")}
               </p>
             </div>
@@ -128,7 +126,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
         </div>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-zinc-800 gap-6 text-sm font-bold">
+        <div className="flex border-b border-white/[0.08] gap-6 text-sm font-semibold">
           <button
             onClick={() => setActiveTab("videos")}
             className={`pb-3 relative cursor-pointer transition-all ${
@@ -182,7 +180,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               {bookmarkedVideos.map((video) => {
                 const wholeStars = getRoundedRating(video.rating || 5);
                 const bDomain = extractCleanDomain(video.placeWebsite || video.placeId || "") || getDisplayUrlAsDomain(video);
-                const bName = formatBusinessName(video.placeName || bDomain) || "Business";
+                const bName = (bDomain && KNOWN_OFFICIAL_NAMES[bDomain.toLowerCase()]) || formatBusinessName(video.placeName || bDomain) || "Business";
                 const recency = formatCompactRecency(video.recordedAt, video.createdAtMs);
                 const catInfo = classifyBusinessCategory({
                   rawCategory: video.placeCategory,
@@ -331,7 +329,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
             <div className="space-y-3">
               {savedPlaces.map((place) => {
                 const cleanDomain = extractCleanDomain(place.id || place.website || place.brandDomain || place.name);
-                const formattedTitle = formatBusinessName(place.name || cleanDomain) || t("common.businessPlace", "Business Place");
+                const formattedTitle = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain.toLowerCase()]) || formatBusinessName(place.name || cleanDomain) || t("common.businessPlace", "Business Place");
 
                 return (
                   <div

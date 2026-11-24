@@ -334,9 +334,10 @@ export function App() {
   // Load places from server on mount
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     const fetchPlaces = async () => {
       try {
-        const res = await fetch("/api/places");
+        const res = await fetch("/api/places", { signal: controller.signal });
         const data = await res.json();
         if (active && data && Array.isArray(data.places)) {
           setPlaces(data.places);
@@ -345,12 +346,16 @@ export function App() {
             localStorage.setItem("yoouz_cached_places", JSON.stringify(data.places));
           } catch (e) {}
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (!active || err?.name === "AbortError") return;
         console.warn("Error fetching places:", err);
       }
     };
     fetchPlaces();
-    return () => { active = false; };
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, []);
 
   // Real-time place updates listener
@@ -799,11 +804,24 @@ export function App() {
 
     const sseInitTimer = setTimeout(() => {
       if (active) setupSse();
-    }, 1500);
+    }, 1800);
+
+    const handlePageHide = () => {
+      if (sse) {
+        try { sse.close(); } catch {}
+        sse = null;
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+    };
+    window.addEventListener("pagehide", handlePageHide);
 
     return () => {
       active = false;
       clearTimeout(sseInitTimer);
+      window.removeEventListener("pagehide", handlePageHide);
       if (sse) sse.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
@@ -836,7 +854,7 @@ export function App() {
     return () => clearTimeout(t);
   }, [videos]);
 
-  // Idle route-chunk prefetching so clicking any business, reviewer, photo review, or business portal feels instant
+  // Idle route-chunk prefetching (polite 3s delay so active route chunks & hero photos load with 100% priority)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const warmChunks = () => {
@@ -845,17 +863,21 @@ export function App() {
       void import("./components/CopoVideoPlayer");
       void import("./components/CopoBusinessDashboardView");
     };
-    const ric = (window as any).requestIdleCallback;
-    if (typeof ric === "function") {
-      const id = ric(warmChunks, { timeout: 2800 });
-      return () => {
-        if (typeof (window as any).cancelIdleCallback === "function") {
-          (window as any).cancelIdleCallback(id);
-        }
-      };
-    }
-    const timer = window.setTimeout(warmChunks, 1600);
-    return () => window.clearTimeout(timer);
+    let idleId: number | null = null;
+    const timer = window.setTimeout(() => {
+      const ric = (window as any).requestIdleCallback;
+      if (typeof ric === "function") {
+        idleId = ric(warmChunks, { timeout: 2000 });
+      } else {
+        warmChunks();
+      }
+    }, 3000);
+    return () => {
+      window.clearTimeout(timer);
+      if (idleId !== null && typeof (window as any).cancelIdleCallback === "function") {
+        (window as any).cancelIdleCallback(idleId);
+      }
+    };
   }, []);
   const [notifications, setNotifications] = useState<CopoNotification[]>([]);
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
@@ -941,8 +963,8 @@ export function App() {
       if (pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/yoouzadmin" || pathname.startsWith("/yoouzadmin")) return "admin";
       if (pathname === "/testembed" || pathname === "/test-embed" || pathname === "/embed-test") return "testembed";
       if (pathname === "/searchtest" || pathname === "/search-test") return "searchtest";
-      if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/portal" || pathname === "/business-dashboard") return "business";
-      if (pathname === "/discover") return "discover";
+      if (pathname === "/business" || pathname.startsWith("/business/") || pathname === "/for-business" || pathname === "/portal" || pathname === "/business-dashboard") return "business";
+      if (pathname === "/discover" || pathname === "/explore") return "discover";
       if (pathname === "/following") return "following";
       if (pathname === "/search" || pathname.startsWith("/trade/") || pathname.startsWith("/category/") || pathname === "/categories") return "search";
       if (pathname === "/map") return "map";
@@ -1284,8 +1306,22 @@ export function App() {
   };
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authIntent, setAuthIntent] = useState<AuthIntent>('general');
-  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
-  const [legalModalTab, setLegalModalTab] = useState<"terms" | "privacy">("terms");
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(() => {
+    try {
+      const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname);
+      return pathWithoutLocale === "/privacy" || pathWithoutLocale === "/terms";
+    } catch {
+      return false;
+    }
+  });
+  const [legalModalTab, setLegalModalTab] = useState<"terms" | "privacy">(() => {
+    try {
+      const { pathWithoutLocale } = parseLocaleFromPath(window.location.pathname);
+      return pathWithoutLocale === "/privacy" ? "privacy" : "terms";
+    } catch {
+      return "terms";
+    }
+  });
 
   const handleOpenLegal = (tab: "terms" | "privacy" = "terms") => {
     setLegalModalTab(tab);
@@ -1536,8 +1572,8 @@ export function App() {
           }
         }
         if (!sectionParam) {
-          if (pathname.startsWith("/business") || pathname === "/portal" || pathname === "/business-dashboard") sectionParam = "business";
-          if (pathname === "/discover") sectionParam = "discover";
+          if (pathname.startsWith("/business") || pathname === "/for-business" || pathname === "/portal" || pathname === "/business-dashboard") sectionParam = "business";
+          if (pathname === "/discover" || pathname === "/explore") sectionParam = "discover";
           if (pathname === "/following") sectionParam = "following";
           if (pathname === "/search") sectionParam = "search";
           if (pathname === "/map") sectionParam = "map";
@@ -1547,6 +1583,10 @@ export function App() {
           if (pathname === "/record_review") sectionParam = "record_review";
           if (pathname === "/more" || pathname === "/about" || pathname === "/faq" || pathname === "/settings") sectionParam = "more";
           if (pathname === "/profile" || pathname === "/me") sectionParam = "profile";
+        }
+        if (pathname === "/privacy" || pathname === "/terms") {
+          setLegalModalTab(pathname === "/privacy" ? "privacy" : "terms");
+          setIsLegalModalOpen(true);
         }
 
         // Competitor comparison and GEO routes
@@ -5547,6 +5587,9 @@ export function App() {
           path = `/@${cleanSlug}`;
           title = `${selectedAuthorForDrawer.name} (@${cleanSlug}) - Photo Reviews | Yoouz`;
         }
+      } else if (isLegalModalOpen) {
+        path = legalModalTab === "privacy" ? "/privacy" : "/terms";
+        title = legalModalTab === "privacy" ? "Privacy Policy | Yoouz" : "Terms & Conditions | Yoouz";
       } else if (activeSection === "home") {
         path = "/";
         title = "Yoouz - Real Photos. Real Proof. | Live Photo Reviews";
@@ -5577,8 +5620,8 @@ export function App() {
         path = "/following";
         title = "Following Feed - Live Photo Reviews | Yoouz";
       } else if (activeSection === "bookmarks") {
-        path = "/bookmarks";
-        title = "Saved Photo Reviews & Bookmarks | Yoouz";
+        path = "/saved";
+        title = "Saved Photo Reviews | Yoouz";
       } else if (activeSection === "messages") {
         path = "/messages";
         title = "Direct Messages | Yoouz";
@@ -5648,7 +5691,7 @@ export function App() {
     } catch (err) {
       console.warn("URL sync warning:", err);
     }
-  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId, pendingCreatorSlug, embedTargetId, isPitchRoute]);
+  }, [selectedPlaceIdForDrawer, selectedAuthorForDrawer, activeSection, currentVideoIndex, videos, places, currentUser, language, isWatchingVideo, activeFeedVideos, isPlaceView, isCreatorView, activeDrawerPlace, pendingVideoId, pendingCreatorSlug, embedTargetId, isPitchRoute, isLegalModalOpen, legalModalTab]);
 
   // Synchronize currentVideoIndex when activeFeedVideos recomputes if we have a pending video
   // Synchronize and enrich selectedAuthorForDrawer with authentic Google avatar once videos load
@@ -8266,57 +8309,7 @@ export function App() {
   // Background chunk pre-warmer: silently warm interactive drawers, players, and views
   // in gentle 2-at-a-time micro-batches with full error handling so every tap opens at 0ms
   // without saturating connection pools or emitting unhandled rejections during reloads.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let cancelled = false;
-
-    const preloadQueue: Array<() => Promise<unknown>> = [
-      () => import("./components/CopoMoreView"),
-      () => import("./components/CopoVideoPlayer"),
-      () => import("./components/CopoPlaceDrawer"),
-      () => import("./components/CopoMobileSearchView"),
-      () => import("./components/CopoCreateModal"),
-      () => import("./components/CopoCreatorDrawer"),
-      () => import("./components/CopoCommentsDrawer"),
-      () => import("./components/CopoShareModal"),
-      () => import("./components/CopoNotificationsView"),
-      () => import("./components/CopoMessagesView"),
-      () => import("./components/CopoBookmarksView"),
-      () => import("./components/CopoFollowingView"),
-      () => import("./components/CopoDiscoverView"),
-      () => import("./components/CopoMobileDiscoverView"),
-      () => import("./components/CopoBusinessDashboardView"),
-      () => import("./components/PasskeyQrModal"),
-      () => import("./components/MobilePasskeyHandoffModal"),
-      () => import("./components/CopoReportModal"),
-      () => import("./components/CopoLegalModal"),
-      () => import("./components/CopoNotificationSettingsModal"),
-      () => import("./components/CopoGoogleAuthModal"),
-      () => import("./components/CopoComparisonModal"),
-      () => import("./components/CopoMapView"),
-    ];
-
-    const runPacedPrewarm = async () => {
-      for (let i = 0; i < preloadQueue.length; i += 2) {
-        if (cancelled) return;
-        const batch = preloadQueue.slice(i, i + 2);
-        await Promise.allSettled(batch.map((load) => load().catch(() => undefined)));
-        if (cancelled) return;
-        await new Promise((resolve) => window.setTimeout(resolve, 120));
-      }
-    };
-
-    const startTimer = window.setTimeout(() => {
-      if (!cancelled) {
-        void runPacedPrewarm();
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(startTimer);
-    };
-  }, []);
+  // Lazy-loaded route chunks are fetched on-demand or politely warmed on idle above without starving active routes.
 
   if (embedTargetId) {
     return (

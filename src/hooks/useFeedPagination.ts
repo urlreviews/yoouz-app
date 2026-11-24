@@ -1237,10 +1237,19 @@ export function useFeedPagination() {
       }
     };
 
+    const handlePageHide = () => {
+      if (sseReconnectTimeout) clearTimeout(sseReconnectTimeout);
+      if (sse) {
+        try { sse.close(); } catch (e) {}
+        sse = null;
+      }
+    };
+
     window.addEventListener("focus", handleVisibilityOrFocus);
     document.addEventListener("visibilitychange", handleVisibilityOrFocus);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+    window.addEventListener("pagehide", handlePageHide);
 
     return () => {
       active = false;
@@ -1262,6 +1271,7 @@ export function useFeedPagination() {
       document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("pagehide", handlePageHide);
     };
   }, []);
 

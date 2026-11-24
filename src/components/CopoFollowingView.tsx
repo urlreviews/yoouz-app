@@ -13,11 +13,12 @@ import {
   Building2,
   Star,
   Globe,
-  Store
+  Store,
+  Compass
 } from "lucide-react";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
 import { CopoBrandLogo } from "./CopoBrandLogo";
-import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor, formatCityCountry } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, getDisplayUrlAsDomain, isPlaceReviewMatch, getSafeAvatarUrl, resolveSafeAuthor, formatCityCountry, KNOWN_OFFICIAL_NAMES } from "../utils/placeUtils";
 import { generateGoogleLetterAvatarSvg } from "../lib/avatar";
 import { getCanonicalUserKey } from "../lib/userCanonicalization";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -485,9 +486,8 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                 </button>
               )}
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-semibold text-white tracking-[-0.02em] flex items-center gap-2 truncate">
-                  <Users className="w-5 h-5 text-zinc-300 shrink-0" />
-                  <span className="truncate">{t("following.title", "Following & Followers")}</span>
+                <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-[-0.025em] truncate">
+                  {t("following.title", "Following & Followers")}
                 </h1>
                 <p className="text-xs text-zinc-400 font-normal truncate mt-0.5">
                   {t("following.subtitle", "Manage businesses and reviewers you follow on Yoouz")}
@@ -619,14 +619,23 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                       : t("following.followingDesc", "When you follow businesses or authentic local reviewers on Yoouz, they will appear here.")}
                   </p>
                 </div>
-                {searchQuery && (
+                {searchQuery ? (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="px-4 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold cursor-pointer transition-colors"
+                    className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] text-white text-xs font-semibold cursor-pointer transition-colors"
                   >
                     {t("following.clearSearch", "Clear search")}
                   </button>
-                )}
+                ) : onNavigateHome ? (
+                  <button
+                    type="button"
+                    onClick={onNavigateHome}
+                    className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold tracking-tight transition-all active:scale-95 cursor-pointer shadow-lg"
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>{t("nav.discover", "Discover Reviews")}</span>
+                  </button>
+                ) : null}
               </div>
             ) : (
               <div className="flex flex-col gap-2">
@@ -635,7 +644,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                   filteredPlaces.map((place) => {
                     const isHovered = hoveredUnfollowPlace === place.id;
                     const cleanDomain = extractCleanDomain(place.website || place.id);
-                    const formattedTitle = formatBusinessName(place.name || cleanDomain);
+                    const formattedTitle = (cleanDomain && KNOWN_OFFICIAL_NAMES[cleanDomain.toLowerCase()]) || formatBusinessName(place.name || cleanDomain);
                     const resolvedLogo =
                       place.logoUrl ||
                       place.avatarUrl ||

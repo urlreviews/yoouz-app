@@ -101,59 +101,50 @@ function setupRealtimeStream(user: UserProfile) {
     userHandle: name
   }).toString();
 
-  fetch("/api/health")
-    .then((healthRes) => {
-      if (!healthRes.ok) return;
-      return healthRes.headers.get("content-type") || "";
-    })
-    .then((contentType) => {
-      if (!contentType || contentType.includes("text/html")) return;
-      if (activeEventSource) return;
+  if (activeEventSource) return;
 
-      try {
-        const es = new EventSource(`/api/realtime/stream?${query}`);
-        activeEventSource = es;
+  try {
+    const es = new EventSource(`/api/realtime/stream?${query}`);
+    activeEventSource = es;
 
-        es.onopen = () => {
-          sseRetryDelay = 5000;
-        };
+    es.onopen = () => {
+      sseRetryDelay = 5000;
+    };
 
-        es.onmessage = (e) => {
-          sseRetryDelay = 5000;
-          setTimeout(() => {
+    es.onmessage = (e) => {
+      sseRetryDelay = 5000;
+      setTimeout(() => {
+        try {
+          if (!e.data || e.data.trim() === "heartbeat") return;
+          const parsed = JSON.parse(e.data);
+          realtimeListeners.forEach((fn) => {
             try {
-              if (!e.data || e.data.trim() === "heartbeat") return;
-              const parsed = JSON.parse(e.data);
-              realtimeListeners.forEach((fn) => {
-                try {
-                  fn(parsed);
-                } catch (err) {}
-              });
-            } catch (parseErr) {}
-          }, 0);
-        };
+              fn(parsed);
+            } catch (err) {}
+          });
+        } catch (parseErr) {}
+      }, 0);
+    };
 
-        es.onerror = () => {
-          try {
-            es.close();
-          } catch (e) {}
-          if (activeEventSource === es) {
-            activeEventSource = null;
+    es.onerror = () => {
+      try {
+        es.close();
+      } catch (e) {}
+      if (activeEventSource === es) {
+        activeEventSource = null;
+      }
+      // Silently schedule reconnect only if online and tab is active
+      if (!sseReconnectTimer && isNetworkOnline && typeof document !== "undefined" && !document.hidden) {
+        sseReconnectTimer = setTimeout(() => {
+          sseReconnectTimer = null;
+          if (realtimeListeners.size > 0 && user && isNetworkOnline && !document.hidden) {
+            setupRealtimeStream(user);
           }
-          // Silently schedule reconnect only if online and tab is active
-          if (!sseReconnectTimer && isNetworkOnline && typeof document !== "undefined" && !document.hidden) {
-            sseReconnectTimer = setTimeout(() => {
-              sseReconnectTimer = null;
-              if (realtimeListeners.size > 0 && user && isNetworkOnline && !document.hidden) {
-                setupRealtimeStream(user);
-              }
-            }, sseRetryDelay);
-            sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
-          }
-        };
-      } catch (err) {}
-    })
-    .catch(() => {});
+        }, sseRetryDelay);
+        sseRetryDelay = Math.min(sseRetryDelay * 2, 60000);
+      }
+    };
+  } catch (err) {}
 }
 
 // Global tab visibility listener to cleanly pause/resume realtime stream
@@ -177,6 +168,19 @@ if (typeof window !== "undefined" && typeof document !== "undefined") {
         };
         setupRealtimeStream(dummyUser);
       }
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    if (sseReconnectTimer) {
+      clearTimeout(sseReconnectTimer);
+      sseReconnectTimer = null;
+    }
+    if (activeEventSource) {
+      try {
+        activeEventSource.close();
+      } catch (e) {}
+      activeEventSource = null;
     }
   });
 }
