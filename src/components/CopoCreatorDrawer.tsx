@@ -1240,8 +1240,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               triggerHaptic("light");
               onClose();
             }}
-            className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
+            className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] left-3 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15 z-30"
             title={t("common.back", "Back to previous page")}
+            aria-label={t("common.back", "Back to previous page")}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -1263,7 +1264,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                   />
                 );
               })()}
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] z-20 pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] z-20 pointer-events-none" />
             </div>
           ) : (
             <div
@@ -1274,6 +1275,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               }}
             >
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.5)_24%,rgba(5,5,6,0)_60%,rgba(0,0,0,0.35)_100%)] pointer-events-none" />
             </div>
           )}
 
@@ -1285,8 +1287,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                 triggerHaptic("light");
                 handleShare();
               }}
-              className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+              className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
               title={t("profile.shareProfile", "Share Profile")}
+              aria-label={t("profile.shareProfile", "Share Profile")}
             >
               <Share2 className="w-4 h-4" />
             </button>
@@ -1295,8 +1298,9 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
               <button
                 id="btn-creator-profile-settings"
                 onClick={() => setIsSettingsMenuOpen((prev) => !prev)}
-                className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
+                className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
                 title={isOwner ? t("profile.accountSettings", "Account & Settings") : t("profile.moreOptions", "More Options")}
+                aria-label={isOwner ? t("profile.accountSettings", "Account & Settings") : t("profile.moreOptions", "More Options")}
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -1470,7 +1474,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
         <div className="px-5 pt-11 sm:pt-12 pb-2 bg-[#050506]">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="min-w-0 flex-1 pr-2">
-              <h2 className="text-2xl font-semibold text-white tracking-[-0.03em] leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap font-['Google_Sans',sans-serif]" dir="auto">
+              <h1 className="text-2xl font-semibold text-white tracking-[-0.03em] leading-tight [overflow-wrap:anywhere] inline-flex items-center gap-2 flex-wrap font-['Google_Sans',sans-serif]" dir="auto">
                 <bdi dir="auto">{displayName || ""}</bdi>
                 {isPasskeyProtected && (
                   <span title="Verified Reviewer (Passkey Protected)" className="inline-flex shrink-0">
@@ -1488,7 +1492,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                     <span>Save Passkey</span>
                   </button>
                 )}
-              </h2>
+              </h1>
             </div>
 
             {/* Primary Action Button (Follow for other users) */}
@@ -1706,7 +1710,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                         onClick={() => onSelectVideo(v.id)}
                         className={`relative aspect-[3/4] rounded-[20px] overflow-hidden bg-[#0a0a0d] cursor-pointer group transition-all transform active:scale-95 shadow-lg border ${
                           isCurrentActive
-                            ? "border-white ring-1 ring-white"
+                            ? "border-white/[0.09] md:border-white md:ring-1 md:ring-white"
                             : "border-white/[0.09] hover:border-white/[0.24]"
                         }`}
                       >

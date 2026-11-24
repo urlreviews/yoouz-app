@@ -537,7 +537,7 @@ export const CopoBusinessAuthLanding: React.FC<CopoBusinessAuthLandingProps> = (
                 type="submit"
                 id="btn-business-continue-magic-link"
                 disabled={isLoading || !email || conflictInfo.isConflict}
-                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:bg-white/[0.06] disabled:text-zinc-500 disabled:border disabled:border-white/[0.08] text-zinc-950 rounded-full text-sm font-semibold shadow-lg shadow-black/40 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                className="w-full py-3.5 bg-white hover:bg-zinc-200 disabled:bg-white/[0.08] disabled:text-zinc-300/75 disabled:border disabled:border-white/[0.12] disabled:cursor-not-allowed text-zinc-950 rounded-full text-sm font-semibold shadow-lg shadow-black/40 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
               >
                 {isLoading ? (
                   <>

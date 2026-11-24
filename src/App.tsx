@@ -359,17 +359,9 @@ export function App() {
     let reconnectTimeout: any = null;
     let active = true;
 
-    const setupSse = async () => {
+    const setupSse = () => {
       if (!active) return;
-      try {
-        const healthRes = await fetch("/api/health").catch(() => null);
-        if (!healthRes || !healthRes.ok) return;
-        const contentType = healthRes.headers.get("content-type") || "";
-        if (contentType.includes("text/html")) return;
-      } catch (e) {
-        return;
-      }
-      if (!active) return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
     const uEmail = currentUser?.email || "";
     const uId = currentUser?.userId || (currentUser as any)?.id || "";
@@ -829,14 +821,42 @@ export function App() {
 
   const { videos, setVideos, isLoading: isLoadingVideos, loadMore: loadMoreVideos, hasMore } = useFeedPagination();
 
-  // Globally warm and pin top review photos after initial paint without stalling window.onload
+  // Globally warm and pin top review photos on Home after initial paint without starving direct route loads
   useEffect(() => {
     if (!Array.isArray(videos) || videos.length === 0) return;
+    const isDirectSubRoute =
+      typeof window !== "undefined" &&
+      (window.location.pathname.startsWith("/business") ||
+        window.location.pathname.startsWith("/reviews/") ||
+        window.location.pathname.startsWith("/u/"));
+    if (isDirectSubRoute) return;
     const t = setTimeout(() => {
-      preloadAllReviewPhotos(videos.slice(0, 16), 6);
-    }, 900);
+      preloadAllReviewPhotos(videos.slice(0, 14), 6);
+    }, 1200);
     return () => clearTimeout(t);
   }, [videos]);
+
+  // Idle route-chunk prefetching so clicking any business, reviewer, photo review, or business portal feels instant
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const warmChunks = () => {
+      void import("./components/CopoPlaceDrawer");
+      void import("./components/CopoCreatorDrawer");
+      void import("./components/CopoVideoPlayer");
+      void import("./components/CopoBusinessDashboardView");
+    };
+    const ric = (window as any).requestIdleCallback;
+    if (typeof ric === "function") {
+      const id = ric(warmChunks, { timeout: 2800 });
+      return () => {
+        if (typeof (window as any).cancelIdleCallback === "function") {
+          (window as any).cancelIdleCallback(id);
+        }
+      };
+    }
+    const timer = window.setTimeout(warmChunks, 1600);
+    return () => window.clearTimeout(timer);
+  }, []);
   const [notifications, setNotifications] = useState<CopoNotification[]>([]);
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>(() => {
     try {

@@ -1537,29 +1537,35 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               : "opacity-100"
           }`}
         >
-          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5">
-            <div className="flex items-center gap-1.5 sm:gap-2 w-max mx-auto pr-1">
-              {CANONICAL_CATEGORIES.map((cat) => {
-                const isSelected = activeCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    data-category-pill={cat.id}
-                    aria-pressed={isSelected}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-[7px] rounded-full text-[12.5px] sm:text-[13px] tracking-[-0.01em] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer border ${
-                      isSelected
-                        ? "bg-white text-zinc-950 border-white font-semibold shadow-[0_4px_18px_rgba(255,255,255,0.16)]"
-                        : "bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border-white/[0.09] hover:border-white/[0.18] font-medium"
-                    }`}
-                  >
-                    {renderCategoryIcon(cat.id, isSelected)}
-                    <span>{cat.label}</span>
-                  </button>
-                );
-              })}
+          <div className="relative w-full max-w-full">
+            <div className="w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x no-scrollbar py-0.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 w-max mx-auto pr-8 lg:pr-1">
+                {CANONICAL_CATEGORIES.map((cat) => {
+                  const isSelected = activeCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      data-category-pill={cat.id}
+                      aria-pressed={isSelected}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-[7px] rounded-full text-[12.5px] sm:text-[13px] tracking-[-0.01em] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer border ${
+                        isSelected
+                          ? "bg-white text-zinc-950 border-white font-semibold shadow-[0_4px_18px_rgba(255,255,255,0.16)]"
+                          : "bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border-white/[0.09] hover:border-white/[0.18] font-medium"
+                      }`}
+                    >
+                      {renderCategoryIcon(cat.id, isSelected)}
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            <div
+              aria-hidden="true"
+              className="lg:hidden pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-black via-black/70 to-transparent"
+            />
           </div>
         </nav>
 
@@ -1726,7 +1732,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   const wholeStars = getRoundedRating(rating);
                   const posterUrl = resolveVideoPosterUrl(video);
                   const cardPosterUrl = toCardPhotoUrl(posterUrl);
-                  const isAboveFoldCard = idx < 6;
+                  const isAboveFoldCard = idx < 10;
                   const recency = formatCompactRecency(video);
 
                   return (
@@ -1759,7 +1765,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           onSelectVideo(video.id);
                         }
                       }}
-                      className="relative shrink-0 self-stretch w-[clamp(162px,43.5vw,196px)] sm:w-[calc(33.333%-10px)] md:w-[calc(25%-11px)] lg:w-[calc(20%-11.5px)] min-h-[235px] sm:min-h-0 sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
+                      className="relative shrink-0 self-stretch w-[clamp(162px,43.5vw,196px)] sm:w-[calc(33.333%-10px)] md:w-[calc(33.333%-10px)] lg:w-[calc(20%-11.5px)] min-h-[235px] sm:min-h-0 sm:h-auto sm:aspect-[3/3.85] rounded-[22px] overflow-hidden bg-[#111114] border border-white/[0.09] hover:border-white/[0.24] shadow-[0_14px_36px_rgba(0,0,0,0.6)] group cursor-pointer select-none touch-manipulation transition-all duration-300 hover:-translate-y-1 snap-start"
                     >
                       {/* Clean Neutral Obsidian Canvas — zero fake letter flash while photo decodes */}
                       <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-[#08080a] z-0" />
@@ -1853,7 +1859,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                               }}
                               onKeyDown={(e) => e.stopPropagation()}
                               title={`View ${businessName} profile`}
-                              className="pointer-events-auto flex items-center gap-1 min-w-0 max-w-full text-left bg-transparent border-0 p-0 cursor-pointer group/biz outline-none focus-visible:underline"
+                              className="pointer-events-auto flex items-center gap-1 min-w-0 max-w-full text-left bg-transparent border-0 py-0.5 -my-0.5 cursor-pointer group/biz outline-none focus-visible:underline"
                             >
                               <span className="text-white text-[12.5px] sm:text-[13.5px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs group-hover/biz:underline decoration-white/60 underline-offset-2">
                                 {businessName}
@@ -1870,7 +1876,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                               }}
                               onKeyDown={(e) => e.stopPropagation()}
                               title={`View ${creatorFullName}'s profile`}
-                              className="pointer-events-auto text-white/75 hover:text-white text-[10.5px] sm:text-[11px] font-normal truncate max-w-full mt-0.5 text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-white/50 underline-offset-2 transition-colors outline-none focus-visible:underline"
+                              className="pointer-events-auto text-white/75 hover:text-white text-[10.5px] sm:text-[11px] font-normal truncate max-w-full mt-0.5 text-left bg-transparent border-0 py-0.5 -my-0.5 cursor-pointer hover:underline decoration-white/50 underline-offset-2 transition-colors outline-none focus-visible:underline"
                             >
                               Review by {creatorFullName}
                             </button>

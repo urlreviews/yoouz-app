@@ -432,7 +432,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const p = places.find((place) => {
           if (!place) return false;
           if (vid.placeId && (place.id === vid.placeId || place.id === vidCleanId)) return true;
-          const pDomain = extractCleanDomain(place.id || place.website || place.brandDomain || "");
+          const pDomain = extractCleanDomain(place.brandDomain || place.website || place.id || "");
           if (pDomain && pDomain !== "home" && (pDomain === vidCleanId || pDomain === vidCleanWeb || pDomain === vidCleanName)) return true;
           if (place.website && vid.placeWebsite && extractCleanDomain(place.website) === extractCleanDomain(vid.placeWebsite)) return true;
           return false;
@@ -1135,10 +1135,12 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
         const isAtFirstPhoto = activeCardIndex <= 0;
         const isAtLastPhoto = activeCardIndex >= displayItems.length - 1 && displayItems.length > 1;
 
+        const isSplitContext = feedContextType === "place" || feedContextType === "creator";
+
         return (
           <div
             id="copo-floating-nav-buttons"
-            className={`hidden md:flex flex-col gap-2.5 select-none shrink-0 z-40 absolute top-1/2 -translate-y-1/2 transition-all duration-200 ${
+            className={`${isSplitContext ? "hidden xl:flex" : "hidden md:flex"} flex-col gap-2.5 select-none shrink-0 z-40 absolute top-1/2 -translate-y-1/2 transition-all duration-200 ${
               commentsOpen
                 ? "right-3 lg:right-4"
                 : "right-4 lg:right-8"

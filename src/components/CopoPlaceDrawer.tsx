@@ -1613,7 +1613,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               </div>
             </div>
           )}
-          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] pointer-events-none" />
         </div>
 
         {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
@@ -1662,8 +1662,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             />
               );
             })()}
-            {/* Seamless Obsidian edge-only bottom melt — preserves 100% crisp full-brightness hero banner */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.58)_14%,rgba(5,5,6,0.12)_32%,rgba(5,5,6,0)_54%,rgba(0,0,0,0.10)_100%)] z-20 pointer-events-none" />
+            {/* Seamless Obsidian edge melt + top contrast vignette for back/QR/report controls */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] z-20 pointer-events-none" />
           </div>
         ) : null}
 
@@ -1698,7 +1698,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               const lastWord = words.pop() || '';
               const firstPart = words.join(' ');
               return (
-                <h2 className="text-xl sm:text-2xl md:text-[26px] font-semibold text-white tracking-[-0.03em] leading-snug break-normal font-['Google_Sans',sans-serif]" dir="auto">
+                <h1 className="text-xl sm:text-2xl md:text-[26px] font-semibold text-white tracking-[-0.03em] leading-snug break-normal font-['Google_Sans',sans-serif]" dir="auto">
                   <span className="text-white" dir="auto">
                     {firstPart ? firstPart + " " : ""}
                     <span className="whitespace-nowrap inline-block align-baseline">
@@ -1706,7 +1706,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                       <CheckCircle className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] fill-white text-[#050506] shrink-0 inline-block align-middle ml-1.5" />
                     </span>
                   </span>
-                </h2>
+                </h1>
               );
             })()}
 
@@ -1801,7 +1801,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 </div>
                 <div className="h-4 w-px bg-white/[0.1]" />
                 <span className="text-zinc-400 font-medium text-xs whitespace-nowrap tabular-nums">
-                  {dynamicReviewCount} {dynamicReviewCount === 1 ? t("place.review", "Review") : t("place.reviews", "Reviews")}
+                  {dynamicReviewCount} {dynamicReviewCount === 1 ? t("common.photoReview", "Photo Review") : t("common.photoReviews", "Photo Reviews")}
                 </span>
               </>
             ) : (
