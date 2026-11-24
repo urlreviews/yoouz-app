@@ -18,7 +18,7 @@ interface CopoHomePageProps {
   videos: VideoReview[];
   allUsers?: any[];
   onSelectVideo: (videoId: string) => void;
-  onOpenPlace: (placeId: string) => void;
+  onOpenPlace: (placeId: string, fromVideoId?: string) => void;
   onAddPlace?: (place: Place) => void;
   onOpenCreator?: (author: VideoAuthor) => void;
   onOpenMenu?: () => void;
@@ -1802,26 +1802,60 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           </span>
                         </div>
 
-                        {/* Business Brand Row + Reviewer Attribution */}
+                        {/* Business Brand Row + Reviewer Attribution (Direct Profile Links) */}
                         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                          <CopoBrandLogo
-                            domain={brandDomain || video.placeId}
-                            name={businessName}
-                            logoUrl={brandLogoUrl}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] sm:rounded-[10px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 sm:p-1 shadow-md"
-                            imageClassName="w-full h-full object-contain"
-                            fallbackTextClassName="text-[11px] font-bold text-zinc-900"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <span className="text-white text-[12.5px] sm:text-[13.5px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const targetPlaceId = matchedPlace?.id || brandDomain || video.placeId || businessName;
+                              if (targetPlaceId) onOpenPlace(targetPlaceId, video.id);
+                            }}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            aria-label={`Open ${businessName} profile`}
+                            title={`View ${businessName} profile`}
+                            className="pointer-events-auto shrink-0 rounded-[9px] sm:rounded-[10px] bg-transparent border-0 p-0 cursor-pointer hover:scale-[1.05] active:scale-95 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                          >
+                            <CopoBrandLogo
+                              domain={brandDomain || video.placeId}
+                              name={businessName}
+                              logoUrl={brandLogoUrl}
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-[9px] sm:rounded-[10px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 sm:p-1 shadow-md"
+                              imageClassName="w-full h-full object-contain"
+                              fallbackTextClassName="text-[11px] font-bold text-zinc-900"
+                            />
+                          </button>
+                          <div className="min-w-0 flex-1 flex flex-col items-start">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const targetPlaceId = matchedPlace?.id || brandDomain || video.placeId || businessName;
+                                if (targetPlaceId) onOpenPlace(targetPlaceId, video.id);
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              title={`View ${businessName} profile`}
+                              className="pointer-events-auto flex items-center gap-1 min-w-0 max-w-full text-left bg-transparent border-0 p-0 cursor-pointer group/biz outline-none focus-visible:underline"
+                            >
+                              <span className="text-white text-[12.5px] sm:text-[13.5px] font-semibold tracking-[-0.015em] truncate leading-tight drop-shadow-xs group-hover/biz:underline decoration-white/60 underline-offset-2">
                                 {businessName}
                               </span>
                               <CheckCircle className="w-3.5 h-3.5 fill-white text-zinc-950 shrink-0 inline-block" />
-                            </div>
-                            <div className="text-white/75 text-[10.5px] sm:text-[11px] font-normal truncate mt-0.5">
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onOpenCreator && author) {
+                                  onOpenCreator(author);
+                                }
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              title={`View ${creatorFullName}'s profile`}
+                              className="pointer-events-auto text-white/75 hover:text-white text-[10.5px] sm:text-[11px] font-normal truncate max-w-full mt-0.5 text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-white/50 underline-offset-2 transition-colors outline-none focus-visible:underline"
+                            >
                               Review by {creatorFullName}
-                            </div>
+                            </button>
                           </div>
                         </div>
                       </div>

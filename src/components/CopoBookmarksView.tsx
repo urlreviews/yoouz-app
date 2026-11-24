@@ -247,24 +247,53 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 min-w-0">
-                        <CopoBrandLogo
-                          domain={bDomain || video.placeId}
-                          name={bName}
-                          logoUrl={video.placeLogoUrl}
-                          className="w-7 h-7 rounded-[8px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 shadow-sm"
-                          imageClassName="w-full h-full object-contain"
-                          fallbackTextClassName="text-[10px] font-bold text-zinc-900"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <span className="text-white text-[12px] font-semibold tracking-[-0.015em] truncate leading-tight">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const targetPlaceId = bDomain || video.placeId || bName;
+                            if (onSelectPlace && targetPlaceId) onSelectPlace(targetPlaceId);
+                          }}
+                          aria-label={`Open ${bName} profile`}
+                          title={`View ${bName} profile`}
+                          className="pointer-events-auto shrink-0 rounded-[8px] bg-transparent border-0 p-0 cursor-pointer hover:scale-[1.05] active:scale-95 transition-transform outline-none"
+                        >
+                          <CopoBrandLogo
+                            domain={bDomain || video.placeId}
+                            name={bName}
+                            logoUrl={video.placeLogoUrl}
+                            className="w-7 h-7 rounded-[8px] bg-white/95 border border-white/25 flex items-center justify-center shrink-0 overflow-hidden p-0.5 shadow-sm"
+                            imageClassName="w-full h-full object-contain"
+                            fallbackTextClassName="text-[10px] font-bold text-zinc-900"
+                          />
+                        </button>
+                        <div className="min-w-0 flex-1 flex flex-col items-start">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const targetPlaceId = bDomain || video.placeId || bName;
+                              if (onSelectPlace && targetPlaceId) onSelectPlace(targetPlaceId);
+                            }}
+                            title={`View ${bName} profile`}
+                            className="pointer-events-auto flex items-center gap-1 min-w-0 max-w-full text-left bg-transparent border-0 p-0 cursor-pointer group/biz outline-none"
+                          >
+                            <span className="text-white text-[12px] font-semibold tracking-[-0.015em] truncate leading-tight group-hover/biz:underline decoration-white/60 underline-offset-2">
                               {bName}
                             </span>
                             <CheckCircle2 className="w-3 h-3 fill-white text-zinc-950 shrink-0" />
-                          </div>
-                          <div className="text-white/75 text-[10px] font-normal truncate mt-0.5">
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onSelectCreator && video.author) onSelectCreator(video.author);
+                            }}
+                            title={`View ${reviewerName}'s profile`}
+                            className="pointer-events-auto text-white/75 hover:text-white text-[10px] font-normal truncate max-w-full mt-0.5 text-left bg-transparent border-0 p-0 cursor-pointer hover:underline decoration-white/50 underline-offset-2 transition-colors outline-none"
+                          >
                             {t("feed.reviewBy", "Review by")} {reviewerName}
-                          </div>
+                          </button>
                         </div>
                       </div>
                     </div>
