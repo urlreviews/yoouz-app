@@ -2753,7 +2753,7 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
                             isMemberFollowed
                               ? isHoveredUnfollow
                                 ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                                : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                                : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
                               : "bg-white text-zinc-950 hover:bg-zinc-200 border border-white"
                           }`}
                         >

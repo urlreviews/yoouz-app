@@ -1159,6 +1159,24 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
         {/* 2. Sculpted Sentence-Case Editorial Hero — Instant 1-Second Review Identity */}
         <div className="w-full shrink-0 text-center max-w-3xl mx-auto mb-[clamp(10px,1.8dvh,20px)] sm:mb-6 relative z-10 px-1 animate-in fade-in duration-300">
+          {searchMode === "review" && onCancelSearch && (
+            <div className="inline-flex items-center gap-2 pl-3 pr-1.5 py-1 mb-3 rounded-full bg-white/[0.06] border border-white/[0.12] backdrop-blur-xl">
+              <Camera className="w-3.5 h-3.5 text-white shrink-0" />
+              <span className="text-[11.5px] font-medium text-zinc-200 tracking-[-0.01em]">
+                Add Live Photo Review
+              </span>
+              <button
+                type="button"
+                onClick={onCancelSearch}
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.1] hover:bg-white/[0.18] text-[11px] font-semibold text-white transition-colors cursor-pointer"
+                aria-label="Exit add review mode"
+              >
+                <X className="w-3 h-3" />
+                <span>Cancel</span>
+              </button>
+            </div>
+          )}
+
           <h1 className="text-[27px] xs:text-[31px] sm:text-[44px] md:text-[50px] lg:text-[54px] font-bold text-white tracking-[-0.038em] leading-[1.06] text-balance">
             {searchMode === "review" ? (
               <>Find a business to review.</>

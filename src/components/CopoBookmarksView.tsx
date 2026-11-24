@@ -119,9 +119,9 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               <Bookmark className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("nav.bookmarks", "Saved")}</h2>
-              <p className="text-xs text-zinc-400 font-semibold">
-                {t("bookmarks.subtitle", "Your saved visual reviews, places & creators")}
+              <h1 className="text-xl font-semibold text-white tracking-[-0.02em]">{t("bookmarks.savedTitle", "Saved")}</h1>
+              <p className="text-xs text-zinc-400 font-medium">
+                {t("bookmarks.savedSubtitle", "Your saved photo reviews, places & reviewers")}
               </p>
             </div>
           </div>
@@ -302,9 +302,9 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
-              <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
-                <Camera className="w-6 h-6" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white/[0.025] rounded-3xl border border-white/[0.08]">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300 mb-4">
+                <Camera className="w-6 h-6 stroke-[1.7]" />
               </div>
               <h3 className="font-bold text-white text-sm mb-1">
                 {t("photo.no_reviews", "No photo reviews saved yet")}
@@ -353,7 +353,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-bold text-white text-sm line-clamp-2 [overflow-wrap:anywhere] leading-snug">{formattedTitle}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 text-[10px] font-bold border border-zinc-750 shrink-0">
+                          <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 text-[10px] font-semibold border border-white/[0.1] shrink-0">
                             {place.category}
                           </span>
                         </div>
@@ -364,7 +364,7 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
                           </div>
                           {(place.city || place.address || place.brandDomain || place.website) && (
                             <>
-                              <span className="text-zinc-750">|</span>
+                              <span className="text-zinc-600">·</span>
                               <span className="truncate">{place.city || place.address || place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//, '') : "")}</span>
                             </>
                           )}
@@ -385,9 +385,9 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
-              <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
-                <Store className="w-6 h-6" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white/[0.025] rounded-3xl border border-white/[0.08]">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300 mb-4">
+                <Store className="w-6 h-6 stroke-[1.7]" />
               </div>
               <h3 className="font-bold text-white text-sm mb-1">
                 {t("place.no_saved_places", "No saved places yet")}
@@ -453,15 +453,15 @@ export const CopoBookmarksView: React.FC<CopoBookmarksViewProps> = ({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-zinc-900/50 rounded-3xl border border-zinc-850">
-              <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 mb-4">
-                <User className="w-6 h-6" />
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white/[0.025] rounded-3xl border border-white/[0.08]">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300 mb-4">
+                <User className="w-6 h-6 stroke-[1.7]" />
               </div>
               <h3 className="font-bold text-white text-sm mb-1">
                 {t("profile.no_saved_reviewers", "No saved reviewers yet")}
               </h3>
               <p className="text-xs text-zinc-400 max-w-sm mb-6 font-medium">
-                {t("bookmarks.reviewersEmpty", "Save trusted local guides & creators to instantly track their latest visual reviews.")}
+                {t("bookmarks.reviewersEmptyClean", "Save trusted reviewers to easily follow their latest live photo reviews.")}
               </p>
               {onNavigateHome && (
                 <button

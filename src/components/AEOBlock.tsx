@@ -24,7 +24,7 @@ export function AEOBlock() {
     >
       <article itemScope itemType="https://schema.org/TechArticle">
         <header>
-          <h1 itemProp="headline">Yoouz – Live Photo Reviews &amp; Visual Proof</h1>
+          <h2 itemProp="headline">Yoouz – Live Photo Reviews &amp; Visual Proof</h2>
           <p itemProp="description">
             Yoouz is the premier live photo review platform. It replaces outdated, easily fabricated text reviews and gallery uploads with 100% genuine, live camera photo reviews paired with strict whole-number 1–5 solid star ratings.
           </p>

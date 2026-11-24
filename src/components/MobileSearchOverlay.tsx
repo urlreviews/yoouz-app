@@ -734,8 +734,8 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                           </span>
                           <CheckCircle className="w-3.5 h-3.5 fill-white text-[#050506] shrink-0" />
                         </div>
-                        <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums truncate">
-                          {biz.domain && <span className="truncate">{biz.domain}</span>}
+                        <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums overflow-hidden whitespace-nowrap">
+                          {biz.domain && <span className="truncate min-w-0 max-w-[110px]">{biz.domain}</span>}
                           {(() => {
                             const catBadge = classifyBusinessCategory({
                               rawCategory: biz.place?.category,

@@ -768,7 +768,7 @@ export const CopoShareModal: React.FC<CopoShareModalProps> = ({
       id: "more",
       name: "More",
       category: "more",
-      bgClass: "bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white hover:bg-zinc-750",
+      bgClass: "bg-zinc-800 border border-zinc-700/80 text-zinc-200 hover:text-white hover:bg-zinc-700",
       icon: <MoreHorizontal className="w-6 h-6 stroke-[2.2]" />,
       onClick: () => {
         triggerHaptic("medium");

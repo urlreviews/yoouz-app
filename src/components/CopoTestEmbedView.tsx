@@ -156,7 +156,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
                   placeholder="https://www.yoouz.com/embed/yoouz.com"
-                  className="w-full bg-zinc-950 border border-zinc-750 text-white font-mono text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
+                  className="w-full bg-zinc-950 border border-white/[0.12] text-white font-mono text-xs sm:text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
                 />
               </div>
               <button
@@ -189,7 +189,7 @@ export const CopoTestEmbedView: React.FC<CopoTestEmbedViewProps> = ({
 
         {/* Live Iframe Sandbox Preview Container */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl flex flex-col">
-          <div className="bg-zinc-850 border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between text-xs">
+          <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 text-zinc-300 font-medium">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>

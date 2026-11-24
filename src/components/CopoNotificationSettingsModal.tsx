@@ -175,7 +175,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
           {/* Modal Header */}
           <div className="px-5 pt-3 sm:pt-4 pb-3.5 border-b border-zinc-800/80 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-750 flex items-center justify-center text-white shadow-inner">
+              <div className="w-10 h-10 rounded-2xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-white shadow-inner">
                 <Bell className="w-5 h-5 text-zinc-100" />
               </div>
               <div>
@@ -215,7 +215,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all shadow-inner ${
                       prefs.enabled
                         ? "bg-zinc-800 text-white border-zinc-600"
-                        : "bg-zinc-850 text-zinc-500 border-zinc-800"
+                        : "bg-zinc-900 text-zinc-500 border-white/[0.08]"
                     }`}
                   >
                     {prefs.enabled ? (
@@ -233,7 +233,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                         className={`text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full border transition-all ${
                           prefs.enabled
                             ? "bg-zinc-800 text-white border-zinc-600"
-                            : "bg-zinc-850 text-zinc-400 border-zinc-800"
+                            : "bg-zinc-900 text-zinc-400 border-white/[0.08]"
                         }`}
                       >
                         {prefs.enabled ? "Active" : "Paused"}
@@ -277,10 +277,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("reviews");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <Star className="w-4 h-4" />
                     </div>
                     <div>
@@ -305,10 +305,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("messages");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div>
@@ -333,10 +333,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("likes");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <Heart className="w-4 h-4" />
                     </div>
                     <div>
@@ -361,10 +361,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("comments");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div>
@@ -389,10 +389,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("follows");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <UserPlus className="w-4 h-4" />
                     </div>
                     <div>
@@ -417,10 +417,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("bookmarks");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <Bookmark className="w-4 h-4" />
                     </div>
                     <div>
@@ -445,10 +445,10 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                   onClick={() => {
                     if (prefs.enabled) handleToggle("shares");
                   }}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-zinc-850 border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-900/50 hover:bg-zinc-900/90 active:bg-white/[0.08] border border-zinc-800/80 transition-all cursor-pointer select-none group min-h-[58px]"
                 >
                   <div className="flex items-center gap-3.5 min-w-0 pr-3">
-                    <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-700/60 flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center shrink-0 text-zinc-300 group-hover:text-white transition-colors shadow-inner">
                       <Share2 className="w-4 h-4" />
                     </div>
                     <div>
@@ -475,14 +475,14 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-black uppercase tracking-wider text-zinc-400 flex items-center gap-2">
                   <span>Email Channel</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-850 text-zinc-300 border border-zinc-700/70">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.1]">
                     Coming soon
                   </span>
                 </h4>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-800/70 flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-xl bg-zinc-850 border border-zinc-800 text-zinc-400 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-white/[0.025] border border-white/[0.08] flex items-start gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] text-zinc-400 flex items-center justify-center shrink-0 mt-0.5">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -490,7 +490,7 @@ export const CopoNotificationSettingsModal: React.FC<CopoNotificationSettingsMod
                     <p className="text-xs sm:text-sm font-bold text-zinc-200">
                       Email Digests & Alerts
                     </p>
-                    <div className="w-9 h-5 rounded-full bg-zinc-850 border border-zinc-700 flex items-center px-0.5 cursor-not-allowed opacity-50">
+                    <div className="w-9 h-5 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center px-0.5 cursor-not-allowed opacity-50">
                       <div className="w-4 h-4 rounded-full bg-zinc-500" />
                     </div>
                   </div>

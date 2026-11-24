@@ -1551,23 +1551,25 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                     ? `${unreadCount} ${t("messages.unread", "UNREAD").toLowerCase()} ${unreadCount > 1 ? t("messages.messages", "messages") : t("messages.message", "message")}`
                     : filteredThreads.length > 0
                     ? `${filteredThreads.length} ${filteredThreads.length > 1 ? t("messages.conversations", "conversations") : t("messages.conversation", "conversation")}`
-                    : t("messages.noConversations", "No conversations yet")}
+                    : t("messages.headerSubtitle", "Direct conversations with businesses & reviewers")}
                 </p>
               </div>
             </div>
 
-            {/* Right: New Chat compose button + Desktop stats */}
+            {/* Right: New Chat compose button + Desktop stats (shown once chats exist) */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="hidden sm:flex items-center gap-4 bg-[#050506]/80 border border-white/[0.08] rounded-2xl px-4 py-2 shrink-0">
-                <div className="text-center border-r border-white/[0.08] pr-4">
-                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.unread", "UNREAD")}</p>
-                  <p className="text-sm font-bold text-white">{unreadCount}</p>
+              {messages.length > 0 && (
+                <div className="hidden sm:flex items-center gap-4 bg-[#050506]/80 border border-white/[0.08] rounded-2xl px-4 py-2 shrink-0">
+                  <div className="text-center border-r border-white/[0.08] pr-4">
+                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.unread", "UNREAD")}</p>
+                    <p className="text-sm font-bold text-white tabular-nums">{unreadCount}</p>
+                  </div>
+                  <div className="text-center pl-1">
+                    <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.totalChats", "TOTAL CHATS")}</p>
+                    <p className="text-sm font-bold text-white tabular-nums">{messages.length}</p>
+                  </div>
                 </div>
-                <div className="text-center pl-1">
-                  <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">{t("messages.totalChats", "TOTAL CHATS")}</p>
-                  <p className="text-sm font-bold text-white">{messages.length}</p>
-                </div>
-              </div>
+              )}
 
               <button
                 type="button"
@@ -2285,12 +2287,29 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                 <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-zinc-300 flex items-center justify-center">
                   <Mail className="w-6 h-6 stroke-[1.6]" />
                 </div>
-                <div className="max-w-md space-y-1.5">
-                  <p className="text-base font-semibold text-white tracking-[-0.02em] font-['Google_Sans',sans-serif]">{t("nav.messages", "Messages")}</p>
+                <div className="max-w-sm space-y-1.5">
+                  <p className="text-base font-semibold text-white tracking-[-0.02em] font-['Google_Sans',sans-serif]">
+                    {filteredThreads.length > 0 ? t("messages.selectThreadTitle", "Select a conversation") : t("messages.yourInboxTitle", "Your Inbox")}
+                  </p>
                   <p className="text-xs text-zinc-400 leading-relaxed">
-                    {t("messages.emptyState", "Select a conversation to start messaging")}
+                    {filteredThreads.length > 0
+                      ? t("messages.emptyState", "Select a conversation to start messaging")
+                      : t("messages.inboxEmptyHint", "Message businesses or fellow reviewers directly to ask questions or share recommendations.")}
                   </p>
                 </div>
+                {filteredThreads.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewChatSearch("");
+                      setShowNewChatModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white text-zinc-950 text-xs font-semibold hover:bg-zinc-200 transition-colors cursor-pointer active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{t("messages.startMessage", "Start a Message")}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -2591,7 +2610,7 @@ export const CopoMessagesView: React.FC<CopoMessagesViewProps> = ({
                   <div
                     key={`recip-${recipient.id}`}
                     onClick={() => handleStartNewUserChat(recipient)}
-                    className="p-3 flex items-center justify-between gap-3 hover:bg-zinc-850/80 rounded-2xl cursor-pointer transition-colors group border border-transparent hover:border-zinc-800"
+                    className="p-3 flex items-center justify-between gap-3 hover:bg-white/[0.06] rounded-2xl cursor-pointer transition-colors group border border-transparent hover:border-white/[0.08]"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {recipient.isBusiness ? (

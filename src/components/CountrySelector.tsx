@@ -110,7 +110,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({ value, onChang
                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
                         ? "bg-zinc-800 text-white font-semibold"
-                        : "text-zinc-200 hover:bg-zinc-850"
+                        : "text-zinc-200 hover:bg-zinc-800"
                     }`}
                   >
                     <div className="flex items-center gap-2">

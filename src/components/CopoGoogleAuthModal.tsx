@@ -870,7 +870,7 @@ export const CopoAuthPrompt: React.FC<{
                 </div>
                 <button 
                   type="button" 
-                  className="absolute bottom-0 right-0 p-1.5 bg-zinc-850 hover:bg-zinc-750 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-750"
+                  className="absolute bottom-0 right-0 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-white/15"
                 >
                   <Camera className="w-3 h-3" />
                 </button>
@@ -906,7 +906,7 @@ export const CopoAuthPrompt: React.FC<{
                 </div>
                 <button 
                   type="button" 
-                  className="absolute bottom-2.5 right-2.5 p-1.5 bg-zinc-850 hover:bg-zinc-750 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-zinc-750"
+                  className="absolute bottom-2.5 right-2.5 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full shadow-lg transition-colors cursor-pointer border border-white/15"
                 >
                   <Camera className="w-3 h-3" />
                 </button>

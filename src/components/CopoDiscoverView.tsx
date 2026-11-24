@@ -490,152 +490,159 @@ export const CopoDiscoverView: React.FC<CopoDiscoverViewProps> = ({
   return (
     <div
       id="copo-discover-root"
-      className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-zinc-950 text-white flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-20 select-none"
+      className="flex-1 h-full w-full max-w-full min-w-0 relative overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white flex flex-col items-center p-4 sm:p-6 pt-6 sm:pt-10 pb-24 select-none"
     >
       {onNavigateHome && (
         <div className="w-full max-w-3xl flex justify-start mb-2">
           <button
             onClick={onNavigateHome}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold transition-colors cursor-pointer border border-zinc-800 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 text-xs font-semibold transition-colors cursor-pointer border border-white/[0.1] active:scale-95"
             title="Back to Feed"
           >
-            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
-            <span>{t("nav.home", "Feed")}</span>
+            <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
+            <span>{t("nav.home", "Home")}</span>
           </button>
         </div>
       )}
 
-      <div className={`w-full max-w-3xl flex flex-col items-center animate-in fade-in zoom-in duration-500 ${isMobileModal ? 'mt-0' : 'mt-[2vh] sm:mt-[4vh]'}`}>
+      <div className={`w-full max-w-3xl flex flex-col items-center animate-in fade-in duration-300 ${isMobileModal ? 'mt-0' : 'mt-2 sm:mt-4'}`}>
         
         {!hideSearchBar && !isMobileModal && (
           <>
-            {/* Central Logo / Icon */}
-            <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mb-6 shadow-xs animate-fade-in shrink-0">
-              <Users className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <div className="w-14 h-14 bg-white/[0.04] border border-white/[0.1] rounded-2xl flex items-center justify-center mb-4 shadow-sm shrink-0">
+              <Users className="w-7 h-7 text-white" strokeWidth={1.6} />
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight text-center mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white tracking-[-0.03em] text-center mb-2">
               {t("discover.title", "Discover Reviewers")}
             </h1>
+            <p className="text-xs sm:text-sm text-zinc-400 text-center mb-6 max-w-md">
+              {t("discover.subtitle", "Browse verified community members sharing real, live camera photo reviews.")}
+            </p>
           </>
         )}
 
-        {/* Search Bar - styled exactly like the Search page */}
+        {/* Search Bar */}
         {!hideSearchBar && (
-          <div className="w-full max-w-xl mb-12">
-            <div className="w-full relative group shadow-sm rounded-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-500/20 transition-all">
+          <div className="w-full max-w-xl mb-8">
+            <div className="w-full relative group shadow-[0_12px_36px_rgba(0,0,0,0.55)] rounded-full bg-white/[0.045] border border-white/[0.1] focus-within:border-white/30 focus-within:ring-4 focus-within:ring-white/[0.06] transition-all">
               <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-zinc-200 group-focus-within:text-white transition-colors" />
+                <Search className="h-4.5 w-4.5 text-zinc-400 group-focus-within:text-white transition-colors" />
               </div>
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("discover.searchPlaceholder", "Search reviewer by name...")}
-                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-400 text-white"
-                autoFocus
+                placeholder={t("discover.searchPlaceholder", "Search reviewer by name or handle...")}
+                className="block w-full pl-12 pr-28 py-3.5 rounded-full text-[14px] bg-transparent focus:outline-none placeholder:text-zinc-500 text-white"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="absolute inset-y-0 right-24 flex items-center text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-24 flex items-center text-zinc-400 hover:text-white transition-colors cursor-pointer"
                   title="Clear search query"
+                  aria-label="Clear search query"
                 >
-                  <span className="text-xl font-medium leading-none">×</span>
+                  <X className="w-4 h-4" />
                 </button>
               )}
               <div className="absolute inset-y-0 right-1.5 flex items-center">
                 <button
                   type="button"
-                  className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                  className="h-9 px-5 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                 >
-                  {t("common.search", "Search")}
+                  {t("discover.searchAction", "Search")}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Reviewers List */}
-        {(query.trim().length > 0 || hideSearchBar) && (
-          <div className="w-full text-left animate-in fade-in slide-in-from-bottom-3 duration-300">
-            <div className="flex items-center justify-between text-xs font-bold text-zinc-200 uppercase tracking-wider mb-4 px-2">
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-zinc-200" />
-                {t("discover.searchResults", "Search Results")} ({displayedReviewers.length})
-              </span>
-            <span className="text-zinc-200 hidden sm:block font-medium">{t("discover.tapToView", "Tap card to view profile")}</span>
+        {/* Reviewers List (Always visible on load so Discover never shows an empty black void) */}
+        <div className="w-full text-left animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center justify-between text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3.5 px-1">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
+              {query.trim().length > 0
+                ? `${t("discover.searchResults", "Search Results")} (${displayedReviewers.length})`
+                : `${t("discover.activeReviewers", "Active Reviewers")} (${displayedReviewers.length})`}
+            </span>
+            <span className="text-zinc-500 hidden sm:block font-normal normal-case tracking-normal">
+              {t("discover.tapToView", "Tap a reviewer to open their profile")}
+            </span>
           </div>
 
           {displayedReviewers.length > 0 ? (
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {displayedReviewers.map((reviewer, idx) => {
                 return (
                   <div
                     key={`reviewer-card-${reviewer.author.name}-${idx}`}
                     onClick={() => onOpenCreator(reviewer.author)}
-                    className="bg-zinc-900 rounded-2xl border border-zinc-800 hover:border-zinc-700 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between gap-4 group"
+                    className="bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl border border-white/[0.08] hover:border-white/[0.18] p-4 shadow-sm transition-all cursor-pointer flex items-center justify-between gap-3.5 group"
                   >
                     {/* Left: Avatar + Name + Metadata */}
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       <div className="relative shrink-0">
                         <img
                           src={getSafeAvatarUrl(reviewer.author.avatar, reviewer.author.name, reviewer.author.handle)}
                           alt={reviewer.author.name}
-                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border border-zinc-800 group-hover:scale-105 transition-transform"
+                          className="w-12 h-12 rounded-full object-cover border border-white/[0.12] group-hover:scale-105 transition-transform"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
                             target.src = getSafeAvatarUrl(null, reviewer.author.name, reviewer.author.handle);
-                          }} 
+                          }}
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <h3 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-zinc-200 transition-colors">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <h3 className="text-sm sm:text-[15px] font-semibold text-white truncate group-hover:text-zinc-100 transition-colors">
                             {reviewer.author.name}
                           </h3>
                         </div>
                         
                         {reviewer.author.location ? (
-                          <p className="text-xs text-zinc-200 font-medium flex items-start gap-1.5 mb-1">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0 mt-0.5" />
-                            <span className="whitespace-normal break-words leading-tight">{formatCityCountry(reviewer.author.location || reviewer.author)}</span>
+                          <p className="text-xs text-zinc-400 font-normal flex items-center gap-1 truncate mb-0.5">
+                            <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
+                            <span className="truncate">{formatCityCountry(reviewer.author.location || reviewer.author)}</span>
                           </p>
                         ) : (
-                          <p className="text-xs text-zinc-200 font-medium flex items-center gap-1.5 mb-1">
-                            <MapPin className="w-3.5 h-3.5 text-zinc-200 shrink-0" />
-                            <span>{t("discover.localContributor", "Local Contributor")}</span>
+                          <p className="text-xs text-zinc-400 font-normal truncate mb-0.5">
+                            {t("discover.localContributor", "Community Reviewer")}
                           </p>
                         )}
                         
-                        <p className="text-[11px] font-semibold text-zinc-200">
+                        <p className="text-[11px] font-medium text-zinc-300 tabular-nums">
                           {reviewer.count} {reviewer.count === 1 ? t("common.photoReview", "photo review") : t("common.photoReviews", "photo reviews")}
                         </p>
                       </div>
                     </div>
 
                     {/* Right: Navigation Indicator */}
-                    <div className="shrink-0 flex items-center pl-2 text-zinc-200 group-hover:text-white transition-colors">
-                      <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                    <div className="shrink-0 flex items-center text-zinc-500 group-hover:text-white transition-colors">
+                      <ChevronRight className="w-4.5 h-4.5 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 text-center shadow-sm">
-              <p className="text-sm font-bold text-white mb-1">
-                {t("discover.noReviewersFound", `No reviewers found matching "${query}"`)}
+            <div className="bg-white/[0.025] rounded-3xl border border-white/[0.08] p-10 text-center">
+              <p className="text-sm font-semibold text-white mb-1">
+                {query.trim()
+                  ? t("discover.noReviewersFound", `No reviewers found matching "${query}"`)
+                  : t("discover.noReviewersYet", "No reviewers yet")}
               </p>
-              <p className="text-xs text-zinc-200">
-                {t("discover.trySearchingName", "Try searching by their name.")}
+              <p className="text-xs text-zinc-400">
+                {query.trim()
+                  ? t("discover.trySearchingName", "Try searching by another name or handle.")
+                  : t("discover.beFirst", "Post the first live photo review to appear here.")}
               </p>
             </div>
           )}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

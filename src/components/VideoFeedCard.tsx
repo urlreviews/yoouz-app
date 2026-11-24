@@ -98,6 +98,7 @@ interface VideoFeedCardProps {
   onNextVideo?: () => void;
   isAtLastVideo?: boolean;
   hideFloatingNav?: boolean;
+  hideDesktopBackButton?: boolean;
   commentsOpen?: boolean;
 }
 
@@ -132,6 +133,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
   forceShowMenu = false,
   isEmbed = false,
   onCloseEmbed,
+  hideDesktopBackButton = false,
   commentsOpen = false
 }) => {
   const { t, language } = useLanguage();
@@ -672,7 +674,7 @@ export const VideoFeedCard: React.FC<VideoFeedCardProps> = ({
                       }
                     }
                   }}
-                  className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/[0.15] flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer shrink-0"
+                  className={`${hideDesktopBackButton ? "md:hidden " : ""}w-10 h-10 rounded-full bg-black/50 hover:bg-black/75 backdrop-blur-xl border border-white/[0.15] flex items-center justify-center text-white active:scale-90 transition-all shadow-lg cursor-pointer shrink-0`}
                   title={t("common.goBack", "Go back")}
                 >
                   <ChevronLeft className="w-5 h-5 stroke-[2.4]" />

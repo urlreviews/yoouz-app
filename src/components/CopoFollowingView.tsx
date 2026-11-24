@@ -605,9 +605,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         {activeTab === "following" && (
           <div id="tab-following-content" className="space-y-2 animate-in fade-in duration-150">
             {totalFollowingCount === 0 ? (
-              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
-                  <User className="w-6 h-6" />
+              <div id="following-empty-state" className="p-8 sm:p-12 rounded-3xl bg-white/[0.025] border border-white/[0.08] text-center text-zinc-300 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-zinc-200 flex items-center justify-center mx-auto">
+                  <User className="w-5 h-5" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
@@ -730,7 +730,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                             isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                              : "bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 border border-white/[0.1]"
                           }`}
                           title={isHovered ? "Unfollow this business" : "You are following this business"}
                         >
@@ -812,7 +812,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs whitespace-nowrap active:scale-95 ${
                             isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                              : "bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 border border-white/[0.1]"
                           }`}
                           title={isHovered ? "Unfollow this reviewer" : "You are following this reviewer"}
                         >
@@ -840,9 +840,9 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
         {activeTab === "followers" && (
           <div id="tab-followers-content" className="space-y-2 animate-in fade-in duration-150">
             {filteredFollowers.length === 0 ? (
-              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-zinc-900/60 border border-zinc-800 text-center text-zinc-300 space-y-3 shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-850 text-white flex items-center justify-center mx-auto">
-                  <Users className="w-6 h-6" />
+              <div id="followers-empty-state" className="p-8 sm:p-12 rounded-3xl bg-white/[0.025] border border-white/[0.08] text-center text-zinc-300 space-y-3 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-zinc-200 flex items-center justify-center mx-auto">
+                  <Users className="w-5 h-5" />
                 </div>
                 <div className="space-y-1 max-w-sm mx-auto">
                   <p className="font-bold text-white text-sm sm:text-base">
@@ -925,7 +925,7 @@ export const CopoFollowingView: React.FC<CopoFollowingViewProps> = ({
                           isFollowingThem
                             ? isHovered
                               ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                              : "bg-zinc-800 hover:bg-zinc-750 text-zinc-200 border border-zinc-700"
+                              : "bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 border border-white/[0.1]"
                             : "bg-white hover:bg-zinc-200 text-zinc-950 font-black"
                         }`}
                       >

@@ -1554,7 +1554,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        {/* Top-Right Header Actions: QR Code, Share & Report / Flag */}
+        {/* Top-Right Header Actions: QR Code & Report / Flag (Share lives in the main action bar below) */}
         <div className="absolute top-[calc(0.75rem+env(safe-area-inset-top,0px))] right-3 flex items-center gap-2 z-30">
           <button
             id="btn-qr-business-header"
@@ -1567,17 +1567,6 @@ return () => window.removeEventListener("keydown", handleKeyDown);
             aria-label={t("place.qrCode", "Business QR Code")}
           >
             <QrCode className="w-4 h-4 text-white" />
-          </button>
-          <button
-            onClick={() => {
-              triggerHaptic("light");
-              handleShare();
-            }}
-            className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-xl shadow-xl flex items-center justify-center text-white active:scale-95 transition-all cursor-pointer border border-white/15"
-            title={t("place.shareBusiness", "Share Business")}
-            aria-label={t("place.shareBusiness", "Share Business")}
-          >
-            <Share2 className="w-4 h-4" />
           </button>
           {onOpenReport && (
             <button
@@ -3096,7 +3085,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
                   {/* Callout Prompt with Edit Trigger */}
                   <div className="mb-4 sm:mb-5 px-2 flex items-center justify-center gap-1.5">
-                    <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-zinc-750 shadow-inner max-w-[85%] truncate">
+                    <span className="inline-block px-3.5 py-1.5 rounded-full bg-zinc-950 text-zinc-100 font-black text-[10.5px] sm:text-xs uppercase tracking-wider border border-white/[0.12] shadow-inner max-w-[85%] truncate">
                       {qrCustomHeading || "SNAP A LIVE PHOTO REVIEW"}
                     </span>
                     <button
@@ -3121,7 +3110,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           value={qrCustomHeading}
                           onChange={(e) => setQrCustomHeading(e.target.value)}
                           placeholder="e.g. SNAP A LIVE PHOTO REVIEW"
-                          className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                          className="w-full bg-zinc-900 border border-white/[0.12] rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
                         />
                       </div>
                       <div>
@@ -3133,7 +3122,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           value={qrTableLabel}
                           onChange={(e) => setQrTableLabel(e.target.value)}
                           placeholder="e.g. Counter, Table #4"
-                          className="w-full bg-zinc-900 border border-zinc-750 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
+                          className="w-full bg-zinc-900 border border-white/[0.12] rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-hidden focus:ring-1 focus:ring-zinc-600"
                         />
                       </div>
                     </div>
@@ -3187,7 +3176,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                           setQrLinkCopied(true);
                           setTimeout(() => setQrLinkCopied(false), 2500);
                         }}
-                        className="p-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-750 active:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer text-xs font-semibold flex items-center gap-1 border border-zinc-700/60"
+                        className="p-1.5 px-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer text-xs font-semibold flex items-center gap-1 border border-zinc-700/60"
                         title="Copy Direct Link"
                       >
                         {qrLinkCopied ? (

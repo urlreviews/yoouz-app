@@ -610,9 +610,9 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
       id="yoouz-more-view-container"
       className="flex-1 w-full max-w-full min-w-0 h-full bg-[#050506] overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y font-sans text-white pb-[calc(env(safe-area-inset-bottom,16px)+104px)] md:pb-24 select-none selection:bg-white/20 selection:text-white"
     >
-      {/* Top Sticky Bar */}
-      <header className="sticky top-0 z-40 w-full bg-[#050506]/85 backdrop-blur-2xl border-b border-white/[0.07]">
-        <div className="max-w-[1160px] mx-auto h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      {/* Compact Mobile Back Bar (Desktop uses inline back button below to avoid stacked double headers) */}
+      <header className={`${isBusinessSuiteEmbedded ? "sticky" : "sticky md:hidden"} top-0 z-40 w-full bg-[#050506]/85 backdrop-blur-2xl border-b border-white/[0.07]`}>
+        <div className="max-w-[1160px] mx-auto h-13 px-4 flex items-center justify-between">
           <button
             onClick={() => {
               if (onBack) {
@@ -621,33 +621,50 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                 onNavigate("home");
               }
             }}
-            className="w-9 h-9 -ml-1.5 rounded-full hover:bg-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
-            title={isBusinessSuiteEmbedded ? "Back to Dashboard" : "Back to Feed"}
+            className="inline-flex items-center gap-1.5 -ml-1.5 px-2.5 py-1.5 rounded-full hover:bg-white/[0.08] text-zinc-200 hover:text-white text-xs font-semibold transition-colors cursor-pointer shrink-0 active:scale-95"
+            title={isBusinessSuiteEmbedded ? "Back to Dashboard" : "Back to Home"}
           >
-            <ChevronLeft className="w-5 h-5 stroke-[2]" />
+            <ChevronLeft className="w-4.5 h-4.5 stroke-[2.2]" />
+            <span>{isBusinessSuiteEmbedded ? t("business.dashboard", "Dashboard") : t("nav.home", "Home")}</span>
           </button>
-          <span className="text-[13.5px] font-semibold text-zinc-200 tracking-[-0.01em] absolute left-1/2 -translate-x-1/2">
-            {t("trustCenter.title", "Knowledge & Trust Center")}
-          </span>
           <div className="w-9 h-9" />
         </div>
       </header>
 
       {/* Main Widescreen Container */}
-      <main className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 pt-7 sm:pt-10 pb-8 space-y-7 sm:space-y-9">
+      <main className="max-w-[1160px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-9 pb-8 space-y-7 sm:space-y-9">
         {/* Editorial Hero Header + Liquid-Glass Segmented Control */}
         <section aria-label="Knowledge Navigation" className="space-y-6">
-          <div className="space-y-2 max-w-2xl">
-            <h1 className="text-[28px] sm:text-[36px] font-semibold tracking-[-0.03em] text-white leading-[1.1]">
-              {t("trustCenter.title", "Knowledge & Trust Center")}
-            </h1>
-            <p className="text-sm sm:text-[15px] text-zinc-400 leading-relaxed font-normal">
-              {t("trustCenter.heroSubtitle", "How Yoouz verifies live camera proof, protects privacy, and empowers transparent businesses.")}
-            </p>
+          <div className="flex items-start gap-3.5 max-w-2xl">
+            {!isBusinessSuiteEmbedded && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onBack) {
+                    onBack();
+                  } else if (onNavigate) {
+                    onNavigate("home");
+                  }
+                }}
+                className="hidden md:flex w-10 h-10 mt-0.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-zinc-200 hover:text-white items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
+                title="Back to Home"
+                aria-label="Back to Home"
+              >
+                <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
+              </button>
+            )}
+            <div className="space-y-2">
+              <h1 className="text-[26px] sm:text-[34px] font-semibold tracking-[-0.03em] text-white leading-[1.1]">
+                {t("trustCenter.title", "Knowledge & Trust Center")}
+              </h1>
+              <p className="text-sm sm:text-[15px] text-zinc-400 leading-relaxed font-normal">
+                {t("trustCenter.heroSubtitle", "How Yoouz verifies live camera proof, protects privacy, and empowers transparent businesses.")}
+              </p>
+            </div>
           </div>
 
-          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar">
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.045] border border-white/[0.08] whitespace-nowrap">
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar [mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] sm:[mask-image:none]">
+            <div className="inline-flex items-center gap-1 p-1 pr-6 sm:pr-1 rounded-full bg-white/[0.045] border border-white/[0.08] whitespace-nowrap">
               <button
                 onClick={() => setActiveTab("about")}
                 className={`px-4 sm:px-5 py-2 rounded-full text-[13px] font-semibold transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer ${
@@ -760,7 +777,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
                       <Camera className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.strictRule", "Strict Rule")}</span>
+                    <span className="text-[11px] font-medium text-zinc-400 block uppercase tracking-wider">{t("trustCenter.pillar1", "Pillar 1")}</span>
                     <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule1Title", "Live Camera Only")}</h4>
                     <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule1Desc", "Zero gallery uploads or saved stock photos. Snap a live photo on the spot using your front or rear camera.")}
@@ -771,7 +788,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-[#E8C78A]">
                       <Lock className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.pillar2", "Pillar 2")}</span>
+                    <span className="text-[11px] font-medium text-zinc-400 block uppercase tracking-wider">{t("trustCenter.pillar2", "Pillar 2")}</span>
                     <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule2Title", "Strict 1–5 Whole Stars")}</h4>
                     <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule2Desc", "Clean, decisive whole-number ratings from 1 to 5 stars paired directly with live visual proof.")}
@@ -782,7 +799,7 @@ export const CopoMoreView: React.FC<CopoMoreViewProps> = ({
                     <div className="w-10 h-10 rounded-2xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white">
                       <Users className="w-4.5 h-4.5" />
                     </div>
-                    <span className="text-[11px] font-medium text-zinc-400 block">{t("trustCenter.pillar3", "Pillar 3")}</span>
+                    <span className="text-[11px] font-medium text-zinc-400 block uppercase tracking-wider">{t("trustCenter.pillar3", "Pillar 3")}</span>
                     <h4 className="text-[15px] font-semibold text-white tracking-[-0.01em]">{t("trustCenter.rule3Title", "Instant Handles & Passkeys")}</h4>
                     <p className="text-[13px] text-zinc-400 leading-relaxed">
                       {t("trustCenter.rule3Desc", "Browse with zero sign-up. An anonymous handle is created automatically when you post or interact, with optional Passkey backup across devices.")}

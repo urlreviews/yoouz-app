@@ -4132,7 +4132,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 1. Claimed Businesses */}
                 <div
                   onClick={() => setActiveTab("businesses")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-violet-500/50 shadow-md hover:shadow-violet-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-violet-500/50 shadow-md hover:shadow-violet-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-violet-400">Businesses</span>
@@ -4157,7 +4157,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 2. Photo Reviews */}
                 <div
                   onClick={() => setActiveTab("videos")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Photo Reviews</span>
@@ -4184,7 +4184,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 3. Places Directory */}
                 <div
                   onClick={() => setActiveTab("places")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-sky-500/50 shadow-md hover:shadow-sky-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-sky-500/50 shadow-md hover:shadow-sky-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-sky-400">Places Directory</span>
@@ -4209,7 +4209,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 4. Creators & Reviewers */}
                 <div
                   onClick={() => setActiveTab("creators")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-amber-500/50 shadow-md hover:shadow-amber-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-amber-500/50 shadow-md hover:shadow-amber-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Creators</span>
@@ -4234,7 +4234,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 5. Community Users */}
                 <div
                   onClick={() => setActiveTab("users")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-emerald-500/50 shadow-md hover:shadow-emerald-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/50 shadow-md hover:shadow-emerald-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Community</span>
@@ -4259,7 +4259,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* 6. Interactions */}
                 <div
                   onClick={() => setActiveTab("likes")}
-                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-850 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-rose-500/50 shadow-md hover:shadow-rose-500/10 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-400">Interactions</span>
@@ -5112,7 +5112,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </thead>
                       <tbody className="divide-y divide-zinc-800/80">
                         {filteredVideos.map((v) => (
-                          <tr key={v.id} className="hover:bg-zinc-850/50 transition-colors">
+                          <tr key={v.id} className="hover:bg-zinc-800/50 transition-colors">
                             <td className="p-4">
                               <input
                                 type="checkbox"
@@ -6704,7 +6704,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <button
                     onClick={fetchAdminLikes}
                     disabled={isLoadingLikes}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
+                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isLoadingLikes ? "animate-spin" : ""}`} />
                     <span>Sync Feed</span>
@@ -6823,7 +6823,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     return (
                       <div
                         key={like.id || `like-${idx}`}
-                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-850/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                       >
                         {/* User Identity Column */}
                         <div className="flex items-center gap-3.5 min-w-[240px]">
@@ -6990,7 +6990,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <button
                     onClick={fetchAdminBookmarks}
                     disabled={isLoadingBookmarks}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
+                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isLoadingBookmarks ? "animate-spin" : ""}`} />
                     <span>Sync Feed</span>
@@ -7110,7 +7110,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     return (
                       <div
                         key={bm.id || `bm-${idx}`}
-                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-850/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                       >
                         {/* User Identity Column */}
                         <div className="flex items-center gap-3.5 min-w-[240px]">
@@ -7545,7 +7545,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div
                           key={chat.id}
                           className={`p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${
-                            isSelected ? "bg-blue-950/20" : "hover:bg-zinc-850/40"
+                            isSelected ? "bg-blue-950/20" : "hover:bg-zinc-800/40"
                           }`}
                         >
                           {/* Left: Checkbox + Dual Avatars + Metadata */}
@@ -7813,7 +7813,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <div className="flex items-center justify-end gap-2">
                                       <button
                                         onClick={() => setEditingMessageId(null)}
-                                        className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 hover:text-white rounded-lg bg-zinc-850 cursor-pointer"
+                                        className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 hover:text-white rounded-lg bg-zinc-800/80 cursor-pointer"
                                       >
                                         Cancel
                                       </button>
@@ -7901,7 +7901,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
 
                       {/* Modal Footer Controls */}
-                      <div className="flex items-center justify-between gap-3 pt-1 border-t border-zinc-850">
+                      <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/[0.08]">
                         <button
                           onClick={() => setConfirmDeleteChatId(inspectChatModal.id)}
                           className="px-3.5 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 font-bold text-xs rounded-xl transition-all border border-red-800/40 flex items-center gap-1.5 cursor-pointer"
@@ -8167,7 +8167,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                               broadcastAudience === aud.id
                                 ? "bg-white text-zinc-950 border-white shadow-md font-bold"
-                                : "bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-850 hover:border-zinc-700"
+                                : "bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
                             }`}
                           >
                             <div className="text-xs font-bold">{aud.label}</div>
@@ -8323,7 +8323,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
 
                       {broadcastData.targetUrl && (
-                        <div className="pt-2 border-t border-zinc-850 flex items-center justify-between text-[11px]">
+                        <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px]">
                           <span className="text-zinc-500 font-mono truncate max-w-[180px]">
                             🔗 {broadcastData.targetUrl}
                           </span>
@@ -8370,7 +8370,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-white">{item.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-400 font-mono font-bold uppercase">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-400 font-mono font-bold uppercase">
                               {item.type || "announcement"}
                             </span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
@@ -8631,7 +8631,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <button
                       key={t.name}
                       onClick={() => setInspectTableModal(t.name)}
-                      className="p-3 bg-zinc-950 hover:bg-zinc-850 rounded-2xl border border-zinc-800 hover:border-zinc-700 flex flex-col justify-between transition-all cursor-pointer text-left group"
+                      className="p-3 bg-zinc-950 hover:bg-zinc-800 rounded-2xl border border-zinc-800 hover:border-zinc-700 flex flex-col justify-between transition-all cursor-pointer text-left group"
                     >
                       <div className="flex items-center justify-between gap-1 w-full">
                         <span className="font-mono text-[11px] text-zinc-300 font-bold truncate group-hover:text-white">
@@ -8641,7 +8641,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                       <div className="mt-2.5 flex items-baseline justify-between w-full">
                         {isLoadingLiveStats && !liveStats ? (
-                          <div className="h-6 w-12 bg-zinc-850 animate-pulse rounded-md mt-0.5" />
+                          <div className="h-6 w-12 bg-zinc-800/80 animate-pulse rounded-md mt-0.5" />
                         ) : (
                           <span className="text-lg font-black text-white font-mono">{t.count}</span>
                         )}
@@ -8899,7 +8899,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                       const matchedVid = activeVideos.find((v) => v.id === item.id) || item;
                                       setPreviewVideo(matchedVid);
                                     }}
-                                    className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-850 transition-all group"
+                                    className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-800 transition-all group"
                                     title="Click to preview photo review"
                                   >
                                     <div className="w-14 h-20 rounded-xl bg-zinc-950 border border-zinc-700/80 overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-emerald-500 transition-all">
@@ -8962,7 +8962,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 ) : inspectTableModal === "likes" ? (
                                   <div
                                     onClick={() => setSelectedLikeDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-rose-500/50 hover:bg-zinc-850 transition-all group"
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-rose-500/50 hover:bg-zinc-800 transition-all group"
                                     title="Click to view full Like Audit modal"
                                   >
                                     <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-rose-500/20 group-hover:ring-rose-500 transition-all">
@@ -9000,7 +9000,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 ) : inspectTableModal === "shares" ? (
                                   <div
                                     onClick={() => setSelectedShareDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-sky-500/50 hover:bg-zinc-850 transition-all group"
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-sky-500/50 hover:bg-zinc-800 transition-all group"
                                     title="Click to view full Share Audit modal"
                                   >
                                     <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-sky-500/20 group-hover:ring-sky-500 transition-all">
@@ -9038,7 +9038,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 ) : inspectTableModal === "bookmarks" ? (
                                   <div
                                     onClick={() => setSelectedBookmarkDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-850 transition-all group"
+                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-800 transition-all group"
                                     title="Click to view full Bookmark Audit modal"
                                   >
                                     <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-amber-500/20 group-hover:ring-amber-500 transition-all">
@@ -9314,7 +9314,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </tr>
                       ) : (
                         searchIntelLogs.map((log, idx) => (
-                          <tr key={idx} className="hover:bg-zinc-850/40 transition-colors group">
+                          <tr key={idx} className="hover:bg-zinc-800/40 transition-colors group">
                             <td className="px-5 py-4 font-mono text-[10px] text-zinc-400">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </td>
@@ -9411,7 +9411,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     type="button"
                     onClick={fetchAdminAgencies}
                     disabled={isLoadingAdminAgencies}
-                    className="px-4 py-2 bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-zinc-800 cursor-pointer shadow-sm"
+                    className="px-4 py-2 bg-zinc-800/80 hover:bg-zinc-800 disabled:opacity-50 text-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-zinc-800 cursor-pointer shadow-sm"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAdminAgencies ? "animate-spin" : ""}`} />
                     <span>Refresh</span>
@@ -9488,7 +9488,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             {agency.logoUrl ? (
                               <img src={agency.logoUrl} alt={agency.name} className="w-10 h-10 rounded-xl object-cover bg-white p-1 ring-1 ring-zinc-800" />
                             ) : (
-                              <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-center font-bold text-xs text-zinc-300">
+                              <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/[0.08] flex items-center justify-center font-bold text-xs text-zinc-300">
                                 {agency.name.substring(0, 2).toUpperCase()}
                               </div>
                             )}
@@ -10062,7 +10062,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                     editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail)
                       ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800"
-                      : "bg-zinc-850 text-zinc-400 border border-zinc-700"
+                      : "bg-zinc-800/80 text-zinc-400 border border-zinc-700"
                   }`}>
                     {editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "Profile Claimed" : "Unclaimed"}
                   </span>

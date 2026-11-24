@@ -206,7 +206,7 @@ export const GoogleOwnerReplyModal: React.FC<GoogleOwnerReplyModalProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => handleApplyTemplate(template)}
-                  className="px-2.5 py-1 rounded-full bg-zinc-800/80 hover:bg-zinc-750 border border-zinc-700/60 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left"
+                  className="px-2.5 py-1 rounded-full bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/60 text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left"
                 >
                   {template}
                 </button>

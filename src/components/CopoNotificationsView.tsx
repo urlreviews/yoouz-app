@@ -355,7 +355,7 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
       className="flex-1 h-full w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain overscroll-x-none touch-pan-y bg-[#050506] text-white px-3.5 sm:px-6 md:px-8 py-3 sm:py-5 select-none" 
       style={{ paddingBottom: 'calc(7.5rem + env(safe-area-inset-bottom, 0px))', paddingTop: 'calc(0.5rem + env(safe-area-inset-top, 0px))' }}
     >
-      <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
+      <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
         
         {/* Top Header & Navigation Bar */}
         <div className="flex items-center justify-between gap-3 pt-1 pb-2">
@@ -438,33 +438,35 @@ export const CopoNotificationsView: React.FC<CopoNotificationsViewProps> = ({
         )}
 
         {/* Filter Pills Segment Bar */}
-        <div className="flex items-center gap-2 w-full max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x pb-2 scrollbar-none no-scrollbar">
-          {filterPills.map((pill) => {
-            const isActive = activeFilter === pill.value;
-            return (
-              <button
-                key={pill.value}
-                onClick={() => setActiveFilter(pill.value)}
-                className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 active:scale-95 border ${
-                  isActive
-                    ? "bg-white text-zinc-950 border-white shadow-sm font-semibold"
-                    : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:bg-white/[0.08] hover:text-white"
-                }`}
-              >
-                {pill.icon}
-                <span>{pill.label}</span>
-                {pill.count !== undefined && (
-                  <span
-                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-semibold tabular-nums ${
-                      isActive ? "bg-zinc-950 text-white" : "bg-white/[0.08] text-zinc-300"
-                    }`}
-                  >
-                    {pill.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <div className="relative -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+          <div className="flex items-center sm:flex-wrap gap-2 w-full max-w-full overflow-x-auto sm:overflow-visible overflow-y-hidden overscroll-x-contain touch-pan-x pb-2 pr-8 sm:pr-0 scrollbar-none no-scrollbar [mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] sm:[mask-image:none]">
+            {filterPills.map((pill) => {
+              const isActive = activeFilter === pill.value;
+              return (
+                <button
+                  key={pill.value}
+                  onClick={() => setActiveFilter(pill.value)}
+                  className={`px-3.5 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 border shrink-0 ${
+                    isActive
+                      ? "bg-white text-zinc-950 border-white shadow-sm font-semibold"
+                      : "bg-white/[0.04] text-zinc-300 border-white/[0.08] hover:bg-white/[0.08] hover:text-white"
+                  }`}
+                >
+                  {pill.icon}
+                  <span>{pill.label}</span>
+                  {pill.count !== undefined && (
+                    <span
+                      className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full text-[10px] font-semibold tabular-nums ${
+                        isActive ? "bg-zinc-950 text-white" : "bg-white/[0.08] text-zinc-300"
+                      }`}
+                    >
+                      {pill.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Notification Feed Card List */}

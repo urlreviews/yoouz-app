@@ -19,6 +19,7 @@ export interface CopoMobileBottomNavProps {
   unreadMessagesCount?: number;
   onOpenCreateModal?: () => void;
   onOpenSearch?: () => void;
+  suppressHomeIndicator?: boolean;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
   unreadMessagesCount = 0,
   onOpenCreateModal,
   onOpenSearch,
+  suppressHomeIndicator = false,
   className = "md:hidden fixed bottom-0 left-0 right-0"
 }) => {
   const { t } = useLanguage();
@@ -48,11 +50,11 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
     }
   };
 
-  const isHomeActive = activeSection === "home";
+  const isHomeActive = activeSection === "home" && !suppressHomeIndicator;
   const isSearchActive = activeSection === "search" || activeSection === "discover";
   const isReviewActive = activeSection === "record_review";
   const isMessagesActive = activeSection === "messages";
-  const isProfileActive = activeSection === "profile" || activeSection === "more";
+  const isProfileActive = activeSection === "profile";
 
   return (
     <div
@@ -63,7 +65,7 @@ export const CopoMobileBottomNav: React.FC<CopoMobileBottomNavProps> = ({
       {/* Floating iOS Liquid-Glass Dock Capsule */}
       <nav
         aria-label="Mobile Navigation"
-        className="pointer-events-auto relative flex items-center justify-between max-w-[430px] mx-auto rounded-[28px] bg-[#111114]/88 backdrop-blur-2xl border border-white/[0.12] px-2 py-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.08)] text-white"
+        className="pointer-events-auto relative flex items-center justify-between max-w-[430px] mx-auto rounded-[28px] bg-[#111114]/88 backdrop-blur-2xl border border-white/[0.12] px-2 py-2 shadow-[0_18px_48px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.08)] text-white"
       >
         {/* 1. Home */}
         <button

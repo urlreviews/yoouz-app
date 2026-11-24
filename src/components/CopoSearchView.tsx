@@ -1263,7 +1263,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenPlace && onOpenPlace(searchedPlace.id)}
-                    className="w-full h-12 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-white font-bold border border-zinc-700/80 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
+                    className="w-full h-12 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold border border-zinc-700/80 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-sm active:scale-98"
                   >
                     <Building2 className="w-4.5 h-4.5 text-zinc-300 shrink-0" />
                     <span className="truncate">{t("search.viewBusiness", "View Business")}</span>

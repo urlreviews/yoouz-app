@@ -101,7 +101,7 @@ export const CopoBrandedAdExportModal: React.FC<CopoBrandedAdExportModalProps> =
         <div className="p-5 space-y-4 text-zinc-300">
           
           {/* EXACT SHARE CARD PREVIEW (100% IDENTICAL TO SHARE MODAL) */}
-          <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-750/90 bg-zinc-950 shadow-xl select-none group">
+          <div className="relative w-full rounded-2xl overflow-hidden border border-white/[0.12] bg-zinc-950 shadow-xl select-none group">
             <div className="relative aspect-[16/9] w-full overflow-hidden flex items-center justify-center bg-black">
               {/* Clean video thumbnail */}
               <img

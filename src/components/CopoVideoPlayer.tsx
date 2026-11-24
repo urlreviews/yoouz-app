@@ -1122,6 +1122,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 isBusinessOwnerView={isBusinessOwnerView}
                 onOpenOwnerReply={onOpenOwnerReply}
                 onCloseEmbed={onCloseEmbed}
+                hideDesktopBackButton={feedContextType === "place" || feedContextType === "creator"}
                 commentsOpen={commentsOpen}
               />
             );
@@ -1500,7 +1501,7 @@ export const CopoVideoPlayer: React.FC<CopoVideoPlayerProps> = ({
                 id="btn-cancel-edit-rating"
                 disabled={isSavingEdit}
                 onClick={() => setEditingReviewVideo(null)}
-                className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-750 text-zinc-200 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
               >
                 {t("common.cancel", "Cancel")}
               </button>

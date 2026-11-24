@@ -1746,7 +1746,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                   ))}
 
                   {isUploadingAttachments && (
-                    <div className="w-14 h-14 rounded-xl border border-dashed border-zinc-750 flex flex-col items-center justify-center bg-zinc-950/70 shrink-0 text-zinc-300 gap-1 animate-pulse">
+                    <div className="w-14 h-14 rounded-xl border border-dashed border-white/20 flex flex-col items-center justify-center bg-zinc-950/70 shrink-0 text-zinc-300 gap-1 animate-pulse">
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span className="text-[9px] font-bold">Uploading...</span>
                     </div>
@@ -1756,7 +1756,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-14 h-14 rounded-xl border border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center bg-zinc-950/40 hover:bg-zinc-850 shrink-0 text-zinc-400 hover:text-white transition-all cursor-pointer group"
+                      className="w-14 h-14 rounded-xl border border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center bg-zinc-950/40 hover:bg-white/[0.06] shrink-0 text-zinc-400 hover:text-white transition-all cursor-pointer group"
                       title="Add more photos (up to 5)"
                     >
                       <Plus className="w-4 h-4 group-hover:scale-110 transition-transform text-zinc-300" />
@@ -1969,7 +1969,7 @@ export const CopoCommentsDrawer: React.FC<CopoCommentsDrawerProps> = ({
           {/* Top Bar */}
           <div className="flex items-center justify-between z-10 w-full max-w-4xl mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
-              <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-850/80 border border-zinc-750">
+              <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-900/85 border border-white/[0.12]">
                 {lightboxState.activeIndex + 1} / {lightboxState.images.length}
               </span>
               {lightboxState.authorName && (

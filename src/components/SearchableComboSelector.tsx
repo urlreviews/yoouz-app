@@ -95,7 +95,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                   onChange(search.trim());
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer text-zinc-200 hover:bg-zinc-850"
+                className="w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer text-zinc-200 hover:bg-zinc-800"
               >
                 <span className="font-semibold text-emerald-400">Use "{search.trim()}"</span>
               </button>
@@ -119,7 +119,7 @@ export const SearchableComboSelector: React.FC<SearchableComboSelectorProps> = (
                     className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
                         ? "bg-zinc-800 text-white font-semibold"
-                        : "text-zinc-200 hover:bg-zinc-850"
+                        : "text-zinc-200 hover:bg-zinc-800"
                     }`}
                   >
                     <span>{option}</span>

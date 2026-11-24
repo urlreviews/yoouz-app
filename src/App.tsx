@@ -12,6 +12,7 @@ import { CopoHomePage } from "./components/CopoHomePage";
 import { GlobalUploadToast } from "./components/GlobalUploadToast";
 import { CopoMobileBottomNav } from "./components/CopoMobileBottomNav";
 import { CopoMobileNavDrawer } from "./components/CopoMobileNavDrawer";
+import { ObsidianRouteSkeleton } from "./components/ObsidianRouteSkeleton";
 import { getThreadPartnerDetails } from "./utils/threadPartner";
 import type { PasskeyModalMode } from "./components/PasskeyQrModal";
 import type { AuthIntent } from "./components/CopoGoogleAuthModal";
@@ -8372,7 +8373,7 @@ export function App() {
 
         {/* Place Drawer */}
         {selectedPlaceIdForDrawer && (activeDrawerPlace || drawerPlace) && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<ObsidianRouteSkeleton variant="drawer" />}>
           <CopoPlaceDrawer
             key={(activeDrawerPlace || drawerPlace)!.id}
             place={activeDrawerPlace || drawerPlace}
@@ -8409,7 +8410,7 @@ export function App() {
 
         {/* Creator Drawer */}
         {selectedAuthorForDrawer && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<ObsidianRouteSkeleton variant="drawer" />}>
           <CopoCreatorDrawer
             author={selectedAuthorForDrawer}
             allVideos={videos}
@@ -8811,7 +8812,7 @@ export function App() {
 
       {/* 2. Workspace Stage: Optional Left Business/Creator Profile Panel + Main Stage */}
       <div className="flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-row relative overflow-hidden overscroll-none">
-        <Suspense fallback={null}>
+        <Suspense fallback={(isPlaceView || isCreatorView) ? <ObsidianRouteSkeleton variant="drawer" /> : null}>
         {isPlaceView ? (
           <CopoPlaceDrawer
             key={(activeDrawerPlace || drawerPlace)?.id || "place-drawer"}
@@ -8883,7 +8884,7 @@ export function App() {
       <div className="copo-has-bottom-nav flex-1 min-h-0 min-w-0 w-full max-w-full flex flex-col relative overflow-hidden overscroll-none bg-[#050506]">
         {/* If in Photo Feed Player mode */}
         {(isPlaceView || isCreatorView || (activeSection === "home" && (isWatchingVideo || fullscreenFeedContext))) && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<ObsidianRouteSkeleton variant="player" />}>
             <CopoVideoPlayer
               key={currentFeedContextKey}
               commentsOpen={Boolean(activeCommentVideo)}
@@ -9081,7 +9082,7 @@ export function App() {
 
             {/* Discover Reviewers / Creators Directory View */}
             {activeSection === "discover" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoDiscoverView
                 videos={videos}
                 allUsers={allRegisteredUsers}
@@ -9225,7 +9226,7 @@ export function App() {
 
             {/* Notifications View */}
             {activeSection === "notifications" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoNotificationsView
                 notifications={notifications}
                 currentUser={currentUser}
@@ -9284,7 +9285,7 @@ export function App() {
 
             {/* Direct Messages View */}
             {activeSection === "messages" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoMessagesView
                 messages={messages}
                 currentUser={currentUser}
@@ -9372,7 +9373,7 @@ export function App() {
 
             {/* Bookmarks / Bucket List View */}
             {activeSection === "bookmarks" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoBookmarksView
                 bookmarkedVideos={bookmarkedVideos}
                 savedPlaces={savedPlaces}
@@ -9397,7 +9398,7 @@ export function App() {
 
             {/* Following Directory View */}
             {activeSection === "following" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoFollowingView
                 places={places}
                 videos={videos}
@@ -9430,7 +9431,7 @@ export function App() {
             {/* Pricing View */}
             {/* Business Dashboard View */}
             {activeSection === "business" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="business" />}>
               <CopoBusinessDashboardView 
                 onNavigate={(sec) => {
                   if (sec === "home") {
@@ -9579,7 +9580,7 @@ export function App() {
               </Suspense>
             )}
             {activeSection === "more" && (
-              <Suspense fallback={null}>
+              <Suspense fallback={<ObsidianRouteSkeleton variant="page" />}>
               <CopoMoreView
                 currentUser={currentUser}
                 onOpenLegal={handleOpenLegal}
@@ -9775,6 +9776,7 @@ export function App() {
       {!isSearchActive && !isSearchModalOpen && !embedTargetId && !selectedPlaceIdForDrawer && !selectedAuthorForDrawer && !isCreateModalOpen && !isPitchRoute && activeSection !== "business" && activeSection !== "admin" && activeSection !== "search" && activeSection !== "discover" && (
         <CopoMobileBottomNav
           activeSection={activeSection}
+          suppressHomeIndicator={Boolean(isWatchingVideo || fullscreenFeedContext)}
           currentUser={currentUser}
           unreadNotifsCount={effectiveUnreadNotifsCount}
           unreadMessagesCount={calculateUnreadMessagesCount(messages, currentUser)}
