@@ -81,20 +81,31 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
       setShowDropdown(true);
     }
 
-    setIsLoadingSuggest(true);
+    if (trimmed.length < 2) {
+      setIsLoadingSuggest(false);
+      return;
+    }
+
     setShowDropdown(true);
+    let cancelled = false;
+    let controller: AbortController | null = null;
 
     const timer = setTimeout(async () => {
+      if (cancelled) return;
+      controller = new AbortController();
+      setIsLoadingSuggest(true);
       try {
-        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
-        if (resp.ok) {
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal
+        });
+        if (!cancelled && resp.ok) {
           const data = await resp.json();
+          if (cancelled) return;
           const serverList: SuggestionItem[] = data.suggestions || [];
-          
-          // Merge local matches with server suggestions (avoiding duplicates)
+
           const seen = new Set<string>();
           const merged: SuggestionItem[] = [];
-          
+
           for (const item of [...localMatches, ...serverList]) {
             const key = (item.id || item.domain || item.title).toLowerCase();
             if (!seen.has(key)) {
@@ -104,15 +115,19 @@ export const CopoSearchTestView: React.FC<CopoSearchTestViewProps> = ({
           }
           setSuggestions(merged.slice(0, 8));
         }
-      } catch (err) {
-        console.error("Search suggest error:", err);
+      } catch (err: any) {
+        if (err?.name !== "AbortError") console.error("Search suggest error:", err);
       } finally {
-        setIsLoadingSuggest(false);
+        if (!cancelled) setIsLoadingSuggest(false);
       }
-    }, 120);
+    }, 280);
 
-    return () => clearTimeout(timer);
-  }, [query, places]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller?.abort();
+    };
+  }, [query]);
 
   // Click outside listener to close dropdown
   useEffect(() => {

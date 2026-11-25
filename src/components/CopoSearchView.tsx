@@ -303,10 +303,22 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
     return sorted.slice(0, 8);
   }, [places, videos]);
 
-  // Live Auto-Suggest debounce with 0ms instant local database preview
+  const placesRef = useRef(places);
+  placesRef.current = places;
+  const suggestCacheRef = useRef<Map<string, { ts: number; items: any[] }>>(new Map());
+  const activeAbortRef = useRef<AbortController | null>(null);
+  const suggestSeqRef = useRef(0);
+  const normalizedQuery = useMemo(() => query.trim().replace(/\s+/g, " "), [query]);
+
+  // Live Auto-Suggest debounce with 0ms instant local database preview (decoupled from background places updates)
   useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
+    if (activeAbortRef.current) {
+      activeAbortRef.current.abort();
+      activeAbortRef.current = null;
+    }
+    const reqSeq = ++suggestSeqRef.current;
+
+    if (!normalizedQuery) {
       setSuggestions([]);
       setIsLoadingSuggest(false);
       setShowDropdown(false);
@@ -314,10 +326,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       return;
     }
 
-    // 0ms instant local DB match (space-insensitive so "jet blue" matches "JetBlue")
+    const trimmed = normalizedQuery;
     const qLow = trimmed.toLowerCase();
     const qNoSpace = qLow.replace(/\s+/g, '');
-    const localMatches = places
+    const localMatches = placesRef.current
       .filter(p => {
         const pName = (p.name || '').toLowerCase();
         const pNameNoSpace = pName.replace(/\s+/g, '');
@@ -344,20 +356,54 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         };
       });
 
-    if (localMatches.length > 0) {
-      setSuggestions(localMatches);
-      setShowDropdown(true);
-    }
-
-    setIsLoadingSuggest(true);
     setShowDropdown(true);
 
+    const cached = suggestCacheRef.current.get(qLow);
+    if (cached && Date.now() - cached.ts < 3 * 60 * 1000) {
+      const seen = new Set<string>();
+      const merged: any[] = [];
+      for (const item of [...localMatches, ...cached.items]) {
+        const key = (item.id || item.domain || item.title).toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push(item); }
+      }
+      setSuggestions(merged.slice(0, 8));
+      setIsLoadingSuggest(false);
+      return;
+    }
+
+    if (localMatches.length > 0) {
+      setSuggestions(localMatches);
+    }
+
+    if (trimmed.length < 2) {
+      setIsLoadingSuggest(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingSuggest(false);
+
     const timer = setTimeout(async () => {
+      if (cancelled || reqSeq !== suggestSeqRef.current) return;
+      const controller = new AbortController();
+      activeAbortRef.current = controller;
+      setIsLoadingSuggest(true);
+
       try {
-        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`);
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal
+        });
+        if (cancelled || reqSeq !== suggestSeqRef.current) return;
         if (resp.ok) {
           const data = await resp.json();
+          if (cancelled || reqSeq !== suggestSeqRef.current) return;
           const serverList = data.suggestions || [];
+          if (suggestCacheRef.current.size > 100) {
+            const firstKey = suggestCacheRef.current.keys().next().value;
+            if (firstKey) suggestCacheRef.current.delete(firstKey);
+          }
+          suggestCacheRef.current.set(qLow, { ts: Date.now(), items: serverList });
+
           const seen = new Set<string>();
           const merged = [];
           for (const item of [...localMatches, ...serverList]) {
@@ -371,12 +417,20 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         }
       } catch (err) {
       } finally {
-        setIsLoadingSuggest(false);
+        if (activeAbortRef.current === controller) activeAbortRef.current = null;
+        if (!cancelled && reqSeq === suggestSeqRef.current) setIsLoadingSuggest(false);
       }
-    }, 120);
+    }, 280);
 
-    return () => clearTimeout(timer);
-  }, [query, places]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      if (activeAbortRef.current) {
+        activeAbortRef.current.abort();
+        activeAbortRef.current = null;
+      }
+    };
+  }, [normalizedQuery]);
 
   // Click outside listener to close dropdown
   useEffect(() => {

@@ -38569,463 +38569,405 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     res.json({ logs: SEARCH_INTEL_LOG });
   });
 
-  // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with Memory LRU Cache
+  // Enterprise Ultra-Fast Multi-Language Business Auto-Suggest Endpoint with 5-Min TTL LRU Cache & In-Flight Deduplication
   const searchSuggestCache = new Map<string, { timestamp: number; data: any }>();
+  const searchSuggestInflight = new Map<string, Promise<any[]>>();
   const suggestBrandResolutionCache = new Map<string, { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null>();
+  const SEARCH_SUGGEST_TTL_MS = 5 * 60 * 1000;
+  const SUGGEST_BRAND_TTL_MS = 5 * 60 * 1000;
   const SPAM_AUTOCOMPLETE_REGEX = /\b(?:list|lists|school|schools|review|reviews|phone|phones|number|numbers|salary|salaries|jobs|job|career|careers|wiki|wikipedia|pdf|app|login|signup|reddit|forum|quora|contact|email|hours|rating|ratings|fake|scam|glassdoor|indeed|linkedin|facebook|instagram|youtube|twitter|tiktok|meaning|definition|valuation|portfolio|net\s*worth|stock\s*price|share\s*price)\b/i;
 
   app.get('/api/search-suggest', async (req, res) => {
     try {
-      const q = String(req.query.q || '').trim();
+      const q = String(req.query.q || '').trim().replace(/\s+/g, ' ');
       if (!q || q.length < 1) {
         return res.json({ suggestions: [], query: q });
       }
 
       const qLower = q.toLowerCase();
       const cacheKey = qLower;
-      // Clear in-memory cache to guarantee real-time accurate information
-      searchSuggestCache.clear();
 
-      const suggestions: Array<{
-        id?: string;
-        title: string;
-        domain: string;
-        websiteUrl?: string;
-        logoUrl: string;
-        category?: string;
-        address?: string;
-        source: string;
-      }> = [];
-      const seenKeys = new Set<string>();
-      const seenDomains = new Set<string>();
+      // 1. Instant 0ms LRU TTL Cache Hit
+      const cachedEntry = searchSuggestCache.get(cacheKey);
+      if (cachedEntry && Date.now() - cachedEntry.timestamp < SEARCH_SUGGEST_TTL_MS) {
+        res.setHeader("Cache-Control", "private, max-age=60");
+        return res.json({ suggestions: cachedEntry.data, query: q, cached: true });
+      }
 
-      const addSuggestion = (item: {
-        id?: string;
-        title: string;
-        domain?: string;
-        websiteUrl?: string;
-        logoUrl?: string;
-        category?: string;
-        address?: string;
-        source: string;
-      }) => {
-        if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
-        if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
+      // 2. Coalesce identical concurrent requests onto a single in-flight execution
+      const existingInflight = searchSuggestInflight.get(cacheKey);
+      if (existingInflight) {
+        const sharedResults = await existingInflight;
+        if (res.writableEnded || req.destroyed) return;
+        res.setHeader("Cache-Control", "private, max-age=60");
+        return res.json({ suggestions: sharedResults, query: q, coalesced: true });
+      }
 
-        let dom = (cleanDomainName(item.domain || "") || (item.domain || "").toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0]).replace(/^www\d*\./i, "").trim();
-        const normTitle = item.title.toLowerCase().trim();
-        const compactTitle = normTitle.replace(/[^\p{L}\p{N}]/gu, '');
+      const computeSuggestions = async (): Promise<any[]> => {
+        const suggestions: Array<{
+          id?: string;
+          title: string;
+          domain: string;
+          websiteUrl?: string;
+          logoUrl: string;
+          category?: string;
+          address?: string;
+          source: string;
+        }> = [];
+        const seenKeys = new Set<string>();
+        const seenDomains = new Set<string>();
 
-        // If domain is empty but title looks like a domain name (e.g. "example.com" or "www.example.com")
-        if (!dom && normTitle.includes(".") && !normTitle.includes(" ") && normTitle.length > 3) {
-          dom = (cleanDomainName(normTitle) || normTitle.replace(/^www\d*\./i, "")).replace(/^www\d*\./i, "").trim();
+        const addSuggestion = (item: {
+          id?: string;
+          title: string;
+          domain?: string;
+          websiteUrl?: string;
+          logoUrl?: string;
+          category?: string;
+          address?: string;
+          source: string;
+        }) => {
+          if (!item.title || item.title === ".com" || item.title.trim().length === 0) return;
+          if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
+
+          let dom = (cleanDomainName(item.domain || "") || (item.domain || "").toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0]).replace(/^www\d*\./i, "").trim();
+          const normTitle = item.title.toLowerCase().trim();
+          const compactTitle = normTitle.replace(/[^\p{L}\p{N}]/gu, '');
+
+          if (!dom && normTitle.includes(".") && !normTitle.includes(" ") && normTitle.length > 3) {
+            dom = (cleanDomainName(normTitle) || normTitle.replace(/^www\d*\./i, "")).replace(/^www\d*\./i, "").trim();
+          }
+
+          const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
+          if (hasValidDomain && seenDomains.has(dom)) return;
+
+          const key = dom ? `${dom}:${normTitle}` : normTitle;
+          if (seenKeys.has(normTitle)) return;
+          if (compactTitle && seenKeys.has(`compact:${compactTitle}`)) return;
+          if (seenKeys.has(key)) return;
+          seenKeys.add(normTitle);
+          if (compactTitle) seenKeys.add(`compact:${compactTitle}`);
+          if (hasValidDomain) seenDomains.add(dom);
+          if (key !== normTitle) seenKeys.add(key);
+
+          let logo = item.logoUrl || "";
+          if (!logo && hasValidDomain) {
+            logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || `/api/favicon?domain=${encodeURIComponent(dom)}`;
+          }
+          if (logo && logo.includes("/api/proxy-image?v=2&")) {
+            logo = logo.replace("/api/proxy-image?v=2&", "/api/proxy-image?v=3&");
+          }
+
+          const cleanTitle = formatBusinessName(item.title, dom, undefined, { fromWebsite: item.source !== 'domain_guess' }) || item.title;
+          const cleanItemId = hasValidDomain ? dom : (item.id ? String(item.id).replace(/^www\d*\./i, "") : undefined);
+
+          suggestions.push({
+            id: cleanItemId,
+            title: cleanTitle,
+            domain: hasValidDomain ? dom : "",
+            websiteUrl: hasValidDomain ? `https://${dom}` : item.websiteUrl,
+            logoUrl: logo,
+            category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
+            address: item.address || "",
+            source: item.source
+          });
+        };
+
+        // Step A. Search BunnyDB places (instant prefix, space-insensitive, AND multi-word brand prefix match so "the hoxton brussels" hits "The Hoxton")
+        const qNoSpaces = qLower.replace(/\s+/g, '');
+        const qWords = qLower.split(/\s+/).filter(Boolean);
+        const coreTwoWords = qWords.length >= 2 ? qWords.slice(0, 2).join(" ") : "";
+        const coreTwoNoSpaces = coreTwoWords.replace(/\s+/g, "");
+        const activeDb = getBunnyDb();
+        if (activeDb) {
+          try {
+            const dbSql = coreTwoWords && coreTwoWords !== qLower
+              ? `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website, data FROM places
+                 WHERE name LIKE ? OR REPLACE(LOWER(name), ' ', '') LIKE ? OR id LIKE ? OR REPLACE(LOWER(id), ' ', '') LIKE ? OR brandDomain LIKE ?
+                    OR name LIKE ? OR REPLACE(LOWER(name), ' ', '') LIKE ? OR brandDomain LIKE ?
+                 LIMIT 10`
+              : `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website, data FROM places
+                 WHERE name LIKE ? OR REPLACE(LOWER(name), ' ', '') LIKE ? OR id LIKE ? OR REPLACE(LOWER(id), ' ', '') LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ?
+                 LIMIT 8`;
+            const dbArgs = coreTwoWords && coreTwoWords !== qLower
+              ? [`${q}%`, `${qNoSpaces}%`, `${q}%`, `${qNoSpaces}%`, `${q}%`, `${coreTwoWords}%`, `${coreTwoNoSpaces}%`, `${coreTwoNoSpaces}%`]
+              : [`${q}%`, `${qNoSpaces}%`, `${q}%`, `${qNoSpaces}%`, `${q}%`, `${q}%`, `${q}%`];
+            const dbRes = await activeDb.execute({ sql: dbSql, args: dbArgs });
+            if (dbRes && dbRes.rows) {
+              const isHebrewSuggest = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat)\b/i.test(q);
+              for (const row of dbRes.rows as any[]) {
+                const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
+                if (isDisallowedNonOfficialHost(bDom, q) || isParkedOrBrokerPage(bDom, "", String(row.name || ""), q)) {
+                  continue;
+                }
+                if (!isHebrewSuggest && bDom.endsWith(".co.il") && !KNOWN_OFFICIAL_NAMES[bDom] && !row.address) {
+                  continue;
+                }
+                let pData: any = {};
+                try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
+                const hasDot = bDom.includes(".");
+                const descOfficial = hasDot ? extractOfficialBrandSpellingFromText(pData.description, bDom) : null;
+                const rawTitle = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+                const title = (hasDot && (isFalseSplitOfDomain(rawTitle, bDom) || isFalseSplitAgainstText(rawTitle, pData.description, bDom) || isDomainStemName(rawTitle, bDom)) && descOfficial)
+                  ? descOfficial
+                  : (formatBusinessName(rawTitle, bDom, undefined, { fromWebsite: true, fallbackText: pData.description }) || rawTitle);
+                addSuggestion({
+                  id: row.id,
+                  title,
+                  domain: hasDot ? bDom : "",
+                  websiteUrl: row.website || pData.website || (hasDot ? `https://${bDom}` : undefined),
+                  logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
+                  category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
+                  address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
+                  source: "database"
+                });
+              }
+            }
+          } catch {}
         }
 
-        const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
-        if (hasValidDomain && seenDomains.has(dom)) return;
-
-        const key = dom ? `${dom}:${normTitle}` : normTitle;
-        if (seenKeys.has(normTitle)) return;
-        if (compactTitle && seenKeys.has(`compact:${compactTitle}`)) return;
-        if (seenKeys.has(key)) return;
-        seenKeys.add(normTitle);
-        if (compactTitle) seenKeys.add(`compact:${compactTitle}`);
-        if (hasValidDomain) seenDomains.add(dom);
-        if (key !== normTitle) seenKeys.add(key);
-        
-        // Only assign logo if item has official logo or is a known verified brand (or domain favicon)
-        let logo = item.logoUrl || "";
-        if (!logo && hasValidDomain) {
-          logo = KNOWN_BRAND_LOGOS[dom] || serverBrandLogos[dom] || `/api/favicon?domain=${encodeURIComponent(dom)}`;
+        // Step B. Curated Brand Knowledge Graph & Official Names Dictionary
+        const escapedQ = qLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const wordRegex = new RegExp(`(?:^|\\s|-|\\.)${escapedQ}`, 'i');
+        for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
+          const domLower = domKey.toLowerCase().replace(/^www\d*\./i, "");
+          const nameLower = officialName.toLowerCase();
+          const nameNoSpaces = nameLower.replace(/\s+/g, '');
+          const matchesCore =
+            coreTwoWords.length >= 4 &&
+            (nameLower === coreTwoWords || nameNoSpaces === coreTwoNoSpaces || (nameNoSpaces.length >= 4 && qNoSpaces.startsWith(nameNoSpaces)));
+          if (
+            domLower.startsWith(qLower) ||
+            nameLower.startsWith(qLower) ||
+            (qNoSpaces.length >= 2 && nameNoSpaces.startsWith(qNoSpaces)) ||
+            wordRegex.test(domLower) ||
+            wordRegex.test(nameLower) ||
+            matchesCore
+          ) {
+            const hasDot = domLower.includes(".");
+            const validDomain = hasDot
+              ? domLower
+              : (KNOWN_BRAND_LOGOS[domLower + ".com"] ? domLower + ".com" : (KNOWN_OFFICIAL_NAMES[domLower + ".com"] ? domLower + ".com" : (KNOWN_BRAND_LOGOS[domLower] ? domLower : "")));
+            addSuggestion({
+              title: officialName,
+              domain: validDomain.replace(/^www\d*\./i, ""),
+              logoUrl: validDomain && KNOWN_BRAND_LOGOS[validDomain] ? KNOWN_BRAND_LOGOS[validDomain] : "",
+              category: "",
+              source: "brand_index"
+            });
+            if (suggestions.length >= 8) break;
+          }
         }
-        if (logo && logo.includes("/api/proxy-image?v=2&")) {
-          logo = logo.replace("/api/proxy-image?v=2&", "/api/proxy-image?v=3&");
-        }
 
-        const cleanTitle = formatBusinessName(item.title, dom, undefined, { fromWebsite: item.source !== 'domain_guess' }) || item.title;
-        const cleanItemId = hasValidDomain ? dom : (item.id ? String(item.id).replace(/^www\d*\./i, "") : undefined);
-
-        suggestions.push({
-          id: cleanItemId,
-          title: cleanTitle,
-          domain: hasValidDomain ? dom : "",
-          websiteUrl: hasValidDomain ? `https://${dom}` : item.websiteUrl,
-          logoUrl: logo,
-          category: (item.category && !item.category.toLowerCase().includes("verified") && !item.category.toLowerCase().includes("google") && item.category !== "Website") ? item.category : "",
-          address: "",
-          source: item.source
+        // Step C. Bounded Parallel External Autocomplete (ONLY when needed, NEVER scrapes target HTML during typing, hard 900ms budget!)
+        const isDirectDomainInput = q.includes('.') && !q.includes(' ') && cleanDomainName(q).includes('.');
+        const alreadyHasStrongDomainMatch = suggestions.some((s) => {
+          if (!s.domain) return false;
+          const tNoSpace = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const dRoot = s.domain.split('.')[0].replace(/[^a-z0-9]/g, '');
+          return (
+            tNoSpace === qNoSpaces ||
+            (tNoSpace.length >= 4 && (qNoSpaces.startsWith(tNoSpace) || tNoSpace.startsWith(qNoSpaces))) ||
+            (dRoot.length >= 4 && (qNoSpaces.startsWith(dRoot) || dRoot.startsWith(qNoSpaces)))
+          );
         });
+
+        if (!isDirectDomainInput && q.length >= 3) {
+          const needStructuredDiscovery = !alreadyHasStrongDomainMatch && suggestions.length < 3;
+          const needGoogleSuggest = suggestions.length < 6;
+
+          const [discoveredBrand, googlePhrases] = await Promise.all([
+            // C1. Fast Structured Official Website Resolution (hard 900ms timeout, 5-min TTL cache including negative hits)
+            (async () => {
+              if (!needStructuredDiscovery) return null;
+              const suggestCacheKey = qNoSpaces;
+              const cachedBrand = suggestBrandResolutionCache.get(suggestCacheKey);
+              if (cachedBrand !== undefined) {
+                if (cachedBrand === null) return null;
+                if (Date.now() - cachedBrand.timestamp < SUGGEST_BRAND_TTL_MS) return cachedBrand;
+              }
+              try {
+                const discovered = await Promise.race([
+                  discoverFastStructuredOfficial(q).catch(() => null),
+                  new Promise<null>((resolve) => setTimeout(() => resolve(null), 900))
+                ]);
+                let resolvedTop: { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null = null;
+                if (discovered && discovered.domain && !isDisallowedNonOfficialHost(discovered.domain, q)) {
+                  const host = discovered.domain;
+                  const spelled = extractOfficialBrandSpellingFromText(`${discovered.title} | ${discovered.snippet}`, host);
+                  const bestSeg = selectBestTitleSegmentServer(discovered.title || "", host);
+                  const merged = mergeOfficialBrandSpellingServer(bestSeg || discovered.title, spelled, host);
+                  const cand = merged || spelled || formatBusinessName(bestSeg || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
+                  if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
+                    resolvedTop = { timestamp: Date.now(), title: cand, domain: host, websiteUrl: discovered.url };
+                  }
+                }
+                if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
+                suggestBrandResolutionCache.set(suggestCacheKey, resolvedTop);
+                return resolvedTop;
+              } catch {
+                return null;
+              }
+            })(),
+            // C2. Multi-Language Fast Auto-Complete (hard 500ms timeout)
+            (async () => {
+              if (!needGoogleSuggest) return [] as string[];
+              const combinedPhrases: string[] = [];
+              try {
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 500);
+                const gRes = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
+                  signal: ctrl.signal
+                });
+                clearTimeout(tid);
+                if (gRes.ok) {
+                  const list = await gRes.json();
+                  if (Array.isArray(list) && Array.isArray(list[1])) {
+                    for (const phrase of list[1].slice(0, 8)) {
+                      if (typeof phrase === 'string' && phrase.trim().length > 1 && !combinedPhrases.includes(phrase.trim())) {
+                        combinedPhrases.push(phrase.trim());
+                      }
+                    }
+                  }
+                }
+              } catch {}
+              return combinedPhrases;
+            })()
+          ]);
+
+          if (discoveredBrand && discoveredBrand.domain && discoveredBrand.title) {
+            addSuggestion({
+              title: discoveredBrand.title,
+              domain: discoveredBrand.domain,
+              websiteUrl: discoveredBrand.websiteUrl,
+              logoUrl: KNOWN_BRAND_LOGOS[discoveredBrand.domain] || "",
+              category: discoveredBrand.category || "",
+              source: "brand_index"
+            });
+          }
+
+          if (googlePhrases.length > 0 && suggestions.length < 8) {
+            const JUNK_KEYWORDS = [
+              'menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook',
+              'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in',
+              'checkin', 'portfolio', 'valuation', 'net worth', 'logo', 'founder', 'founders', 'ceo', 'stock',
+              'share price', 'flight', 'flights', 'booking', 'booking.com', 'boeken', 'expedia', 'trivago',
+              'agoda', 'hotels.com', 'trip.com', 'airbnb', 'price', 'prices', 'per night', 'cost', 'room',
+              'rooms', 'suite', 'suites', 'closed', 'facts', 'fun facts', 'tickets', 'ticket', 'dress code',
+              'height', 'inside', 'owner', 'owners', 'maps', 'directions', 'images', 'pictures'
+            ];
+
+            for (const phrase of googlePhrases) {
+              if (suggestions.length >= 8) break;
+              const phraseClean = phrase.trim();
+              const phraseLower = phraseClean.toLowerCase();
+              const phraseNoSpaces = phraseLower.replace(/\s+/g, '');
+
+              if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
+                continue;
+              }
+
+              let targetDom = "";
+              if (phraseClean.includes(".") && !phraseClean.includes(" ") && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(phraseClean)) {
+                targetDom = cleanDomainName(phraseClean);
+              } else {
+                const matchedEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
+                  const kLower = k.toLowerCase();
+                  const vLower = v.toLowerCase();
+                  const vNoSpaces = vLower.replace(/\s+/g, '');
+                  if (kLower.includes('.') && isDisallowedNonOfficialHost(kLower, q)) return false;
+                  if (kLower.length <= 3 || vLower.length <= 3) {
+                    const kWordRegex = new RegExp(`\\b${kLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                    const vWordRegex = new RegExp(`\\b${vLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                    return kLower === phraseLower || vLower === phraseLower || kWordRegex.test(phraseLower) || vWordRegex.test(phraseLower);
+                  }
+                  return kLower === phraseLower || vLower === phraseLower || vNoSpaces === phraseNoSpaces;
+                });
+                if (matchedEntry) {
+                  const candDom = matchedEntry[0].includes('.') ? matchedEntry[0] : (matchedEntry[1].includes('.') ? matchedEntry[1] : (KNOWN_OFFICIAL_NAMES[matchedEntry[0] + '.com'] ? matchedEntry[0] + '.com' : ''));
+                  if (candDom && !isDisallowedNonOfficialHost(candDom, q)) {
+                    targetDom = candDom;
+                  }
+                }
+              }
+
+              const phraseDistinctiveTokens = phraseLower.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length >= 3 && !GENERIC_QUERY_STOPWORDS.has(w));
+              if (!targetDom && suggestions.some(s => {
+                if (!s.domain) return false;
+                const sNoSpace = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+                const sTitleLow = s.title.toLowerCase();
+                if (sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace))) return true;
+                if (phraseDistinctiveTokens.length >= 2 && phraseDistinctiveTokens.every(tok => sTitleLow.includes(tok))) return true;
+                return false;
+              })) {
+                continue;
+              }
+
+              const knownLoc = targetDom ? (KNOWN_ENTITY_LOCATIONS[targetDom] || KNOWN_ENTITY_LOCATIONS[targetDom.split('.')[0]]) : null;
+              const displayTitle = knownLoc?.name
+                || (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
+                || formatBusinessName(phraseClean, targetDom, undefined, { fromWebsite: true })
+                || phraseClean;
+
+              addSuggestion({
+                title: displayTitle,
+                domain: targetDom,
+                logoUrl: targetDom && KNOWN_BRAND_LOGOS[targetDom] ? KNOWN_BRAND_LOGOS[targetDom] : "",
+                category: knownLoc?.category || "",
+                address: knownLoc?.city ? `${knownLoc.address ? knownLoc.address + ', ' : ''}${knownLoc.city}` : "",
+                source: targetDom ? "brand_index" : "autocomplete"
+              });
+            }
+          }
+        }
+
+        // Step D. Instant Direct Domain Formatting (NO live website HTML scrape while typing — full scrape runs cleanly on submit/open!)
+        if (isDirectDomainInput) {
+          const cleanQDom = cleanDomainName(q);
+          if (cleanQDom && cleanQDom.includes('.')) {
+            const existingIdx = suggestions.findIndex(s => s.domain === cleanQDom || s.id === cleanQDom);
+            const resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[cleanQDom] || KNOWN_PLACE_METADATA[cleanQDom]?.name || "";
+            const resolvedDirectLogo = KNOWN_BRAND_LOGOS[cleanQDom] || KNOWN_PLACE_METADATA[cleanQDom]?.logoUrl || "";
+            const finalTitle = resolvedDirectTitle || formatBusinessName(cleanQDom, cleanQDom) || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || cleanQDom;
+
+            if (existingIdx >= 0) {
+              if (resolvedDirectTitle) suggestions[existingIdx].title = resolvedDirectTitle;
+              if (resolvedDirectLogo && !suggestions[existingIdx].logoUrl) suggestions[existingIdx].logoUrl = resolvedDirectLogo;
+            } else if (!seenKeys.has(cleanQDom)) {
+              addSuggestion({
+                title: finalTitle,
+                domain: cleanQDom,
+                logoUrl: resolvedDirectLogo,
+                category: KNOWN_PLACE_METADATA[cleanQDom]?.category || "",
+                source: resolvedDirectTitle ? "direct" : "domain_guess"
+              });
+            }
+          }
+        }
+
+        const finalResults = suggestions.slice(0, 8);
+        if (searchSuggestCache.size > 600) {
+          const oldestKey = searchSuggestCache.keys().next().value;
+          if (oldestKey) searchSuggestCache.delete(oldestKey);
+        }
+        searchSuggestCache.set(cacheKey, { timestamp: Date.now(), data: finalResults });
+        return finalResults;
       };
 
-      // 1. Search local DB places (Instant Database Index, including space-insensitive match)
-      const qNoSpaces = qLower.replace(/\s+/g, '');
-      const activeDb = getBunnyDb();
-      if (activeDb) {
-        try {
-          const dbRes = await activeDb.execute({
-            sql: `SELECT id, name, category, address, city, country, logoUrl, brandDomain, website, data FROM places 
-                  WHERE name LIKE ? OR REPLACE(LOWER(name), ' ', '') LIKE ? OR id LIKE ? OR REPLACE(LOWER(id), ' ', '') LIKE ? OR brandDomain LIKE ? OR category LIKE ? OR city LIKE ? LIMIT 8`,
-            args: [`${q}%`, `${qNoSpaces}%`, `${q}%`, `${qNoSpaces}%`, `${q}%`, `${q}%`, `${q}%`]
-          });
-          if (dbRes && dbRes.rows) {
-            const isHebrewSuggest = /[\u0590-\u05FF]|\b(israel|tel\s*aviv|jerusalem|haifa|eilat)\b/i.test(q);
-            for (const row of dbRes.rows as any[]) {
-              const bDom = (row.brandDomain || row.website || row.id || "").toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split('/')[0];
-              if (isDisallowedNonOfficialHost(bDom, q) || isParkedOrBrokerPage(bDom, "", String(row.name || ""), q)) {
-                continue;
-              }
-              if (!isHebrewSuggest && bDom.endsWith(".co.il") && !KNOWN_OFFICIAL_NAMES[bDom] && !row.address) {
-                continue;
-              }
-              let pData: any = {};
-              try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
-              const hasDot = bDom.includes(".");
-              const descOfficial = hasDot ? extractOfficialBrandSpellingFromText(pData.description, bDom) : null;
-              const rawTitle = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
-              const title = (hasDot && (isFalseSplitOfDomain(rawTitle, bDom) || isFalseSplitAgainstText(rawTitle, pData.description, bDom) || isDomainStemName(rawTitle, bDom)) && descOfficial)
-                ? descOfficial
-                : (formatBusinessName(rawTitle, bDom, undefined, { fromWebsite: true, fallbackText: pData.description }) || rawTitle);
-              addSuggestion({
-                id: row.id,
-                title,
-                domain: hasDot ? bDom : "",
-                websiteUrl: row.website || pData.website || (hasDot ? `https://${bDom}` : undefined),
-                logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
-                category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
-                address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
-                source: "database"
-              });
-            }
-          }
-        } catch (dbErr) {}
-      }
+      const workPromise = computeSuggestions().finally(() => {
+        searchSuggestInflight.delete(cacheKey);
+      });
+      searchSuggestInflight.set(cacheKey, workPromise);
 
-      // 2. Search Curated Brand Knowledge Graph & Official Names Dictionary
-      const escapedQ = qLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-      const wordRegex = new RegExp(`(?:^|\\s|-|\\.)${escapedQ}`, 'i');
-      for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
-        const domLower = domKey.toLowerCase().replace(/^www\d*\./i, "");
-        const nameLower = officialName.toLowerCase();
-        const nameNoSpaces = nameLower.replace(/\s+/g, '');
-        if (domLower.startsWith(qLower) || nameLower.startsWith(qLower) || (qNoSpaces.length >= 2 && nameNoSpaces.startsWith(qNoSpaces)) || wordRegex.test(domLower) || wordRegex.test(nameLower)) {
-          const hasDot = domLower.includes(".");
-          const validDomain = hasDot 
-            ? domLower 
-            : (KNOWN_BRAND_LOGOS[domLower + ".com"] ? domLower + ".com" : (KNOWN_OFFICIAL_NAMES[domLower + ".com"] ? domLower + ".com" : (KNOWN_BRAND_LOGOS[domLower] ? domLower : "")));
-          addSuggestion({
-            title: officialName,
-            domain: validDomain.replace(/^www\d*\./i, ""),
-            logoUrl: validDomain && KNOWN_BRAND_LOGOS[validDomain] ? KNOWN_BRAND_LOGOS[validDomain] : "",
-            category: "",
-            source: "brand_index"
-          });
-          if (suggestions.length >= 8) break;
-        }
-      }
-
-      // 2.5 Fast Structured Official Website Resolution during typing (DDG Instant JSON + OSM Nominatim + Wikidata P856 — zero-captcha, reserves DDG HTML for search submit)
-      if (!q.includes('.') && q.length >= 3 && !suggestions.some(s => s.domain && s.title.toLowerCase().replace(/\s+/g, '').includes(qNoSpaces))) {
-        try {
-          const suggestCacheKey = qNoSpaces;
-          const cachedBrand = suggestBrandResolutionCache.get(suggestCacheKey);
-          if (cachedBrand !== undefined) {
-            if (cachedBrand && cachedBrand.domain && cachedBrand.title) {
-              addSuggestion({
-                title: cachedBrand.title,
-                domain: cachedBrand.domain,
-                websiteUrl: cachedBrand.websiteUrl,
-                logoUrl: KNOWN_BRAND_LOGOS[cachedBrand.domain] || "",
-                category: cachedBrand.category || "",
-                source: "brand_index"
-              });
-            }
-          } else {
-            const discovered = await discoverFastStructuredOfficial(q).catch(() => null);
-            let resolvedTop: { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null = null;
-            if (discovered && discovered.domain && !isDisallowedNonOfficialHost(discovered.domain, q)) {
-              const host = discovered.domain;
-              const spelled = extractOfficialBrandSpellingFromText(`${discovered.title} | ${discovered.snippet}`, host);
-              const bestSeg = selectBestTitleSegmentServer(discovered.title || "", host);
-              const merged = mergeOfficialBrandSpellingServer(bestSeg || discovered.title, spelled, host);
-              const cand = merged || spelled || formatBusinessName(bestSeg || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
-              if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
-                resolvedTop = { timestamp: Date.now(), title: cand, domain: host, websiteUrl: discovered.url };
-              }
-            }
-            if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
-            suggestBrandResolutionCache.set(suggestCacheKey, resolvedTop);
-            if (resolvedTop) {
-              addSuggestion({
-                title: resolvedTop.title,
-                domain: resolvedTop.domain,
-                websiteUrl: resolvedTop.websiteUrl,
-                logoUrl: KNOWN_BRAND_LOGOS[resolvedTop.domain] || "",
-                category: "",
-                source: "brand_index"
-              });
-            }
-          }
-        } catch {}
-      }
-
-      // 3. Multi-Language Live Auto-Complete (Google Complete — skip when user typed a direct domain URL)
-      const isDirectDomainInput = q.includes('.') && !q.includes(' ') && cleanDomainName(q).includes('.');
-      if (suggestions.length < 8 && !isDirectDomainInput) {
-        const combinedPhrases: string[] = [];
-        try {
-          const ctrl = new AbortController();
-          const tid = setTimeout(() => ctrl.abort(), 600);
-          const res = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
-            signal: ctrl.signal
-          });
-          clearTimeout(tid);
-          if (res.ok) {
-            const list = await res.json();
-            if (Array.isArray(list) && Array.isArray(list[1])) {
-              for (const phrase of list[1].slice(0, 8)) {
-                if (typeof phrase === 'string' && phrase.trim().length > 1 && !combinedPhrases.includes(phrase.trim())) {
-                  combinedPhrases.push(phrase.trim());
-                }
-              }
-            }
-          }
-        } catch(e) {}
-
-        const JUNK_KEYWORDS = [
-          'menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook',
-          'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in',
-          'checkin', 'portfolio', 'valuation', 'net worth', 'logo', 'founder', 'founders', 'ceo', 'stock',
-          'share price', 'flight', 'flights', 'booking', 'booking.com', 'boeken', 'expedia', 'trivago',
-          'agoda', 'hotels.com', 'trip.com', 'airbnb', 'price', 'prices', 'per night', 'cost', 'room',
-          'rooms', 'suite', 'suites', 'closed', 'facts', 'fun facts', 'tickets', 'ticket', 'dress code',
-          'height', 'inside', 'owner', 'owners', 'maps', 'directions', 'images', 'pictures'
-        ];
-
-        for (const phrase of combinedPhrases) {
-          if (suggestions.length >= 8) break;
-          const phraseClean = phrase.trim();
-          const phraseLower = phraseClean.toLowerCase();
-          const phraseNoSpaces = phraseLower.replace(/\s+/g, '');
-
-          // Skip junk phrases (e.g., "smith's tavern menu", "jet blue flight 292", "burj al arab hotel booking.com")
-          if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
-            continue;
-          }
-
-          let targetDom = "";
-
-          // Check if phrase has genuine domain dot
-          if (phraseClean.includes(".") && !phraseClean.includes(" ") && /^[a-z0-9\.\-]+\.[a-z]{2,}$/i.test(phraseClean)) {
-            targetDom = cleanDomainName(phraseClean);
-          } else {
-            // Check if matches known brand / location dictionary (forward, reverse, and space-insensitive)
-            const matchedEntry = Object.entries(KNOWN_OFFICIAL_NAMES).find(([k, v]) => {
-              const kLower = k.toLowerCase();
-              const vLower = v.toLowerCase();
-              const vNoSpaces = vLower.replace(/\s+/g, '');
-              
-              // Never match an OTA/aggregator/directory domain from a multi-word search query (e.g. "burj al arab booking")
-              if (kLower.includes('.') && isDisallowedNonOfficialHost(kLower, q)) {
-                return false;
-              }
-
-              // Prevent tiny brand keywords (like "ing" or "at") from matching substrings of longer words (like "cleaning" or "creative")
-              if (kLower.length <= 3 || vLower.length <= 3) {
-                const kWordRegex = new RegExp(`\\b${kLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
-                const vWordRegex = new RegExp(`\\b${vLower.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
-                return kLower === phraseLower || vLower === phraseLower || kWordRegex.test(phraseLower) || vWordRegex.test(phraseLower);
-              }
-
-              return (
-                kLower === phraseLower ||
-                vLower === phraseLower ||
-                vNoSpaces === phraseNoSpaces
-              );
-            });
-            if (matchedEntry) {
-              const candDom = matchedEntry[0].includes('.') ? matchedEntry[0] : (matchedEntry[1].includes('.') ? matchedEntry[1] : (KNOWN_OFFICIAL_NAMES[matchedEntry[0] + '.com'] ? matchedEntry[0] + '.com' : ''));
-              if (candDom && !isDisallowedNonOfficialHost(candDom, q)) {
-                targetDom = candDom;
-              }
-            }
-          }
-
-          // Skip redundant/unverified Google autocomplete sub-queries when an official/DB business covering the same entity tokens is already resolved
-          const phraseDistinctiveTokens = phraseLower.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length >= 3 && !GENERIC_QUERY_STOPWORDS.has(w));
-          if (!targetDom && suggestions.some(s => {
-            if (!s.domain) return false;
-            const sNoSpace = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-            const sTitleLow = s.title.toLowerCase();
-            if (sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace))) return true;
-            if (phraseDistinctiveTokens.length >= 2 && phraseDistinctiveTokens.every(tok => sTitleLow.includes(tok))) return true;
-            return false;
-          })) {
-            continue;
-          }
-
-          const knownLoc = targetDom ? (KNOWN_ENTITY_LOCATIONS[targetDom] || KNOWN_ENTITY_LOCATIONS[targetDom.split('.')[0]]) : null;
-
-          const displayTitle = knownLoc?.name 
-            || (targetDom && KNOWN_OFFICIAL_NAMES[targetDom])
-            || formatBusinessName(phraseClean, targetDom, undefined, { fromWebsite: true }) 
-            || phraseClean;
-
-          addSuggestion({
-            title: displayTitle,
-            domain: targetDom,
-            logoUrl: targetDom && KNOWN_BRAND_LOGOS[targetDom] ? KNOWN_BRAND_LOGOS[targetDom] : "",
-            category: knownLoc?.category || "",
-            address: knownLoc?.city ? `${knownLoc.address ? knownLoc.address + ', ' : ''}${knownLoc.city}` : "",
-            source: targetDom ? "brand_index" : "autocomplete"
-          });
-        }
-      }
-
-      // 4. If query itself looks like a domain, ensure it is added with its official business name from the website
-      if (q.includes('.') && !q.includes(' ')) {
-        const cleanQDom = cleanDomainName(q);
-        if (cleanQDom && cleanQDom.includes('.')) {
-          const existingIdx = suggestions.findIndex(s => s.domain === cleanQDom || s.id === cleanQDom);
-          const existingHasGoodName = existingIdx >= 0 && suggestions[existingIdx].title && !isDomainStemName(suggestions[existingIdx].title, cleanQDom) && !isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom);
-          let resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[cleanQDom] || "";
-          let resolvedDirectLogo = KNOWN_BRAND_LOGOS[cleanQDom] || KNOWN_PLACE_METADATA[cleanQDom]?.logoUrl || "";
-
-          if (!resolvedDirectTitle && !existingHasGoodName) {
-            try {
-              let directRes: any = null;
-              for (const tryUrl of [`https://${cleanQDom}`, `https://www.${cleanQDom}`]) {
-                try {
-                  const ctrl = new AbortController();
-                  const tid = setTimeout(() => ctrl.abort(), 1600);
-                  const r = await fetch(tryUrl, {
-                    signal: ctrl.signal,
-                    redirect: "follow",
-                    headers: {
-                      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                      "Accept": "text/html,application/xhtml+xml"
-                    }
-                  });
-                  clearTimeout(tid);
-                  if (r.ok) {
-                    directRes = r;
-                    break;
-                  }
-                } catch (eTry) {}
-              }
-              if (directRes && directRes.ok) {
-                const finalDirectUrl = directRes.url || `https://${cleanQDom}`;
-                const redirDom = cleanDomainName(finalDirectUrl) || cleanQDom;
-                if (KNOWN_OFFICIAL_NAMES[redirDom]) {
-                  resolvedDirectTitle = KNOWN_OFFICIAL_NAMES[redirDom];
-                }
-                if (!resolvedDirectLogo) {
-                  resolvedDirectLogo = KNOWN_BRAND_LOGOS[redirDom] || KNOWN_PLACE_METADATA[redirDom]?.logoUrl || "";
-                }
-                const html = await directRes.text();
-                const $d = cheerio.load(html);
-                const ogSiteName = ($d('meta[property="og:site_name"]').attr('content') || $d('meta[name="application-name"]').attr('content') || $d('meta[name="apple-mobile-web-app-title"]').attr('content') || "").trim();
-                const htmlTitleText = ($d('title').first().text() || "").trim();
-                const ogTitle = ($d('meta[property="og:title"]').attr('content') || htmlTitleText || "").trim();
-                const twitterTitle = ($d('meta[name="twitter:title"]').attr('content') || $d('meta[property="twitter:title"]').attr('content') || "").trim();
-                const ogDesc = ($d('meta[property="og:description"]').attr('content') || $d('meta[name="description"]').attr('content') || "").trim();
-                let suggestJsonLdName = "";
-                try {
-                  $d('script[type="application/ld+json"]').each((_: any, el: any) => {
-                    if (suggestJsonLdName) return;
-                    try {
-                      const parsed = JSON.parse($d(el).html() || "{}");
-                      const scan = (node: any) => {
-                        if (!node || suggestJsonLdName) return;
-                        if (Array.isArray(node)) { node.forEach(scan); return; }
-                        if (typeof node === "object") {
-                          const t = String(node["@type"] || node.type || "").toLowerCase();
-                          const n = (typeof node.name === "string" && node.name.trim()) || (typeof node.legalName === "string" && node.legalName.trim()) || "";
-                          if (n && n.length <= 65 && (t.includes("organization") || t.includes("localbusiness") || t.includes("corporation") || t.includes("store") || t.includes("service") || t.includes("website"))) {
-                            suggestJsonLdName = n;
-                            return;
-                          }
-                          for (const k in node) scan(node[k]);
-                        }
-                      };
-                      scan(parsed);
-                    } catch (e) {}
-                  });
-                } catch (e) {}
-                const officialSuggestSpelling = extractOfficialBrandSpellingFromText([ogSiteName, suggestJsonLdName, htmlTitleText, ogTitle, twitterTitle, ogDesc].filter(Boolean).join(" | "), redirDom)
-                  || extractOfficialBrandSpellingFromText([ogSiteName, suggestJsonLdName, htmlTitleText, ogTitle, twitterTitle, ogDesc].filter(Boolean).join(" | "), cleanQDom);
-                const rawCandidates = [
-                  officialSuggestSpelling,
-                  ogSiteName,
-                  suggestJsonLdName,
-                  twitterTitle,
-                  htmlTitleText.split(/\s*(?:\||—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "",
-                  ogTitle.split(/\s*(?:\||—|–|•|·|:\s+|\s+-\s+)\s*/)[0]?.trim() || "",
-                  extractDomainAlignedNameFromText(`${htmlTitleText} | ${ogTitle} | ${ogSiteName} | ${ogDesc}`, redirDom),
-                  extractCamelCaseBrandFromText(ogDesc, redirDom),
-                  extractCamelCaseBrandFromText(ogDesc, cleanQDom),
-                  extractBrandFromDescription(ogDesc, redirDom),
-                  extractBrandFromDescription(ogDesc, cleanQDom)
-                ].filter(Boolean);
-                for (const rawCand of rawCandidates) {
-                  if (isGenericSeoSlogan(String(rawCand), redirDom)) continue;
-                  const cand = formatBusinessName(String(rawCand), redirDom, undefined, { fromWebsite: true, fallbackText: ogDesc }) || String(rawCand);
-                  if (cand && cand.length >= 2 && cand.length <= 50 && !isDomainStemName(cand, cleanQDom) && !isDomainStemName(cand, redirDom) && !isDomainDerivedGuess(cand, redirDom) && !isFalseSplitOfDomain(cand, cleanQDom)) {
-                    resolvedDirectTitle = cand;
-                    break;
-                  }
-                }
-                if (!resolvedDirectLogo) {
-                  const extractedLogo = extractAuthenticWebsiteLogo($d, html, finalDirectUrl, redirDom);
-                  if (extractedLogo) {
-                    resolvedDirectLogo = extractedLogo.startsWith("http") ? `/api/proxy-image?url=${encodeURIComponent(extractedLogo)}` : extractedLogo;
-                  }
-                }
-              }
-            } catch (e) {}
-
-            if (!resolvedDirectTitle) {
-              const searchSiteMeta = await resolveOfficialSiteMetaFromSearch(cleanQDom).catch(() => null);
-              if (searchSiteMeta && searchSiteMeta.title) {
-                resolvedDirectTitle = searchSiteMeta.title;
-              }
-            }
-          }
-
-          const finalTitle = resolvedDirectTitle || formatBusinessName(cleanQDom, cleanQDom) || (existingIdx >= 0 ? suggestions[existingIdx].title : "") || cleanQDom;
-          if (existingIdx >= 0) {
-            if (resolvedDirectTitle && (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom) || (!suggestions[existingIdx].title.includes(" ") && resolvedDirectTitle.includes(" ")))) {
-              suggestions[existingIdx].title = resolvedDirectTitle;
-            } else if (isDomainStemName(suggestions[existingIdx].title, cleanQDom) || isFalseSplitOfDomain(suggestions[existingIdx].title, cleanQDom)) {
-              suggestions[existingIdx].title = finalTitle;
-            }
-            if (resolvedDirectLogo && !suggestions[existingIdx].logoUrl) {
-              suggestions[existingIdx].logoUrl = resolvedDirectLogo;
-            }
-          } else if (!seenKeys.has(cleanQDom)) {
-            addSuggestion({
-              title: finalTitle,
-              domain: cleanQDom,
-              logoUrl: resolvedDirectLogo,
-              category: "Direct Domain Search",
-              source: resolvedDirectTitle ? "direct" : "domain_guess"
-            });
-            // Ensure addSuggestion didn't overwrite resolvedDirectTitle with a stem
-            const addedIdx = suggestions.findIndex(s => s.domain === cleanQDom);
-            if (addedIdx >= 0 && resolvedDirectTitle) {
-              suggestions[addedIdx].title = resolvedDirectTitle;
-            }
-          }
-        }
-      }
-
-      const finalResults = suggestions.slice(0, 8);
-      // Cache response for 10 minutes
-      searchSuggestCache.set(cacheKey, { timestamp: Date.now(), data: finalResults });
-
+      const finalResults = await workPromise;
+      if (res.writableEnded || req.destroyed) return;
+      res.setHeader("Cache-Control", "private, max-age=60");
       return res.json({ suggestions: finalResults, query: q });
     } catch (e: any) {
       console.error('Search suggest error:', e);
-      return res.status(500).json({ suggestions: [], error: e.message });
+      if (!res.writableEnded) {
+        return res.status(500).json({ suggestions: [], error: e.message });
+      }
     }
   });
 

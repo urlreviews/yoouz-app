@@ -504,16 +504,44 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     [businessStatsMap, searchMode]
   );
 
-  // Live Auto-Suggest debounce
+  // Stable refs so background places/videos/feed refreshes NEVER re-trigger search or wipe open dropdown results!
+  const placesRef = useRef(places);
+  const trendingVideosRef = useRef(trendingVideos);
+  const knownCreatorsRef = useRef(knownCreators);
+  const rankSuggestionsRef = useRef(rankSuggestions);
+  const suggestionsRef = useRef(suggestions);
+  placesRef.current = places;
+  trendingVideosRef.current = trendingVideos;
+  knownCreatorsRef.current = knownCreators;
+  rankSuggestionsRef.current = rankSuggestions;
+  suggestionsRef.current = suggestions;
+
+  // Client-side LRU cache (3-min TTL) + real AbortController + monotonic request sequence
+  const suggestClientCacheRef = useRef<Map<string, { ts: number; items: SuggestionItem[] }>>(new Map());
+  const activeSuggestAbortRef = useRef<AbortController | null>(null);
+  const suggestSeqRef = useRef(0);
+
+  // Normalized query ignores trailing/duplicate spaces so pressing Space never triggers a duplicate fetch or blinks!
+  const normalizedQuery = useMemo(() => query.trim().replace(/\s+/g, " "), [query]);
+
+  // Apple Spotlight / Google Instant Auto-Suggest Pipeline
   useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
+    // Always abort any previous in-flight autocomplete request immediately to keep browser connection pool free
+    if (activeSuggestAbortRef.current) {
+      activeSuggestAbortRef.current.abort();
+      activeSuggestAbortRef.current = null;
+    }
+
+    const reqSeq = ++suggestSeqRef.current;
+
+    if (!normalizedQuery) {
       setSuggestions([]);
       setIsLoadingSuggest(false);
       setShowDropdown(false);
       return;
     }
 
+    const trimmed = normalizedQuery;
     const qLow = trimmed.toLowerCase();
     const normalizeDomain = (raw?: string | null): string => {
       if (!raw) return "";
@@ -583,15 +611,19 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return out;
     };
 
+    const currentPlaces = placesRef.current;
+    const currentVideos = trendingVideosRef.current;
+    const currentRank = rankSuggestionsRef.current;
+
     const localMatches: SuggestionItem[] = [];
     const pushLocal = (item: SuggestionItem) => {
       localMatches.push(sanitizeSuggestion(item));
     };
 
-    // 1. If user typed a URL or domain directly (e.g. "https://www.apple.com" or "www.mcdonalds.com"), strip www and put canonical domain #1
+    // 1. Direct URL or domain input (0ms local)
     const directDomain = normalizeDomain(trimmed);
     if (directDomain && isValidDomainUrl(directDomain)) {
-      const existingPlace = places.find((p) => {
+      const existingPlace = currentPlaces.find((p) => {
         const pDom = normalizeDomain(p.brandDomain || p.website || p.id);
         return pDom === directDomain;
       });
@@ -615,18 +647,33 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
 
     const qSearchClean = qLow.replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "");
     const qNoSpace = qSearchClean.replace(/\s+/g, "");
+    const qWords = qSearchClean.split(/\s+/).filter(Boolean);
+    const coreTwoWords = qWords.length >= 2 ? qWords.slice(0, 2).join(" ") : "";
+    const coreTwoNoSpace = coreTwoWords.replace(/\s+/g, "");
 
-    // 2. Scan ALL local places (do not break early so prefix matches like "Zara" are never dropped)
-    for (const p of places) {
+    const matchesQueryLocal = (nameLow: string, nameNoSpace: string, domLow: string): boolean => {
+      if (
+        nameLow.includes(qSearchClean) ||
+        (qNoSpace.length >= 2 && nameNoSpace.includes(qNoSpace)) ||
+        (domLow && (domLow.includes(qSearchClean) || (qNoSpace.length >= 2 && domLow.includes(qNoSpace))))
+      ) {
+        return true;
+      }
+      // Also match brand + city queries (e.g. "the hoxton brussels" matches "The Hoxton" / "thehoxton.com")
+      if (coreTwoWords.length >= 4 && nameNoSpace.length >= 4) {
+        if (nameLow === coreTwoWords || nameNoSpace === coreTwoNoSpace || qNoSpace.startsWith(nameNoSpace)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // 2. Scan local places (0ms)
+    for (const p of currentPlaces) {
       const pName = (p.name || "").toLowerCase();
       const pNameNoSpace = pName.replace(/\s+/g, "");
       const pDomLow = normalizeDomain(p.brandDomain || p.website || p.id);
-      if (
-        pName.includes(qSearchClean) ||
-        (qNoSpace.length >= 2 && pNameNoSpace.includes(qNoSpace)) ||
-        pDomLow.includes(qSearchClean) ||
-        (qNoSpace.length >= 2 && pDomLow.includes(qNoSpace))
-      ) {
+      if (matchesQueryLocal(pName, pNameNoSpace, pDomLow)) {
         const officialFromDesc = pDomLow ? extractOfficialBrandSpellingFromText(p.description, pDomLow) : null;
         const resolvedPlaceTitle =
           KNOWN_OFFICIAL_NAMES[pDomLow] ||
@@ -647,17 +694,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       }
     }
 
-    // 3. Scan businesses from active video reviews if not already matched
-    for (const v of trendingVideos) {
+    // 3. Scan businesses from active photo reviews (0ms)
+    for (const v of currentVideos) {
       const vName = (v.placeName || v.businessName || "").trim();
       const vNameLow = vName.toLowerCase();
       const vNameNoSpace = vNameLow.replace(/\s+/g, "");
       const vDomLow = normalizeDomain(v.placeWebsite || v.placeId || "");
-      if (
-        vNameLow.includes(qSearchClean) ||
-        (qNoSpace.length >= 2 && vNameNoSpace.includes(qNoSpace)) ||
-        (vDomLow && (vDomLow.includes(qSearchClean) || (qNoSpace.length >= 2 && vDomLow.includes(qNoSpace))))
-      ) {
+      if (matchesQueryLocal(vNameLow, vNameNoSpace, vDomLow)) {
         pushLocal({
           id: vDomLow || (v.placeId ? v.placeId.replace(/^www\d*\./i, "") : vName),
           title: (vDomLow && KNOWN_OFFICIAL_NAMES[vDomLow]) || vName || vDomLow,
@@ -671,13 +714,18 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       }
     }
 
-    // 4. Scan KNOWN_OFFICIAL_NAMES with strict www stripping so www.* aliases never duplicate canonical brands
+    // 4. Scan curated KNOWN_OFFICIAL_NAMES dictionary (0ms)
     for (const [domKey, officialName] of Object.entries(KNOWN_OFFICIAL_NAMES)) {
       if (!domKey.includes(".")) continue;
       const domLow = normalizeDomain(domKey);
       if (!domLow) continue;
       const nameLow = officialName.toLowerCase();
-      if (nameLow.startsWith(qSearchClean) || domLow.startsWith(qSearchClean)) {
+      const nameNoSpace = nameLow.replace(/\s+/g, "");
+      if (
+        nameLow.startsWith(qSearchClean) ||
+        domLow.startsWith(qSearchClean) ||
+        (coreTwoNoSpace.length >= 4 && nameNoSpace.length >= 4 && qNoSpace.startsWith(nameNoSpace))
+      ) {
         pushLocal({
           id: domLow,
           title: officialName,
@@ -689,39 +737,100 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
     }
 
     const dedupedLocal = dedupeSuggestions(localMatches);
-    const rankedLocal = rankSuggestions(dedupedLocal, qSearchClean || trimmed).slice(0, 6);
-    setSuggestions(rankedLocal);
+    const rankedLocal = currentRank(dedupedLocal, qSearchClean || trimmed).slice(0, 6);
+    const searchParam = directDomain && isValidDomainUrl(directDomain) ? directDomain : (qSearchClean || trimmed);
+    const clientCacheKey = `${searchMode}:${searchParam.toLowerCase()}`;
+
     if (!isDropdownDismissedRef.current && document.activeElement === searchInputRef.current) {
       setShowDropdown(true);
     }
 
-    setIsLoadingSuggest(true);
+    // 5. Instant Client LRU Cache Hit (0ms — zero spinner, zero network request!)
+    const cachedClient = suggestClientCacheRef.current.get(clientCacheKey);
+    if (cachedClient && Date.now() - cachedClient.ts < 3 * 60 * 1000) {
+      const mergedCached = dedupeSuggestions([...dedupedLocal, ...cachedClient.items]);
+      setSuggestions(currentRank(mergedCached, qSearchClean || trimmed).slice(0, 6));
+      setIsLoadingSuggest(false);
+      return;
+    }
+
+    // 6. Stale-while-revalidate UI: NEVER wipe already-relevant suggestions into blank skeletons while user extends a query!
+    if (rankedLocal.length > 0) {
+      setSuggestions(rankedLocal);
+    } else {
+      const preservedRelevant = suggestionsRef.current.filter((item) => {
+        const tLow = (item.title || "").toLowerCase();
+        const tNoSpace = tLow.replace(/\s+/g, "");
+        const dLow = (item.domain || "").toLowerCase();
+        return matchesQueryLocal(tLow, tNoSpace, dLow);
+      });
+      if (preservedRelevant.length > 0) {
+        setSuggestions(preservedRelevant);
+      } else {
+        setSuggestions([]);
+      }
+    }
+
+    // Single-character non-domain queries stay 100% local (0 network noise while starting to type)
+    if (searchParam.length < 2 && !(directDomain && isValidDomainUrl(directDomain))) {
+      setIsLoadingSuggest(false);
+      return;
+    }
+
+    // 7. Debounced Network Suggest (280ms quiet window + AbortController — fires ONLY once user pauses typing!)
     let cancelled = false;
-    const searchParam = directDomain && isValidDomainUrl(directDomain) ? directDomain : (qSearchClean || trimmed);
+    setIsLoadingSuggest(false);
+
     const timer = setTimeout(async () => {
+      if (cancelled || reqSeq !== suggestSeqRef.current) return;
+      const controller = new AbortController();
+      activeSuggestAbortRef.current = controller;
+      setIsLoadingSuggest(true);
+
       try {
-        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(searchParam)}`);
-        if (!cancelled && resp.ok) {
+        const resp = await fetch(`/api/search-suggest?q=${encodeURIComponent(searchParam)}`, {
+          signal: controller.signal
+        });
+        if (cancelled || reqSeq !== suggestSeqRef.current) return;
+        if (resp.ok) {
           const data = await resp.json();
+          if (cancelled || reqSeq !== suggestSeqRef.current) return;
           const serverList: SuggestionItem[] = (data.suggestions || []).map(sanitizeSuggestion);
+
+          if (suggestClientCacheRef.current.size > 100) {
+            const firstKey = suggestClientCacheRef.current.keys().next().value;
+            if (firstKey) suggestClientCacheRef.current.delete(firstKey);
+          }
+          suggestClientCacheRef.current.set(clientCacheKey, { ts: Date.now(), items: serverList });
+
           const merged = dedupeSuggestions([...dedupedLocal, ...serverList]);
-          const rankedMerged = rankSuggestions(merged, qSearchClean || trimmed).slice(0, 6);
+          const rankedMerged = rankSuggestionsRef.current(merged, qSearchClean || trimmed).slice(0, 6);
           setSuggestions(rankedMerged);
           if (!isDropdownDismissedRef.current && document.activeElement === searchInputRef.current) {
             setShowDropdown(true);
           }
         }
-      } catch (e) {
+      } catch (err: any) {
+        // Ignore intentional AbortError from next keystroke
       } finally {
-        if (!cancelled) setIsLoadingSuggest(false);
+        if (activeSuggestAbortRef.current === controller) {
+          activeSuggestAbortRef.current = null;
+        }
+        if (!cancelled && reqSeq === suggestSeqRef.current) {
+          setIsLoadingSuggest(false);
+        }
       }
-    }, 120);
+    }, 280);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      if (activeSuggestAbortRef.current) {
+        activeSuggestAbortRef.current.abort();
+        activeSuggestAbortRef.current = null;
+      }
     };
-  }, [query, places, trendingVideos, knownCreators, searchMode, rankSuggestions]);
+  }, [normalizedQuery, searchMode]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -1294,9 +1403,9 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   />
                 </div>
 
-                {/* Right Side: Spinner / Clear + Pure-White Submit Arrow */}
+                {/* Right Side: Quiet Spinner (only on submit resolve or empty-list fetch) / Clear + Pure-White Submit Arrow */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {(isLoadingSuggest || isResolvingPlace) && (
+                  {(isResolvingPlace || (isLoadingSuggest && suggestions.length === 0)) && (
                     <Loader2 className="w-4 h-4 text-zinc-400 animate-spin mr-1" />
                   )}
                   {query.trim() && (
@@ -1339,23 +1448,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
               </div>
             </form>
 
-            {/* Desktop Spotlight Autocomplete Sheet — Anchored Directly Below Pill, Zero Half-Cut Rows */}
+            {/* Desktop Spotlight Autocomplete Sheet — Anchored Directly Below Pill, Zero Layout Jump */}
             {!isMobile && showDropdown && query.trim().length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-[#0D0D10]/97 backdrop-blur-3xl border border-white/[0.12] rounded-[24px] shadow-[0_32px_90px_rgba(0,0,0,0.94),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden z-50 animate-in fade-in duration-150">
+                {suggestions.length > 0 && (
                 <div className="p-2 space-y-0.5 max-h-[388px] overflow-y-auto no-scrollbar md:scrollbar-thin overscroll-contain">
-                  {isLoadingSuggest && suggestions.length === 0 && (
-                    <div className="space-y-1 p-1">
-                      {[0, 1, 2].map((sIdx) => (
-                        <div key={sIdx} className="px-3 py-2.5 flex items-center gap-3.5">
-                          <div className="w-9 h-9 rounded-xl bg-white/[0.06] shrink-0 animate-pulse" />
-                          <div className="flex-1 space-y-1.5">
-                            <div className="h-3.5 w-32 rounded bg-white/[0.08] animate-pulse" />
-                            <div className="h-2.5 w-24 rounded bg-white/[0.04] animate-pulse" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
 
                   {suggestions.map((item, idx) => {
                     const domKey = (item.domain || "").toLowerCase();
@@ -1476,9 +1573,10 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     );
                   })}
                 </div>
+                )}
 
                 {/* Integrated Direct-Action Footer + Quiet Keyboard Hints */}
-                <div className="border-t border-white/[0.07] bg-white/[0.02] px-3 py-2 flex items-center justify-between gap-3">
+                <div className={`${suggestions.length > 0 ? "border-t border-white/[0.07]" : ""} bg-white/[0.02] px-3 py-2 flex items-center justify-between gap-3`}>
                   <button
                     type="button"
                     onClick={() => handleSearchSubmit()}
