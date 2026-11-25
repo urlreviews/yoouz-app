@@ -376,6 +376,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   });
 
   const [confirmMasterResetModal, setConfirmMasterResetModal] = useState(false);
+  const [masterResetConfirmText, setMasterResetConfirmText] = useState("");
+  const [sessionDeletedUserKeys, setSessionDeletedUserKeys] = useState<Set<string>>(new Set());
   const [adminConfirmDialog, setAdminConfirmDialog] = useState<{
     title: string;
     message: string;
@@ -391,7 +393,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [isLoadingTableData, setIsLoadingTableData] = useState(false);
   const [tableDataQuery, setTableDataQuery] = useState("");
   const [selectedItemJsonModal, setSelectedItemJsonModal] = useState<any | null>(null);
-  const [isSeedingCommunity, setIsSeedingCommunity] = useState(false);
 
   const fetchTableData = async (tableName: string) => {
     setIsLoadingTableData(true);
@@ -1764,7 +1765,23 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         .catch(() => {})
         .finally(() => commentsCtrl.done());
 
-      await Promise.allSettled([statsTask, usersTask, placesTask, videosTask, chatsTask, commentsTask]);
+      const broadcastsCtrl = withSignal(10000);
+      const broadcastsTask = adminFetch(`/api/admin/broadcasts?_t=${Date.now()}`, { cache: "no-store", signal: broadcastsCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const bcData = await res.json();
+            if (bcData && bcData.success && Array.isArray(bcData.broadcasts) && bcData.broadcasts.length > 0) {
+              setBroadcastHistory(bcData.broadcasts);
+              try {
+                localStorage.setItem("yoouz_broadcast_history", JSON.stringify(bcData.broadcasts));
+              } catch {}
+            }
+          }
+        })
+        .catch(() => {})
+        .finally(() => broadcastsCtrl.done());
+
+      await Promise.allSettled([statsTask, usersTask, placesTask, videosTask, chatsTask, commentsTask, broadcastsTask]);
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
     } finally {
@@ -1858,24 +1875,49 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const targetName = (targetUser.name || "").trim();
     const targetHandle = (targetUser.handle || "").replace(/^@+/, "").toLowerCase().trim();
 
-    // 1. Immediately record in persistent deleted users local store and state
+    // 1. Immediately record in persistent deleted users local store, session set, and purge from dbUsers
     recordDeletedUsersInLocalStorage([targetId, targetUid, targetEmail, targetName, targetHandle]);
+
+    const keysToAdd: string[] = [];
+    if (targetId) keysToAdd.push(targetId.toLowerCase());
+    if (targetUid) keysToAdd.push(targetUid.toLowerCase());
+    if (targetEmail) {
+      keysToAdd.push(targetEmail);
+      keysToAdd.push(`usr_${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
+    }
+    if (targetName) keysToAdd.push(targetName.toLowerCase());
+    if (targetHandle) keysToAdd.push(targetHandle);
+
+    setSessionDeletedUserKeys((prev) => {
+      const next = new Set(prev);
+      keysToAdd.forEach((k) => next.add(k));
+      return next;
+    });
 
     setDeletedUserKeys((prev) => {
       const next = new Set(prev);
-      if (targetId) next.add(targetId.toLowerCase());
-      if (targetUid) next.add(targetUid.toLowerCase());
-      if (targetEmail) {
-        next.add(targetEmail);
-        next.add(`usr_${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`);
-      }
-      if (targetName) next.add(targetName.toLowerCase());
-      if (targetHandle) next.add(targetHandle);
-
+      keysToAdd.forEach((k) => next.add(k));
       try {
         localStorage.setItem("yoouz_deleted_users", JSON.stringify(Array.from(next)));
       } catch {}
       return next;
+    });
+
+    // Immediately remove from dbUsers and cached user storage so UI updates instantaneously
+    setDbUsers((prev) => {
+      const keySet = new Set(keysToAdd);
+      const filtered = prev.filter((u) => {
+        if (!u) return false;
+        const uId = String(u.id || "").toLowerCase().trim();
+        const uUid = String(u.uid || "").toLowerCase().trim();
+        const uEmail = String(u.email || "").toLowerCase().trim();
+        const uName = String(u.name || "").toLowerCase().trim();
+        return !((uId && keySet.has(uId)) || (uUid && keySet.has(uUid)) || (uEmail && keySet.has(uEmail)) || (targetEmail && uName === targetName.toLowerCase()));
+      });
+      try {
+        localStorage.setItem("yoouz_admin_cached_users_v2", JSON.stringify(filtered));
+      } catch {}
+      return filtered;
     });
 
     setConfirmDeleteUserId(null);
@@ -1904,6 +1946,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         await fetch(`/api/nosql/users/${encodeURIComponent(targetId || targetUid)}`, { method: "DELETE" });
         showToast(`User ${targetName || targetEmail || "account"} deleted.`);
       }
+      setTimeout(() => fetchLiveStats(true), 400);
     } catch (e) {
       showToast(`User deleted.`);
     }
@@ -2022,10 +2065,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Unique Users Mapping (Real registered users and video creators, without fake business email injection!)
   const uniqueUsers = useMemo(() => {
     const getCleanHandle = (str?: string) => (str || "").replace(/^@+/, "").trim().toLowerCase();
+    const isSessionDeleted = (val?: string) => {
+      if (!val || sessionDeletedUserKeys.size === 0) return false;
+      const clean = val.toLowerCase().trim();
+      const withoutAt = clean.replace(/^@+/, "");
+      return sessionDeletedUserKeys.has(clean) || sessionDeletedUserKeys.has(withoutAt);
+    };
+
     const isKeyDeleted = (val?: string) => {
       if (!val) return false;
       const clean = val.toLowerCase().trim();
       const withoutAt = clean.replace(/^@+/, "");
+      if (sessionDeletedUserKeys.has(clean) || sessionDeletedUserKeys.has(withoutAt)) {
+        return true;
+      }
       if (activeKeysSet.has(clean) || activeKeysSet.has(withoutAt)) {
         return false;
       }
@@ -2037,13 +2090,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     (activeAllUsers || []).forEach((u) => {
       if (!u) return;
       if (
-        !isAuthenticated && (
+        isSessionDeleted(u.id) ||
+        isSessionDeleted(u.uid) ||
+        isSessionDeleted(u.email) ||
+        isSessionDeleted(u.name) ||
+        isSessionDeleted(u.handle) ||
+        (!isAuthenticated && (
           isKeyDeleted(u.id) ||
           isKeyDeleted(u.uid) ||
           isKeyDeleted(u.email) ||
           isKeyDeleted(u.name) ||
           isKeyDeleted(u.handle)
-        )
+        ))
       ) {
         return;
       }
@@ -2154,19 +2212,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     // Do not filter out incomplete signups; keep all registered users in the admin view so the admin can always find them!
     return finalList.filter(u => {
        if (
-         !isAuthenticated && (
+         isSessionDeleted(u.id) ||
+         isSessionDeleted(u.uid) ||
+         isSessionDeleted(u.email) ||
+         isSessionDeleted(u.name) ||
+         isSessionDeleted(u.handle) ||
+         (!isAuthenticated && (
            isKeyDeleted(u.id) ||
            isKeyDeleted(u.uid) ||
            isKeyDeleted(u.email) ||
            isKeyDeleted(u.name) ||
            isKeyDeleted(u.handle)
-         )
+         ))
        ) {
          return false;
        }
        return true;
     });
-  }, [activeAllUsers, activeVideos, deletedUserKeys, isAuthenticated]);
+  }, [activeAllUsers, activeVideos, deletedUserKeys, sessionDeletedUserKeys, isAuthenticated]);
 
   // Helper to normalize comment details with full user resolution for Admin View
   const resolveCommentUserMeta = useCallback((c: ReviewComment): ReviewComment => {
@@ -2486,12 +2549,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         (p.city && p.city.toLowerCase().includes(q)) ||
         (p.address && p.address.toLowerCase().includes(q)) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.brandDomain && p.brandDomain.toLowerCase().includes(q)) ||
         (p.id && p.id.toLowerCase().includes(q));
 
       const matchCategory = placeCategoryFilter === "all" || p.category?.toLowerCase() === placeCategoryFilter.toLowerCase();
-      return matchQuery && matchCategory;
+      const isPlaceClaimed = Boolean(p.isClaimed || p.claimedByEmail);
+      const matchClaim =
+        placeClaimFilter === "all" ||
+        (placeClaimFilter === "claimed" && isPlaceClaimed) ||
+        (placeClaimFilter === "unclaimed" && !isPlaceClaimed);
+      return matchQuery && matchCategory && matchClaim;
     });
-  }, [allPhysicalPlaces, searchQuery, placeCategoryFilter]);
+  }, [allPhysicalPlaces, searchQuery, placeCategoryFilter, placeClaimFilter]);
 
   // Filtered Places List (Combined fallback if needed)
   const filteredPlaces = useMemo(() => {
@@ -2817,10 +2886,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   const handleSelectAllPlaces = () => {
-    if (selectedPlaceIds.length === filteredPlaces.length) {
+    if (selectedPlaceIds.length === filteredPhysicalPlaces.length && filteredPhysicalPlaces.length > 0) {
       setSelectedPlaceIds([]);
     } else {
-      setSelectedPlaceIds(filteredPlaces.map((p) => p.id));
+      setSelectedPlaceIds(filteredPhysicalPlaces.map((p) => p.id));
     }
   };
 
@@ -2936,92 +3005,98 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setTimeout(fetchLiveStats, 300);
   };
 
-  const executeSeedCommunityReviews = async () => {
-    if (isSeedingCommunity) return;
-    setIsSeedingCommunity(true);
-    showToast("Auto-seeding 20 authentic accounts & business photo reviews...");
-    try {
-      const res = await adminFetch("/api/admin/seed-photo-reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || "20 authentic accounts and business photo reviews seeded successfully!");
-        try {
-          const feedRes = await fetch(`/api/videos/feed?limit=100&_t=${Date.now()}`);
-          const feedData = await feedRes.json();
-          if (feedData.videos) {
-            setDbVideos(feedData.videos);
-          }
-        } catch (e) {}
-        setTimeout(fetchLiveStats, 400);
-      } else {
-        showToast(data.error || "Failed to seed community reviews");
-      }
-    } catch (err: any) {
-      showToast(err.message || "Network error while seeding");
-    } finally {
-      setIsSeedingCommunity(false);
-    }
+  const removePlaceIdsFromLocalDb = (idsToRemove: string[]) => {
+    if (idsToRemove.length === 0) return;
+    const idSet = new Set(idsToRemove.map((id) => String(id).trim().toLowerCase()));
+    setDbPlaces((prev) => {
+      const next = prev.filter((p) => !idSet.has(String(p.id).trim().toLowerCase()));
+      try {
+        localStorage.setItem("yoouz_cached_places", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   };
 
-  const executeDeletePlace = (id: string) => {
+  const executeDeletePlace = async (id: string) => {
+    removePlaceIdsFromLocalDb([id]);
     onDeletePlace(id);
     setSelectedPlaceIds((prev) => prev.filter((pId) => pId !== id));
     setConfirmDeletePlaceId(null);
-    showToast("Business place record removed.");
-    setTimeout(fetchLiveStats, 400);
+    showToast("Place record removed from directory and database.");
+    try {
+      await fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch {}
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
-  const executeBulkDeletePlaces = () => {
+  const executeBulkDeletePlaces = async () => {
     if (selectedPlaceIds.length === 0) return;
-    const count = selectedPlaceIds.length;
+    const ids = [...selectedPlaceIds];
+    const count = ids.length;
+    removePlaceIdsFromLocalDb(ids);
     if (onBulkDeletePlaces) {
-      onBulkDeletePlaces(selectedPlaceIds);
+      onBulkDeletePlaces(ids);
     } else {
-      selectedPlaceIds.forEach((id) => onDeletePlace(id));
+      ids.forEach((id) => onDeletePlace(id));
     }
     setSelectedPlaceIds([]);
     setConfirmBulkDeletePlaces(false);
-    showToast(`Deleted ${count} selected business pages.`);
-    setTimeout(fetchLiveStats, 400);
+    showToast(`Deleted ${count} selected places.`);
+    try {
+      await Promise.allSettled(ids.map((id) => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" })));
+    } catch {}
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
-  const executePurgeAllPlaces = () => {
+  const executePurgeAllPlaces = async () => {
+    const ids = allPhysicalPlaces.map((p) => p.id);
+    removePlaceIdsFromLocalDb(ids);
     if (onPurgeAllPlaces) {
       onPurgeAllPlaces();
-    } else if (onBulkDeletePlaces && places.length > 0) {
-      onBulkDeletePlaces(places.map(p => p.id));
+    } else if (onBulkDeletePlaces && ids.length > 0) {
+      onBulkDeletePlaces(ids);
     } else {
-      places.forEach(p => onDeletePlace(p.id));
+      ids.forEach((id) => onDeletePlace(id));
     }
     setSelectedPlaceIds([]);
     setConfirmPurgeAllPlaces(false);
-    showToast("All business records purged completely from database.");
-    setTimeout(fetchLiveStats, 400);
+    showToast("All place records purged from database.");
+    try {
+      await Promise.allSettled(ids.map((id) => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" })));
+    } catch {}
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
-  const executeBulkDeleteBusinesses = () => {
+  const executeBulkDeleteBusinesses = async () => {
     if (selectedBusinessIds.length === 0) return;
-    const count = selectedBusinessIds.length;
+    const ids = [...selectedBusinessIds];
+    const count = ids.length;
+    removePlaceIdsFromLocalDb(ids);
     if (onBulkDeletePlaces) {
-      onBulkDeletePlaces(selectedBusinessIds);
+      onBulkDeletePlaces(ids);
     } else {
-      selectedBusinessIds.forEach((id) => onDeletePlace(id));
+      ids.forEach((id) => onDeletePlace(id));
     }
     setSelectedBusinessIds([]);
     setConfirmBulkDeleteBusinesses(false);
     showToast(`Deleted ${count} selected businesses.`);
-    setTimeout(fetchLiveStats, 400);
+    try {
+      await Promise.allSettled(ids.map((id) => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" })));
+    } catch {}
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
-  const executePurgeAllBusinesses = () => {
-    allBusinesses.forEach((b) => onDeletePlace(b.id));
+  const executePurgeAllBusinesses = async () => {
+    const ids = allBusinesses.map((b) => b.id);
+    removePlaceIdsFromLocalDb(ids);
+    ids.forEach((id) => onDeletePlace(id));
     setSelectedBusinessIds([]);
     setConfirmPurgeAllBusinesses(false);
     showToast("Purged all claimed businesses.");
-    setTimeout(fetchLiveStats, 400);
+    try {
+      await Promise.allSettled(ids.map((id) => fetch(`/api/nosql/places/${encodeURIComponent(id)}`, { method: "DELETE" })));
+    } catch {}
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
   const handleQuickClaimPlace = (place: Place) => {
@@ -3038,6 +3113,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       onUpdatePlace(updated);
     }
     showToast(`Claimed "${place.name}" as an official business.`);
+    setTimeout(() => fetchLiveStats(true), 400);
+  };
+
+  const handleQuickUnclaimPlace = (place: Place) => {
+    const updated: Place = {
+      ...place,
+      isClaimed: false,
+      isVerified: false,
+      claimedByEmail: ""
+    };
+    setDbPlaces((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
+    if (onUpdatePlace) {
+      onUpdatePlace(updated);
+    }
+    showToast(`Removed business claim for "${place.name}".`);
     setTimeout(() => fetchLiveStats(true), 400);
   };
 
@@ -3097,21 +3187,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     }
     showToast(fixedCount > 0 ? `Synced and verified ${fixedCount} review business names!` : "All review business names are authentic and in sync.");
-  };
-
-  const handleSyncBunnyLibrary = async () => {
-    try {
-      const res = await adminFetch("/api/admin/bunny/sync-library", { method: "POST" });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message || `Synchronized! Purged ${data.purgedCount} orphaned videos.`);
-        setTimeout(fetchLiveStats, 500);
-      } else {
-        showToast(data.error || "Failed to synchronize Bunny Stream library.");
-      }
-    } catch (e: any) {
-      showToast("Error synchronizing Bunny Stream library: " + e.message);
-    }
   };
 
   const [pendingIncompleteIds, setPendingIncompleteIds] = useState<string[] | null>(null);
@@ -3174,14 +3249,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         sentAt: new Date().toISOString()
       };
       setBroadcastHistory((prev) => {
-        const next = [newEntry, ...prev.slice(0, 19)];
+        const next = [newEntry, ...prev.filter((x) => x.id !== newEntry.id).slice(0, 49)];
         try {
           localStorage.setItem("yoouz_broadcast_history", JSON.stringify(next));
         } catch (e) {}
         return next;
       });
-      showToast("Broadcast notification delivered to all targeted users!");
+      try {
+        await adminFetch("/api/admin/broadcasts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newEntry)
+        });
+      } catch {}
+      showToast("Broadcast notification delivered and saved to BunnyDB.");
       setBroadcastData({ title: "", message: "", targetUrl: "" });
+      setTimeout(() => fetchLiveStats(true), 400);
     } catch (err) {
       showToast("Error sending broadcast notification.");
     } finally {
@@ -3322,7 +3405,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     placeholder={isSetup ? "Choose a strong passcode" : "Enter admin passcode"}
                     autoFocus
                     autoComplete={isSetup ? "new-password" : "current-password"}
-                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 pr-11 text-sm transition-colors select-text"
+                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-400 focus:outline-none focus:border-white/30 pr-11 text-sm transition-colors select-text"
                   />
                   <button
                     type="button"
@@ -3349,7 +3432,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }}
                     placeholder="Re-enter passcode"
                     autoComplete="new-password"
-                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 text-sm transition-colors select-text"
+                    className="w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.09] rounded-xl text-white placeholder-zinc-400 focus:outline-none focus:border-white/30 text-sm transition-colors select-text"
                   />
                 </div>
               )}
@@ -3374,12 +3457,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </button>
 
               {authSource === "env" && !isSetup && (
-                <p className="text-[11px] text-center text-zinc-500">
+                <p className="text-[11px] text-center text-zinc-300">
                   Protected by server-configured passcode
                 </p>
               )}
 
-              <div className="pt-1 flex items-center justify-center text-xs text-zinc-500">
+              <div className="pt-1 flex items-center justify-center text-xs text-zinc-300">
                 <button
                   type="button"
                   onClick={onExit}
@@ -3497,26 +3580,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* Top Application Bar */}
-      <header className="h-14 border-b border-white/[0.08] bg-[#050506]/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 border-b border-white/[0.11] bg-[#050506]/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={onExit}
-            className="h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 text-xs font-medium shrink-0"
+            className="h-9 px-3.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.13] text-white transition-colors border border-white/[0.14] cursor-pointer flex items-center gap-1.5 text-[13px] font-medium shrink-0 whitespace-nowrap"
             title="Return to Yoouz Live Feed"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Exit</span>
           </button>
 
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.09] flex items-center justify-center shrink-0">
-              <Shield className="w-3.5 h-3.5 text-white" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-white/[0.09] border border-white/[0.14] flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4 text-white" />
             </div>
-            <div className="flex items-center gap-1.5 min-w-0 text-[13px]">
-              <span className="font-semibold tracking-tight text-white">Yoouz</span>
-              <span className="text-zinc-600">/</span>
-              <span className="text-zinc-400 font-medium truncate">
+            <div className="flex items-center gap-1.5 min-w-0 text-sm">
+              <span className="font-bold tracking-tight text-white">Yoouz</span>
+              <span className="text-zinc-300">/</span>
+              <span className="text-zinc-200 font-medium truncate">
                 {({
                   overview: "Overview",
                   videos: "Photo Reviews",
@@ -3542,26 +3625,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
         {/* Global Search Bar */}
         <div className="flex-1 max-w-md mx-4 relative hidden md:block">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-zinc-300 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             ref={adminSearchInputRef}
             type="text"
             placeholder="Search reviews, places, users, comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-8 pl-9 pr-14 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-colors"
+            className="w-full h-9 pl-10 pr-14 bg-white/[0.06] border border-white/[0.14] rounded-xl text-[13px] text-white placeholder-zinc-400 focus:outline-none focus:border-white/35 focus:bg-white/[0.09] transition-colors"
           />
           {searchQuery ? (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
               aria-label="Clear search"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-white cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           ) : (
-            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-zinc-500 border border-white/[0.08] rounded px-1.5 py-0.5 bg-white/[0.02]">
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-mono text-zinc-300 border border-white/[0.14] rounded-md px-1.5 py-0.5 bg-white/[0.05]">
               ⌘K
             </kbd>
           )}
@@ -3581,10 +3664,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               if (activeTab === "search") fetchSearchIntel(false);
             }}
             disabled={isLoadingLiveStats}
-            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            className="h-9 flex items-center gap-1.5 px-3.5 rounded-xl bg-white/[0.07] hover:bg-white/[0.13] border border-white/[0.14] text-white text-[13px] font-medium transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
             title="Sync live data from database and CDN storage"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isLoadingLiveStats ? "animate-spin text-white" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-zinc-200 ${isLoadingLiveStats ? "animate-spin text-white" : ""}`} />
             <span className="tabular-nums">
               {isLoadingLiveStats ? "Syncing" : liveStats ? `${liveStats.latencyMs}ms` : "Refresh"}
             </span>
@@ -3593,7 +3676,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           <button
             type="button"
             onClick={handleLogout}
-            className="h-8 flex items-center gap-1.5 px-3 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer"
+            className="h-9 flex items-center gap-1.5 px-3.5 bg-white/[0.07] hover:bg-white/[0.13] text-white rounded-xl text-[13px] font-medium transition-colors border border-white/[0.14] cursor-pointer whitespace-nowrap"
             title="Lock Admin Session"
           >
             <Lock className="w-3.5 h-3.5" />
@@ -3605,8 +3688,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       {/* Main Admin Workspace Layout */}
       <div className="flex-1 flex overflow-hidden bg-[#050506]">
         {/* Grouped Obsidian Sidebar */}
-        <aside className="w-60 border-r border-white/[0.08] bg-[#050506] hidden md:flex flex-col shrink-0 overflow-hidden select-none">
-          <nav aria-label="Admin Navigation" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+        <aside className="w-60 border-r border-white/[0.11] bg-[#050506] hidden md:flex flex-col shrink-0 overflow-hidden select-none">
+          <nav aria-label="Admin Navigation" className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
             {(
               [
                 {
@@ -3662,8 +3745,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 }>;
               }>
             ).map((group) => (
-              <div key={group.title} className="space-y-0.5">
-                <div className="px-2.5 pb-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">
+              <div key={group.title} className="space-y-1">
+                <div className="px-2.5 pb-1 text-[11px] font-semibold text-zinc-400 uppercase tracking-[0.1em]">
                   {group.title}
                 </div>
                 {group.items.map((item) => {
@@ -3674,19 +3757,19 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       key={item.id}
                       type="button"
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                      className={`w-full flex items-center justify-between gap-2 px-2.5 h-9 rounded-xl text-[13px] transition-colors cursor-pointer ${
                         isActive
-                          ? "bg-white/[0.09] text-white font-medium"
-                          : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] font-normal"
+                          ? "bg-white/[0.13] text-white font-semibold border border-white/[0.12]"
+                          : "text-zinc-200 hover:text-white hover:bg-white/[0.06] font-medium border border-transparent"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : item.alert ? "text-rose-400" : "text-zinc-500"}`} />
+                        <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : item.alert ? "text-rose-400" : "text-zinc-300"}`} />
                         <span className="truncate">{item.label}</span>
                       </div>
                       {item.count !== undefined && (
-                        <span className={`text-[11px] tabular-nums font-medium shrink-0 ${
-                          item.alert ? "text-rose-400" : isActive ? "text-zinc-200" : "text-zinc-500"
+                        <span className={`text-xs tabular-nums font-semibold shrink-0 ${
+                          item.alert ? "text-rose-400" : isActive ? "text-white" : "text-zinc-300"
                         }`}>
                           {item.count}
                         </span>
@@ -3702,7 +3785,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto bg-[#050506] p-4 sm:p-6 lg:p-8 relative text-white">
           {/* Mobile Tab Nav */}
-          <div className="md:hidden flex overflow-x-auto gap-1.5 pb-3.5 mb-5 border-b border-white/[0.08] no-scrollbar">
+          <div className="md:hidden flex overflow-x-auto gap-2 pb-3.5 mb-5 border-b border-white/[0.1] no-scrollbar">
             {(
               [
                 ["overview", "Overview"],
@@ -3727,10 +3810,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 key={tabKey}
                 type="button"
                 onClick={() => setActiveTab(tabKey as AdminTab)}
-                className={`px-3 h-9 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`px-3.5 h-9 rounded-xl text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   activeTab === tabKey
-                    ? "bg-white text-zinc-950 font-semibold"
-                    : "bg-white/[0.04] text-zinc-400 border border-white/[0.08] hover:text-white"
+                    ? "bg-white text-black font-semibold"
+                    : "bg-white/[0.06] text-zinc-200 border border-white/[0.12] hover:text-white"
                 }`}
               >
                 {label}
@@ -3755,7 +3838,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed truncate">
                     {videoUploadAlertLogs[0].message}
                   </p>
-                  <div className="text-[11px] text-zinc-500 mt-1 tabular-nums">
+                  <div className="text-[11px] text-zinc-300 mt-1 tabular-nums">
                     {new Date(videoUploadAlertLogs[0].timestamp).toLocaleTimeString()} · Anti-Stall Guard
                   </div>
                 </div>
@@ -3834,7 +3917,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 />
                 <div className={`${ADMIN_SURFACE} p-4 flex flex-col justify-between gap-2`}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">
                       Notifications
                     </span>
                     <button
@@ -3851,7 +3934,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <span className="text-2xl font-semibold tracking-tight tabular-nums text-white">
                       {(liveStats?.totals?.notifications ?? 0).toLocaleString()}
                     </span>
-                    <span className="text-[11px] text-zinc-500">Deduplication check</span>
+                    <span className="text-[11px] text-zinc-300">Deduplication check</span>
                   </div>
                 </div>
               </div>
@@ -3859,7 +3942,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Subsystems Filter Bar */}
               <div className={`${ADMIN_SURFACE} p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3`}>
                 <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-300" />
                   <input
                     type="text"
                     value={subsystemSearchQuery}
@@ -4007,7 +4090,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <button
                                       type="button"
                                       onClick={() => toggleSubsystemExpand(key)}
-                                      className="text-zinc-500 hover:text-white cursor-pointer"
+                                      className="text-zinc-300 hover:text-white cursor-pointer"
                                     >
                                       Hide
                                     </button>
@@ -4018,7 +4101,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => toggleSubsystemExpand(key)}
-                                  className="text-[11px] text-zinc-500 hover:text-zinc-200 font-medium transition-colors cursor-pointer"
+                                  className="text-[11px] text-zinc-300 hover:text-zinc-200 font-medium transition-colors cursor-pointer"
                                 >
                                   Verification guide
                                 </button>
@@ -4028,7 +4111,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </div>
 
                         <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
-                          <div className="flex items-center justify-between text-[11px] text-zinc-500 tabular-nums">
+                          <div className="flex items-center justify-between text-[11px] text-zinc-300 tabular-nums">
                             <span>{item.latencyMs}ms</span>
                             <span>Auto-verified</span>
                           </div>
@@ -4092,11 +4175,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">Runtime Error Logs</h3>
-                    <p className="text-xs text-zinc-500 mt-0.5">
+                    <p className="text-xs text-zinc-300 mt-0.5">
                       Unhandled interactions, network timeouts, and runtime exceptions.
                     </p>
                   </div>
-                  <span className="text-xs text-zinc-500 tabular-nums">
+                  <span className="text-xs text-zinc-300 tabular-nums">
                     {healthData?.logs?.length || 0} logged
                   </span>
                 </div>
@@ -4105,7 +4188,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="py-12 text-center px-6">
                     <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-2.5" />
                     <p className="text-sm font-medium text-white">No runtime errors</p>
-                    <p className="text-xs text-zinc-500 mt-1">All tracked endpoints and client interactions are healthy.</p>
+                    <p className="text-xs text-zinc-300 mt-1">All tracked endpoints and client interactions are healthy.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-white/[0.06] max-h-[480px] overflow-y-auto">
@@ -4113,14 +4196,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <div key={log.id} className={`p-4 space-y-2 ${log.status === "resolved" ? "opacity-50" : ""}`}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2 text-xs">
-                            <span className={`font-medium ${log.status === "resolved" ? "text-zinc-500" : "text-rose-400"}`}>
+                            <span className={`font-medium ${log.status === "resolved" ? "text-zinc-300" : "text-rose-400"}`}>
                               {log.category || "runtime"}
                             </span>
-                            <span className="text-zinc-600">·</span>
+                            <span className="text-zinc-400">·</span>
                             <span className="font-semibold text-white">{log.component}</span>
                           </div>
                           <div className="flex items-center gap-2.5">
-                            <span className="text-[11px] text-zinc-500 tabular-nums">
+                            <span className="text-[11px] text-zinc-300 tabular-nums">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </span>
                             {log.status !== "resolved" && (
@@ -4161,7 +4244,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 subtitle="Live database metrics across verified photo reviews, claimed businesses, places, and community activity."
                 actions={
                   liveStats?.latencyMs !== undefined ? (
-                    <span className="text-xs text-zinc-500 tabular-nums">
+                    <span className="text-xs text-zinc-300 tabular-nums">
                       BunnyDB · {liveStats.latencyMs}ms
                     </span>
                   ) : undefined
@@ -4176,16 +4259,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Businesses</span>
-                    <Briefcase className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Businesses</span>
+                    <Briefcase className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalBusinesses}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Claimed & verified</div>
+                    <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Claimed & verified</div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Manage</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4197,20 +4280,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Reviews</span>
-                    <Camera className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Reviews</span>
+                    <Camera className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {liveStats?.totals?.videoReviews ?? metrics.totalVideos}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 flex items-center gap-1 truncate tabular-nums">
+                    <div className="text-[11px] text-zinc-300 mt-0.5 flex items-center gap-1 truncate tabular-nums">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
                       <span className="text-zinc-300 font-medium">{metrics.avgRating}</span>
                       <span>avg</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Inspect</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4222,16 +4305,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Places</span>
-                    <Building2 className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Places</span>
+                    <Building2 className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalPhysicalPlaces}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Indexed venues</div>
+                    <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Indexed venues</div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Browse</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4243,18 +4326,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Creators</span>
-                    <Award className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Creators</span>
+                    <Award className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalCreators}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                    <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                       {liveStats?.totals?.videoReviews ?? metrics.totalVideos} authored reviews
                     </div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>View all</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4266,16 +4349,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Users</span>
-                    <Users className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Users</span>
+                    <Users className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {metrics.totalUsers}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Total accounts</div>
+                    <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Total accounts</div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Manage</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4287,18 +4370,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Activity</span>
-                    <Heart className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Activity</span>
+                    <Heart className="w-4 h-4 text-zinc-300 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
                       {(liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments)) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                    <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                       {liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved
                     </div>
                   </div>
-                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Inspect</span>
                     <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
@@ -4358,7 +4441,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               </button>
                               <div className="min-w-0 flex-1">
                                 <h4 className="font-medium text-xs text-white truncate">{v.placeName}</h4>
-                                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                <div className="flex items-center gap-1.5 text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                                   <span className="truncate">{v.author?.name || "Reviewer"}</span>
                                   <span>·</span>
                                   <span className="inline-flex items-center gap-0.5 text-zinc-300">
@@ -4392,13 +4475,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         ))}
                       {activeVideos.length === 0 && (
-                        <div className="py-10 text-center text-zinc-500 text-xs">No photo reviews recorded yet.</div>
+                        <div className="py-10 text-center text-zinc-300 text-xs">No photo reviews recorded yet.</div>
                       )}
                     </div>
                   </div>
 
                   <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
-                    <span className="text-zinc-500 tabular-nums">
+                    <span className="text-zinc-300 tabular-nums">
                       {liveStats?.totals?.videoReviews ?? activeVideos.length} total
                     </span>
                     <button
@@ -4460,10 +4543,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   <h4 className="font-medium text-xs text-white truncate" title={p.name}>
                                     {p.name}
                                   </h4>
-                                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                                     <span className="truncate">{p.category || "Place"}</span>
                                     <span>·</span>
-                                    <span className={isClaimed ? "text-emerald-400" : "text-zinc-500"}>
+                                    <span className={isClaimed ? "text-emerald-400" : "text-zinc-300"}>
                                       {isClaimed ? "Claimed" : "Unclaimed"}
                                     </span>
                                     <span>·</span>
@@ -4484,13 +4567,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           );
                         })}
                       {activePlaces.length === 0 && (
-                        <div className="py-10 text-center text-zinc-500 text-xs">No places recorded yet.</div>
+                        <div className="py-10 text-center text-zinc-300 text-xs">No places recorded yet.</div>
                       )}
                     </div>
                   </div>
 
                   <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
-                    <span className="text-zinc-500 tabular-nums">{activePlaces.length} total</span>
+                    <span className="text-zinc-300 tabular-nums">{activePlaces.length} total</span>
                     <button
                       type="button"
                       onClick={() => setActiveTab("places")}
@@ -4510,7 +4593,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
                       <div>
                         <h3 className="font-semibold text-white text-sm tracking-tight">Recent Likes</h3>
-                        <p className="text-[11px] text-zinc-500 mt-0.5 tabular-nums">{adminLikes.length} recorded</p>
+                        <p className="text-[11px] text-zinc-300 mt-0.5 tabular-nums">{adminLikes.length} recorded</p>
                       </div>
                       <button
                         type="button"
@@ -4522,9 +4605,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
 
                     {isLoadingLikes && adminLikes.length === 0 ? (
-                      <div className="py-10 text-center text-zinc-500 text-xs">Loading likes...</div>
+                      <div className="py-10 text-center text-zinc-300 text-xs">Loading likes...</div>
                     ) : adminLikes.length === 0 ? (
-                      <div className="py-10 text-center text-zinc-500 text-xs">No likes recorded yet.</div>
+                      <div className="py-10 text-center text-zinc-300 text-xs">No likes recorded yet.</div>
                     ) : (
                       <div className="divide-y divide-white/[0.06]">
                         {adminLikes.slice(0, 5).map((like, idx) => {
@@ -4551,9 +4634,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <div className="min-w-0 flex-1">
                                   <div className="text-xs font-medium text-white truncate">
                                     {like.userName || "Community User"}{" "}
-                                    <span className="text-zinc-500 font-normal">liked {placeName}</span>
+                                    <span className="text-zinc-300 font-normal">liked {placeName}</span>
                                   </div>
-                                  <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                  <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                                     {like.userHandle || "@user"} · {like.timestamp || "Recently"}
                                   </div>
                                 </div>
@@ -4579,7 +4662,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
                       <div>
                         <h3 className="font-semibold text-white text-sm tracking-tight">Recent Bookmarks</h3>
-                        <p className="text-[11px] text-zinc-500 mt-0.5 tabular-nums">{adminBookmarks.length} saved</p>
+                        <p className="text-[11px] text-zinc-300 mt-0.5 tabular-nums">{adminBookmarks.length} saved</p>
                       </div>
                       <button
                         type="button"
@@ -4591,9 +4674,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
 
                     {isLoadingBookmarks && adminBookmarks.length === 0 ? (
-                      <div className="py-10 text-center text-zinc-500 text-xs">Loading bookmarks...</div>
+                      <div className="py-10 text-center text-zinc-300 text-xs">Loading bookmarks...</div>
                     ) : adminBookmarks.length === 0 ? (
-                      <div className="py-10 text-center text-zinc-500 text-xs">No bookmarks recorded yet.</div>
+                      <div className="py-10 text-center text-zinc-300 text-xs">No bookmarks recorded yet.</div>
                     ) : (
                       <div className="divide-y divide-white/[0.06]">
                         {adminBookmarks.slice(0, 5).map((bm, idx) => {
@@ -4621,9 +4704,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <div className="min-w-0 flex-1">
                                   <div className="text-xs font-medium text-white truncate">
                                     {bm.userName || "Community User"}{" "}
-                                    <span className="text-zinc-500 font-normal">saved {placeName}</span>
+                                    <span className="text-zinc-300 font-normal">saved {placeName}</span>
                                   </div>
-                                  <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                  <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
                                     {bm.userHandle || "@user"} · {bm.timestamp || "Recently"}
                                   </div>
                                 </div>
@@ -4841,7 +4924,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                               title="View likes"
                             >
-                              <Heart className="w-3 h-3 text-zinc-500" />
+                              <Heart className="w-3 h-3 text-zinc-300" />
                               <span>{video.likes || 0}</span>
                             </button>
                             <button
@@ -4854,7 +4937,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                               title="View bookmarks"
                             >
-                              <Bookmark className="w-3 h-3 text-zinc-500" />
+                              <Bookmark className="w-3 h-3 text-zinc-300" />
                               <span>{video.bookmarksCount || (video as any).bookmarks || 0}</span>
                             </button>
                             <button
@@ -4867,7 +4950,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
                               title="View comments"
                             >
-                              <MessageSquare className="w-3 h-3 text-zinc-500" />
+                              <MessageSquare className="w-3 h-3 text-zinc-300" />
                               <span>{video.commentsCount || (video.comments || []).length}</span>
                             </button>
                           </div>
@@ -4921,7 +5004,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className={`${ADMIN_SURFACE} overflow-hidden`}>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs text-zinc-300">
-                      <thead className="bg-white/[0.02] text-[11px] font-medium uppercase tracking-wider text-zinc-500 border-b border-white/[0.06]">
+                      <thead className="bg-white/[0.02] text-[11px] font-medium uppercase tracking-wider text-zinc-300 border-b border-white/[0.06]">
                         <tr>
                           <th className="p-3.5 w-10">
                             <input
@@ -4962,7 +5045,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             </td>
                             <td className="p-3.5">
                               <div className="font-medium text-white">{v.placeName}</div>
-                              <div className="text-[11px] text-zinc-500">{v.placeCategory || "Venue"}</div>
+                              <div className="text-[11px] text-zinc-300">{v.placeCategory || "Venue"}</div>
                             </td>
                             <td className="p-3.5">
                               <div className="flex items-center gap-2">
@@ -4979,7 +5062,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <span>{v.author?.name || "Reviewer"}</span>
                                     {v.author?.isVerified && <BadgeCheck className="w-3 h-3 text-sky-400 shrink-0" />}
                                   </div>
-                                  <div className="text-[11px] text-zinc-500 font-mono">@{v.author?.handle || v.userId || "reviewer"}</div>
+                                  <div className="text-[11px] text-zinc-300 font-mono">@{v.author?.handle || v.userId || "reviewer"}</div>
                                 </div>
                               </div>
                             </td>
@@ -4995,21 +5078,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   onClick={(e) => { e.stopPropagation(); setActiveTab("likes"); setLikesSearchQuery(v.id); }}
                                   className="flex items-center gap-1 hover:text-white cursor-pointer"
                                 >
-                                  <Heart className="w-3 h-3 text-zinc-500" /> {v.likes || 0}
+                                  <Heart className="w-3 h-3 text-zinc-300" /> {v.likes || 0}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setActiveTab("bookmarks"); setBookmarksSearchQuery(v.id || v.placeId || ""); }}
                                   className="flex items-center gap-1 hover:text-white cursor-pointer"
                                 >
-                                  <Bookmark className="w-3 h-3 text-zinc-500" /> {v.bookmarksCount || (v as any).bookmarks || 0}
+                                  <Bookmark className="w-3 h-3 text-zinc-300" /> {v.bookmarksCount || (v as any).bookmarks || 0}
                                 </button>
                                 <span className="flex items-center gap-1">
-                                  <MessageSquare className="w-3 h-3 text-zinc-500" /> {v.commentsCount || (v.comments || []).length}
+                                  <MessageSquare className="w-3 h-3 text-zinc-300" /> {v.commentsCount || (v.comments || []).length}
                                 </span>
                               </div>
                             </td>
-                            <td className="p-3.5 text-zinc-500 tabular-nums">{formatRecordedDate(v.recordedAt, v.createdAtMs || parseTimestampToMs(v.createdAt) || undefined)}</td>
+                            <td className="p-3.5 text-zinc-300 tabular-nums">{formatRecordedDate(v.recordedAt, v.createdAtMs || parseTimestampToMs(v.createdAt) || undefined)}</td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <button type="button" onClick={() => setPreviewVideo(v)} className={ADMIN_BTN_ICON} title="Inspect Review">
@@ -5130,7 +5213,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </select>
                 </div>
 
-                <span className="text-xs text-zinc-500 tabular-nums pr-1">
+                <span className="text-xs text-zinc-300 tabular-nums pr-1">
                   {filteredBusinesses.length} {filteredBusinesses.length === 1 ? "business" : "businesses"}
                 </span>
               </div>
@@ -5165,7 +5248,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <h3 className="font-semibold text-white text-sm leading-snug truncate" title={biz.name}>
                               {biz.name}
                             </h3>
-                            <p className="text-xs text-zinc-500 truncate mt-0.5">
+                            <p className="text-xs text-zinc-300 truncate mt-0.5">
                               {biz.category || "Business"}{isYoouzOfficial ? " · Official Platform" : ""}
                             </p>
                             {domain && (
@@ -5185,18 +5268,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         {/* Hairline Stats Row */}
                         <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/[0.06] text-center">
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Reviews</div>
+                            <div className="text-[10px] text-zinc-300 uppercase tracking-wider font-medium">Reviews</div>
                             <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{bizVideos.length}</div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Rating</div>
+                            <div className="text-[10px] text-zinc-300 uppercase tracking-wider font-medium">Rating</div>
                             <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
                               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                               {avgRating}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</div>
+                            <div className="text-[10px] text-zinc-300 uppercase tracking-wider font-medium">Status</div>
                             <div className="text-xs font-medium text-emerald-400 mt-1">Claimed</div>
                           </div>
                         </div>
@@ -5205,13 +5288,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <div className="space-y-1 text-xs text-zinc-400">
                             {(biz.city || biz.address) && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <MapPin className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                 <span className="truncate">{biz.city}{biz.address ? ` · ${biz.address}` : ""}</span>
                               </div>
                             )}
                             {biz.phone && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <Phone className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                 <span className="truncate font-mono">{biz.phone}</span>
                               </div>
                             )}
@@ -5298,17 +5381,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             <div className="max-w-7xl mx-auto space-y-5">
               <AdminPageHeader
                 title="Places"
-                subtitle={`${filteredPhysicalPlaces.length} unclaimed venues in the directory`}
+                subtitle={`${filteredPhysicalPlaces.length.toLocaleString()} venues in directory · ${allPhysicalPlaces.filter((p) => Boolean(p.isClaimed || p.claimedByEmail)).length} claimed`}
                 actions={
                   <>
                     {selectedPlaceIds.length > 0 && (
                       confirmBulkDeletePlaces ? (
-                        <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
-                          <span className="text-xs font-medium text-rose-300">Delete {selectedPlaceIds.length}?</span>
+                        <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30">
+                          <span className="text-xs font-semibold text-rose-200">Delete {selectedPlaceIds.length}?</span>
                           <button type="button" onClick={executeBulkDeletePlaces} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
                             Confirm
                           </button>
-                          <button type="button" onClick={() => setConfirmBulkDeletePlaces(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                          <button type="button" onClick={() => setConfirmBulkDeletePlaces(false)} className="p-1 text-zinc-300 hover:text-white cursor-pointer">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -5321,12 +5404,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     )}
 
                     {confirmPurgeAllPlaces && (
-                      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
-                        <span className="text-xs font-medium text-rose-300">Purge ALL {allPhysicalPlaces.length}?</span>
+                      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30">
+                        <span className="text-xs font-semibold text-rose-200">Purge ALL {allPhysicalPlaces.length}?</span>
                         <button type="button" onClick={executePurgeAllPlaces} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
                           Purge All
                         </button>
-                        <button type="button" onClick={() => setConfirmPurgeAllPlaces(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                        <button type="button" onClick={() => setConfirmPurgeAllPlaces(false)} className="p-1 text-zinc-300 hover:text-white cursor-pointer">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -5348,12 +5431,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-2.5`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {filteredPhysicalPlaces.length > 0 && (
-                    <label className="h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white">
+                    <label className="h-9 px-3.5 rounded-xl bg-white/[0.06] border border-white/[0.14] flex items-center gap-2 cursor-pointer text-[13px] font-medium text-white hover:bg-white/[0.1]">
                       <input
                         type="checkbox"
                         checked={selectedPlaceIds.length === filteredPhysicalPlaces.length && filteredPhysicalPlaces.length > 0}
                         onChange={handleSelectAllPlaces}
-                        className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-0 cursor-pointer accent-white"
+                        className="w-3.5 h-3.5 rounded border-zinc-600 bg-zinc-950 text-white focus:ring-0 cursor-pointer accent-white"
                       />
                       <span className="tabular-nums">Select All ({filteredPhysicalPlaces.length})</span>
                     </label>
@@ -5369,10 +5452,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
+
+                  <select
+                    value={placeClaimFilter}
+                    onChange={(e) => setPlaceClaimFilter(e.target.value as any)}
+                    className={ADMIN_SELECT}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="claimed">Claimed Only</option>
+                    <option value="unclaimed">Unclaimed Only</option>
+                  </select>
                 </div>
 
-                <span className="text-xs text-zinc-500 tabular-nums pr-1">
-                  {filteredPhysicalPlaces.length} venues
+                <span className="text-xs font-medium text-zinc-300 tabular-nums pr-1">
+                  {filteredPhysicalPlaces.length.toLocaleString()} venues
                 </span>
               </div>
 
@@ -5380,6 +5473,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredPhysicalPlaces.map((place) => {
                   const placeVideos = getPlaceVideos(place);
+                  const isPlaceClaimed = Boolean(place.isClaimed || place.claimedByEmail);
                   const avgRating = placeVideos.length > 0
                     ? (placeVideos.reduce((acc: number, v: any) => acc + (v.rating || 5), 0) / placeVideos.length).toFixed(1)
                     : (place.rating ? place.rating.toFixed(1) : "5.0");
@@ -5388,7 +5482,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   return (
                     <div
                       key={place.id}
-                      className={`${ADMIN_SURFACE} p-5 flex flex-col justify-between gap-4 hover:border-white/[0.16] transition-colors`}
+                      className={`${ADMIN_SURFACE} p-5 flex flex-col justify-between gap-4 hover:border-white/[0.2] transition-colors`}
                     >
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
@@ -5396,14 +5490,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             type="checkbox"
                             checked={selectedPlaceIds.includes(place.id)}
                             onChange={() => handleTogglePlaceSelection(place.id)}
-                            className="w-3.5 h-3.5 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white shrink-0"
+                            className="w-3.5 h-3.5 mt-1.5 rounded border-zinc-600 bg-zinc-950 text-white cursor-pointer accent-white shrink-0"
                           />
                           <AdminPlaceLogo place={place} size="md" className="shrink-0" />
                           <div className="min-w-0 flex-1">
                             <h3 className="font-semibold text-white text-sm leading-snug line-clamp-2" title={place.name}>
                               {place.name}
                             </h3>
-                            <p className="text-xs text-zinc-500 truncate mt-0.5">
+                            <p className="text-xs text-zinc-300 truncate mt-0.5">
                               {place.category || "Venue"}{place.city ? ` · ${place.city}` : ""}
                             </p>
                             {cleanDomain && (
@@ -5411,7 +5505,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 href={place.website || `https://${place.brandDomain}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-white mt-1 truncate max-w-full"
+                                className="inline-flex items-center gap-1 text-xs font-mono text-zinc-300 hover:text-white mt-1 truncate max-w-full"
                               >
                                 <span className="truncate">{cleanDomain}</span>
                                 <ExternalLink className="w-3 h-3 shrink-0" />
@@ -5421,42 +5515,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </div>
 
                         {/* Hairline Stats Row */}
-                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/[0.06] text-center">
+                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/[0.08] text-center">
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Reviews</div>
-                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{placeVideos.length}</div>
+                            <div className="text-[11px] text-zinc-300 uppercase tracking-wider font-semibold">Reviews</div>
+                            <div className="text-sm font-bold text-white tabular-nums mt-0.5">{placeVideos.length}</div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Rating</div>
-                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
-                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            <div className="text-[11px] text-zinc-300 uppercase tracking-wider font-semibold">Rating</div>
+                            <div className="text-sm font-bold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                               {avgRating}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</div>
-                            <div className="text-xs font-medium text-zinc-500 mt-1">Unclaimed</div>
+                            <div className="text-[11px] text-zinc-300 uppercase tracking-wider font-semibold">Status</div>
+                            <div className={`text-xs font-semibold mt-1 ${isPlaceClaimed ? "text-emerald-400" : "text-zinc-300"}`}>
+                              {isPlaceClaimed ? "Claimed" : "Unclaimed"}
+                            </div>
                           </div>
                         </div>
 
                         {(place.address || place.city || place.phone || place.email) && (
-                          <div className="space-y-1 text-xs text-zinc-400">
+                          <div className="space-y-1 text-xs text-zinc-300">
                             {(place.address || place.city) && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                                 <span className="truncate">{place.address || place.city}</span>
                               </div>
                             )}
                             {place.phone && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                                 <span className="truncate font-mono">{place.phone}</span>
                               </div>
                             )}
                             {place.email && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                <span className="truncate font-mono text-[11px]">{place.email}</span>
+                                <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                <span className="truncate font-mono text-xs">{place.email}</span>
                               </div>
                             )}
                           </div>
@@ -5464,17 +5560,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
 
                       {/* Card Actions */}
-                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.08]">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleQuickClaimPlace(place)}
-                            className={ADMIN_BTN_SECONDARY}
-                            title="Promote to claimed business"
-                          >
-                            <Briefcase className="w-3.5 h-3.5" />
-                            <span>Claim</span>
-                          </button>
+                          {isPlaceClaimed ? (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickUnclaimPlace(place)}
+                              className={ADMIN_BTN_SECONDARY}
+                              title="Remove claimed business status"
+                            >
+                              <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Unclaim</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleQuickClaimPlace(place)}
+                              className={ADMIN_BTN_SECONDARY}
+                              title="Promote to claimed business"
+                            >
+                              <Briefcase className="w-3.5 h-3.5" />
+                              <span>Claim</span>
+                            </button>
+                          )}
                           <button type="button" onClick={() => setEditPlaceModal(place)} className={ADMIN_BTN_SECONDARY}>
                             <Edit className="w-3.5 h-3.5" />
                             <span>Edit</span>
@@ -5509,7 +5617,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <AdminEmptyState
                   icon={<Building2 className="w-5 h-5" />}
                   title="No places found"
-                  description="Try clearing your search query or selecting a different category."
+                  description="Try clearing your search query or selecting a different filter."
                 />
               )}
             </div>
@@ -5531,11 +5639,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className={ADMIN_SELECT}
                   >
                     <option value="all">All Creators ({creatorsList.length})</option>
-                    <option value="top">Top Creators (3+ Reviews)</option>
+                    <option value="top">Top Creators (2+ Reviews)</option>
                   </select>
                 </div>
-                <span className="text-xs text-zinc-400 tabular-nums px-1">
-                  Showing <span className="text-white font-medium">{filteredCreators.length}</span> creators
+                <span className="text-xs text-zinc-300 tabular-nums px-1">
+                  Showing <span className="text-white font-semibold">{filteredCreators.length}</span> creators
                 </span>
               </div>
 
@@ -5562,6 +5670,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredCreators.map((creator) => {
+                    const creatorKey = creator.id || creator.uid || creator.email || creator.name;
                     const creatorVideos = activeVideos.filter((v) =>
                       isAuthorMatch(v, {
                         name: creator.name,
@@ -5578,11 +5687,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                     return (
                       <div
-                        key={creator.id || creator.uid || creator.email || creator.name}
-                        className={`${ADMIN_SURFACE} p-4 hover:border-white/[0.14] transition-colors flex flex-col justify-between gap-4`}
+                        key={creatorKey}
+                        className={`${ADMIN_SURFACE} p-4 hover:border-white/[0.2] transition-colors flex flex-col justify-between gap-4`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0">
+                          <div className="w-11 h-11 rounded-full bg-white/[0.06] border border-white/[0.12] overflow-hidden shrink-0">
                             <img
                               src={getSafeAvatarUrl(creator.avatar, creator.name, creator.handle || creator.email)}
                               alt=""
@@ -5595,26 +5704,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-sm font-semibold text-white truncate">{creator.name}</h3>
-                            <p className="text-xs text-zinc-400 font-mono truncate">
+                            <p className="text-xs text-zinc-300 font-mono truncate">
                               {creator.handle ? (creator.handle.startsWith("@") ? creator.handle : `@${creator.handle}`) : `@${creator.name}`}
                             </p>
-                            {creator.email && <p className="text-[11px] text-zinc-500 truncate mt-0.5">{creator.email}</p>}
+                            {creator.email && <p className="text-xs text-zinc-400 truncate mt-0.5">{creator.email}</p>}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 divide-x divide-white/[0.06] py-2.5 border-y border-white/[0.06] text-center">
+                        <div className="grid grid-cols-3 divide-x divide-white/[0.08] py-2.5 border-y border-white/[0.08] text-center">
                           <div className="px-2">
-                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Reviews</div>
-                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{creatorVideos.length}</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">Reviews</div>
+                            <div className="text-sm font-bold text-white tabular-nums mt-0.5">{creatorVideos.length}</div>
                           </div>
                           <div className="px-2">
-                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Likes</div>
-                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{totalLikes.toLocaleString()}</div>
+                            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">Likes</div>
+                            <div className="text-sm font-bold text-white tabular-nums mt-0.5">{totalLikes.toLocaleString()}</div>
                           </div>
                           <div className="px-2">
-                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Avg Rating</div>
-                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
-                              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <div className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">Avg Rating</div>
+                            <div className="text-sm font-bold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
+                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                               {avgCreatorRating}
                             </div>
                           </div>
@@ -5636,8 +5745,35 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 type="button"
                                 onClick={() => {
                                   const userVidIds = creatorVideos.map((v) => v.id);
-                                  if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
-                                  showToast(`Removed all ${userVidIds.length} reviews for @${creator.name}`);
+                                  setAdminConfirmDialog({
+                                    title: `Clear ${userVidIds.length} review(s)?`,
+                                    message: `Permanently delete all ${userVidIds.length} photo review(s) published by ${creator.name}? The user account itself will remain active.`,
+                                    confirmLabel: "Clear Reviews",
+                                    onConfirm: async () => {
+                                      const idSet = new Set(userVidIds.map((id) => String(id).trim().toLowerCase()));
+                                      userVidIds.forEach((id) => purgeVideoIdFromClientStorage(id));
+                                      setDbVideos((prev) => prev.filter((v) => !idSet.has(String(v.id).trim().toLowerCase())));
+                                      if (onBulkDeleteVideos) {
+                                        onBulkDeleteVideos(userVidIds);
+                                      } else {
+                                        userVidIds.forEach((id) => onDeleteVideo(id));
+                                      }
+                                      try {
+                                        await Promise.allSettled([
+                                          adminFetch("/api/admin/videos/bulk-delete", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ videoIds: userVidIds })
+                                          }),
+                                          ...userVidIds.map((id) =>
+                                            fetch(`/api/nosql/videoReviews/${encodeURIComponent(id)}`, { method: "DELETE" })
+                                          )
+                                        ]);
+                                      } catch {}
+                                      showToast(`Removed all ${userVidIds.length} reviews for ${creator.name}.`);
+                                      setTimeout(() => fetchLiveStats(true), 400);
+                                    }
+                                  });
                                 }}
                                 className={ADMIN_BTN_DESTRUCTIVE}
                                 title="Remove this creator's reviews while keeping the account"
@@ -5646,7 +5782,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               </button>
                             )}
 
-                            {confirmDeleteUserId === (creator.id || creator.uid) ? (
+                            {confirmDeleteUserId === creatorKey ? (
                               <div className="flex items-center gap-1.5">
                                 <button
                                   type="button"
@@ -5658,7 +5794,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => setConfirmDeleteUserId(null)}
-                                  className="h-8 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
+                                  className="h-8 px-2.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium transition-colors cursor-pointer"
                                 >
                                   Cancel
                                 </button>
@@ -5666,7 +5802,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => setConfirmDeleteUserId(creator.id || creator.uid)}
+                                onClick={() => setConfirmDeleteUserId(creatorKey)}
                                 className={ADMIN_BTN_ICON_DANGER}
                                 title="Delete creator account"
                                 aria-label="Delete creator account"
@@ -5794,7 +5930,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <h3 className="text-sm font-semibold text-white truncate">{user.name}</h3>
                             {user.email && <p className="text-xs text-zinc-400 truncate">{user.email}</p>}
                             {user.city && (
-                              <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                              <p className="text-[11px] text-zinc-300 truncate mt-0.5">
                                 {user.city}{user.country ? `, ${user.country}` : ""}
                               </p>
                             )}
@@ -5802,7 +5938,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         </div>
 
                         <div className="flex items-center justify-between text-xs py-2.5 border-y border-white/[0.06]">
-                          <span className="text-zinc-500">Account Role</span>
+                          <span className="text-zinc-300">Account Role</span>
                           <span className="font-medium text-zinc-200">{user.role || "Community Member"}</span>
                         </div>
 
@@ -5816,7 +5952,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <span>Edit Profile</span>
                           </button>
 
-                          {confirmDeleteUserId === (user.id || user.uid) ? (
+                          {confirmDeleteUserId === userKey ? (
                             <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
@@ -5828,7 +5964,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteUserId(null)}
-                                className="h-8 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
+                                className="h-8 px-2.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-medium transition-colors cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -5836,7 +5972,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => setConfirmDeleteUserId(user.id || user.uid)}
+                              onClick={() => setConfirmDeleteUserId(userKey)}
                               className={ADMIN_BTN_ICON_DANGER}
                               title="Delete user account"
                               aria-label="Delete user account"
@@ -5904,9 +6040,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       type="button"
                       onClick={async () => {
                         const keysToDelete = [...selectedCommentKeys];
-                        allComments.forEach((item) => {
-                          const k = `${item.video.id}_${item.comment.id}`;
-                          if (keysToDelete.includes(k) && onDeleteComment) {
+                        const deletedCommentIds = new Set<string>();
+                        const targets = allComments.filter((item) => keysToDelete.includes(`${item.video.id}_${item.comment.id}`));
+                        targets.forEach((item) => {
+                          deletedCommentIds.add(String(item.comment.id));
+                          if (onDeleteComment) {
                             onDeleteComment(
                               item.video.id,
                               item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
@@ -5914,9 +6052,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             );
                           }
                         });
+                        setDbComments((prev) => prev.filter((c) => !deletedCommentIds.has(String(c.id))));
                         setSelectedCommentKeys([]);
                         setConfirmBulkDeleteComments(false);
-                        showToast(`Deleted ${keysToDelete.length} comment(s) successfully.`);
+                        showToast(`Deleted ${keysToDelete.length} comment(s) permanently.`);
+                        try {
+                          await Promise.allSettled(
+                            targets
+                              .filter((t) => !t.isReply)
+                              .map((t) => fetch(`/api/nosql/comments/${encodeURIComponent(t.comment.id)}`, { method: "DELETE" }))
+                          );
+                        } catch {}
                         setTimeout(() => fetchLiveStats(true), 400);
                       }}
                       className={ADMIN_BTN_DESTRUCTIVE_SOLID}
@@ -5928,7 +6074,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               )}
 
               {confirmPurgeAllComments && (
-                <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="bg-rose-500/15 border border-rose-500/30 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-xs text-rose-200">
                     Permanently purge all <span className="font-semibold text-white">{allComments.length}</span> comments across the platform?
                   </span>
@@ -5956,6 +6102,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             );
                           }
                         });
+                        setDbComments([]);
                         setSelectedCommentKeys([]);
                         setConfirmPurgeAllComments(false);
                         showToast(`All ${totalToPurge} comments purged permanently.`);
@@ -5995,7 +6142,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     {selectedCommentKeys.length > 0 && selectedCommentKeys.length === filteredComments.length ? (
                       <CheckSquare className="w-3.5 h-3.5 text-white" />
                     ) : (
-                      <Square className="w-3.5 h-3.5 text-zinc-500" />
+                      <Square className="w-3.5 h-3.5 text-zinc-300" />
                     )}
                     <span>
                       {selectedCommentKeys.length > 0 ? `${selectedCommentKeys.length} Selected` : "Select All"}
@@ -6149,14 +6296,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   {item.comment.authorName}
                                 </button>
                                 {item.comment.authorHandle && (
-                                  <span className="text-zinc-500 font-mono">
+                                  <span className="text-zinc-300 font-mono">
                                     @{item.comment.authorHandle.replace(/^@/, "")}
                                   </span>
                                 )}
-                                <span className="text-zinc-600">·</span>
+                                <span className="text-zinc-400">·</span>
                                 <span className="text-zinc-400">{metaTags.join(" · ")}</span>
                               </div>
-                              <span className="text-[11px] text-zinc-500 tabular-nums">{timeDisplay}</span>
+                              <span className="text-[11px] text-zinc-300 tabular-nums">{timeDisplay}</span>
                             </div>
 
                             <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap break-words">
@@ -6183,7 +6330,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400">
                                 <span className="inline-flex items-center gap-1.5 text-zinc-300 truncate max-w-[240px]">
-                                  <Building2 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  <Building2 className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                   <span className="truncate">{item.video.placeName || "Photo Review"}</span>
                                 </span>
                                 {item.video.rating !== undefined && item.video.rating !== null && (
@@ -6229,13 +6376,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <div className="flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     if (onDeleteComment) {
                                       onDeleteComment(
                                         item.video.id,
                                         item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
                                         item.isReply ? item.comment.id : undefined
                                       );
+                                    }
+                                    if (item.isReply && item.parentCommentId) {
+                                      setDbComments((prev) =>
+                                        prev.map((c) =>
+                                          String(c.id) === String(item.parentCommentId) && Array.isArray(c.replies)
+                                            ? { ...c, replies: c.replies.filter((r: any) => String(r.id) !== String(item.comment.id)) }
+                                            : c
+                                        )
+                                      );
+                                    } else {
+                                      setDbComments((prev) => prev.filter((c) => String(c.id) !== String(item.comment.id)));
+                                      try {
+                                        await fetch(`/api/nosql/comments/${encodeURIComponent(item.comment.id)}`, { method: "DELETE" });
+                                      } catch {}
                                     }
                                     setConfirmDeleteCommentInfo(null);
                                     showToast("Comment deleted permanently.");
@@ -6323,7 +6484,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Filter & Sort Toolbar */}
               <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between`}>
                 <div className="relative flex-1">
-                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-zinc-300 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={likesSearchQuery}
@@ -6421,11 +6582,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <span className="text-sm font-medium text-white truncate">
                                 {like.userName || "Community User"}
                               </span>
-                              <span className="text-[11px] font-mono text-zinc-500 truncate">
+                              <span className="text-[11px] font-mono text-zinc-300 truncate">
                                 {like.userHandle || `@${String(like.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
                               </span>
                             </div>
-                            <div className="text-[11px] text-zinc-500 tabular-nums">
+                            <div className="text-[11px] text-zinc-300 tabular-nums">
                               {like.createdAt
                                 ? `${new Date(like.createdAt).toLocaleDateString()} · ${new Date(like.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
                                 : like.timestamp || "Recently"}
@@ -6444,7 +6605,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             {videoThumb ? (
                               <img src={videoThumb} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                              <div className="w-full h-full flex items-center justify-center text-zinc-400">
                                 <Camera className="w-4 h-4" />
                               </div>
                             )}
@@ -6460,7 +6621,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-500 truncate">
+                            <div className="text-[11px] text-zinc-300 truncate">
                               By <span className="text-zinc-300">{like.videoAuthor || matchedVid?.authorName || "Creator"}</span>
                               {" · "}
                               <span className="font-mono">{like.videoId}</span>
@@ -6548,7 +6709,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Filter & Sort Toolbar */}
               <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between`}>
                 <div className="relative flex-1">
-                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-zinc-300 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={bookmarksSearchQuery}
@@ -6649,11 +6810,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <span className="text-sm font-medium text-white truncate">
                                 {bm.userName || "Community User"}
                               </span>
-                              <span className="text-[11px] font-mono text-zinc-500 truncate">
+                              <span className="text-[11px] font-mono text-zinc-300 truncate">
                                 {bm.userHandle || `@${String(bm.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
                               </span>
                             </div>
-                            <div className="text-[11px] text-zinc-500 tabular-nums">
+                            <div className="text-[11px] text-zinc-300 tabular-nums">
                               {bm.createdAt
                                 ? `${new Date(bm.createdAt).toLocaleDateString()} · ${new Date(bm.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
                                 : bm.timestamp || "Recently"}
@@ -6674,7 +6835,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             ) : bm.placeLogo || matchedPlace?.logoUrl ? (
                               <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain p-1.5" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                              <div className="w-full h-full flex items-center justify-center text-zinc-400">
                                 <Building2 className="w-4 h-4" />
                               </div>
                             )}
@@ -6684,7 +6845,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-medium text-white truncate">{placeName}</span>
                               {bm.placeCategory && (
-                                <span className="text-[11px] text-zinc-500 truncate">· {bm.placeCategory}</span>
+                                <span className="text-[11px] text-zinc-300 truncate">· {bm.placeCategory}</span>
                               )}
                               {rating !== undefined && rating !== null && (
                                 <span className="inline-flex items-center gap-0.5 text-[11px] text-zinc-300 tabular-nums shrink-0">
@@ -6693,7 +6854,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-500 truncate">
+                            <div className="text-[11px] text-zinc-300 truncate">
                               <span className="font-mono">{bm.placeId || bm.videoId || "Venue"}</span>
                               {bm.videoAuthor && (
                                 <>
@@ -6815,7 +6976,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {selectedChatIds.length === filteredAdminChats.length && filteredAdminChats.length > 0 ? (
                         <CheckSquare className="w-3.5 h-3.5 text-white" />
                       ) : (
-                        <Square className="w-3.5 h-3.5 text-zinc-500" />
+                        <Square className="w-3.5 h-3.5 text-zinc-300" />
                       )}
                       <span>{selectedChatIds.length > 0 ? `${selectedChatIds.length} Selected` : "Select All"}</span>
                     </button>
@@ -6930,13 +7091,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                 prev.includes(chat.id) ? prev.filter((id) => id !== chat.id) : [...prev, chat.id]
                               );
                             }}
-                            className="mt-1 text-zinc-500 hover:text-white cursor-pointer shrink-0"
+                            className="mt-1 text-zinc-300 hover:text-white cursor-pointer shrink-0"
                             aria-label="Select thread"
                           >
                             {isSelected ? (
                               <CheckSquare className="w-4 h-4 text-white" />
                             ) : (
-                              <Square className="w-4 h-4 text-zinc-600 hover:text-zinc-400" />
+                              <Square className="w-4 h-4 text-zinc-400 hover:text-zinc-400" />
                             )}
                           </button>
 
@@ -6962,22 +7123,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <div className="space-y-1 min-w-0 flex-1">
                             <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap text-xs">
                               <span className="font-semibold text-white">{p1Name}</span>
-                              <span className="text-zinc-600">↔</span>
+                              <span className="text-zinc-400">↔</span>
                               <span className="font-semibold text-white">{p2Name}</span>
-                              <span className="text-zinc-600">·</span>
+                              <span className="text-zinc-400">·</span>
                               <span className="text-zinc-400 tabular-nums">
                                 {historyCount} {historyCount === 1 ? "message" : "messages"}
                               </span>
                               {hasMedia && (
                                 <>
-                                  <span className="text-zinc-600">·</span>
+                                  <span className="text-zinc-400">·</span>
                                   <span className="text-zinc-300">Media attached</span>
                                 </>
                               )}
                               {formattedTime && (
                                 <>
-                                  <span className="text-zinc-600">·</span>
-                                  <span className="text-zinc-500 tabular-nums">{formattedTime}</span>
+                                  <span className="text-zinc-400">·</span>
+                                  <span className="text-zinc-300 tabular-nums">{formattedTime}</span>
                                 </>
                               )}
                             </div>
@@ -6986,7 +7147,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               &ldquo;{lastMsg}&rdquo;
                             </p>
 
-                            <div className="text-[11px] font-mono text-zinc-500 truncate">
+                            <div className="text-[11px] font-mono text-zinc-300 truncate">
                               {chat.id}
                             </div>
                           </div>
@@ -7081,9 +7242,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="space-y-4">
                     {!Array.isArray(inspectChatModal.history) || inspectChatModal.history.length === 0 ? (
                       <div className="py-12 text-center space-y-2">
-                        <MessageSquare className="w-6 h-6 mx-auto text-zinc-600" />
+                        <MessageSquare className="w-6 h-6 mx-auto text-zinc-400" />
                         <p className="text-sm font-medium text-white">No recorded messages</p>
-                        <p className="text-xs text-zinc-500">This thread contains no messages yet.</p>
+                        <p className="text-xs text-zinc-300">This thread contains no messages yet.</p>
                       </div>
                     ) : (
                       inspectChatModal.history.map((msg: any, idx: number) => {
@@ -7114,11 +7275,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   {msg.senderName || msg.senderEmail || "User"}
                                 </span>
                                 {msg.senderRole && (
-                                  <span className="text-[11px] text-zinc-500">
+                                  <span className="text-[11px] text-zinc-300">
                                     · {isYoouzAdmin ? "Admin" : msg.senderRole}
                                   </span>
                                 )}
-                                <span className="text-[10px] text-zinc-500 tabular-nums">
+                                <span className="text-[10px] text-zinc-300 tabular-nums">
                                   {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : msg.timestamp || ""}
                                 </span>
 
@@ -7130,7 +7291,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                         setEditingMessageId(msgId);
                                         setEditingMessageText(msg.text || "");
                                       }}
-                                      className="p-1 text-zinc-500 hover:text-white rounded cursor-pointer"
+                                      className="p-1 text-zinc-300 hover:text-white rounded cursor-pointer"
                                       title="Edit message"
                                     >
                                       <Edit3 className="w-3 h-3" />
@@ -7138,7 +7299,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteMessageFromThread(msgId)}
-                                      className="p-1 text-zinc-500 hover:text-rose-400 rounded cursor-pointer"
+                                      className="p-1 text-zinc-300 hover:text-rose-400 rounded cursor-pointer"
                                       title="Delete message"
                                     >
                                       <Trash2 className="w-3 h-3" />
@@ -7184,7 +7345,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   {msg.text || "(Media Attachment)"}
 
                                   {msg.editedByAdminAt && (
-                                    <span className={`block mt-1 text-[10px] italic ${isYoouzAdmin ? "text-zinc-600" : "text-zinc-500"}`}>
+                                    <span className={`block mt-1 text-[10px] italic ${isYoouzAdmin ? "text-zinc-700" : "text-zinc-300"}`}>
                                       Edited by Admin
                                     </span>
                                   )}
@@ -7331,7 +7492,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {/* Preset Templates */}
               <div className={`${ADMIN_SURFACE} p-4 flex flex-wrap items-center justify-between gap-3`}>
-                <span className="text-xs font-medium text-zinc-400">Quick Templates</span>
+                <span className="text-[13px] font-semibold text-white">Quick Templates</span>
                 <div className="flex flex-wrap gap-2">
                   {[
                     {
@@ -7391,12 +7552,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Two-Column Composer & Live Preview */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                 <div className={`lg:col-span-7 ${ADMIN_SURFACE} p-5 space-y-5`}>
-                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                    <h3 className="text-sm font-semibold text-white">Compose Announcement</h3>
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.1]">
+                    <h3 className="text-[15px] font-semibold text-white">Compose Announcement</h3>
                     <button
                       type="button"
                       onClick={() => setBroadcastData({ title: "", message: "", targetUrl: "" })}
-                      className="text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                      className="text-xs font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
                     >
                       Clear
                     </button>
@@ -7404,10 +7565,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                   <form onSubmit={handleSendBroadcast} className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-200 mb-2">
                         Target Audience
                       </label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2.5">
                         {[
                           { id: "all", label: "All Users", desc: `${uniqueUsers.length} accounts` },
                           { id: "creators", label: "Creators", desc: `${metrics.totalCreators} reviewers` },
@@ -7419,12 +7580,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             onClick={() => setBroadcastAudience(aud.id as any)}
                             className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                               broadcastAudience === aud.id
-                                ? "bg-white text-zinc-950 border-white"
-                                : "bg-white/[0.02] text-zinc-300 border-white/[0.08] hover:bg-white/[0.06]"
+                                ? "bg-white text-black border-white"
+                                : "bg-white/[0.05] text-white border-white/[0.13] hover:bg-white/[0.1]"
                             }`}
                           >
-                            <div className="text-xs font-semibold">{aud.label}</div>
-                            <div className={`text-[11px] mt-0.5 tabular-nums ${broadcastAudience === aud.id ? "text-zinc-600" : "text-zinc-500"}`}>
+                            <div className="text-[13px] font-semibold">{aud.label}</div>
+                            <div className={`text-xs mt-0.5 tabular-nums ${broadcastAudience === aud.id ? "text-zinc-700 font-medium" : "text-zinc-300"}`}>
                               {aud.desc}
                             </div>
                           </button>
@@ -7433,7 +7594,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-200 mb-2">
                         Category
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -7447,10 +7608,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             key={cat.id}
                             type="button"
                             onClick={() => setBroadcastType(cat.id as any)}
-                            className={`h-8 px-3 rounded-lg text-xs font-medium transition-colors border cursor-pointer ${
+                            className={`h-9 px-3.5 rounded-xl text-[13px] font-medium transition-colors border cursor-pointer ${
                               broadcastType === cat.id
-                                ? "bg-white text-zinc-950 border-white"
-                                : "bg-white/[0.03] text-zinc-400 border-white/[0.08] hover:text-white hover:bg-white/[0.07]"
+                                ? "bg-white text-black border-white font-semibold"
+                                : "bg-white/[0.06] text-zinc-200 border-white/[0.13] hover:text-white hover:bg-white/[0.11]"
                             }`}
                           >
                             {cat.label}
@@ -7461,10 +7622,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200">
                           Notification Title
                         </label>
-                        <span className="text-[11px] text-zinc-500 tabular-nums">{broadcastData.title.length}/100</span>
+                        <span className="text-xs text-zinc-300 tabular-nums">{broadcastData.title.length}/100</span>
                       </div>
                       <input
                         type="text"
@@ -7478,10 +7639,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-200">
                           Message Body
                         </label>
-                        <span className="text-[11px] text-zinc-500 tabular-nums">{broadcastData.message.length}/500</span>
+                        <span className="text-xs text-zinc-300 tabular-nums">{broadcastData.message.length}/500</span>
                       </div>
                       <textarea
                         rows={4}
@@ -7490,12 +7651,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
                         placeholder="Write the announcement message for user notification inboxes..."
                         required
-                        className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 resize-none leading-relaxed"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/[0.14] text-[13px] text-white placeholder-zinc-400 focus:outline-none focus:border-white/35 focus:bg-white/[0.08] resize-none leading-relaxed"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-200 mb-1.5">
                         Target Path or URL (Optional)
                       </label>
                       <input
@@ -7532,43 +7693,43 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* Live Preview */}
                 <div className="lg:col-span-5 space-y-4">
                   <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
-                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-                      <h3 className="text-sm font-semibold text-white">Notification Preview</h3>
-                      <span className="text-[11px] text-zinc-500">In-App Inbox</span>
+                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.1]">
+                      <h3 className="text-[15px] font-semibold text-white">Notification Preview</h3>
+                      <span className="text-xs font-medium text-zinc-300">In-App Inbox</span>
                     </div>
 
-                    <div className="p-4 bg-[#050506] border border-white/[0.08] rounded-xl space-y-2.5">
+                    <div className="p-4 bg-[#050506] border border-white/[0.12] rounded-xl space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-white/[0.08] border border-white/[0.1] flex items-center justify-center text-xs font-semibold text-white">
+                          <div className="w-6 h-6 rounded-lg bg-white/[0.12] border border-white/[0.16] flex items-center justify-center text-xs font-bold text-white">
                             Y
                           </div>
                           <span className="text-xs font-semibold text-white">Yoouz</span>
-                          <span className="text-[11px] text-zinc-500 capitalize">· {broadcastType}</span>
+                          <span className="text-xs text-zinc-300 capitalize">· {broadcastType}</span>
                         </div>
-                        <span className="text-[11px] text-zinc-500">Just now</span>
+                        <span className="text-xs text-zinc-300">Just now</span>
                       </div>
 
                       <div className="space-y-1">
-                        <div className="text-xs font-semibold text-white break-words">
+                        <div className="text-[13px] font-semibold text-white break-words">
                           {broadcastData.title.trim() || "Yoouz Platform Announcement"}
                         </div>
-                        <p className="text-xs text-zinc-400 leading-relaxed break-words">
+                        <p className="text-[13px] text-zinc-300 leading-relaxed break-words">
                           {broadcastData.message.trim() || "Your announcement text will appear here as users see it in their notifications drawer."}
                         </p>
                       </div>
 
                       {broadcastData.targetUrl && (
-                        <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
-                          <span className="text-zinc-500 font-mono truncate max-w-[200px]">
+                        <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-mono truncate max-w-[200px]">
                             {broadcastData.targetUrl}
                           </span>
-                          <span className="text-zinc-300 font-medium">Open &rarr;</span>
+                          <span className="text-white font-semibold">Open &rarr;</span>
                         </div>
                       )}
                     </div>
 
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    <p className="text-xs text-zinc-300 leading-relaxed">
                       Broadcasts write directly to BunnyDB notification records and appear immediately inside active user inboxes.
                     </p>
                   </div>
@@ -7577,36 +7738,36 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {/* Broadcast Dispatch History */}
               <div className={`${ADMIN_SURFACE} overflow-hidden`}>
-                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white">Dispatch History</h3>
-                  <span className="text-xs text-zinc-500 tabular-nums">{broadcastHistory.length} sent</span>
+                <div className="px-5 py-4 border-b border-white/[0.1] flex items-center justify-between">
+                  <h3 className="text-[15px] font-semibold text-white">Dispatch History</h3>
+                  <span className="text-xs font-medium text-zinc-300 tabular-nums">{broadcastHistory.length} sent</span>
                 </div>
 
                 {broadcastHistory.length === 0 ? (
-                  <div className="px-6 py-12 text-center text-xs text-zinc-500">
+                  <div className="px-6 py-12 text-center text-[13px] text-zinc-300">
                     No broadcasts dispatched yet. Send an announcement above to record it here.
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/[0.06]">
+                  <div className="divide-y divide-white/[0.08]">
                     {broadcastHistory.map((item) => (
                       <div
                         key={item.id}
-                        className="px-5 py-4 hover:bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
+                        className="px-5 py-4 hover:bg-white/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
                       >
                         <div className="space-y-1 flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <div className="flex items-center gap-2 flex-wrap text-[13px]">
                             <span className="font-semibold text-white">{item.title}</span>
-                            <span className="text-zinc-500 capitalize">· {item.type || "announcement"}</span>
-                            <span className="text-zinc-500">· Audience: {item.audience || "all"}</span>
+                            <span className="text-zinc-300 capitalize">· {item.type || "announcement"}</span>
+                            <span className="text-zinc-300">· Audience: {item.audience || "all"}</span>
                           </div>
-                          <p className="text-xs text-zinc-400 truncate max-w-2xl">{item.message}</p>
-                          <div className="flex items-center gap-3 text-[11px] text-zinc-500 tabular-nums">
+                          <p className="text-xs text-zinc-300 truncate max-w-2xl">{item.message}</p>
+                          <div className="flex items-center gap-3 text-xs text-zinc-400 tabular-nums">
                             <span>{new Date(item.sentAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
                             {item.targetUrl && <span className="font-mono truncate">{item.targetUrl}</span>}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={() => {
@@ -7625,12 +7786,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               const updated = broadcastHistory.filter((x) => x.id !== item.id);
                               setBroadcastHistory(updated);
                               try {
                                 localStorage.setItem("yoouz_broadcast_history", JSON.stringify(updated));
                               } catch (e) {}
+                              try {
+                                await adminFetch(`/api/admin/broadcasts/${encodeURIComponent(item.id)}`, { method: "DELETE" });
+                              } catch {}
                               showToast("Deleted broadcast record.");
                             }}
                             className={ADMIN_BTN_ICON_DANGER}
@@ -7696,9 +7860,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           className="text-xs font-mono text-zinc-300 hover:text-white hover:underline break-all inline-flex items-center gap-1"
                         >
                           <span>{item.url}</span>
-                          <ExternalLink className="w-3 h-3 text-zinc-500 shrink-0" />
+                          <ExternalLink className="w-3 h-3 text-zinc-300 shrink-0" />
                         </a>
-                        <p className="text-[11px] text-zinc-500">{item.desc}</p>
+                        <p className="text-[11px] text-zinc-300">{item.desc}</p>
                       </div>
                       <button
                         type="button"
@@ -7744,8 +7908,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 subtitle="BunnyDB libSQL edge tables and Bunny CDN object storage."
                 actions={
                   <>
-                    <span className="h-9 px-3 rounded-xl bg-white/[0.03] border border-white/[0.08] inline-flex items-center gap-2 text-xs text-zinc-300 tabular-nums">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="h-9 px-3.5 rounded-xl bg-white/[0.06] border border-white/[0.13] inline-flex items-center gap-2 text-[13px] font-medium text-white tabular-nums">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
                       {liveStats ? `Connected · ${liveStats.latencyMs}ms` : pingEdgeResult ? `Connected · ${pingEdgeResult.latencyMs}ms` : "Connected"}
                     </span>
                     <button
@@ -7754,18 +7918,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       disabled={isPingingEdge}
                       className={ADMIN_BTN_SECONDARY}
                     >
-                      <Zap className="w-3.5 h-3.5 text-zinc-400" />
+                      <Zap className="w-3.5 h-3.5 text-zinc-200" />
                       <span>{isPingingEdge ? "Pinging..." : "Ping Edge"}</span>
                     </button>
                   </>
                 }
               />
 
-              {/* Database Tables Grid (10 Tables — full clean labels, zero clipped strings) */}
+              {/* Database Tables Grid (10 Tables — synchronized with Sidebar & BunnyDB) */}
               <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white">BunnyDB Tables</h3>
-                  <span className="text-xs text-zinc-500">Select a table to inspect or delete rows</span>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h3 className="text-[15px] font-semibold text-white">BunnyDB Tables</h3>
+                  <span className="text-xs font-medium text-zinc-300">Select a table to inspect or delete rows</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -7774,13 +7938,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, Icon: Camera },
                       { name: "places", label: "Places", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, Icon: MapPin },
                       { name: "users", label: "Users", count: liveStats?.totals?.users ?? metrics.totalUsers, Icon: Users },
-                      { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? allComments.length, Icon: MessageSquare },
-                      { name: "likes", label: "Likes", count: liveStats?.totals?.likes ?? metrics.totalLikes, Icon: Heart },
+                      { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments), Icon: MessageSquare },
+                      { name: "likes", label: "Likes", count: liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes), Icon: Heart },
                       { name: "shares", label: "Shares", count: liveStats?.totals?.shares ?? metrics.totalShares, Icon: Share2 },
-                      { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? metrics.totalBookmarks, Icon: Bookmark },
+                      { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? (adminBookmarks.length || metrics.totalBookmarks), Icon: Bookmark },
                       { name: "chats", label: "Messages", count: liveStats?.totals?.chats ?? adminChats.length, Icon: Mail },
                       { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, Icon: Bell },
-                      { name: "businessClaims", label: "Business Claims", count: liveStats?.totals?.businessClaims ?? 0, Icon: Building2 }
+                      { name: "businessClaims", label: "Business Claims", count: liveStats?.totals?.businessClaims ?? metrics.totalBusinesses, Icon: Building2 }
                     ] as const
                   ).map((t) => {
                     const TableIcon = t.Icon;
@@ -7789,21 +7953,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         key={t.name}
                         type="button"
                         onClick={() => setInspectTableModal(t.name)}
-                        className="p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-xl border border-white/[0.07] hover:border-white/[0.15] flex flex-col justify-between gap-2.5 transition-colors cursor-pointer text-left group"
+                        className="p-3.5 bg-white/[0.04] hover:bg-white/[0.09] rounded-xl border border-white/[0.1] hover:border-white/[0.22] flex flex-col justify-between gap-2.5 transition-colors cursor-pointer text-left group"
                       >
                         <div className="flex items-center justify-between gap-2 w-full">
-                          <span className="text-xs text-zinc-300 font-medium leading-tight group-hover:text-white transition-colors">
+                          <span className="text-[13px] text-white font-semibold leading-tight transition-colors">
                             {t.label}
                           </span>
-                          <TableIcon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                          <TableIcon className="w-4 h-4 text-zinc-300 group-hover:text-white shrink-0" />
                         </div>
                         <div className="flex items-baseline justify-between gap-2 w-full">
                           {isLoadingLiveStats && !liveStats ? (
-                            <div className="h-6 w-10 bg-white/[0.08] animate-pulse rounded" />
+                            <div className="h-6 w-10 bg-white/[0.1] animate-pulse rounded" />
                           ) : (
-                            <span className="text-xl font-semibold text-white tabular-nums">{t.count.toLocaleString()}</span>
+                            <span className="text-2xl font-bold text-white tabular-nums">{t.count.toLocaleString()}</span>
                           )}
-                          <span className="text-[11px] text-zinc-500">rows</span>
+                          <span className="text-xs font-medium text-zinc-300">rows</span>
                         </div>
                       </button>
                     );
@@ -7814,7 +7978,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Bunny CDN Media Storage */}
               <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-white">Bunny CDN Media Storage</h3>
+                  <h3 className="text-[15px] font-semibold text-white">Bunny CDN Media Storage</h3>
                   <button
                     type="button"
                     onClick={handlePurgeCdnCache}
@@ -7826,18 +7990,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] border-t border-white/[0.06] pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.1] border-t border-white/[0.1] pt-4">
                   <div className="py-2 sm:py-0 sm:pr-4">
-                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Storage Zone</span>
-                    <span className="font-mono text-sm font-medium text-white mt-1 block">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300 block">Storage Zone</span>
+                    <span className="font-mono text-sm font-semibold text-white mt-1 block">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
                   </div>
                   <div className="py-2 sm:py-0 sm:px-4">
-                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Media Files</span>
-                    <span className="text-sm font-semibold text-white tabular-nums mt-1 block">{(liveStats?.storage?.filesCount ?? 0).toLocaleString()} files</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300 block">Media Files</span>
+                    <span className="text-sm font-bold text-white tabular-nums mt-1 block">
+                      {(liveStats?.storage?.filesCount ?? activeVideos.length).toLocaleString()} files
+                    </span>
                   </div>
                   <div className="py-2 sm:py-0 sm:pl-4">
-                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Allocated Size</span>
-                    <span className="text-sm font-semibold text-white tabular-nums mt-1 block">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300 block">Allocated Size</span>
+                    <span className="text-sm font-bold text-white tabular-nums mt-1 block">
+                      {liveStats?.storage?.formattedSize && liveStats.storage.filesCount > 0
+                        ? liveStats.storage.formattedSize
+                        : `${((activeVideos.length * 185000) / (1024 * 1024)).toFixed(2)} MB`}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -7845,8 +8015,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Backup & Recovery */}
               <div className={`${ADMIN_SURFACE} p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Backup & Recovery</h3>
-                  <p className="text-xs text-zinc-400 mt-1">
+                  <h3 className="text-[15px] font-semibold text-white">Backup & Recovery</h3>
+                  <p className="text-[13px] text-zinc-300 mt-1">
                     Export all database collections as a portable JSON snapshot, or perform a full system reset.
                   </p>
                 </div>
@@ -7861,7 +8031,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setConfirmMasterResetModal(true)}
+                    onClick={() => {
+                      setMasterResetConfirmText("");
+                      setConfirmMasterResetModal(true);
+                    }}
                     disabled={isMasterResetting}
                     className={ADMIN_BTN_DESTRUCTIVE}
                   >
@@ -7921,7 +8094,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
-                        <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-3.5 h-3.5 text-zinc-300 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="text"
                           value={tableDataQuery}
@@ -7956,11 +8129,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       if (filtered.length === 0) {
                         return (
                           <div className="py-14 text-center space-y-1.5 border border-white/[0.06] rounded-xl bg-white/[0.02]">
-                            <Database className="w-5 h-5 text-zinc-600 mx-auto mb-2" />
+                            <Database className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
                             <p className="text-sm font-medium text-white">
                               {tableDataQuery ? "No matching records" : `No rows in ${inspectTableModal}`}
                             </p>
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-zinc-300">
                               {tableDataQuery ? "Try adjusting your filter query." : "This table currently has 0 rows."}
                             </p>
                           </div>
@@ -7977,12 +8150,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               <div key={itemId + idx} className="p-3.5 hover:bg-white/[0.02] space-y-2.5 transition-colors">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-[11px] font-mono text-zinc-500 tabular-nums">#{idx + 1}</span>
+                                    <span className="text-[11px] font-mono text-zinc-300 tabular-nums">#{idx + 1}</span>
                                     <span className="text-xs font-mono font-medium text-white truncate max-w-[240px]">
                                       {itemId}
                                     </span>
                                     {createdAt && (
-                                      <span className="text-[11px] text-zinc-500 tabular-nums">
+                                      <span className="text-[11px] text-zinc-300 tabular-nums">
                                         · {new Date(createdAt).toLocaleString()}
                                       </span>
                                     )}
@@ -8066,7 +8239,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                             {Math.max(1, Math.min(5, Math.round(item.rating || 5)))}
                                           </span>
                                         </div>
-                                        <div className="text-[11px] text-zinc-500 truncate mt-0.5">
+                                        <div className="text-[11px] text-zinc-300 truncate mt-0.5">
                                           By {item.author?.name || item.authorName || "Reviewer"} · {item.likesCount || item.likes || 0} likes · {item.commentsCount || (Array.isArray(item.comments) ? item.comments.length : 0)} comments · {formatRecordedDate(item.recordedAt, item.createdAtMs || parseTimestampToMs(item.createdAt) || undefined)}
                                         </div>
                                       </div>
@@ -8080,7 +8253,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     >
                                       <div className="truncate">
                                         <span className="font-medium text-white">{item.userName || "Community User"}</span>
-                                        <span className="text-zinc-500"> liked </span>
+                                        <span className="text-zinc-300"> liked </span>
                                         <span className="text-zinc-300">{item.placeName || item.videoId}</span>
                                       </div>
                                       <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
@@ -8093,7 +8266,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     >
                                       <div className="truncate">
                                         <span className="font-medium text-white">{item.userName || "Community User"}</span>
-                                        <span className="text-zinc-500"> shared </span>
+                                        <span className="text-zinc-300"> shared </span>
                                         <span className="text-zinc-300">{item.placeName || item.videoId}</span>
                                       </div>
                                       <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
@@ -8106,7 +8279,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     >
                                       <div className="truncate">
                                         <span className="font-medium text-white">{item.userName || "Community User"}</span>
-                                        <span className="text-zinc-500"> saved </span>
+                                        <span className="text-zinc-300"> saved </span>
                                         <span className="text-zinc-300">{item.placeName || item.placeId || item.videoId}</span>
                                       </div>
                                       <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
@@ -8200,12 +8373,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <AdminModal
                   title="Execute Master System Reset"
                   maxWidthClass="max-w-md"
-                  onClose={() => setConfirmMasterResetModal(false)}
+                  onClose={() => {
+                    setConfirmMasterResetModal(false);
+                    setMasterResetConfirmText("");
+                  }}
                   footer={
                     <>
                       <button
                         type="button"
-                        onClick={() => setConfirmMasterResetModal(false)}
+                        onClick={() => {
+                          setConfirmMasterResetModal(false);
+                          setMasterResetConfirmText("");
+                        }}
                         className={ADMIN_BTN_SECONDARY}
                       >
                         Cancel
@@ -8213,7 +8392,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       <button
                         type="button"
                         onClick={handleMasterReset}
-                        disabled={isMasterResetting}
+                        disabled={isMasterResetting || masterResetConfirmText.trim().toUpperCase() !== "RESET"}
                         className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                       >
                         {isMasterResetting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -8222,9 +8401,23 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </>
                   }
                 >
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    <strong className="text-rose-400">Permanent action:</strong> This will wipe every BunnyDB table (users, photo reviews, places, comments, likes, bookmarks, and messages) and CDN media files. This cannot be undone.
-                  </p>
+                  <div className="space-y-4">
+                    <p className="text-[13px] text-zinc-200 leading-relaxed">
+                      <strong className="text-rose-400">Permanent action:</strong> This will wipe every BunnyDB content table (users, photo reviews, places, comments, likes, bookmarks, and messages). Your admin passcode will be preserved.
+                    </p>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-200 mb-1.5">
+                        Type <span className="font-mono text-white">RESET</span> to confirm
+                      </label>
+                      <input
+                        type="text"
+                        value={masterResetConfirmText}
+                        onChange={(e) => setMasterResetConfirmText(e.target.value)}
+                        placeholder="RESET"
+                        className={`${ADMIN_INPUT} font-mono`}
+                      />
+                    </div>
+                  </div>
                 </AdminModal>
               )}
             </div>
@@ -8250,11 +8443,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <table className="w-full text-left border-collapse min-w-[760px]">
                       <thead className="border-b border-white/[0.08]">
                         <tr>
-                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Time</th>
-                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Query</th>
-                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Status</th>
-                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Resolved Domain</th>
-                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Extracted Details</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-300">Time</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-300">Query</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-300">Status</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-300">Resolved Domain</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-300">Extracted Details</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.06] text-xs">
@@ -8265,7 +8458,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                           return (
                             <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                              <td className="px-4 py-3 font-mono text-[11px] text-zinc-500 tabular-nums whitespace-nowrap">
+                              <td className="px-4 py-3 font-mono text-[11px] text-zinc-300 tabular-nums whitespace-nowrap">
                                 {new Date(log.timestamp).toLocaleTimeString()}
                               </td>
                               <td className="px-4 py-3 font-medium text-white">
@@ -8299,13 +8492,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                     <span className="font-mono text-zinc-300">{log.domain}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-zinc-600">Unresolved</span>
+                                  <span className="text-zinc-400">Unresolved</span>
                                 )}
                               </td>
                               <td className="px-4 py-3">
                                 <div className="space-y-0.5">
                                   {log.title && <div className="text-white font-medium truncate max-w-xs">{log.title}</div>}
-                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-500">
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-300">
                                     {log.phone && <span>{log.phone}</span>}
                                     {log.email && <span>{log.email}</span>}
                                     {log.source && <span className="font-mono">src:{log.source}</span>}
@@ -8344,7 +8537,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               {/* Filters Toolbar */}
               <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5`}>
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-300" />
                   <input
                     type="text"
                     value={agencySearchQuery}
@@ -8438,14 +8631,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             )}
                             <div className="min-w-0 flex-1">
                               <h3 className="text-sm font-semibold text-white truncate">{agency.name}</h3>
-                              <p className="text-xs text-zinc-500 truncate">{agency.city}{agency.city && agency.country ? ", " : ""}{agency.country}</p>
+                              <p className="text-xs text-zinc-300 truncate">{agency.city}{agency.city && agency.country ? ", " : ""}{agency.country}</p>
                             </div>
                           </div>
 
                           <div className="space-y-1.5 text-xs text-zinc-400 py-2.5 border-y border-white/[0.06]">
                             {agency.website && (
                               <div className="flex items-center gap-2 truncate">
-                                <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <Globe className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                 <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-zinc-200 hover:text-white hover:underline truncate">
                                   {agency.website}
                                 </a>
@@ -8453,13 +8646,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             )}
                             {agency.phone && (
                               <div className="flex items-center gap-2 truncate">
-                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <Phone className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                 <span className="font-mono text-zinc-300">{agency.phone}</span>
                               </div>
                             )}
                             {agency.email && (
                               <div className="flex items-center gap-2 truncate">
-                                <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <Mail className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
                                 <span className="text-zinc-300 truncate">{agency.email}</span>
                               </div>
                             )}
@@ -8626,8 +8819,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-200 tabular-nums">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {previewVideo.rating} / 5
                     </span>
-                    <span className="text-zinc-600">·</span>
-                    <span className="text-[11px] text-zinc-500 font-mono truncate">ID: {previewVideo.id}</span>
+                    <span className="text-zinc-400">·</span>
+                    <span className="text-[11px] text-zinc-300 font-mono truncate">ID: {previewVideo.id}</span>
                   </div>
                   <h3 className="text-lg font-semibold text-white tracking-tight">{previewVideo.placeName}</h3>
                   <p className="text-xs text-zinc-400 mt-0.5">{previewVideo.placeAddress || previewVideo.placeCategory}</p>
@@ -8645,7 +8838,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   />
                   <div className="min-w-0">
                     <h4 className="font-medium text-sm text-white truncate">{previewVideo.author?.name || "Reviewer"}</h4>
-                    <p className="text-xs text-zinc-500 truncate">
+                    <p className="text-xs text-zinc-300 truncate">
                       {previewVideo.author?.handle || previewVideo.author?.name || "Anonymous"}
                     </p>
                   </div>
@@ -8653,7 +8846,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 {previewVideo.caption && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Review Caption</label>
+                    <label className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider">Review Caption</label>
                     <p className="text-xs text-zinc-200 bg-[#050506] p-3 rounded-xl border border-white/[0.08] leading-relaxed">
                       {previewVideo.caption}
                     </p>
@@ -8662,7 +8855,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                 {previewVideo.transcript && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Captions Transcript</label>
+                    <label className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider">Captions Transcript</label>
                     <p className="text-xs text-zinc-300 bg-[#050506] p-3 rounded-xl border border-white/[0.08] max-h-24 overflow-y-auto leading-relaxed">
                       {previewVideo.transcript}
                     </p>
@@ -8672,14 +8865,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 {/* Comments Section */}
                 <div className="space-y-2 pt-3 border-t border-white/[0.08]">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
+                    <label className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-zinc-300" />
                       Comments ({previewVideo.commentsCount || (previewVideo.comments || []).length})
                     </label>
                   </div>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
                     {!previewVideo.comments || previewVideo.comments.length === 0 ? (
-                      <p className="text-xs text-zinc-500 py-2">No comments on this review.</p>
+                      <p className="text-xs text-zinc-300 py-2">No comments on this review.</p>
                     ) : (
                       previewVideo.comments.map((c: any) => (
                         <div key={c.id || Math.random()} className="p-2.5 rounded-xl bg-[#050506] border border-white/[0.06] text-xs">
@@ -8694,8 +8887,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               }}
                             />
                             <span className="font-medium text-zinc-200">{c.authorName || c.userName}</span>
-                            <span className="text-zinc-500 hidden sm:inline">@{c.authorHandle || c.userHandle || "user"}</span>
-                            <span className="ml-auto text-[10px] text-zinc-600 tabular-nums">
+                            <span className="text-zinc-300 hidden sm:inline">@{c.authorHandle || c.userHandle || "user"}</span>
+                            <span className="ml-auto text-[10px] text-zinc-400 tabular-nums">
                               {c.createdAtMs ? new Date(c.createdAtMs).toLocaleDateString() : c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
                             </span>
                           </div>
@@ -8707,9 +8900,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                   <div className="flex items-center gap-1.5 mb-0.5">
                                     <img src={getSafeAvatarUrl(r.authorAvatar || r.userAvatar, r.authorName || r.userName)} className="w-3.5 h-3.5 rounded-full" alt="" />
                                     <span className="font-medium text-zinc-300">{r.authorName || r.userName}</span>
-                                    {r.isOwner && <span className="text-[10px] text-zinc-500 font-medium">Owner</span>}
+                                    {r.isOwner && <span className="text-[10px] text-zinc-300 font-medium">Owner</span>}
                                   </div>
-                                  <p className="text-zinc-500">{r.text}</p>
+                                  <p className="text-zinc-300">{r.text}</p>
                                 </div>
                               ))}
                             </div>
@@ -8854,7 +9047,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
             {/* Live Profile Header Preview */}
             <div className="space-y-1.5">
-              <label className="block text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+              <label className="block text-[11px] font-medium text-zinc-300 uppercase tracking-wider">
                 Live Profile Header Preview
               </label>
               <div className="relative h-36 w-full rounded-xl bg-[#050506] border border-white/[0.08] overflow-hidden flex items-center justify-center">
@@ -8870,7 +9063,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   />
                 ) : (
                   <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#050506] via-[#0f1014] to-[#050506] flex flex-col items-center justify-center">
-                    <span className="text-zinc-500 text-[11px] font-medium tracking-wider uppercase">No Banner Set</span>
+                    <span className="text-zinc-300 text-[11px] font-medium tracking-wider uppercase">No Banner Set</span>
                   </div>
                 )}
 
@@ -9023,7 +9216,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="flex items-center gap-2 text-xs font-medium text-zinc-200">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" /> Merchant Claim & Verification
                 </div>
-                <span className={`text-xs font-medium ${editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "text-emerald-400" : "text-zinc-500"}`}>
+                <span className={`text-xs font-medium ${editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "text-emerald-400" : "text-zinc-300"}`}>
                   {editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "Claimed" : "Unclaimed"}
                 </span>
               </div>
@@ -9237,7 +9430,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-white truncate">{editUserModal.name || "User"}</p>
-                <p className="text-[11px] text-zinc-500 truncate">{editUserModal.email || "No email"}</p>
+                <p className="text-[11px] text-zinc-300 truncate">{editUserModal.email || "No email"}</p>
                 <label className="text-[11px] text-zinc-300 hover:text-white font-medium underline underline-offset-2 mt-1 cursor-pointer inline-block">
                   Upload Avatar Image
                   <input
@@ -9351,6 +9544,24 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     });
                   }
 
+                  setDbVideos((prev) =>
+                    prev.map((v) => (String(v.id) === String(video.id) ? { ...v, comments: nextComments } : v))
+                  );
+                  setDbComments((prev) =>
+                    prev.map((c) => {
+                      if (isReply && parentCommentId && String(c.id) === String(parentCommentId) && Array.isArray(c.replies)) {
+                        return {
+                          ...c,
+                          replies: c.replies.map((r: any) => (String(r.id) === String(comment.id) ? { ...r, text: clean } : r))
+                        };
+                      }
+                      if (!isReply && String(c.id) === String(comment.id)) {
+                        return { ...c, text: clean };
+                      }
+                      return c;
+                    })
+                  );
+
                   try {
                     await Promise.allSettled([
                       fetch(`/api/nosql/videoReviews/${encodeURIComponent(video.id)}`, {
@@ -9422,10 +9633,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-white truncate">{editCommentModal.comment.authorName || "User"}</p>
                   {editCommentModal.comment.authorHandle && (
-                    <p className="text-[11px] text-zinc-500 font-mono">@{editCommentModal.comment.authorHandle.replace(/^@/, "")}</p>
+                    <p className="text-[11px] text-zinc-300 font-mono">@{editCommentModal.comment.authorHandle.replace(/^@/, "")}</p>
                   )}
                 </div>
-                <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                <p className="text-[11px] text-zinc-300 truncate mt-0.5">
                   On <span className="text-zinc-300 font-medium">{editCommentModal.video.placeName || "Review"}</span>
                   {editCommentModal.isReply && " (Reply thread)"}
                 </p>
@@ -9442,7 +9653,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 required
                 className="w-full px-3 py-2.5 bg-[#050506] border border-white/[0.08] rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/[0.22] leading-relaxed transition-colors"
               />
-              <div className="flex justify-between items-center text-[11px] text-zinc-500 mt-1.5">
+              <div className="flex justify-between items-center text-[11px] text-zinc-300 mt-1.5">
                 <span>Updates immediately across the review feed and database.</span>
                 <span className="font-mono tabular-nums">{editCommentText.length} chars</span>
               </div>
@@ -9551,7 +9762,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       )}
 
                       {(selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail) && (
-                        <p className="text-xs text-zinc-500 font-mono truncate">
+                        <p className="text-xs text-zinc-300 font-mono truncate">
                           {selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail}
                         </p>
                       )}
@@ -9560,35 +9771,35 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
                   <div className="pt-3 border-t border-white/[0.06] grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
                     <div>
-                      <span className="block text-[11px] text-zinc-500 font-medium">Account Role</span>
+                      <span className="block text-[11px] text-zinc-300 font-medium">Account Role</span>
                       <span className="text-zinc-200 font-medium">
                         {resolvedUser?.role ||
                           (selectedCommentDetailModal.comment.isOwner ? "Business" : selectedCommentDetailModal.comment.isCreator ? "Creator" : "Member")}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[11px] text-zinc-500 font-medium">Location</span>
+                      <span className="block text-[11px] text-zinc-300 font-medium">Location</span>
                       <span className="text-zinc-200 font-medium">{resolvedUser?.location || resolvedUser?.city || "Online"}</span>
                     </div>
                     <div>
-                      <span className="block text-[11px] text-zinc-500 font-medium">Photo Reviews</span>
+                      <span className="block text-[11px] text-zinc-300 font-medium">Photo Reviews</span>
                       <span className="text-zinc-200 font-medium tabular-nums">{resolvedUser?.videoReviewCount || 0}</span>
                     </div>
                     <div>
-                      <span className="block text-[11px] text-zinc-500 font-medium">Social Graph</span>
+                      <span className="block text-[11px] text-zinc-300 font-medium">Social Graph</span>
                       <span className="text-zinc-200 font-medium tabular-nums">
                         {resolvedUser?.followersCount || 0} followers · {resolvedUser?.followingCount || 0} following
                       </span>
                     </div>
                     {resolvedUser?.memberSince && (
                       <div className="col-span-2">
-                        <span className="block text-[11px] text-zinc-500 font-medium">Member Since</span>
+                        <span className="block text-[11px] text-zinc-300 font-medium">Member Since</span>
                         <span className="text-zinc-200 font-medium">{resolvedUser.memberSince}</span>
                       </div>
                     )}
                     {resolvedUser?.bio && (
                       <div className="col-span-2 pt-1">
-                        <span className="block text-[11px] text-zinc-500 font-medium mb-1">Bio</span>
+                        <span className="block text-[11px] text-zinc-300 font-medium mb-1">Bio</span>
                         <p className="text-zinc-300 leading-relaxed bg-[#0c0c0f] p-2.5 rounded-lg border border-white/[0.06]">
                           {resolvedUser.bio}
                         </p>
@@ -9600,7 +9811,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             })()}
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Comment Text</label>
+              <label className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider">Comment Text</label>
               <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap break-words">
                 {selectedCommentDetailModal.comment.text}
               </div>
@@ -9608,7 +9819,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
             {Array.isArray(selectedCommentDetailModal.comment.attachments) && selectedCommentDetailModal.comment.attachments.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                <label className="text-[11px] font-medium text-zinc-300 uppercase tracking-wider">
                   Attached Photos ({selectedCommentDetailModal.comment.attachments.length})
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -9631,11 +9842,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs">
               {selectedCommentDetailModal.video && (
                 <div className="flex items-center gap-2 text-zinc-300 font-medium">
-                  <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+                  <Building2 className="w-3.5 h-3.5 text-zinc-300" />
                   <span>{selectedCommentDetailModal.video.placeName || "Photo Review"}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 text-zinc-500 font-mono text-[11px] ml-auto tabular-nums">
+              <div className="flex items-center gap-1.5 text-zinc-300 font-mono text-[11px] ml-auto tabular-nums">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{new Date(selectedCommentDetailModal.comment.createdAt || Date.now()).toLocaleString()}</span>
               </div>
@@ -9685,7 +9896,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 className="max-h-[60vh] w-full object-contain bg-[#050506]"
               />
             ) : (
-              <div className="py-16 text-center text-zinc-500">
+              <div className="py-16 text-center text-zinc-300">
                 <Camera className="w-10 h-10 mx-auto mb-2 opacity-40" />
                 <p className="text-xs">Media preview unavailable</p>
               </div>
@@ -9723,7 +9934,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         >
           <div className="space-y-4">
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">User Identity</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">User Identity</span>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                   <img
@@ -9739,13 +9950,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-medium text-white text-sm truncate">{selectedShareDetailModal.userName || "Community User"}</h4>
                   <p className="text-xs text-zinc-400 font-mono truncate">{selectedShareDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedShareDetailModal.userId || selectedShareDetailModal.userEmail}</p>
+                  <p className="text-[11px] text-zinc-300 font-mono truncate">{selectedShareDetailModal.userId || selectedShareDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Photo Review</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedShareDetailModal.videoThumbnail && (
                   <img
@@ -9757,7 +9968,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-medium text-white text-sm truncate">{selectedShareDetailModal.placeName || "Target Place"}</h4>
                   <p className="text-xs text-zinc-400">Reviewed by {selectedShareDetailModal.videoAuthor || "Reviewer"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
+                  <p className="text-[11px] text-zinc-300 font-mono mt-0.5 truncate">
                     Review ID: {selectedShareDetailModal.videoId} · {selectedShareDetailModal.platform || "Direct"}
                   </p>
                 </div>
@@ -9765,7 +9976,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Raw Stored JSON</span>
               <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedShareDetailModal, null, 2)}
               </pre>
@@ -9803,7 +10014,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         >
           <div className="space-y-4">
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">User Identity</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">User Identity</span>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                   <img
@@ -9819,13 +10030,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-medium text-white text-sm truncate">{selectedLikeDetailModal.userName || "Community User"}</h4>
                   <p className="text-xs text-zinc-400 font-mono truncate">{selectedLikeDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedLikeDetailModal.userId || selectedLikeDetailModal.userEmail}</p>
+                  <p className="text-[11px] text-zinc-300 font-mono truncate">{selectedLikeDetailModal.userId || selectedLikeDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Photo Review</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedLikeDetailModal.videoThumbnail && (
                   <img
@@ -9837,13 +10048,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-medium text-white text-sm truncate">{selectedLikeDetailModal.placeName || "Target Place"}</h4>
                   <p className="text-xs text-zinc-400">Reviewed by {selectedLikeDetailModal.videoAuthor || "Reviewer"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Review ID: {selectedLikeDetailModal.videoId}</p>
+                  <p className="text-[11px] text-zinc-300 font-mono mt-0.5 truncate">Review ID: {selectedLikeDetailModal.videoId}</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Raw Stored JSON</span>
               <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedLikeDetailModal, null, 2)}
               </pre>
@@ -9947,7 +10158,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           <div className="space-y-4">
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Member Identity</span>
+                <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Member Identity</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -9978,13 +10189,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-medium text-white text-sm truncate">{selectedBookmarkDetailModal.userName || "Community User"}</h4>
                   <p className="text-xs text-zinc-400 font-mono truncate">{selectedBookmarkDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail}</p>
+                  <p className="text-[11px] text-zinc-300 font-mono truncate">{selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
             <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Saved Entity</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Target Saved Entity</span>
               <div className="flex items-center gap-3">
                 {selectedBookmarkDetailModal.videoThumbnail ? (
                   <button
@@ -10020,7 +10231,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     className="w-12 h-12 rounded-lg object-contain p-1 border border-white/[0.08] shrink-0 bg-white/[0.04]"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-500 shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300 shrink-0">
                     <Building2 className="w-5 h-5" />
                   </div>
                 )}
@@ -10036,7 +10247,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   {selectedBookmarkDetailModal.videoAuthor && (
                     <p className="text-xs text-zinc-400">Reviewed by {selectedBookmarkDetailModal.videoAuthor}</p>
                   )}
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
+                  <p className="text-[11px] text-zinc-300 font-mono mt-0.5 truncate">
                     Target: {selectedBookmarkDetailModal.placeId || selectedBookmarkDetailModal.videoId || "Venue"}
                   </p>
                 </div>
@@ -10045,7 +10256,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] space-y-1">
-                <span className="text-[11px] text-zinc-500 font-medium">Saved Timestamp</span>
+                <span className="text-[11px] text-zinc-300 font-medium">Saved Timestamp</span>
                 <p className="text-zinc-300 font-mono text-[11px] tabular-nums">
                   {selectedBookmarkDetailModal.createdAt
                     ? new Date(selectedBookmarkDetailModal.createdAt).toLocaleString()
@@ -10053,7 +10264,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] space-y-1">
-                <span className="text-[11px] text-zinc-500 font-medium">Storage Engine</span>
+                <span className="text-[11px] text-zinc-300 font-medium">Storage Engine</span>
                 <p className="text-emerald-400 font-mono text-[11px] flex items-center gap-1.5">
                   <Database className="w-3.5 h-3.5" />
                   <span>Bunny libSQL Edge</span>
@@ -10062,7 +10273,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-300">Raw Stored JSON</span>
               <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedBookmarkDetailModal, null, 2)}
               </pre>

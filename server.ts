@@ -5581,6 +5581,8 @@ async function startServer() {
     "reports",
     "agencies",
     "passkeys",
+    "businessClaims",
+    "broadcasts",
     "nosql_items"
   ]);
 
@@ -8796,7 +8798,7 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
     const itemMap = new Map<string, any>();
     
     // Safety check for collection name to prevent SQL injection or weird parse errors like "None"
-    const validCollections = ['users', 'places', 'videoReviews', 'chats', 'notifications', 'comments', 'likes', 'shares', 'bookmarks', 'follows', 'saved_creators', 'contact_requests', 'nosql_items'];
+    const validCollections = ['users', 'places', 'videoReviews', 'chats', 'notifications', 'comments', 'likes', 'shares', 'bookmarks', 'follows', 'saved_creators', 'contact_requests', 'businessClaims', 'nosql_items'];
     if (!colName || colName === 'None' || !validCollections.includes(colName)) {
       console.warn(`⚠️ [Server] Invalid collection request: ${colName}`);
       return [];
@@ -8831,6 +8833,43 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
               args: []
             });
           } catch (e2) {}
+        }
+        // Also merge claimed places when inspecting businessClaims so live claimed businesses always appear
+        if (colName === 'businessClaims') {
+          try {
+            const claimedRs = await bunnyDb.execute({
+              sql: `SELECT * FROM places WHERE data LIKE '%"isClaimed":true%' OR data LIKE '%"claimedByEmail"%'`,
+              args: []
+            });
+            if (claimedRs && claimedRs.rows) {
+              claimedRs.rows.forEach((row: any) => {
+                if (!row?.id) return;
+                let parsed: any = {};
+                try {
+                  parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                } catch {}
+                const isClaimed = Boolean(
+                  parsed.isClaimed === true ||
+                  (typeof parsed.claimedByEmail === 'string' && parsed.claimedByEmail.trim().length > 0) ||
+                  parsed.claimed === true ||
+                  parsed.ownerId
+                );
+                if (isClaimed) {
+                  itemMap.set(String(row.id), {
+                    id: String(row.id),
+                    placeId: String(row.id),
+                    name: parsed.name || row.name || String(row.id),
+                    brandDomain: parsed.brandDomain || parsed.website || "",
+                    category: parsed.category || "Business",
+                    isClaimed: true,
+                    isVerified: Boolean(parsed.isVerified),
+                    claimedAt: parsed.claimedAt || row.updatedAt || row.createdAt || null,
+                    ...parsed
+                  });
+                }
+              });
+            }
+          } catch {}
         }
         if (rs && rs.rows) {
           rs.rows.forEach((row: any) => {
@@ -12751,7 +12790,12 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
     if (bunnyDb) {
       for (const tbl of tables) {
         try {
-          await bunnyDb.execute(`DELETE FROM ${tbl}`);
+          if (tbl === 'nosql_items') {
+            // Preserve persisted admin credentials stored under collection = '_system'
+            await bunnyDb.execute(`DELETE FROM nosql_items WHERE collection != '_system'`);
+          } else {
+            await bunnyDb.execute(`DELETE FROM ${tbl}`);
+          }
         } catch (e) {
           // Table might not exist yet, safe to ignore
         }
@@ -12763,6 +12807,7 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
     if (dbInstance) {
       for (const tbl of tables) {
         try {
+          if (tbl === 'nosql_items') continue;
           const table = getNoSqlTable(tbl);
           if (table) await dbInstance.delete(table);
         } catch (e) {}
@@ -12799,98 +12844,237 @@ app.post('/api/admin/system/master-reset', express.json(), async (_req, res) => 
   }
 });
 
-// Authoritative Live Stats Endpoint directly querying Bunny Database tables & Bunny CDN Storage in <10ms
+// Authoritative Live Stats Endpoint directly querying Bunny Database tables & Bunny CDN Storage
 app.get('/api/admin/live-stats', async (_req, res) => {
   res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  const bunnyDb = getBunnyDb();
   const startTime = Date.now();
+  try {
+    const bunnyDb = getBunnyDb();
 
-  const localUsers = readUsersIndex();
-  const localPlaces = readPlacesIndex();
-  const localReviews = readReviewsIndex().filter((v: any) => v && v.id && !isDeletedReviewServer(v.id) && (v.mediaType === 'photo' || Boolean(v.photoUrl)));
-  const deletedCommentSet = new Set(readDeletedCommentsIndex());
-  const localComments = readCommentsIndex().filter((c: any) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedCommentSet.has(String(c.id)));
+    let localUsers: any[] = [];
+    let localPlaces: any[] = [];
+    let localReviews: any[] = [];
+    let localComments: any[] = [];
+    try { localUsers = readUsersIndex(); } catch {}
+    try { localPlaces = readPlacesIndex(); } catch {}
+    try {
+      localReviews = readReviewsIndex().filter(
+        (v: any) => v && v.id && !isDeletedReviewServer(v.id) && (v.mediaType === 'photo' || Boolean(v.photoUrl))
+      );
+    } catch {}
+    try {
+      const deletedCommentSet = new Set(readDeletedCommentsIndex());
+      localComments = readCommentsIndex().filter(
+        (c: any) => c && c.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedCommentSet.has(String(c.id))
+      );
+    } catch {}
 
-  const counts: Record<string, number> = {
-    users: localUsers.length,
-    places: localPlaces.length,
-    videoReviews: localReviews.length,
-    comments: localComments.length,
-    likes: 0,
-    bookmarks: 0,
-    shares: 0,
-    chats: 0,
-    notifications: 0,
-    businessClaims: 0,
-    follows: 0
-  };
+    const counts: Record<string, number> = {
+      users: localUsers.length,
+      places: localPlaces.length,
+      videoReviews: localReviews.length,
+      comments: localComments.length,
+      likes: 0,
+      bookmarks: 0,
+      shares: 0,
+      chats: 0,
+      notifications: 0,
+      businessClaims: 0,
+      follows: 0
+    };
 
-  if (bunnyDb) {
-    const fastTables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
-    await Promise.all(fastTables.map(async (tbl) => {
-      try {
-        const rs = await bunnyDb.execute(`SELECT COUNT(*) as total FROM ${tbl}`);
-        const dbCount = Number((rs?.rows?.[0] as any)?.total || 0);
-        if (tbl === 'users' || tbl === 'places' || tbl === 'videoReviews' || tbl === 'comments') {
-          counts[tbl] = Math.max(counts[tbl] || 0, dbCount);
-        } else {
-          counts[tbl] = dbCount;
-        }
-      } catch (e) {
-        counts[tbl] = counts[tbl] || 0;
-      }
-    }));
+    let dbClaimedPlacesCount = 0;
+    let dbMediaFilesCount = 0;
+    let dbMediaTotalBytes = 0;
+
+    if (bunnyDb) {
+      const fastTables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
+      await Promise.all([
+        ...fastTables.map(async (tbl) => {
+          try {
+            const rs = await bunnyDb.execute(`SELECT COUNT(*) as total FROM ${tbl}`);
+            const dbCount = Number((rs?.rows?.[0] as any)?.total || 0);
+            if (tbl === 'users' || tbl === 'places' || tbl === 'videoReviews' || tbl === 'comments') {
+              counts[tbl] = Math.max(counts[tbl] || 0, dbCount);
+            } else {
+              counts[tbl] = dbCount;
+            }
+          } catch (e) {
+            counts[tbl] = counts[tbl] || 0;
+          }
+        }),
+        // Count claimed places directly from BunnyDB places table
+        (async () => {
+          try {
+            const claimedRs = await bunnyDb.execute(
+              `SELECT id, data FROM places WHERE data LIKE '%"isClaimed":true%' OR data LIKE '%"claimedByEmail"%'`
+            );
+            const claimedIds = new Set<string>();
+            (claimedRs?.rows || []).forEach((row: any) => {
+              try {
+                const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                const isClaimed = Boolean(
+                  parsed.isClaimed === true ||
+                  (typeof parsed.claimedByEmail === 'string' && parsed.claimedByEmail.trim().length > 0) ||
+                  parsed.claimed === true ||
+                  parsed.ownerId
+                );
+                if (isClaimed && row.id) claimedIds.add(String(row.id));
+              } catch {}
+            });
+            dbClaimedPlacesCount = claimedIds.size;
+          } catch {}
+        })(),
+        // Compute live CDN media file count & allocated bytes directly from BunnyDB videoReviews
+        (async () => {
+          try {
+            const revRs = await bunnyDb.execute(`SELECT id, data FROM videoReviews`);
+            const rows = revRs?.rows || [];
+            let count = 0;
+            let bytes = 0;
+            rows.forEach((row: any) => {
+              if (!row?.id || isDeletedReviewServer(String(row.id))) return;
+              let parsed: any = {};
+              try {
+                parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+              } catch {}
+              if (parsed.photoUrl || parsed.thumbnailUrl || parsed.videoUrl || parsed.mediaType === 'photo') {
+                count += 1;
+                const size = Number(parsed.fileSize || parsed.bytes || 0);
+                bytes += size > 0 ? size : 185000;
+              }
+            });
+            dbMediaFilesCount = count;
+            dbMediaTotalBytes = bytes;
+          } catch {}
+        })()
+      ]);
+    }
+
+    // Calculate claimed places & business claims count accurately across BunnyDB + local index
+    const localClaimedCount = localPlaces.filter((p: any) =>
+      Boolean(p && (p.isClaimed === true || (typeof p.claimedByEmail === 'string' && p.claimedByEmail.trim().length > 0) || p.claimed === true || p.ownerId))
+    ).length;
+    counts.businessClaims = Math.max(counts.businessClaims || 0, dbClaimedPlacesCount, localClaimedCount);
+
+    const totalLikesSum = Number(counts.likes || 0);
+    const totalSharesSum = Number(counts.shares || 0);
+    const totalCommentsSum = Number(counts.comments || 0);
+    const totalBookmarksSum = Number(counts.bookmarks || 0);
+
+    const localTotalBytes = localReviews.reduce((acc: number, v: any) => {
+      const size = Number(v.fileSize || v.bytes || 0);
+      return acc + (size > 0 ? size : 185000);
+    }, 0);
+    const storageFilesCount = Math.max(dbMediaFilesCount, localReviews.length, counts.videoReviews || 0);
+    const totalBytes = Math.max(dbMediaTotalBytes, localTotalBytes, storageFilesCount * 185000);
+
+    const storageStats = {
+      filesCount: storageFilesCount,
+      totalBytes,
+      formattedSize: (totalBytes / (1024 * 1024)).toFixed(2) + " MB",
+      zoneName: process.env.BUNNY_STORAGE_ZONE_NAME || "yoouz-storage",
+      folder: "/photos/",
+      connected: true,
+      error: null as string | null
+    };
+
+    res.json({
+      success: true,
+      timestamp: Date.now(),
+      latencyMs: Math.max(1, Date.now() - startTime),
+      database: {
+        engine: "Bunny.net libSQL Edge",
+        connected: Boolean(bunnyDb),
+        counts
+      },
+      totals: {
+        users: counts.users || 0,
+        places: counts.places || 0,
+        videoReviews: counts.videoReviews || 0,
+        comments: totalCommentsSum,
+        likes: totalLikesSum,
+        shares: totalSharesSum,
+        bookmarks: totalBookmarksSum,
+        chats: counts.chats || 0,
+        notifications: counts.notifications || 0,
+        businessClaims: counts.businessClaims || 0,
+        follows: counts.follows || 0
+      },
+      storage: storageStats
+    });
+  } catch (err: any) {
+    console.error("❌ [Admin Live Stats] Error:", err);
+    res.status(500).json({ success: false, error: err?.message || "Failed to load live stats" });
   }
+});
 
-  // Calculate claimed places & business claims count accurately
-  const claimedPlacesCount = localPlaces.filter((p: any) => Boolean(p && (p.isClaimed || p.claimedByEmail || p.claimed || p.ownerId))).length;
-  counts.businessClaims = Math.max(counts.businessClaims || 0, claimedPlacesCount);
+// Admin Broadcast Dispatch History (persisted in BunnyDB nosql_items)
+app.get('/api/admin/broadcasts', async (_req, res) => {
+  try {
+    const bunnyDb = getBunnyDb();
+    if (!bunnyDb) return res.json({ success: true, broadcasts: [] });
+    const rs = await bunnyDb.execute({
+      sql: `SELECT id, data, updated_at FROM nosql_items WHERE collection = 'broadcasts' ORDER BY updated_at DESC LIMIT 50`,
+      args: []
+    });
+    const broadcasts = (rs?.rows || []).map((row: any) => {
+      try {
+        const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+        return { id: String(row.id), ...parsed };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    broadcasts.sort((a: any, b: any) => Date.parse(b.sentAt || 0) - Date.parse(a.sentAt || 0));
+    res.json({ success: true, broadcasts });
+  } catch (err: any) {
+    res.json({ success: true, broadcasts: [] });
+  }
+});
 
-  const totalLikesSum = Number(counts.likes || 0);
-  const totalSharesSum = Number(counts.shares || 0);
-  const totalCommentsSum = Number(counts.comments || 0);
-  const totalBookmarksSum = Number(counts.bookmarks || 0);
+app.post('/api/admin/broadcasts', express.json(), async (req, res) => {
+  try {
+    const entry = req.body || {};
+    const id = typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : `bc-${Date.now()}`;
+    const payload = {
+      id,
+      title: String(entry.title || "Yoouz Platform Announcement").slice(0, 140),
+      message: String(entry.message || "").slice(0, 1000),
+      targetUrl: String(entry.targetUrl || "").slice(0, 500),
+      audience: String(entry.audience || "all"),
+      type: String(entry.type || "announcement"),
+      sentAt: entry.sentAt || new Date().toISOString()
+    };
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute({
+        sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES ('broadcasts', ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(collection, id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
+        args: [id, JSON.stringify(payload)]
+      });
+    }
+    res.json({ success: true, broadcast: payload });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to save broadcast" });
+  }
+});
 
-  const storageFilesCount = localReviews.length;
-  const totalBytes = localReviews.reduce((acc: number, v: any) => {
-    const size = Number(v.fileSize || v.bytes || 0);
-    return acc + (size > 0 ? size : 180000);
-  }, 0);
-
-  const storageStats = {
-    filesCount: storageFilesCount,
-    totalBytes,
-    formattedSize: (totalBytes / (1024 * 1024)).toFixed(2) + " MB",
-    zoneName: process.env.BUNNY_STORAGE_ZONE_NAME || "yoouz-storage",
-    folder: "/photos/",
-    connected: true,
-    error: null as string | null
-  };
-
-  res.json({
-    success: true,
-    timestamp: Date.now(),
-    latencyMs: Date.now() - startTime,
-    database: {
-      engine: "Bunny.net libSQL Edge",
-      connected: Boolean(bunnyDb),
-      counts
-    },
-    totals: {
-      users: counts.users || 0,
-      places: counts.places || 0,
-      videoReviews: counts.videoReviews || 0,
-      comments: totalCommentsSum,
-      likes: totalLikesSum,
-      shares: totalSharesSum,
-      bookmarks: totalBookmarksSum,
-      chats: counts.chats || 0,
-      notifications: counts.notifications || 0,
-      businessClaims: counts.businessClaims || 0,
-      follows: counts.follows || 0
-    },
-    storage: storageStats
-  });
+app.delete('/api/admin/broadcasts/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || "").trim();
+    if (!id) return res.status(400).json({ success: false, error: "Missing broadcast id" });
+    const bunnyDb = getBunnyDb();
+    if (bunnyDb) {
+      await bunnyDb.execute({
+        sql: `DELETE FROM nosql_items WHERE collection = 'broadcasts' AND id = ?`,
+        args: [id]
+      });
+    }
+    res.json({ success: true, id });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Failed to delete broadcast" });
+  }
 });
 
 // ==========================================
@@ -12901,7 +13085,7 @@ const DEFAULT_SEED_AGENCIES = [
   {
     id: "agency_sortlist_brussels",
     name: "Sortlist Belgium",
-    logoUrl: "https://www.sortlist.com/favicon.ico",
+    logoUrl: "https://www.google.com/s2/favicons?domain=sortlist.com&sz=128",
     website: "https://www.sortlist.com",
     phone: "+32 2 808 62 10",
     email: "belgium@sortlist.com",
@@ -12911,7 +13095,7 @@ const DEFAULT_SEED_AGENCIES = [
   {
     id: "agency_invisible_ghent",
     name: "Invisible Puuup",
-    logoUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=80&auto=format&fit=crop",
+    logoUrl: "https://www.google.com/s2/favicons?domain=invisiblepuuup.be&sz=128",
     website: "https://invisiblepuuup.be",
     phone: "+32 9 396 11 02",
     email: "info@invisiblepuuup.be",
@@ -12921,7 +13105,7 @@ const DEFAULT_SEED_AGENCIES = [
   {
     id: "agency_webtext_bruges",
     name: "Webtext SMM",
-    logoUrl: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=80&auto=format&fit=crop",
+    logoUrl: "https://www.google.com/s2/favicons?domain=webtextsmm.be&sz=128",
     website: "https://webtextsmm.be",
     phone: "+32 50 49 11 44",
     email: "contact@webtextsmm.be",
@@ -12931,7 +13115,7 @@ const DEFAULT_SEED_AGENCIES = [
   {
     id: "agency_passion_london",
     name: "Passion Digital",
-    logoUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=80&auto=format&fit=crop",
+    logoUrl: "https://www.google.com/s2/favicons?domain=passiondigital.co.uk&sz=128",
     website: "https://passiondigital.co.uk",
     phone: "+44 20 7240 8400",
     email: "hello@passiondigital.co.uk",
@@ -12941,7 +13125,7 @@ const DEFAULT_SEED_AGENCIES = [
   {
     id: "agency_pacific54_miami",
     name: "Pacific54 Digital",
-    logoUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=80&auto=format&fit=crop",
+    logoUrl: "https://www.google.com/s2/favicons?domain=pacific54.com&sz=128",
     website: "https://pacific54.com",
     phone: "+1 305-515-5400",
     email: "grow@pacific54.com",
