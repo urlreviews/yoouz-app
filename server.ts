@@ -9217,18 +9217,105 @@ async function getNoSqlCollectionItems(colName: string, reqUser?: string): Promi
       } catch (e) {}
     }
 
-    // 2d. For comments, aggregate with local comments_index.json
+    // 2d. For comments, aggregate with local comments_index.json AND embedded comments/replies inside videoReviews
     if (colName === 'comments') {
+      const deletedCommentSet = new Set(readDeletedCommentsIndex().map((id) => String(id).trim()));
+      const isValidLiveComment = (c: any, vId?: string): boolean => {
+        if (!c || !c.id) return false;
+        const cid = String(c.id).trim();
+        if (!cid || cid === "comm-101" || cid === "comm-102" || deletedCommentSet.has(cid)) return false;
+        const resolvedVid = String(vId || c.videoId || "").trim();
+        if (resolvedVid && isDeletedReviewServer(resolvedVid)) return false;
+        return true;
+      };
+
+      // Clean any deleted entries already loaded from BunnyDB comments table
+      for (const [k, v] of Array.from(itemMap.entries())) {
+        if (!isValidLiveComment(v)) {
+          itemMap.delete(k);
+        }
+      }
+
+      const ingestEmbeddedCommentList = (videoId: string, list: any[]) => {
+        if (!videoId || isDeletedReviewServer(videoId) || !Array.isArray(list)) return;
+        list.forEach((rawComment: any) => {
+          if (!isValidLiveComment(rawComment, videoId)) return;
+          const norm = normalizeCommentServer({ ...rawComment, videoId });
+          const cid = String(norm.id).trim();
+          const key = cid.toLowerCase();
+          if (!itemMap.has(key) && !itemMap.has(cid)) {
+            itemMap.set(key, { ...norm, id: cid, videoId });
+          }
+          if (Array.isArray(rawComment.replies)) {
+            rawComment.replies.forEach((rawReply: any) => {
+              if (!isValidLiveComment(rawReply, videoId)) return;
+              const normReply = normalizeCommentServer({
+                ...rawReply,
+                videoId,
+                isReply: true,
+                parentId: cid
+              });
+              const rid = String(normReply.id).trim();
+              const rKey = rid.toLowerCase();
+              if (!itemMap.has(rKey) && !itemMap.has(rid)) {
+                itemMap.set(rKey, { ...normReply, id: rid, videoId, isReply: true, parentId: cid });
+              }
+            });
+          }
+        });
+      };
+
+      // Local comments_index.json
       try {
         const localComments = readCommentsIndex();
         localComments.forEach((c: any) => {
-          if (c && c.id) {
-            const existing = itemMap.get(c.id) || {};
-            itemMap.set(c.id, {
-              ...c,
-              ...existing,
-              id: c.id
+          if (isValidLiveComment(c)) {
+            const cid = String(c.id).trim();
+            const key = cid.toLowerCase();
+            const existing = itemMap.get(key) || itemMap.get(cid) || {};
+            itemMap.set(key, normalizeCommentServer({ ...c, ...existing, id: cid }));
+          }
+        });
+      } catch (e) {}
+
+      // Embedded comments inside BunnyDB videoReviews (lightweight json_extract avoids transferring media blobs)
+      if (bunnyDb) {
+        try {
+          const revCommentsRs = await bunnyDb.execute(
+            `SELECT id, json_extract(data, '$.comments') as commentsJson FROM videoReviews WHERE data LIKE '%"comments":[%'`
+          );
+          (revCommentsRs?.rows || []).forEach((row: any) => {
+            if (!row?.id || !row?.commentsJson) return;
+            try {
+              const parsedList = typeof row.commentsJson === 'string' ? JSON.parse(row.commentsJson) : row.commentsJson;
+              if (Array.isArray(parsedList)) {
+                ingestEmbeddedCommentList(String(row.id), parsedList);
+              }
+            } catch {}
+          });
+        } catch (jsonExtractErr) {
+          // Fallback if SQLite json1 extension is unavailable
+          try {
+            const revRs = await bunnyDb.execute(`SELECT id, data FROM videoReviews WHERE data LIKE '%"comments":[%'`);
+            (revRs?.rows || []).forEach((row: any) => {
+              if (!row?.id || !row?.data) return;
+              try {
+                const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+                if (Array.isArray(parsed?.comments)) {
+                  ingestEmbeddedCommentList(String(row.id), parsed.comments);
+                }
+              } catch {}
             });
+          } catch {}
+        }
+      }
+
+      // Embedded comments inside local reviews_index.json
+      try {
+        const localReviewsList = readReviewsIndex();
+        localReviewsList.forEach((r: any) => {
+          if (r && r.id && Array.isArray(r.comments) && r.comments.length > 0) {
+            ingestEmbeddedCommentList(String(r.id), r.comments);
           }
         });
       } catch (e) {}
@@ -11969,8 +12056,53 @@ app.delete('/api/nosql/:collection/:id', async (req, res) => {
       });
 
       if (colName === 'comments') {
-          // Trigger sync-comments-cache asynchronously
-          fetch("http://localhost:3000/api/system/sync-comments-cache", { method: "POST" }).catch(console.error);
+        recordDeletedCommentId(id);
+        // Also strip embedded copy from any videoReviews row that contains this comment/reply ID
+        try {
+          const matchedRevRs = await bunnyDb.execute({
+            sql: `SELECT id, data FROM videoReviews WHERE data LIKE ?`,
+            args: [`%${id}%`]
+          });
+          for (const revRow of (matchedRevRs?.rows || []) as any[]) {
+            try {
+              const parsed = typeof revRow.data === 'string' ? JSON.parse(revRow.data) : (revRow.data || {});
+              if (!Array.isArray(parsed.comments)) continue;
+              let changed = false;
+              const nextComments = parsed.comments
+                .filter((c: any) => {
+                  if (String(c?.id || '') === String(id)) {
+                    changed = true;
+                    return false;
+                  }
+                  return true;
+                })
+                .map((c: any) => {
+                  if (Array.isArray(c?.replies)) {
+                    const filteredReplies = c.replies.filter((r: any) => String(r?.id || '') !== String(id));
+                    if (filteredReplies.length !== c.replies.length) {
+                      changed = true;
+                      return { ...c, replies: filteredReplies };
+                    }
+                  }
+                  return c;
+                });
+              if (changed) {
+                const nextCount = nextComments.reduce(
+                  (acc: number, c: any) => acc + 1 + (Array.isArray(c?.replies) ? c.replies.length : 0),
+                  0
+                );
+                parsed.comments = nextComments;
+                parsed.commentsCount = nextCount;
+                await bunnyDb.execute({
+                  sql: `UPDATE videoReviews SET data = ?, commentsCount = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                  args: [JSON.stringify(parsed), nextCount, String(revRow.id)]
+                });
+              }
+            } catch {}
+          }
+        } catch {}
+        // Trigger sync-comments-cache asynchronously
+        fetch("http://localhost:3000/api/system/sync-comments-cache", { method: "POST" }).catch(console.error);
       }
     }
 
@@ -12448,6 +12580,23 @@ app.post('/api/admin/comments/purge-all', express.json(), async (_req, res) => {
       try {
         await bunnyDb.execute("DELETE FROM comments");
       } catch (e) {}
+      // Also clear embedded comments inside videoReviews rows
+      try {
+        const revWithComments = await bunnyDb.execute(
+          `SELECT id, data FROM videoReviews WHERE data LIKE '%"comments":[%' OR commentsCount > 0`
+        );
+        for (const revRow of (revWithComments?.rows || []) as any[]) {
+          try {
+            const parsed = typeof revRow.data === 'string' ? JSON.parse(revRow.data) : (revRow.data || {});
+            parsed.comments = [];
+            parsed.commentsCount = 0;
+            await bunnyDb.execute({
+              sql: `UPDATE videoReviews SET data = ?, commentsCount = 0, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+              args: [JSON.stringify(parsed), String(revRow.id)]
+            });
+          } catch {}
+        }
+      } catch (e) {}
     }
     const dbInstance = getDb();
     if (dbInstance) {
@@ -12884,17 +13033,44 @@ app.get('/api/admin/live-stats', async (_req, res) => {
     };
 
     let dbClaimedPlacesCount = 0;
+    let dbActiveReviewsCount = 0;
     let dbMediaFilesCount = 0;
     let dbMediaTotalBytes = 0;
+    const deletedCommentSet = new Set(readDeletedCommentsIndex().map((id) => String(id).trim()));
+    const liveCommentIds = new Set<string>();
+    let embeddedCommentsFallbackSum = 0;
+
+    // Seed liveCommentIds from local indexes
+    localComments.forEach((c: any) => {
+      if (c?.id && !isDeletedReviewServer(String(c.videoId || ""))) {
+        liveCommentIds.add(String(c.id).trim().toLowerCase());
+      }
+    });
+    localReviews.forEach((v: any) => {
+      if (Array.isArray(v?.comments)) {
+        v.comments.forEach((c: any) => {
+          if (c?.id && c.id !== "comm-101" && c.id !== "comm-102" && !deletedCommentSet.has(String(c.id))) {
+            liveCommentIds.add(String(c.id).trim().toLowerCase());
+            if (Array.isArray(c.replies)) {
+              c.replies.forEach((r: any) => {
+                if (r?.id && r.id !== "comm-101" && r.id !== "comm-102" && !deletedCommentSet.has(String(r.id))) {
+                  liveCommentIds.add(String(r.id).trim().toLowerCase());
+                }
+              });
+            }
+          }
+        });
+      }
+    });
 
     if (bunnyDb) {
-      const fastTables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
+      const fastTables = ['users', 'places', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
       await Promise.all([
         ...fastTables.map(async (tbl) => {
           try {
             const rs = await bunnyDb.execute(`SELECT COUNT(*) as total FROM ${tbl}`);
             const dbCount = Number((rs?.rows?.[0] as any)?.total || 0);
-            if (tbl === 'users' || tbl === 'places' || tbl === 'videoReviews' || tbl === 'comments') {
+            if (tbl === 'users' || tbl === 'places') {
               counts[tbl] = Math.max(counts[tbl] || 0, dbCount);
             } else {
               counts[tbl] = dbCount;
@@ -12903,53 +13079,90 @@ app.get('/api/admin/live-stats', async (_req, res) => {
             counts[tbl] = counts[tbl] || 0;
           }
         }),
-        // Count claimed places directly from BunnyDB places table
+        // Fast SQLite COUNT for claimed places (transfers 1 integer instead of JSON blobs)
         (async () => {
           try {
             const claimedRs = await bunnyDb.execute(
-              `SELECT id, data FROM places WHERE data LIKE '%"isClaimed":true%' OR data LIKE '%"claimedByEmail"%'`
+              `SELECT COUNT(*) as total FROM places WHERE data LIKE '%"isClaimed":true%' OR (data LIKE '%"claimedByEmail":"%' AND data NOT LIKE '%"claimedByEmail":""%') OR data LIKE '%"claimed":true%'`
             );
-            const claimedIds = new Set<string>();
-            (claimedRs?.rows || []).forEach((row: any) => {
-              try {
-                const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-                const isClaimed = Boolean(
-                  parsed.isClaimed === true ||
-                  (typeof parsed.claimedByEmail === 'string' && parsed.claimedByEmail.trim().length > 0) ||
-                  parsed.claimed === true ||
-                  parsed.ownerId
-                );
-                if (isClaimed && row.id) claimedIds.add(String(row.id));
-              } catch {}
-            });
-            dbClaimedPlacesCount = claimedIds.size;
+            dbClaimedPlacesCount = Number((claimedRs?.rows?.[0] as any)?.total || 0);
           } catch {}
         })(),
-        // Compute live CDN media file count & allocated bytes directly from BunnyDB videoReviews
+        // Lightweight comments table ID scan (excludes deleted comments & deleted reviews)
         (async () => {
           try {
-            const revRs = await bunnyDb.execute(`SELECT id, data FROM videoReviews`);
+            const commRs = await bunnyDb.execute(`SELECT id, videoId FROM comments`);
+            (commRs?.rows || []).forEach((row: any) => {
+              const cid = String(row?.id || "").trim();
+              const vid = String(row?.videoId || "").trim();
+              if (!cid || cid === "comm-101" || cid === "comm-102" || deletedCommentSet.has(cid)) return;
+              if (vid && isDeletedReviewServer(vid)) return;
+              liveCommentIds.add(cid.toLowerCase());
+            });
+          } catch {}
+        })(),
+        // Ultra-fast lightweight metadata extraction from videoReviews (never transfers large media blobs)
+        (async () => {
+          try {
+            const revRs = await bunnyDb.execute(
+              `SELECT id,
+                      json_extract(data, '$.fileSize') as fileSize,
+                      json_extract(data, '$.bytes') as bytes,
+                      json_extract(data, '$.comments') as commentsJson,
+                      json_extract(data, '$.commentsCount') as commentsCount
+               FROM videoReviews`
+            );
             const rows = revRs?.rows || [];
-            let count = 0;
+            let activeCount = 0;
             let bytes = 0;
             rows.forEach((row: any) => {
               if (!row?.id || isDeletedReviewServer(String(row.id))) return;
-              let parsed: any = {};
-              try {
-                parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
-              } catch {}
-              if (parsed.photoUrl || parsed.thumbnailUrl || parsed.videoUrl || parsed.mediaType === 'photo') {
-                count += 1;
-                const size = Number(parsed.fileSize || parsed.bytes || 0);
-                bytes += size > 0 ? size : 185000;
+              activeCount += 1;
+              const size = Number(row.fileSize || row.bytes || 0);
+              bytes += size > 0 ? size : 185000;
+
+              let parsedComments: any[] = [];
+              if (row.commentsJson) {
+                try {
+                  const arr = typeof row.commentsJson === 'string' ? JSON.parse(row.commentsJson) : row.commentsJson;
+                  if (Array.isArray(arr)) parsedComments = arr;
+                } catch {}
+              }
+              if (parsedComments.length > 0) {
+                parsedComments.forEach((c: any) => {
+                  const cid = String(c?.id || "").trim();
+                  if (!cid || cid === "comm-101" || cid === "comm-102" || deletedCommentSet.has(cid)) return;
+                  liveCommentIds.add(cid.toLowerCase());
+                  if (Array.isArray(c.replies)) {
+                    c.replies.forEach((r: any) => {
+                      const rid = String(r?.id || "").trim();
+                      if (!rid || rid === "comm-101" || rid === "comm-102" || deletedCommentSet.has(rid)) return;
+                      liveCommentIds.add(rid.toLowerCase());
+                    });
+                  }
+                });
+              } else if (Number(row.commentsCount || 0) > 0) {
+                embeddedCommentsFallbackSum += Number(row.commentsCount || 0);
               }
             });
-            dbMediaFilesCount = count;
+            dbActiveReviewsCount = activeCount;
+            dbMediaFilesCount = activeCount;
             dbMediaTotalBytes = bytes;
-          } catch {}
+          } catch {
+            // Safe fallback if json_extract is unavailable
+            try {
+              const cntRs = await bunnyDb.execute(`SELECT COUNT(*) as total FROM videoReviews`);
+              dbActiveReviewsCount = Number((cntRs?.rows?.[0] as any)?.total || 0);
+              dbMediaFilesCount = dbActiveReviewsCount;
+              dbMediaTotalBytes = dbActiveReviewsCount * 185000;
+            } catch {}
+          }
         })()
       ]);
     }
+
+    counts.videoReviews = Math.max(dbActiveReviewsCount, localReviews.length);
+    counts.comments = Math.max(liveCommentIds.size, embeddedCommentsFallbackSum);
 
     // Calculate claimed places & business claims count accurately across BunnyDB + local index
     const localClaimedCount = localPlaces.filter((p: any) =>

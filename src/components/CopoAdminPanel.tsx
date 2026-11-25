@@ -1671,7 +1671,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       return { signal: controller.signal, done: () => clearTimeout(timer) };
     };
     try {
-      const statsCtrl = withSignal(8000);
+      const statsCtrl = withSignal(15000);
       const statsTask = adminFetch("/api/admin/live-stats", { cache: "no-store", signal: statsCtrl.signal })
         .then(async (res) => {
           if (res.ok) {
@@ -1851,13 +1851,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     fetchLiveStats(false);
     fetchAdminLikes(true);
     fetchAdminBookmarks(true);
+    fetchAdminChats(true);
     const interval = setInterval(() => {
       fetchLiveStats(true);
       fetchAdminLikes(true);
       fetchAdminBookmarks(true);
+      fetchAdminChats(true);
     }, 30000);
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
+  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks, fetchAdminChats]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -2285,30 +2287,58 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } as any;
   }, [uniqueUsers]);
 
-  // All Comments aggregation for Moderation
+  // All Comments aggregation for Moderation (combines dbComments table + embedded video.comments + nested replies)
   const allComments = useMemo(() => {
     const list: { video: VideoReview; comment: ReviewComment; isReply?: boolean; parentCommentId?: string }[] = [];
     const seenCommentKeys = new Set<string>();
-
-    (dbComments || []).forEach((c) => {
-      if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
-      
-      const vId = c.videoId || "";
-      if (vId && isClientDeletedVideo(vId)) return;
-      const video = activeVideos.find((v) => String(v.id) === String(vId));
-      if (!video) return; // Completely skip comments for deleted or missing videos
-
-      const key = `${video.id}_${c.id}`;
-      if (!seenCommentKeys.has(key)) {
-        seenCommentKeys.add(key);
-        list.push({
-          video,
-          comment: resolveCommentUserMeta(c),
-          isReply: Boolean(c.isReply || c.parentId),
-          parentCommentId: c.parentId
-        });
+    const videoById = new Map<string, VideoReview>();
+    activeVideos.forEach((v) => {
+      if (v?.id) {
+        videoById.set(String(v.id).trim().toLowerCase(), v);
       }
     });
+
+    const addEntry = (video: VideoReview, rawComment: any, isReply = false, parentCommentId?: string) => {
+      if (!rawComment || !rawComment.id) return;
+      const cid = String(rawComment.id).trim();
+      if (!cid || cid === "comm-101" || cid === "comm-102") return;
+      const key = `${String(video.id).trim().toLowerCase()}_${cid.toLowerCase()}`;
+      if (seenCommentKeys.has(key)) return;
+      seenCommentKeys.add(key);
+      list.push({
+        video,
+        comment: resolveCommentUserMeta(rawComment),
+        isReply: Boolean(isReply || rawComment.isReply || rawComment.parentId),
+        parentCommentId: parentCommentId || rawComment.parentId
+      });
+    };
+
+    // 1. Standalone comments from /api/nosql/comments (includes nested replies if present)
+    (dbComments || []).forEach((c: any) => {
+      if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
+      const vId = String(c.videoId || "").trim();
+      if (!vId || isClientDeletedVideo(vId)) return;
+      const video = videoById.get(vId.toLowerCase());
+      if (!video) return;
+
+      addEntry(video, c, Boolean(c.isReply || c.parentId), c.parentId);
+      if (Array.isArray(c.replies)) {
+        c.replies.forEach((r: any) => addEntry(video, { ...r, videoId: video.id }, true, String(c.id)));
+      }
+    });
+
+    // 2. Embedded comments + nested replies directly on activeVideos
+    activeVideos.forEach((video) => {
+      if (!video || !Array.isArray(video.comments) || video.comments.length === 0) return;
+      video.comments.forEach((c: any) => {
+        if (!c || !c.id || c.id === "comm-101" || c.id === "comm-102") return;
+        addEntry(video, { ...c, videoId: video.id }, Boolean(c.isReply || c.parentId), c.parentId);
+        if (Array.isArray(c.replies)) {
+          c.replies.forEach((r: any) => addEntry(video, { ...r, videoId: video.id }, true, String(c.id)));
+        }
+      });
+    });
+
     return list;
   }, [dbComments, activeVideos, resolveCommentUserMeta]);
 
@@ -2380,8 +2410,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         return (b.likes || 0) - (a.likes || 0);
       }
       if (videoSortFilter === "most_comments") {
-        const countA = b.commentsCount || (b.comments?.length || 0);
-        const countB = a.commentsCount || (a.comments?.length || 0);
+        const countA = a.commentsCount || (a.comments?.length || 0);
+        const countB = b.commentsCount || (b.comments?.length || 0);
         return countB - countA;
       }
       // default: newest
@@ -3367,7 +3397,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const isSetup = authMode === "setup";
     const isLoadingStatus = authMode === "loading";
     return (
-      <div className="flex-1 w-full h-full min-h-screen flex items-center justify-center bg-[#050506] p-4 relative z-50">
+      <div className="fixed inset-0 z-[100] w-full h-[100dvh] flex items-center justify-center bg-[#050506] p-4 overflow-y-auto">
         <div className="w-full max-w-sm bg-[#0c0c0f] border border-white/[0.08] rounded-2xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.8)] relative z-10 text-white">
           <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto mb-5">
             <Shield className="w-5 h-5 text-white" />
@@ -3479,7 +3509,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   }
 
   return (
-    <div className="flex-1 w-full h-full min-h-screen flex flex-col bg-[#050506] text-zinc-100 font-sans absolute inset-0 z-50 overflow-hidden select-none">
+    <div className="fixed inset-0 z-[100] w-full h-[100dvh] flex flex-col bg-[#050506] text-white font-sans overflow-hidden select-none">
       {/* Reusable Obsidian Admin Confirmation Modal */}
       {adminConfirmDialog && (
         <div
@@ -3580,7 +3610,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* Top Application Bar */}
-      <header className="h-14 border-b border-white/[0.11] bg-[#050506]/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 min-h-[56px] border-b border-white/[0.11] bg-[#050506]/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -3696,7 +3726,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   title: "Core",
                   items: [
                     { id: "overview" as AdminTab, label: "Overview", icon: BarChart3 },
-                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: liveStats?.totals?.videoReviews ?? metrics.totalVideos },
+                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos) },
                     { id: "businesses" as AdminTab, label: "Businesses", icon: Briefcase, count: metrics.totalBusinesses },
                     { id: "places" as AdminTab, label: "Places", icon: Building2, count: metrics.totalPhysicalPlaces }
                   ]
@@ -3706,10 +3736,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   items: [
                     { id: "users" as AdminTab, label: "Users", icon: Users, count: metrics.totalUsers },
                     { id: "creators" as AdminTab, label: "Creators", icon: Award, count: metrics.totalCreators },
-                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments) },
-                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes) },
-                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: liveStats?.totals?.bookmarks ?? adminBookmarks.length },
-                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: liveStats?.totals?.chats ?? adminChats.length }
+                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments) },
+                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes) },
+                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks) },
+                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length) }
                   ]
                 },
                 {
@@ -3789,15 +3819,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             {(
               [
                 ["overview", "Overview"],
-                ["videos", `Photo Reviews (${liveStats?.totals?.videoReviews ?? metrics.totalVideos})`],
+                ["videos", `Photo Reviews (${activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)})`],
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["users", `Users (${metrics.totalUsers})`],
                 ["creators", `Creators (${metrics.totalCreators})`],
-                ["comments", `Comments (${liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments)})`],
-                ["likes", `Likes (${liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)})`],
-                ["bookmarks", `Bookmarks (${liveStats?.totals?.bookmarks ?? adminBookmarks.length})`],
-                ["messages", `Messages (${liveStats?.totals?.chats ?? adminChats.length})`],
+                ["comments", `Comments (${allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)})`],
+                ["likes", `Likes (${filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)})`],
+                ["bookmarks", `Bookmarks (${filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks)})`],
+                ["messages", `Messages (${hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length)})`],
                 ["broadcast", "Broadcast"],
                 ["search", "Search Intel"],
                 ["indexing", "Google Indexing"],
@@ -4285,7 +4315,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos}
+                      {activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 flex items-center gap-1 truncate tabular-nums">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
@@ -4334,7 +4364,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {metrics.totalCreators}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
-                      {liveStats?.totals?.videoReviews ?? metrics.totalVideos} authored reviews
+                      {activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)} authored reviews
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
@@ -4375,10 +4405,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {(liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments)) + (liveStats?.totals?.shares ?? metrics.totalShares)}
+                      {(filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)) + (filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks)) + (allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
-                      {liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved
+                      {filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)} likes · {allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)} comments
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
@@ -5370,7 +5400,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <AdminEmptyState
                   icon={<Briefcase className="w-5 h-5" />}
                   title="No claimed businesses found"
-                  description="Claim venues from the Places tab or create a new business."
+                  description="Businesses appear here automatically once claimed from the Places directory or verified by their owners."
                 />
               )}
             </div>
@@ -6052,15 +6082,35 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             );
                           }
                         });
-                        setDbComments((prev) => prev.filter((c) => !deletedCommentIds.has(String(c.id))));
+                        setDbComments((prev) =>
+                          prev
+                            .filter((c) => !deletedCommentIds.has(String(c.id)))
+                            .map((c) =>
+                              Array.isArray(c.replies)
+                                ? { ...c, replies: c.replies.filter((r: any) => !deletedCommentIds.has(String(r.id))) }
+                                : c
+                            )
+                        );
+                        setDbVideos((prev) =>
+                          prev.map((v) => {
+                            if (!Array.isArray(v.comments)) return v;
+                            const nextComments = v.comments
+                              .filter((c) => !deletedCommentIds.has(String(c.id)))
+                              .map((c) =>
+                                Array.isArray(c.replies)
+                                  ? { ...c, replies: c.replies.filter((r) => !deletedCommentIds.has(String(r.id))) }
+                                  : c
+                              );
+                            const nextCount = nextComments.reduce((acc, c) => acc + 1 + (Array.isArray(c.replies) ? c.replies.length : 0), 0);
+                            return { ...v, comments: nextComments, commentsCount: nextCount };
+                          })
+                        );
                         setSelectedCommentKeys([]);
                         setConfirmBulkDeleteComments(false);
                         showToast(`Deleted ${keysToDelete.length} comment(s) permanently.`);
                         try {
                           await Promise.allSettled(
-                            targets
-                              .filter((t) => !t.isReply)
-                              .map((t) => fetch(`/api/nosql/comments/${encodeURIComponent(t.comment.id)}`, { method: "DELETE" }))
+                            targets.map((t) => fetch(`/api/nosql/comments/${encodeURIComponent(t.comment.id)}`, { method: "DELETE" }))
                           );
                         } catch {}
                         setTimeout(() => fetchLiveStats(true), 400);
@@ -6103,6 +6153,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           }
                         });
                         setDbComments([]);
+                        setDbVideos((prev) => prev.map((v) => ({ ...v, comments: [], commentsCount: 0 })));
+                        setLiveStats((prev: any) => prev ? { ...prev, totals: { ...(prev.totals || {}), comments: 0 } } : prev);
                         setSelectedCommentKeys([]);
                         setConfirmPurgeAllComments(false);
                         showToast(`All ${totalToPurge} comments purged permanently.`);
@@ -6384,20 +6436,33 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                                         item.isReply ? item.comment.id : undefined
                                       );
                                     }
-                                    if (item.isReply && item.parentCommentId) {
-                                      setDbComments((prev) =>
-                                        prev.map((c) =>
-                                          String(c.id) === String(item.parentCommentId) && Array.isArray(c.replies)
-                                            ? { ...c, replies: c.replies.filter((r: any) => String(r.id) !== String(item.comment.id)) }
+                                    const targetCommentId = String(item.comment.id);
+                                    setDbComments((prev) =>
+                                      prev
+                                        .filter((c) => String(c.id) !== targetCommentId)
+                                        .map((c) =>
+                                          Array.isArray(c.replies)
+                                            ? { ...c, replies: c.replies.filter((r: any) => String(r.id) !== targetCommentId) }
                                             : c
                                         )
-                                      );
-                                    } else {
-                                      setDbComments((prev) => prev.filter((c) => String(c.id) !== String(item.comment.id)));
-                                      try {
-                                        await fetch(`/api/nosql/comments/${encodeURIComponent(item.comment.id)}`, { method: "DELETE" });
-                                      } catch {}
-                                    }
+                                    );
+                                    setDbVideos((prev) =>
+                                      prev.map((v) => {
+                                        if (String(v.id) !== String(item.video.id) || !Array.isArray(v.comments)) return v;
+                                        const nextComments = v.comments
+                                          .filter((c) => String(c.id) !== targetCommentId)
+                                          .map((c) =>
+                                            Array.isArray(c.replies)
+                                              ? { ...c, replies: c.replies.filter((r) => String(r.id) !== targetCommentId) }
+                                              : c
+                                          );
+                                        const nextCount = nextComments.reduce((acc, c) => acc + 1 + (Array.isArray(c.replies) ? c.replies.length : 0), 0);
+                                        return { ...v, comments: nextComments, commentsCount: nextCount };
+                                      })
+                                    );
+                                    try {
+                                      await fetch(`/api/nosql/comments/${encodeURIComponent(targetCommentId)}`, { method: "DELETE" });
+                                    } catch {}
                                     setConfirmDeleteCommentInfo(null);
                                     showToast("Comment deleted permanently.");
                                     setTimeout(() => fetchLiveStats(true), 400);
@@ -7490,65 +7555,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <AdminStatCard label="Sent Broadcasts" value={broadcastHistory.length} sublabel="Dispatch history" icon={<Bell className="w-4 h-4" />} />
               </div>
 
-              {/* Preset Templates */}
-              <div className={`${ADMIN_SURFACE} p-4 flex flex-wrap items-center justify-between gap-3`}>
-                <span className="text-[13px] font-semibold text-white">Quick Templates</span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    {
-                      label: "Feature Release v2.0",
-                      type: "feature" as const,
-                      audience: "all" as const,
-                      title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
-                      message: "We just rolled out fast photo CDN delivery powered by Bunny CDN and interactive local discovery maps.",
-                      targetUrl: "/search"
-                    },
-                    {
-                      label: "Weekend Spotlight",
-                      type: "announcement" as const,
-                      audience: "all" as const,
-                      title: "Weekend Spotlight: Top-Rated Local Spots",
-                      message: "Discover this week's highest-rated places and verified community favorites near you.",
-                      targetUrl: "/reviews/pl_1"
-                    },
-                    {
-                      label: "Creator Challenge",
-                      type: "promo" as const,
-                      audience: "creators" as const,
-                      title: "Creator Challenge: Review 3 Spots This Weekend",
-                      message: "Publish authentic live photo reviews this weekend to get featured on the Yoouz home feed.",
-                      targetUrl: "/profile"
-                    },
-                    {
-                      label: "Edge CDN Notice",
-                      type: "alert" as const,
-                      audience: "all" as const,
-                      title: "Edge Storage Optimization Complete",
-                      message: "Global CDN caching optimization completed with zero downtime for faster media loading.",
-                      targetUrl: ""
-                    }
-                  ].map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setBroadcastData({
-                          title: preset.title,
-                          message: preset.message,
-                          targetUrl: preset.targetUrl
-                        });
-                        setBroadcastType(preset.type);
-                        setBroadcastAudience(preset.audience);
-                        showToast(`Applied template: ${preset.label}`);
-                      }}
-                      className={ADMIN_BTN_SECONDARY}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Two-Column Composer & Live Preview */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                 <div className={`lg:col-span-7 ${ADMIN_SURFACE} p-5 space-y-5`}>
@@ -7663,7 +7669,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         type="text"
                         value={broadcastData.targetUrl}
                         onChange={(e) => setBroadcastData({ ...broadcastData, targetUrl: e.target.value })}
-                        placeholder="/reviews/pl_1 or https://yoouz.com/search"
+                        placeholder="/search or https://yoouz.com/..."
                         className={`${ADMIN_INPUT} w-full font-mono`}
                       />
                     </div>
@@ -7705,7 +7711,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             Y
                           </div>
                           <span className="text-xs font-semibold text-white">Yoouz</span>
-                          <span className="text-xs text-zinc-300 capitalize">· {broadcastType}</span>
+                          <span className="text-xs text-zinc-300">
+                            · {({ announcement: "Announcement", feature: "Feature Drop", promo: "Spotlight", alert: "System Notice" } as Record<string, string>)[broadcastType] || broadcastType}
+                          </span>
                         </div>
                         <span className="text-xs text-zinc-300">Just now</span>
                       </div>
@@ -7833,9 +7841,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
               {/* Status KPI Strip */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                <AdminStatCard label="Crawl Errors" value="0" sublabel="Clean 404 handling" tone="positive" icon={<CheckCircle2 className="w-4 h-4" />} />
-                <AdminStatCard label="Indexable Reviews" value={metrics.totalVideos} sublabel="Review & ImageObject schema" icon={<Globe className="w-4 h-4" />} />
-                <AdminStatCard label="IndexNow Status" value="202 OK" sublabel="Instant engine ping" tone="positive" icon={<Zap className="w-4 h-4" />} />
+                <AdminStatCard label="Indexable Reviews" value={activeVideos.length > 0 ? activeVideos.length : metrics.totalVideos} sublabel="Review & ImageObject schema" icon={<Camera className="w-4 h-4" />} />
+                <AdminStatCard label="Indexable Places" value={metrics.totalPhysicalPlaces} sublabel="LocalBusiness directory URLs" icon={<Globe className="w-4 h-4" />} />
+                <AdminStatCard label="IndexNow Status" value={isPingingGoogleIndex ? "Submitting" : "Ready"} sublabel="Instant search engine ping" tone="positive" icon={<Zap className="w-4 h-4" />} />
               </div>
 
               {/* Sitemaps & Endpoints */}
@@ -7935,16 +7943,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {(
                     [
-                      { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, Icon: Camera },
-                      { name: "places", label: "Places", count: liveStats?.totals?.places ?? metrics.totalPhysicalPlaces, Icon: MapPin },
-                      { name: "users", label: "Users", count: liveStats?.totals?.users ?? metrics.totalUsers, Icon: Users },
-                      { name: "comments", label: "Comments", count: liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments), Icon: MessageSquare },
-                      { name: "likes", label: "Likes", count: liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes), Icon: Heart },
+                      { name: "videoReviews", label: "Photo Reviews", count: activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos), Icon: Camera },
+                      { name: "places", label: "Places", count: metrics.totalPhysicalPlaces > 0 ? metrics.totalPhysicalPlaces : (liveStats?.totals?.places ?? 0), Icon: MapPin },
+                      { name: "users", label: "Users", count: metrics.totalUsers > 0 ? metrics.totalUsers : (liveStats?.totals?.users ?? 0), Icon: Users },
+                      { name: "comments", label: "Comments", count: allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments), Icon: MessageSquare },
+                      { name: "likes", label: "Likes", count: filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes), Icon: Heart },
                       { name: "shares", label: "Shares", count: liveStats?.totals?.shares ?? metrics.totalShares, Icon: Share2 },
-                      { name: "bookmarks", label: "Bookmarks", count: liveStats?.totals?.bookmarks ?? (adminBookmarks.length || metrics.totalBookmarks), Icon: Bookmark },
-                      { name: "chats", label: "Messages", count: liveStats?.totals?.chats ?? adminChats.length, Icon: Mail },
+                      { name: "bookmarks", label: "Bookmarks", count: filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks), Icon: Bookmark },
+                      { name: "chats", label: "Messages", count: hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length), Icon: Mail },
                       { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, Icon: Bell },
-                      { name: "businessClaims", label: "Business Claims", count: liveStats?.totals?.businessClaims ?? metrics.totalBusinesses, Icon: Building2 }
+                      { name: "businessClaims", label: "Business Claims", count: metrics.totalBusinesses > 0 ? metrics.totalBusinesses : (liveStats?.totals?.businessClaims ?? 0), Icon: Building2 }
                     ] as const
                   ).map((t) => {
                     const TableIcon = t.Icon;
@@ -9549,14 +9557,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   );
                   setDbComments((prev) =>
                     prev.map((c) => {
+                      if (String(c.id) === String(comment.id)) {
+                        return { ...c, text: clean };
+                      }
                       if (isReply && parentCommentId && String(c.id) === String(parentCommentId) && Array.isArray(c.replies)) {
                         return {
                           ...c,
                           replies: c.replies.map((r: any) => (String(r.id) === String(comment.id) ? { ...r, text: clean } : r))
                         };
-                      }
-                      if (!isReply && String(c.id) === String(comment.id)) {
-                        return { ...c, text: clean };
                       }
                       return c;
                     })
