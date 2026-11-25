@@ -2496,20 +2496,23 @@ export function App() {
       return prev;
     });
 
-    fetch("/api/user/profile", {
+    const userUpdatePayload = {
+      id: targetId,
+      uid: updatedUser.uid || targetId,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      handle: updatedUser.handle,
+      bio: updatedUser.bio,
+      avatar: updatedUser.avatar,
+      role: updatedUser.role,
+      isVerified: updatedUser.isVerified ?? true
+    };
+    const updateEndpoint = hasAdminToken() ? "/api/admin/users/update" : "/api/user/profile";
+    const updateFetcher = hasAdminToken() ? adminFetch : fetch;
+    updateFetcher(updateEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: targetId,
-        uid: updatedUser.uid || targetId,
-        email: updatedUser.email,
-        name: updatedUser.name,
-        handle: updatedUser.handle,
-        bio: updatedUser.bio,
-        avatar: updatedUser.avatar,
-        role: updatedUser.role,
-        isVerified: false
-      })
+      body: JSON.stringify(userUpdatePayload)
     })
       .then((res) => res.json())
       .then((data) => {
@@ -7868,14 +7871,21 @@ export function App() {
 
     if (skipServerSync) return;
 
-    // Mirror updates to BunnyDB ONLY if updatedPlace.id is a valid canonical domain
-    const canonicalSaveId = extractCleanDomain(updatedPlace.id || updatedPlace.brandDomain || "");
-    if (!canonicalSaveId || !isValidDomainUrl(canonicalSaveId)) return;
+    // Mirror updates to BunnyDB using canonical domain when available, or direct place ID for scraped venues
+    const extractedDomain = extractCleanDomain(updatedPlace.id || updatedPlace.brandDomain || "");
+    const canonicalSaveId = (extractedDomain && isValidDomainUrl(extractedDomain))
+      ? extractedDomain
+      : String(updatedPlace.id || "").trim();
+    if (!canonicalSaveId) return;
 
     try {
       const { explicitBannerUpdate, explicitLogoUpdate, ...cleanPlaceData } = updatedPlace as any;
       const payload = {
-        data: { ...cleanPlaceData, id: canonicalSaveId, brandDomain: canonicalSaveId },
+        data: {
+          ...cleanPlaceData,
+          id: canonicalSaveId,
+          ...(extractedDomain && isValidDomainUrl(extractedDomain) ? { brandDomain: extractedDomain } : {})
+        },
         merge: true,
         ...(explicitBannerUpdate ? { explicitBannerUpdate: true } : {}),
         ...(explicitLogoUpdate ? { explicitLogoUpdate: true } : {})
@@ -9225,25 +9235,41 @@ export function App() {
                 onDeleteComment={handleDeleteComment}
                 onBroadcastNotification={async (notif) => {
                   try {
+                    const audience = notif.audience || "all";
+                    const recipients = new Map<string, { email: string; name: string }>();
                     const allU = allRegisteredUsers || [];
                     for (const u of allU) {
+                      const roleLower = String(u.role || "").toLowerCase();
+                      if (audience === "creators" && !roleLower.includes("creator")) continue;
+                      if (audience === "businesses" && !roleLower.includes("business") && !roleLower.includes("owner")) continue;
                       const recEmail = u.email || u.name || u.id;
                       if (recEmail) {
+                        recipients.set(String(recEmail).toLowerCase(), { email: recEmail, name: u.name || recEmail });
+                      }
+                    }
+                    if (audience === "all" || audience === "businesses") {
+                      for (const p of places || []) {
+                        if (p.isClaimed && p.claimedByEmail) {
+                          recipients.set(String(p.claimedByEmail).toLowerCase(), { email: p.claimedByEmail, name: p.name || p.claimedByEmail });
+                        }
+                      }
+                    }
+                    await Promise.allSettled(
+                      Array.from(recipients.values()).map((r) =>
                         sendSocialNotification({
-                          recipientEmail: recEmail,
-                          recipientHandle: u.name || recEmail,
+                          recipientEmail: r.email,
+                          recipientHandle: r.name,
                           type: "message",
                           user: {
-                            name: "Yoouz Admin Team",
-                            //handle: "yoouz",
+                            name: notif.title?.trim() || "Yoouz Admin",
                             avatar: "/api/avatar?name=Yoouz+Admin&background=27272a&color=fff&bold=true",
                             email: "admin@yoouz.com"
                           },
                           text: notif.message,
                           videoId: notif.targetUrl
-                        }).catch(() => {});
-                      }
-                    }
+                        })
+                      )
+                    );
                   } catch (e) {}
                 }}
                 onExit={() => {

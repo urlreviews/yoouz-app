@@ -23,7 +23,7 @@ export const ADMIN_BTN_ICON_DANGER =
   "inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent hover:bg-rose-500/15 border border-transparent hover:border-rose-500/20 text-zinc-500 hover:text-rose-400 transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer shrink-0";
 
 export const ADMIN_INPUT =
-  "h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 transition-colors";
+  "w-full h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 transition-colors";
 
 export const ADMIN_SELECT =
   "h-9 px-3 rounded-xl bg-[#0c0c0f] border border-white/[0.08] text-xs text-zinc-200 focus:outline-none focus:border-white/25 transition-colors cursor-pointer";

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { VideoReview, Place, ReviewComment, UserProfile } from "../types";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
-import { adminFetch, hasAdminToken, setAdminToken } from "../lib/adminAuth";
+import { adminFetch, getAdminToken, hasAdminToken, setAdminToken } from "../lib/adminAuth";
 import {
   Shield,
   Video,
@@ -192,7 +192,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   useEffect(() => {
     if (isAuthenticated) return;
     let cancelled = false;
-    setAuthMode("loading");
+    setAuthMode((prev) => (prev === "login" ? "login" : "loading"));
     fetch("/api/admin/auth/status", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
@@ -312,8 +312,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         setEditUserModal(null);
       } else if (editAgencyModal) {
         setEditAgencyModal(null);
-      } else if (isAddPlaceOpen) {
-        setIsAddPlaceOpen(false);
       } else if (isAddAgencyOpen) {
         setIsAddAgencyOpen(false);
       }
@@ -360,7 +358,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   }, [previewVideo?.id]);
 
   const [editPlaceModal, setEditPlaceModal] = useState<Place | null>(null);
-  const [isAddPlaceOpen, setIsAddPlaceOpen] = useState(false);
   const [editVideoModal, setEditVideoModal] = useState<VideoReview | null>(null);
   const [editUserModal, setEditUserModal] = useState<any | null>(null);
   const [broadcastData, setBroadcastData] = useState({ title: "", message: "", targetUrl: "" });
@@ -1665,85 +1662,109 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return Array.from(map.values());
   }, [allUsers, dbUsers]);
 
-  const fetchLiveStats = async (silent = false) => {
+  const fetchLiveStats = async (silent = true) => {
     if (!silent) setIsLoadingLiveStats(true);
+    const withSignal = (ms = 10000) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      return { signal: controller.signal, done: () => clearTimeout(timer) };
+    };
     try {
-      const tasks = [
-        adminFetch("/api/admin/users", { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const usersData = await res.json();
-              const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
-              if (Array.isArray(list)) {
-                setDbUsers(list);
-                try {
-                  localStorage.removeItem("yoouz_admin_cached_users");
-                  localStorage.setItem("yoouz_admin_cached_users_v2", JSON.stringify(list));
-                } catch (e) {}
-              }
+      const statsCtrl = withSignal(8000);
+      const statsTask = adminFetch("/api/admin/live-stats", { cache: "no-store", signal: statsCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            setLiveStats(data);
+            setLastSyncedTime(new Date());
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          statsCtrl.done();
+          if (!silent) setIsLoadingLiveStats(false);
+        });
+
+      const usersCtrl = withSignal(10000);
+      const usersTask = adminFetch("/api/admin/users", { cache: "no-store", signal: usersCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const usersData = await res.json();
+            const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
+            if (Array.isArray(list)) {
+              setDbUsers(list);
+              try {
+                localStorage.removeItem("yoouz_admin_cached_users");
+                localStorage.setItem("yoouz_admin_cached_users_v2", JSON.stringify(list));
+              } catch (e) {}
             }
-          })
-          .catch(() => {}),
-        adminFetch("/api/admin/live-stats", { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const data = await res.json();
-              setLiveStats(data);
-              setLastSyncedTime(new Date());
+          }
+        })
+        .catch(() => {})
+        .finally(() => usersCtrl.done());
+
+      const placesCtrl = withSignal(12000);
+      const placesTask = fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store", signal: placesCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const placesData = await res.json();
+            if (Array.isArray(placesData)) {
+              setDbPlaces(placesData);
+              try {
+                localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
+              } catch (e) {}
             }
-          })
-          .catch(() => {}),
-        fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const placesData = await res.json();
-              if (Array.isArray(placesData)) {
-                setDbPlaces(placesData);
-                try {
-                  localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
-                } catch (e) {}
-              }
+          }
+        })
+        .catch(() => {})
+        .finally(() => placesCtrl.done());
+
+      const videosCtrl = withSignal(12000);
+      const videosTask = fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store", signal: videosCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const videosData = await res.json();
+            if (Array.isArray(videosData)) {
+              const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+              let localDel: string[] = [];
+              try { localDel = JSON.parse(deletedStr); } catch (e) {}
+              const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
+              const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
+              setDbVideos(cleanVideos);
             }
-          })
-          .catch(() => {}),
-        fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const videosData = await res.json();
-              if (Array.isArray(videosData)) {
-                const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-                let localDel: string[] = [];
-                try { localDel = JSON.parse(deletedStr); } catch (e) {}
-                const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
-                const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
-                setDbVideos(cleanVideos);
-              }
+          }
+        })
+        .catch(() => {})
+        .finally(() => videosCtrl.done());
+
+      const chatsCtrl = withSignal(10000);
+      const chatsTask = adminFetch("/api/admin/chats", { cache: "no-store", signal: chatsCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const chatsData = await res.json();
+            if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
+              setAdminChats(chatsData.chats);
+              setHasLoadedChats(true);
             }
-          })
-          .catch(() => {}),
-        adminFetch("/api/admin/chats", { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const chatsData = await res.json();
-              if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
-                setAdminChats(chatsData.chats);
-                setHasLoadedChats(true);
-              }
+          }
+        })
+        .catch(() => {})
+        .finally(() => chatsCtrl.done());
+
+      const commentsCtrl = withSignal(10000);
+      const commentsTask = fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store", signal: commentsCtrl.signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const commentsData = await res.json();
+            if (Array.isArray(commentsData)) {
+              setDbComments(commentsData);
             }
-          })
-          .catch(() => {}),
-        fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store" })
-          .then(async (res) => {
-            if (res.ok) {
-              const commentsData = await res.json();
-              if (Array.isArray(commentsData)) {
-                setDbComments(commentsData);
-              }
-            }
-          })
-          .catch(() => {})
-      ];
-      await Promise.allSettled(tasks);
+          }
+        })
+        .catch(() => {})
+        .finally(() => commentsCtrl.done());
+
+      await Promise.allSettled([statsTask, usersTask, placesTask, videosTask, chatsTask, commentsTask]);
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
     } finally {
@@ -1965,15 +1986,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await adminFetch("/api/admin/auth/logout", { method: "POST" });
-    } catch {}
+  const handleLogout = () => {
+    const activeToken = getAdminToken();
     setAdminToken(null);
     setPasswordInput("");
     setConfirmPasswordInput("");
     setAuthError("");
+    setAuthMode("login");
     setIsAuthenticated(false);
+    if (activeToken) {
+      fetch("/api/admin/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${activeToken}` },
+        keepalive: true
+      }).catch(() => {});
+    }
   };
 
   const activeKeysSet = useMemo(() => {
@@ -2998,7 +3025,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   };
 
   const handleQuickClaimPlace = (place: Place) => {
-    const domain = (place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || place.id).toLowerCase();
+    const domain = (place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0] : "") || place.id).toLowerCase();
     const updated: Place = {
       ...place,
       isClaimed: true,
@@ -3006,31 +3033,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       claimedByEmail: "info@yoouz.com",
       brandDomain: domain
     };
+    setDbPlaces((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
     if (onUpdatePlace) {
       onUpdatePlace(updated);
     }
     showToast(`Claimed "${place.name}" as an official business.`);
-    setTimeout(fetchLiveStats, 400);
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
   const handleSavePlaceEdits = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editPlaceModal) return;
+    const updated = { ...editPlaceModal };
+    setDbPlaces((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)));
     if (onUpdatePlace) {
-      onUpdatePlace(editPlaceModal);
+      onUpdatePlace(updated);
     }
-    showToast(`Updated business "${editPlaceModal.name}".`);
+    showToast(`Updated business "${updated.name}".`);
     setEditPlaceModal(null);
-    setTimeout(fetchLiveStats, 400);
-  };
-
-  const handleCreateNewPlace = (newPlace: Place) => {
-    if (onAddPlace) {
-      onAddPlace(newPlace);
-      showToast(`Created business "${newPlace.name}"!`);
-      setIsAddPlaceOpen(false);
-      setTimeout(fetchLiveStats, 400);
-    }
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
   const handleSaveVideoEdits = (e: React.FormEvent) => {
@@ -3046,12 +3067,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       dishOrItem: cleanName,
       businessName: cleanName
     };
+    setDbVideos((prev) => prev.map((v) => (v.id === updatedReview.id ? { ...v, ...updatedReview } : v)));
     if (onUpdateVideo) {
       onUpdateVideo(updatedReview);
     }
     showToast(`Updated review details for "${cleanName}".`);
     setEditVideoModal(null);
-    setTimeout(fetchLiveStats, 400);
+    setTimeout(() => fetchLiveStats(true), 400);
   };
 
   const handleSyncReviewBusinessNames = async () => {
@@ -3263,7 +3285,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const isLoadingStatus = authMode === "loading";
     return (
       <div className="flex-1 w-full h-full min-h-screen flex items-center justify-center bg-[#050506] p-4 relative z-50">
-        <div className="w-full max-w-sm bg-[#0c0c0f] border border-white/[0.08] rounded-3xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.8)] relative z-10 text-white">
+        <div className="w-full max-w-sm bg-[#0c0c0f] border border-white/[0.08] rounded-2xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.8)] relative z-10 text-white">
           <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/[0.09] flex items-center justify-center mx-auto mb-5">
             <Shield className="w-5 h-5 text-white" />
           </div>
@@ -3549,16 +3571,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => setIsAddPlaceOpen(true)}
-            className="md:hidden h-8 flex items-center gap-1 px-2.5 rounded-lg bg-white text-zinc-950 text-xs font-semibold cursor-pointer"
-            title="New Business"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>New</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => {
               fetchLiveStats(false);
               if (activeTab === "messages") fetchAdminChats(false);
@@ -3592,7 +3604,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       {/* Main Admin Workspace Layout */}
       <div className="flex-1 flex overflow-hidden bg-[#050506]">
-        {/* Grouped Obsidian Sidebar with Sticky Footer */}
+        {/* Grouped Obsidian Sidebar */}
         <aside className="w-60 border-r border-white/[0.08] bg-[#050506] hidden md:flex flex-col shrink-0 overflow-hidden select-none">
           <nav aria-label="Admin Navigation" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
             {(
@@ -3611,8 +3623,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   items: [
                     { id: "users" as AdminTab, label: "Users", icon: Users, count: metrics.totalUsers },
                     { id: "creators" as AdminTab, label: "Creators", icon: Award, count: metrics.totalCreators },
-                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: liveStats?.totals?.comments ?? allComments.length },
-                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: liveStats?.totals?.likes ?? adminLikes.length },
+                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments) },
+                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes) },
                     { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: liveStats?.totals?.bookmarks ?? adminBookmarks.length },
                     { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: liveStats?.totals?.chats ?? adminChats.length }
                   ]
@@ -3685,18 +3697,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
             ))}
           </nav>
-
-          {/* Pinned Sticky Primary Sidebar Action */}
-          <div className="shrink-0 p-3 border-t border-white/[0.08] bg-[#050506]">
-            <button
-              type="button"
-              onClick={() => setIsAddPlaceOpen(true)}
-              className={`w-full ${ADMIN_BTN_PRIMARY}`}
-            >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>New Business</span>
-            </button>
-          </div>
         </aside>
 
         {/* Content Area */}
@@ -3711,8 +3711,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["users", `Users (${metrics.totalUsers})`],
                 ["creators", `Creators (${metrics.totalCreators})`],
-                ["comments", `Comments (${liveStats?.totals?.comments ?? allComments.length})`],
-                ["likes", `Likes (${liveStats?.totals?.likes ?? adminLikes.length})`],
+                ["comments", `Comments (${liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments)})`],
+                ["likes", `Likes (${liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)})`],
                 ["bookmarks", `Bookmarks (${liveStats?.totals?.bookmarks ?? adminBookmarks.length})`],
                 ["messages", `Messages (${liveStats?.totals?.chats ?? adminChats.length})`],
                 ["broadcast", "Broadcast"],
@@ -4271,9 +4271,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {liveStats?.totals?.users ?? metrics.totalCommunityUsers}
+                      {metrics.totalUsers}
                     </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Registered accounts</div>
+                    <div className="text-[11px] text-zinc-500 mt-0.5 truncate">Total accounts</div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
                     <span>Manage</span>
@@ -4281,9 +4281,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                <div
+                <button
+                  type="button"
                   onClick={() => setActiveTab("likes")}
-                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between"
+                  className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Activity</span>
@@ -4291,36 +4292,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {(liveStats?.totals?.likes ?? metrics.totalLikes) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? metrics.totalComments) + (liveStats?.totals?.shares ?? metrics.totalShares)}
+                      {(liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? (allComments.length || metrics.totalComments)) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
                     <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
-                      {liveStats?.totals?.likes ?? metrics.totalLikes} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved
+                      {liveStats?.totals?.likes ?? (adminLikes.length || metrics.totalLikes)} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 pt-2.5 border-t border-white/[0.06] text-[10px] font-medium">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setActiveTab("likes"); }}
-                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
-                    >
-                      Likes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setActiveTab("bookmarks"); }}
-                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
-                    >
-                      Saved
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setActiveTab("comments"); }}
-                      className="flex-1 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white text-center transition-colors cursor-pointer"
-                    >
-                      Comments
-                    </button>
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
+                    <span>Inspect</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* 2-Column Split: Recent Photo Reviews & Places Directory */}
@@ -4713,9 +4695,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       label="Actions"
                       items={[
                         { label: "Sync Business Names", icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: handleSyncReviewBusinessNames },
-                        { label: "Clean Legacy Streams", icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: handleSyncBunnyLibrary },
                         { label: "Clean Incomplete Uploads", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: handlePurgeIncompleteUploads },
-                        { label: isSeedingCommunity ? "Seeding Samples..." : "Seed Sample Reviews (20)", icon: <Plus className="w-3.5 h-3.5" />, onClick: executeSeedCommunityReviews, disabled: isSeedingCommunity },
                         { label: "Purge All Reviews", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: () => setConfirmPurgeAllVideos(true), destructive: true, dividerBefore: true }
                       ]}
                     />
@@ -9102,13 +9082,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* ADD NEW PLACE MODAL */}
-      {/* ========================================================================= */}
-      {isAddPlaceOpen && (
-        <CreatePlaceModal onClose={() => setIsAddPlaceOpen(false)} onSave={handleCreateNewPlace} />
-      )}
-
-      {/* ========================================================================= */}
       {/* EDIT REVIEW MODAL */}
       {/* ========================================================================= */}
       {editVideoModal && (
@@ -10454,187 +10427,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         </AdminModal>
       )}
     </div>
-  );
-};
-
-// =========================================================================
-// SUB-COMPONENT: CREATE PLACE MODAL
-// =========================================================================
-const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => void }> = ({ onClose, onSave }) => {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("Restaurant");
-  const [city, setCity] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [website, setWebsite] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [claimedByEmail, setClaimedByEmail] = useState("");
-  const [rating] = useState(5.0);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    const id = `place_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-    const newPlace: Place = {
-      id,
-      name: name.trim(),
-      category: category.trim(),
-      categoryType: "restaurants",
-      address: address.trim() || city.trim() || "Online",
-      city: city.trim(),
-      lat: 37.7749,
-      lng: -122.4194,
-      rating,
-      totalReviews: 1,
-      videoReviewCount: 0,
-      ratingDistribution: { stars5: 1, stars4: 0, stars3: 0, stars2: 0, stars1: 0 },
-      avatarUrl: logoUrl.trim() || `/api/avatar?name=${encodeURIComponent(name)}&background=27272a&color=fff&bold=true`,
-      logoUrl: logoUrl.trim(),
-      bannerUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&auto=format&fit=crop&q=80",
-      photos: [],
-      openingHours: "Mon-Sun 10:00 AM - 10:00 PM",
-      isOpen: true,
-      phone: phone.trim(),
-      email: email.trim(),
-      website: website.trim(),
-      priceRange: "$$",
-      plusCode: "",
-      description: "Listed business on Yoouz.",
-      popularKeywords: [{ tag: "Authentic", count: 1 }],
-      amenities: ["Free Wi-Fi", "Credit Cards Accepted"],
-      topDishes: [],
-      isClaimed: Boolean(claimedByEmail.trim()),
-      isVerified: Boolean(claimedByEmail.trim()),
-      claimedByEmail: claimedByEmail.trim() || undefined
-    };
-
-    onSave(newPlace);
-  };
-
-  return (
-    <AdminModal
-      title="Create Business Page"
-      subtitle="Add a new venue or brand listing to Yoouz"
-      onClose={onClose}
-      maxWidthClass="max-w-2xl"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Business Name (Required)</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Blue Bottle Coffee"
-              required
-              className={ADMIN_INPUT}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Cafe, Restaurant, Hotel"
-              className={ADMIN_INPUT}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">City / Region</label>
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g. New York"
-              className={ADMIN_INPUT}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Full Street Address</label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="e.g. 100 Main St, Suite 200"
-              className={ADMIN_INPUT}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Phone Number</label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 415-555-0199"
-              className={`${ADMIN_INPUT} font-mono text-xs`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Public Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="contact@business.com"
-              className={`${ADMIN_INPUT} font-mono text-xs`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Website URL</label>
-            <input
-              type="text"
-              value={website}
-              onChange={(e) => setWebsite(e.target.value)}
-              placeholder="https://example.com"
-              className={`${ADMIN_INPUT} text-xs`}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Logo URL (Optional)</label>
-            <input
-              type="text"
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              placeholder="https://..."
-              className={ADMIN_INPUT}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Assign Owner Email (Private)</label>
-            <input
-              type="email"
-              value={claimedByEmail}
-              onChange={(e) => setClaimedByEmail(e.target.value)}
-              placeholder="owner@business.com"
-              className={ADMIN_INPUT}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
-          <button type="button" onClick={onClose} className={ADMIN_BTN_SECONDARY}>
-            Cancel
-          </button>
-          <button type="submit" disabled={!name.trim()} className={ADMIN_BTN_PRIMARY}>
-            Create Business
-          </button>
-        </div>
-      </form>
-    </AdminModal>
   );
 };
 

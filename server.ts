@@ -5348,13 +5348,17 @@ async function startServer() {
     claimedAt: string;
   }
 
+  const ADMIN_CRED_COLLECTION = "_system";
+  const ADMIN_CRED_DOC_ID = "__yoouz_admin_cred_v1";
+
   const readClaimedAdminCred = async (): Promise<StoredAdminCred | null> => {
+    // 1. Check local BunnyDB replica first (<1ms)
     try {
       const bunnyDb = getBunnyDb();
       if (bunnyDb) {
         const rs = await bunnyDb.execute({
-          sql: `SELECT data FROM nosql_items WHERE id = ? LIMIT 1`,
-          args: ["__yoouz_admin_cred_v1"]
+          sql: `SELECT data FROM nosql_items WHERE collection = ? AND id = ? LIMIT 1`,
+          args: [ADMIN_CRED_COLLECTION, ADMIN_CRED_DOC_ID]
         });
         if (rs.rows.length > 0) {
           const raw = (rs.rows[0] as any)?.data;
@@ -5363,26 +5367,58 @@ async function startServer() {
         }
       }
     } catch {}
+
+    // 2. Cold-start fallback: query remote Bunny Cloud DB directly before background sync completes
+    try {
+      const remoteRs = await queryRemoteBunnyDbDirect({
+        sql: `SELECT data FROM nosql_items WHERE collection = ? AND id = ? LIMIT 1`,
+        args: [ADMIN_CRED_COLLECTION, ADMIN_CRED_DOC_ID]
+      });
+      if (remoteRs && remoteRs.rows.length > 0) {
+        const raw = (remoteRs.rows[0] as any)?.data;
+        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (parsed?.salt && parsed?.hash) {
+          // Cache locally for subsequent fast reads
+          try {
+            const bunnyDb = getBunnyDb();
+            if (bunnyDb) {
+              await bunnyDb.execute({
+                sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                      ON CONFLICT(collection, id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
+                args: [ADMIN_CRED_COLLECTION, ADMIN_CRED_DOC_ID, JSON.stringify(parsed)]
+              });
+            }
+          } catch {}
+          return parsed as StoredAdminCred;
+        }
+      }
+    } catch {}
+
+    // 3. Legacy disk fallback: migrate any previously claimed file-based credential durably into Bunny Cloud DB
     try {
       if (fs.existsSync(ADMIN_CRED_FILE)) {
         const parsed = JSON.parse(fs.readFileSync(ADMIN_CRED_FILE, "utf8"));
-        if (parsed?.salt && parsed?.hash) return parsed as StoredAdminCred;
+        if (parsed?.salt && parsed?.hash) {
+          await writeClaimedAdminCred(parsed as StoredAdminCred);
+          return parsed as StoredAdminCred;
+        }
       }
     } catch {}
+
     return null;
   };
 
   const writeClaimedAdminCred = async (cred: StoredAdminCred): Promise<void> => {
     try {
-      const bunnyDb = getBunnyDb();
-      if (bunnyDb) {
-        await bunnyDb.execute({
-          sql: `INSERT INTO nosql_items (id, data, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(id) DO UPDATE SET data = excluded.data, updatedAt = CURRENT_TIMESTAMP`,
-          args: ["__yoouz_admin_cred_v1", JSON.stringify(cred)]
-        });
-      }
-    } catch {}
+      await initBunnyDbSchema();
+      await executeDurableBunnyDb({
+        sql: `INSERT INTO nosql_items (collection, id, data, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+              ON CONFLICT(collection, id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`,
+        args: [ADMIN_CRED_COLLECTION, ADMIN_CRED_DOC_ID, JSON.stringify(cred)]
+      });
+    } catch (err: any) {
+      console.warn("⚠️ [AdminAuth] Failed to persist admin credential to BunnyDB:", err?.message || err);
+    }
     try {
       fs.writeFileSync(ADMIN_CRED_FILE, JSON.stringify(cred), { mode: 0o600 });
     } catch {}
@@ -12790,20 +12826,25 @@ app.get('/api/admin/live-stats', async (_req, res) => {
   };
 
   if (bunnyDb) {
-    const fastTables = ['likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
+    const fastTables = ['users', 'places', 'videoReviews', 'comments', 'likes', 'bookmarks', 'shares', 'chats', 'notifications', 'businessClaims', 'follows'];
     await Promise.all(fastTables.map(async (tbl) => {
       try {
         const rs = await bunnyDb.execute(`SELECT COUNT(*) as total FROM ${tbl}`);
-        counts[tbl] = Number((rs?.rows?.[0] as any)?.total || 0);
+        const dbCount = Number((rs?.rows?.[0] as any)?.total || 0);
+        if (tbl === 'users' || tbl === 'places' || tbl === 'videoReviews' || tbl === 'comments') {
+          counts[tbl] = Math.max(counts[tbl] || 0, dbCount);
+        } else {
+          counts[tbl] = dbCount;
+        }
       } catch (e) {
-        counts[tbl] = 0;
+        counts[tbl] = counts[tbl] || 0;
       }
     }));
   }
 
   // Calculate claimed places & business claims count accurately
   const claimedPlacesCount = localPlaces.filter((p: any) => Boolean(p && (p.isClaimed || p.claimedByEmail || p.claimed || p.ownerId))).length;
-  counts.businessClaims = Math.max(counts.businessClaims || 0, claimedPlacesCount, 1);
+  counts.businessClaims = Math.max(counts.businessClaims || 0, claimedPlacesCount);
 
   const totalLikesSum = Number(counts.likes || 0);
   const totalSharesSum = Number(counts.shares || 0);
