@@ -1648,10 +1648,142 @@ export function isFalseSplitAgainstText(name?: string | null, text?: string | nu
 }
 
 /**
- * Detects corrupt/fragmented strings scraped from website footers or contact blocks (e.g. "Kruis Tel", "St-Kruis Tel", "Tel: 050", etc.)
+ * Detects WAF, bot-protection, security-checkpoint, loader, and HTTP error page titles
+ * (e.g. "Radware Page", "Vercel Security Checkpoint", "Just a moment...", "Access Denied",
+ * "Pardon Our Interruption", "Attention Required!", "Loader Page", "403 Forbidden", etc.)
+ * while permitting legitimate vendor brand sites when the domain itself matches the vendor.
  */
-export function isCorruptedBusinessName(name?: string | null): boolean {
+export function isWafOrBlockTitle(name?: string | null, domain?: string | null): boolean {
   if (!name) return false;
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase().replace(/\s+/g, " ");
+  const domLow = (domain || "").toLowerCase();
+
+  // Explicit WAF / Security vendor challenge page titles
+  const vendorPatterns: Array<{ re: RegExp; allowedDom: string }> = [
+    { re: /\bradware(?:\s+page|\s+bot|\s+cloud|\s+security|\s+appwall)?\b/i, allowedDom: "radware" },
+    { re: /\bvercel\s+security\s+checkpoint\b/i, allowedDom: "vercel" },
+    { re: /\bcloudflare\b.*(?:security|attention|blocked|ray|challenge|checking|error|ddos|just a moment)/i, allowedDom: "cloudflare" },
+    { re: /^(?:attention\s+required!?\s*\|\s*)?cloudflare$/i, allowedDom: "cloudflare" },
+    { re: /\b(?:incapsula|imperva)\b(?:\s+(?:incident|security|waf|page|block|error))?/i, allowedDom: "imperva" },
+    { re: /\bsucuri\s+website\s+firewall\b/i, allowedDom: "sucuri" },
+    { re: /\bdatadome\b/i, allowedDom: "datadome" },
+    { re: /\bperimeterx\b/i, allowedDom: "perimeterx" },
+    { re: /\bshieldsquare\b/i, allowedDom: "shieldsquare" },
+    { re: /\bddos[\s\-]*guard\b/i, allowedDom: "ddos-guard" },
+    { re: /\bfortiguard\b/i, allowedDom: "fortinet" },
+    { re: /\bqueue[\s\-]*it\b/i, allowedDom: "queue-it" },
+    { re: /\b(?:akamai|edgesuite)\b.*(?:denied|error|reference|security)/i, allowedDom: "akamai" },
+    { re: /\baws\s+waf\b/i, allowedDom: "amazon" },
+    { re: /\breblaze\b/i, allowedDom: "reblaze" },
+    { re: /\bkasada\b/i, allowedDom: "kasada" },
+    { re: /\bbarracuda\s+(?:waf|networks\s+block)\b/i, allowedDom: "barracuda" }
+  ];
+  for (const vp of vendorPatterns) {
+    if (vp.re.test(lower)) {
+      if (domLow && domLow.includes(vp.allowedDom)) return false;
+      return true;
+    }
+  }
+
+  // Generic bot-wall, challenge, interstitial, loader, and HTTP error page titles
+  if (
+    /^(?:just\s+a\s+moment\.{0,3}|attention\s+required!?|access\s+denied|access\s+to\s+this\s+page\s+has\s+been\s+denied|pardon\s+our\s+interruption|human\s+verification|verify\s+you\s+are\s+(?:a\s+)?human|are\s+you\s+a\s+(?:human|robot)\??|bot\s+(?:protection|verification|check|detected|manager)|security\s+(?:check|checkpoint|verification|challenge|warning)|one\s+more\s+step|checking\s+(?:your\s+browser|if\s+the\s+site\s+connection\s+is\s+secure)|please\s+wait\.{0,3}|redirecting\.{0,3}|loader\s+page\.?|loading\.{0,3}|request\s+rejected|the\s+requested\s+url\s+was\s+rejected|you\s+have\s+been\s+blocked|sorry,?\s+you\s+have\s+been\s+blocked|blocked|forbidden|not\s+acceptable|unauthorized|too\s+many\s+requests|service\s+unavailable|bad\s+gateway|gateway\s+timeout|internal\s+server\s+error|page\s+not\s+found|error\s*(?:400|401|403|404|405|406|429|500|502|503|504)?|(?:400|401|403|404|405|406|429|500|502|503|504)\s+(?:bad\s+request|unauthorized|forbidden|not\s+found|not\s+acceptable|too\s+many\s+requests|error|bad\s+gateway|service\s+unavailable|gateway\s+timeout)|enable\s+javascript|javascript\s+is\s+required|enable\s+cookies|browser\s+check|robot\s+check|captcha|site\s+maintenance|under\s+maintenance|coming\s+soon|domain\s+details\s+page|domain\s+is\s+for\s+sale|parked\s+domain|default\s+web\s+site\s+page|iis\s+windows\s+server|apache2?\s+.*default\s+page|welcome\s+to\s+nginx!?)$/i.test(lower)
+  ) {
+    return true;
+  }
+
+  // Substring checks for unambiguous WAF/error phrases anywhere in the title
+  if (
+    lower.includes("radware page") ||
+    lower.includes("vercel security checkpoint") ||
+    lower.includes("pardon our interruption") ||
+    lower.includes("checking your browser") ||
+    lower.includes("verify you are human") ||
+    lower.includes("access to this page has been denied") ||
+    lower.includes("you have been blocked") ||
+    lower.includes("the requested url was rejected") ||
+    lower.includes("attention required! |") ||
+    lower.includes("just a moment...") ||
+    lower.includes("human verification") ||
+    lower.includes("bot protection") ||
+    lower.includes("ddos protection")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Detects WAF, loader, interstitial, or error page meta descriptions that must never be saved or displayed.
+ */
+export function isWafOrBlockDescription(desc?: string | null): boolean {
+  if (!desc) return false;
+  const lower = desc.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!lower) return false;
+  if (
+    /^(?:loader\s+page\.?|loading\.{0,3}|please\s+wait\.{0,3}|redirecting\.{0,3}|access\s+denied\.?|forbidden\.?|403\s+forbidden\.?|404\s+not\s+found\.?)$/i.test(lower)
+  ) {
+    return true;
+  }
+  return (
+    lower.includes("radware") && (lower.includes("loader") || lower.includes("captcha") || lower.includes("blocked") || lower.includes("bot")) ||
+    lower.includes("vercel security checkpoint") ||
+    lower.includes("checking your browser before accessing") ||
+    lower.includes("please enable javascript and cookies") ||
+    lower.includes("verify you are human") ||
+    lower.includes("pardon our interruption") ||
+    lower.includes("the requested url was rejected") ||
+    lower.includes("your support id is") ||
+    lower.includes("sorry, you have been blocked") ||
+    lower.includes("why have i been blocked")
+  );
+}
+
+/**
+ * Detects authentication, login, SSO, or internal portal subdomains/paths (e.g.
+ * https://services.bankjerusalem.co.il/Pages/Login.aspx or https://login.example.com)
+ * that sit behind strict WAF walls and should NEVER replace the brand's primary homepage.
+ */
+export function isLoginOrPortalUrl(urlStr?: string | null): boolean {
+  if (!urlStr || typeof urlStr !== "string") return false;
+  const trimmed = urlStr.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+    const host = parsed.hostname.toLowerCase();
+    const pathname = parsed.pathname.toLowerCase();
+
+    // Check auth/login/portal path patterns (e.g. /Pages/Login.aspx, /login, /signin, /sso, /auth)
+    if (/(?:^|\/)(?:login|logon|signin|sign-in|sign_in|auth|oauth|sso|account\/login|pages\/login|portal\/login|webmail|captcha|challenge)(?:\.[a-z0-9]+)?(?:\/|$)/i.test(pathname)) {
+      return true;
+    }
+
+    // Check portal/auth subdomains when a deeper subdomain prefix exists (e.g. services.bankjerusalem.co.il)
+    const parts = host.replace(/^www\d*\./, "").split(".");
+    const isMultiPartTld = parts.length >= 3 && /^(?:co|com|org|net|gov|edu|ac|ne|or|go)$/i.test(parts[parts.length - 2]) && parts[parts.length - 1].length === 2;
+    const minRootParts = isMultiPartTld ? 3 : 2;
+    if (parts.length > minRootParts) {
+      const sub = parts[0];
+      if (/^(?:login|logon|signin|auth|sso|id|identity|accounts?|my|portal|secure|online|ebanking|netbank|banking|services?|client|clients|webmail|mail|vpn|admin|dashboard|console|app|api)$/i.test(sub)) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return /\/(?:pages\/)?(?:login|signin|sign-in|logon|sso|auth)(?:\.[a-z]+)?(?:\?|#|$)/i.test(trimmed);
+  }
+}
+
+/**
+ * Detects corrupt/fragmented strings scraped from website footers, contact blocks, or WAF/bot-protection pages
+ * (e.g. "Kruis Tel", "St-Kruis Tel", "Radware Page", "Vercel Security Checkpoint", "Just a moment...", etc.)
+ */
+export function isCorruptedBusinessName(name?: string | null, domain?: string | null): boolean {
+  if (!name) return false;
+  if (isWafOrBlockTitle(name, domain)) return true;
   const trimmed = name.trim();
   const lower = trimmed.toLowerCase();
   if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
@@ -1979,10 +2111,11 @@ export function isGenericPlaceName(name?: string | null): boolean {
     "hotel", "hotels", "restaurant", "restaurants", "cafe", "cafes", "barber", "clinic", "garage", "pharmacy", "lawyer", "hospital",
     "מלון", "בית מלון", "מלונות", "מסעדה", "מסעדות", "בית קפה", "קפה", "ספא", "צימר", "צימרים", "פונדק", "אכסניה", "אכסניית",
     "עורך דין", "עורכי דין", "מרפאה", "מוסך", "מסעדת", "חנות", "בית מרקחת", "מספרה", "אופטיקה", "קניון",
-    "סופרמרקט", "סוכנות", "משרד", "משרד עורכי דין"
+    "סופרמרקט", "סוכנות", "משרד", "משרד עורכי דין",
+    "דף הבית", "ראשי", "עמוד הבית", "כניסה", "התחברות", "טוען"
   ]);
   if (genericWords.has(lower)) return true;
-  if (/^(home|welcome|index|default|main page|official site|hotel|restaurant|cafe|מלון|מסעדה|צימר)\s*[|\-–—:•]/i.test(lower)) return true;
+  if (/^(home|welcome|index|default|main page|official site|hotel|restaurant|cafe|מלון|מסעדה|צימר|דף הבית|כניסה)\s*[|\-–—:•]/i.test(lower)) return true;
   return false;
 }
 
@@ -2051,6 +2184,21 @@ export function isGenericSeoSlogan(str?: string | null, domain?: string | null):
 
   // If the string explicitly ends with a legal corporate registration suffix (Inc., LLC, Ltd., Corp.), it is an official registered company name
   if (/(?:,\s*|\s+)(?:LLC|L\.L\.C\.|Inc\.?|Incorporated|Ltd\.?|Limited|Corp\.?|Corporation|GmbH|B\.V\.|N\.V\.|S\.A\.|S\.R\.L\.|P\.C\.|PLLC|LLP)\.?$/i.test(rawTrimmed)) {
+    return false;
+  }
+
+  // Preserve authentic non-Latin business names (Hebrew, Arabic, CJK, Cyrillic, Greek, Thai, Devanagari, etc.)
+  // Previously, ASCII-only stripping turned every non-Latin brand name into `cleanWords = []` -> `return true`!
+  const hasNonLatinLetters = /[\u0590-\u05FF\u0600-\u06FF\u0400-\u04FF\u0370-\u03FF\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF\u0E00-\u0E7F\u0900-\u097F]/.test(rawTrimmed);
+  if (hasNonLatinLetters) {
+    if (isWafOrBlockTitle(rawTrimmed, domain) || isGenericPlaceName(rawTrimmed)) return true;
+    const unicodeWords = rawTrimmed.replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean);
+    if (unicodeWords.length === 0) return true;
+    // Reject only obvious generic Hebrew/Arabic navigation or marketing slogans, never real brand names like "בנק ירושלים"
+    if (/^(?:דף הבית|עמוד הבית|ראשי|כניסה לחשבון|התחברות|צור קשר|אודות|בנקאות קשובה|ברוכים הבאים|الصفحة الرئيسية|تسجيل الدخول)$/i.test(rawTrimmed)) {
+      return true;
+    }
+    if (unicodeWords.length > 8 || rawTrimmed.length > 55) return true;
     return false;
   }
 
@@ -2220,8 +2368,8 @@ export function formatBusinessName(
     return KNOWN_OFFICIAL_NAMES[domRoot.toLowerCase()];
   }
 
-  // Reject corrupted or contact fragment titles (e.g. "Kruis Tel")
-  if (name && isCorruptedBusinessName(name)) {
+  // Reject corrupted, WAF/bot-wall, or contact fragment titles (e.g. "Radware Page", "Vercel Security Checkpoint", "Kruis Tel")
+  if (name && isCorruptedBusinessName(name, cleanDom)) {
     if (cleanDom) return formatBusinessName(cleanDom);
     return "";
   }

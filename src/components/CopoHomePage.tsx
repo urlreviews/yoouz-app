@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe, ShieldCheck, BedDouble, UtensilsCrossed, Package, Briefcase, Sparkles, ShoppingBag, Car, Cpu } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime, isWafOrBlockTitle, isLoginOrPortalUrl } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
@@ -851,11 +851,13 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       const pDom = extractCleanDomain(p.brandDomain || p.website || p.id);
       return pDom?.toLowerCase() === cleanDom.toLowerCase();
     });
-    const existingValidName = existing?.name && !isDomainStemName(existing.name, cleanDom) && !isFalseSplitOfDomain(existing.name, cleanDom) && !isFalseSplitAgainstText(existing.name, existing.description, cleanDom) && !isGenericSeoSlogan(existing.name, cleanDom) ? existing.name : "";
-    const validPreferred = preferredTitle && !isDomainStemName(preferredTitle, cleanDom) && !isFalseSplitOfDomain(preferredTitle, cleanDom) && !isGenericSeoSlogan(preferredTitle, cleanDom) ? preferredTitle : "";
+    const existingValidName = existing?.name && !isWafOrBlockTitle(existing.name, cleanDom) && !isDomainStemName(existing.name, cleanDom) && !isFalseSplitOfDomain(existing.name, cleanDom) && !isFalseSplitAgainstText(existing.name, existing.description, cleanDom) && !isGenericSeoSlogan(existing.name, cleanDom) ? existing.name : "";
+    const validPreferred = preferredTitle && !isWafOrBlockTitle(preferredTitle, cleanDom) && !isDomainStemName(preferredTitle, cleanDom) && !isFalseSplitOfDomain(preferredTitle, cleanDom) && !isGenericSeoSlogan(preferredTitle, cleanDom) ? preferredTitle : "";
+    const safeWebsiteUrl = (websiteUrl && !isLoginOrPortalUrl(websiteUrl)) ? websiteUrl : "";
+    const safeExistingWebsite = (existing?.website && !isLoginOrPortalUrl(existing.website)) ? existing.website : "";
     const hasSpecificUrlPath = (() => {
       try {
-        const u = new URL(websiteUrl || "");
+        const u = new URL(safeWebsiteUrl || "");
         const segs = u.pathname.split("/").filter(Boolean);
         return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
       } catch { return false; }
@@ -879,14 +881,16 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       ? {
           ...existing,
           name: officialName || existing.name,
+          ...(validPreferred ? { selectedName: validPreferred } as any : {}),
           category: !seededCat.isFallback ? seededCat.specificCategory : (!isGenericCategory(existing.category) ? existing.category : ""),
           categoryType: seededCat.canonicalId,
           brandDomain: cleanDom,
-          website: websiteUrl || existing.website || `https://${cleanDom}`
+          website: safeWebsiteUrl || safeExistingWebsite || `https://${cleanDom}`
         }
       : {
           id: cleanDom,
           name: officialName,
+          ...(validPreferred ? { selectedName: validPreferred } as any : {}),
           brandDomain: cleanDom,
           category: seededCat.isFallback ? "" : seededCat.specificCategory,
           categoryType: seededCat.canonicalId,
@@ -907,7 +911,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           isOpen: true,
           phone: "",
           email: "",
-          website: websiteUrl || `https://${cleanDom}`,
+          website: safeWebsiteUrl || `https://${cleanDom}`,
           priceRange: "N/A",
           plusCode: "",
           description: "",
@@ -1023,10 +1027,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
         const resolvedDomain = extractCleanDomain(meta.domain || meta.url || "");
         if (resolvedDomain && isValidDomainUrl(resolvedDomain)) {
           const descBrand = extractBrandFromDescription(meta.description, resolvedDomain);
-          const officialBrand = extractOfficialBrandSpellingFromText([meta.siteName, meta.title, meta.description].filter(Boolean).join(" | "), resolvedDomain);
-          const rawMetaName = (meta.siteName && !isDomainDerivedGuess(meta.siteName, resolvedDomain) && !isFalseSplitOfDomain(meta.siteName, resolvedDomain))
-            ? meta.siteName
-            : (meta.title || meta.siteName || descBrand || trimmed);
+          const safeMetaSiteName = meta.siteName && !isWafOrBlockTitle(meta.siteName, resolvedDomain) ? meta.siteName : "";
+          const safeMetaTitle = meta.title && !isWafOrBlockTitle(meta.title, resolvedDomain) ? meta.title : "";
+          const officialBrand = extractOfficialBrandSpellingFromText([safeMetaSiteName, safeMetaTitle, meta.description].filter(Boolean).join(" | "), resolvedDomain);
+          const rawMetaName = (safeMetaSiteName && !isDomainDerivedGuess(safeMetaSiteName, resolvedDomain) && !isFalseSplitOfDomain(safeMetaSiteName, resolvedDomain))
+            ? safeMetaSiteName
+            : (safeMetaTitle || safeMetaSiteName || descBrand || trimmed);
           const hasSpecificUrlPath = (() => {
             try {
               const segs = new URL(meta.url || "").pathname.split("/").filter(Boolean);
@@ -1034,9 +1040,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             } catch { return false; }
           })();
           const mergedMetaName = mergeOfficialBrandSpelling(rawMetaName, officialBrand, resolvedDomain);
+          const safeFormattedMeta = mergedMetaName ? formatBusinessName(mergedMetaName, resolvedDomain, trimmed, { fromWebsite: true, fallbackText: meta.description }) || mergedMetaName : "";
           const officialName = (!hasSpecificUrlPath ? KNOWN_OFFICIAL_NAMES[resolvedDomain] : undefined)
-            || (mergedMetaName ? formatBusinessName(mergedMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description }) || mergedMetaName : "")
-            || formatBusinessName(rawMetaName, resolvedDomain, undefined, { fromWebsite: true, fallbackText: meta.description })
+            || (safeFormattedMeta && !isWafOrBlockTitle(safeFormattedMeta, resolvedDomain) && !isDomainStemName(safeFormattedMeta, resolvedDomain) ? safeFormattedMeta : "")
+            || (!isValidDomainUrl(trimmed) && !isWafOrBlockTitle(trimmed, resolvedDomain) ? trimmed : "")
+            || formatBusinessName(rawMetaName, resolvedDomain, trimmed, { fromWebsite: true, fallbackText: meta.description })
             || descBrand
             || trimmed;
           const resolvedCat = classifyBusinessCategory({
@@ -1045,9 +1053,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             domain: resolvedDomain,
             description: meta.description
           });
+          const safeResolvedWebsite = (meta.url && !isLoginOrPortalUrl(meta.url)) ? meta.url : `https://${resolvedDomain}`;
           const newPlace: Place = {
             id: resolvedDomain,
             name: officialName,
+            ...(!isValidDomainUrl(trimmed) && !isWafOrBlockTitle(trimmed, resolvedDomain) ? { selectedName: trimmed } as any : {}),
             brandDomain: resolvedDomain,
             category: resolvedCat.isFallback ? "" : resolvedCat.specificCategory,
             categoryType: resolvedCat.canonicalId,
@@ -1068,7 +1078,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             isOpen: true,
             phone: meta.phone || "",
             email: meta.email || "",
-            website: meta.url || `https://${resolvedDomain}`,
+            website: safeResolvedWebsite,
             priceRange: "N/A",
             plusCode: "",
             description: meta.description || "",

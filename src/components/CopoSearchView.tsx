@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Search, Globe, Loader2, Camera, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -762,10 +762,10 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         openingHours: preloadedMeta?.openingHours || "Available 24/7",
         isOpen: true,
         phone: preloadedMeta?.phone || "",
-        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org')) ? preloadedMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
+        website: (preloadedMeta?.url && isValidDomainUrl(preloadedMeta.url) && !preloadedMeta.url.toLowerCase().includes('wikipedia.org') && !isLoginOrPortalUrl(preloadedMeta.url)) ? preloadedMeta.url : (isRealDomain && !cleanUrl.toLowerCase().includes('wikipedia.org') ? `https://${cleanUrl}` : ""),
         priceRange: "N/A",
         plusCode: "",
-        description: preloadedMeta?.description || "",
+        description: (preloadedMeta?.description && !isWafOrBlockDescription(preloadedMeta.description)) ? preloadedMeta.description : "",
         popularKeywords: [],
         amenities: [],
         topDishes: [],
@@ -787,10 +787,11 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
       // 3. Enrich in the background from backend /api/url-metadata to ensure fresh logo/banner/meta/address/phone/hours
       setIsEnriching(true);
       try {
-         const enrichTargetUrl = (preloadedMeta?.url && typeof preloadedMeta.url === "string" && preloadedMeta.url.startsWith("http") && !preloadedMeta.url.includes("wikipedia.org"))
+         const enrichTargetUrl = (preloadedMeta?.url && typeof preloadedMeta.url === "string" && preloadedMeta.url.startsWith("http") && !preloadedMeta.url.includes("wikipedia.org") && !isLoginOrPortalUrl(preloadedMeta.url))
            ? preloadedMeta.url
            : cleanUrl;
-         const queryParam = isRealDomain ? `url=${encodeURIComponent(enrichTargetUrl)}` : `q=${encodeURIComponent(rawQuery)}`;
+         const hintParam = validPreferredName ? `&hintName=${encodeURIComponent(validPreferredName)}` : "";
+         const queryParam = isRealDomain ? `url=${encodeURIComponent(enrichTargetUrl)}${hintParam}` : `q=${encodeURIComponent(rawQuery)}${hintParam}`;
          const resp = await fetch(`/api/url-metadata?${queryParam}`, {
            signal: AbortSignal.timeout(30000)
          });
@@ -825,28 +826,32 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ? data.logo 
                : (isInstantStandaloneLogo ? instantLogo : (domainCleanLogo || (isValidLogo(data.logo) ? data.logo : "") || instantLogo || ""));
              
-             const officialMetaSpelling = extractOfficialBrandSpellingFromText([data.siteName, data.title, data.description].filter(Boolean).join(" | "), discoveredDom);
-             const rawMetaTitle = (data.siteName && !isDomainDerivedGuess(data.siteName, discoveredDom) && !isGenericSeoSlogan(data.siteName, discoveredDom))
-               ? data.siteName
-               : (data.title && !isDomainDerivedGuess(data.title, discoveredDom) && !isGenericSeoSlogan(data.title, discoveredDom) ? data.title : (data.siteName || data.title));
-             const descBrandName = extractBrandFromDescription(data.description, discoveredDom);
+             const safeSiteName = (data.siteName && !isWafOrBlockTitle(data.siteName, discoveredDom)) ? data.siteName : "";
+             const safeTitle = (data.title && !isWafOrBlockTitle(data.title, discoveredDom)) ? data.title : "";
+             const safeDesc = (data.description && !isWafOrBlockDescription(data.description)) ? data.description : "";
+             const officialMetaSpelling = extractOfficialBrandSpellingFromText([safeSiteName, safeTitle, safeDesc].filter(Boolean).join(" | "), discoveredDom);
+             const rawMetaTitle = (safeSiteName && !isDomainDerivedGuess(safeSiteName, discoveredDom) && !isGenericSeoSlogan(safeSiteName, discoveredDom))
+               ? safeSiteName
+               : (safeTitle && !isDomainDerivedGuess(safeTitle, discoveredDom) && !isGenericSeoSlogan(safeTitle, discoveredDom) ? safeTitle : (safeSiteName || safeTitle));
+             const descBrandName = extractBrandFromDescription(safeDesc, discoveredDom);
              const mergedDataName = mergeOfficialBrandSpelling(rawMetaTitle, officialMetaSpelling, discoveredDom);
              const formattedMetaName = mergedDataName
-               || ((descBrandName && isDomainStemName(rawMetaTitle, discoveredDom)) ? descBrandName : formatBusinessName(rawMetaTitle, data.domain || discoveredDom, undefined, { fromWebsite: true, fallbackText: data.description }));
+               || ((descBrandName && isDomainStemName(rawMetaTitle, discoveredDom)) ? descBrandName : formatBusinessName(rawMetaTitle, data.domain || discoveredDom, undefined, { fromWebsite: true, fallbackText: safeDesc }));
+             const safeDataUrl = (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org') && !isLoginOrPortalUrl(data.url)) ? data.url : "";
              const dataHasSpecificPath = (() => {
                try {
-                 const segs = new URL(data.url || enrichTargetUrl || "").pathname.split("/").filter(Boolean);
+                 const segs = new URL(safeDataUrl || enrichTargetUrl || "").pathname.split("/").filter(Boolean);
                  return segs.length > 0 && !(segs.length === 1 && /^[a-z]{2}(?:-[a-z]{2})?$/i.test(segs[0]));
                } catch { return false; }
              })();
-             const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isDomainDerivedGuess(currentPlace.name, discoveredDom) && !isFalseSplitOfDomain(currentPlace.name, discoveredDom) && !isGenericSeoSlogan(currentPlace.name, discoveredDom))
+             const validCurrentName = (!isGenericPlaceName(currentPlace.name) && !isWafOrBlockTitle(currentPlace.name, discoveredDom) && !isDomainDerivedGuess(currentPlace.name, discoveredDom) && !isFalseSplitOfDomain(currentPlace.name, discoveredDom) && !isGenericSeoSlogan(currentPlace.name, discoveredDom))
                ? currentPlace.name
                : "";
              const targetName = (!dataHasSpecificPath && discoveredDom && KNOWN_OFFICIAL_NAMES[discoveredDom])
                || (!dataHasSpecificPath && data.domain && KNOWN_OFFICIAL_NAMES[data.domain])
-               || (formattedMetaName && !isDomainStemName(formattedMetaName, discoveredDom) && !isFalseSplitOfDomain(formattedMetaName, discoveredDom) && !isGenericSeoSlogan(formattedMetaName, discoveredDom) ? formattedMetaName : "")
+               || (formattedMetaName && !isWafOrBlockTitle(formattedMetaName, discoveredDom) && !isDomainStemName(formattedMetaName, discoveredDom) && !isFalseSplitOfDomain(formattedMetaName, discoveredDom) && !isGenericSeoSlogan(formattedMetaName, discoveredDom) ? formattedMetaName : "")
                || validPreferredName
-               || formattedMetaName
+               || (formattedMetaName && !isWafOrBlockTitle(formattedMetaName, discoveredDom) ? formattedMetaName : "")
                || descBrandName
                || validCurrentName
                || KNOWN_OFFICIAL_NAMES[discoveredDom]
@@ -857,17 +862,15 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
                ...currentPlace,
                id: discoveredDom || currentPlace.id,
                brandDomain: discoveredDom || "",
-               selectedName: validPreferredName || (!isDomainStemName(targetName, discoveredDom) ? targetName : undefined),
-               website: (data.url && isValidDomainUrl(data.url) && !data.url.includes('wikipedia.org')) 
-                 ? data.url 
-                 : (discoveredDom ? `https://${discoveredDom}` : ""),
+               selectedName: validPreferredName || (!isDomainStemName(targetName, discoveredDom) && !isWafOrBlockTitle(targetName, discoveredDom) ? targetName : undefined),
+               website: safeDataUrl || (discoveredDom ? `https://${discoveredDom}` : ""),
                name: targetName || currentPlace.name,
                logoUrl: fetchedLogo || instantLogo,
                avatarUrl: fetchedLogo || instantLogo,
                bannerUrl: fetchedBanner || instantBanner || "",
                ogImage: fetchedBanner || instantBanner || "",
                photos: fetchedBanner ? [fetchedBanner] : (instantBanner ? [instantBanner] : []),
-               description: currentPlace.description || data.description || "",
+               description: (!isWafOrBlockDescription(currentPlace.description) ? currentPlace.description : "") || safeDesc || "",
                category: (currentPlace.category && currentPlace.category !== "Website" && currentPlace.category !== "General") ? currentPlace.category : (data.category || currentPlace.category || "Website"),
                address: (data.address && (!currentPlace.address || currentPlace.address === "Verified Location" || currentPlace.address.startsWith("http"))) ? data.address : (currentPlace.address || data.address || ""),
                city: locationDetails?.city || ((currentPlace.city && currentPlace.city !== "Online" && currentPlace.city !== "Worldwide") ? currentPlace.city : (data.city || currentPlace.city || "")),

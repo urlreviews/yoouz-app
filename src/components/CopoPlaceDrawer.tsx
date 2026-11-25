@@ -55,7 +55,7 @@ import {
 } from "lucide-react";
 import { Place, VideoReview, UserProfile } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, getProxiedImageUrl, getPlaceBannerUrl, getLiveWebsiteBannerUrl, KNOWN_LOADED_BANNERS, prewarmBannerImage, isFaviconUrl, getDomainBrandGradient, isValidImageUrl, isGenericOrPlaceholderLogo, isBadBanner, getCategoryThematicBanner, isWhiteOrInvertedLogo, isCrossBrandPortfolioLogo, checkImageNeedsDarkContrast } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, getDisplayUrlAsDomain, getPlaceSlug, getDisplayViews, formatViewCount, extractCleanDomain, isValidDomainUrl, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, getGoogleMapsDirectionsUrl, getGoogleMapsEmbedUrl, getEffectivePlaceDescription, formatPhoneNumber, isGenericPlaceName, toTitleCase, getReviewTime, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl } from "../utils/placeUtils";
 import { resolveVideoPosterUrl } from "../utils/videoUtils";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
 import { CopoBrandLogo } from "./CopoBrandLogo";
@@ -756,15 +756,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const enrichmentRetryCountRef = useRef(0);
   const discoveryAttemptsRef = useRef(0);
   useEffect(() => {
-    const rawTargetUrl = place.website || (drawerDomain ? `https://${drawerDomain}` : null);
+    const rawTargetUrl = (place.website && !isLoginOrPortalUrl(place.website))
+      ? place.website
+      : (drawerDomain ? `https://${drawerDomain}` : null);
     const cleanTargetUrl = (rawTargetUrl && isValidDomainUrl(rawTargetUrl)) ? rawTargetUrl : null;
     const targetUrl = isYoouzWebsite(cleanTargetUrl) ? "" : cleanTargetUrl;
     const targetKey = targetUrl || (place.name && place.name !== "Yoouz" ? `name:${place.name}` : "");
     
     if (!targetKey) return;
     
-    // If we already successfully fetched data for this key, don't re-run unless it was a partial failure
+    // If we already successfully fetched data for this key, don't re-run unless it was a partial failure or WAF-poisoned
     const isGenericName = !place.name ||
+      isWafOrBlockTitle(place.name, drawerDomain) ||
       place.name === place.brandDomain ||
       place.name === drawerDomain ||
       isDomainStemName(place.name, drawerDomain) ||
@@ -777,6 +780,8 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
     const hasCoreData = Boolean(
       !isGenericName &&
+      !isLoginOrPortalUrl(place.website) &&
+      !isWafOrBlockDescription(place.description) &&
       place.logoUrl && !place.logoUrl.includes('tap/0.png') && !isFaviconUrl(place.logoUrl) &&
       place.bannerUrl && !isBadBanner(place.bannerUrl) && !bannerError &&
       place.address && place.address !== "Verified Location"
@@ -787,6 +792,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     }
 
     const isGenericDesc = !place.description ||
+      isWafOrBlockDescription(place.description) ||
       place.description.includes("Verified photo review destination") ||
       place.description.includes("Verified video review destination") ||
       place.description.includes("Verified Yoouz business listing") ||
@@ -846,10 +852,14 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = bannerError ? "&refresh=true" : "";
+        const refreshParam = (bannerError || isWafOrBlockTitle(place.name, drawerDomain) || isLoginOrPortalUrl(place.website)) ? "&refresh=true" : "";
+        const hintCandidate = ((place as any).selectedName && !isWafOrBlockTitle((place as any).selectedName, drawerDomain))
+          ? String((place as any).selectedName).trim()
+          : (place.name && !isGenericName && !isWafOrBlockTitle(place.name, drawerDomain) && !isValidDomainUrl(place.name) ? place.name.trim() : "");
+        const hintParam = hintCandidate ? `&hintName=${encodeURIComponent(hintCandidate)}` : "";
         const endpoint = targetUrl
-          ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${refreshParam}`
-          : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${refreshParam}`;
+          ? `/api/url-metadata?url=${encodeURIComponent(targetUrl)}${hintParam}${refreshParam}`
+          : `/api/url-metadata?q=${encodeURIComponent(place.name || place.id)}${hintParam}${refreshParam}`;
 
         fetch(endpoint)
           .then((res) => (res.ok ? res.json() : null))
@@ -896,16 +906,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     isFalseSplitAgainstText(place.name, data.description || place.description, resolvedDomainClean)
                   )
                 );
-                const mergedDescText = data.description || place.description;
+                const mergedDescText = (!isWafOrBlockDescription(data.description) ? data.description : "") || (!isWafOrBlockDescription(place.description) ? place.description : "");
+                const safeDataSiteName = data.siteName && !isWafOrBlockTitle(data.siteName, resolvedDomainClean) ? data.siteName : "";
+                const safeDataTitle = data.title && !isWafOrBlockTitle(data.title, resolvedDomainClean) ? data.title : "";
                 const officialMetaSpelling = extractOfficialBrandSpellingFromText(
-                  [data.siteName, data.title, mergedDescText].filter(Boolean).join(" | "),
+                  [safeDataSiteName, safeDataTitle, mergedDescText].filter(Boolean).join(" | "),
                   resolvedDomainClean
                 );
-                const rawMetaName = (data.siteName && !isDomainDerivedGuess(data.siteName, resolvedDomainClean) && !isFalseSplitOfDomain(data.siteName, resolvedDomainClean))
-                  ? data.siteName
-                  : ((data.title && !isDomainDerivedGuess(data.title, resolvedDomainClean) && !isFalseSplitOfDomain(data.title, resolvedDomainClean))
-                    ? data.title
-                    : (data.title && !isDomainStemName(data.title, resolvedDomainClean) ? data.title : (data.siteName || data.title)));
+                const rawMetaName = (safeDataSiteName && !isDomainDerivedGuess(safeDataSiteName, resolvedDomainClean) && !isFalseSplitOfDomain(safeDataSiteName, resolvedDomainClean))
+                  ? safeDataSiteName
+                  : ((safeDataTitle && !isDomainDerivedGuess(safeDataTitle, resolvedDomainClean) && !isFalseSplitOfDomain(safeDataTitle, resolvedDomainClean))
+                    ? safeDataTitle
+                    : (safeDataTitle && !isDomainStemName(safeDataTitle, resolvedDomainClean) ? safeDataTitle : (safeDataSiteName || safeDataTitle)));
                 const descExtractedBrand = extractBrandFromDescription(mergedDescText, resolvedDomainClean);
                 const camelExtractedBrand = extractCamelCaseBrandFromText(mergedDescText, resolvedDomainClean);
                 const resolvedTitle = officialMetaSpelling
@@ -913,16 +925,16 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                     ? descExtractedBrand
                     : (camelExtractedBrand && isDomainStemName(rawMetaName, resolvedDomainClean))
                     ? camelExtractedBrand
-                    : (rawMetaName ? formatBusinessName(rawMetaName, resolvedDomainClean, undefined, { fromWebsite: true, fallbackText: mergedDescText }) : (descExtractedBrand || camelExtractedBrand || "")));
-                const validSelectedName = ((place as any).selectedName && !isDomainDerivedGuess((place as any).selectedName, resolvedDomainClean) && !isFalseSplitOfDomain((place as any).selectedName, resolvedDomainClean) && !isFalseSplitAgainstText((place as any).selectedName, mergedDescText, resolvedDomainClean))
+                    : (rawMetaName ? formatBusinessName(rawMetaName, resolvedDomainClean, (place as any).selectedName, { fromWebsite: true, fallbackText: mergedDescText }) : (descExtractedBrand || camelExtractedBrand || "")));
+                const validSelectedName = ((place as any).selectedName && !isWafOrBlockTitle((place as any).selectedName, resolvedDomainClean) && !isDomainDerivedGuess((place as any).selectedName, resolvedDomainClean) && !isFalseSplitOfDomain((place as any).selectedName, resolvedDomainClean) && !isFalseSplitAgainstText((place as any).selectedName, mergedDescText, resolvedDomainClean))
                   ? (formatBusinessName((place as any).selectedName, resolvedDomainClean, undefined, { fromWebsite: true, fallbackText: mergedDescText }) || (place as any).selectedName)
                   : "";
-                const cleanedCurrentPlaceName = (!isGenericName && !isSearchPhraseName && place.name && !isDomainDerivedGuess(place.name, resolvedDomainClean))
+                const cleanedCurrentPlaceName = (!isGenericName && !isSearchPhraseName && place.name && !isWafOrBlockTitle(place.name, resolvedDomainClean) && !isDomainDerivedGuess(place.name, resolvedDomainClean))
                   ? (formatBusinessName(place.name, resolvedDomainClean, undefined, { fromWebsite: true, fallbackText: mergedDescText }) || place.name)
                   : "";
                 const bestPlaceName = (resolvedDomainClean && KNOWN_OFFICIAL_NAMES[resolvedDomainClean])
                   || officialMetaSpelling
-                  || (resolvedTitle && !isDomainStemName(resolvedTitle, resolvedDomainClean) && !isFalseSplitOfDomain(resolvedTitle, resolvedDomainClean) ? resolvedTitle : null)
+                  || (resolvedTitle && !isWafOrBlockTitle(resolvedTitle, resolvedDomainClean) && !isDomainStemName(resolvedTitle, resolvedDomainClean) && !isFalseSplitOfDomain(resolvedTitle, resolvedDomainClean) ? resolvedTitle : null)
                   || (descExtractedBrand && /[\p{Ll}][\p{Lu}]/u.test(descExtractedBrand) ? descExtractedBrand : null)
                   || (camelExtractedBrand ? camelExtractedBrand : null)
                   || resolvedTitle

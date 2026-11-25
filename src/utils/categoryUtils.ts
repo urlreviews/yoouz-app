@@ -396,19 +396,29 @@ function classifyFromPrimaryIdentity(cleanDom: string, name: string): CategoryCl
     return makeClassification("services", "Education & Learning", "Education", "high");
   }
 
-  // 2. Finance, Venture Capital & Investment Firms (Domain TLD or Name explicitly states VC/Ventures/Capital/Investments/Bank)
+  // 2a. Banks & Credit Unions (handles compound domains like bankjerusalem.co.il, bankleumi.co.il, deutschebank.de + multilingual bank names)
+  if (
+    /^(?:bank|banque|banco|banca)[a-z0-9-]{2,}|[a-z0-9-]{2,}(?:bank|banque|banco|banca|banken)$/i.test(domRoot) ||
+    /\b(bank|banque|banco|banca|credit\s+union|savings\s+bank|central\s+bank)\b/i.test(identityText) ||
+    /(?:^|[\s\-"'׳״])(בנק|בנקאות|بنك|مصرف|банк|銀行|银行)(?:$|[\s\-"'׳״])/i.test(identityText)
+  ) {
+    return makeClassification("services", "Banking & Finance", "Finance", "high");
+  }
+
+  // 2b. Finance, Venture Capital & Investment Firms (Domain TLD or Name explicitly states VC/Ventures/Capital/Investments)
   if (
     /\.vc$|\.ventures$|\.capital$/i.test(cleanDom) ||
     /(ventures?|capital|vc|equity|invest(?:ments?)?|angel)\.(com|co|io|be|in|uk|org|fr|de|il|co\.il)$/i.test(cleanDom) ||
-    /\b(venture capital|ventures|venture\s+stars|vc\b|angel\s+invest|sv\s+angel|investments?|capital\s+partners|private\s+equity|asset\s+management|bank|credit\s+union)\b/i.test(identityText)
+    /\b(venture capital|ventures|venture\s+stars|vc\b|angel\s+invest|sv\s+angel|investments?|capital\s+partners|private\s+equity|asset\s+management)\b/i.test(identityText)
   ) {
     return makeClassification("services", "Finance & Venture Capital", "Finance", "high");
   }
 
-  // 3. Hotels, Resorts, Hostels, Motels & Airlines (handles plurals + compound domains like allhotelsdubai.com, istanbulhotelturkey.com)
+  // 3. Hotels, Resorts, Hostels, Motels & Airlines (handles plurals + compound domains like allhotelsdubai.com, istanbulhotelturkey.com + multilingual)
   if (
     /(hotels?|resorts?|hostels?|motels?|aparthotel|suites|airlines?|airways)/i.test(domRoot) ||
-    /\b(hotels?|h[oô]tels?|resorts?|hostels?|motels?|suites?|aparthotel|guesthouse|bed\s*(?:&|and)\s*breakfast|airlines?|airways?)\b/i.test(identityText)
+    /\b(hotels?|h[oô]tels?|resorts?|hostels?|motels?|suites?|aparthotel|guesthouse|bed\s*(?:&|and)\s*breakfast|airlines?|airways?)\b/i.test(identityText) ||
+    /(?:^|[\s\-"'׳״])(מלון|מלונות|فندق|отель|ホテル|酒店)(?:$|[\s\-"'׳״])/i.test(identityText)
   ) {
     const isTravel = /(airlines?|airways?)/i.test(identityText);
     const isResort = /resorts?/i.test(identityText);
@@ -473,10 +483,17 @@ function classifyFromMetadataText(cleanDom: string, name: string, description: s
   const combined = [cleanDom, name, description, keywords].join(" ").toLowerCase();
   if (!combined.trim()) return null;
 
-  // 1. Venture Capital / Investment / Private Equity / Banking
+  // 1a. Banking & Financial Institutions (English + multilingual)
   if (
-    /\b(venture capital|seed fund|seed[- ]stage|early[- ]stage invest|pre[- ]seed|series a|private equity|portfolio management|investment firm|investment fund|investment group|angel invest|venture firm|venture studio|venture creation|venture scale|b2b startups|back founders|backs.*founders|invest(?:s|ing)?\s+(?:in\s+)?(?:early[- ]stage|founders|startups|seed|high[- ]growth|tech(?:nology)?\s+companies)|sfdr|financement non-dilutif)\b/i.test(combined) ||
-    /\b(banking|bnp paribas|credit union|wealth management|mortgage lender|insurance provider)\b/i.test(combined)
+    /\b(banking|bnp paribas|credit union|wealth management|mortgage lender|insurance provider)\b/i.test(combined) ||
+    /(בנקאות|משכנתאות|הלוואות|פיקדונות|פיננסיים|חיסכון ארוך טווח|בנק\s)/i.test(combined)
+  ) {
+    return makeClassification("services", "Banking & Finance", "Finance", "medium");
+  }
+
+  // 1b. Venture Capital / Investment / Private Equity
+  if (
+    /\b(venture capital|seed fund|seed[- ]stage|early[- ]stage invest|pre[- ]seed|series a|private equity|portfolio management|investment firm|investment fund|investment group|angel invest|venture firm|venture studio|venture creation|venture scale|b2b startups|back founders|backs.*founders|invest(?:s|ing)?\s+(?:in\s+)?(?:early[- ]stage|founders|startups|seed|high[- ]growth|tech(?:nology)?\s+companies)|sfdr|financement non-dilutif)\b/i.test(combined)
   ) {
     return makeClassification("services", "Finance & Venture Capital", "Finance", "medium");
   }

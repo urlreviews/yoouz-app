@@ -34,7 +34,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName, areDomainAliases } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl, areDomainAliases } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -108,12 +108,7 @@ async function scrapeWithFirecrawl(url: string) {
     });
     if (directResp.ok) {
       const html = await directResp.text();
-      const lower = html.toLowerCase();
-      const isBlocked = lower.includes("attention required! | cloudflare") ||
-                        lower.includes("sorry, you have been blocked") ||
-                        lower.includes("access denied") ||
-                        lower.includes("challenge-platform");
-      if (!isBlocked && html.length > 500) {
+      if (!isSecurityShieldHtml(html, directResp.status) && html.length > 500) {
         return { html, metadata: {} };
       }
     }
@@ -445,6 +440,12 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("sorry_you_have_been_blocked") ||
       decoded.includes("unable_to_access") ||
       decoded.includes("challenge") ||
+      decoded.includes("radware") ||
+      decoded.includes("shieldsquare") ||
+      decoded.includes("perfdrive") ||
+      decoded.includes("checkpoint") ||
+      decoded.includes("captcha") ||
+      decoded.includes("/pages/image.png") ||
       decoded.includes("403") ||
       decoded.includes("access_denied") ||
       decoded.includes("thum.io") ||
@@ -1171,8 +1172,83 @@ async function calculatePlaceRatingFromDb(placeId: string, placeName?: string): 
 
 // persistToDb & getLockedSavedPlaceRecord are defined inside startServer() where domain helpers are in scope.
 
-function isCorruptedBusinessNameServer(name?: string | null): boolean {
+/**
+ * Unified enterprise WAF / bot-protection / security-checkpoint / loader-stub HTML detector.
+ * Detects Radware (AppWall/Bot Manager/ShieldSquare), Vercel Security Checkpoint, Cloudflare,
+ * Imperva/Incapsula, Akamai, AWS WAF, DataDome, PerimeterX, Sucuri, F5 BIG-IP, FortiGuard,
+ * DDoS-Guard, Kasada, Reblaze, SiteGround, and thin JS loader/error pages — even on HTTP 200.
+ */
+function isSecurityShieldHtml(html?: string | null, status?: number, domain?: string | null): boolean {
+  if (typeof status === "number" && (status === 401 || status === 403 || status === 406 || status === 429 || status === 502 || status === 503 || status >= 520)) {
+    return true;
+  }
+  if (!html || typeof html !== "string") return true;
+  const trimmed = html.trim();
+  if (trimmed.length < 200) return true;
+  const lower = trimmed.toLowerCase();
+
+  // Check extracted <title> directly against our unified WAF/block title detector
+  const titleMatch = trimmed.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const pageTitle = titleMatch ? titleMatch[1].replace(/\s+/g, " ").trim() : "";
+  if (pageTitle && isWafOrBlockTitle(pageTitle, domain)) {
+    return true;
+  }
+
+  // Check meta description for explicit WAF/loader stubs (e.g. Radware "Loader page.")
+  const descMatch = trimmed.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']+)["']/i)
+    || trimmed.match(/<meta[^>]+content=["']([^"']+)["'][^>]*name=["']description["']/i);
+  if (descMatch && descMatch[1] && isWafOrBlockDescription(descMatch[1])) {
+    return true;
+  }
+
+  // Enterprise WAF / Bot-Wall HTML fingerprints
+  if (
+    lower.includes("sgcaptcha") ||
+    lower.includes("cf-browser-verification") ||
+    lower.includes("cf-challenge-running") ||
+    lower.includes("challenge-platform") ||
+    lower.includes("blocked by cloudflare") ||
+    lower.includes("attention required! | cloudflare") ||
+    lower.includes("<title>just a moment") ||
+    lower.includes("<title>attention required") ||
+    lower.includes("<title>radware") ||
+    lower.includes("captcha.perfdrive.com") ||
+    lower.includes("shieldsquare") ||
+    lower.includes("radware bot manager") ||
+    lower.includes("vercel security checkpoint") ||
+    lower.includes("/.well-known/vercel/security") ||
+    lower.includes("_vercel/security") ||
+    lower.includes("_incapsula_resource") ||
+    lower.includes("incapsula incident") ||
+    lower.includes("pardon our interruption") ||
+    lower.includes("datadome") ||
+    lower.includes("perimeterx") ||
+    lower.includes("px-captcha") ||
+    lower.includes("sucuri website firewall") ||
+    lower.includes("ddos-guard") ||
+    lower.includes("fortiguard") ||
+    lower.includes("the requested url was rejected") ||
+    lower.includes("you have been blocked") ||
+    lower.includes("sorry, you have been blocked") ||
+    lower.includes("access to this page has been denied") ||
+    lower.includes("access was denied") ||
+    lower.includes("checking if the site connection is secure") ||
+    lower.includes("target url returned error") ||
+    lower.includes("<title>error 403") ||
+    lower.includes("<title>error 429") ||
+    lower.includes("<title>error 503") ||
+    (lower.includes("ray id:") && (lower.includes("cloudflare") || lower.includes("blocked"))) ||
+    (lower.includes("enable javascript") && (lower.includes("cloudflare") || lower.includes("cookies") || lower.length < 8000)) ||
+    (lower.includes("access denied") && (lower.includes("reference #") || lower.includes("edgesuite") || lower.length < 4000))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isCorruptedBusinessNameServer(name?: string | null, domain?: string | null): boolean {
   if (!name) return false;
+  if (isWafOrBlockTitle(name, domain)) return true;
   const trimmed = name.trim();
   const lower = trimmed.toLowerCase();
   if (/^(st-)?kruis\s*tel$/i.test(lower)) return true;
@@ -35240,7 +35316,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     
     console.log(`[API] Resolving business query: "${cleanQ}" (Engine: Extreme Google-Only Discovery Engine)`);
 
-    const cacheKey = cleanQ.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Unicode-safe cache key so non-Latin queries (Hebrew, Arabic, CJK, Cyrillic) NEVER collide on ""
+    const cacheKey = cleanQ.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') || cleanQ.toLowerCase();
     if (forceRefresh || forceBanner) {
       BUSINESS_QUERY_CACHE.delete(cacheKey);
     }
@@ -35322,13 +35399,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               (cachedBanner.toLowerCase().includes('chipotle') && !rowId.toLowerCase().includes('chipotle'));
             const isDisallowedCachedHost = isDisallowedNonOfficialHost(rowId, cleanQ) || /^domain\s+details\s+page$/i.test(rowName.trim());
 
-            const isMissingDetails = ((!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.'))) || isBadCachedBanner;
+            const isMissingDetails = ((!row.address || row.address === "Online" || row.address === "Verified Location") && !parsedData.phone && !parsedData.email && (!parsedData.description || parsedData.description.includes('is a verified business on Yoouz.') || isWafOrBlockDescription(parsedData.description))) || isBadCachedBanner || isWafOrBlockTitle(rowName, rowId) || isLoginOrPortalUrl(parsedData.website);
 
             if (isFabricatedNameDomain || isDisallowedCachedHost) {
               console.info(`[Database Cache] Purged invalid/broker domain: ${rowId}`);
               bunnyDb.execute({ sql: `DELETE FROM places WHERE id = ?`, args: [rowId] }).catch(() => {});
             } else if (isMissingDetails || isGeneric || isFalseSplit) {
-              console.info(`[Database Cache] Ignored low-quality or split cache for: ${rowName}`);
+              console.info(`[Database Cache] Ignored low-quality, WAF-poisoned, or split cache for: ${rowName}`);
             } else {
               console.log(`[Global Brain Cache Hit] Serving result for: ${cleanQ} -> ${rowId}`);
                 const officialDescBrand = extractOfficialBrandSpellingFromText(parsedData.description, rowId);
@@ -35797,17 +35874,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     if (discoveredUrl) {
       logSearchIntel(cleanQ, cleanDomainName(discoveredUrl), "resolved_by_discovery", { source: "official_discovery_engine" });
       let discoveredDom = cleanDomainName(discoveredUrl);
+      // Never lock onto a WAF-protected login/portal subdomain or path (e.g. services.bankjerusalem.co.il/Pages/Login.aspx)
+      if (discoveredDom && isLoginOrPortalUrl(discoveredUrl)) {
+        discoveredUrl = `https://www.${discoveredDom}`;
+        discoveredIsSpecificEntityPage = false;
+      }
       if (discoveredDom && discoveredDom.includes('.') && !isDisallowedNonOfficialHost(discoveredDom, cleanQ)) {
         const ddgOfficialSpelling = extractOfficialBrandSpellingFromText(`${discoveredDdgTitle} | ${discoveredDdgSnippet}`, discoveredDom);
         const rawDdgBest = discoveredDdgTitle ? selectBestTitleSegmentServer(discoveredDdgTitle, discoveredDom) : "";
         const mergedDdgName = mergeOfficialBrandSpellingServer(rawDdgBest, ddgOfficialSpelling, discoveredDom);
-        const ddgFormattedFromSearch = mergedDdgName
-          ? formatBusinessName(mergedDdgName, discoveredDom, undefined, { fromWebsite: true, fallbackText: discoveredDdgSnippet })
+        const ddgFormattedFromSearch = mergedDdgName && !isWafOrBlockTitle(mergedDdgName, discoveredDom)
+          ? formatBusinessName(mergedDdgName, discoveredDom, cleanQ, { fromWebsite: true, fallbackText: discoveredDdgSnippet })
           : "";
         const knownForDom = !discoveredIsSpecificEntityPage ? KNOWN_OFFICIAL_NAMES[discoveredDom] : undefined;
-        let hasVerifiedScTitle = Boolean(knownForDom || ddgOfficialSpelling || (ddgFormattedFromSearch && !isDomainStemName(ddgFormattedFromSearch, discoveredDom) && !isFalseSplitOfDomain(ddgFormattedFromSearch, discoveredDom)));
-        let scTitle = knownForDom || ddgFormattedFromSearch || ddgOfficialSpelling || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet });
-        let scDesc = discoveredDdgSnippet || `${scTitle} is a verified business on Yoouz.`;
+        let hasVerifiedScTitle = Boolean(knownForDom || ddgOfficialSpelling || (ddgFormattedFromSearch && !isWafOrBlockTitle(ddgFormattedFromSearch, discoveredDom) && !isDomainStemName(ddgFormattedFromSearch, discoveredDom) && !isFalseSplitOfDomain(ddgFormattedFromSearch, discoveredDom)));
+        const cleanQueryFallback = (!isWafOrBlockTitle(cleanQ, discoveredDom) && !isGenericPlaceNameServer(cleanQ) && !cleanQ.includes('.')) ? cleanQ : "";
+        let scTitle = knownForDom
+          || (ddgFormattedFromSearch && !isWafOrBlockTitle(ddgFormattedFromSearch, discoveredDom) ? ddgFormattedFromSearch : "")
+          || ddgOfficialSpelling
+          || cleanQueryFallback
+          || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet });
+        let scDesc = (discoveredDdgSnippet && !isWafOrBlockDescription(discoveredDdgSnippet)) ? discoveredDdgSnippet : `${scTitle} is a verified business on Yoouz.`;
         let scImage = "";
         let scAddress = "";
         let scCity = "Online";
@@ -35824,7 +35911,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           const fastResult: ResolvedBusinessData = {
             domain: discoveredDom,
             websiteUrl: discoveredUrl,
-            name: scTitle || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet }),
+            name: scTitle || cleanQueryFallback || formatBusinessName(cleanQ, discoveredDom, undefined, { fallbackText: discoveredDdgSnippet }),
             category: scCategory || detectedCategory,
             address: "",
             city: "Online",
@@ -35850,12 +35937,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           let scrapeMetadata: any = null;
           
           const scrapeData = await scrapeWithFirecrawl(discoveredUrl).catch(() => null);
-          if (scrapeData && scrapeData.html) {
+          if (scrapeData && scrapeData.html && !isSecurityShieldHtml(scrapeData.html, 200, discoveredDom)) {
             scHtml = scrapeData.html;
             scrapeMetadata = scrapeData.metadata;
           } else {
             console.log(`[Direct Fetch Fallback] Fetching HTML for: ${discoveredUrl}`);
-            for (const candFetchUrl of Array.from(new Set([discoveredUrl, `https://${discoveredDom}`, `https://www.${discoveredDom}`]))) {
+            const directCandidates = Array.from(new Set([
+              ...(isLoginOrPortalUrl(discoveredUrl) ? [] : [discoveredUrl]),
+              `https://www.${discoveredDom}`,
+              `https://${discoveredDom}`
+            ]));
+            for (const candFetchUrl of directCandidates) {
               try {
                 const directResp = await fetch(candFetchUrl, {
                   headers: {
@@ -35874,7 +35966,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
                 if (directResp.ok) {
                   const candidateHtml = await directResp.text();
-                  if (candidateHtml && candidateHtml.length > 500 && !isParkedOrBrokerPage(redirFetchUrl, candidateHtml, "", cleanQ) && !candidateHtml.toLowerCase().includes('<title>attention required') && !candidateHtml.toLowerCase().includes('<title>just a moment')) {
+                  if (candidateHtml && candidateHtml.length > 500 && !isParkedOrBrokerPage(redirFetchUrl, candidateHtml, "", cleanQ) && !isSecurityShieldHtml(candidateHtml, directResp.status, discoveredDom)) {
                     scHtml = candidateHtml;
                     break;
                   }
@@ -35885,8 +35977,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             }
           }
 
-          if (!scHtml || scHtml.length < 500) {
-            for (const jinaUrl of [`https://r.jina.ai/https://${discoveredDom}`, `https://r.jina.ai/https://www.${discoveredDom}`]) {
+          if (!scHtml || scHtml.length < 500 || isSecurityShieldHtml(scHtml, 200, discoveredDom)) {
+            scHtml = "";
+            for (const jinaUrl of [`https://r.jina.ai/https://www.${discoveredDom}`, `https://r.jina.ai/https://${discoveredDom}`]) {
               try {
                 const jinaResp = await fetch(jinaUrl, {
                   headers: {
@@ -35897,7 +35990,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
                 if (jinaResp.ok) {
                   const jinaHtml = await jinaResp.text();
-                  if (jinaHtml && jinaHtml.length >= 500 && !isParkedOrBrokerPage(discoveredUrl, jinaHtml, "", cleanQ) && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
+                  if (jinaHtml && jinaHtml.length >= 500 && !isParkedOrBrokerPage(discoveredUrl, jinaHtml, "", cleanQ) && !isSecurityShieldHtml(jinaHtml, jinaResp.status, discoveredDom)) {
                     scHtml = jinaHtml;
                     break;
                   }
@@ -36165,11 +36258,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (rawQuery.startsWith('http://') || rawQuery.startsWith('https://')) {
         try {
           const parsedIn = new URL(rawQuery);
-          if (parsedIn.pathname && parsedIn.pathname !== '/' && parsedIn.pathname.length > 1) {
+          if (parsedIn.pathname && parsedIn.pathname !== '/' && parsedIn.pathname.length > 1 && !isLoginOrPortalUrl(rawQuery)) {
             specificTargetUrl = rawQuery;
           }
         } catch {}
       }
+
+      // Optional clean business name hint passed from search suggestions dropdown (e.g. "בנק ירושלים")
+      const rawHintName = String(req.query.hintName || '').trim();
+      const safeHintName = (rawHintName && !isWafOrBlockTitle(rawHintName) && !isGenericPlaceNameServer(rawHintName) && !rawHintName.includes('://'))
+        ? rawHintName
+        : "";
 
       // If the query is an explicit URL or domain with a dot, strictly normalize to canonical clean domain
       if (rawQuery.includes('.') && (!rawQuery.includes(' ') || rawQuery.startsWith('http'))) {
@@ -36186,7 +36285,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       const canonicalDedupeQuery = (rawQuery.includes('.') && !rawQuery.includes(' '))
         ? (cleanDomainName(rawQuery) || rawQuery.toLowerCase())
         : rawQuery.toLowerCase().replace(/\s+/g, ' ').trim();
-      const dedupeKey = `${canonicalDedupeQuery}::ro=${resolveOnly}::fb=${forceBanner}::url=${specificTargetUrl}`;
+      const dedupeKey = `${canonicalDedupeQuery}::ro=${resolveOnly}::fb=${forceBanner}::url=${specificTargetUrl}::hn=${safeHintName.toLowerCase()}`;
 
       const existingInFlight = IN_FLIGHT_URL_METADATA.get(dedupeKey);
       if (existingInFlight) {
@@ -36295,13 +36394,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               (isFalseSplitOfDomain(row.name, matchedDom) ||
                isFalseSplitAgainstText(row.name, pData.description, matchedDom))
             );
+            const isCachedWafOrPortal = Boolean(
+              isWafOrBlockTitle(row.name, matchedDom) ||
+              isWafOrBlockDescription(pData.description) ||
+              isLoginOrPortalUrl(pData.website) ||
+              isBadBanner(row.bannerUrl)
+            );
             const isCachedNameStem = (
               isDomainStemName(row.name, matchedDom) ||
-              isCorruptedBusinessNameServer(row.name) ||
+              isCorruptedBusinessNameServer(row.name, matchedDom) ||
+              isCachedWafOrPortal ||
               isCachedFalseSplit ||
               (cachedDescBrand && row.name && !row.name.includes(" ") && !row.name.toLowerCase().includes(cachedDescBrand.toLowerCase()))
             ) && !(cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey]);
-            if (matchedDom && isExactMatch && !isCachedNameStem && !isBadCachedBanner && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && rawCachedLogo) {
+            if (matchedDom && isExactMatch && !isCachedNameStem && !isCachedWafOrPortal && !isBadCachedBanner && !cachedBanner.includes('#') && !cachedBanner.includes('paint0_linear') && rawCachedLogo) {
               console.log("[RETURN PATH 0 - DB CACHE HIT]:", matchedDom);
               logSearchIntel(rawQuery, matchedDom, "db_cache_hit");
               const resolvedEntity = (cleanDomKey && KNOWN_OFFICIAL_NAMES[cleanDomKey])
@@ -36374,12 +36480,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             || ((KNOWN_BRAND_LOGOS[realDomain] && !KNOWN_BRAND_LOGOS[realDomain].includes("/api/favicon")) ? KNOWN_BRAND_LOGOS[realDomain] : "")
             || ((resolvedEntity.logo && isImmutablePersistedLogo(resolvedEntity.logo, realDomain, rawEntityBanner)) ? resolvedEntity.logo : "");
 
-          // Always attempt to extract the authentic official logo from the website itself before falling back to the banner!
-          if (!rawEntityLogo && !resolveOnly) {
+          // Never keep a login/portal subdomain URL (e.g. services.bankjerusalem.co.il/Pages/Login.aspx) as the business website
+          if (resolvedEntity.websiteUrl && isLoginOrPortalUrl(resolvedEntity.websiteUrl)) {
+            resolvedEntity.websiteUrl = `https://www.${realDomain}`;
+          }
+
+          // Always attempt to extract the authentic official logo & hero banner from the real homepage (skipping login portals & WAF pages!)
+          if ((!rawEntityLogo || !rawEntityBanner) && !resolveOnly) {
             const siteUrlsToTry = Array.from(new Set([
-              ...(resolvedEntity.websiteUrl && resolvedEntity.websiteUrl.startsWith('http') ? [resolvedEntity.websiteUrl] : []),
               `https://www.${realDomain}`,
-              `https://${realDomain}`
+              `https://${realDomain}`,
+              ...(resolvedEntity.websiteUrl && resolvedEntity.websiteUrl.startsWith('http') && !isLoginOrPortalUrl(resolvedEntity.websiteUrl) ? [resolvedEntity.websiteUrl] : [])
             ]));
             for (const trySiteUrl of siteUrlsToTry) {
               try {
@@ -36389,24 +36500,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                     "Accept": "text/html,application/xhtml+xml"
                   },
-                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
+                  signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined
                 });
                 const finalSiteUrl = siteResp.url || trySiteUrl;
                 const finalSiteHost = cleanDomainName(finalSiteUrl);
-                if (isDisallowedNonOfficialHost(finalSiteHost, rawQuery) || isParkedOrBrokerPage(finalSiteUrl, "", "", rawQuery)) {
+                if (isDisallowedNonOfficialHost(finalSiteHost, rawQuery) || isParkedOrBrokerPage(finalSiteUrl, "", "", rawQuery) || isLoginOrPortalUrl(finalSiteUrl)) {
                   continue;
                 }
                 if (siteResp.ok) {
                   const siteHtml = await siteResp.text();
-                  if (isParkedOrBrokerPage(finalSiteUrl, siteHtml, "", rawQuery)) continue;
+                  if (isParkedOrBrokerPage(finalSiteUrl, siteHtml, "", rawQuery) || isSecurityShieldHtml(siteHtml, siteResp.status, realDomain)) continue;
                   const $site = cheerio.load(siteHtml);
-                  let extractedSiteLogo = extractAuthenticWebsiteLogo($site, siteHtml, siteResp.url || trySiteUrl, realDomain);
-                  if (!extractedSiteLogo || isFaviconUrl(extractedSiteLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)$/i.test(extractedSiteLogo)) {
-                    const cssLogo = await extractStylesheetLogoFallback($site, siteResp.url || trySiteUrl, realDomain);
-                    if (cssLogo) extractedSiteLogo = cssLogo;
-                  }
-                  if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
-                    rawEntityLogo = sanitizeProxy(extractedSiteLogo);
+                  if (!rawEntityLogo) {
+                    let extractedSiteLogo = extractAuthenticWebsiteLogo($site, siteHtml, siteResp.url || trySiteUrl, realDomain);
+                    if (!extractedSiteLogo || isFaviconUrl(extractedSiteLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)$/i.test(extractedSiteLogo)) {
+                      const cssLogo = await extractStylesheetLogoFallback($site, siteResp.url || trySiteUrl, realDomain);
+                      if (cssLogo) extractedSiteLogo = cssLogo;
+                    }
+                    if (extractedSiteLogo && !isGenericOrPlaceholderLogo(extractedSiteLogo)) {
+                      rawEntityLogo = sanitizeProxy(extractedSiteLogo);
+                    }
                   }
                   if (!rawEntityBanner && !lockedFastRec?.bannerUrl) {
                     const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
@@ -36415,19 +36528,35 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                         rawEntityBanner = sanitizeProxy(new URL(ogImg, siteResp.url || trySiteUrl).toString());
                       } catch {}
                     }
+                    // Also check large homepage hero JPG/WebP photos when og:image is absent (e.g. bankjerusalem.co.il)
+                    if (!rawEntityBanner) {
+                      $site('img').each((_: any, el: any) => {
+                        if (rawEntityBanner) return;
+                        const src = ($site(el).attr('src') || $site(el).attr('data-src') || '').trim();
+                        if (!src || src.startsWith('data:') || !/\.(?:jpe?g|webp)(?:\?|$)/i.test(src)) return;
+                        try {
+                          const abs = new URL(src, siteResp.url || trySiteUrl).toString();
+                          if (!isLogoOrIconUrl(abs) && !isBadBanner(abs)) {
+                            rawEntityBanner = sanitizeProxy(abs);
+                          }
+                        } catch {}
+                      });
+                    }
                   }
-                  if ((!resolvedEntity.name || isDomainStemName(resolvedEntity.name, realDomain) || isFalseSplitOfDomain(resolvedEntity.name, realDomain))) {
+                  if ((!resolvedEntity.name || isWafOrBlockTitle(resolvedEntity.name, realDomain) || isDomainStemName(resolvedEntity.name, realDomain) || isFalseSplitOfDomain(resolvedEntity.name, realDomain))) {
                     const sTitle = ($site('meta[property="og:site_name"]').attr('content') || $site('title').first().text() || '').trim();
                     const sDesc = ($site('meta[property="og:description"]').attr('content') || $site('meta[name="description"]').attr('content') || '').trim();
-                    const sOfficial = extractOfficialBrandSpellingFromText(`${sTitle} | ${sDesc}`, realDomain);
-                    const sMerged = mergeOfficialBrandSpellingServer(sTitle, sOfficial, realDomain);
-                    if (sMerged && !isDomainStemName(sMerged, realDomain)) resolvedEntity.name = sMerged;
-                    else if (sOfficial) resolvedEntity.name = sOfficial;
-                    else if (sTitle) {
-                      const fmtSite = formatBusinessName(sTitle, realDomain, undefined, { fromWebsite: true, fallbackText: sDesc });
-                      if (fmtSite && !isDomainStemName(fmtSite, realDomain)) resolvedEntity.name = fmtSite;
+                    if (sTitle && !isWafOrBlockTitle(sTitle, realDomain)) {
+                      const sOfficial = extractOfficialBrandSpellingFromText(`${sTitle} | ${sDesc}`, realDomain);
+                      const sMerged = mergeOfficialBrandSpellingServer(sTitle, sOfficial, realDomain);
+                      if (sMerged && !isWafOrBlockTitle(sMerged, realDomain) && !isDomainStemName(sMerged, realDomain)) resolvedEntity.name = sMerged;
+                      else if (sOfficial && !isWafOrBlockTitle(sOfficial, realDomain)) resolvedEntity.name = sOfficial;
+                      else {
+                        const fmtSite = formatBusinessName(sTitle, realDomain, rawQuery, { fromWebsite: true, fallbackText: sDesc });
+                        if (fmtSite && !isWafOrBlockTitle(fmtSite, realDomain) && !isDomainStemName(fmtSite, realDomain)) resolvedEntity.name = fmtSite;
+                      }
                     }
-                    if ((!resolvedEntity.description || resolvedEntity.description.includes('is a verified business on Yoouz.')) && sDesc) {
+                    if ((!resolvedEntity.description || resolvedEntity.description.includes('is a verified business on Yoouz.') || isWafOrBlockDescription(resolvedEntity.description)) && sDesc && !isWafOrBlockDescription(sDesc)) {
                       resolvedEntity.description = sDesc;
                     }
                   }
@@ -36612,10 +36741,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       try {
         let fetchResponse: any = null;
         const candidateFetchUrls = Array.from(new Set([
-          ...(specificTargetUrl ? [specificTargetUrl] : []),
-          `https://${cleanDomain}`,
+          ...(specificTargetUrl && !isLoginOrPortalUrl(specificTargetUrl) ? [specificTargetUrl] : []),
           `https://www.${cleanDomain}`,
-          url
+          `https://${cleanDomain}`,
+          ...(url && !isLoginOrPortalUrl(url) ? [url] : [])
         ]));
         for (const cUrl of candidateFetchUrls) {
           try {
@@ -36636,7 +36765,14 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               break;
             }
             if (resp.ok) {
-              fetchResponse = resp;
+              const candidateBody = await resp.text();
+              // Inspect HTML *before* accepting — if this URL hit Radware/Vercel/Cloudflare/login wall, keep trying www/apex!
+              if (isSecurityShieldHtml(candidateBody, resp.status, cleanDomain) || isLoginOrPortalUrl(redirectedUrl)) {
+                console.warn(`[UrlMetadata] Skipping WAF/portal response from ${redirectedUrl}`);
+                continue;
+              }
+              fetchResponse = { ok: true, status: resp.status, url: redirectedUrl };
+              html = candidateBody;
               break;
             }
           } catch(eFetch) {}
@@ -36646,7 +36782,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           return {
             status: 200,
             body: {
-              title: rawQuery,
+              title: safeHintName || rawQuery,
               domain: "",
               url: "",
               image: "",
@@ -36657,14 +36793,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           };
         }
         
-        if (fetchResponse && fetchResponse.ok) {
+        if (fetchResponse && fetchResponse.ok && html) {
           finalUrl = fetchResponse.url;
-          html = await fetchResponse.text();
           if (isParkedOrBrokerPage(finalUrl, html, "", rawQuery)) {
             return {
               status: 200,
               body: {
-                title: rawQuery,
+                title: safeHintName || rawQuery,
                 domain: "",
                 url: "",
                 image: "",
@@ -36701,36 +36836,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
 
-        // Precise Security Gate Shield detection (Cloudflare, Akamai, Incapsula, DataDome Block Pages, or HTTP 403/503)
-        const lowerHtmlCheck = (html || "").toLowerCase();
+        // Unified Enterprise Security Gate Shield detection (Radware, Vercel, Cloudflare, Akamai, Incapsula, DataDome, AWS WAF, etc.)
         const isSecurityShield =
           !fetchResponse ||
           !fetchResponse.ok ||
-          fetchResponse.status === 403 ||
-          fetchResponse.status === 429 ||
-          fetchResponse.status === 503 ||
-          lowerHtmlCheck.includes("sgcaptcha") ||
-          lowerHtmlCheck.includes("cf-browser-verification") ||
-          lowerHtmlCheck.includes("cf-challenge-running") ||
-          lowerHtmlCheck.includes("ray id:") ||
-          lowerHtmlCheck.includes("<title>just a moment") ||
-          lowerHtmlCheck.includes("<title>attention required") ||
-          lowerHtmlCheck.includes("you have been blocked") ||
-          lowerHtmlCheck.includes("sorry, you have been blocked") ||
-          lowerHtmlCheck.includes("unable to access") ||
-          lowerHtmlCheck.includes("access was denied") ||
-          lowerHtmlCheck.includes("access denied") ||
-          lowerHtmlCheck.includes("challenge-platform") ||
-          lowerHtmlCheck.includes("blocked by cloudflare") ||
-          lowerHtmlCheck.includes("incapsula") ||
-          lowerHtmlCheck.includes("datadome") ||
-          lowerHtmlCheck.includes("perimeterx") ||
-          lowerHtmlCheck.includes("turnstile") ||
-          (lowerHtmlCheck.includes("enable javascript") && lowerHtmlCheck.includes("cloudflare"));
+          isSecurityShieldHtml(html, fetchResponse.status, cleanDomain);
 
-        // If live website blocked our server with Cloudflare/WAF/403 or failed, first try Jina HTML reader proxy, then Wayback Machine CDX!
+        // If live website blocked our server with WAF/403/429 or failed, try Jina HTML reader proxy, then Wayback Machine CDX — ALWAYS re-validating against WAF pages!
         if (isSecurityShield || !html || html.length < 500) {
-          for (const jinaCandidateUrl of [`https://r.jina.ai/https://${cleanDomain}`, `https://r.jina.ai/https://www.${cleanDomain}`]) {
+          html = "";
+          fetchResponse = null;
+          for (const jinaCandidateUrl of [`https://r.jina.ai/https://www.${cleanDomain}`, `https://r.jina.ai/https://${cleanDomain}`]) {
             try {
               const jinaResp = await fetch(jinaCandidateUrl, {
                 headers: {
@@ -36741,7 +36857,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               });
               if (jinaResp.ok) {
                 const jinaHtml = await jinaResp.text();
-                if (jinaHtml && jinaHtml.length >= 500 && !jinaHtml.toLowerCase().includes("<title>error 403") && !jinaHtml.toLowerCase().includes("target url returned error")) {
+                if (jinaHtml && jinaHtml.length >= 500 && !isSecurityShieldHtml(jinaHtml, jinaResp.status, cleanDomain)) {
                   html = jinaHtml;
                   finalUrl = canonicalBaseUrl;
                   fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
@@ -36752,10 +36868,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
 
-        if (!fetchResponse || !fetchResponse.ok || !html || html.length < 500) {
+        if (!fetchResponse || !fetchResponse.ok || !html || html.length < 500 || isSecurityShieldHtml(html, 200, cleanDomain)) {
+          html = "";
+          fetchResponse = null;
           try {
             const arcSnap = await fetchArchiveMetadata(cleanDomain);
-            if (arcSnap && arcSnap.html && arcSnap.html.length >= 500) {
+            if (arcSnap && arcSnap.html && arcSnap.html.length >= 500 && !isSecurityShieldHtml(arcSnap.html, 200, cleanDomain)) {
               html = arcSnap.html;
               finalUrl = canonicalBaseUrl;
               fetchResponse = { ok: true, status: 200, url: canonicalBaseUrl };
@@ -36765,7 +36883,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           } catch (eArc) {}
         }
 
-        if (fetchResponse && fetchResponse.ok && html && html.length >= 500) {
+        if (fetchResponse && fetchResponse.ok && html && html.length >= 500 && !isSecurityShieldHtml(html, 200, cleanDomain)) {
             try {
               $ = cheerio.load(html);
 
@@ -37836,13 +37954,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 };
               }
               if (
+                isWafOrBlockTitle(title, cleanDomain) ||
                 lowerTitle.includes('consent') || 
                 lowerTitle.includes('cookie') || 
                 lowerTitle.includes('privacy') || 
                 lowerTitle.includes('datenschutz') || 
                 lowerTitle.includes('terms of service') ||
                 lowerTitle.includes('redirect') ||
-                lowerTitle.includes('cloudflare') ||
                 lowerTitle.includes('just a moment') ||
                 lowerTitle.includes('domain details page') ||
                 lowerTitle.includes('domain is for sale') ||
@@ -37852,6 +37970,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               ) {
                 title = '';
                 hasRealExtractedTitle = false;
+              }
+              if (isWafOrBlockDescription(description)) {
+                description = '';
               }
             } catch (cheerioErr) {
               console.error('Cheerio parse error:', cheerioErr);
@@ -37898,19 +38019,41 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         } catch (fallbackErr) {}
       }
 
+      if (isWafOrBlockTitle(title, cleanDomain)) {
+        title = "";
+        hasRealExtractedTitle = false;
+      }
+      if (isWafOrBlockTitle(siteName, cleanDomain)) {
+        siteName = "";
+      }
+      if (isWafOrBlockDescription(description)) {
+        description = "";
+      }
+
       if (!KNOWN_OFFICIAL_NAMES[cleanDomain] && (!title || !hasRealExtractedTitle || cleanDomainName(title) === cleanDomain || isGenericPlaceNameServer(title) || isDomainStemName(title, cleanDomain) || isFalseSplitOfDomain(title, cleanDomain))) {
         const searchSiteMeta = await resolveOfficialSiteMetaFromSearch(cleanDomain).catch(() => null);
-        if (searchSiteMeta && searchSiteMeta.title) {
+        if (searchSiteMeta && searchSiteMeta.title && !isWafOrBlockTitle(searchSiteMeta.title, cleanDomain)) {
           title = searchSiteMeta.title;
           siteName = searchSiteMeta.title;
           hasRealExtractedTitle = true;
-          if (!description && searchSiteMeta.description) {
+          if (!description && searchSiteMeta.description && !isWafOrBlockDescription(searchSiteMeta.description)) {
             description = searchSiteMeta.description;
           }
+        } else if (safeHintName && !isDomainStemName(safeHintName, cleanDomain) && !isFalseSplitOfDomain(safeHintName, cleanDomain)) {
+          // Preserve the dropdown / user-selected business name whenever the site is WAF-blocked or lacks a clean title
+          title = safeHintName;
+          siteName = safeHintName;
+          hasRealExtractedTitle = true;
         } else if (!title) {
           title = cleanDomain;
           siteName = cleanDomain;
         }
+      }
+      // If user selected an explicit clean hintName (e.g. from search dropdown) and we still only have a bare domain stem, prefer hintName
+      if (safeHintName && (!title || isDomainStemName(title, cleanDomain) || isWafOrBlockTitle(title, cleanDomain))) {
+        title = safeHintName;
+        siteName = safeHintName;
+        hasRealExtractedTitle = true;
       }
 
       // High-accuracy fallback titles for major websites
@@ -38120,6 +38263,42 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
 
       // Never use live browser screenshot bots (thum.io/mshots) that capture Cloudflare challenge pages or browser error screens
       if (image && isBadBanner(image)) {
+        image = "";
+      }
+
+      // Live reachability & WAF-shield verification for external banner URLs:
+      // If a WAF-protected site (e.g. Vercel Security Checkpoint 429, Radware, Cloudflare) returns HTML/403/429 for its og:image,
+      // discard the broken URL so we cleanly fall back to /api/brand-banner/:domain instead of rendering a blank black banner.
+      const rejectedBlockedBanners = new Set<string>();
+      const verifyExternalBannerReachable = async (candidateUrl?: string | null): Promise<boolean> => {
+        if (!candidateUrl || typeof candidateUrl !== "string") return false;
+        if (!/^https?:\/\//i.test(candidateUrl)) return true;
+        if (candidateUrl.includes("b-cdn.net") || candidateUrl.includes("unsplash.com") || candidateUrl.includes("wikimedia.org")) return true;
+        try {
+          const imgCheck = await fetch(candidateUrl, {
+            method: "HEAD",
+            redirect: "follow",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+            },
+            signal: AbortSignal.timeout(2500),
+          });
+          const ct = (imgCheck.headers.get("content-type") || "").toLowerCase();
+          if (
+            (imgCheck.status === 401 || imgCheck.status === 403 || imgCheck.status === 404 || imgCheck.status === 410 || imgCheck.status === 429 || imgCheck.status >= 500) ||
+            (imgCheck.ok && ct && !ct.startsWith("image/") && !ct.includes("octet-stream"))
+          ) {
+            console.log(`[BannerVerify] Rejected blocked/non-image banner (${imgCheck.status}, ${ct}): ${candidateUrl}`);
+            rejectedBlockedBanners.add(candidateUrl);
+            return false;
+          }
+        } catch {
+          // Network timeout on HEAD — allow client-side <img> fallback to handle transient timeouts
+        }
+        return true;
+      };
+      if (image && !(await verifyExternalBannerReachable(image))) {
         image = "";
       }
 
@@ -38345,16 +38524,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const knownBrandBanner = (cleanDomain && (KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`]))
               ? sanitizeProxy(KNOWN_BRAND_BANNERS[cleanDomain] || KNOWN_BRAND_BANNERS[`www.${cleanDomain}`])
               : "";
-            const existingImmBanner = [
+            let existingImmBanner = [
               (existingPlaceRs.rows[0] as any).bannerUrl,
               existingDoc.bannerUrl,
               existingDoc.ogImage,
               ...(Array.isArray(existingDoc.photos) ? existingDoc.photos : []),
               lockedSaved?.bannerUrl
-            ].find(isImmutablePersistedBanner) || "";
+            ].find((b) => isImmutablePersistedBanner(b) && !rejectedBlockedBanners.has(String(b || ""))) || "";
+            if (existingImmBanner && (forceRefresh || forceBanner) && !existingImmBanner.includes("b-cdn.net")) {
+              const reachable = await verifyExternalBannerReachable(existingImmBanner);
+              if (!reachable) existingImmBanner = "";
+            }
             const isCustomUploadedBanner = Boolean(existingDoc.customized || (existingImmBanner && existingImmBanner.includes("b-cdn.net")));
             const hasExistingGoodBanner = Boolean(existingImmBanner);
-            // Strictly lock any persisted non-synthetic photo banner even across &refresh=true; only ?forceBanner=true replaces an existing photo banner.
+            // Strictly lock any persisted non-synthetic photo banner even across &refresh=true (unless unreachable/WAF-blocked); only ?forceBanner=true replaces a working photo banner.
             const rawMergedBanner = (!forceBanner && hasExistingGoodBanner)
               ? ((!isCustomUploadedBanner && knownBrandBanner) ? knownBrandBanner : existingImmBanner)
               : (
@@ -38411,18 +38594,33 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               : (mergedCatClassification.isFallback ? "" : mergedCatClassification.specificCategory);
             const resolvedMergedCategoryType = mergedCatClassification.canonicalId;
 
+            const safeMergedWebsite = (finalUrl && !isLoginOrPortalUrl(finalUrl))
+              ? finalUrl
+              : ((existingDoc.website && !isLoginOrPortalUrl(existingDoc.website))
+                  ? existingDoc.website
+                  : (cleanDomain ? `https://${cleanDomain}` : ""));
+            const safeExistingDesc = (existingDoc.description && !isWafOrBlockDescription(existingDoc.description) && !existingDoc.description.includes("is a verified business on Yoouz."))
+              ? existingDoc.description
+              : "";
+            const safeFreshDesc = (description && !isWafOrBlockDescription(description) && !description.includes("is a verified business on Yoouz."))
+              ? description
+              : "";
+            const safeMergedDesc = safeExistingDesc || safeFreshDesc || "";
+
             const mergedDoc = {
               ...autoPlaceDoc,
               ...existingDoc,
               id: matchedRowId,
               name: formattedExistingName,
+              website: safeMergedWebsite,
+              description: safeMergedDesc,
               category: resolvedMergedCategory,
               categoryType: resolvedMergedCategoryType,
               logoUrl: mergedLogo,
               avatarUrl: mergedLogo,
               bannerUrl: mergedBanner,
               ogImage: mergedBanner,
-              photos: mergedBanner ? Array.from(new Set([mergedBanner, ...(existingDoc.photos || [])].filter(p => isImmutablePersistedBanner(p) || p === mergedBanner))) : (existingDoc.photos || []),
+              photos: mergedBanner ? Array.from(new Set([mergedBanner, ...(existingDoc.photos || [])].filter(p => (isImmutablePersistedBanner(p) && !rejectedBlockedBanners.has(String(p || ""))) || p === mergedBanner))) : (existingDoc.photos || []),
               address: mergedAddress,
               city: mergedCity,
               country: mergedCountry,
@@ -38651,6 +38849,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (SPAM_AUTOCOMPLETE_REGEX.test(item.title)) return;
 
           let dom = (cleanDomainName(item.domain || "") || (item.domain || "").toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0]).replace(/^www\d*\./i, "").trim();
+          if (isWafOrBlockTitle(item.title, dom)) return;
           const normTitle = item.title.toLowerCase().trim();
           const compactTitle = normTitle.replace(/[^\p{L}\p{N}]/gu, '');
 
@@ -38727,21 +38926,28 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 try { pData = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {}); } catch {}
                 const hasDot = bDom.includes(".");
                 const descOfficial = hasDot ? extractOfficialBrandSpellingFromText(pData.description, bDom) : null;
-                const rawTitle = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || row.name || bDom;
+                const rawDbName = (row.name && !isWafOrBlockTitle(String(row.name), bDom)) ? String(row.name) : "";
+                if (!rawDbName && !KNOWN_OFFICIAL_NAMES[bDom]) {
+                  continue;
+                }
+                const rawTitle = (hasDot && KNOWN_OFFICIAL_NAMES[bDom]) || rawDbName || bDom;
                 const title = (hasDot && (isFalseSplitOfDomain(rawTitle, bDom) || isFalseSplitAgainstText(rawTitle, pData.description, bDom) || isDomainStemName(rawTitle, bDom)) && descOfficial)
                   ? descOfficial
                   : (formatBusinessName(rawTitle, bDom, undefined, { fromWebsite: true, fallbackText: pData.description }) || rawTitle);
+                const safeDescForCat = (pData.description && !isWafOrBlockDescription(pData.description)) ? pData.description : "";
                 const dbCatInfo = classifyBusinessCategory({
                   rawCategory: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && !isGenericCategory(row.category)) ? row.category : "",
                   name: title,
                   domain: hasDot ? bDom : "",
-                  description: pData.description || ""
+                  description: safeDescForCat
                 });
+                const rawWebsite = row.website || pData.website || "";
+                const safeWebsite = (rawWebsite && !isLoginOrPortalUrl(rawWebsite)) ? rawWebsite : (hasDot ? `https://${bDom}` : undefined);
                 addSuggestion({
                   id: row.id,
                   title,
                   domain: hasDot ? bDom : "",
-                  websiteUrl: row.website || pData.website || (hasDot ? `https://${bDom}` : undefined),
+                  websiteUrl: safeWebsite,
                   logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
                   category: dbCatInfo.isFallback ? "" : dbCatInfo.specificCategory,
                   address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
