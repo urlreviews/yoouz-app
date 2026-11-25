@@ -79,6 +79,23 @@ import { releaseVideoHardwareDecoder } from "../utils/videoUtils";
 import { formatRecordedDate, parseTimestampToMs } from "../utils/dateUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { subscribeAppHealth, resolveAllAppErrors, AppHealthSummary } from "../lib/errorMonitor";
+import {
+  AdminActionMenu,
+  AdminPageHeader,
+  AdminStatCard,
+  AdminEmptyState,
+  AdminModal,
+  ADMIN_SURFACE,
+  ADMIN_SURFACE_SUBTLE,
+  ADMIN_BTN_PRIMARY,
+  ADMIN_BTN_SECONDARY,
+  ADMIN_BTN_DESTRUCTIVE,
+  ADMIN_BTN_DESTRUCTIVE_SOLID,
+  ADMIN_BTN_ICON,
+  ADMIN_BTN_ICON_DANGER,
+  ADMIN_INPUT,
+  ADMIN_SELECT,
+} from "./admin/AdminUI";
 
 export const AdminPlaceLogo: React.FC<{
   place: Partial<Place> | null | undefined;
@@ -222,10 +239,58 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         setPendingIncompleteIds(null);
       } else if (confirmMasterResetModal && !isMasterResetting) {
         setConfirmMasterResetModal(false);
+      } else if (confirmDeleteChatId) {
+        setConfirmDeleteChatId(null);
+      } else if (confirmBulkDeleteChats) {
+        setConfirmBulkDeleteChats(false);
+      } else if (confirmPurgeAllChats) {
+        setConfirmPurgeAllChats(false);
+      } else if (confirmDeleteLikeId) {
+        setConfirmDeleteLikeId(null);
+      } else if (confirmPurgeAllLikes) {
+        setConfirmPurgeAllLikes(false);
+      } else if (confirmDeleteBookmarkId) {
+        setConfirmDeleteBookmarkId(null);
+      } else if (confirmPurgeAllBookmarks) {
+        setConfirmPurgeAllBookmarks(false);
+      } else if (confirmDeleteShareId) {
+        setConfirmDeleteShareId(null);
+      } else if (confirmPurgeAllShares) {
+        setConfirmPurgeAllShares(false);
+      } else if (confirmDeleteVideoId) {
+        setConfirmDeleteVideoId(null);
+      } else if (confirmDeletePlaceId) {
+        setConfirmDeletePlaceId(null);
+      } else if (confirmDeleteBusinessId) {
+        setConfirmDeleteBusinessId(null);
+      } else if (confirmDeleteUserId) {
+        setConfirmDeleteUserId(null);
+      } else if (confirmDeleteCommentInfo) {
+        setConfirmDeleteCommentInfo(null);
+      } else if (confirmBulkDeleteVideos) {
+        setConfirmBulkDeleteVideos(false);
+      } else if (confirmPurgeAllVideos) {
+        setConfirmPurgeAllVideos(false);
+      } else if (confirmBulkDeletePlaces) {
+        setConfirmBulkDeletePlaces(false);
+      } else if (confirmPurgeAllPlaces) {
+        setConfirmPurgeAllPlaces(false);
+      } else if (confirmBulkDeleteBusinesses) {
+        setConfirmBulkDeleteBusinesses(false);
+      } else if (confirmPurgeAllBusinesses) {
+        setConfirmPurgeAllBusinesses(false);
+      } else if (confirmBulkDeleteComments) {
+        setConfirmBulkDeleteComments(false);
+      } else if (confirmPurgeAllComments) {
+        setConfirmPurgeAllComments(false);
+      } else if (previewLikeVideoModal) {
+        setPreviewLikeVideoModal(null);
       } else if (previewVideo) {
         setPreviewVideo(null);
       } else if (inspectChatModal) {
         setInspectChatModal(null);
+      } else if (selectedCommentDetailModal) {
+        setSelectedCommentDetailModal(null);
       } else if (selectedLikeDetailModal) {
         setSelectedLikeDetailModal(null);
       } else if (selectedBookmarkDetailModal) {
@@ -305,28 +370,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [broadcastHistory, setBroadcastHistory] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem("yoouz_broadcast_history");
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      {
-        id: "bc-1",
-        title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
-        message: "Explore our latest performance upgrades with direct Bunny CDN instant photo delivery and interactive maps.",
-        targetUrl: "/search",
-        audience: "all",
-        type: "feature",
-        sentAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()
-      },
-      {
-        id: "bc-2",
-        title: "Creator Spotlight: Top 10 Hidden Cafes",
-        message: "Check out this week's trending authentic community photo reviews for specialty coffee spots.",
-        targetUrl: "/reviews/pl_1",
-        audience: "creators",
-        type: "announcement",
-        sentAt: new Date(Date.now() - 3600000 * 48).toISOString()
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
       }
-    ];
+    } catch (e) {}
+    return [];
   });
 
   const [confirmMasterResetModal, setConfirmMasterResetModal] = useState(false);
@@ -359,6 +408,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         endpoint = `/api/admin/likes?_t=${Date.now()}`;
       } else if (tableName === "bookmarks") {
         endpoint = `/api/admin/bookmarks?_t=${Date.now()}`;
+      } else if (tableName === "shares") {
+        endpoint = `/api/admin/shares?_t=${Date.now()}`;
       }
       const res = await (endpoint.startsWith("/api/admin/") ? adminFetch(endpoint, { cache: "no-store" }) : fetch(endpoint, { cache: "no-store" }));
       if (res.ok) {
@@ -394,6 +445,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   // Admin Direct Messages & Chats State
   const [adminChats, setAdminChats] = useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const [hasLoadedChats, setHasLoadedChats] = useState(false);
   const [isDeduplicatingChats, setIsDeduplicatingChats] = useState(false);
   const [inspectChatModal, setInspectChatModal] = useState<any | null>(null);
   const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
@@ -418,8 +470,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmPurgeAllLikes, setConfirmPurgeAllLikes] = useState(false);
   const [isDeletingLikeId, setIsDeletingLikeId] = useState<string | null>(null);
 
-  const fetchAdminLikes = useCallback(async () => {
-    setIsLoadingLikes(true);
+  const fetchAdminLikes = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingLikes(true);
     try {
       const res = await adminFetch(`/api/admin/likes?_t=${Date.now()}`);
       if (res.ok) {
@@ -429,7 +481,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {
       console.warn("Failed to fetch admin likes:", e);
     } finally {
-      setIsLoadingLikes(false);
+      if (!silent) setIsLoadingLikes(false);
     }
   }, []);
 
@@ -510,8 +562,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [confirmPurgeAllShares, setConfirmPurgeAllShares] = useState(false);
   const [isDeletingShareId, setIsDeletingShareId] = useState<string | null>(null);
 
-  const fetchAdminBookmarks = useCallback(async () => {
-    setIsLoadingBookmarks(true);
+  const fetchAdminBookmarks = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingBookmarks(true);
     try {
       const res = await adminFetch(`/api/admin/bookmarks?_t=${Date.now()}`);
       if (res.ok) {
@@ -521,7 +573,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {
       console.warn("Failed to fetch admin bookmarks:", e);
     } finally {
-      setIsLoadingBookmarks(false);
+      if (!silent) setIsLoadingBookmarks(false);
     }
   }, []);
 
@@ -670,8 +722,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [searchIntelLogs, setSearchIntelLogs] = useState<any[]>([]);
   const [isFetchingSearchIntel, setIsFetchingSearchIntel] = useState(false);
 
-  const fetchSearchIntel = async () => {
-    setIsFetchingSearchIntel(true);
+  const fetchSearchIntel = async (silent = false) => {
+    if (!silent) setIsFetchingSearchIntel(true);
     try {
       const res = await adminFetch("/api/admin/search-intel");
       if (res.ok) {
@@ -680,15 +732,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       }
     } catch (e) {}
     finally {
-      setIsFetchingSearchIntel(false);
+      if (!silent) setIsFetchingSearchIntel(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
     if (activeTab === "search") {
-      fetchSearchIntel();
-      const interval = setInterval(fetchSearchIntel, 10000);
+      fetchSearchIntel(searchIntelLogs.length > 0);
+      const interval = setInterval(() => fetchSearchIntel(true), 15000);
       return () => clearInterval(interval);
     }
   }, [activeTab, isAuthenticated]);
@@ -792,8 +844,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  const fetchAdminAgencies = useCallback(async () => {
-    setIsLoadingAdminAgencies(true);
+  const fetchAdminAgencies = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingAdminAgencies(true);
     try {
       const res = await adminFetch(`/api/admin/agencies?_t=${Date.now()}`);
       if (res.ok) {
@@ -803,7 +855,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {
       console.warn("Failed to fetch admin agencies:", e);
     } finally {
-      setIsLoadingAdminAgencies(false);
+      if (!silent) setIsLoadingAdminAgencies(false);
     }
   }, []);
 
@@ -873,8 +925,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     });
   };
 
-  const fetchAdminChats = async () => {
-    setIsLoadingChats(true);
+  const fetchAdminChats = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingChats(true);
     try {
       const res = await adminFetch("/api/admin/chats");
       const data = await res.json();
@@ -884,22 +936,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {
       console.warn("Failed to fetch admin chats:", e);
     } finally {
-      setIsLoadingChats(false);
+      setHasLoadedChats(true);
+      if (!silent) setIsLoadingChats(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     if (activeTab === "messages") {
-      fetchAdminChats();
-    }
-    if (activeTab === "likes" || activeTab === "overview") {
-      fetchAdminLikes();
+      fetchAdminChats(hasLoadedChats);
+    } else if (activeTab === "likes" || activeTab === "overview") {
+      fetchAdminLikes(adminLikes.length > 0);
     }
     if (activeTab === "bookmarks" || activeTab === "overview") {
-      fetchAdminBookmarks();
+      fetchAdminBookmarks(adminBookmarks.length > 0);
     }
-  }, [activeTab, isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
+    if (activeTab === "agencies") {
+      fetchAdminAgencies(adminAgencies.length > 0);
+    }
+  }, [activeTab, isAuthenticated, fetchAdminChats, fetchAdminLikes, fetchAdminBookmarks, fetchAdminAgencies]);
 
   const handleDeduplicateChats = async () => {
     setIsDeduplicatingChats(true);
@@ -1198,8 +1253,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     setExpandedSubsystems(next);
   };
 
-  const fetchHealthDiagnostic = async () => {
-    setIsHealthLoading(true);
+  const fetchHealthDiagnostic = async (silent = false) => {
+    if (!silent) setIsHealthLoading(true);
     try {
       const res = await adminFetch("/api/system/health-check");
       const data = await res.json();
@@ -1209,17 +1264,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (e) {
       console.warn("Health check fetch error:", e);
     } finally {
-      setIsHealthLoading(false);
+      if (!silent) setIsHealthLoading(false);
     }
   };
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    fetchHealthDiagnostic();
-    fetchAdminChats();
+    fetchHealthDiagnostic(false);
     const interval = setInterval(() => {
-      fetchHealthDiagnostic();
-      fetchAdminChats();
+      fetchHealthDiagnostic(true);
     }, 30000);
     const unsubscribe = subscribeAppHealth((summary) => {
       setClientHealthSummary(summary);
@@ -1612,8 +1665,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return Array.from(map.values());
   }, [allUsers, dbUsers]);
 
-  const fetchLiveStats = async () => {
-    setIsLoadingLiveStats(true);
+  const fetchLiveStats = async (silent = false) => {
+    if (!silent) setIsLoadingLiveStats(true);
     try {
       const tasks = [
         adminFetch("/api/admin/users", { cache: "no-store" })
@@ -1674,6 +1727,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               const chatsData = await res.json();
               if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
                 setAdminChats(chatsData.chats);
+                setHasLoadedChats(true);
               }
             }
           })
@@ -1693,7 +1747,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     } catch (err) {
       console.warn("Failed to fetch live admin stats:", err);
     } finally {
-      setIsLoadingLiveStats(false);
+      if (!silent) setIsLoadingLiveStats(false);
     }
   };
 
@@ -1718,8 +1772,8 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (vidId && nLikes !== undefined) {
         setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, likes: nLikes, likesCount: nLikes } : v));
       }
-      fetchAdminLikes();
-      fetchLiveStats();
+      fetchAdminLikes(true);
+      fetchLiveStats(true);
     };
     const handleBookmarked = (e: any) => {
       const vidId = e?.detail?.videoId;
@@ -1727,14 +1781,14 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (vidId && nBm !== undefined) {
         setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v));
       }
-      fetchAdminBookmarks();
-      fetchLiveStats();
+      fetchAdminBookmarks(true);
+      fetchLiveStats(true);
     };
     const handleComment = () => {
-      fetchLiveStats();
+      fetchLiveStats(true);
     };
     const handleProfileUpdated = () => {
-      fetchLiveStats();
+      fetchLiveStats(true);
     };
 
     window.addEventListener("copo-video-deleted", handleDeleted);
@@ -1755,28 +1809,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchLiveStats();
-      fetchAdminLikes();
-      fetchAdminBookmarks();
-      if (activeTab === "agencies") {
-        fetchAdminAgencies();
-      }
-      const interval = setInterval(() => {
-        fetchLiveStats();
-        if (activeTab === "likes" || activeTab === "overview") {
-          fetchAdminLikes();
-        }
-        if (activeTab === "bookmarks" || activeTab === "overview") {
-          fetchAdminBookmarks();
-        }
-        if (activeTab === "agencies") {
-          fetchAdminAgencies();
-        }
-      }, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, activeTab, fetchAdminLikes, fetchAdminBookmarks, fetchAdminAgencies]);
+    if (!isAuthenticated) return;
+    fetchLiveStats(false);
+    fetchAdminLikes(true);
+    fetchAdminBookmarks(true);
+    const interval = setInterval(() => {
+      fetchLiveStats(true);
+      fetchAdminLikes(true);
+      fetchAdminBookmarks(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -2452,7 +2495,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     const domain = (place.brandDomain || (place.website ? place.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '')).toLowerCase();
     const pName = (place.name || "").toLowerCase().trim();
 
-    return videos.filter((v) => {
+    return activeVideos.filter((v) => {
       const vPlaceId = String(v.placeId || "").toLowerCase();
       const vPlaceName = String(v.placeName || "").toLowerCase().trim();
       return (
@@ -2659,7 +2702,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     }
     return list;
-  }, [adminBookmarks, bookmarksSearchQuery, bookmarksSort]);
+  }, [adminBookmarks, activeVideos, bookmarksSearchQuery, bookmarksSort]);
 
   // Categories list
   const uniqueBusinessCategories = useMemo(() => {
@@ -3013,9 +3056,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
   const handleSyncReviewBusinessNames = async () => {
     let fixedCount = 0;
-    for (const v of videos) {
+    for (const v of activeVideos) {
       const vDomain = extractCleanDomain(v.placeWebsite || v.placeId || v.placeName);
-      const parentPlace = places.find(p => p.id === v.placeId || (p.website && extractCleanDomain(p.website) === vDomain));
+      const parentPlace = activePlaces.find(p => p.id === v.placeId || (p.website && extractCleanDomain(p.website) === vDomain));
       const canonicalName = (vDomain && KNOWN_OFFICIAL_NAMES[vDomain]) 
         || (parentPlace?.name && parentPlace.name.toLowerCase() !== "vaibe" ? formatBusinessName(parentPlace.name, vDomain) : null)
         || formatBusinessName(v.businessName || v.placeName, vDomain);
@@ -3053,7 +3096,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
   const [isPurgingIncomplete, setIsPurgingIncomplete] = useState(false);
 
   const handlePurgeIncompleteUploads = () => {
-    const incompleteIds = videos
+    const incompleteIds = activeVideos
       .filter(v => v && v.mediaType !== "photo" && !v.photoUrl && !v.bunnyVideoId && (!v.videoUrl || v.videoUrl.includes("/api/videos/stream/") || v.videoUrl.includes("sample-review.mp4")) && (!v.videoData || !v.videoData.startsWith("data:video")))
       .map(v => v.id);
 
@@ -3166,12 +3209,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       timestamp: new Date().toISOString(),
       platform: "Yoouz Admin Suite",
       version: "2.0.0",
-      totalVideos: videos.length,
-      totalPlaces: places.length,
+      totalVideos: activeVideos.length,
+      totalPlaces: activePlaces.length,
       totalUsers: uniqueUsers.length,
       totalComments: allComments.length,
-      videos,
-      places,
+      videos: activeVideos,
+      places: activePlaces,
       users: uniqueUsers,
       comments: allComments
     };
@@ -3353,7 +3396,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 type="button"
                 disabled={isAdminConfirmRunning}
                 onClick={() => setAdminConfirmDialog(null)}
-                className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold transition-colors cursor-pointer"
+                className={ADMIN_BTN_SECONDARY}
               >
                 Cancel
               </button>
@@ -3369,7 +3412,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     setAdminConfirmDialog(null);
                   }
                 }}
-                className="px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-white text-sm font-semibold transition-colors cursor-pointer"
+                className={ADMIN_BTN_DESTRUCTIVE_SOLID}
               >
                 {isAdminConfirmRunning ? "Working..." : adminConfirmDialog.confirmLabel}
               </button>
@@ -3380,26 +3423,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       {/* Incomplete Uploads Confirmation Modal */}
       {pendingIncompleteIds && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-md flex items-center justify-center p-4"
-          onClick={() => !isPurgingIncomplete && setPendingIncompleteIds(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-white tracking-tight">Purge Incomplete Uploads</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">
-                Found {pendingIncompleteIds.length} incomplete video upload(s) without valid media files. Permanently remove them?
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-2.5">
+        <AdminModal
+          title="Purge Incomplete Uploads"
+          onClose={() => !isPurgingIncomplete && setPendingIncompleteIds(null)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
               <button
                 type="button"
                 disabled={isPurgingIncomplete}
                 onClick={() => setPendingIncompleteIds(null)}
-                className="px-4 py-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold transition-colors cursor-pointer"
+                className={ADMIN_BTN_SECONDARY}
               >
                 Cancel
               </button>
@@ -3407,13 +3441,17 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 type="button"
                 disabled={isPurgingIncomplete}
                 onClick={handleConfirmPurgeIncompleteUploads}
-                className="px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-500 disabled:opacity-60 text-white text-sm font-semibold transition-colors cursor-pointer"
+                className={ADMIN_BTN_DESTRUCTIVE_SOLID}
               >
                 {isPurgingIncomplete ? "Purging..." : "Purge Records"}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Found {pendingIncompleteIds.length} incomplete upload(s) without valid media files. Permanently remove them?
+          </p>
+        </AdminModal>
       )}
 
       {/* Toast Banner */}
@@ -3421,10 +3459,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className="fixed top-4 right-5 z-50 bg-[#121216]/95 backdrop-blur-xl border border-white/[0.12] text-white px-4 py-2.5 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.65)] flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3"
+          className="fixed top-4 right-5 z-[140] bg-[#121216]/95 backdrop-blur-xl border border-white/[0.12] text-white px-4 py-2.5 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.65)] flex items-center gap-2.5 animate-in fade-in slide-in-from-top-3"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span className="text-[13px] font-medium tracking-tight">{toastMessage}</span>
+          <span className="text-xs font-medium tracking-tight">{toastMessage}</span>
           <button
             type="button"
             onClick={() => setToastMessage(null)}
@@ -3437,12 +3475,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* Top Application Bar */}
-      <header className="h-14 border-b border-white/[0.08] bg-[#050506]/90 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
+      <header className="h-14 border-b border-white/[0.08] bg-[#050506]/95 backdrop-blur-xl px-4 lg:px-6 flex items-center justify-between gap-3 shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={onExit}
-            className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 text-xs font-medium shrink-0"
+            className="h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 text-xs font-medium shrink-0"
             title="Return to Yoouz Live Feed"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -3489,7 +3527,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             placeholder="Search reviews, places, users, comments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-14 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-colors"
+            className="w-full h-8 pl-9 pr-14 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 focus:bg-white/[0.06] transition-colors"
           />
           {searchQuery ? (
             <button
@@ -3507,12 +3545,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           )}
         </div>
 
-        {/* Header Right Actions (Single canonical controls — no duplicates) */}
+        {/* Header Right Actions */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setIsAddPlaceOpen(true)}
-            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-zinc-950 text-xs font-semibold cursor-pointer"
+            className="md:hidden h-8 flex items-center gap-1 px-2.5 rounded-lg bg-white text-zinc-950 text-xs font-semibold cursor-pointer"
             title="New Business"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -3521,21 +3559,29 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           <button
             type="button"
-            onClick={fetchLiveStats}
+            onClick={() => {
+              fetchLiveStats(false);
+              if (activeTab === "messages") fetchAdminChats(false);
+              if (activeTab === "likes") fetchAdminLikes(false);
+              if (activeTab === "bookmarks") fetchAdminBookmarks(false);
+              if (activeTab === "agencies") fetchAdminAgencies(false);
+              if (activeTab === "health") fetchHealthDiagnostic(false);
+              if (activeTab === "search") fetchSearchIntel(false);
+            }}
             disabled={isLoadingLiveStats}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
-            title="Sync live stats from database and CDN storage"
+            className="h-8 flex items-center gap-1.5 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+            title="Sync live data from database and CDN storage"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isLoadingLiveStats ? "animate-spin text-white" : ""}`} />
             <span className="tabular-nums">
-              {isLoadingLiveStats ? "Syncing..." : liveStats ? `${liveStats.latencyMs}ms` : "Refresh"}
+              {isLoadingLiveStats ? "Syncing" : liveStats ? `${liveStats.latencyMs}ms` : "Refresh"}
             </span>
           </button>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer"
+            className="h-8 flex items-center gap-1.5 px-3 text-zinc-400 hover:text-white hover:bg-white/[0.06] rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer"
             title="Lock Admin Session"
           >
             <Lock className="w-3.5 h-3.5" />
@@ -3546,16 +3592,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
       {/* Main Admin Workspace Layout */}
       <div className="flex-1 flex overflow-hidden bg-[#050506]">
-        {/* Grouped Obsidian Sidebar */}
-        <aside className="w-60 border-r border-white/[0.08] bg-[#050506] px-3 py-4 flex flex-col justify-between shrink-0 hidden md:flex overflow-y-auto select-none">
-          <nav aria-label="Admin Navigation" className="space-y-5">
+        {/* Grouped Obsidian Sidebar with Sticky Footer */}
+        <aside className="w-60 border-r border-white/[0.08] bg-[#050506] hidden md:flex flex-col shrink-0 overflow-hidden select-none">
+          <nav aria-label="Admin Navigation" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
             {(
               [
                 {
                   title: "Core",
                   items: [
                     { id: "overview" as AdminTab, label: "Overview", icon: BarChart3 },
-                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: metrics.totalVideos },
+                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: liveStats?.totals?.videoReviews ?? metrics.totalVideos },
                     { id: "businesses" as AdminTab, label: "Businesses", icon: Briefcase, count: metrics.totalBusinesses },
                     { id: "places" as AdminTab, label: "Places", icon: Building2, count: metrics.totalPhysicalPlaces }
                   ]
@@ -3565,10 +3611,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   items: [
                     { id: "users" as AdminTab, label: "Users", icon: Users, count: metrics.totalUsers },
                     { id: "creators" as AdminTab, label: "Creators", icon: Award, count: metrics.totalCreators },
-                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.comments ?? allComments.length) },
-                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.likes ?? adminLikes.length) },
-                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: isLoadingLiveStats && !liveStats ? undefined : (liveStats?.totals?.bookmarks ?? adminBookmarks.length) },
-                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: adminChats.length }
+                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: liveStats?.totals?.comments ?? allComments.length },
+                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: liveStats?.totals?.likes ?? adminLikes.length },
+                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: liveStats?.totals?.bookmarks ?? adminBookmarks.length },
+                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: liveStats?.totals?.chats ?? adminChats.length }
                   ]
                 },
                 {
@@ -3605,7 +3651,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               }>
             ).map((group) => (
               <div key={group.title} className="space-y-0.5">
-                <div className="px-2.5 pb-1.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">
+                <div className="px-2.5 pb-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">
                   {group.title}
                 </div>
                 {group.items.map((item) => {
@@ -3616,7 +3662,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       key={item.id}
                       type="button"
                       onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                      className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[13px] transition-colors cursor-pointer ${
                         isActive
                           ? "bg-white/[0.09] text-white font-medium"
                           : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] font-normal"
@@ -3640,12 +3686,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             ))}
           </nav>
 
-          {/* Single Primary Sidebar Action */}
-          <div className="pt-4 mt-4 border-t border-white/[0.08]">
+          {/* Pinned Sticky Primary Sidebar Action */}
+          <div className="shrink-0 p-3 border-t border-white/[0.08] bg-[#050506]">
             <button
               type="button"
               onClick={() => setIsAddPlaceOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold text-[13px] tracking-tight active:scale-[0.98] transition-all cursor-pointer"
+              className={`w-full ${ADMIN_BTN_PRIMARY}`}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Business</span>
@@ -3655,20 +3701,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto bg-[#050506] p-4 sm:p-6 lg:p-8 relative text-white">
-          {/* Mobile Tab Nav (Complete parity with all 16 desktop sections) */}
+          {/* Mobile Tab Nav */}
           <div className="md:hidden flex overflow-x-auto gap-1.5 pb-3.5 mb-5 border-b border-white/[0.08] no-scrollbar">
             {(
               [
                 ["overview", "Overview"],
-                ["videos", `Photo Reviews (${metrics.totalVideos})`],
+                ["videos", `Photo Reviews (${liveStats?.totals?.videoReviews ?? metrics.totalVideos})`],
                 ["businesses", `Businesses (${metrics.totalBusinesses})`],
                 ["places", `Places (${metrics.totalPhysicalPlaces})`],
                 ["users", `Users (${metrics.totalUsers})`],
                 ["creators", `Creators (${metrics.totalCreators})`],
-                ["comments", `Comments (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.comments ?? allComments.length)})`],
-                ["likes", `Likes (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.likes ?? adminLikes.length)})`],
-                ["bookmarks", `Bookmarks (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.bookmarks ?? adminBookmarks.length)})`],
-                ["messages", `Messages (${isLoadingLiveStats && !liveStats ? "..." : (liveStats?.totals?.chats ?? adminChats.length)})`],
+                ["comments", `Comments (${liveStats?.totals?.comments ?? allComments.length})`],
+                ["likes", `Likes (${liveStats?.totals?.likes ?? adminLikes.length})`],
+                ["bookmarks", `Bookmarks (${liveStats?.totals?.bookmarks ?? adminBookmarks.length})`],
+                ["messages", `Messages (${liveStats?.totals?.chats ?? adminChats.length})`],
                 ["broadcast", "Broadcast"],
                 ["search", "Search Intel"],
                 ["indexing", "Google Indexing"],
@@ -3681,7 +3727,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 key={tabKey}
                 type="button"
                 onClick={() => setActiveTab(tabKey as AdminTab)}
-                className={`px-3 py-2 min-h-[38px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`px-3 h-9 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   activeTab === tabKey
                     ? "bg-white text-zinc-950 font-semibold"
                     : "bg-white/[0.04] text-zinc-400 border border-white/[0.08] hover:text-white"
@@ -3692,38 +3738,40 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             ))}
           </div>
 
-          {/* Persistent Video Recording & Upload Alert Banner */}
+          {/* Persistent Upload Alert Banner */}
           {videoUploadAlertLogs.length > 0 && (
-            <div className="mb-6 p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 font-bold shrink-0 text-lg">
-                  🎥
+            <div className="max-w-7xl mx-auto mb-6 p-4 rounded-2xl bg-[#0c0c0f] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
-                    Video Upload & Recording Alert
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold border border-rose-500/30">
-                      {videoUploadAlertLogs.length} Active Notice{videoUploadAlertLogs.length > 1 ? "s" : ""}
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-white flex items-center gap-2">
+                    <span>Media Upload Notice</span>
+                    <span className="text-[11px] font-medium text-amber-400 tabular-nums">
+                      · {videoUploadAlertLogs.length} active
                     </span>
                   </div>
-                  <p className="text-xs text-amber-200/90 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed truncate">
                     {videoUploadAlertLogs[0].message}
                   </p>
-                  <div className="text-[10px] text-amber-400/80 mt-1 font-mono">
-                    Logged at {new Date(videoUploadAlertLogs[0].timestamp).toLocaleTimeString()} • Auto-rescued by Anti-Stall Guard
+                  <div className="text-[11px] text-zinc-500 mt-1 tabular-nums">
+                    {new Date(videoUploadAlertLogs[0].timestamp).toLocaleTimeString()} · Anti-Stall Guard
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                 <button
+                  type="button"
                   onClick={() => setActiveTab("health")}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-colors cursor-pointer"
+                  className={ADMIN_BTN_PRIMARY}
                 >
-                  View Diagnostics
+                  Diagnostics
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleClearErrorLog(videoUploadAlertLogs[0].id)}
-                  className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs transition-colors cursor-pointer"
+                  className={ADMIN_BTN_SECONDARY}
                 >
                   Mark Resolved
                 </button>
@@ -3734,136 +3782,119 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: SYSTEM HEALTH & BUG MONITOR */}
           {activeTab === "health" && (
             <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header Title */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-semibold text-white tracking-tight">System Health</h2>
-                    <span className={`text-xs font-medium ${
-                      healthData?.overallStatus === "healthy" ? "text-emerald-400" : "text-rose-400"
-                    }`}>
-                      {healthData?.overallStatus === "healthy" ? "All Systems Operational" : "Attention Required"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Automated subsystem diagnostics, runtime error logs, and integrity maintenance actions.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={fetchHealthDiagnostic}
-                    disabled={isHealthLoading}
-                    className="px-3.5 py-2 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isHealthLoading ? "animate-spin" : ""}`} />
-                    Run Diagnostics
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleClearErrorLog()}
-                    className="px-3.5 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white font-medium rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Clear Error Logs
-                  </button>
-                </div>
-              </div>
+              <AdminPageHeader
+                title="System Health"
+                subtitle={
+                  healthData?.overallStatus === "healthy"
+                    ? "All subsystems operational · Automated diagnostics and runtime error logs"
+                    : "Attention required · Automated diagnostics and runtime error logs"
+                }
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleClearErrorLog()}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear Error Logs</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fetchHealthDiagnostic(false)}
+                      disabled={isHealthLoading}
+                      className={ADMIN_BTN_PRIMARY}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isHealthLoading ? "animate-spin" : ""}`} />
+                      <span>Run Diagnostics</span>
+                    </button>
+                  </>
+                }
+              />
 
-              {/* Telemetry Quick Bar */}
+              {/* Telemetry KPI Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">Edge Latency</div>
-                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
-                      {liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "—"}
-                    </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">Bunny CDN & libSQL</div>
+                <AdminStatCard
+                  label="Edge Latency"
+                  value={liveStats?.latencyMs !== undefined ? `${liveStats.latencyMs}ms` : "—"}
+                  sublabel="Bunny CDN & libSQL"
+                  icon={<Server className="w-4 h-4" />}
+                />
+                <AdminStatCard
+                  label="Realtime Stream"
+                  value={clientHealthSummary?.issue39Errors || 0}
+                  sublabel="SSE errors"
+                  icon={<Radio className="w-4 h-4" />}
+                />
+                <AdminStatCard
+                  label="Client Exceptions"
+                  value={clientHealthSummary?.issue40Errors || 0}
+                  sublabel="Runtime guard"
+                  icon={<ShieldCheck className="w-4 h-4" />}
+                />
+                <div className={`${ADMIN_SURFACE} p-4 flex flex-col justify-between gap-2`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                      Notifications
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDeduplicateNotifications}
+                      disabled={isDeduplicatingNotifs}
+                      className={ADMIN_BTN_ICON}
+                      title="Deduplicate notifications"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isDeduplicatingNotifs ? "animate-spin" : ""}`} />
+                    </button>
                   </div>
-                  <Server className="w-5 h-5 text-zinc-500" />
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">Realtime SSE Stream</div>
-                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
-                      {clientHealthSummary?.issue39Errors || 0} Errors
-                    </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">Auto-Reconnect Guard</div>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-2xl font-semibold tracking-tight tabular-nums text-white">
+                      {(liveStats?.totals?.notifications ?? 0).toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-zinc-500">Deduplication check</span>
                   </div>
-                  <Radio className="w-5 h-5 text-zinc-500" />
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">Client Exceptions</div>
-                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
-                      {clientHealthSummary?.issue40Errors || 0} Issues
-                    </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">Runtime Guard</div>
-                  </div>
-                  <ShieldCheck className="w-5 h-5 text-zinc-500" />
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-medium text-zinc-400">Notifications</div>
-                    <div className="text-xl font-semibold text-white tabular-nums mt-1">
-                      {liveStats?.totals?.notifications ?? 0} Total
-                    </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">Deduplication Check</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleDeduplicateNotifications}
-                    disabled={isDeduplicatingNotifs}
-                    className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50"
-                    title="Clean duplicate notifications"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isDeduplicatingNotifs ? "animate-spin" : ""}`} />
-                  </button>
                 </div>
               </div>
 
-              {/* Subsystems Control & Filter Bar */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900 border border-zinc-800">
-                {/* Search input */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              {/* Subsystems Filter Bar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3`}>
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
                   <input
                     type="text"
                     value={subsystemSearchQuery}
                     onChange={(e) => setSubsystemSearchQuery(e.target.value)}
-                    placeholder="Search 10 master system health modules & guards..."
-                    className="w-full pl-10 pr-4 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-medium"
+                    placeholder="Filter system health modules..."
+                    className={`w-full pl-9 pr-8 ${ADMIN_INPUT}`}
                   />
                   {subsystemSearchQuery && (
                     <button
+                      type="button"
                       onClick={() => setSubsystemSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white text-xs"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-                {/* Category Pills & Action Toggles */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800 overflow-x-auto no-scrollbar">
+                  <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06] overflow-x-auto no-scrollbar">
                     {[
-                      { id: "all", label: "All Subsystems" },
+                      { id: "all", label: "All" },
                       { id: "database", label: "DB & Cloud" },
                       { id: "media", label: "Media & CDN" },
-                      { id: "security", label: "Security & Claims" },
-                      { id: "realtime", label: "Realtime & SSE" },
-                      { id: "social", label: "Social & Sync" }
+                      { id: "security", label: "Security" },
+                      { id: "realtime", label: "Realtime" },
+                      { id: "social", label: "Social" }
                     ].map((tab) => (
                       <button
                         key={tab.id}
+                        type="button"
                         onClick={() => setSubsystemCategory(tab.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
                           subsystemCategory === tab.id
-                            ? "bg-white text-zinc-950 shadow-sm"
+                            ? "bg-white text-zinc-950 font-semibold"
                             : "text-zinc-400 hover:text-white"
                         }`}
                       >
@@ -3872,45 +3903,44 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => expandAllSubsystems(true)}
-                      className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[11px] font-bold transition-all"
-                    >
-                      Expand All
-                    </button>
-                    <button
-                      onClick={() => expandAllSubsystems(false)}
-                      className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-[11px] font-bold transition-all"
-                    >
-                      Collapse
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => expandAllSubsystems(true)}
+                    className={ADMIN_BTN_SECONDARY}
+                  >
+                    Expand All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => expandAllSubsystems(false)}
+                    className={ADMIN_BTN_SECONDARY}
+                  >
+                    Collapse
+                  </button>
                 </div>
               </div>
 
               {/* Filtered Subsystems Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {healthData?.subsystems && Object.entries(healthData.subsystems)
                   .filter(([key, item]: [string, any]) => {
                     const masterTitles: Record<string, string> = {
-                      "1_video_engine_cdn": "1. Vertical Photo Feed Engine & BunnyCDN Delivery",
-                      "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
-                      "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
-                      "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
-                      "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
-                      "6_front_camera_recording": "6. Live Camera Capture Engine (No Gallery Uploads)",
-                      "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
-                      "8_user_profiles": "8. User Profiles, Anonymous U/XXXXXX IDs & Privacy",
-                      "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
-                      "10_error_telemetry": "10. Universal Application & Error Telemetry",
-                      "11_first_video_scroll_bound": "11. First Item Feed Top-Bound Scroll Lock"
+                      "1_video_engine_cdn": "Vertical Photo Feed & BunnyCDN",
+                      "2_database_bunny_cloud": "Database Persistence & BunnyDB",
+                      "3_business_claims_auth": "Business Claims & Verification",
+                      "4_comments_likes_realtime": "Comments, Likes & Realtime Sync",
+                      "5_search_google_maps": "Search & Place Entity Resolution",
+                      "6_front_camera_recording": "Live Camera Capture Engine",
+                      "7_ai_moderation": "Safety & Content Moderation",
+                      "8_user_profiles": "User Profiles & Privacy",
+                      "9_i18n_translation": "Multi-Language i18n Engine",
+                      "10_error_telemetry": "Application Error Telemetry",
+                      "11_first_video_scroll_bound": "Feed Top-Bound Scroll Lock"
                     };
 
                     const title = masterTitles[key] || key;
                     const details = item?.details || "";
 
-                    // Category matching
                     if (subsystemCategory === "database") {
                       if (!["2_database_bunny_cloud"].includes(key)) return false;
                     } else if (subsystemCategory === "media") {
@@ -3923,7 +3953,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       if (!["5_search_google_maps", "8_user_profiles", "9_i18n_translation", "10_error_telemetry"].includes(key)) return false;
                     }
 
-                    // Search matching
                     if (subsystemSearchQuery.trim()) {
                       const q = subsystemSearchQuery.toLowerCase();
                       return title.toLowerCase().includes(q) || details.toLowerCase().includes(q) || key.toLowerCase().includes(q);
@@ -3933,180 +3962,123 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   })
                   .map(([key, item]: [string, any]) => {
                     const masterTitles: Record<string, string> = {
-                      "1_video_engine_cdn": "1. Vertical Photo Feed Engine & BunnyCDN Delivery",
-                      "2_database_bunny_cloud": "2. Database Persistence, BunnyDB Cloud & Storage",
-                      "3_business_claims_auth": "3. Business Owner Claims, Verification & Pricing",
-                      "4_comments_likes_realtime": "4. Comments, Likes & Real-Time Sync Pipeline",
-                      "5_search_google_maps": "5. Search, Google Maps & Place Entity Resolution",
-                      "6_front_camera_recording": "6. Live Camera Capture Engine (No Gallery Uploads)",
-                      "7_ai_moderation": "7. AI Safety, Gemini Vision & Content Moderation",
-                      "8_user_profiles": "8. User Profiles, Anonymous U/XXXXXX IDs & Privacy",
-                      "9_i18n_translation": "9. Multi-Language i18n Translation Engine",
-                      "10_error_telemetry": "10. Universal Application & Error Telemetry",
-                      "11_first_video_scroll_bound": "11. First Item Feed Top-Bound Scroll Lock"
+                      "1_video_engine_cdn": "Vertical Photo Feed & BunnyCDN",
+                      "2_database_bunny_cloud": "Database Persistence & BunnyDB",
+                      "3_business_claims_auth": "Business Claims & Verification",
+                      "4_comments_likes_realtime": "Comments, Likes & Realtime Sync",
+                      "5_search_google_maps": "Search & Place Entity Resolution",
+                      "6_front_camera_recording": "Live Camera Capture Engine",
+                      "7_ai_moderation": "Safety & Content Moderation",
+                      "8_user_profiles": "User Profiles & Privacy",
+                      "9_i18n_translation": "Multi-Language i18n Engine",
+                      "10_error_telemetry": "Application Error Telemetry",
+                      "11_first_video_scroll_bound": "Feed Top-Bound Scroll Lock"
                     };
 
-                    const icons: Record<string, string> = {
-                      "1_video_engine_cdn": "🎬",
-                      "2_database_bunny_cloud": "⚡",
-                      "3_business_claims_auth": "🛡️",
-                      "4_comments_likes_realtime": "💬",
-                      "5_search_google_maps": "🔍",
-                      "6_front_camera_recording": "🎥",
-                      "7_ai_moderation": "✨",
-                      "8_user_profiles": "👥",
-                      "9_i18n_translation": "🌐",
-                      "10_error_telemetry": "📡",
-                      "11_first_video_scroll_bound": "🔒"
-                    };
-
-                    const title = masterTitles[key] || key;
-                    const icon = icons[key] || "⚙️";
-
+                    const title = masterTitles[key] || key.replace(/_/g, " ");
                     const isExpanded = expandedSubsystems[key] || false;
 
                     return (
-                      <div key={key} className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3 hover:border-zinc-700 transition-all flex flex-col justify-between">
-                        <div>
+                      <div key={key} className={`${ADMIN_SURFACE} p-4 flex flex-col justify-between gap-3`}>
+                        <div className="space-y-2.5">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-lg shrink-0">{icon}</span>
-                              <span className="text-xs font-bold text-white leading-tight truncate">{title}</span>
-                            </div>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 border ${
-                              item.status === 'ok'
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : item.status === 'degraded'
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            <span className="text-xs font-semibold text-white leading-snug">{title}</span>
+                            <span className={`text-[11px] font-medium shrink-0 ${
+                              item.status === "ok"
+                                ? "text-emerald-400"
+                                : item.status === "degraded"
+                                ? "text-amber-400"
+                                : "text-rose-400"
                             }`}>
-                              {item.status === 'ok' ? 'PASSED 🟢' : item.status === 'degraded' ? 'WARNING 🟡' : 'ERROR 🔴'}
+                              {item.status === "ok" ? "Healthy" : item.status === "degraded" ? "Warning" : "Error"}
                             </span>
                           </div>
 
-                          <p className="text-[11px] text-zinc-300 leading-relaxed bg-zinc-950 p-2.5 rounded-xl border border-zinc-800/80 font-mono mt-2.5">
+                          <p className="text-[11px] text-zinc-400 leading-relaxed font-mono">
                             {item.details}
                           </p>
 
-                          {/* Collapsible How to test instruction */}
                           {item.testInstruction && (
-                            <div className="mt-2.5">
+                            <div>
                               {isExpanded ? (
-                                <div className="p-2.5 bg-zinc-950 rounded-xl border border-zinc-800 text-[11px] space-y-1 animate-in fade-in">
-                                  <div className="flex items-center justify-between text-amber-400 font-bold text-[10px]">
-                                    <span>📋 VERIFICATION GUIDE:</span>
+                                <div className="pt-2 border-t border-white/[0.06] text-[11px] space-y-1">
+                                  <div className="flex items-center justify-between text-zinc-300 font-medium text-[11px]">
+                                    <span>Verification Guide</span>
                                     <button
+                                      type="button"
                                       onClick={() => toggleSubsystemExpand(key)}
-                                      className="text-zinc-400 hover:text-white"
+                                      className="text-zinc-500 hover:text-white cursor-pointer"
                                     >
-                                      Close
+                                      Hide
                                     </button>
                                   </div>
-                                  <p className="text-zinc-400 leading-normal font-sans">
-                                    {item.testInstruction}
-                                  </p>
+                                  <p className="text-zinc-400 leading-relaxed">{item.testInstruction}</p>
                                 </div>
                               ) : (
                                 <button
+                                  type="button"
                                   onClick={() => toggleSubsystemExpand(key)}
-                                  className="text-[10px] text-zinc-400 hover:text-amber-400 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                                  className="text-[11px] text-zinc-500 hover:text-zinc-200 font-medium transition-colors cursor-pointer"
                                 >
-                                  <span>View Verification Guide</span>
-                                  <span>▾</span>
+                                  Verification guide
                                 </button>
                               )}
                             </div>
                           )}
                         </div>
 
-                        {/* Action Buttons & Latency */}
-                        <div className="pt-2 border-t border-zinc-800/80 space-y-2">
-                          <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
-                            <span>Latency: {item.latencyMs}ms</span>
-                            <span className="text-emerald-400">Verified Auto-Check</span>
+                        <div className="pt-2.5 border-t border-white/[0.06] space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-zinc-500 tabular-nums">
+                            <span>{item.latencyMs}ms</span>
+                            <span>Auto-verified</span>
                           </div>
 
                           {key === "cross_device_comment_sync_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleSyncCommentsCache}
-                              disabled={isSyncingComments}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
+                            <button type="button" onClick={handleSyncCommentsCache} disabled={isSyncingComments} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
                               <RefreshCw className={`w-3.5 h-3.5 ${isSyncingComments ? "animate-spin" : ""}`} />
-                              <span>{isSyncingComments ? "Syncing Comments..." : "Re-sync Comments"}</span>
+                              <span>{isSyncingComments ? "Syncing..." : "Re-sync Comments"}</span>
                             </button>
                           )}
 
                           {key === "user_profile_chat_dedup_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleReconcileUserProfiles}
-                              disabled={isReconcilingProfiles}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
+                            <button type="button" onClick={handleReconcileUserProfiles} disabled={isReconcilingProfiles} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
                               <RefreshCw className={`w-3.5 h-3.5 ${isReconcilingProfiles ? "animate-spin" : ""}`} />
-                              <span>{isReconcilingProfiles ? "Deduplicating..." : "Deduplicate User Profiles"}</span>
+                              <span>{isReconcilingProfiles ? "Deduplicating..." : "Deduplicate Profiles"}</span>
                             </button>
                           )}
 
                           {key === "fake_reviewer_ghost_profile_ban_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleReconcileUserProfiles}
-                              disabled={isReconcilingProfiles}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>{isReconcilingProfiles ? "Purging Records..." : "Purge Ghost Profiles"}</span>
+                            <button type="button" onClick={handleReconcileUserProfiles} disabled={isReconcilingProfiles} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              <span>{isReconcilingProfiles ? "Purging..." : "Purge Ghost Profiles"}</span>
                             </button>
                           )}
 
                           {key === "zero_fake_followers_strict_enforcement_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleAuditFollowers}
-                              disabled={isAuditingFollowers}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
-                              <Users className="w-3.5 h-3.5 text-cyan-400" />
-                              <span>{isAuditingFollowers ? "Auditing..." : "Audit Follower Integrity"}</span>
+                            <button type="button" onClick={handleAuditFollowers} disabled={isAuditingFollowers} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
+                              <Users className="w-3.5 h-3.5" />
+                              <span>{isAuditingFollowers ? "Auditing..." : "Audit Followers"}</span>
                             </button>
                           )}
 
                           {key === "business_profile_banner_logo_database_live_sync_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleResyncBusinessBanners}
-                              disabled={isResyncingBanners}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
-                              <RefreshCw className={`w-3.5 h-3.5 ${isResyncingBanners ? "animate-spin text-amber-400" : "text-emerald-400"}`} />
-                              <span>{isResyncingBanners ? "Resyncing..." : "Resync Business Banners"}</span>
+                            <button type="button" onClick={handleResyncBusinessBanners} disabled={isResyncingBanners} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
+                              <RefreshCw className={`w-3.5 h-3.5 ${isResyncingBanners ? "animate-spin" : ""}`} />
+                              <span>{isResyncingBanners ? "Resyncing..." : "Resync Banners"}</span>
                             </button>
                           )}
 
                           {key === "google_maps_business_name_resolution_anti_break_guard" && (
-                            <button
-                              type="button"
-                              onClick={handleResyncMapsPreviews}
-                              disabled={isResyncingMaps}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
-                              <MapPin className={`w-3.5 h-3.5 ${isResyncingMaps ? "animate-bounce text-amber-400" : "text-emerald-400"}`} />
-                              <span>{isResyncingMaps ? "Verifying Maps..." : "Re-Verify Google Maps"}</span>
+                            <button type="button" onClick={handleResyncMapsPreviews} disabled={isResyncingMaps} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{isResyncingMaps ? "Verifying..." : "Verify Maps Previews"}</span>
                             </button>
                           )}
 
                           {(key === "video_review_metadata_sharing_social_preview_guard" || key === "user_profile_location_canonicalization_guard") && (
-                            <button
-                              type="button"
-                              onClick={handleVerifyShareCards}
-                              disabled={isVerifyingShareCards}
-                              className="w-full py-1.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer disabled:opacity-50"
-                            >
-                              <Share2 className={`w-3.5 h-3.5 ${isVerifyingShareCards ? "animate-spin text-amber-400" : "text-cyan-400"}`} />
-                              <span>{isVerifyingShareCards ? "Auditing Cards..." : "Test Social Share Cards"}</span>
+                            <button type="button" onClick={handleVerifyShareCards} disabled={isVerifyingShareCards} className={`w-full ${ADMIN_BTN_SECONDARY}`}>
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>{isVerifyingShareCards ? "Testing..." : "Verify Share Cards"}</span>
                             </button>
                           )}
                         </div>
@@ -4115,66 +4087,47 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   })}
               </div>
 
-              {/* Real-Time Reported Error & Exception Log Section */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+              {/* Runtime Error Logs */}
+              <div className={`${ADMIN_SURFACE} overflow-hidden`}>
+                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-black text-white flex items-center gap-2">
-                      <span>🐛</span> Real-Time Error & Exception Logs
-                    </h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      Every unhandled button click, network timeout, or component error is logged here automatically in real time.
+                    <h3 className="text-sm font-semibold text-white">Runtime Error Logs</h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Unhandled interactions, network timeouts, and runtime exceptions.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-400 font-mono">
-                      {healthData?.logs?.length || 0} Total Logged Events
-                    </span>
-                  </div>
+                  <span className="text-xs text-zinc-500 tabular-nums">
+                    {healthData?.logs?.length || 0} logged
+                  </span>
                 </div>
 
                 {(!healthData?.logs || healthData.logs.length === 0) ? (
-                  <div className="py-12 text-center space-y-3">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl">
-                      ✓
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Zero Error Logs Detected</h4>
-                      <p className="text-xs text-zinc-400 max-w-md mx-auto mt-1">
-                        The system has logged zero runtime exceptions or broken interactions across all features. Everything is running smoothly!
-                      </p>
-                    </div>
+                  <div className="py-12 text-center px-6">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-2.5" />
+                    <p className="text-sm font-medium text-white">No runtime errors</p>
+                    <p className="text-xs text-zinc-500 mt-1">All tracked endpoints and client interactions are healthy.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                  <div className="divide-y divide-white/[0.06] max-h-[480px] overflow-y-auto">
                     {healthData.logs.map((log: any) => (
-                      <div
-                        key={log.id}
-                        className={`p-4 rounded-2xl border text-xs space-y-2.5 transition-all ${
-                          log.status === 'resolved'
-                            ? 'bg-zinc-950/50 border-zinc-800/50 opacity-60'
-                            : 'bg-zinc-950 border-rose-500/30 shadow-lg'
-                        }`}
-                      >
+                      <div key={log.id} className={`p-4 space-y-2 ${log.status === "resolved" ? "opacity-50" : ""}`}>
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
-                              log.status === 'resolved'
-                                ? 'bg-zinc-800 text-zinc-400'
-                                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                            }`}>
-                              {log.category || 'uncaught'}
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className={`font-medium ${log.status === "resolved" ? "text-zinc-500" : "text-rose-400"}`}>
+                              {log.category || "runtime"}
                             </span>
-                            <span className="font-bold text-white">{log.component}</span>
+                            <span className="text-zinc-600">·</span>
+                            <span className="font-semibold text-white">{log.component}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-zinc-200 font-mono">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-[11px] text-zinc-500 tabular-nums">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </span>
-                            {log.status !== 'resolved' && (
+                            {log.status !== "resolved" && (
                               <button
+                                type="button"
                                 onClick={() => handleClearErrorLog(log.id)}
-                                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] font-bold cursor-pointer"
+                                className="h-7 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-[11px] font-medium text-zinc-200 hover:text-white cursor-pointer"
                               >
                                 Mark Resolved
                               </button>
@@ -4182,28 +4135,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         </div>
 
-                        <p className="font-mono text-zinc-200 font-medium bg-zinc-900/80 p-2.5 rounded-xl border border-zinc-800/80 break-all">
-                          {log.message}
-                        </p>
+                        <p className="font-mono text-xs text-zinc-300 break-all">{log.message}</p>
 
                         {log.stack && (
-                          <details className="text-[11px] text-zinc-200 font-mono">
-                            <summary className="cursor-pointer hover:text-white transition-colors">
-                              View Stack Trace
-                            </summary>
-                            <pre className="mt-2 p-2.5 bg-black/60 rounded-xl overflow-x-auto text-[10px] text-rose-300/90 leading-tight">
+                          <details className="text-[11px] text-zinc-400 font-mono">
+                            <summary className="cursor-pointer hover:text-white transition-colors">Stack trace</summary>
+                            <pre className="mt-2 p-3 bg-black/50 rounded-xl border border-white/[0.06] overflow-x-auto text-[10px] text-zinc-300 leading-relaxed">
                               {log.stack}
                             </pre>
                           </details>
-                        )}
-
-                        {log.testSteps && (
-                          <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-200/90">
-                            <span className="font-bold text-amber-400 block mb-1">How To Test & Reproduce:</span>
-                            <pre className="whitespace-pre-wrap font-sans text-zinc-300">
-                              {log.testSteps}
-                            </pre>
-                          </div>
                         )}
                       </div>
                     ))}
@@ -4216,31 +4156,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB 1: OVERVIEW & KPIS */}
           {activeTab === "overview" && (
             <div className="max-w-7xl mx-auto space-y-6">
-              {/* Clean Obsidian Overview Header (zero duplicate quick-action clutter) */}
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-1">
-                <div>
-                  <h1 className="text-2xl font-semibold text-white tracking-tight">Overview</h1>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Live database metrics across verified photo reviews, claimed businesses, places, and community activity.
-                  </p>
-                </div>
-                {liveStats?.latencyMs !== undefined && (
-                  <div className="text-xs text-zinc-500 tabular-nums">
-                    BunnyDB · {liveStats.latencyMs}ms
-                  </div>
-                )}
-              </div>
+              <AdminPageHeader
+                title="Overview"
+                subtitle="Live database metrics across verified photo reviews, claimed businesses, places, and community activity."
+                actions={
+                  liveStats?.latencyMs !== undefined ? (
+                    <span className="text-xs text-zinc-500 tabular-nums">
+                      BunnyDB · {liveStats.latencyMs}ms
+                    </span>
+                  ) : undefined
+                }
+              />
 
               {/* 6 Clean Single-Elevation KPI Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                {/* 1. Claimed Businesses */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("businesses")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Businesses</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Businesses</span>
                     <Briefcase className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4255,14 +4191,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                {/* 2. Photo Reviews */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("videos")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Photo Reviews</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Reviews</span>
                     <Camera className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4272,7 +4207,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <div className="text-[11px] text-zinc-500 mt-0.5 flex items-center gap-1 truncate tabular-nums">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
                       <span className="text-zinc-300 font-medium">{metrics.avgRating}</span>
-                      <span>avg rating</span>
+                      <span>avg</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
@@ -4281,14 +4216,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                {/* 3. Places Directory */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("places")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Places</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Places</span>
                     <Building2 className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4303,14 +4237,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                {/* 4. Creators */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("creators")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Creators</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Creators</span>
                     <Award className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4327,14 +4260,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                {/* 5. Users */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("users")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between text-left"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Users</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Users</span>
                     <Users className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4349,13 +4281,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                 </button>
 
-                {/* 6. Interactions */}
                 <div
                   onClick={() => setActiveTab("likes")}
                   className="group p-4 rounded-2xl bg-[#0c0c0f] hover:bg-[#111116] border border-white/[0.08] hover:border-white/[0.16] transition-colors cursor-pointer flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[11px] font-medium text-zinc-400">Interactions</span>
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Activity</span>
                     <Heart className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
                   </div>
                   <div className="my-3">
@@ -4363,7 +4294,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       {(liveStats?.totals?.likes ?? metrics.totalLikes) + (liveStats?.totals?.bookmarks ?? adminBookmarks.length) + (liveStats?.totals?.comments ?? metrics.totalComments) + (liveStats?.totals?.shares ?? metrics.totalShares)}
                     </div>
                     <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
-                      {liveStats?.totals?.likes ?? metrics.totalLikes} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved · {liveStats?.totals?.comments ?? metrics.totalComments} comments
+                      {liveStats?.totals?.likes ?? metrics.totalLikes} likes · {liveStats?.totals?.bookmarks ?? adminBookmarks.length} saved
                     </div>
                   </div>
                   <div className="flex items-center gap-1 pt-2.5 border-t border-white/[0.06] text-[10px] font-medium">
@@ -4392,30 +4323,26 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* 2-Column Split Action Hub */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Column 1: Recent Photo Reviews */}
-                <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4 flex flex-col justify-between">
+              {/* 2-Column Split: Recent Photo Reviews & Places Directory */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Recent Photo Reviews */}
+                <div className={`${ADMIN_SURFACE} flex flex-col justify-between overflow-hidden`}>
                   <div>
-                    <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                      <div className="flex items-center gap-2">
-                        <Camera className="w-4 h-4 text-zinc-400" />
-                        <h3 className="font-semibold text-white text-sm tracking-tight">Recent Photo Reviews</h3>
-                      </div>
-
-                      {/* Filter Chips */}
-                      <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                    <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+                      <h3 className="font-semibold text-white text-sm tracking-tight">Recent Photo Reviews</h3>
+                      <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
                         {[
-                          { id: "all", label: `All (${activeVideos.length})` },
-                          { id: "5stars", label: "5 Stars" },
-                          { id: "4plus", label: "4+ Stars" }
+                          { id: "all", label: "All" },
+                          { id: "5stars", label: "5★" },
+                          { id: "4plus", label: "4+★" }
                         ].map((chip) => (
                           <button
                             key={chip.id}
+                            type="button"
                             onClick={() => setOverviewVideoFilter(chip.id)}
-                            className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
                               overviewVideoFilter === chip.id
-                                ? "bg-white text-zinc-950 shadow-xs"
+                                ? "bg-white text-zinc-950 font-semibold"
                                 : "text-zinc-400 hover:text-white"
                             }`}
                           >
@@ -4425,7 +4352,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                     </div>
 
-                    <div className="space-y-2.5 mt-3">
+                    <div className="divide-y divide-white/[0.06]">
                       {activeVideos
                         .filter((v) => {
                           if (overviewVideoFilter === "5stars") return v.rating === 5;
@@ -4436,51 +4363,46 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         .map((v) => (
                           <div
                             key={v.id}
-                            className="flex items-center justify-between p-3 rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 transition-all group"
+                            className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors group"
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div
+                              <button
+                                type="button"
                                 onClick={() => setPreviewVideo(v)}
-                                className="w-12 h-16 rounded-xl bg-zinc-900 overflow-hidden relative shrink-0 cursor-pointer shadow-sm border border-zinc-800"
+                                className="w-10 h-12 rounded-lg bg-zinc-900 overflow-hidden relative shrink-0 cursor-pointer border border-white/[0.08]"
+                                title="Inspect Review"
                               >
-                                <CopoVideoThumbnail video={v} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
-                                  <div className="w-6 h-6 rounded-full bg-white/90 text-zinc-950 flex items-center justify-center">
-                                    <Play className="w-3 h-3 fill-zinc-950 ml-0.5" />
-                                  </div>
-                                </div>
-                              </div>
+                                <CopoVideoThumbnail video={v} className="w-full h-full object-cover" />
+                              </button>
                               <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-xs text-white truncate group-hover:text-rose-400 transition-colors">
-                                  {v.placeName}
-                                </h4>
-                                <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                                  by <span className="text-zinc-200">{v.author?.name || "Reviewer"}</span>
-                                </p>
-                                <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-1">
-                                  <span className="flex items-center gap-0.5 text-amber-400 font-bold">
-                                    <Star className="w-3 h-3 fill-amber-400" /> {v.rating}
+                                <h4 className="font-medium text-xs text-white truncate">{v.placeName}</h4>
+                                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                  <span className="truncate">{v.author?.name || "Reviewer"}</span>
+                                  <span>·</span>
+                                  <span className="inline-flex items-center gap-0.5 text-zinc-300">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                    {v.rating}
                                   </span>
-                                  <span>•</span>
+                                  <span>·</span>
                                   <span>{v.likes || 0} likes</span>
-                                  <span>•</span>
-                                  <span>{v.commentsCount || 0} comments</span>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                            <div className="flex items-center gap-1 shrink-0">
                               <button
+                                type="button"
                                 onClick={() => setPreviewVideo(v)}
-                                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-800"
-                                title="Play Video"
+                                className={ADMIN_BTN_ICON}
+                                title="Inspect Review"
                               >
-                                <Play className="w-3.5 h-3.5" />
+                                <Eye className="w-3.5 h-3.5" />
                               </button>
                               <button
+                                type="button"
                                 onClick={() => setEditVideoModal(v)}
-                                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-800"
-                                title="Edit Review Metadata"
+                                className={ADMIN_BTN_ICON}
+                                title="Edit Review"
                               >
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
@@ -4488,47 +4410,43 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           </div>
                         ))}
                       {activeVideos.length === 0 && (
-                        <div className="py-8 text-center text-zinc-400 text-xs">No photo reviews in database yet.</div>
+                        <div className="py-10 text-center text-zinc-500 text-xs">No photo reviews recorded yet.</div>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
-                    <span className="text-xs text-zinc-400 font-mono">
-                      Showing up to 5 of {activeVideos.length} reviews
+                  <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 tabular-nums">
+                      {liveStats?.totals?.videoReviews ?? activeVideos.length} total
                     </span>
                     <button
+                      type="button"
                       onClick={() => setActiveTab("videos")}
-                      className="text-xs font-bold text-rose-400 hover:text-rose-300 cursor-pointer flex items-center gap-1 transition-colors"
+                      className="text-zinc-300 hover:text-white font-medium cursor-pointer transition-colors"
                     >
-                      <span>View All Reviews ({activeVideos.length})</span>
-                      <span>→</span>
+                      View all reviews →
                     </button>
                   </div>
                 </div>
 
-                {/* Column 2: Businesses & Venues Directory */}
-                <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4 flex flex-col justify-between">
+                {/* Places Directory */}
+                <div className={`${ADMIN_SURFACE} flex flex-col justify-between overflow-hidden`}>
                   <div>
-                    <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-sky-400" />
-                        <h3 className="font-bold text-white text-sm">Businesses & Venues Directory</h3>
-                      </div>
-
-                      {/* Filter Chips */}
-                      <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                    <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+                      <h3 className="font-semibold text-white text-sm tracking-tight">Places Directory</h3>
+                      <div className="flex items-center gap-1 bg-white/[0.03] p-0.5 rounded-lg border border-white/[0.06]">
                         {[
-                          { id: "all", label: `All (${activePlaces.length})` },
-                          { id: "claimed", label: `Claimed (${activePlaces.filter(p => p.isClaimed || p.claimedByEmail).length})` },
-                          { id: "unclaimed", label: `Unclaimed (${activePlaces.filter(p => !p.isClaimed && !p.claimedByEmail).length})` }
+                          { id: "all", label: "All" },
+                          { id: "claimed", label: "Claimed" },
+                          { id: "unclaimed", label: "Unclaimed" }
                         ].map((chip) => (
                           <button
                             key={chip.id}
+                            type="button"
                             onClick={() => setOverviewPlaceFilter(chip.id)}
-                            className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
                               overviewPlaceFilter === chip.id
-                                ? "bg-white text-zinc-950 shadow-xs"
+                                ? "bg-white text-zinc-950 font-semibold"
                                 : "text-zinc-400 hover:text-white"
                             }`}
                           >
@@ -4538,7 +4456,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                     </div>
 
-                    <div className="space-y-2.5 mt-3">
+                    <div className="divide-y divide-white/[0.06]">
                       {activePlaces
                         .filter((p) => {
                           const isClaimed = p.isClaimed || p.claimedByEmail;
@@ -4552,322 +4470,202 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           return (
                             <div
                               key={p.id}
-                              className="flex items-center justify-between p-3 rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 transition-all group"
+                              className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors"
                             >
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <AdminPlaceLogo place={p} size="sm" className="shrink-0" />
                                 <div className="min-w-0 flex-1">
-                                  <h4 className="font-bold text-xs text-white truncate group-hover:text-sky-400 transition-colors" title={p.name}>
+                                  <h4 className="font-medium text-xs text-white truncate" title={p.name}>
                                     {p.name}
                                   </h4>
-                                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                                    {p.category} • {p.city || p.address}
-                                  </p>
-                                  <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-1">
-                                    <span className="flex items-center gap-0.5 text-amber-400 font-bold">
-                                      <Star className="w-3 h-3 fill-amber-400" /> {p.rating || 5.0}
+                                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                    <span className="truncate">{p.category || "Place"}</span>
+                                    <span>·</span>
+                                    <span className={isClaimed ? "text-emerald-400" : "text-zinc-500"}>
+                                      {isClaimed ? "Claimed" : "Unclaimed"}
                                     </span>
-                                    <span>•</span>
+                                    <span>·</span>
                                     <span>{p.totalReviews || 0} reviews</span>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
-                                <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                    isClaimed
-                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                      : "bg-zinc-800 text-zinc-400 border-zinc-700"
-                                  }`}
-                                >
-                                  {isClaimed ? "Claimed" : "Unclaimed"}
-                                </span>
-                                <button
-                                  onClick={() => setEditPlaceModal(p)}
-                                  className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-800"
-                                  title="Edit Business Details"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setEditPlaceModal(p)}
+                                className={ADMIN_BTN_ICON}
+                                title="Edit Place"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           );
                         })}
                       {activePlaces.length === 0 && (
-                        <div className="py-8 text-center text-zinc-400 text-xs">No business places recorded yet.</div>
+                        <div className="py-10 text-center text-zinc-500 text-xs">No places recorded yet.</div>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
-                    <span className="text-xs text-zinc-400 font-mono">
-                      Showing up to 5 of {activePlaces.length} businesses
-                    </span>
+                  <div className="px-5 py-3 border-t border-white/[0.06] flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 tabular-nums">{activePlaces.length} total</span>
                     <button
+                      type="button"
                       onClick={() => setActiveTab("places")}
-                      className="text-xs font-bold text-sky-400 hover:text-sky-300 cursor-pointer flex items-center gap-1 transition-colors"
+                      className="text-zinc-300 hover:text-white font-medium cursor-pointer transition-colors"
                     >
-                      <span>View All Places ({activePlaces.length})</span>
-                      <span>→</span>
+                      View all places →
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Row 3: Live Community Likes & Reactions Activity Stream */}
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
-                      <Heart className="w-4 h-4 fill-rose-500 text-rose-500" />
+              {/* 2-Column Split: Recent Likes & Recent Bookmarks */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Live Community Likes */}
+                <div className={`${ADMIN_SURFACE} flex flex-col justify-between overflow-hidden`}>
+                  <div>
+                    <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold text-white text-sm tracking-tight">Recent Likes</h3>
+                        <p className="text-[11px] text-zinc-500 mt-0.5 tabular-nums">{adminLikes.length} recorded</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("likes")}
+                        className="text-xs text-zinc-300 hover:text-white font-medium cursor-pointer transition-colors"
+                      >
+                        View all →
+                      </button>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                        Live Community Likes Activity
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-bold">
-                          {adminLikes.length} Recorded
-                        </span>
-                      </h3>
-                      <p className="text-[11px] text-zinc-400">
-                        Real-time audit stream showing each member who liked photo reviews
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={fetchAdminLikes}
-                      disabled={isLoadingLikes}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors shadow-sm"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isLoadingLikes ? "animate-spin" : ""}`} />
-                      <span>Sync</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("likes")}
-                      className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
-                    >
-                      <span>Full Likes Feed ({adminLikes.length}) →</span>
-                    </button>
-                  </div>
-                </div>
+                    {isLoadingLikes && adminLikes.length === 0 ? (
+                      <div className="py-10 text-center text-zinc-500 text-xs">Loading likes...</div>
+                    ) : adminLikes.length === 0 ? (
+                      <div className="py-10 text-center text-zinc-500 text-xs">No likes recorded yet.</div>
+                    ) : (
+                      <div className="divide-y divide-white/[0.06]">
+                        {adminLikes.slice(0, 5).map((like, idx) => {
+                          const matchedVid = activeVideos.find((v) => v.id === like.videoId);
+                          const videoThumb = like.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                          const placeName = like.placeName || matchedVid?.placeName || "Photo Review";
 
-                {isLoadingLikes ? (
-                  <div className="py-8 text-center text-zinc-400 space-y-2">
-                    <RefreshCw className="w-6 h-6 text-rose-500 animate-spin mx-auto" />
-                    <p className="text-xs">Loading recorded likes...</p>
-                  </div>
-                ) : adminLikes.length === 0 ? (
-                  <div className="py-8 text-center text-zinc-400 space-y-2">
-                    <Heart className="w-8 h-8 text-zinc-600 mx-auto" />
-                    <p className="text-xs font-medium text-zinc-300">No likes recorded yet.</p>
-                    <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
-                      When community members tap the heart icon on any photo review, their user identity and liked review details will instantly show here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {adminLikes.slice(0, 6).map((like, idx) => {
-                      const matchedVid = activeVideos.find((v) => v.id === like.videoId);
-                      const videoThumb = like.videoThumbnail || matchedVid?.thumbnailUrl || "";
-                      const placeName = like.placeName || matchedVid?.placeName || "Review Video";
-                      const videoRating = like.videoRating || matchedVid?.rating;
-
-                      return (
-                        <div
-                          key={like.id || `ov-like-${idx}`}
-                          onClick={() => setSelectedLikeDetailModal(like)}
-                          className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800/90 hover:border-rose-500/50 hover:bg-zinc-900/60 transition-all cursor-pointer group flex items-center justify-between gap-3 shadow-xs"
-                          title="Click to view full like audit details"
-                        >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            {/* User Avatar */}
-                            <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden ring-1 ring-rose-500/20 group-hover:ring-rose-500/60 transition-all">
+                          return (
+                            <button
+                              key={like.id || `ov-like-${idx}`}
+                              type="button"
+                              onClick={() => setSelectedLikeDetailModal(like)}
+                              className="w-full px-5 py-3 hover:bg-white/[0.02] transition-colors flex items-center justify-between gap-3 text-left cursor-pointer"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <img
                                   src={getSafeAvatarUrl(like.userAvatar, like.userName, like.userHandle)}
                                   alt=""
-                                  className="w-full h-full object-cover"
+                                  className="w-8 h-8 rounded-full object-cover border border-white/[0.08] shrink-0"
                                   onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.src = generateGoogleLetterAvatarSvg(like.userName || "User", 128, like.userHandle || like.userName);
+                                    (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(like.userName || "User", 128, like.userHandle || like.userName);
                                   }}
                                 />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-medium text-white truncate">
+                                    {like.userName || "Community User"}{" "}
+                                    <span className="text-zinc-500 font-normal">liked {placeName}</span>
+                                  </div>
+                                  <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                    {like.userHandle || "@user"} · {like.timestamp || "Recently"}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-rose-600 border border-zinc-900 flex items-center justify-center text-[8px] text-white">
-                                ❤️
-                              </div>
-                            </div>
-
-                            {/* User & Video Info */}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs text-white truncate group-hover:text-rose-400 transition-colors">
-                                  {like.userName || "Community User"}
-                                </span>
-                                <span className="text-[10px] px-1 rounded font-mono bg-zinc-800 text-zinc-400">
-                                  {like.userHandle || "@user"}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                                Liked <strong className="text-zinc-200">{placeName}</strong>
-                              </p>
-                              <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
-                                <span>{like.timestamp || "Recently"}</span>
-                                {videoRating && (
-                                  <span className="flex items-center gap-0.5 text-amber-400 font-mono font-bold">
-                                    <Star className="w-2.5 h-2.5 fill-amber-400" /> {videoRating}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Video Thumbnail */}
-                          {videoThumb && (
-                            <div className="w-11 h-11 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 relative">
-                              <img src={videoThumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                <Play className="w-2.5 h-2.5 fill-white text-white ml-0.5" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Row 4: Live Community Bookmarks & Saved Reviews Activity Stream */}
-              <div className="p-5 rounded-3xl bg-zinc-900 border border-zinc-800 shadow-xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                      <Bookmark className="w-4 h-4 fill-amber-500 text-amber-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                        Live Community Saved & Bookmarked Reviews Activity
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
-                          {adminBookmarks.length} Saved
-                        </span>
-                      </h3>
-                      <p className="text-[11px] text-zinc-400">
-                        Real-time audit stream showing each member who saved/bookmarked reviews and places
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={fetchAdminBookmarks}
-                      disabled={isLoadingBookmarks}
-                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors shadow-sm"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isLoadingBookmarks ? "animate-spin" : ""}`} />
-                      <span>Sync</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("bookmarks")}
-                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
-                    >
-                      <span>Full Bookmarks Feed ({adminBookmarks.length}) →</span>
-                    </button>
+                              {videoThumb && (
+                                <img
+                                  src={videoThumb}
+                                  alt=""
+                                  className="w-8 h-8 rounded-lg object-cover border border-white/[0.08] shrink-0"
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {isLoadingBookmarks ? (
-                  <div className="py-8 text-center text-zinc-400 space-y-2">
-                    <RefreshCw className="w-6 h-6 text-amber-500 animate-spin mx-auto" />
-                    <p className="text-xs">Loading recorded bookmarks...</p>
-                  </div>
-                ) : adminBookmarks.length === 0 ? (
-                  <div className="py-8 text-center text-zinc-400 space-y-2">
-                    <Bookmark className="w-8 h-8 text-zinc-600 mx-auto" />
-                    <p className="text-xs font-medium text-zinc-300">No bookmarks recorded yet.</p>
-                    <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
-                      When community members bookmark places or photo reviews, their full identity and saved review details will instantly appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {adminBookmarks.slice(0, 6).map((bm, idx) => {
-                      const matchedVid = activeVideos.find((v) => v.id === bm.videoId);
-                      const matchedPlace = activePlaces.find((p) => p.id === bm.placeId || p.brandDomain === bm.placeId);
-                      const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || "";
-                      const placeName = bm.placeName || matchedPlace?.name || matchedVid?.placeName || "Saved Place";
-                      const videoRating = bm.videoRating || matchedVid?.rating;
+                {/* Live Community Bookmarks */}
+                <div className={`${ADMIN_SURFACE} flex flex-col justify-between overflow-hidden`}>
+                  <div>
+                    <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-semibold text-white text-sm tracking-tight">Recent Bookmarks</h3>
+                        <p className="text-[11px] text-zinc-500 mt-0.5 tabular-nums">{adminBookmarks.length} saved</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("bookmarks")}
+                        className="text-xs text-zinc-300 hover:text-white font-medium cursor-pointer transition-colors"
+                      >
+                        View all →
+                      </button>
+                    </div>
 
-                      return (
-                        <div
-                          key={bm.id || `ov-bm-${idx}`}
-                          onClick={() => setSelectedBookmarkDetailModal(bm)}
-                          className="p-3 rounded-2xl bg-zinc-950 border border-zinc-800/90 hover:border-amber-500/50 hover:bg-zinc-900/60 transition-all cursor-pointer group flex items-center justify-between gap-3 shadow-xs"
-                          title="Click to view full bookmark audit details"
-                        >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            {/* User Avatar */}
-                            <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden ring-1 ring-amber-500/20 group-hover:ring-amber-500/60 transition-all">
+                    {isLoadingBookmarks && adminBookmarks.length === 0 ? (
+                      <div className="py-10 text-center text-zinc-500 text-xs">Loading bookmarks...</div>
+                    ) : adminBookmarks.length === 0 ? (
+                      <div className="py-10 text-center text-zinc-500 text-xs">No bookmarks recorded yet.</div>
+                    ) : (
+                      <div className="divide-y divide-white/[0.06]">
+                        {adminBookmarks.slice(0, 5).map((bm, idx) => {
+                          const matchedVid = activeVideos.find((v) => v.id === bm.videoId);
+                          const matchedPlace = activePlaces.find((p) => p.id === bm.placeId || p.brandDomain === bm.placeId);
+                          const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                          const placeName = bm.placeName || matchedPlace?.name || matchedVid?.placeName || "Saved Place";
+
+                          return (
+                            <button
+                              key={bm.id || `ov-bm-${idx}`}
+                              type="button"
+                              onClick={() => setSelectedBookmarkDetailModal(bm)}
+                              className="w-full px-5 py-3 hover:bg-white/[0.02] transition-colors flex items-center justify-between gap-3 text-left cursor-pointer"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <img
                                   src={getSafeAvatarUrl(bm.userAvatar, bm.userName, bm.userHandle)}
                                   alt=""
-                                  className="w-full h-full object-cover"
+                                  className="w-8 h-8 rounded-full object-cover border border-white/[0.08] shrink-0"
                                   onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
+                                    (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
                                   }}
                                 />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-medium text-white truncate">
+                                    {bm.userName || "Community User"}{" "}
+                                    <span className="text-zinc-500 font-normal">saved {placeName}</span>
+                                  </div>
+                                  <div className="text-[11px] text-zinc-500 mt-0.5 truncate tabular-nums">
+                                    {bm.userHandle || "@user"} · {bm.timestamp || "Recently"}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-600 border border-zinc-900 flex items-center justify-center text-[8px] text-white">
-                                🔖
-                              </div>
-                            </div>
-
-                            {/* User & Bookmarked Info */}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs text-white truncate group-hover:text-amber-400 transition-colors">
-                                  {bm.userName || "Community User"}
-                                </span>
-                                <span className="text-[10px] px-1 rounded font-mono bg-zinc-800 text-zinc-400">
-                                  {bm.userHandle || "@user"}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                                Saved <strong className="text-zinc-200">{placeName}</strong>
-                              </p>
-                              <div className="flex items-center gap-2 text-[10px] text-zinc-500 mt-0.5">
-                                <span>{bm.timestamp || "Recently"}</span>
-                                {videoRating && (
-                                  <span className="flex items-center gap-0.5 text-amber-400 font-mono font-bold">
-                                    <Star className="w-2.5 h-2.5 fill-amber-400" /> {videoRating}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Video Thumbnail / Logo */}
-                          {videoThumb ? (
-                            <div className="w-11 h-11 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 relative">
-                              <img src={videoThumb} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-                                <Play className="w-2.5 h-2.5 fill-white text-white ml-0.5" />
-                              </div>
-                            </div>
-                          ) : bm.placeLogo || matchedPlace?.logoUrl ? (
-                            <div className="w-11 h-11 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 p-1">
-                              <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain" />
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
+                              {videoThumb ? (
+                                <img
+                                  src={videoThumb}
+                                  alt=""
+                                  className="w-8 h-8 rounded-lg object-cover border border-white/[0.08] shrink-0"
+                                />
+                              ) : (bm.placeLogo || matchedPlace?.logoUrl) ? (
+                                <img
+                                  src={bm.placeLogo || matchedPlace?.logoUrl}
+                                  alt=""
+                                  className="w-8 h-8 rounded-lg object-contain bg-white p-1 border border-white/[0.08] shrink-0"
+                                />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}
@@ -4875,12 +4673,61 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB 2: PHOTO REVIEWS MANAGEMENT */}
           {activeTab === "videos" && (
             <div className="max-w-7xl mx-auto space-y-5">
-              {/* Action Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
+              <AdminPageHeader
+                title="Photo Reviews"
+                subtitle={`${filteredVideos.length} of ${liveStats?.totals?.videoReviews ?? activeVideos.length} reviews shown`}
+                actions={
+                  <>
+                    {selectedVideoIds.length > 0 && (
+                      confirmBulkDeleteVideos ? (
+                        <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                          <span className="text-xs font-medium text-rose-300">Delete {selectedVideoIds.length}?</span>
+                          <button type="button" onClick={executeBulkDeleteVideos} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                            Confirm
+                          </button>
+                          <button type="button" onClick={() => setConfirmBulkDeleteVideos(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setConfirmBulkDeleteVideos(true)} className={ADMIN_BTN_DESTRUCTIVE}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete ({selectedVideoIds.length})</span>
+                        </button>
+                      )
+                    )}
+
+                    {confirmPurgeAllVideos && (
+                      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                        <span className="text-xs font-medium text-rose-300">Purge ALL?</span>
+                        <button type="button" onClick={executePurgeAllVideos} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                          Wipe All
+                        </button>
+                        <button type="button" onClick={() => setConfirmPurgeAllVideos(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <AdminActionMenu
+                      label="Actions"
+                      items={[
+                        { label: "Sync Business Names", icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: handleSyncReviewBusinessNames },
+                        { label: "Clean Legacy Streams", icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: handleSyncBunnyLibrary },
+                        { label: "Clean Incomplete Uploads", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: handlePurgeIncompleteUploads },
+                        { label: isSeedingCommunity ? "Seeding Samples..." : "Seed Sample Reviews (20)", icon: <Plus className="w-3.5 h-3.5" />, onClick: executeSeedCommunityReviews, disabled: isSeedingCommunity },
+                        { label: "Purge All Reviews", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: () => setConfirmPurgeAllVideos(true), destructive: true, dividerBefore: true }
+                      ]}
+                    />
+                  </>
+                }
+              />
+
+              {/* Single-Line Filter Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-2.5`}>
                 <div className="flex flex-wrap items-center gap-2">
-                  {/* Select All Checkbox */}
                   {filteredVideos.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] transition-colors">
+                    <label className="h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white transition-colors">
                       <input
                         type="checkbox"
                         checked={selectedVideoIds.length === filteredVideos.length && filteredVideos.length > 0}
@@ -4891,11 +4738,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     </label>
                   )}
 
-                  {/* Rating Filter Dropdown */}
                   <select
                     value={videoRatingFilter}
                     onChange={(e) => setVideoRatingFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
-                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
+                    className={ADMIN_SELECT}
                   >
                     <option value="all">All Ratings</option>
                     <option value="5">5 Stars</option>
@@ -4905,11 +4751,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="1">1 Star</option>
                   </select>
 
-                  {/* Sort Filter Dropdown */}
                   <select
                     value={videoSortFilter}
                     onChange={(e) => setVideoSortFilter(e.target.value as any)}
-                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
+                    className={ADMIN_SELECT}
                   >
                     <option value="newest">Newest First</option>
                     <option value="highest_rated">Highest Rated</option>
@@ -4917,137 +4762,31 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     <option value="most_likes">Most Liked</option>
                     <option value="most_comments">Most Comments</option>
                   </select>
-
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.08]">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("grid")}
-                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${viewMode === "grid" ? "bg-white/[0.12] text-white" : "text-zinc-400 hover:text-zinc-200"}`}
-                      title="Grid View"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("table")}
-                      className={`p-1.5 rounded-md transition-colors cursor-pointer ${viewMode === "table" ? "bg-white/[0.12] text-white" : "text-zinc-400 hover:text-zinc-200"}`}
-                      title="Table View"
-                    >
-                      <List className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
                 </div>
 
-                {/* Maintenance & Bulk Actions (Each action lives strictly ONCE here) */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-zinc-500 tabular-nums hidden sm:inline-block mr-1">
-                    <span className="text-zinc-200 font-medium">{filteredVideos.length}</span> of {activeVideos.length}
-                  </span>
-
-                  {selectedVideoIds.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      {confirmBulkDeleteVideos ? (
-                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                          <span className="text-xs font-medium text-rose-200">Delete {selectedVideoIds.length}?</span>
-                          <button
-                            type="button"
-                            onClick={executeBulkDeleteVideos}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" /> Confirm
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmBulkDeleteVideos(false)}
-                            className="p-0.5 text-zinc-400 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmBulkDeleteVideos(true)}
-                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedVideoIds.length})
-                        </button>
-                      )}
-                    </div>
-                  )}
-
+                <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]">
                   <button
                     type="button"
-                    onClick={handleSyncReviewBusinessNames}
-                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                    title="Synchronize photo review business names with verified official brand names"
+                    onClick={() => setViewMode("grid")}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${viewMode === "grid" ? "bg-white text-zinc-950" : "text-zinc-400 hover:text-white"}`}
+                    title="Grid View"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 text-zinc-400" /> Sync Names
+                    <LayoutGrid className="w-3.5 h-3.5" />
                   </button>
-
                   <button
                     type="button"
-                    onClick={handleSyncBunnyLibrary}
-                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                    title="Clean up any legacy orphaned stream entries"
+                    onClick={() => setViewMode("table")}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${viewMode === "table" ? "bg-white text-zinc-950" : "text-zinc-400 hover:text-white"}`}
+                    title="Table View"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 text-zinc-400" /> Clean Legacy
+                    <List className="w-3.5 h-3.5" />
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={handlePurgeIncompleteUploads}
-                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.08] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                    title="Remove incomplete review records where media upload was interrupted"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-zinc-400" /> Clean Incomplete
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={executeSeedCommunityReviews}
-                    disabled={isSeedingCommunity}
-                    className="px-2.5 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 hover:text-white border border-white/[0.1] rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
-                    title="Seed 20 sample community accounts and business-matched photo reviews"
-                  >
-                    <Plus className={`w-3.5 h-3.5 ${isSeedingCommunity ? "animate-spin" : ""}`} />
-                    <span>{isSeedingCommunity ? "Seeding..." : "Seed Sample (20)"}</span>
-                  </button>
-
-                  {confirmPurgeAllVideos ? (
-                    <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                      <span className="text-xs font-medium text-rose-200">Purge ALL?</span>
-                      <button
-                        type="button"
-                        onClick={executePurgeAllVideos}
-                        className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md cursor-pointer"
-                      >
-                        Wipe All
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmPurgeAllVideos(false)}
-                        className="p-0.5 text-zinc-400 hover:text-white cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmPurgeAllVideos(true)}
-                      className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Purge All
-                    </button>
-                  )}
                 </div>
               </div>
 
               {/* Grid View */}
               {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
                   {filteredVideos.map((video) => {
                     const isPhotoItem = video.mediaType === "photo" || Boolean(video.photoUrl);
                     const isBrokenStream = !isPhotoItem && !video.bunnyVideoId && (!video.videoUrl || video.videoUrl.includes("/api/videos/stream/") || video.videoUrl.includes("sample-review.mp4")) && (!video.videoData || !video.videoData.startsWith("data:video"));
@@ -5055,292 +4794,261 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     return (
                       <div
                         key={video.id}
-                        className={`group relative bg-zinc-900 rounded-2xl border overflow-hidden shadow-sm hover:border-zinc-700 transition-all flex flex-col ${isBrokenStream ? 'border-amber-500/40 bg-amber-950/10' : 'border-zinc-800'}`}
+                        className={`group relative bg-[#0c0c0f] rounded-2xl border overflow-hidden hover:border-white/[0.16] transition-colors flex flex-col ${isBrokenStream ? "border-amber-500/40" : "border-white/[0.08]"}`}
                       >
-                        {/* Top Bar Overlay */}
+                        {/* Top Overlay */}
                         <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between pointer-events-none">
                           <div className="pointer-events-auto">
                             <input
                               type="checkbox"
                               checked={selectedVideoIds.includes(video.id)}
                               onChange={() => handleToggleVideoSelection(video.id)}
-                              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950/80 text-white focus:ring-0 cursor-pointer shadow-md accent-white"
+                              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950/80 text-white focus:ring-0 cursor-pointer accent-white"
                             />
                           </div>
                           <div className="flex items-center gap-1.5 pointer-events-auto">
                             {isBrokenStream && (
-                              <span className="px-2 py-0.5 rounded-lg bg-amber-950/90 backdrop-blur-md text-[10px] font-bold text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-sm" title="Video stream failed or upload was interrupted before completion">
-                                <AlertTriangle className="w-3 h-3 text-amber-400" /> Upload Interrupted
+                              <span className="px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-medium text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Interrupted
                               </span>
                             )}
-                            <span className="px-2 py-0.5 rounded-lg bg-black/70 backdrop-blur-md text-[11px] font-bold text-white border border-white/10 flex items-center gap-1 shadow-sm">
+                            <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[11px] font-semibold text-white border border-white/10 flex items-center gap-1 tabular-nums">
                               <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {video.rating}
                             </span>
                           </div>
                         </div>
 
-                      {/* Video Thumbnail with Hover Play */}
-                      <div
-                        onClick={() => setPreviewVideo(video)}
-                        className="aspect-[9/16] bg-black relative overflow-hidden cursor-pointer"
-                      >
-                        <CopoVideoThumbnail
-                          video={video}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent flex flex-col justify-end p-3.5">
-                          <p className="text-white font-black text-sm drop-shadow-md truncate">{video.placeName}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-zinc-300 text-xs truncate">by {video.author?.name || "Reviewer"}</span>
-                            {video.author?.isVerified && (
-                              <BadgeCheck className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-12 h-12 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg">
-                            {isPhotoItem ? (
-                              <Eye className="w-5 h-5" />
-                            ) : (
-                              <Play className="w-5 h-5 ml-0.5 fill-current" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Bottom Bar */}
-                      <div className="p-3 bg-zinc-900/95 flex items-center justify-between border-t border-zinc-800/80">
-                        <div className="flex items-center gap-3 text-xs text-zinc-400">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveTab("likes");
-                              setLikesSearchQuery(video.id);
-                            }}
-                            className="flex items-center gap-1 font-mono hover:text-rose-400 transition-colors cursor-pointer group/likes"
-                            title={`Click to view users who liked ${video.placeName}`}
-                          >
-                            <Heart className="w-3.5 h-3.5 text-rose-500/70 group-hover/likes:fill-rose-500 group-hover/likes:text-rose-500" />
-                            <span>{video.likes || 0}</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveTab("bookmarks");
-                              setBookmarksSearchQuery(video.id || video.placeId || "");
-                            }}
-                            className="flex items-center gap-1 font-mono hover:text-amber-400 transition-colors cursor-pointer group/bkmk"
-                            title={`Click to view users who saved ${video.placeName}`}
-                          >
-                            <Bookmark className="w-3.5 h-3.5 text-amber-500/70 group-hover/bkmk:fill-amber-500 group-hover/bkmk:text-amber-500" />
-                            <span>{video.bookmarksCount || (video as any).bookmarks || 0}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveTab("comments");
-                              if (video.placeName) setSearchQuery(video.placeName);
-                            }}
-                            className="flex items-center gap-1 font-mono tabular-nums hover:text-blue-400 transition-colors cursor-pointer"
-                            title={`Click to view comments on ${video.placeName}`}
-                          >
-                            <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
-                            <span>{video.commentsCount || (video.comments || []).length}</span>
-                          </button>
-                          <span className="flex items-center gap-1 font-mono">
-                            <Eye className="w-3.5 h-3.5 text-zinc-500" /> {video.viewsCount || video.views || 0}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setEditVideoModal(video)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
-                            title="Edit Review Details"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-
-                          {confirmDeleteVideoId === video.id ? (
-                            <div className="flex items-center gap-1 animate-in fade-in">
-                              <button
-                                onClick={() => executeDeleteVideo(video.id)}
-                                className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-[11px] font-black cursor-pointer shadow-sm flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" /> Confirm
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteVideoId(null)}
-                                className="p-1 text-zinc-400 hover:text-white cursor-pointer"
-                                title="Cancel"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
+                        {/* Thumbnail */}
+                        <div
+                          onClick={() => setPreviewVideo(video)}
+                          className="aspect-[9/16] bg-black relative overflow-hidden cursor-pointer"
+                        >
+                          <CopoVideoThumbnail
+                            video={video}
+                            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-3">
+                            <p className="text-white font-semibold text-xs truncate">{video.placeName}</p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-zinc-400 text-[11px] truncate">{video.author?.name || "Reviewer"}</span>
+                              {video.author?.isVerified && (
+                                <BadgeCheck className="w-3 h-3 text-sky-400 shrink-0" />
+                              )}
                             </div>
-                          ) : (
+                          </div>
+
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg">
+                              {isPhotoItem ? (
+                                <Eye className="w-4 h-4" />
+                              ) : (
+                                <Play className="w-4 h-4 ml-0.5 fill-current" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Footer */}
+                        <div className="px-3 py-2.5 bg-[#0c0c0f] flex items-center justify-between gap-2 border-t border-white/[0.06]">
+                          <div className="flex items-center gap-2.5 text-[11px] text-zinc-400 tabular-nums">
                             <button
-                              onClick={() => setConfirmDeleteVideoId(video.id)}
-                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer"
-                              title="Delete Video"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveTab("likes");
+                                setLikesSearchQuery(video.id);
+                              }}
+                              className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                              title="View likes"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Heart className="w-3 h-3 text-zinc-500" />
+                              <span>{video.likes || 0}</span>
                             </button>
-                          )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveTab("bookmarks");
+                                setBookmarksSearchQuery(video.id || video.placeId || "");
+                              }}
+                              className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                              title="View bookmarks"
+                            >
+                              <Bookmark className="w-3 h-3 text-zinc-500" />
+                              <span>{video.bookmarksCount || (video as any).bookmarks || 0}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveTab("comments");
+                                if (video.placeName) setSearchQuery(video.placeName);
+                              }}
+                              className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+                              title="View comments"
+                            >
+                              <MessageSquare className="w-3 h-3 text-zinc-500" />
+                              <span>{video.commentsCount || (video.comments || []).length}</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditVideoModal(video)}
+                              className={ADMIN_BTN_ICON}
+                              title="Edit Review"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+
+                            {confirmDeleteVideoId === video.id ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => executeDeleteVideo(video.id)}
+                                  className="h-8 px-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-semibold cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteVideoId(null)}
+                                  className={ADMIN_BTN_ICON}
+                                  title="Cancel"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteVideoId(video.id)}
+                                className={ADMIN_BTN_ICON_DANGER}
+                                title="Delete Review"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
                 </div>
               ) : (
                 /* Table View */
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className={`${ADMIN_SURFACE} overflow-hidden`}>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-zinc-300">
-                      <thead className="bg-zinc-950 text-xs font-bold uppercase text-zinc-400 border-b border-zinc-800">
+                    <table className="w-full text-left text-xs text-zinc-300">
+                      <thead className="bg-white/[0.02] text-[11px] font-medium uppercase tracking-wider text-zinc-500 border-b border-white/[0.06]">
                         <tr>
-                          <th className="p-4 w-12">
+                          <th className="p-3.5 w-10">
                             <input
                               type="checkbox"
                               checked={selectedVideoIds.length === filteredVideos.length && filteredVideos.length > 0}
                               onChange={handleSelectAllVideos}
-                              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white"
+                              className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white"
                             />
                           </th>
-                          <th className="p-4">Preview</th>
-                          <th className="p-4">Business Place</th>
-                          <th className="p-4">Author / Reviewer</th>
-                          <th className="p-4">Rating</th>
-                          <th className="p-4">Engagement</th>
-                          <th className="p-4">Recorded</th>
-                          <th className="p-4 text-right">Actions</th>
+                          <th className="p-3.5">Preview</th>
+                          <th className="p-3.5">Place</th>
+                          <th className="p-3.5">Author</th>
+                          <th className="p-3.5">Rating</th>
+                          <th className="p-3.5">Engagement</th>
+                          <th className="p-3.5">Date</th>
+                          <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-800/80">
+                      <tbody className="divide-y divide-white/[0.06]">
                         {filteredVideos.map((v) => (
-                          <tr key={v.id} className="hover:bg-zinc-800/50 transition-colors">
-                            <td className="p-4">
+                          <tr key={v.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="p-3.5">
                               <input
                                 type="checkbox"
                                 checked={selectedVideoIds.includes(v.id)}
                                 onChange={() => handleToggleVideoSelection(v.id)}
-                                className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white"
+                                className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white"
                               />
                             </td>
-                            <td className="p-4">
-                              <div
+                            <td className="p-3.5">
+                              <button
+                                type="button"
                                 onClick={() => setPreviewVideo(v)}
-                                className="w-12 h-16 rounded-xl bg-zinc-950 overflow-hidden relative cursor-pointer group border border-zinc-800"
+                                className="w-10 h-14 rounded-lg bg-zinc-950 overflow-hidden relative cursor-pointer border border-white/[0.08] block"
                               >
                                 <CopoVideoThumbnail video={v} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Play className="w-4 h-4 text-white fill-white" />
-                                </div>
-                              </div>
+                              </button>
                             </td>
-                            <td className="p-4">
-                              <div className="font-bold text-white">{v.placeName}</div>
-                              <div className="text-xs text-zinc-400">{v.placeCategory || "Establishment"}</div>
+                            <td className="p-3.5">
+                              <div className="font-medium text-white">{v.placeName}</div>
+                              <div className="text-[11px] text-zinc-500">{v.placeCategory || "Venue"}</div>
                             </td>
-                            <td className="p-4">
+                            <td className="p-3.5">
                               <div className="flex items-center gap-2">
                                 <img
                                   src={getSafeAvatarUrl(v.author?.avatar, v.author?.name, v.author?.handle)}
                                   alt=""
-                                  className="w-7 h-7 rounded-full object-cover border border-zinc-700"
+                                  className="w-7 h-7 rounded-full object-cover border border-white/[0.08]"
                                   onError={(e) => {
                                     (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(v.author?.name || "User", 128, v.author?.handle || v.author?.name);
                                   }}
                                 />
                                 <div>
-                                  <div className="font-semibold text-zinc-200 text-xs flex items-center gap-1">
-                                    {v.author?.name || "Reviewer"}
-                                    {v.author?.isVerified && (
-                                      <BadgeCheck className="w-3 h-3 text-sky-400 shrink-0" />
-                                    )}
+                                  <div className="font-medium text-zinc-200 flex items-center gap-1">
+                                    <span>{v.author?.name || "Reviewer"}</span>
+                                    {v.author?.isVerified && <BadgeCheck className="w-3 h-3 text-sky-400 shrink-0" />}
                                   </div>
-                                  <div className="text-[11px] text-zinc-400 font-mono">@{v.author?.handle || v.userId || "reviewer"}</div>
+                                  <div className="text-[11px] text-zinc-500 font-mono">@{v.author?.handle || v.userId || "reviewer"}</div>
                                 </div>
                               </div>
                             </td>
-                            <td className="p-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-950 text-zinc-200 border border-zinc-800 font-bold text-xs">
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {v.rating}
+                            <td className="p-3.5 tabular-nums">
+                              <span className="inline-flex items-center gap-1 font-medium text-white">
+                                <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {v.rating}
                               </span>
                             </td>
-                            <td className="p-4 text-xs">
-                              <div className="flex items-center gap-3 font-mono text-zinc-400">
+                            <td className="p-3.5 tabular-nums">
+                              <div className="flex items-center gap-3 text-zinc-400">
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab("likes");
-                                    setLikesSearchQuery(v.id);
-                                  }}
-                                  className="flex items-center gap-1 hover:text-rose-400 transition-colors cursor-pointer group/likes"
-                                  title={`Click to view users who liked ${v.placeName}`}
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setActiveTab("likes"); setLikesSearchQuery(v.id); }}
+                                  className="flex items-center gap-1 hover:text-white cursor-pointer"
                                 >
-                                  <Heart className="w-3 h-3 text-rose-500/70 group-hover/likes:fill-rose-500 group-hover/likes:text-rose-500" />
-                                  <span>{v.likes || 0}</span>
+                                  <Heart className="w-3 h-3 text-zinc-500" /> {v.likes || 0}
                                 </button>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveTab("bookmarks");
-                                    setBookmarksSearchQuery(v.id || v.placeId || "");
-                                  }}
-                                  className="flex items-center gap-1 hover:text-amber-400 transition-colors cursor-pointer group/bkmk"
-                                  title={`Click to view users who saved ${v.placeName}`}
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setActiveTab("bookmarks"); setBookmarksSearchQuery(v.id || v.placeId || ""); }}
+                                  className="flex items-center gap-1 hover:text-white cursor-pointer"
                                 >
-                                  <Bookmark className="w-3 h-3 text-amber-500/70 group-hover/bkmk:fill-amber-500" />
-                                  <span>{v.bookmarksCount || (v as any).bookmarks || 0}</span>
+                                  <Bookmark className="w-3 h-3 text-zinc-500" /> {v.bookmarksCount || (v as any).bookmarks || 0}
                                 </button>
                                 <span className="flex items-center gap-1">
                                   <MessageSquare className="w-3 h-3 text-zinc-500" /> {v.commentsCount || (v.comments || []).length}
                                 </span>
                               </div>
                             </td>
-                            <td className="p-4 text-xs text-zinc-400 font-mono">{formatRecordedDate(v.recordedAt, v.createdAtMs || parseTimestampToMs(v.createdAt) || undefined)}</td>
-                            <td className="p-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => setPreviewVideo(v)}
-                                  className="p-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 cursor-pointer"
-                                  title="Play Video"
-                                >
-                                  <Play className="w-3.5 h-3.5" />
+                            <td className="p-3.5 text-zinc-500 tabular-nums">{formatRecordedDate(v.recordedAt, v.createdAtMs || parseTimestampToMs(v.createdAt) || undefined)}</td>
+                            <td className="p-3.5 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <button type="button" onClick={() => setPreviewVideo(v)} className={ADMIN_BTN_ICON} title="Inspect Review">
+                                  <Eye className="w-3.5 h-3.5" />
                                 </button>
-                                <button
-                                  onClick={() => setEditVideoModal(v)}
-                                  className="p-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 cursor-pointer"
-                                  title="Edit"
-                                >
+                                <button type="button" onClick={() => setEditVideoModal(v)} className={ADMIN_BTN_ICON} title="Edit Review">
                                   <Edit className="w-3.5 h-3.5" />
                                 </button>
-
                                 {confirmDeleteVideoId === v.id ? (
-                                  <div className="flex items-center gap-1 animate-in fade-in">
-                                    <button
-                                      onClick={() => executeDeleteVideo(v.id)}
-                                      className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-black cursor-pointer shadow-sm flex items-center gap-1 whitespace-nowrap"
-                                    >
-                                      <Trash2 className="w-3 h-3" /> Confirm Delete
+                                  <div className="flex items-center gap-1">
+                                    <button type="button" onClick={() => executeDeleteVideo(v.id)} className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                                      Delete
                                     </button>
-                                    <button
-                                      onClick={() => setConfirmDeleteVideoId(null)}
-                                      className="p-1 text-zinc-400 hover:text-white cursor-pointer"
-                                      title="Cancel"
-                                    >
+                                    <button type="button" onClick={() => setConfirmDeleteVideoId(null)} className={ADMIN_BTN_ICON} title="Cancel">
                                       <X className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 ) : (
-                                  <button
-                                    onClick={() => setConfirmDeleteVideoId(v.id)}
-                                    className="p-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/50 cursor-pointer transition-colors"
-                                    title="Delete Video"
-                                  >
+                                  <button type="button" onClick={() => setConfirmDeleteVideoId(v.id)} className={ADMIN_BTN_ICON_DANGER} title="Delete Review">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
@@ -5355,9 +5063,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               )}
 
               {filteredVideos.length === 0 && (
-                <div className="py-16 text-center text-zinc-400 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
-                  No photo reviews found matching criteria.
-                </div>
+                <AdminEmptyState
+                  icon={<Camera className="w-5 h-5" />}
+                  title="No photo reviews found"
+                  description="Adjust your search or rating filters to view matching reviews."
+                />
               )}
             </div>
           )}
@@ -5365,11 +5075,59 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: REGISTERED & CLAIMED BUSINESSES */}
           {activeTab === "businesses" && (
             <div className="max-w-7xl mx-auto space-y-5">
-              {/* Action Toolbar (Deduplicated: Add Business is in Sidebar; Audit Followers is in Health; Repair Names is in Places) */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
-                <div className="flex flex-wrap items-center gap-2.5">
+              <AdminPageHeader
+                title="Businesses"
+                subtitle={`${filteredBusinesses.length} claimed ${filteredBusinesses.length === 1 ? "business" : "businesses"} with active brand management`}
+                actions={
+                  <>
+                    {selectedBusinessIds.length > 0 && (
+                      confirmBulkDeleteBusinesses ? (
+                        <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                          <span className="text-xs font-medium text-rose-300">Delete {selectedBusinessIds.length}?</span>
+                          <button type="button" onClick={executeBulkDeleteBusinesses} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                            Confirm
+                          </button>
+                          <button type="button" onClick={() => setConfirmBulkDeleteBusinesses(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setConfirmBulkDeleteBusinesses(true)} className={ADMIN_BTN_DESTRUCTIVE}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete ({selectedBusinessIds.length})</span>
+                        </button>
+                      )
+                    )}
+
+                    {confirmPurgeAllBusinesses && (
+                      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                        <span className="text-xs font-medium text-rose-300">Purge ALL {allBusinesses.length}?</span>
+                        <button type="button" onClick={executePurgeAllBusinesses} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                          Purge All
+                        </button>
+                        <button type="button" onClick={() => setConfirmPurgeAllBusinesses(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {allBusinesses.length > 0 && (
+                      <AdminActionMenu
+                        label="Actions"
+                        items={[
+                          { label: "Purge All Businesses", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: () => setConfirmPurgeAllBusinesses(true), destructive: true }
+                        ]}
+                      />
+                    )}
+                  </>
+                }
+              />
+
+              {/* Single-Line Filter Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-2.5`}>
+                <div className="flex flex-wrap items-center gap-2">
                   {filteredBusinesses.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+                    <label className="h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white">
                       <input
                         type="checkbox"
                         checked={selectedBusinessIds.length === filteredBusinesses.length && filteredBusinesses.length > 0}
@@ -5383,239 +5141,137 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <select
                     value={businessCategoryFilter}
                     onChange={(e) => setBusinessCategoryFilter(e.target.value)}
-                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
+                    className={ADMIN_SELECT}
                   >
                     <option value="all">All Categories</option>
                     {uniqueBusinessCategories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-zinc-500 tabular-nums mr-1">
-                    <span className="text-zinc-200 font-medium">{filteredBusinesses.length}</span> claimed {filteredBusinesses.length === 1 ? "business" : "businesses"}
-                  </span>
-
-                  {selectedBusinessIds.length > 0 && (
-                    <div>
-                      {confirmBulkDeleteBusinesses ? (
-                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                          <span className="text-xs font-medium text-rose-200">Delete {selectedBusinessIds.length}?</span>
-                          <button
-                            type="button"
-                            onClick={executeBulkDeleteBusinesses}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" /> Yes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmBulkDeleteBusinesses(false)}
-                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmBulkDeleteBusinesses(true)}
-                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedBusinessIds.length})
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {allBusinesses.length > 0 && (
-                    <div>
-                      {confirmPurgeAllBusinesses ? (
-                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                          <span className="text-xs font-medium text-rose-200">Purge ALL {allBusinesses.length}?</span>
-                          <button
-                            type="button"
-                            onClick={executePurgeAllBusinesses}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" /> Purge All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmPurgeAllBusinesses(false)}
-                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmPurgeAllBusinesses(true)}
-                          className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                          title="Purge all claimed businesses permanently from database"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge All
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <span className="text-xs text-zinc-500 tabular-nums pr-1">
+                  {filteredBusinesses.length} {filteredBusinesses.length === 1 ? "business" : "businesses"}
+                </span>
               </div>
 
-              {/* Businesses List Grid */}
+              {/* Businesses Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredBusinesses.map((biz) => {
                   const bizVideos = getPlaceVideos(biz);
-                  const isYoouzOfficial = biz.id === 'yoouz.com' || biz.brandDomain === 'yoouz.com' || (biz.name && biz.name.toLowerCase() === 'yoouz');
-                  const domain = biz.brandDomain || (biz.website ? biz.website.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] : '') || (isYoouzOfficial ? 'yoouz.com' : '');
-                  const websiteUrl = biz.website || (domain ? `https://${domain}` : '');
-                  const avgRating = bizVideos.length > 0 
-                    ? (bizVideos.reduce((acc: number, v: any) => acc + (v.rating || 5), 0) / bizVideos.length).toFixed(1) 
+                  const isYoouzOfficial = biz.id === "yoouz.com" || biz.brandDomain === "yoouz.com" || (biz.name && biz.name.toLowerCase() === "yoouz");
+                  const domain = biz.brandDomain || (biz.website ? biz.website.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0] : "") || (isYoouzOfficial ? "yoouz.com" : "");
+                  const websiteUrl = biz.website || (domain ? `https://${domain}` : "");
+                  const avgRating = bizVideos.length > 0
+                    ? (bizVideos.reduce((acc: number, v: any) => acc + (v.rating || 5), 0) / bizVideos.length).toFixed(1)
                     : (biz.rating ? biz.rating.toFixed(1) : "5.0");
+                  const isPremium = ((biz as any).plan || "").toLowerCase() !== "free" && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan);
 
                   return (
                     <div
                       key={biz.id}
-                      className={`p-5 rounded-2xl bg-zinc-900/90 border transition-all flex flex-col justify-between space-y-4 shadow-sm ${
-                        isYoouzOfficial ? "border-zinc-700 ring-1 ring-zinc-700/50" : "border-zinc-800 hover:border-zinc-700"
-                      }`}
+                      className={`${ADMIN_SURFACE} p-5 flex flex-col justify-between gap-4 hover:border-white/[0.16] transition-colors`}
                     >
-                      <div className="space-y-3.5">
-                        <div className="flex items-start gap-3 w-full">
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
                           <input
                             type="checkbox"
                             checked={selectedBusinessIds.includes(biz.id)}
                             onChange={() => handleToggleBusinessSelection(biz.id)}
-                            className="w-4 h-4 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white shrink-0"
+                            className="w-3.5 h-3.5 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white shrink-0"
                           />
-
-                          <div className="shrink-0">
-                            <AdminPlaceLogo place={biz} size="md" className="rounded-xl ring-2 ring-zinc-800" />
-                          </div>
-
+                          <AdminPlaceLogo place={biz} size="md" className="shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h3 
-                                className="font-bold text-white text-base leading-snug break-words" 
-                                title={biz.name}
-                              >
-                                {biz.name}
-                              </h3>
-                              {isYoouzOfficial && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-800 border border-zinc-700 text-zinc-200">
-                                  Official Platform
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-zinc-400 truncate mt-0.5">
-                              {biz.category || "General Business"}
+                            <h3 className="font-semibold text-white text-sm leading-snug truncate" title={biz.name}>
+                              {biz.name}
+                            </h3>
+                            <p className="text-xs text-zinc-500 truncate mt-0.5">
+                              {biz.category || "Business"}{isYoouzOfficial ? " · Official Platform" : ""}
                             </p>
-                          </div>
-                        </div>
-
-                        {/* Domain / Website URL */}
-                        {domain && (
-                          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-mono font-bold truncate">
-                              <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                              <span className="truncate">{domain}</span>
-                            </div>
-                            {websiteUrl && (
+                            {domain && (
                               <a
                                 href={websiteUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[11px] font-semibold text-zinc-400 hover:text-white flex items-center gap-1 shrink-0 ml-2"
+                                className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-white mt-1 truncate max-w-full"
                               >
-                                Visit <ExternalLink className="w-3 h-3" />
+                                <span className="truncate">{domain}</span>
+                                <ExternalLink className="w-3 h-3 shrink-0" />
                               </a>
                             )}
                           </div>
-                        )}
+                        </div>
 
-                        {/* Business Key Metrics */}
-                        <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 text-center">
+                        {/* Hairline Stats Row */}
+                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/[0.06] text-center">
                           <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Reviews</div>
-                            <div className="font-black text-white text-sm tabular-nums font-mono flex items-center justify-center gap-1">
-                              <Video className="w-3 h-3 text-zinc-400" />
-                              {bizVideos.length}
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Reviews</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{bizVideos.length}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Rating</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              {avgRating}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Avg Rating</div>
-                            <div className="font-black text-amber-400 text-sm flex items-center justify-center gap-0.5 tabular-nums font-mono">
-                              <Star className="w-3 h-3 fill-amber-400" /> {avgRating}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Status</div>
-                            <div className="font-bold text-zinc-200 text-xs flex items-center justify-center gap-1 mt-0.5">
-                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Claimed
-                            </div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</div>
+                            <div className="text-xs font-medium text-emerald-400 mt-1">Claimed</div>
                           </div>
                         </div>
 
-                        {/* Location / Contact */}
                         {(biz.city || biz.address || biz.phone) && (
-                          <div className="space-y-1 text-xs text-zinc-400 px-1">
+                          <div className="space-y-1 text-xs text-zinc-400">
                             {(biz.city || biz.address) && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
-                                <span className="truncate">{biz.city}{biz.address ? ` • ${biz.address}` : ''}</span>
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                <span className="truncate">{biz.city}{biz.address ? ` · ${biz.address}` : ""}</span>
                               </div>
                             )}
                             {biz.phone && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Phone className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                 <span className="truncate font-mono">{biz.phone}</span>
                               </div>
                             )}
                           </div>
                         )}
 
-                        {/* Premium Plan Administration Toggle */}
-                        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/60 border border-zinc-800">
-                          <span className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
-                            <ShieldCheck className={`w-3.5 h-3.5 ${((biz as any).plan || '').toLowerCase() !== 'free' && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "text-emerald-400" : "text-zinc-500"}`} />
-                            Plan: <strong className={((biz as any).plan || '').toLowerCase() !== 'free' && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "text-emerald-400 font-extrabold" : "text-zinc-400 font-bold"}>{((biz as any).plan || '').toLowerCase() !== 'free' && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "Premium ($199/mo)" : "Free Plan"}</strong>
-                          </span>
+                        {/* Plan Row */}
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <div className="text-xs text-zinc-400">
+                            Plan:{" "}
+                            <span className={isPremium ? "text-emerald-400 font-semibold" : "text-zinc-200 font-medium"}>
+                              {isPremium ? "Premium ($199/mo)" : "Free"}
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => handleTogglePremium(biz)}
-                            className={`px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide border cursor-pointer transition ${
-                              ((biz as any).plan || '').toLowerCase() !== 'free' && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan)
-                                ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-700"
-                                : "bg-white hover:bg-zinc-200 text-zinc-950 font-black border-white"
-                            }`}
+                            className={isPremium ? "h-7 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-[11px] font-medium text-zinc-300 hover:text-white cursor-pointer" : "h-7 px-2.5 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 text-[11px] font-semibold cursor-pointer"}
                           >
-                            {((biz as any).plan || '').toLowerCase() !== 'free' && Boolean((biz as any).isPremium || (biz as any).plan === "premium" || (biz as any).isPremiumPlan) ? "Set Free" : "Set Premium"}
+                            {isPremium ? "Set Free" : "Upgrade"}
                           </button>
                         </div>
                       </div>
 
                       {/* Card Actions */}
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditPlaceModal(biz)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
-                          >
-                            <Edit className="w-3.5 h-3.5" /> Edit
+                          <button type="button" onClick={() => setEditPlaceModal(biz)} className={ADMIN_BTN_SECONDARY}>
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
                           </button>
-
                           {domain && (
                             <a
                               href={`/testembed?slug=${encodeURIComponent(domain)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-amber-200 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              className={ADMIN_BTN_SECONDARY}
                             >
-                              <Sparkles className="w-3.5 h-3.5" /> Test Embed
+                              <Code className="w-3.5 h-3.5" />
+                              <span>Embed</span>
                             </a>
                           )}
                         </div>
@@ -5623,28 +5279,22 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         {confirmDeleteBusinessId === biz.id ? (
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={() => {
                                 executeDeletePlace(biz.id);
                                 setConfirmDeleteBusinessId(null);
                               }}
-                              className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold cursor-pointer shadow-sm"
+                              className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer"
                             >
-                              Confirm
+                              Delete
                             </button>
-                            <button
-                              onClick={() => setConfirmDeleteBusinessId(null)}
-                              className="p-1 text-zinc-300 hover:text-white cursor-pointer"
-                            >
+                            <button type="button" onClick={() => setConfirmDeleteBusinessId(null)} className={ADMIN_BTN_ICON} title="Cancel">
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => setConfirmDeleteBusinessId(biz.id)}
-                            className="p-1.5 rounded-xl text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer border border-transparent hover:border-red-900/40"
-                            title="Delete Business"
-                          >
-                            <Trash2 className="w-4 h-4" />
+                          <button type="button" onClick={() => setConfirmDeleteBusinessId(biz.id)} className={ADMIN_BTN_ICON_DANGER} title="Delete Business">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -5654,10 +5304,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
 
               {filteredBusinesses.length === 0 && (
-                <div className="py-16 text-center text-zinc-300 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800 space-y-2">
-                  <p className="font-bold">No businesses found matching criteria.</p>
-                  <p className="text-xs text-zinc-400">You can claim venues from the Places Directory tab or register a new business.</p>
-                </div>
+                <AdminEmptyState
+                  icon={<Briefcase className="w-5 h-5" />}
+                  title="No claimed businesses found"
+                  description="Claim venues from the Places tab or create a new business."
+                />
               )}
             </div>
           )}
@@ -5665,11 +5316,59 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB: PLACES & VENUES DIRECTORY */}
           {activeTab === "places" && (
             <div className="max-w-7xl mx-auto space-y-5">
-              {/* Action Toolbar (Canonical home for Repair Names & Flush Metadata Cache) */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0c0c0f] p-3.5 rounded-2xl border border-white/[0.08]">
-                <div className="flex flex-wrap items-center gap-2.5">
+              <AdminPageHeader
+                title="Places"
+                subtitle={`${filteredPhysicalPlaces.length} unclaimed venues in the directory`}
+                actions={
+                  <>
+                    {selectedPlaceIds.length > 0 && (
+                      confirmBulkDeletePlaces ? (
+                        <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                          <span className="text-xs font-medium text-rose-300">Delete {selectedPlaceIds.length}?</span>
+                          <button type="button" onClick={executeBulkDeletePlaces} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                            Confirm
+                          </button>
+                          <button type="button" onClick={() => setConfirmBulkDeletePlaces(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setConfirmBulkDeletePlaces(true)} className={ADMIN_BTN_DESTRUCTIVE}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete ({selectedPlaceIds.length})</span>
+                        </button>
+                      )
+                    )}
+
+                    {confirmPurgeAllPlaces && (
+                      <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25">
+                        <span className="text-xs font-medium text-rose-300">Purge ALL {allPhysicalPlaces.length}?</span>
+                        <button type="button" onClick={executePurgeAllPlaces} className="h-7 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer">
+                          Purge All
+                        </button>
+                        <button type="button" onClick={() => setConfirmPurgeAllPlaces(false)} className="p-1 text-zinc-400 hover:text-white cursor-pointer">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <AdminActionMenu
+                      label="Actions"
+                      items={[
+                        { label: isFlushingMetadataCache ? "Flushing Cache..." : "Flush Metadata Cache", icon: <RefreshCw className="w-3.5 h-3.5" />, onClick: handleFlushMetadataAndAssetCache, disabled: isFlushingMetadataCache },
+                        { label: isRepairingBrandNames ? "Repairing Names..." : "Repair Business Names", icon: <Building2 className="w-3.5 h-3.5" />, onClick: handleRepairAllBusinessNames, disabled: isRepairingBrandNames },
+                        ...(allPhysicalPlaces.length > 0 ? [{ label: "Purge All Places", icon: <Trash2 className="w-3.5 h-3.5" />, onClick: () => setConfirmPurgeAllPlaces(true), destructive: true, dividerBefore: true }] : [])
+                      ]}
+                    />
+                  </>
+                }
+              />
+
+              {/* Single-Line Filter Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-2.5`}>
+                <div className="flex flex-wrap items-center gap-2">
                   {filteredPhysicalPlaces.length > 0 && (
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+                    <label className="h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2 cursor-pointer text-xs font-medium text-zinc-300 hover:text-white">
                       <input
                         type="checkbox"
                         checked={selectedPlaceIds.length === filteredPhysicalPlaces.length && filteredPhysicalPlaces.length > 0}
@@ -5683,209 +5382,100 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   <select
                     value={placeCategoryFilter}
                     onChange={(e) => setPlaceCategoryFilter(e.target.value)}
-                    className="px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium text-zinc-200 focus:outline-none focus:border-white/25 cursor-pointer"
+                    className={ADMIN_SELECT}
                   >
-                    <option value="all">All Place Categories</option>
+                    <option value="all">All Categories</option>
                     {uniquePlaceCategories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-zinc-500 tabular-nums mr-1">
-                    <span className="text-zinc-200 font-medium">{filteredPhysicalPlaces.length}</span> venues
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={handleFlushMetadataAndAssetCache}
-                    disabled={isFlushingMetadataCache}
-                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white rounded-lg text-xs font-medium border border-white/[0.08] transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                    title="Flush search metadata caches and sanitize place asset references"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isFlushingMetadataCache ? "animate-spin" : ""}`} />
-                    <span>{isFlushingMetadataCache ? "Flushing..." : "Flush Cache"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleRepairAllBusinessNames}
-                    disabled={isRepairingBrandNames}
-                    className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white rounded-lg text-xs font-medium border border-white/[0.08] transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                    title="Audit and repair brand name formatting across all places and businesses"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>{isRepairingBrandNames ? "Repairing..." : "Repair Names"}</span>
-                  </button>
-
-                  {selectedPlaceIds.length > 0 && (
-                    <div>
-                      {confirmBulkDeletePlaces ? (
-                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                          <span className="text-xs font-medium text-rose-200">Delete {selectedPlaceIds.length}?</span>
-                          <button
-                            type="button"
-                            onClick={executeBulkDeletePlaces}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" /> Yes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmBulkDeletePlaces(false)}
-                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmBulkDeletePlaces(true)}
-                          className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedPlaceIds.length})
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {allPhysicalPlaces.length > 0 && (
-                    <div>
-                      {confirmPurgeAllPlaces ? (
-                        <div className="flex items-center gap-2 bg-rose-950/50 border border-rose-800/60 px-2.5 py-1 rounded-lg">
-                          <span className="text-xs font-medium text-rose-200">Purge ALL {allPhysicalPlaces.length}?</span>
-                          <button
-                            type="button"
-                            onClick={executePurgeAllPlaces}
-                            className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-md flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" /> Purge All
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmPurgeAllPlaces(false)}
-                            className="p-0.5 text-zinc-300 hover:text-white cursor-pointer"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmPurgeAllPlaces(true)}
-                          className="px-2.5 py-1.5 bg-white/[0.03] hover:bg-rose-950/50 text-zinc-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-800/60 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                          title="Purge all directory places permanently from database"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge All
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <span className="text-xs text-zinc-500 tabular-nums pr-1">
+                  {filteredPhysicalPlaces.length} venues
+                </span>
               </div>
 
-              {/* Places List Grid */}
+              {/* Places Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredPhysicalPlaces.map((place) => {
                   const placeVideos = getPlaceVideos(place);
-                  const avgRating = placeVideos.length > 0 
-                    ? (placeVideos.reduce((acc: number, v: any) => acc + (v.rating || 5), 0) / placeVideos.length).toFixed(1) 
+                  const avgRating = placeVideos.length > 0
+                    ? (placeVideos.reduce((acc: number, v: any) => acc + (v.rating || 5), 0) / placeVideos.length).toFixed(1)
                     : (place.rating ? place.rating.toFixed(1) : "5.0");
+                  const cleanDomain = place.brandDomain || place.website?.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0];
 
                   return (
                     <div
                       key={place.id}
-                      className="p-5 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between space-y-4 shadow-sm"
+                      className={`${ADMIN_SURFACE} p-5 flex flex-col justify-between gap-4 hover:border-white/[0.16] transition-colors`}
                     >
-                      <div className="space-y-3.5">
-                        <div className="flex items-start gap-3 w-full">
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3">
                           <input
                             type="checkbox"
                             checked={selectedPlaceIds.includes(place.id)}
                             onChange={() => handleTogglePlaceSelection(place.id)}
-                            className="w-4 h-4 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white shrink-0"
+                            className="w-3.5 h-3.5 mt-1.5 rounded border-zinc-700 bg-zinc-950 text-white cursor-pointer accent-white shrink-0"
                           />
-
-                          <div className="shrink-0">
-                            <AdminPlaceLogo place={place} size="md" className="rounded-xl ring-2 ring-zinc-800" />
-                          </div>
-
+                          <AdminPlaceLogo place={place} size="md" className="shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <h3 
-                              className="font-bold text-white text-base leading-snug break-words line-clamp-2" 
-                              title={place.name}
-                            >
+                            <h3 className="font-semibold text-white text-sm leading-snug line-clamp-2" title={place.name}>
                               {place.name}
                             </h3>
-                            <p className="text-xs text-zinc-400 truncate mt-0.5">
-                              {place.category || "Venue"}{place.city ? ` • ${place.city}` : ""}
+                            <p className="text-xs text-zinc-500 truncate mt-0.5">
+                              {place.category || "Venue"}{place.city ? ` · ${place.city}` : ""}
                             </p>
+                            {cleanDomain && (
+                              <a
+                                href={place.website || `https://${place.brandDomain}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-white mt-1 truncate max-w-full"
+                              >
+                                <span className="truncate">{cleanDomain}</span>
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </a>
+                            )}
                           </div>
                         </div>
 
-                        {/* Domain / Website URL if present */}
-                        {(place.brandDomain || place.website) && (
-                          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800/80">
-                            <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-mono font-bold truncate">
-                              <Globe className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                              <span className="truncate">{place.brandDomain || place.website?.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0]}</span>
-                            </div>
-                            <a
-                              href={place.website || `https://${place.brandDomain}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] font-bold text-zinc-400 hover:text-white flex items-center gap-1 transition-colors ml-2 shrink-0 cursor-pointer"
-                            >
-                              Visit <ExternalLink className="w-3 h-3" />
-                            </a>
-                          </div>
-                        )}
-
-                        {/* Place Key Metrics */}
-                        <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 text-center">
+                        {/* Hairline Stats Row */}
+                        <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/[0.06] text-center">
                           <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Reviews</div>
-                            <div className="font-black text-white text-sm tabular-nums font-mono flex items-center justify-center gap-1">
-                              <Video className="w-3 h-3 text-zinc-400" />
-                              {placeVideos.length}
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Reviews</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{placeVideos.length}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Rating</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              {avgRating}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Avg Rating</div>
-                            <div className="font-black text-amber-400 text-sm flex items-center justify-center gap-0.5 tabular-nums font-mono">
-                              <Star className="w-3 h-3 fill-amber-400" /> {avgRating}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Status</div>
-                            <div className="font-semibold text-zinc-400 text-xs flex items-center justify-center gap-1 mt-0.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" /> Unclaimed
-                            </div>
+                            <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Status</div>
+                            <div className="text-xs font-medium text-zinc-500 mt-1">Unclaimed</div>
                           </div>
                         </div>
 
-                        {/* Location / Address / Contact */}
                         {(place.address || place.city || place.phone || place.email) && (
-                          <div className="space-y-1 text-xs text-zinc-400 px-1">
+                          <div className="space-y-1 text-xs text-zinc-400">
                             {(place.address || place.city) && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <MapPin className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <MapPin className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                 <span className="truncate">{place.address || place.city}</span>
                               </div>
                             )}
                             {place.phone && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Phone className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <Phone className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                 <span className="truncate font-mono">{place.phone}</span>
                               </div>
                             )}
                             {place.email && (
                               <div className="flex items-center gap-1.5 truncate">
-                                <Mail className="w-3 h-3 text-zinc-500 shrink-0" />
+                                <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                                 <span className="truncate font-mono text-[11px]">{place.email}</span>
                               </div>
                             )}
@@ -5894,45 +5484,39 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
 
                       {/* Card Actions */}
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                      <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleQuickClaimPlace(place)}
-                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer border border-zinc-700/60"
-                            title="Promote this place to an official claimed business profile"
+                            className={ADMIN_BTN_SECONDARY}
+                            title="Promote to claimed business"
                           >
-                            <Briefcase className="w-3.5 h-3.5 text-zinc-300" /> Claim Business
+                            <Briefcase className="w-3.5 h-3.5" />
+                            <span>Claim</span>
                           </button>
-                          <button
-                            onClick={() => setEditPlaceModal(place)}
-                            className="px-2.5 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer border border-zinc-800"
-                          >
-                            <Edit className="w-3 h-3" /> Edit
+                          <button type="button" onClick={() => setEditPlaceModal(place)} className={ADMIN_BTN_SECONDARY}>
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
                           </button>
                         </div>
 
                         {confirmDeletePlaceId === place.id ? (
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={() => executeDeletePlace(place.id)}
-                              className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold cursor-pointer shadow-sm"
+                              className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer"
                             >
-                              Confirm
+                              Delete
                             </button>
-                            <button
-                              onClick={() => setConfirmDeletePlaceId(null)}
-                              className="p-1 text-zinc-300 hover:text-white cursor-pointer"
-                            >
+                            <button type="button" onClick={() => setConfirmDeletePlaceId(null)} className={ADMIN_BTN_ICON} title="Cancel">
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ) : (
-                          <button
-                            onClick={() => setConfirmDeletePlaceId(place.id)}
-                            className="p-1.5 rounded-xl text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer border border-transparent hover:border-red-900/40"
-                            title="Delete Place"
-                          >
-                            <Trash2 className="w-4 h-4" />
+                          <button type="button" onClick={() => setConfirmDeletePlaceId(place.id)} className={ADMIN_BTN_ICON_DANGER} title="Delete Place">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -5942,162 +5526,179 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
 
               {filteredPhysicalPlaces.length === 0 && (
-                <div className="py-16 text-center text-zinc-300 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800">
-                  No places found in directory.
-                </div>
+                <AdminEmptyState
+                  icon={<Building2 className="w-5 h-5" />}
+                  title="No places found"
+                  description="Try clearing your search query or selecting a different category."
+                />
               )}
             </div>
           )}
 
           {/* TAB: CREATORS & REVIEWERS */}
           {activeTab === "creators" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-bold text-white">Creators & Photo Reviewers</span>
-                  </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Creators"
+                subtitle={`${filteredCreators.length.toLocaleString()} of ${creatorsList.length.toLocaleString()} photo reviewers`}
+              />
 
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-3`}>
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={creatorFilter}
                     onChange={(e) => setCreatorFilter(e.target.value as any)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none"
+                    className={ADMIN_SELECT}
                   >
                     <option value="all">All Creators ({creatorsList.length})</option>
                     <option value="top">Top Creators (3+ Reviews)</option>
                   </select>
                 </div>
-
-                <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
-                  Showing <span className="text-amber-400 font-bold">{filteredCreators.length}</span> creators
-                </div>
+                <span className="text-xs text-zinc-400 tabular-nums px-1">
+                  Showing <span className="text-white font-medium">{filteredCreators.length}</span> creators
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCreators.map((creator) => {
-                  const creatorVideos = videos.filter((v) =>
-                    isAuthorMatch(v, {
-                      name: creator.name,
-                      handle: `@${creator.name}`,
-                      email: creator.email,
-                      uid: creator.uid || creator.id
-                    })
-                  );
+              {filteredCreators.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Award className="w-5 h-5" />}
+                  title="No creators found"
+                  description="No reviewers match your active filter or search query."
+                  action={
+                    (searchQuery || creatorFilter !== "all") ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setCreatorFilter("all");
+                        }}
+                        className={ADMIN_BTN_SECONDARY}
+                      >
+                        Clear Filters
+                      </button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredCreators.map((creator) => {
+                    const creatorVideos = activeVideos.filter((v) =>
+                      isAuthorMatch(v, {
+                        name: creator.name,
+                        handle: `@${creator.name}`,
+                        email: creator.email,
+                        uid: creator.uid || creator.id
+                      })
+                    );
 
-                  const totalLikes = creatorVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
-                  const totalViews = creatorVideos.reduce((acc, v) => acc + (v.views || 0), 0);
-                  const avgCreatorRating = creatorVideos.length > 0 
-                    ? (creatorVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / creatorVideos.length).toFixed(1)
-                    : "5.0";
+                    const totalLikes = creatorVideos.reduce((acc, v) => acc + (v.likes || 0), 0);
+                    const avgCreatorRating = creatorVideos.length > 0
+                      ? (creatorVideos.reduce((acc, v) => acc + (v.rating || 5), 0) / creatorVideos.length).toFixed(1)
+                      : "5.0";
 
-                  return (
-                    <div
-                      key={creator.name || creator.email || creator.id}
-                      className="p-5 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between space-y-4 shadow-sm"
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-full bg-zinc-950 border border-amber-500/40 overflow-hidden shrink-0 relative ring-2 ring-amber-500/20">
-                          <img 
-                            src={getSafeAvatarUrl(creator.avatar, creator.name, creator.handle || creator.email)} 
-                            alt="" 
-                            className="w-full h-full object-cover" 
-                            onError={(e) => { 
-                              const target = e.currentTarget as HTMLImageElement; 
-                              target.src = generateGoogleLetterAvatarSvg(creator.name || "Creator", 128, creator.handle || creator.name);
-                            }} 
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-white text-base truncate">{creator.name}</h3>
+                    return (
+                      <div
+                        key={creator.id || creator.uid || creator.email || creator.name}
+                        className={`${ADMIN_SURFACE} p-4 hover:border-white/[0.14] transition-colors flex flex-col justify-between gap-4`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0">
+                            <img
+                              src={getSafeAvatarUrl(creator.avatar, creator.name, creator.handle || creator.email)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(creator.name || "Creator", 128, creator.handle || creator.name);
+                              }}
+                            />
                           </div>
-                          
-                          <p className="text-xs text-amber-400/90 font-mono truncate">
-                            {creator.handle ? (creator.handle.startsWith("@") ? creator.handle : `@${creator.handle}`) : `@${creator.name}`}
-                          </p>
-
-                          {creator.email && <p className="text-[11px] text-zinc-400 truncate mt-0.5">{creator.email}</p>}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 text-center">
-                        <div>
-                          <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Reviews</div>
-                          <div className="font-black text-white text-sm tabular-nums font-mono">{creatorVideos.length}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Likes</div>
-                          <div className="font-black text-white text-sm tabular-nums font-mono">{totalLikes}</div>
-                        </div>
-                        <div>
-                          <div className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Avg Rating</div>
-                          <div className="font-black text-amber-400 text-sm flex items-center justify-center gap-0.5 tabular-nums font-mono">
-                            <Star className="w-3 h-3 fill-amber-400" /> {avgCreatorRating}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-semibold text-white truncate">{creator.name}</h3>
+                            <p className="text-xs text-zinc-400 font-mono truncate">
+                              {creator.handle ? (creator.handle.startsWith("@") ? creator.handle : `@${creator.handle}`) : `@${creator.name}`}
+                            </p>
+                            {creator.email && <p className="text-[11px] text-zinc-500 truncate mt-0.5">{creator.email}</p>}
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800/80">
-                        <div className="flex items-center justify-between">
+                        <div className="grid grid-cols-3 divide-x divide-white/[0.06] py-2.5 border-y border-white/[0.06] text-center">
+                          <div className="px-2">
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Reviews</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{creatorVideos.length}</div>
+                          </div>
+                          <div className="px-2">
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Likes</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5">{totalLikes.toLocaleString()}</div>
+                          </div>
+                          <div className="px-2">
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500">Avg Rating</div>
+                            <div className="text-sm font-semibold text-white tabular-nums mt-0.5 inline-flex items-center justify-center gap-1">
+                              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                              {avgCreatorRating}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2">
                           <button
+                            type="button"
                             onClick={() => setEditUserModal(creator)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
+                            className={ADMIN_BTN_SECONDARY}
                           >
-                            <Edit className="w-3.5 h-3.5" /> Edit Creator
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
                           </button>
-                          
+
                           <div className="flex items-center gap-1.5">
                             {creatorVideos.length > 0 && (
                               <button
+                                type="button"
                                 onClick={() => {
                                   const userVidIds = creatorVideos.map((v) => v.id);
                                   if (onBulkDeleteVideos) onBulkDeleteVideos(userVidIds);
                                   showToast(`Removed all ${userVidIds.length} reviews for @${creator.name}`);
                                 }}
-                                className="px-2.5 py-1.5 text-orange-400 hover:bg-orange-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-transparent hover:border-orange-800/40"
-                                title="Remove this creator's videos (keeps account intact)"
+                                className={ADMIN_BTN_DESTRUCTIVE}
+                                title="Remove this creator's reviews while keeping the account"
                               >
                                 Clear Reviews
                               </button>
                             )}
 
                             {confirmDeleteUserId === (creator.id || creator.uid) ? (
-                              <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
-                                <span className="text-[11px] font-bold text-red-300 px-1">Delete?</span>
+                              <div className="flex items-center gap-1.5">
                                 <button
+                                  type="button"
                                   onClick={() => executeDeleteUser(creator)}
-                                  className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                                  className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                                 >
-                                  Yes
+                                  Delete
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => setConfirmDeleteUserId(null)}
-                                  className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  className="h-8 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
                                 >
                                   Cancel
                                 </button>
                               </div>
                             ) : (
                               <button
+                                type="button"
                                 onClick={() => setConfirmDeleteUserId(creator.id || creator.uid)}
-                                className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 border border-transparent hover:border-red-900/40"
+                                className={ADMIN_BTN_ICON_DANGER}
                                 title="Delete creator account"
+                                aria-label="Delete creator account"
                               >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {filteredCreators.length === 0 && (
-                <div className="py-16 text-center text-zinc-400 bg-zinc-900 rounded-2xl border border-dashed border-zinc-800">
-                  No creators found matching criteria.
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -6105,149 +5706,168 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: USERS & COMMUNITY MEMBERS */}
           {activeTab === "users" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-zinc-200" />
-                    <span className="text-sm font-bold text-white">All Registered Users</span>
-                  </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Users"
+                subtitle={`${filteredUsers.length.toLocaleString()} of ${uniqueUsers.length.toLocaleString()} community accounts`}
+                actions={
+                  <AdminActionMenu
+                    label="Manage"
+                    items={[
+                      {
+                        label: "Purge All Users",
+                        icon: <Trash2 className="w-3.5 h-3.5" />,
+                        destructive: true,
+                        disabled: uniqueUsers.length === 0,
+                        onClick: () => setConfirmPurgeAllUsers(true)
+                      }
+                    ]}
+                  />
+                }
+              />
 
+              {confirmPurgeAllUsers && (
+                <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs text-rose-200">
+                    Permanently purge all <span className="font-semibold text-white">{uniqueUsers.length}</span> user accounts? This cannot be undone.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPurgeAllUsers(false)}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExecutePurgeAllUsers}
+                      disabled={isPurgingUsers}
+                      className={ADMIN_BTN_DESTRUCTIVE_SOLID}
+                    >
+                      {isPurgingUsers ? "Purging..." : "Confirm Purge"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-3`}>
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={userTypeFilter}
                     onChange={(e) => setUserTypeFilter(e.target.value as any)}
-                    className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
+                    className={ADMIN_SELECT}
                   >
                     <option value="all">All Users ({uniqueUsers.length})</option>
                     <option value="members">Standard Users ({standardUsersList.length})</option>
                     <option value="creators">Creators ({creatorsList.length})</option>
                     <option value="registered">Registered Accounts</option>
                   </select>
-
-                  {confirmPurgeAllUsers ? (
-                    <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
-                      <span className="text-xs text-red-200 font-bold">Purge ALL user accounts?</span>
-                      <button
-                        onClick={handleExecutePurgeAllUsers}
-                        disabled={isPurgingUsers}
-                        className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {isPurgingUsers ? "Purging..." : "Confirm Purge"}
-                      </button>
-                      <button
-                        onClick={() => setConfirmPurgeAllUsers(false)}
-                        className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmPurgeAllUsers(true)}
-                      className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      title="Delete all user accounts"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-red-400" /> Purge All Users
-                    </button>
-                  )}
                 </div>
-
-                <div className="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
-                  Showing <span className="text-white font-bold">{filteredUsers.length}</span> active users
-                </div>
+                <span className="text-xs text-zinc-400 tabular-nums px-1">
+                  Showing <span className="text-white font-medium">{filteredUsers.length}</span> active users
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUsers.map((user) => {
-                  return (
-                    <div
-                      key={user.name || user.email || user.id}
-                      className="p-5 rounded-2xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col justify-between space-y-4 shadow-sm"
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 ring-2 ring-zinc-800">
-                          <img 
-                            src={getSafeAvatarUrl(user.avatar, user.name, user.handle || user.email)} 
-                            alt="" 
-                            className="w-full h-full object-cover" 
-                            onError={(e) => { 
-                              const target = e.currentTarget as HTMLImageElement; 
-                              target.src = generateGoogleLetterAvatarSvg(user.name || "User", 128, user.handle || user.name);
-                            }} 
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-white text-base truncate">{user.name}</h3>
+              {filteredUsers.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Users className="w-5 h-5" />}
+                  title="No users found"
+                  description="No user accounts match your current filter or search query."
+                  action={
+                    (searchQuery || userTypeFilter !== "all") ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setUserTypeFilter("all");
+                        }}
+                        className={ADMIN_BTN_SECONDARY}
+                      >
+                        Clear Filters
+                      </button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredUsers.map((user) => {
+                    const userKey = user.id || user.uid || user.email || user.name;
+                    return (
+                      <div
+                        key={userKey}
+                        className={`${ADMIN_SURFACE} p-4 hover:border-white/[0.14] transition-colors flex flex-col justify-between gap-4`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0">
+                            <img
+                              src={getSafeAvatarUrl(user.avatar, user.name, user.handle || user.email)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(user.name || "User", 128, user.handle || user.name);
+                              }}
+                            />
                           </div>
-                          
-                          {user.email && <p className="text-xs text-zinc-400 truncate">{user.email}</p>}
-                          {user.city && (
-                            <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                              {user.city}{user.country ? `, ${user.country}` : ""}
-                            </p>
-                          )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-sm font-semibold text-white truncate">{user.name}</h3>
+                            {user.email && <p className="text-xs text-zinc-400 truncate">{user.email}</p>}
+                            {user.city && (
+                              <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                                {user.city}{user.country ? `, ${user.country}` : ""}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800/80 text-xs flex items-center justify-between">
-                        <div>
-                          <span className="text-zinc-400">Account Type: </span>
-                          <span className="font-bold text-white">{user.role || "Community Member"}</span>
+                        <div className="flex items-center justify-between text-xs py-2.5 border-y border-white/[0.06]">
+                          <span className="text-zinc-500">Account Role</span>
+                          <span className="font-medium text-zinc-200">{user.role || "Community Member"}</span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-md font-semibold text-[10px] ${
-                          user.role === "Creator" 
-                            ? "bg-blue-950/60 text-blue-300 border border-blue-800/60" 
-                            : "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
-                        }`}>
-                          {user.role || "Member"}
-                        </span>
-                      </div>
 
-                      <div className="flex flex-col gap-2 pt-2 border-t border-zinc-800/80">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <button
+                            type="button"
                             onClick={() => setEditUserModal(user)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
+                            className={ADMIN_BTN_SECONDARY}
                           >
-                            <Edit className="w-3.5 h-3.5" /> Edit Profile
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit Profile</span>
                           </button>
 
                           {confirmDeleteUserId === (user.id || user.uid) ? (
-                            <div className="flex items-center gap-1.5 bg-red-950/60 border border-red-900/60 p-1 rounded-xl">
-                              <span className="text-[11px] font-bold text-red-300 px-1">Delete user?</span>
+                            <div className="flex items-center gap-1.5">
                               <button
+                                type="button"
                                 onClick={() => executeDeleteUser(user)}
-                                className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                                className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                               >
-                                Yes
+                                Delete
                               </button>
                               <button
+                                type="button"
                                 onClick={() => setConfirmDeleteUserId(null)}
-                                className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                className="h-8 px-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
                               >
                                 Cancel
                               </button>
                             </div>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => setConfirmDeleteUserId(user.id || user.uid)}
-                              className="px-2.5 py-1.5 text-red-400 hover:bg-red-950/40 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 border border-transparent hover:border-red-900/40"
-                              title="Delete entire user account"
+                              className={ADMIN_BTN_ICON_DANGER}
+                              title="Delete user account"
+                              aria-label="Delete user account"
                             >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {filteredUsers.length === 0 && (
-                <div className="py-16 text-center text-zinc-400 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800">
-                  No users found matching criteria.
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -6255,1711 +5875,1181 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB 5: COMMENTS & MODERATION */}
           {activeTab === "comments" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header & KPI Summary Ribbon */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Total Comments</div>
-                    <div className="text-xl font-black text-white font-mono">{commentMetrics.total}</div>
-                  </div>
-                </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Comments"
+                subtitle="Audit, edit, and moderate community discussions across all photo reviews."
+                actions={
+                  <>
+                    {selectedCommentKeys.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmBulkDeleteComments(true)}
+                        className={ADMIN_BTN_DESTRUCTIVE}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete Selected ({selectedCommentKeys.length})</span>
+                      </button>
+                    )}
+                    <AdminActionMenu
+                      label="Manage"
+                      items={[
+                        {
+                          label: `Purge All Comments (${allComments.length})`,
+                          icon: <Trash2 className="w-3.5 h-3.5" />,
+                          destructive: true,
+                          disabled: allComments.length === 0,
+                          onClick: () => setConfirmPurgeAllComments(true)
+                        }
+                      ]}
+                    />
+                  </>
+                }
+              />
 
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 border border-purple-500/20">
-                    <MessageCircle className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Top-Level Discussions</div>
-                    <div className="text-xl font-black text-purple-300 font-mono">{commentMetrics.topLevel}</div>
+              {confirmBulkDeleteComments && selectedCommentKeys.length > 0 && (
+                <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs text-rose-200">
+                    Delete <span className="font-semibold text-white">{selectedCommentKeys.length}</span> selected comment(s) permanently?
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmBulkDeleteComments(false)}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const keysToDelete = [...selectedCommentKeys];
+                        allComments.forEach((item) => {
+                          const k = `${item.video.id}_${item.comment.id}`;
+                          if (keysToDelete.includes(k) && onDeleteComment) {
+                            onDeleteComment(
+                              item.video.id,
+                              item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
+                              item.isReply ? item.comment.id : undefined
+                            );
+                          }
+                        });
+                        setSelectedCommentKeys([]);
+                        setConfirmBulkDeleteComments(false);
+                        showToast(`Deleted ${keysToDelete.length} comment(s) successfully.`);
+                        setTimeout(() => fetchLiveStats(true), 400);
+                      }}
+                      className={ADMIN_BTN_DESTRUCTIVE_SOLID}
+                    >
+                      Confirm Delete
+                    </button>
                   </div>
                 </div>
+              )}
 
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
-                    <CornerDownRight className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Replies & Threads</div>
-                    <div className="text-xl font-black text-amber-300 font-mono">{commentMetrics.replies}</div>
+              {confirmPurgeAllComments && (
+                <div className="bg-rose-500/10 border border-rose-500/25 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs text-rose-200">
+                    Permanently purge all <span className="font-semibold text-white">{allComments.length}</span> comments across the platform?
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPurgeAllComments(false)}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const totalToPurge = allComments.length;
+                        try {
+                          await adminFetch("/api/admin/comments/purge-all", { method: "POST" });
+                        } catch {}
+                        allComments.forEach((item) => {
+                          if (onDeleteComment) {
+                            onDeleteComment(
+                              item.video.id,
+                              item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
+                              item.isReply ? item.comment.id : undefined
+                            );
+                          }
+                        });
+                        setSelectedCommentKeys([]);
+                        setConfirmPurgeAllComments(false);
+                        showToast(`All ${totalToPurge} comments purged permanently.`);
+                        setTimeout(() => fetchLiveStats(true), 400);
+                      }}
+                      className={ADMIN_BTN_DESTRUCTIVE_SOLID}
+                    >
+                      Confirm Purge
+                    </button>
                   </div>
                 </div>
+              )}
 
-                <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20">
-                    <Heart className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Liked Comments</div>
-                    <div className="text-xl font-black text-rose-300 font-mono">{commentMetrics.liked}</div>
-                  </div>
-                </div>
+              {/* KPI Summary Ribbon */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <AdminStatCard label="Total Comments" value={commentMetrics.total} icon={<MessageSquare className="w-4 h-4" />} />
+                <AdminStatCard label="Top-Level" value={commentMetrics.topLevel} icon={<MessageCircle className="w-4 h-4" />} />
+                <AdminStatCard label="Replies" value={commentMetrics.replies} icon={<CornerDownRight className="w-4 h-4" />} />
+                <AdminStatCard label="Liked" value={commentMetrics.liked} icon={<Heart className="w-4 h-4" />} />
               </div>
 
-              {/* Main Moderation Controls Toolbar */}
-              <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-bold text-white text-base flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-amber-400" />
-                      Comments & Discussions Moderation
-                    </h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      Audit, edit, filter, and moderate user discussions across all photo reviews
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Bulk Delete Trigger */}
-                    {selectedCommentKeys.length > 0 && (
-                      confirmBulkDeleteComments ? (
-                        <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
-                          <span className="text-xs text-red-200 font-bold">Delete {selectedCommentKeys.length} comment(s)?</span>
-                          <button
-                            onClick={async () => {
-                              const keysToDelete = [...selectedCommentKeys];
-                              allComments.forEach((item) => {
-                                const k = `${item.video.id}_${item.comment.id}`;
-                                if (keysToDelete.includes(k) && onDeleteComment) {
-                                  onDeleteComment(
-                                    item.video.id,
-                                    item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
-                                    item.isReply ? item.comment.id : undefined
-                                  );
-                                }
-                              });
-                              setSelectedCommentKeys([]);
-                              setConfirmBulkDeleteComments(false);
-                              showToast(`Deleted ${keysToDelete.length} comment(s) successfully.`);
-                              setTimeout(fetchLiveStats, 400);
-                            }}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Confirm Delete
-                          </button>
-                          <button
-                            onClick={() => setConfirmBulkDeleteComments(false)}
-                            className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmBulkDeleteComments(true)}
-                          className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                          Delete Selected ({selectedCommentKeys.length})
-                        </button>
-                      )
+              {/* Filter & Sort Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-3`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const allKeys = filteredComments.map((i) => `${i.video.id}_${i.comment.id}`);
+                      if (selectedCommentKeys.length === allKeys.length && allKeys.length > 0) {
+                        setSelectedCommentKeys([]);
+                      } else {
+                        setSelectedCommentKeys(allKeys);
+                      }
+                    }}
+                    className={ADMIN_BTN_SECONDARY}
+                  >
+                    {selectedCommentKeys.length > 0 && selectedCommentKeys.length === filteredComments.length ? (
+                      <CheckSquare className="w-3.5 h-3.5 text-white" />
+                    ) : (
+                      <Square className="w-3.5 h-3.5 text-zinc-500" />
                     )}
+                    <span>
+                      {selectedCommentKeys.length > 0 ? `${selectedCommentKeys.length} Selected` : "Select All"}
+                    </span>
+                  </button>
 
-                    {/* Purge All Comments Trigger */}
-                    {allComments.length > 0 && (
-                      confirmPurgeAllComments ? (
-                        <div className="flex items-center gap-1.5 bg-red-950/80 border border-red-800 px-2 py-1 rounded-xl">
-                          <span className="text-xs text-red-200 font-bold">Purge ALL {allComments.length} comments?</span>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const totalToPurge = allComments.length;
-                              try {
-                                await adminFetch("/api/admin/comments/purge-all", { method: "POST" });
-                              } catch {}
-                              allComments.forEach((item) => {
-                                if (onDeleteComment) {
-                                  onDeleteComment(
-                                    item.video.id,
-                                    item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
-                                    item.isReply ? item.comment.id : undefined
-                                  );
-                                }
-                              });
-                              setSelectedCommentKeys([]);
-                              setConfirmPurgeAllComments(false);
-                              showToast(`All ${totalToPurge} comments purged permanently.`);
-                              setTimeout(fetchLiveStats, 400);
-                            }}
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Confirm Purge
-                          </button>
-                          <button
-                            onClick={() => setConfirmPurgeAllComments(false)}
-                            className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmPurgeAllComments(true)}
-                          className="px-3 py-1.5 bg-zinc-950 hover:bg-red-950/30 border border-zinc-800 hover:border-red-900/40 text-zinc-400 hover:text-red-400 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                          title="Purge all comments across the application"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Purge All
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
+                  <select
+                    value={commentTypeFilter}
+                    onChange={(e) => setCommentTypeFilter(e.target.value as any)}
+                    className={ADMIN_SELECT}
+                  >
+                    <option value="all">All Types</option>
+                    <option value="top_level">Top-Level Only</option>
+                    <option value="replies">Replies Only</option>
+                    <option value="liked">Liked Comments</option>
+                  </select>
 
-                {/* Filters & Sorting Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800/80">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    {/* Select All Checkbox */}
-                    <button
-                      onClick={() => {
-                        const allKeys = filteredComments.map((i) => `${i.video.id}_${i.comment.id}`);
-                        if (selectedCommentKeys.length === allKeys.length && allKeys.length > 0) {
-                          setSelectedCommentKeys([]);
-                        } else {
-                          setSelectedCommentKeys(allKeys);
-                        }
-                      }}
-                      className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-2 transition-all cursor-pointer"
+                  {uniqueCommentPlaces.length > 1 && (
+                    <select
+                      value={commentPlaceFilter}
+                      onChange={(e) => setCommentPlaceFilter(e.target.value)}
+                      className={`${ADMIN_SELECT} max-w-[180px]`}
                     >
-                      {selectedCommentKeys.length > 0 && selectedCommentKeys.length === filteredComments.length ? (
-                        <CheckSquare className="w-3.5 h-3.5 text-amber-400" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5 text-zinc-500" />
-                      )}
-                      <span>
-                        {selectedCommentKeys.length > 0 ? `${selectedCommentKeys.length} Selected` : "Select All"}
-                      </span>
-                    </button>
+                      <option value="all">All Places ({uniqueCommentPlaces.length})</option>
+                      {uniqueCommentPlaces.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
 
-                    {/* Filter: Comment Type */}
-                    <div className="flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-800">
-                      <Filter className="w-3.5 h-3.5 text-zinc-400" />
-                      <select
-                        value={commentTypeFilter}
-                        onChange={(e) => setCommentTypeFilter(e.target.value as any)}
-                        className="bg-transparent text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
-                      >
-                        <option value="all" className="bg-zinc-900 text-white">All Comment Types</option>
-                        <option value="top_level" className="bg-zinc-900 text-white">Top-Level Only</option>
-                        <option value="replies" className="bg-zinc-900 text-white">Replies Only</option>
-                        <option value="liked" className="bg-zinc-900 text-white">Liked Comments</option>
-                      </select>
-                    </div>
-
-                    {/* Filter: By Place */}
-                    {uniqueCommentPlaces.length > 1 && (
-                      <div className="flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-800">
-                        <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                        <select
-                          value={commentPlaceFilter}
-                          onChange={(e) => setCommentPlaceFilter(e.target.value)}
-                          className="bg-transparent text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer max-w-[160px] truncate"
-                        >
-                          <option value="all" className="bg-zinc-900 text-white">All Venues ({uniqueCommentPlaces.length})</option>
-                          {uniqueCommentPlaces.map((p) => (
-                            <option key={p.id} value={p.id} className="bg-zinc-900 text-white">
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Sort Filter */}
-                    <div className="flex items-center gap-1.5 bg-zinc-950 px-2.5 py-1.5 rounded-xl border border-zinc-800">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" />
-                      <select
-                        value={commentSortFilter}
-                        onChange={(e) => setCommentSortFilter(e.target.value as any)}
-                        className="bg-transparent text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
-                      >
-                        <option value="newest" className="bg-zinc-900 text-white">Newest First</option>
-                        <option value="oldest" className="bg-zinc-900 text-white">Oldest First</option>
-                        <option value="most_likes" className="bg-zinc-900 text-white">Most Liked</option>
-                        <option value="longest" className="bg-zinc-900 text-white">Longest Text</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-zinc-400 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800 font-mono">
-                    Showing <span className="text-white font-bold">{filteredComments.length}</span> of {allComments.length} comments
-                  </div>
+                  <select
+                    value={commentSortFilter}
+                    onChange={(e) => setCommentSortFilter(e.target.value as any)}
+                    className={ADMIN_SELECT}
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="most_likes">Most Liked</option>
+                    <option value="longest">Longest Text</option>
+                  </select>
                 </div>
+
+                <span className="text-xs text-zinc-400 tabular-nums px-1">
+                  Showing <span className="text-white font-medium">{filteredComments.length}</span> of {allComments.length}
+                </span>
               </div>
 
               {/* Comments List */}
-              <div className="space-y-3.5">
-                {filteredComments.map((item) => {
-                  const commentKey = `${item.video.id}_${item.comment.id}`;
-                  const isSelected = selectedCommentKeys.includes(commentKey);
-                  const isConfirmingDelete = confirmDeleteCommentInfo?.commentId === item.comment.id;
-
-                  // Format relative timestamp
-                  let timeDisplay = item.comment.createdAt || "Recent";
-                  if (item.comment.createdAtMs) {
-                    const diffMs = Date.now() - item.comment.createdAtMs;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffHours = Math.floor(diffMs / 3600000);
-                    const diffDays = Math.floor(diffMs / 86400000);
-                    if (diffMins < 1) timeDisplay = "Just now";
-                    else if (diffMins < 60) timeDisplay = `${diffMins}m ago`;
-                    else if (diffHours < 24) timeDisplay = `${diffHours}h ago`;
-                    else if (diffDays < 7) timeDisplay = `${diffDays}d ago`;
-                    else timeDisplay = new Date(item.comment.createdAtMs).toLocaleDateString();
-                  }
-
-                  return (
-                    <div
-                      key={commentKey}
-                      className={`p-4 sm:p-5 rounded-2xl border transition-all duration-200 ${
-                        isSelected
-                          ? "bg-zinc-900/95 border-amber-500/50 shadow-lg shadow-amber-500/5"
-                          : "bg-zinc-900/80 border-zinc-800 hover:border-zinc-700"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3.5">
-                        {/* Checkbox */}
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            setSelectedCommentKeys((prev) =>
-                              prev.includes(commentKey) ? prev.filter((k) => k !== commentKey) : [...prev, commentKey]
-                            );
-                          }}
-                          className="w-4 h-4 mt-1 rounded border-zinc-700 bg-zinc-950 text-white focus:ring-zinc-500 cursor-pointer accent-white shrink-0"
-                        />
-
-                        {/* Author Avatar */}
-                        <div
-                          onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
-                          className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden shrink-0 ring-2 ring-zinc-800/80 cursor-pointer hover:scale-105 transition-all"
-                          title="Click to view Author Details & Comment"
-                        >
-                          <img
-                            src={getSafeAvatarUrl(
-                              item.comment.authorAvatar,
-                              item.comment.authorName,
-                              item.comment.authorHandle
-                            )}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.src = generateGoogleLetterAvatarSvg(
-                                item.comment.authorName || "User",
-                                128,
-                                item.comment.authorHandle || item.comment.authorName
-                              );
-                            }}
-                          />
-                        </div>
-
-                        {/* Comment Body */}
-                        <div className="min-w-0 flex-1 space-y-2.5">
-                          {/* Top row: Author, badge, timestamp, parent venue info */}
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
-                                className="font-bold text-white text-sm hover:underline cursor-pointer hover:text-amber-400 transition-colors"
-                                title="Click to view Author Details & Comment"
-                              >
-                                {item.comment.authorName}
-                              </span>
-                              {item.comment.authorHandle && (
-                                <span className="text-xs text-zinc-400 font-mono">
-                                  @{item.comment.authorHandle.replace(/^@/, '')}
-                                </span>
-                              )}
-
-                              {item.isReply ? (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-950/60 text-amber-300 border border-amber-800/60 font-semibold flex items-center gap-1">
-                                  <CornerDownRight className="w-2.5 h-2.5" /> Reply Thread
-                                </span>
-                              ) : (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-semibold">
-                                  Direct Comment
-                                </span>
-                              )}
-
-                              {item.comment.isOwner && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/60 text-blue-300 border border-blue-800/60 font-semibold">
-                                  Business Owner
-                                </span>
-                              )}
-
-                              {item.comment.isCreator && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/60 text-purple-300 border border-purple-800/60 font-semibold">
-                                  Creator
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-mono">
-                              <Clock className="w-3 h-3" />
-                              <span>{timeDisplay}</span>
-                            </div>
-                          </div>
-
-                          {/* Comment Text Bubble */}
-                          <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800/90 text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap break-words selection:bg-zinc-800">
-                            {item.comment.text}
-                          </div>
-
-                          {/* Attached Photos / Proof */}
-                          {Array.isArray(item.comment.attachments) && item.comment.attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {item.comment.attachments.map((attUrl: string, attIdx: number) => (
-                                <a
-                                  key={attIdx}
-                                  href={attUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block w-16 h-16 rounded-xl overflow-hidden border border-zinc-800 hover:border-zinc-500 transition-colors shadow-xs"
-                                  title="View attached proof photo"
-                                >
-                                  <img src={attUrl} alt="Attachment" className="w-full h-full object-cover" />
-                                </a>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Parent Video / Place Context Pill & Engagement Stats */}
-                          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {/* Parent Place pill with watch video trigger */}
-                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/90 border border-zinc-800 text-xs">
-                                <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                                <span className="text-zinc-300 font-medium truncate max-w-[200px]">
-                                  {item.video.placeName || "Review Video"}
-                                </span>
-                                {item.video.rating && (
-                                  <span className="flex items-center gap-0.5 text-amber-400 font-bold ml-1">
-                                    <Star className="w-3 h-3 fill-amber-400" /> {item.video.rating}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Watch video trigger */}
-                              <button
-                                onClick={() => setPreviewVideo(item.video)}
-                                className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-zinc-700/60"
-                                title="Watch the review video containing this comment"
-                              >
-                                <Play className="w-3 h-3 fill-current text-amber-400" /> Watch Review
-                              </button>
-                            </div>
-
-                            {/* Likes on Comment */}
-                            <div className="flex items-center gap-3 text-xs text-zinc-400 font-semibold">
-                              {(item.comment.likesCount || 0) > 0 && (
-                                <span className="flex items-center gap-1 text-rose-400 font-bold bg-rose-950/30 px-2 py-0.5 rounded-lg border border-rose-900/30">
-                                  <Heart className="w-3 h-3 fill-rose-400" /> {item.comment.likesCount}
-                                </span>
-                              )}
-
-                              {item.comment.likedByCreator && (
-                                <span className="text-[10px] text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-800/40 font-bold">
-                                  ❤️ Creator Liked
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Inline Actions (Edit & Delete) */}
-                        <div className="shrink-0 flex items-center gap-1.5 pt-0.5">
-                          <button
-                            onClick={() => {
-                              setEditCommentModal(item);
-                              setEditCommentText(item.comment.text || "");
-                            }}
-                            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer border border-transparent hover:border-zinc-700"
-                            title="Edit Comment Text"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
-                          {isConfirmingDelete ? (
-                            <div className="flex items-center gap-1 bg-red-950/80 border border-red-800 p-1 rounded-xl shadow-lg">
-                              <button
-                                onClick={() => {
-                                  if (onDeleteComment) {
-                                    onDeleteComment(
-                                      item.video.id,
-                                      item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
-                                      item.isReply ? item.comment.id : undefined
-                                    );
-                                  }
-                                  setConfirmDeleteCommentInfo(null);
-                                  showToast("Comment deleted permanently.");
-                                  setTimeout(fetchLiveStats, 400);
-                                }}
-                                className="px-2.5 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-all shadow-sm"
-                              >
-                                Confirm
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteCommentInfo(null)}
-                                className="p-1 text-zinc-300 hover:text-white cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                setConfirmDeleteCommentInfo({
-                                  videoId: item.video.id,
-                                  commentId: item.comment.id,
-                                  replyId: item.isReply ? item.comment.id : undefined
-                                })
-                              }
-                              className="p-2 rounded-xl text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors cursor-pointer border border-transparent hover:border-red-900/40"
-                              title="Delete Comment"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {filteredComments.length === 0 && (
-                  <div className="py-16 text-center space-y-3 bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-800">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-500">
-                      <MessageSquare className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-bold text-white text-base">No comments found</p>
-                      <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                        No discussion comments match the current filters or search criteria.
-                      </p>
-                    </div>
-                    {(searchQuery || commentTypeFilter !== "all" || commentPlaceFilter !== "all") && (
+              {filteredComments.length === 0 ? (
+                <AdminEmptyState
+                  icon={<MessageSquare className="w-5 h-5" />}
+                  title="No comments found"
+                  description="No discussion comments match the current filters or search criteria."
+                  action={
+                    (searchQuery || commentTypeFilter !== "all" || commentPlaceFilter !== "all") ? (
                       <button
+                        type="button"
                         onClick={() => {
                           setSearchQuery("");
                           setCommentTypeFilter("all");
                           setCommentPlaceFilter("all");
                           setCommentSortFilter("newest");
                         }}
-                        className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
-                        Reset All Filters
+                        Reset Filters
                       </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className={`${ADMIN_SURFACE} divide-y divide-white/[0.06] overflow-hidden`}>
+                  {filteredComments.map((item) => {
+                    const commentKey = `${item.video.id}_${item.comment.id}`;
+                    const isSelected = selectedCommentKeys.includes(commentKey);
+                    const isConfirmingDelete = confirmDeleteCommentInfo?.commentId === item.comment.id;
+
+                    let timeDisplay = item.comment.createdAt || "Recent";
+                    if (item.comment.createdAtMs) {
+                      const diffMs = Date.now() - item.comment.createdAtMs;
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMs / 3600000);
+                      const diffDays = Math.floor(diffMs / 86400000);
+                      if (diffMins < 1) timeDisplay = "Just now";
+                      else if (diffMins < 60) timeDisplay = `${diffMins}m ago`;
+                      else if (diffHours < 24) timeDisplay = `${diffHours}h ago`;
+                      else if (diffDays < 7) timeDisplay = `${diffDays}d ago`;
+                      else timeDisplay = new Date(item.comment.createdAtMs).toLocaleDateString();
+                    }
+
+                    const metaTags: string[] = [];
+                    metaTags.push(item.isReply ? "Reply" : "Comment");
+                    if (item.comment.isOwner) metaTags.push("Business Owner");
+                    if (item.comment.isCreator) metaTags.push("Creator");
+                    if (item.comment.likedByCreator) metaTags.push("Creator Liked");
+
+                    return (
+                      <div
+                        key={commentKey}
+                        className={`p-4 sm:p-5 transition-colors ${
+                          isSelected ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedCommentKeys((prev) =>
+                                prev.includes(commentKey) ? prev.filter((k) => k !== commentKey) : [...prev, commentKey]
+                              );
+                            }}
+                            className="w-4 h-4 mt-1 rounded border-white/20 bg-transparent text-white cursor-pointer accent-white shrink-0"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
+                            className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                            title="Inspect comment details"
+                          >
+                            <img
+                              src={getSafeAvatarUrl(
+                                item.comment.authorAvatar,
+                                item.comment.authorName,
+                                item.comment.authorHandle
+                              )}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(
+                                  item.comment.authorName || "User",
+                                  128,
+                                  item.comment.authorHandle || item.comment.authorName
+                                );
+                              }}
+                            />
+                          </button>
+
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCommentDetailModal({ comment: item.comment, video: item.video, isReply: item.isReply, parentCommentId: item.parentCommentId })}
+                                  className="font-semibold text-white hover:underline cursor-pointer"
+                                >
+                                  {item.comment.authorName}
+                                </button>
+                                {item.comment.authorHandle && (
+                                  <span className="text-zinc-500 font-mono">
+                                    @{item.comment.authorHandle.replace(/^@/, "")}
+                                  </span>
+                                )}
+                                <span className="text-zinc-600">·</span>
+                                <span className="text-zinc-400">{metaTags.join(" · ")}</span>
+                              </div>
+                              <span className="text-[11px] text-zinc-500 tabular-nums">{timeDisplay}</span>
+                            </div>
+
+                            <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap break-words">
+                              {item.comment.text}
+                            </p>
+
+                            {Array.isArray(item.comment.attachments) && item.comment.attachments.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                {item.comment.attachments.map((attUrl: string, attIdx: number) => (
+                                  <a
+                                    key={attIdx}
+                                    href={attUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block w-14 h-14 rounded-xl overflow-hidden border border-white/[0.1] hover:border-white/30 transition-colors"
+                                    title="Open attached photo"
+                                  >
+                                    <img src={attUrl} alt="Attachment" className="w-full h-full object-cover" />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400">
+                                <span className="inline-flex items-center gap-1.5 text-zinc-300 truncate max-w-[240px]">
+                                  <Building2 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                                  <span className="truncate">{item.video.placeName || "Photo Review"}</span>
+                                </span>
+                                {item.video.rating !== undefined && item.video.rating !== null && (
+                                  <span className="inline-flex items-center gap-1 text-zinc-300 tabular-nums">
+                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                    {item.video.rating}
+                                  </span>
+                                )}
+                                {(item.comment.likesCount || 0) > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-zinc-400 tabular-nums">
+                                    <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
+                                    {item.comment.likesCount}
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setPreviewVideo(item.video)}
+                                className="text-xs font-medium text-zinc-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-zinc-400" />
+                                <span>View Review</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditCommentModal(item);
+                                setEditCommentText(item.comment.text || "");
+                              }}
+                              className={ADMIN_BTN_ICON}
+                              title="Edit comment"
+                              aria-label="Edit comment"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+
+                            {isConfirmingDelete ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (onDeleteComment) {
+                                      onDeleteComment(
+                                        item.video.id,
+                                        item.isReply && item.parentCommentId ? item.parentCommentId : item.comment.id,
+                                        item.isReply ? item.comment.id : undefined
+                                      );
+                                    }
+                                    setConfirmDeleteCommentInfo(null);
+                                    showToast("Comment deleted permanently.");
+                                    setTimeout(() => fetchLiveStats(true), 400);
+                                  }}
+                                  className="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer transition-colors"
+                                >
+                                  Delete
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteCommentInfo(null)}
+                                  className={ADMIN_BTN_ICON}
+                                  aria-label="Cancel delete"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setConfirmDeleteCommentInfo({
+                                    videoId: item.video.id,
+                                    commentId: item.comment.id,
+                                    replyId: item.isReply ? item.comment.id : undefined
+                                  })
+                                }
+                                className={ADMIN_BTN_ICON_DANGER}
+                                title="Delete comment"
+                                aria-label="Delete comment"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB: LIKES & REACTIONS AUDIT FEED */}
           {activeTab === "likes" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-                      <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                        Likes & Reactions Audit Feed
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-bold">
-                          {adminLikes.length} Recorded
-                        </span>
-                      </h2>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        Live real-time activity log tracking each user identity, photo review, and interaction timestamp
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Likes"
+                subtitle={`${adminLikes.length.toLocaleString()} recorded reactions across photo reviews`}
+                actions={
+                  <AdminActionMenu
+                    label="Manage"
+                    items={[
+                      {
+                        label: "Purge All Likes",
+                        icon: <Trash2 className="w-3.5 h-3.5" />,
+                        destructive: true,
+                        disabled: adminLikes.length === 0,
+                        onClick: () => setConfirmPurgeAllLikes(true)
+                      }
+                    ]}
+                  />
+                }
+              />
 
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <button
-                    onClick={fetchAdminLikes}
-                    disabled={isLoadingLikes}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${isLoadingLikes ? "animate-spin" : ""}`} />
-                    <span>Sync Feed</span>
-                  </button>
-
-                  {adminLikes.length > 0 && (
-                    <button
-                      onClick={() => setConfirmPurgeAllLikes(true)}
-                      className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Purge All</span>
-                    </button>
-                  )}
-                </div>
+              {/* KPI Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <AdminStatCard label="Total Likes" value={adminLikes.length} sublabel="Persisted reactions" icon={<Heart className="w-4 h-4" />} />
+                <AdminStatCard
+                  label="Unique Users"
+                  value={new Set(adminLikes.map((l) => l.userId || l.userEmail || l.userName)).size}
+                  sublabel="Active accounts"
+                  icon={<Users className="w-4 h-4" />}
+                />
+                <AdminStatCard
+                  label="Liked Reviews"
+                  value={new Set(adminLikes.map((l) => l.videoId)).size}
+                  sublabel="Distinct reviews"
+                  icon={<Camera className="w-4 h-4" />}
+                />
               </div>
 
-              {/* Metrics Summary Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Total Likes</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">{adminLikes.length}</div>
-                    <span className="text-[11px] text-zinc-500">Live persisted interactions</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                    <Heart className="w-5 h-5 fill-rose-500" />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Active Likers</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">
-                      {new Set(adminLikes.map((l) => l.userId || l.userEmail || l.userName)).size}
-                    </div>
-                    <span className="text-[11px] text-zinc-500">Unique user accounts</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                    <Users className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Liked Videos</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">
-                      {new Set(adminLikes.map((l) => l.videoId)).size}
-                    </div>
-                    <span className="text-[11px] text-zinc-500">Target review videos</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <Video className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Search & Sort Controls */}
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between">
-                <div className="relative flex-1 w-full">
-                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              {/* Filter & Sort Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between`}>
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={likesSearchQuery}
                     onChange={(e) => setLikesSearchQuery(e.target.value)}
-                    placeholder="Filter likes by user name, handle, place, or video ID..."
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500"
+                    placeholder="Filter by user, handle, place, or review ID..."
+                    className={`${ADMIN_INPUT} w-full pl-9 pr-14`}
                   />
                   {likesSearchQuery && (
                     <button
+                      type="button"
                       onClick={() => setLikesSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400 hover:text-white cursor-pointer"
                     >
                       Clear
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
-                  <select
-                    value={likesSort}
-                    onChange={(e) => setLikesSort(e.target.value as any)}
-                    className="bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-rose-500 cursor-pointer"
-                  >
-                    <option value="newest">Newest Likes First</option>
-                    <option value="oldest">Oldest Likes First</option>
-                  </select>
-                </div>
+                <select
+                  value={likesSort}
+                  onChange={(e) => setLikesSort(e.target.value as any)}
+                  className={ADMIN_SELECT}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
               </div>
 
               {/* Likes List */}
-              <div className="space-y-3">
-                {isLoadingLikes ? (
-                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
-                    <RefreshCw className="w-8 h-8 text-rose-500 animate-spin mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">Fetching real-time likes audit from Bunny libSQL database...</p>
-                  </div>
-                ) : filteredLikes.length === 0 ? (
-                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl mx-auto">
-                      ❤️
-                    </div>
-                    <h3 className="text-base font-bold text-white">No Likes Recorded Yet</h3>
-                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                      {likesSearchQuery ? "No likes matching your search query. Try clearing your filter." : "When community members tap the like heart on review videos, their full profile and liked video details will appear here."}
-                    </p>
-                  </div>
-                ) : (
-                  filteredLikes.map((like, idx) => {
+              {isLoadingLikes && adminLikes.length === 0 ? (
+                <div className={`${ADMIN_SURFACE} py-16 text-center space-y-2.5`}>
+                  <RefreshCw className="w-5 h-5 text-zinc-400 animate-spin mx-auto" />
+                  <p className="text-xs text-zinc-400">Loading likes audit feed...</p>
+                </div>
+              ) : filteredLikes.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Heart className="w-5 h-5" />}
+                  title="No likes recorded"
+                  description={
+                    likesSearchQuery
+                      ? "No likes match your current search filter."
+                      : "When community members like photo reviews, their activity will appear here."
+                  }
+                  action={
+                    likesSearchQuery ? (
+                      <button type="button" onClick={() => setLikesSearchQuery("")} className={ADMIN_BTN_SECONDARY}>
+                        Clear Filter
+                      </button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className={`${ADMIN_SURFACE} divide-y divide-white/[0.06] overflow-hidden`}>
+                  {filteredLikes.map((like, idx) => {
                     const matchedVid = activeVideos.find((v) => v.id === like.videoId);
-                    const videoThumb = like.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                    const videoThumb = like.videoThumbnail || matchedVid?.thumbnailUrl || (matchedVid as any)?.photoUrl || "";
                     const videoUrl = like.videoUrl || matchedVid?.videoUrl || "";
-                    const placeName = like.placeName || matchedVid?.placeName || "Review Video";
+                    const placeName = like.placeName || matchedVid?.placeName || "Photo Review";
                     const rating = like.videoRating || matchedVid?.rating;
+                    const canPreview = Boolean(matchedVid || videoUrl || videoThumb);
+
+                    const openPreview = () => {
+                      if (matchedVid) {
+                        setPreviewVideo(matchedVid);
+                      } else if (videoUrl || videoThumb) {
+                        setPreviewLikeVideoModal({
+                          videoUrl: videoUrl || undefined,
+                          thumbnailUrl: videoThumb,
+                          placeName,
+                          authorName: like.videoAuthor || "Reviewer",
+                          rating
+                        });
+                      }
+                    };
 
                     return (
                       <div
                         key={like.id || `like-${idx}`}
-                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                        className="p-4 hover:bg-white/[0.02] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
                       >
-                        {/* User Identity Column */}
-                        <div className="flex items-center gap-3.5 min-w-[240px]">
-                          <div className="relative shrink-0">
-                            <div className="w-11 h-11 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden ring-2 ring-rose-500/20 group-hover:ring-rose-500/50 transition-all">
-                              <img
-                                src={getSafeAvatarUrl(like.userAvatar, like.userName, like.userHandle)}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.src = generateGoogleLetterAvatarSvg(like.userName || "User", 128, like.userHandle || like.userName);
-                                }}
-                              />
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rose-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] text-white">
-                              ❤️
-                            </div>
+                        <div className="flex items-center gap-3 min-w-[220px]">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0">
+                            <img
+                              src={getSafeAvatarUrl(like.userAvatar, like.userName, like.userHandle)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(like.userName || "User", 128, like.userHandle || like.userName);
+                              }}
+                            />
                           </div>
-
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-sm truncate group-hover:text-rose-400 transition-colors">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium text-white truncate">
                                 {like.userName || "Community User"}
                               </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-md font-mono bg-zinc-800 text-zinc-400 font-bold">
+                              <span className="text-[11px] font-mono text-zinc-500 truncate">
                                 {like.userHandle || `@${String(like.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                              <Clock className="w-3 h-3 text-zinc-500" />
-                              <span>{like.timestamp || "Recently"}</span>
-                              {like.createdAt && (
-                                <span className="text-[10px] text-zinc-600 font-mono">
-                                  • {new Date(like.createdAt).toLocaleDateString()} {new Date(like.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              )}
+                            <div className="text-[11px] text-zinc-500 tabular-nums">
+                              {like.createdAt
+                                ? `${new Date(like.createdAt).toLocaleDateString()} · ${new Date(like.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                                : like.timestamp || "Recently"}
                             </div>
                           </div>
                         </div>
 
-                        {/* Liked Video & Place Information */}
-                        <div className="flex items-center gap-3.5 flex-1 min-w-0 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
-                          {/* Video Thumbnail */}
-                          <div
-                            onClick={() => {
-                              if (videoUrl || matchedVid) {
-                                setPreviewLikeVideoModal({
-                                  videoUrl: videoUrl || matchedVid?.videoUrl,
-                                  thumbnailUrl: videoThumb,
-                                  placeName,
-                                  authorName: like.videoAuthor || matchedVid?.authorName || "Reviewer",
-                                  rating
-                                });
-                              }
-                            }}
-                            className="relative w-16 h-16 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 cursor-pointer group/thumb"
-                            title="Click to play video"
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={openPreview}
+                            disabled={!canPreview}
+                            className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0 cursor-pointer disabled:cursor-default"
+                            title={canPreview ? "View review" : undefined}
                           >
                             {videoThumb ? (
                               <img src={videoThumb} alt="" className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                                <Video className="w-6 h-6" />
+                                <Camera className="w-4 h-4" />
                               </div>
                             )}
-                            <div className="absolute inset-0 bg-black/40 group-hover/thumb:bg-black/20 flex items-center justify-center transition-colors">
-                              <div className="w-6 h-6 rounded-full bg-rose-600/90 flex items-center justify-center text-white shadow-sm">
-                                <Play className="w-3 h-3 fill-white ml-0.5" />
-                              </div>
-                            </div>
-                          </div>
+                          </button>
 
-                          <div className="min-w-0 flex-1 space-y-1">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-white truncate">
-                                {placeName}
-                              </span>
+                              <span className="text-xs font-medium text-white truncate">{placeName}</span>
                               {rating !== undefined && rating !== null && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-1">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400" /> {rating}
+                                <span className="inline-flex items-center gap-0.5 text-[11px] text-zinc-300 tabular-nums shrink-0">
+                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                  {rating}
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-400 flex items-center gap-2 truncate">
-                              <span>Reviewed by: <strong className="text-zinc-200">{like.videoAuthor || matchedVid?.authorName || "Creator"}</strong></span>
-                              <span className="text-zinc-600">•</span>
-                              <span className="font-mono text-[10px] text-zinc-500 truncate">ID: {like.videoId}</span>
+                            <div className="text-[11px] text-zinc-500 truncate">
+                              By <span className="text-zinc-300">{like.videoAuthor || matchedVid?.authorName || "Creator"}</span>
+                              {" · "}
+                              <span className="font-mono">{like.videoId}</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                          {(videoUrl || matchedVid) && (
+                        <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                          {canPreview && (
                             <button
-                              onClick={() => {
-                                setPreviewLikeVideoModal({
-                                  videoUrl: videoUrl || matchedVid?.videoUrl,
-                                  thumbnailUrl: videoThumb,
-                                  placeName,
-                                  authorName: like.videoAuthor || matchedVid?.authorName || "Reviewer",
-                                  rating
-                                });
-                              }}
-                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
-                              title="Play Video"
+                              type="button"
+                              onClick={openPreview}
+                              className={ADMIN_BTN_SECONDARY}
                             >
-                              <Play className="w-3 h-3 fill-current text-rose-400" />
-                              <span>Play</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View</span>
                             </button>
                           )}
-
                           <button
+                            type="button"
                             onClick={() => setSelectedLikeDetailModal(like)}
-                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
-                            title="View Raw JSON Details"
+                            className={ADMIN_BTN_ICON}
+                            title="Inspect raw record"
+                            aria-label="Inspect raw record"
                           >
-                            <Code className="w-3 h-3 text-zinc-400" />
-                            <span>Audit</span>
+                            <Code className="w-3.5 h-3.5" />
                           </button>
-
                           <button
+                            type="button"
                             onClick={() => setConfirmDeleteLikeId(like.id)}
-                            className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl cursor-pointer transition-colors"
-                            title="Remove this like"
+                            className={ADMIN_BTN_ICON_DANGER}
+                            title="Remove like"
+                            aria-label="Remove like"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB: BOOKMARKS & SAVED REVIEWS AUDIT FEED */}
           {activeTab === "bookmarks" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-                      <Bookmark className="w-5 h-5 fill-amber-500 text-amber-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                        Bookmarks & Saved Reviews Audit Feed
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold">
-                          {adminBookmarks.length} Saved
-                        </span>
-                      </h2>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        Live real-time activity log tracking each community member who saved/bookmarked reviews and places
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Bookmarks"
+                subtitle={`${adminBookmarks.length.toLocaleString()} saved places and photo reviews`}
+                actions={
+                  <AdminActionMenu
+                    label="Manage"
+                    items={[
+                      {
+                        label: "Purge All Bookmarks",
+                        icon: <Trash2 className="w-3.5 h-3.5" />,
+                        destructive: true,
+                        disabled: adminBookmarks.length === 0,
+                        onClick: () => setConfirmPurgeAllBookmarks(true)
+                      }
+                    ]}
+                  />
+                }
+              />
 
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <button
-                    onClick={fetchAdminBookmarks}
-                    disabled={isLoadingBookmarks}
-                    className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700/80 cursor-pointer flex items-center gap-2 transition-all shadow-sm"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isLoadingBookmarks ? "animate-spin" : ""}`} />
-                    <span>Sync Feed</span>
-                  </button>
-
-                  {adminBookmarks.length > 0 && (
-                    <button
-                      onClick={() => setConfirmPurgeAllBookmarks(true)}
-                      className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5 transition-all shadow-sm"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Purge All</span>
-                    </button>
-                  )}
-                </div>
+              {/* KPI Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <AdminStatCard label="Total Bookmarks" value={adminBookmarks.length} sublabel="Saved in BunnyDB" icon={<Bookmark className="w-4 h-4" />} />
+                <AdminStatCard
+                  label="Unique Users"
+                  value={new Set(adminBookmarks.map((b) => b.userId || b.userEmail || b.userName)).size}
+                  sublabel="Active savers"
+                  icon={<Users className="w-4 h-4" />}
+                />
+                <AdminStatCard
+                  label="Saved Entities"
+                  value={new Set(adminBookmarks.map((b) => b.placeId || b.videoId)).size}
+                  sublabel="Places & reviews"
+                  icon={<Building2 className="w-4 h-4" />}
+                />
               </div>
 
-              {/* Metrics Summary Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Total Bookmarks</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">{adminBookmarks.length}</div>
-                    <span className="text-[11px] text-zinc-500">Live saved items in BunnyDB</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <Bookmark className="w-5 h-5 fill-amber-500" />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Active Savers</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">
-                      {new Set(adminBookmarks.map((b) => b.userId || b.userEmail || b.userName)).size}
-                    </div>
-                    <span className="text-[11px] text-zinc-500">Unique user accounts</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                    <Users className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Saved Places & Reviews</span>
-                    <div className="text-2xl font-black text-white font-mono mt-1">
-                      {new Set(adminBookmarks.map((b) => b.placeId || b.videoId)).size}
-                    </div>
-                    <span className="text-[11px] text-zinc-500">Target saved entities</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Search & Sort Controls */}
-              <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between">
-                <div className="relative flex-1 w-full">
-                  <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              {/* Filter & Sort Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between`}>
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={bookmarksSearchQuery}
                     onChange={(e) => setBookmarksSearchQuery(e.target.value)}
-                    placeholder="Filter bookmarks by user name, handle, place name, or place ID..."
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500"
+                    placeholder="Filter by user, handle, place name, or ID..."
+                    className={`${ADMIN_INPUT} w-full pl-9 pr-14`}
                   />
                   {bookmarksSearchQuery && (
                     <button
+                      type="button"
                       onClick={() => setBookmarksSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400 hover:text-white cursor-pointer"
                     >
                       Clear
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
-                  <select
-                    value={bookmarksSort}
-                    onChange={(e) => setBookmarksSort(e.target.value as any)}
-                    className="bg-zinc-950 border border-zinc-800 text-xs text-zinc-300 font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500 cursor-pointer"
-                  >
-                    <option value="newest">Newest Bookmarks First</option>
-                    <option value="oldest">Oldest Bookmarks First</option>
-                  </select>
-                </div>
+                <select
+                  value={bookmarksSort}
+                  onChange={(e) => setBookmarksSort(e.target.value as any)}
+                  className={ADMIN_SELECT}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
               </div>
 
               {/* Bookmarks List */}
-              <div className="space-y-3">
-                {isLoadingBookmarks ? (
-                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
-                    <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">Fetching real-time bookmarks audit from Bunny libSQL database...</p>
-                  </div>
-                ) : filteredBookmarks.length === 0 ? (
-                  <div className="p-12 text-center bg-zinc-900 rounded-3xl border border-zinc-800 space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl mx-auto">
-                      🔖
-                    </div>
-                    <h3 className="text-base font-bold text-white">No Bookmarks Recorded Yet</h3>
-                    <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                      {bookmarksSearchQuery ? "No bookmarks matching your search query. Try clearing your filter." : "When community members tap the bookmark button on places or photo reviews, their full identity and saved review details will appear here."}
-                    </p>
-                  </div>
-                ) : (
-                  filteredBookmarks.map((bm, idx) => {
+              {isLoadingBookmarks && adminBookmarks.length === 0 ? (
+                <div className={`${ADMIN_SURFACE} py-16 text-center space-y-2.5`}>
+                  <RefreshCw className="w-5 h-5 text-zinc-400 animate-spin mx-auto" />
+                  <p className="text-xs text-zinc-400">Loading bookmarks audit feed...</p>
+                </div>
+              ) : filteredBookmarks.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Bookmark className="w-5 h-5" />}
+                  title="No bookmarks recorded"
+                  description={
+                    bookmarksSearchQuery
+                      ? "No bookmarks match your current search filter."
+                      : "When community members save places or photo reviews, they will appear here."
+                  }
+                  action={
+                    bookmarksSearchQuery ? (
+                      <button type="button" onClick={() => setBookmarksSearchQuery("")} className={ADMIN_BTN_SECONDARY}>
+                        Clear Filter
+                      </button>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className={`${ADMIN_SURFACE} divide-y divide-white/[0.06] overflow-hidden`}>
+                  {filteredBookmarks.map((bm, idx) => {
                     const matchedVid = activeVideos.find((v) => v.id === bm.videoId);
                     const matchedPlace = activePlaces.find((p) => p.id === bm.placeId || p.brandDomain === bm.placeId);
-                    const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || "";
+                    const videoThumb = bm.videoThumbnail || matchedVid?.thumbnailUrl || (matchedVid as any)?.photoUrl || "";
                     const videoUrl = bm.videoUrl || matchedVid?.videoUrl || "";
                     const placeName = bm.placeName || matchedPlace?.name || matchedVid?.placeName || "Saved Place";
                     const rating = bm.videoRating || matchedVid?.rating || matchedPlace?.rating;
+                    const canOpen = Boolean(matchedVid || videoUrl || videoThumb || matchedPlace);
+
+                    const openTarget = () => {
+                      if (matchedVid) {
+                        setPreviewVideo(matchedVid);
+                      } else if (videoUrl || videoThumb) {
+                        setPreviewLikeVideoModal({
+                          videoUrl: videoUrl || undefined,
+                          thumbnailUrl: videoThumb,
+                          placeName,
+                          authorName: bm.videoAuthor || "Reviewer",
+                          rating
+                        });
+                      } else if (matchedPlace) {
+                        setEditPlaceModal(matchedPlace);
+                      }
+                    };
 
                     return (
                       <div
                         key={bm.id || `bm-${idx}`}
-                        className="p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800/90 border border-zinc-800 hover:border-zinc-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                        className="p-4 hover:bg-white/[0.02] transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
                       >
-                        {/* User Identity Column */}
-                        <div className="flex items-center gap-3.5 min-w-[240px]">
-                          <div className="relative shrink-0">
-                            <div className="w-11 h-11 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden ring-2 ring-amber-500/20 group-hover:ring-amber-500/50 transition-all">
-                              <img
-                                src={getSafeAvatarUrl(bm.userAvatar, bm.userName, bm.userHandle)}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
-                                }}
-                              />
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-600 border-2 border-zinc-900 flex items-center justify-center text-[10px] text-white">
-                              🔖
-                            </div>
+                        <div className="flex items-center gap-3 min-w-[220px]">
+                          <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0">
+                            <img
+                              src={getSafeAvatarUrl(bm.userAvatar, bm.userName, bm.userHandle)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = generateGoogleLetterAvatarSvg(bm.userName || "User", 128, bm.userHandle || bm.userName);
+                              }}
+                            />
                           </div>
-
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-sm truncate group-hover:text-amber-400 transition-colors">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium text-white truncate">
                                 {bm.userName || "Community User"}
                               </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded-md font-mono bg-zinc-800 text-zinc-400 font-bold">
+                              <span className="text-[11px] font-mono text-zinc-500 truncate">
                                 {bm.userHandle || `@${String(bm.userName || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                              <Clock className="w-3 h-3 text-zinc-500" />
-                              <span>{bm.timestamp || "Recently"}</span>
-                              {bm.createdAt && (
-                                <span className="text-[10px] text-zinc-600 font-mono">
-                                  • {new Date(bm.createdAt).toLocaleDateString()} {new Date(bm.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              )}
+                            <div className="text-[11px] text-zinc-500 tabular-nums">
+                              {bm.createdAt
+                                ? `${new Date(bm.createdAt).toLocaleDateString()} · ${new Date(bm.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                                : bm.timestamp || "Recently"}
                             </div>
                           </div>
                         </div>
 
-                        {/* Saved Review / Place Information */}
-                        <div className="flex items-center gap-3.5 flex-1 min-w-0 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
-                          {/* Thumbnail / Logo */}
-                          <div
-                            onClick={() => {
-                              if (videoUrl || matchedVid) {
-                                setPreviewLikeVideoModal({
-                                  videoUrl: videoUrl || matchedVid?.videoUrl,
-                                  thumbnailUrl: videoThumb,
-                                  placeName,
-                                  authorName: bm.videoAuthor || matchedVid?.authorName || "Reviewer",
-                                  rating
-                                });
-                              } else if (matchedPlace) {
-                                setEditPlaceModal(matchedPlace);
-                              }
-                            }}
-                            className="relative w-16 h-16 rounded-xl bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800 cursor-pointer group/thumb"
-                            title={videoUrl || matchedVid ? "Click to play review video" : "Click to view place details"}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={openTarget}
+                            disabled={!canOpen}
+                            className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] overflow-hidden shrink-0 cursor-pointer disabled:cursor-default"
+                            title={canOpen ? "Inspect saved item" : undefined}
                           >
                             {videoThumb ? (
                               <img src={videoThumb} alt="" className="w-full h-full object-cover" />
                             ) : bm.placeLogo || matchedPlace?.logoUrl ? (
-                              <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain p-2" />
+                              <img src={bm.placeLogo || matchedPlace?.logoUrl} alt="" className="w-full h-full object-contain p-1.5" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-zinc-600">
-                                <Building2 className="w-6 h-6" />
+                                <Building2 className="w-4 h-4" />
                               </div>
                             )}
-                            {(videoUrl || matchedVid) && (
-                              <div className="absolute inset-0 bg-black/40 group-hover/thumb:bg-black/20 flex items-center justify-center transition-colors">
-                                <div className="w-6 h-6 rounded-full bg-amber-600/90 flex items-center justify-center text-white shadow-sm">
-                                  <Play className="w-3 h-3 fill-white ml-0.5" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          </button>
 
-                          <div className="min-w-0 flex-1 space-y-1">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-white truncate">
-                                {placeName}
-                              </span>
+                              <span className="text-xs font-medium text-white truncate">{placeName}</span>
                               {bm.placeCategory && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 font-semibold truncate">
-                                  {bm.placeCategory}
-                                </span>
+                                <span className="text-[11px] text-zinc-500 truncate">· {bm.placeCategory}</span>
                               )}
                               {rating !== undefined && rating !== null && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-1">
-                                  <Star className="w-2.5 h-2.5 fill-amber-400" /> {rating}
+                                <span className="inline-flex items-center gap-0.5 text-[11px] text-zinc-300 tabular-nums shrink-0">
+                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                  {rating}
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-zinc-400 flex items-center gap-2 truncate">
-                              <span>Target: <strong className="text-zinc-200">{bm.placeId || bm.videoId || "Venue"}</strong></span>
+                            <div className="text-[11px] text-zinc-500 truncate">
+                              <span className="font-mono">{bm.placeId || bm.videoId || "Venue"}</span>
                               {bm.videoAuthor && (
                                 <>
-                                  <span className="text-zinc-600">•</span>
-                                  <span>Reviewed by: <strong className="text-zinc-200">{bm.videoAuthor}</strong></span>
+                                  {" · "}
+                                  <span>By <span className="text-zinc-300">{bm.videoAuthor}</span></span>
                                 </>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                          {(videoUrl || matchedVid) && (
+                        <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                          {canOpen && (
                             <button
-                              onClick={() => {
-                                setPreviewLikeVideoModal({
-                                  videoUrl: videoUrl || matchedVid?.videoUrl,
-                                  thumbnailUrl: videoThumb,
-                                  placeName,
-                                  authorName: bm.videoAuthor || matchedVid?.authorName || "Reviewer",
-                                  rating
-                                });
-                              }}
-                              className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
-                              title="Play Video"
+                              type="button"
+                              onClick={openTarget}
+                              className={ADMIN_BTN_SECONDARY}
                             >
-                              <Play className="w-3 h-3 fill-current text-amber-400" />
-                              <span>Play</span>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>{matchedVid || videoUrl || videoThumb ? "View" : "Open"}</span>
                             </button>
                           )}
-
                           <button
+                            type="button"
                             onClick={() => setSelectedBookmarkDetailModal(bm)}
-                            className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5 transition-colors"
-                            title="View Raw JSON Details"
+                            className={ADMIN_BTN_ICON}
+                            title="Inspect raw record"
+                            aria-label="Inspect raw record"
                           >
-                            <Code className="w-3 h-3 text-zinc-400" />
-                            <span>Audit</span>
+                            <Code className="w-3.5 h-3.5" />
                           </button>
-
                           <button
+                            type="button"
                             onClick={() => setConfirmDeleteBookmarkId(bm.id)}
-                            className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-xl cursor-pointer transition-colors"
-                            title="Remove this bookmark"
+                            className={ADMIN_BTN_ICON_DANGER}
+                            title="Remove bookmark"
+                            aria-label="Remove bookmark"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB: DIRECT MESSAGES & MODERATION */}
           {activeTab === "messages" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
-                      <Mail className="w-4.5 h-4.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-black text-white tracking-tight">Direct Messages & Chat Sync</h2>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Live Edge Sync
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        Real-time peer-to-peer conversation threads stored on Bunny Cloud libSQL. Inspect transcripts, moderate content, or merge duplicates.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <button
-                    onClick={handleDeduplicateChats}
-                    disabled={isDeduplicatingChats}
-                    className="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
-                    title="Merge duplicate threads between the same participants and unite chat histories"
-                  >
-                    <Sparkles className={`w-3.5 h-3.5 ${isDeduplicatingChats ? "animate-spin" : ""}`} />
-                    {isDeduplicatingChats ? "Merging..." : "Deduplicate & Merge"}
-                  </button>
-
-                  <button
-                    onClick={handlePurgeEmptyChats}
-                    className="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer"
-                    title="Purge threads with 0 messages"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-amber-400" />
-                    Purge Empty
-                  </button>
-
-                  <button
-                    onClick={() => setConfirmPurgeAllChats(true)}
-                    className="px-3.5 py-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 text-xs font-bold rounded-xl transition-all border border-red-800/40 flex items-center gap-1.5 cursor-pointer"
-                    title="Purge all chat threads from database"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                    Purge All
-                  </button>
-
-                  <button
-                    onClick={fetchAdminChats}
-                    disabled={isLoadingChats}
-                    className="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingChats ? "animate-spin" : ""}`} />
-                    Refresh
-                  </button>
-                </div>
-              </div>
-
-              {/* KPI Ribbon */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-zinc-900 p-4.5 rounded-3xl border border-zinc-800 shadow-sm flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Total Threads</p>
-                    <h3 className="text-xl font-black text-white">{chatMetrics.totalThreads}</h3>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-900 p-4.5 rounded-3xl border border-zinc-800 shadow-sm flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
-                    <Send className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Total Messages</p>
-                    <h3 className="text-xl font-black text-white">{chatMetrics.totalMessages}</h3>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-900 p-4.5 rounded-3xl border border-zinc-800 shadow-sm flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Active Inboxes</p>
-                    <h3 className="text-xl font-black text-white">{chatMetrics.totalParticipants}</h3>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-900 p-4.5 rounded-3xl border border-zinc-800 shadow-sm flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">With Video Media</p>
-                    <h3 className="text-xl font-black text-white">{chatMetrics.mediaCount}</h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* Search, Filter & Multi-Select Bar */}
-              <div className="bg-zinc-900 p-4 rounded-3xl border border-zinc-800 shadow-sm space-y-3">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                  {/* Search */}
-                  <div className="relative w-full md:max-w-md">
-                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                    <input
-                      type="text"
-                      placeholder="Search messages, participants, handles, emails, or thread IDs..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-9 py-2.5 bg-zinc-950 border border-zinc-800 rounded-2xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Filters & Sort */}
-                  <div className="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
-                    <div className="flex items-center bg-zinc-950 p-1 rounded-2xl border border-zinc-800">
-                      {(
-                        [
-                          ["all", `All (${adminChats.length})`],
-                          ["active", `Active (${adminChats.filter((c) => Array.isArray(c.history) && c.history.length > 0).length})`],
-                          ["with_media", `Media (${chatMetrics.mediaCount})`],
-                          ["empty", `Empty (${adminChats.filter((c) => !Array.isArray(c.history) || c.history.length === 0).length})`]
-                        ] as const
-                      ).map(([fKey, fLabel]) => (
-                        <button
-                          key={fKey}
-                          onClick={() => setChatFilter(fKey)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            chatFilter === fKey
-                              ? "bg-zinc-800 text-white shadow-sm"
-                              : "text-zinc-400 hover:text-zinc-200"
-                          }`}
-                        >
-                          {fLabel}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 bg-zinc-950 px-3 py-1.5 rounded-2xl border border-zinc-800">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" />
-                      <select
-                        value={chatSort}
-                        onChange={(e) => setChatSort(e.target.value as any)}
-                        className="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer"
-                      >
-                        <option value="recent" className="bg-zinc-900 text-white">Latest Activity</option>
-                        <option value="most_messages" className="bg-zinc-900 text-white">Most Messages</option>
-                        <option value="oldest" className="bg-zinc-900 text-white">Oldest Activity</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Multi-Select Bar */}
-                {filteredAdminChats.length > 0 && (
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-xs">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          if (selectedChatIds.length === filteredAdminChats.length) {
-                            setSelectedChatIds([]);
-                          } else {
-                            setSelectedChatIds(filteredAdminChats.map((c) => c.id));
-                          }
-                        }}
-                        className="flex items-center gap-2 text-zinc-300 hover:text-white font-bold cursor-pointer"
-                      >
-                        {selectedChatIds.length === filteredAdminChats.length && filteredAdminChats.length > 0 ? (
-                          <CheckSquare className="w-4 h-4 text-blue-400" />
-                        ) : (
-                          <Square className="w-4 h-4 text-zinc-500" />
-                        )}
-                        <span>Select All Filtered ({filteredAdminChats.length})</span>
-                      </button>
-
-                      {selectedChatIds.length > 0 && (
-                        <span className="text-zinc-400 font-medium">
-                          ({selectedChatIds.length} selected)
-                        </span>
-                      )}
-                    </div>
-
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Direct Messages"
+                subtitle="Inspect conversation transcripts, moderate messages, and merge duplicate threads."
+                actions={
+                  <>
                     {selectedChatIds.length > 0 && (
                       <button
+                        type="button"
                         onClick={() => setConfirmBulkDeleteChats(true)}
-                        className="px-3 py-1 bg-red-950/50 hover:bg-red-900/60 text-red-400 hover:text-red-300 border border-red-800/40 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-sm animate-in fade-in"
+                        className={ADMIN_BTN_DESTRUCTIVE}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        Delete Selected ({selectedChatIds.length})
+                        <span>Delete Selected ({selectedChatIds.length})</span>
                       </button>
                     )}
-                  </div>
-                )}
+                    <AdminActionMenu
+                      label="Maintenance"
+                      items={[
+                        {
+                          label: isDeduplicatingChats ? "Merging Duplicates..." : "Deduplicate & Merge",
+                          icon: <Sparkles className="w-3.5 h-3.5" />,
+                          disabled: isDeduplicatingChats,
+                          onClick: handleDeduplicateChats
+                        },
+                        {
+                          label: "Purge Empty Threads",
+                          icon: <Trash2 className="w-3.5 h-3.5" />,
+                          onClick: handlePurgeEmptyChats
+                        },
+                        {
+                          label: "Purge All Threads",
+                          icon: <Trash2 className="w-3.5 h-3.5" />,
+                          destructive: true,
+                          dividerBefore: true,
+                          disabled: adminChats.length === 0,
+                          onClick: () => setConfirmPurgeAllChats(true)
+                        }
+                      ]}
+                    />
+                  </>
+                }
+              />
+
+              {/* KPI Ribbon */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <AdminStatCard label="Total Threads" value={chatMetrics.totalThreads} icon={<MessageSquare className="w-4 h-4" />} />
+                <AdminStatCard label="Total Messages" value={chatMetrics.totalMessages} icon={<Send className="w-4 h-4" />} />
+                <AdminStatCard label="Active Inboxes" value={chatMetrics.totalParticipants} icon={<Users className="w-4 h-4" />} />
+                <AdminStatCard label="With Media" value={chatMetrics.mediaCount} icon={<Camera className="w-4 h-4" />} />
               </div>
 
-              {/* Thread List Table / Cards */}
-              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden shadow-md">
-                {isLoadingChats ? (
-                  <div className="py-24 text-center text-zinc-400 flex flex-col items-center justify-center gap-3">
-                    <RefreshCw className="w-7 h-7 animate-spin text-blue-400" />
-                    <span className="text-xs font-bold text-zinc-300">Synchronizing Bunny Cloud Database chats...</span>
-                  </div>
-                ) : filteredAdminChats.length === 0 ? (
-                  <div className="py-20 text-center text-zinc-400 space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto text-zinc-500">
-                      <Mail className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-base font-bold text-white">No chat threads found</p>
-                      <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                        No conversations matched your active filters or search criteria.
-                      </p>
-                    </div>
-                    {(searchQuery || chatFilter !== "all") && (
+              {/* Filter, Multi-Select & Sort Toolbar */}
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-wrap items-center justify-between gap-3`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  {filteredAdminChats.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedChatIds.length === filteredAdminChats.length) {
+                          setSelectedChatIds([]);
+                        } else {
+                          setSelectedChatIds(filteredAdminChats.map((c) => c.id));
+                        }
+                      }}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      {selectedChatIds.length === filteredAdminChats.length && filteredAdminChats.length > 0 ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-white" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5 text-zinc-500" />
+                      )}
+                      <span>{selectedChatIds.length > 0 ? `${selectedChatIds.length} Selected` : "Select All"}</span>
+                    </button>
+                  )}
+
+                  <div className="inline-flex items-center bg-white/[0.03] p-1 rounded-xl border border-white/[0.07]">
+                    {(
+                      [
+                        ["all", `All (${adminChats.length})`],
+                        ["active", `Active (${adminChats.filter((c) => Array.isArray(c.history) && c.history.length > 0).length})`],
+                        ["with_media", `Media (${chatMetrics.mediaCount})`],
+                        ["empty", `Empty (${adminChats.filter((c) => !Array.isArray(c.history) || c.history.length === 0).length})`]
+                      ] as const
+                    ).map(([fKey, fLabel]) => (
                       <button
+                        key={fKey}
+                        type="button"
+                        onClick={() => setChatFilter(fKey)}
+                        className={`h-7 px-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                          chatFilter === fKey
+                            ? "bg-white text-zinc-950"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {fLabel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={chatSort}
+                    onChange={(e) => setChatSort(e.target.value as any)}
+                    className={ADMIN_SELECT}
+                  >
+                    <option value="recent">Latest Activity</option>
+                    <option value="most_messages">Most Messages</option>
+                    <option value="oldest">Oldest Activity</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Thread List */}
+              {!hasLoadedChats && isLoadingChats ? (
+                <div className={`${ADMIN_SURFACE} py-20 text-center flex flex-col items-center justify-center gap-3`}>
+                  <RefreshCw className="w-5 h-5 animate-spin text-zinc-400" />
+                  <span className="text-xs text-zinc-400">Loading conversation threads...</span>
+                </div>
+              ) : filteredAdminChats.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Mail className="w-5 h-5" />}
+                  title="No chat threads found"
+                  description={
+                    searchQuery || chatFilter !== "all"
+                      ? "No conversations matched your active filters or search query."
+                      : "Direct message threads between community members and businesses will appear here."
+                  }
+                  action={
+                    (searchQuery || chatFilter !== "all") ? (
+                      <button
+                        type="button"
                         onClick={() => {
                           setSearchQuery("");
                           setChatFilter("all");
                         }}
-                        className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
                         Clear Filters
                       </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="divide-y divide-zinc-800/60">
-                    {filteredAdminChats.map((chat) => {
-                      const historyCount = Array.isArray(chat.history) ? chat.history.length : 0;
-                      const p1Name = chat.senderName || chat.lastSenderName || (chat.senderEmail ? chat.senderEmail.split("@")[0] : "User 1");
-                      const p1Handle = chat.senderHandle || (chat.senderEmail ? `@${chat.senderEmail.split("@")[0]}` : `@${p1Name.toLowerCase().replace(/\s+/g, "")}`);
-                      const p1Avatar = getSafeAvatarUrl(chat.senderAvatar, p1Name, p1Handle);
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className={`${ADMIN_SURFACE} divide-y divide-white/[0.06] overflow-hidden`}>
+                  {filteredAdminChats.map((chat) => {
+                    const historyCount = Array.isArray(chat.history) ? chat.history.length : 0;
+                    const p1Name = chat.senderName || chat.lastSenderName || (chat.senderEmail ? chat.senderEmail.split("@")[0] : "User 1");
+                    const p1Handle = chat.senderHandle || (chat.senderEmail ? `@${chat.senderEmail.split("@")[0]}` : `@${p1Name.toLowerCase().replace(/\s+/g, "")}`);
+                    const p1Avatar = getSafeAvatarUrl(chat.senderAvatar, p1Name, p1Handle);
 
-                      const p2Name = chat.recipientName || (chat.recipientEmail ? chat.recipientEmail.split("@")[0] : (chat.lastRecipientName || "User 2"));
-                      const p2Handle = chat.recipientHandle || (chat.recipientEmail ? `@${chat.recipientEmail.split("@")[0]}` : `@${p2Name.toLowerCase().replace(/\s+/g, "")}`);
-                      const p2Avatar = getSafeAvatarUrl(chat.recipientAvatar, p2Name, p2Handle);
+                    const p2Name = chat.recipientName || (chat.recipientEmail ? chat.recipientEmail.split("@")[0] : (chat.lastRecipientName || "User 2"));
+                    const p2Handle = chat.recipientHandle || (chat.recipientEmail ? `@${chat.recipientEmail.split("@")[0]}` : `@${p2Name.toLowerCase().replace(/\s+/g, "")}`);
+                    const p2Avatar = getSafeAvatarUrl(chat.recipientAvatar, p2Name, p2Handle);
 
-                      const hasMedia = Array.isArray(chat.history) && chat.history.some((m: any) => m.videoThumbnail || m.videoId || m.videoUrl);
-                      const lastMsg =
-                        chat.lastMessage && chat.lastMessage !== "Conversation started" && chat.lastMessage !== "Direct conversation"
-                          ? chat.lastMessage
-                          : historyCount > 0
-                          ? chat.history[historyCount - 1]?.text || (chat.history[historyCount - 1]?.videoThumbnail ? "📷 Shared a photo review" : "No messages yet")
-                          : "No messages yet";
+                    const hasMedia = Array.isArray(chat.history) && chat.history.some((m: any) => m.videoThumbnail || m.videoId || m.videoUrl);
+                    const lastMsg =
+                      chat.lastMessage && chat.lastMessage !== "Conversation started" && chat.lastMessage !== "Direct conversation"
+                        ? chat.lastMessage
+                        : historyCount > 0
+                        ? chat.history[historyCount - 1]?.text || (chat.history[historyCount - 1]?.videoThumbnail ? "Shared a photo review" : "No messages yet")
+                        : "No messages yet";
 
-                      const updatedAt = chat.updatedAt || chat.createdAt || chat.createdAtMs;
-                      const formattedTime = updatedAt ? new Date(updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
-                      const isSelected = selectedChatIds.includes(chat.id);
+                    const updatedAt = chat.updatedAt || chat.createdAt || chat.createdAtMs;
+                    const formattedTime = updatedAt
+                      ? new Date(updatedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                      : "";
+                    const isSelected = selectedChatIds.includes(chat.id);
 
-                      // Clean participant tags (deduplicated clean tags)
-                      const rawParticipants = Array.isArray(chat.participants) ? chat.participants : [];
-                      const cleanBadges: string[] = Array.from(
-                        new Set<string>(
-                          rawParticipants
-                            .map((p: any) => String(p || "").trim().toLowerCase())
-                            .filter((p: string) => p && p !== "user" && p !== "yoouz.com" && p.length > 2)
-                        )
-                      ).slice(0, 4);
+                    return (
+                      <div
+                        key={chat.id}
+                        className={`p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${
+                          isSelected ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedChatIds((prev) =>
+                                prev.includes(chat.id) ? prev.filter((id) => id !== chat.id) : [...prev, chat.id]
+                              );
+                            }}
+                            className="mt-1 text-zinc-500 hover:text-white cursor-pointer shrink-0"
+                            aria-label="Select thread"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-white" />
+                            ) : (
+                              <Square className="w-4 h-4 text-zinc-600 hover:text-zinc-400" />
+                            )}
+                          </button>
 
-                      return (
-                        <div
-                          key={chat.id}
-                          className={`p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${
-                            isSelected ? "bg-blue-950/20" : "hover:bg-zinc-800/40"
-                          }`}
-                        >
-                          {/* Left: Checkbox + Dual Avatars + Metadata */}
-                          <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                            <button
-                              onClick={() => {
-                                setSelectedChatIds((prev) =>
-                                  prev.includes(chat.id) ? prev.filter((id) => id !== chat.id) : [...prev, chat.id]
-                                );
+                          <div className="relative flex items-center shrink-0 pt-0.5">
+                            <img
+                              src={p1Avatar}
+                              alt={p1Name}
+                              className="w-9 h-9 rounded-full object-cover border border-white/[0.12] bg-[#0c0c0f]"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(p1Name, 128, p1Handle);
                               }}
-                              className="mt-1 text-zinc-500 hover:text-white cursor-pointer shrink-0"
-                            >
-                              {isSelected ? (
-                                <CheckSquare className="w-4.5 h-4.5 text-blue-400" />
-                              ) : (
-                                <Square className="w-4.5 h-4.5 text-zinc-600 hover:text-zinc-400" />
-                              )}
-                            </button>
-
-                            {/* Dual Avatars */}
-                            <div className="relative flex items-center shrink-0 pt-0.5">
-                              <img
-                                src={p1Avatar}
-                                alt={p1Name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-zinc-900 shadow-md ring-1 ring-zinc-700"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(p1Name, 128, p1Handle);
-                                }}
-                              />
-                              <img
-                                src={p2Avatar}
-                                alt={p2Name}
-                                className="w-8 h-8 rounded-full object-cover border-2 border-zinc-900 shadow-md ring-1 ring-zinc-700 -ml-3.5 mt-2"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(p2Name, 128, p2Handle);
-                                }}
-                              />
-                            </div>
-
-                            {/* Thread Details */}
-                            <div className="space-y-1.5 min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-zinc-950 text-zinc-300 border border-zinc-800">
-                                  {chat.id}
-                                </span>
-                                <div className="text-sm font-black text-white flex items-center gap-1.5 flex-wrap">
-                                  <span>{p1Name}</span>
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-950 text-blue-400 font-mono border border-zinc-800">
-                                    {chat.senderRole || "User"}
-                                  </span>
-                                  <span className="text-zinc-500 font-normal">↔</span>
-                                  <span>{p2Name}</span>
-                                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono border ${
-                                    chat.recipientRole === "Business" || chat.recipientIsBusiness
-                                      ? "bg-purple-950 text-purple-300 border-purple-800/60"
-                                      : "bg-zinc-950 text-indigo-400 border-zinc-800"
-                                  }`}>
-                                    {chat.recipientRole || "User"}
-                                  </span>
-                                </div>
-                                <span
-                                  className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${
-                                    historyCount > 0
-                                      ? "bg-blue-950/60 text-blue-400 border-blue-800/40"
-                                      : "bg-zinc-800 text-zinc-400 border-zinc-700"
-                                  }`}
-                                >
-                                  {historyCount} message{historyCount === 1 ? "" : "s"}
-                                </span>
-                                {hasMedia && (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/60 text-purple-300 border border-purple-800/40 font-bold flex items-center gap-1">
-                                    🎬 Video Shared
-                                  </span>
-                                )}
-                                {formattedTime && (
-                                  <span className="text-[10px] text-zinc-400 font-mono flex items-center gap-1 ml-auto md:ml-0">
-                                    <Clock className="w-3 h-3" />
-                                    {formattedTime}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Last Message Pill */}
-                              <div className="p-2.5 bg-zinc-950/80 rounded-2xl border border-zinc-800/80 text-xs text-zinc-200 flex items-center gap-2 max-w-2xl">
-                                <span className="text-zinc-400 text-[11px] font-bold shrink-0">Latest:</span>
-                                <p className="truncate italic text-zinc-200">
-                                  &ldquo;{lastMsg}&rdquo;
-                                </p>
-                              </div>
-
-                              {/* Clean participant badge pills */}
-                              {cleanBadges.length > 0 && (
-                                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                                  <span className="text-[10px] text-zinc-400 font-bold">Participants:</span>
-                                  {cleanBadges.map((badge, bIdx) => (
-                                    <span
-                                      key={bIdx}
-                                      className="text-[10px] px-2 py-0.5 rounded-lg bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 font-mono"
-                                    >
-                                      {badge}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                            />
+                            <img
+                              src={p2Avatar}
+                              alt={p2Name}
+                              className="w-7 h-7 rounded-full object-cover border-2 border-[#0c0c0f] -ml-2.5 mt-2.5 bg-[#0c0c0f]"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(p2Name, 128, p2Handle);
+                              }}
+                            />
                           </div>
 
-                          {/* Right: Actions */}
-                          <div className="flex items-center gap-2 shrink-0 self-end md:self-center pl-10 md:pl-0">
-                            <button
-                              onClick={() => setInspectChatModal(chat)}
-                              className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-bold rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5 cursor-pointer shadow-sm"
-                            >
-                              <Search className="w-3.5 h-3.5 text-blue-400" />
-                              Inspect Transcript
-                            </button>
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap text-xs">
+                              <span className="font-semibold text-white">{p1Name}</span>
+                              <span className="text-zinc-600">↔</span>
+                              <span className="font-semibold text-white">{p2Name}</span>
+                              <span className="text-zinc-600">·</span>
+                              <span className="text-zinc-400 tabular-nums">
+                                {historyCount} {historyCount === 1 ? "message" : "messages"}
+                              </span>
+                              {hasMedia && (
+                                <>
+                                  <span className="text-zinc-600">·</span>
+                                  <span className="text-zinc-300">Media attached</span>
+                                </>
+                              )}
+                              {formattedTime && (
+                                <>
+                                  <span className="text-zinc-600">·</span>
+                                  <span className="text-zinc-500 tabular-nums">{formattedTime}</span>
+                                </>
+                              )}
+                            </div>
 
-                            <button
-                              onClick={() => setConfirmDeleteChatId(chat.id)}
-                              className="p-2 bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 rounded-xl transition-all border border-red-800/40 cursor-pointer"
-                              title="Delete thread permanently"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <p className="text-xs text-zinc-400 truncate max-w-2xl">
+                              &ldquo;{lastMsg}&rdquo;
+                            </p>
+
+                            <div className="text-[11px] font-mono text-zinc-500 truncate">
+                              {chat.id}
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center pl-8 md:pl-0">
+                          <button
+                            type="button"
+                            onClick={() => setInspectChatModal(chat)}
+                            className={ADMIN_BTN_SECONDARY}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Inspect</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteChatId(chat.id)}
+                            className={ADMIN_BTN_ICON_DANGER}
+                            title="Delete thread permanently"
+                            aria-label="Delete thread permanently"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* MODAL: Inspect Transcript & Live Moderate Thread */}
               {inspectChatModal && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-                  <div className="bg-zinc-900 rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col border border-zinc-800 shadow-2xl animate-in zoom-in-95 duration-150 overflow-hidden">
-                    {/* Modal Header */}
-                    <div className="p-5 border-b border-zinc-800 flex items-center justify-between gap-3 bg-zinc-950">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                          <MessageSquare className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-sm font-black text-white truncate">
-                              Thread Transcript: {inspectChatModal.id}
-                            </h3>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-400 border border-blue-800 font-bold">
-                              {Array.isArray(inspectChatModal.history) ? inspectChatModal.history.length : 0} messages
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-zinc-300 mt-0.5 truncate">
-                            <span className="font-bold text-white flex items-center gap-1">
-                              {inspectChatModal.senderName || "User 1"}
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
-                                {inspectChatModal.senderRole || "User"}
-                              </span>
-                            </span>
-                            <span className="text-zinc-500">↔</span>
-                            <span className="font-bold text-white flex items-center gap-1">
-                              {inspectChatModal.recipientName || "User 2"}
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono">
-                                {inspectChatModal.recipientRole || "User"}
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setInspectChatModal(null);
-                          setEditingMessageId(null);
-                        }}
-                        className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Messages Timeline */}
-                    <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-zinc-900/60">
-                      {!Array.isArray(inspectChatModal.history) || inspectChatModal.history.length === 0 ? (
-                        <div className="py-16 text-center text-zinc-400 space-y-2">
-                          <MessageSquare className="w-8 h-8 mx-auto text-zinc-600" />
-                          <p className="text-sm font-bold text-white">No recorded messages</p>
-                          <p className="text-xs text-zinc-500">This thread was initialized but contains no text entries.</p>
-                        </div>
-                      ) : (
-                        inspectChatModal.history.map((msg: any, idx: number) => {
-                          const isYoouzAdmin = msg.senderEmail === "admin@yoouz.com" || msg.senderName === "Yoouz Admin";
-                          const msgId = msg.id || String(idx);
-                          const isEditingThis = editingMessageId === msgId;
-                          const senderAvatar = getSafeAvatarUrl(msg.senderAvatar, msg.senderName || "User", msg.senderHandle || msg.senderEmail);
-
-                          return (
-                            <div
-                              key={msgId}
-                              className={`flex items-start gap-3 group animate-in fade-in ${
-                                isYoouzAdmin ? "justify-end" : ""
-                              }`}
-                            >
-                              {!isYoouzAdmin && (
-                                <img
-                                  src={senderAvatar}
-                                  alt=""
-                                  className="w-8 h-8 rounded-full object-cover border border-zinc-700 shrink-0 mt-0.5 shadow-sm"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(msg.senderName || "User", 128);
-                                  }}
-                                />
-                              )}
-
-                              <div className={`space-y-1.5 max-w-lg ${isYoouzAdmin ? "items-end" : ""}`}>
-                                <div className={`flex items-center gap-2 ${isYoouzAdmin ? "justify-end" : ""}`}>
-                                  <span className={`text-xs font-bold ${isYoouzAdmin ? "text-blue-400" : "text-white"}`}>
-                                    {msg.senderName || msg.senderEmail || "User"}
-                                  </span>
-                                  {msg.senderRole && (
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                      isYoouzAdmin
-                                        ? "bg-blue-950 text-blue-300 border border-blue-800"
-                                        : msg.senderRole === "Business"
-                                        ? "bg-purple-950/80 text-purple-300 border border-purple-800/60"
-                                        : "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                                    }`}>
-                                      {isYoouzAdmin ? "Admin" : msg.senderRole}
-                                    </span>
-                                  )}
-                                  <span className="text-[10px] text-zinc-400 font-mono">
-                                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : msg.timestamp || ""}
-                                  </span>
-
-                                  {!isEditingThis && (
-                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
-                                      <button
-                                        onClick={() => {
-                                          setEditingMessageId(msgId);
-                                          setEditingMessageText(msg.text || "");
-                                        }}
-                                        className="p-1 text-zinc-400 hover:text-blue-400 rounded cursor-pointer"
-                                        title="Edit message text"
-                                      >
-                                        <Edit3 className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteMessageFromThread(msgId)}
-                                        className="p-1 text-zinc-400 hover:text-red-400 rounded cursor-pointer"
-                                        title="Delete this message"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {isEditingThis ? (
-                                  <div className="p-3 bg-zinc-950 border border-blue-500/50 rounded-2xl space-y-2">
-                                    <textarea
-                                      value={editingMessageText}
-                                      onChange={(e) => setEditingMessageText(e.target.value)}
-                                      rows={2}
-                                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-blue-500"
-                                    />
-                                    <div className="flex items-center justify-end gap-2">
-                                      <button
-                                        onClick={() => setEditingMessageId(null)}
-                                        className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 hover:text-white rounded-lg bg-zinc-800/80 cursor-pointer"
-                                      >
-                                        Cancel
-                                      </button>
-                                      <button
-                                        onClick={() => handleEditMessageInThread(msgId)}
-                                        className="px-3 py-1 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg cursor-pointer flex items-center gap-1 shadow-sm"
-                                      >
-                                        <Check className="w-3 h-3" />
-                                        Save
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div
-                                    className={`p-3.5 rounded-2xl text-xs leading-relaxed break-words shadow-sm ${
-                                      isYoouzAdmin
-                                        ? "bg-blue-600 text-white rounded-tr-none"
-                                        : "bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-tl-none"
-                                    }`}
-                                  >
-                                    {msg.text || "(Media Attachment)"}
-
-                                    {msg.editedByAdminAt && (
-                                      <span className="block mt-1 text-[10px] text-zinc-400 italic">
-                                        (Edited by Admin)
-                                      </span>
-                                    )}
-
-                                    {msg.videoThumbnail && (
-                                      <div className="mt-2.5 rounded-xl overflow-hidden border border-zinc-800/80 max-w-xs relative group/vid">
-                                        <img src={msg.videoThumbnail} alt="Attached video" className="w-full h-32 object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                          <div className="w-9 h-9 rounded-full bg-white/90 text-zinc-900 flex items-center justify-center shadow-lg">
-                                            <Play className="w-4 h-4 ml-0.5 fill-current" />
-                                          </div>
-                                        </div>
-                                        {msg.placeName && (
-                                          <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/90 to-transparent text-[11px] font-bold text-white truncate">
-                                            📍 {msg.placeName}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              {isYoouzAdmin && (
-                                <img
-                                  src="/favicon.svg"
-                                  alt="Yoouz Admin"
-                                  className="w-8 h-8 rounded-full object-cover border border-blue-500 shrink-0 mt-0.5"
-                                />
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-
-                    {/* Admin Reply Composer */}
-                    <div className="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
+                <AdminModal
+                  title={`${inspectChatModal.senderName || "User 1"} ↔ ${inspectChatModal.recipientName || "User 2"}`}
+                  subtitle={`Thread ${inspectChatModal.id} · ${Array.isArray(inspectChatModal.history) ? inspectChatModal.history.length : 0} messages`}
+                  maxWidthClass="max-w-3xl"
+                  onClose={() => {
+                    setInspectChatModal(null);
+                    setEditingMessageId(null);
+                  }}
+                  footer={
+                    <div className="w-full space-y-3">
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
@@ -7972,290 +7062,389 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               handleSendAdminReply();
                             }
                           }}
-                          className="flex-1 px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                          className={`${ADMIN_INPUT} flex-1`}
                         />
                         <button
+                          type="button"
                           onClick={handleSendAdminReply}
                           disabled={isSendingAdminReply || !adminReplyText.trim()}
-                          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                          className={ADMIN_BTN_PRIMARY}
                         >
                           <Send className="w-3.5 h-3.5" />
-                          {isSendingAdminReply ? "Sending..." : "Reply"}
+                          <span>{isSendingAdminReply ? "Sending..." : "Reply"}</span>
                         </button>
                       </div>
 
-                      {/* Modal Footer Controls */}
-                      <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/[0.08]">
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.06]">
                         <button
+                          type="button"
                           onClick={() => setConfirmDeleteChatId(inspectChatModal.id)}
-                          className="px-3.5 py-2 bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300 font-bold text-xs rounded-xl transition-all border border-red-800/40 flex items-center gap-1.5 cursor-pointer"
+                          className={ADMIN_BTN_DESTRUCTIVE}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          Delete Thread
+                          <span>Delete Thread</span>
                         </button>
-
                         <button
-                          onClick={() => setInspectChatModal(null)}
-                          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl transition-all cursor-pointer border border-zinc-700"
+                          type="button"
+                          onClick={() => {
+                            setInspectChatModal(null);
+                            setEditingMessageId(null);
+                          }}
+                          className={ADMIN_BTN_SECONDARY}
                         >
                           Close
                         </button>
                       </div>
                     </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    {!Array.isArray(inspectChatModal.history) || inspectChatModal.history.length === 0 ? (
+                      <div className="py-12 text-center space-y-2">
+                        <MessageSquare className="w-6 h-6 mx-auto text-zinc-600" />
+                        <p className="text-sm font-medium text-white">No recorded messages</p>
+                        <p className="text-xs text-zinc-500">This thread contains no messages yet.</p>
+                      </div>
+                    ) : (
+                      inspectChatModal.history.map((msg: any, idx: number) => {
+                        const isYoouzAdmin = msg.senderEmail === "admin@yoouz.com" || msg.senderName === "Yoouz Admin";
+                        const msgId = msg.id || String(idx);
+                        const isEditingThis = editingMessageId === msgId;
+                        const senderAvatar = getSafeAvatarUrl(msg.senderAvatar, msg.senderName || "User", msg.senderHandle || msg.senderEmail);
+
+                        return (
+                          <div
+                            key={msgId}
+                            className={`flex items-start gap-3 group ${isYoouzAdmin ? "justify-end" : ""}`}
+                          >
+                            {!isYoouzAdmin && (
+                              <img
+                                src={senderAvatar}
+                                alt=""
+                                className="w-8 h-8 rounded-full object-cover border border-white/[0.1] shrink-0 mt-0.5"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = generateGoogleLetterAvatarSvg(msg.senderName || "User", 128);
+                                }}
+                              />
+                            )}
+
+                            <div className={`space-y-1.5 max-w-lg ${isYoouzAdmin ? "items-end" : ""}`}>
+                              <div className={`flex items-center gap-2 ${isYoouzAdmin ? "justify-end" : ""}`}>
+                                <span className="text-xs font-medium text-white">
+                                  {msg.senderName || msg.senderEmail || "User"}
+                                </span>
+                                {msg.senderRole && (
+                                  <span className="text-[11px] text-zinc-500">
+                                    · {isYoouzAdmin ? "Admin" : msg.senderRole}
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-zinc-500 tabular-nums">
+                                  {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : msg.timestamp || ""}
+                                </span>
+
+                                {!isEditingThis && (
+                                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingMessageId(msgId);
+                                        setEditingMessageText(msg.text || "");
+                                      }}
+                                      className="p-1 text-zinc-500 hover:text-white rounded cursor-pointer"
+                                      title="Edit message"
+                                    >
+                                      <Edit3 className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteMessageFromThread(msgId)}
+                                      className="p-1 text-zinc-500 hover:text-rose-400 rounded cursor-pointer"
+                                      title="Delete message"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {isEditingThis ? (
+                                <div className="p-3 bg-white/[0.03] border border-white/[0.12] rounded-xl space-y-2">
+                                  <textarea
+                                    value={editingMessageText}
+                                    onChange={(e) => setEditingMessageText(e.target.value)}
+                                    rows={2}
+                                    className="w-full bg-[#050506] border border-white/[0.1] rounded-lg p-2 text-xs text-white focus:outline-none focus:border-white/25"
+                                  />
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingMessageId(null)}
+                                      className="h-7 px-2.5 text-xs font-medium text-zinc-400 hover:text-white rounded-lg bg-white/[0.05] cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleEditMessageInThread(msgId)}
+                                      className="h-7 px-3 text-xs font-semibold text-zinc-950 bg-white hover:bg-zinc-200 rounded-lg cursor-pointer inline-flex items-center gap-1"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  className={`px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed break-words ${
+                                    isYoouzAdmin
+                                      ? "bg-white text-zinc-950 rounded-tr-sm"
+                                      : "bg-white/[0.04] border border-white/[0.08] text-zinc-200 rounded-tl-sm"
+                                  }`}
+                                >
+                                  {msg.text || "(Media Attachment)"}
+
+                                  {msg.editedByAdminAt && (
+                                    <span className={`block mt-1 text-[10px] italic ${isYoouzAdmin ? "text-zinc-600" : "text-zinc-500"}`}>
+                                      Edited by Admin
+                                    </span>
+                                  )}
+
+                                  {msg.videoThumbnail && (
+                                    <div className="mt-2 rounded-xl overflow-hidden border border-white/[0.1] max-w-xs relative">
+                                      <img src={msg.videoThumbnail} alt="Attached review" className="w-full h-32 object-cover" />
+                                      {msg.placeName && (
+                                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/90 to-transparent text-[11px] font-medium text-white truncate">
+                                          {msg.placeName}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {isYoouzAdmin && (
+                              <img
+                                src="/favicon.svg"
+                                alt="Yoouz Admin"
+                                className="w-8 h-8 rounded-full object-cover border border-white/[0.15] shrink-0 mt-0.5"
+                              />
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
-                </div>
+                </AdminModal>
               )}
 
               {/* DIALOG: Confirm Delete Single Thread */}
               {confirmDeleteChatId && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-4 shadow-2xl">
-                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-                      <Trash2 className="w-6 h-6" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h3 className="text-lg font-black text-white">Delete Chat Thread?</h3>
-                      <p className="text-xs text-zinc-400">
-                        Are you sure you want to permanently delete thread <span className="font-mono text-zinc-200 font-bold">{confirmDeleteChatId}</span>? This action cannot be undone.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-2">
+                <AdminModal
+                  title="Delete Chat Thread"
+                  maxWidthClass="max-w-md"
+                  onClose={() => setConfirmDeleteChatId(null)}
+                  footer={
+                    <>
                       <button
+                        type="button"
                         onClick={() => setConfirmDeleteChatId(null)}
-                        className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDeleteAdminChat(confirmDeleteChatId)}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl cursor-pointer shadow-md"
+                        className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                       >
-                        Yes, Delete
+                        Delete Thread
                       </button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  }
+                >
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Permanently delete thread <span className="font-mono text-zinc-200">{confirmDeleteChatId}</span> and all of its messages? This action cannot be undone.
+                  </p>
+                </AdminModal>
               )}
 
               {/* DIALOG: Confirm Bulk Delete Threads */}
               {confirmBulkDeleteChats && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-4 shadow-2xl">
-                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-                      <Trash2 className="w-6 h-6" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h3 className="text-lg font-black text-white">Delete {selectedChatIds.length} Threads?</h3>
-                      <p className="text-xs text-zinc-400">
-                        This will permanently delete {selectedChatIds.length} selected chat conversations from Bunny Database.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-2">
+                <AdminModal
+                  title={`Delete ${selectedChatIds.length} Threads`}
+                  maxWidthClass="max-w-md"
+                  onClose={() => setConfirmBulkDeleteChats(false)}
+                  footer={
+                    <>
                       <button
+                        type="button"
                         onClick={() => setConfirmBulkDeleteChats(false)}
-                        className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={handleBulkDeleteChats}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl cursor-pointer shadow-md"
+                        className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                       >
-                        Yes, Delete All
+                        Delete Selected
                       </button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  }
+                >
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Permanently delete {selectedChatIds.length} selected conversations from BunnyDB? This action cannot be undone.
+                  </p>
+                </AdminModal>
               )}
 
               {/* DIALOG: Confirm Purge All Chats */}
               {confirmPurgeAllChats && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-4 shadow-2xl">
-                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-                      <AlertTriangle className="w-6 h-6" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h3 className="text-lg font-black text-white">Purge All Database Chats?</h3>
-                      <p className="text-xs text-zinc-400">
-                        Warning: This will wipe all chat thread records and message histories in the database.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-2">
+                <AdminModal
+                  title="Purge All Chat Threads"
+                  maxWidthClass="max-w-md"
+                  onClose={() => setConfirmPurgeAllChats(false)}
+                  footer={
+                    <>
                       <button
+                        type="button"
                         onClick={() => setConfirmPurgeAllChats(false)}
-                        className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={handlePurgeAllChats}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl cursor-pointer shadow-md"
+                        className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                       >
-                        Yes, Wipe All Chats
+                        Purge All Chats
                       </button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  }
+                >
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    This will permanently delete every direct message thread and transcript stored in BunnyDB. This action cannot be undone.
+                  </p>
+                </AdminModal>
               )}
             </div>
           )}
 
           {/* TAB 6: BROADCAST ALERTS */}
           {activeTab === "broadcast" && (
-            <div className="max-w-6xl mx-auto space-y-6">
-              {/* Executive Header & KPI Ribbon */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-md">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold">
-                        <Bell className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-black text-white tracking-tight">Broadcast Platform Notification & Alerts</h2>
-                        <p className="text-xs text-zinc-400">
-                          Send instant announcements, feature drops, and alerts to all active users & creators across Yoouz.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                      Push Dispatcher Active
-                    </span>
-                  </div>
-                </div>
+            <div className="max-w-6xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Broadcast"
+                subtitle="Send platform announcements, feature drops, and system alerts to active users."
+              />
 
-                {/* Audience KPI Counters */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Total Platform Reach</span>
-                    <span className="font-mono text-lg font-bold text-white">{uniqueUsers.length} {uniqueUsers.length === 1 ? 'user' : 'users'}</span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">All registered accounts</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Photo Reviewers</span>
-                    <span className="font-mono text-lg font-bold text-amber-400">{metrics.totalCreators} {metrics.totalCreators === 1 ? 'reviewer' : 'reviewers'}</span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">Active photo reviewers</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Business Accounts</span>
-                    <span className="font-mono text-lg font-bold text-blue-400">{metrics.totalBusinesses} {metrics.totalBusinesses === 1 ? 'business' : 'businesses'}</span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">Claimed & registered</span>
-                  </div>
-                  <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    <span className="text-zinc-400 block mb-1">Sent Broadcasts</span>
-                    <span className="font-mono text-lg font-bold text-emerald-400">{broadcastHistory.length} total</span>
-                    <span className="text-[10px] text-zinc-500 block mt-0.5">Notification history log</span>
-                  </div>
-                </div>
+              {/* Audience KPI Strip */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <AdminStatCard label="Total Reach" value={uniqueUsers.length} sublabel="Registered accounts" icon={<Users className="w-4 h-4" />} />
+                <AdminStatCard label="Photo Reviewers" value={metrics.totalCreators} sublabel="Active creators" icon={<Camera className="w-4 h-4" />} />
+                <AdminStatCard label="Businesses" value={metrics.totalBusinesses} sublabel="Claimed profiles" icon={<Building2 className="w-4 h-4" />} />
+                <AdminStatCard label="Sent Broadcasts" value={broadcastHistory.length} sublabel="Dispatch history" icon={<Bell className="w-4 h-4" />} />
+              </div>
 
-                {/* One-Click Preset Templates */}
-                <div className="pt-2 border-t border-zinc-800/80">
-                  <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-2.5">
-                    Quick Preset Templates (Click to fill)
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      {
-                        label: "🚀 Feature Release v2.0",
-                        type: "feature" as const,
-                        audience: "all" as const,
-                        title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
-                        message: "We just rolled out lightning-fast photo CDN delivery powered by Bunny CDN and interactive local discovery maps!",
-                        targetUrl: "/search"
-                      },
-                      {
-                        label: "🔥 Weekend Trending Spotlight",
-                        type: "announcement" as const,
-                        audience: "all" as const,
-                        title: "Weekend Spotlight: Top-Rated Local Gems",
-                        message: "Discover this week's highest-rated culinary spots and verified community favorites in your city.",
-                        targetUrl: "/reviews/pl_1"
-                      },
-                      {
-                        label: "👑 Creator Photo Challenge",
-                        type: "promo" as const,
-                        audience: "creators" as const,
-                        title: "Creator Challenge: Review 3 Spots & Earn Badges",
-                        message: "Publish authentic live photo reviews this weekend to get featured on the global Yoouz home feed!",
-                        targetUrl: "/profile"
-                      },
-                      {
-                        label: "⚠️ Edge CDN Performance Notice",
-                        type: "alert" as const,
-                        audience: "all" as const,
-                        title: "Edge Storage Optimization Complete",
-                        message: "Global CDN caching optimization completed with 0ms downtime. Enjoy seamless instant video playback.",
-                        targetUrl: ""
-                      }
-                    ].map((preset, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setBroadcastData({
-                            title: preset.title,
-                            message: preset.message,
-                            targetUrl: preset.targetUrl
-                          });
-                          setBroadcastType(preset.type);
-                          setBroadcastAudience(preset.audience);
-                          showToast(`Applied preset: ${preset.label}`);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 text-xs font-semibold transition-all cursor-pointer shadow-sm"
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
+              {/* Preset Templates */}
+              <div className={`${ADMIN_SURFACE} p-4 flex flex-wrap items-center justify-between gap-3`}>
+                <span className="text-xs font-medium text-zinc-400">Quick Templates</span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    {
+                      label: "Feature Release v2.0",
+                      type: "feature" as const,
+                      audience: "all" as const,
+                      title: "Yoouz 2.0 Live: Instant Search & Live Photo Reviews",
+                      message: "We just rolled out fast photo CDN delivery powered by Bunny CDN and interactive local discovery maps.",
+                      targetUrl: "/search"
+                    },
+                    {
+                      label: "Weekend Spotlight",
+                      type: "announcement" as const,
+                      audience: "all" as const,
+                      title: "Weekend Spotlight: Top-Rated Local Spots",
+                      message: "Discover this week's highest-rated places and verified community favorites near you.",
+                      targetUrl: "/reviews/pl_1"
+                    },
+                    {
+                      label: "Creator Challenge",
+                      type: "promo" as const,
+                      audience: "creators" as const,
+                      title: "Creator Challenge: Review 3 Spots This Weekend",
+                      message: "Publish authentic live photo reviews this weekend to get featured on the Yoouz home feed.",
+                      targetUrl: "/profile"
+                    },
+                    {
+                      label: "Edge CDN Notice",
+                      type: "alert" as const,
+                      audience: "all" as const,
+                      title: "Edge Storage Optimization Complete",
+                      message: "Global CDN caching optimization completed with zero downtime for faster media loading.",
+                      targetUrl: ""
+                    }
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setBroadcastData({
+                          title: preset.title,
+                          message: preset.message,
+                          targetUrl: preset.targetUrl
+                        });
+                        setBroadcastType(preset.type);
+                        setBroadcastAudience(preset.audience);
+                        showToast(`Applied template: ${preset.label}`);
+                      }}
+                      className={ADMIN_BTN_SECONDARY}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Two-Column Composer & Live Device Preview */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left Column: Composer Form */}
-                <div className="lg:col-span-7 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-5 shadow-md">
-                  <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <Edit className="w-4 h-4 text-zinc-400" />
-                      Compose Announcement
-                    </h3>
+              {/* Two-Column Composer & Live Preview */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div className={`lg:col-span-7 ${ADMIN_SURFACE} p-5 space-y-5`}>
+                  <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                    <h3 className="text-sm font-semibold text-white">Compose Announcement</h3>
                     <button
                       type="button"
                       onClick={() => setBroadcastData({ title: "", message: "", targetUrl: "" })}
-                      className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                      className="text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
                     >
-                      Clear Form
+                      Clear
                     </button>
                   </div>
 
                   <form onSubmit={handleSendBroadcast} className="space-y-4">
-                    {/* Audience Targeting Selector */}
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
+                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
                         Target Audience
                       </label>
                       <div className="grid grid-cols-3 gap-2">
                         {[
-                          { id: "all", label: "👥 All Users", desc: `${uniqueUsers.length} ${uniqueUsers.length === 1 ? 'account' : 'accounts'}` },
-                          { id: "creators", label: "👑 Creators", desc: `${metrics.totalCreators} ${metrics.totalCreators === 1 ? 'reviewer' : 'reviewers'}` },
-                          { id: "businesses", label: "🏢 Businesses", desc: `${metrics.totalBusinesses} ${metrics.totalBusinesses === 1 ? 'business' : 'businesses'}` }
+                          { id: "all", label: "All Users", desc: `${uniqueUsers.length} accounts` },
+                          { id: "creators", label: "Creators", desc: `${metrics.totalCreators} reviewers` },
+                          { id: "businesses", label: "Businesses", desc: `${metrics.totalBusinesses} claimed` }
                         ].map((aud) => (
                           <button
                             key={aud.id}
                             type="button"
                             onClick={() => setBroadcastAudience(aud.id as any)}
-                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                            className={`p-3 rounded-xl border text-left transition-colors cursor-pointer ${
                               broadcastAudience === aud.id
-                                ? "bg-white text-zinc-950 border-white shadow-md font-bold"
-                                : "bg-zinc-950 text-zinc-300 border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700"
+                                ? "bg-white text-zinc-950 border-white"
+                                : "bg-white/[0.02] text-zinc-300 border-white/[0.08] hover:bg-white/[0.06]"
                             }`}
                           >
-                            <div className="text-xs font-bold">{aud.label}</div>
-                            <div className={`text-[10px] mt-0.5 ${broadcastAudience === aud.id ? "text-zinc-700" : "text-zinc-500"}`}>
+                            <div className="text-xs font-semibold">{aud.label}</div>
+                            <div className={`text-[11px] mt-0.5 tabular-nums ${broadcastAudience === aud.id ? "text-zinc-600" : "text-zinc-500"}`}>
                               {aud.desc}
                             </div>
                           </button>
@@ -8263,26 +7452,25 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                     </div>
 
-                    {/* Notification Category */}
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                        Category & Priority
+                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+                        Category
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          { id: "announcement", label: "📢 Announcement", color: "text-zinc-200 bg-zinc-800" },
-                          { id: "feature", label: "🚀 Feature Drop", color: "text-blue-300 bg-blue-950/60 border-blue-800" },
-                          { id: "promo", label: "🔥 Spotlight / Promo", color: "text-amber-300 bg-amber-950/60 border-amber-800" },
-                          { id: "alert", label: "⚠️ System Notice", color: "text-red-300 bg-red-950/60 border-red-800" }
+                          { id: "announcement", label: "Announcement" },
+                          { id: "feature", label: "Feature Drop" },
+                          { id: "promo", label: "Spotlight" },
+                          { id: "alert", label: "System Notice" }
                         ].map((cat) => (
                           <button
                             key={cat.id}
                             type="button"
                             onClick={() => setBroadcastType(cat.id as any)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                            className={`h-8 px-3 rounded-lg text-xs font-medium transition-colors border cursor-pointer ${
                               broadcastType === cat.id
-                                ? "bg-white text-zinc-950 border-white shadow-sm"
-                                : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:border-zinc-700"
+                                ? "bg-white text-zinc-950 border-white"
+                                : "bg-white/[0.03] text-zinc-400 border-white/[0.08] hover:text-white hover:bg-white/[0.07]"
                             }`}
                           >
                             {cat.label}
@@ -8291,77 +7479,69 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       </div>
                     </div>
 
-                    {/* Notification Title */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
                           Notification Title
                         </label>
-                        <span className="text-[11px] text-zinc-500 font-mono">
-                          {broadcastData.title.length}/100
-                        </span>
+                        <span className="text-[11px] text-zinc-500 tabular-nums">{broadcastData.title.length}/100</span>
                       </div>
                       <input
                         type="text"
                         maxLength={100}
                         value={broadcastData.title}
                         onChange={(e) => setBroadcastData({ ...broadcastData, title: e.target.value })}
-                        placeholder="e.g. New Features Live / Special Weekend Update"
-                        className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-sm"
+                        placeholder="e.g. New Features Live"
+                        className={`${ADMIN_INPUT} w-full`}
                       />
                     </div>
 
-                    {/* Message Body */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-zinc-300">
-                          Message Body (Required)
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                          Message Body
                         </label>
-                        <span className="text-[11px] text-zinc-500 font-mono">
-                          {broadcastData.message.length}/500
-                        </span>
+                        <span className="text-[11px] text-zinc-500 tabular-nums">{broadcastData.message.length}/500</span>
                       </div>
                       <textarea
                         rows={4}
                         maxLength={500}
                         value={broadcastData.message}
                         onChange={(e) => setBroadcastData({ ...broadcastData, message: e.target.value })}
-                        placeholder="Write announcement message that will appear in users' notification inboxes..."
+                        placeholder="Write the announcement message for user notification inboxes..."
                         required
-                        className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-sm resize-none"
+                        className="w-full px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/25 resize-none leading-relaxed"
                       />
                     </div>
 
-                    {/* Target Link */}
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                        Target Deep Link or Place ID (Optional)
+                      <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                        Target Path or URL (Optional)
                       </label>
                       <input
                         type="text"
                         value={broadcastData.targetUrl}
                         onChange={(e) => setBroadcastData({ ...broadcastData, targetUrl: e.target.value })}
-                        placeholder="e.g. /reviews/pl_1 or https://yoouz.com/search"
-                        className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-sm font-mono"
+                        placeholder="/reviews/pl_1 or https://yoouz.com/search"
+                        className={`${ADMIN_INPUT} w-full font-mono`}
                       />
                     </div>
 
-                    {/* Action Button */}
                     <div className="pt-2 flex items-center justify-end">
                       <button
                         type="submit"
                         disabled={isBroadcastSending || !broadcastData.message.trim()}
-                        className="px-6 py-3.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold rounded-2xl transition-all shadow-lg flex items-center gap-2 text-sm cursor-pointer active:scale-98"
+                        className={ADMIN_BTN_PRIMARY}
                       >
                         {isBroadcastSending ? (
                           <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Dispatching Broadcast...</span>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Dispatching...</span>
                           </>
                         ) : (
                           <>
-                            <Send className="w-4 h-4" />
-                            <span>Send Broadcast to Users</span>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Broadcast</span>
                           </>
                         )}
                       </button>
@@ -8369,107 +7549,86 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </form>
                 </div>
 
-                {/* Right Column: Live Mobile & In-App Push Preview */}
+                {/* Live Preview */}
                 <div className="lg:col-span-5 space-y-4">
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 space-y-4 shadow-md">
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-zinc-400" />
-                        <h3 className="text-sm font-bold text-white">Live Push Preview</h3>
-                      </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono">
-                        Mobile & In-App
-                      </span>
+                  <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
+                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                      <h3 className="text-sm font-semibold text-white">Notification Preview</h3>
+                      <span className="text-[11px] text-zinc-500">In-App Inbox</span>
                     </div>
 
-                    {/* Realistic Notification Mockup Banner */}
-                    <div className="p-4 bg-zinc-950/95 border border-zinc-800 rounded-2xl shadow-xl space-y-2.5">
+                    <div className="p-4 bg-[#050506] border border-white/[0.08] rounded-xl space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-black text-white">
+                          <div className="w-6 h-6 rounded-lg bg-white/[0.08] border border-white/[0.1] flex items-center justify-center text-xs font-semibold text-white">
                             Y
                           </div>
-                          <span className="text-xs font-bold text-white">Yoouz</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 font-mono font-bold uppercase">
-                            {broadcastType}
-                          </span>
+                          <span className="text-xs font-semibold text-white">Yoouz</span>
+                          <span className="text-[11px] text-zinc-500 capitalize">· {broadcastType}</span>
                         </div>
-                        <span className="text-[10px] text-zinc-500">Just now</span>
+                        <span className="text-[11px] text-zinc-500">Just now</span>
                       </div>
 
                       <div className="space-y-1">
-                        <div className="text-xs font-bold text-white break-words">
+                        <div className="text-xs font-semibold text-white break-words">
                           {broadcastData.title.trim() || "Yoouz Platform Announcement"}
                         </div>
-                        <p className="text-xs text-zinc-300 leading-relaxed break-words">
-                          {broadcastData.message.trim() || "Your broadcast announcement text will appear here exactly as users see it in their notification drawers."}
+                        <p className="text-xs text-zinc-400 leading-relaxed break-words">
+                          {broadcastData.message.trim() || "Your announcement text will appear here as users see it in their notifications drawer."}
                         </p>
                       </div>
 
                       {broadcastData.targetUrl && (
-                        <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-[11px]">
-                          <span className="text-zinc-500 font-mono truncate max-w-[180px]">
-                            🔗 {broadcastData.targetUrl}
+                        <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
+                          <span className="text-zinc-500 font-mono truncate max-w-[200px]">
+                            {broadcastData.targetUrl}
                           </span>
-                          <span className="text-blue-400 font-bold hover:underline">Open link &rarr;</span>
+                          <span className="text-zinc-300 font-medium">Open &rarr;</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800/80 text-xs text-zinc-400 space-y-1.5">
-                      <div className="font-bold text-zinc-300 flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Real-Time Delivery Guarantee
-                      </div>
-                      <p className="text-[11px] leading-relaxed">
-                        Broadcasts sync immediately into user inbox notifications, badge indicators, and edge databases.
-                      </p>
-                    </div>
+                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                      Broadcasts write directly to BunnyDB notification records and appear immediately inside active user inboxes.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Sent Broadcasts History & Archives */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-zinc-400" />
-                    <h3 className="font-bold text-white text-base">Broadcast Dispatch History</h3>
-                  </div>
-                  <span className="text-xs px-2.5 py-1 bg-zinc-800 text-zinc-300 rounded-lg font-bold">
-                    {broadcastHistory.length} Previous Messages
-                  </span>
+              {/* Broadcast Dispatch History */}
+              <div className={`${ADMIN_SURFACE} overflow-hidden`}>
+                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">Dispatch History</h3>
+                  <span className="text-xs text-zinc-500 tabular-nums">{broadcastHistory.length} sent</span>
                 </div>
 
                 {broadcastHistory.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-zinc-500 bg-zinc-950 rounded-2xl border border-zinc-800">
-                    No broadcasts recorded yet. Send your first announcement above.
+                  <div className="px-6 py-12 text-center text-xs text-zinc-500">
+                    No broadcasts dispatched yet. Send an announcement above to record it here.
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="divide-y divide-white/[0.06]">
                     {broadcastHistory.map((item) => (
                       <div
                         key={item.id}
-                        className="p-4 bg-zinc-950 rounded-2xl border border-zinc-800/80 hover:border-zinc-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
+                        className="px-5 py-4 hover:bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
                       >
                         <div className="space-y-1 flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-white">{item.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-400 font-mono font-bold uppercase">
-                              {item.type || "announcement"}
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
-                              Audience: {item.audience || "all"}
-                            </span>
+                          <div className="flex items-center gap-2 flex-wrap text-xs">
+                            <span className="font-semibold text-white">{item.title}</span>
+                            <span className="text-zinc-500 capitalize">· {item.type || "announcement"}</span>
+                            <span className="text-zinc-500">· Audience: {item.audience || "all"}</span>
                           </div>
-                          <p className="text-xs text-zinc-300 truncate max-w-xl">{item.message}</p>
-                          <div className="flex items-center gap-3 text-[10px] text-zinc-500 font-mono pt-0.5">
+                          <p className="text-xs text-zinc-400 truncate max-w-2xl">{item.message}</p>
+                          <div className="flex items-center gap-3 text-[11px] text-zinc-500 tabular-nums">
                             <span>{new Date(item.sentAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}</span>
-                            {item.targetUrl && <span>URL: {item.targetUrl}</span>}
+                            {item.targetUrl && <span className="font-mono truncate">{item.targetUrl}</span>}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
+                            type="button"
                             onClick={() => {
                               setBroadcastData({
                                 title: item.title,
@@ -8480,11 +7639,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               setBroadcastType(item.type || "announcement");
                               showToast("Loaded broadcast into composer.");
                             }}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-700"
+                            className={ADMIN_BTN_SECONDARY}
                           >
-                            Reuse Template
+                            Reuse
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
                               const updated = broadcastHistory.filter((x) => x.id !== item.id);
                               setBroadcastHistory(updated);
@@ -8493,8 +7653,9 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                               } catch (e) {}
                               showToast("Deleted broadcast record.");
                             }}
-                            className="p-1.5 text-zinc-500 hover:text-red-400 rounded-xl hover:bg-red-950/30 transition-all cursor-pointer"
+                            className={ADMIN_BTN_ICON_DANGER}
                             title="Delete log entry"
+                            aria-label="Delete log entry"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -8509,95 +7670,63 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
 
           {/* TAB: GOOGLE SEARCH CONSOLE & INDEXING */}
           {activeTab === "indexing" && (
-            <div className="max-w-5xl mx-auto space-y-6">
-              {/* Header */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-5 shadow-md">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold shrink-0">
-                      <Globe className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2 flex-wrap">
-                        <span>Google Search Console & SEO Indexing Hub</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800/80">
-                          100% HEALTHY
-                        </span>
-                      </h2>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        Live sitemaps, Google Video Schema (1.1) verification, and 1-click search engine submission.
-                      </p>
-                    </div>
-                  </div>
-
+            <div className="max-w-5xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Google Indexing"
+                subtitle="Live XML sitemaps, structured schema endpoints, and instant IndexNow submission."
+                actions={
                   <button
+                    type="button"
                     onClick={handleTriggerGoogleIndexing}
                     disabled={isPingingGoogleIndex}
-                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-emerald-500 cursor-pointer shadow-md shrink-0"
+                    className={ADMIN_BTN_PRIMARY}
                   >
-                    <RefreshCw className={`w-4 h-4 ${isPingingGoogleIndex ? "animate-spin" : ""}`} />
-                    <span>{isPingingGoogleIndex ? "Pinging Google..." : "Submit Google & IndexNow Ping"}</span>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isPingingGoogleIndex ? "animate-spin" : ""}`} />
+                    <span>{isPingingGoogleIndex ? "Submitting Ping..." : "Submit IndexNow Ping"}</span>
                   </button>
-                </div>
+                }
+              />
+
+              {/* Status KPI Strip */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <AdminStatCard label="Crawl Errors" value="0" sublabel="Clean 404 handling" tone="positive" icon={<CheckCircle2 className="w-4 h-4" />} />
+                <AdminStatCard label="Indexable Reviews" value={metrics.totalVideos} sublabel="Review & ImageObject schema" icon={<Globe className="w-4 h-4" />} />
+                <AdminStatCard label="IndexNow Status" value="202 OK" sublabel="Instant engine ping" tone="positive" icon={<Zap className="w-4 h-4" />} />
               </div>
 
-              {/* Status Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
-                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Search Console Errors</div>
-                  <div className="text-2xl font-black text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
-                    <span>0 Errors</span>
-                  </div>
-                  <p className="text-xs text-zinc-500">Deleted pages return HTTP 404 cleanly with no soft-404s.</p>
+              {/* Sitemaps & Endpoints */}
+              <div className={`${ADMIN_SURFACE} overflow-hidden`}>
+                <div className="px-5 py-4 border-b border-white/[0.06]">
+                  <h3 className="text-sm font-semibold text-white">Sitemaps & Crawler Endpoints</h3>
                 </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
-                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Indexable Photo Reviews</div>
-                  <div className="text-2xl font-black text-white font-mono">
-                    {metrics.totalVideos} Reviews
-                  </div>
-                  <p className="text-xs text-zinc-500">Formatted with Google Review & ImageObject Schema URLs.</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-2">
-                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">IndexNow Instant Ping</div>
-                  <div className="text-2xl font-black text-emerald-400 flex items-center gap-2">
-                    <Zap className="w-6 h-6 text-emerald-400 shrink-0" />
-                    <span>Active (202 OK)</span>
-                  </div>
-                  <p className="text-xs text-zinc-500">Instant indexing for Bing, Yahoo, Seznam, and AI search engines.</p>
-                </div>
-              </div>
-
-              {/* Live Sitemaps & Verification Endpoints */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <ExternalLink className="w-4 h-4 text-emerald-400" />
-                  <span>Google Search Console Sitemaps & Endpoints</span>
-                </h3>
-
-                <div className="space-y-3 font-mono text-xs">
+                <div className="divide-y divide-white/[0.06]">
                   {[
-                    { label: "Main Sitemaps XML", url: "https://www.yoouz.com/sitemap.xml", desc: "Core landing pages, trades, places, and photo reviews" },
-                    { label: "Google Video XML Sitemap", url: "https://www.yoouz.com/video-sitemap.xml", desc: "Dedicated Google Video Schema 1.1 feed" },
-                    { label: "Sitemap Index XML", url: "https://www.yoouz.com/sitemap-index.xml", desc: "Google Search Console master sitemap index" },
-                    { label: "Robots.txt Engine Policy", url: "https://www.yoouz.com/robots.txt", desc: "Allows Googlebot, Googlebot-Video, Googlebot-Image, and AI agents" }
+                    { label: "Main Sitemap XML", url: "https://www.yoouz.com/sitemap.xml", desc: "Core landing pages, places, and photo reviews" },
+                    { label: "Video Sitemap XML", url: "https://www.yoouz.com/video-sitemap.xml", desc: "Dedicated Google Video Schema 1.1 feed" },
+                    { label: "Sitemap Index XML", url: "https://www.yoouz.com/sitemap-index.xml", desc: "Master sitemap index for Search Console" },
+                    { label: "Robots.txt Policy", url: "https://www.yoouz.com/robots.txt", desc: "Crawler permissions for Googlebot and search agents" }
                   ].map((item, idx) => (
-                    <div key={idx} className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <span className="text-zinc-400 font-bold block">{item.label}</span>
-                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline break-all">
-                          {item.url}
+                    <div key={idx} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors">
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="text-xs font-medium text-white">{item.label}</div>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-mono text-zinc-300 hover:text-white hover:underline break-all inline-flex items-center gap-1"
+                        >
+                          <span>{item.url}</span>
+                          <ExternalLink className="w-3 h-3 text-zinc-500 shrink-0" />
                         </a>
-                        <span className="text-[11px] text-zinc-500 block font-sans">{item.desc}</span>
+                        <p className="text-[11px] text-zinc-500">{item.desc}</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(item.url);
-                          showToast(`Copied ${item.label} link to clipboard!`);
+                          showToast(`Copied ${item.label} URL.`);
                         }}
-                        className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-[11px] font-bold shrink-0 cursor-pointer self-start sm:self-center"
+                        className={`${ADMIN_BTN_SECONDARY} shrink-0 self-start sm:self-center`}
                       >
                         Copy URL
                       </button>
@@ -8606,31 +7735,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* Clear Index / Submit Instructions */}
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4 shadow-md">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Google Search Console Clear & Re-index Checklist</span>
-                </h3>
-
+              {/* Search Console Checklist */}
+              <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
+                <h3 className="text-sm font-semibold text-white">Search Console Checklist</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-2">
-                    <div className="font-bold text-white flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-bold flex items-center justify-center shrink-0">1</span>
-                      <span>Submit Sitemaps in Google Search Console</span>
-                    </div>
+                  <div className="space-y-1.5">
+                    <div className="font-medium text-white">1. Submit Sitemaps</div>
                     <p className="text-zinc-400 leading-relaxed">
-                      Go to Google Search Console &gt; Sitemaps, submit <code className="text-emerald-400 font-mono">sitemap.xml</code> and <code className="text-emerald-400 font-mono">video-sitemap.xml</code>. Google will process all pages immediately.
+                      In Google Search Console &rarr; Sitemaps, submit <code className="text-zinc-200 font-mono">sitemap.xml</code> and <code className="text-zinc-200 font-mono">video-sitemap.xml</code>.
                     </p>
                   </div>
-
-                  <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800/80 space-y-2">
-                    <div className="font-bold text-white flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-bold flex items-center justify-center shrink-0">2</span>
-                      <span>Request Live URL Inspection</span>
-                    </div>
+                  <div className="space-y-1.5">
+                    <div className="font-medium text-white">2. Inspect Live URL</div>
                     <p className="text-zinc-400 leading-relaxed">
-                      In Search Console, paste <code className="text-emerald-400 font-mono">https://www.yoouz.com/</code> into the top search bar, click "Test Live URL", then click "Request Indexing".
+                      Paste <code className="text-zinc-200 font-mono">https://www.yoouz.com/</code> into URL Inspection, run Test Live URL, and request indexing.
                     </p>
                   </div>
                 </div>
@@ -8641,48 +7759,36 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
           {/* TAB 7: DATABASE & CLOUD SUITE */}
           {activeTab === "database" && (
             <div className="max-w-5xl mx-auto space-y-5">
-              {/* Connectivity & Edge Cluster Header */}
-              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] text-zinc-200 flex items-center justify-center shrink-0">
-                      <Database className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-white tracking-tight">Database & Edge Storage</h2>
-                      <p className="text-xs text-zinc-400">
-                        BunnyDB libSQL edge tables and Bunny CDN persistent object storage.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
+              <AdminPageHeader
+                title="Database & Edge Storage"
+                subtitle="BunnyDB libSQL edge tables and Bunny CDN object storage."
+                actions={
+                  <>
+                    <span className="h-9 px-3 rounded-xl bg-white/[0.03] border border-white/[0.08] inline-flex items-center gap-2 text-xs text-zinc-300 tabular-nums">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      {liveStats ? `Connected · ${liveStats.latencyMs}ms` : pingEdgeResult ? `Connected · ${pingEdgeResult.latencyMs}ms` : "Connected"}
+                    </span>
                     <button
                       type="button"
                       onClick={handlePingEdge}
                       disabled={isPingingEdge}
-                      className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] disabled:opacity-50 text-zinc-200 hover:text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 border border-white/[0.08] cursor-pointer"
-                      title="Measure roundtrip latency to edge database nodes"
+                      className={ADMIN_BTN_SECONDARY}
                     >
                       <Zap className="w-3.5 h-3.5 text-zinc-400" />
                       <span>{isPingingEdge ? "Pinging..." : "Ping Edge"}</span>
                     </button>
+                  </>
+                }
+              />
 
-                    <span className="text-xs tabular-nums bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/[0.08] text-emerald-400 font-medium">
-                      {liveStats ? `Connected · ${liveStats.latencyMs}ms` : pingEdgeResult ? `Connected · ${pingEdgeResult.latencyMs}ms` : "Connected"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Database Tables Live Row Parity (10 Tables) */}
-              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
+              {/* Database Tables Grid (10 Tables — full clean labels, zero clipped strings) */}
+              <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-white text-sm tracking-tight">BunnyDB Tables</h3>
-                  <span className="text-[11px] text-zinc-500">Click any table to inspect or edit rows</span>
+                  <h3 className="text-sm font-semibold text-white">BunnyDB Tables</h3>
+                  <span className="text-xs text-zinc-500">Select a table to inspect or delete rows</span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {(
                     [
                       { name: "videoReviews", label: "Photo Reviews", count: liveStats?.totals?.videoReviews ?? metrics.totalVideos, Icon: Camera },
@@ -8703,21 +7809,21 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         key={t.name}
                         type="button"
                         onClick={() => setInspectTableModal(t.name)}
-                        className="p-3 bg-white/[0.02] hover:bg-white/[0.06] rounded-xl border border-white/[0.07] hover:border-white/[0.15] flex flex-col justify-between transition-colors cursor-pointer text-left group"
+                        className="p-3.5 bg-white/[0.02] hover:bg-white/[0.06] rounded-xl border border-white/[0.07] hover:border-white/[0.15] flex flex-col justify-between gap-2.5 transition-colors cursor-pointer text-left group"
                       >
-                        <div className="flex items-center justify-between gap-1.5 w-full">
-                          <span className="text-[11px] text-zinc-400 font-medium truncate group-hover:text-white transition-colors">
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <span className="text-xs text-zinc-300 font-medium leading-tight group-hover:text-white transition-colors">
                             {t.label}
                           </span>
                           <TableIcon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
                         </div>
-                        <div className="mt-2.5 flex items-baseline justify-between w-full">
+                        <div className="flex items-baseline justify-between gap-2 w-full">
                           {isLoadingLiveStats && !liveStats ? (
-                            <div className="h-5 w-10 bg-white/[0.08] animate-pulse rounded mt-0.5" />
+                            <div className="h-6 w-10 bg-white/[0.08] animate-pulse rounded" />
                           ) : (
-                            <span className="text-lg font-semibold text-white tabular-nums">{t.count}</span>
+                            <span className="text-xl font-semibold text-white tabular-nums">{t.count.toLocaleString()}</span>
                           )}
-                          <span className="text-[10px] font-mono text-zinc-500 truncate max-w-[68px]">{t.name}</span>
+                          <span className="text-[11px] text-zinc-500">rows</span>
                         </div>
                       </button>
                     );
@@ -8725,812 +7831,553 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              {/* Bunny CDN Media Storage Telemetry */}
-              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
+              {/* Bunny CDN Media Storage */}
+              <div className={`${ADMIN_SURFACE} p-5 space-y-4`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <HardDrive className="w-4 h-4 text-zinc-400" />
-                    <h3 className="font-semibold text-white text-sm tracking-tight">Bunny CDN Media Storage</h3>
-                  </div>
+                  <h3 className="text-sm font-semibold text-white">Bunny CDN Media Storage</h3>
                   <button
                     type="button"
                     onClick={handlePurgeCdnCache}
                     disabled={isPurgingCdnCache}
-                    className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.09] disabled:opacity-50 text-zinc-200 hover:text-white rounded-lg text-xs font-medium transition-colors border border-white/[0.08] cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                    className={ADMIN_BTN_SECONDARY}
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${isPurgingCdnCache ? "animate-spin" : ""}`} />
+                    <RefreshCw className={`w-3.5 h-3.5 ${isPurgingCdnCache ? "animate-spin" : ""}`} />
                     <span>{isPurgingCdnCache ? "Purging Edge..." : "Purge CDN Cache"}</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
-                    <span className="text-zinc-500 block mb-1">Storage Zone</span>
-                    <span className="font-mono text-sm font-medium text-white">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] border-t border-white/[0.06] pt-4">
+                  <div className="py-2 sm:py-0 sm:pr-4">
+                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Storage Zone</span>
+                    <span className="font-mono text-sm font-medium text-white mt-1 block">{liveStats?.storage?.zoneName || "yoouz-storage"}</span>
                   </div>
-                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
-                    <span className="text-zinc-500 block mb-1">Media Files in CDN</span>
-                    <span className="text-sm font-semibold text-white tabular-nums">{liveStats?.storage?.filesCount ?? 0} files</span>
+                  <div className="py-2 sm:py-0 sm:px-4">
+                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Media Files</span>
+                    <span className="text-sm font-semibold text-white tabular-nums mt-1 block">{(liveStats?.storage?.filesCount ?? 0).toLocaleString()} files</span>
                   </div>
-                  <div className="p-3.5 bg-white/[0.02] rounded-xl border border-white/[0.07]">
-                    <span className="text-zinc-500 block mb-1">Allocated Size</span>
-                    <span className="text-sm font-semibold text-white tabular-nums">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
+                  <div className="py-2 sm:py-0 sm:pl-4">
+                    <span className="text-[11px] uppercase tracking-wider text-zinc-500 block">Allocated Size</span>
+                    <span className="text-sm font-semibold text-white tabular-nums mt-1 block">{liveStats?.storage?.formattedSize || "0.00 MB"}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Backup & Recovery (Single canonical home for JSON Export & Master Reset) */}
-              <div className="p-5 rounded-2xl bg-[#0c0c0f] border border-white/[0.08] space-y-4">
+              {/* Backup & Recovery */}
+              <div className={`${ADMIN_SURFACE} p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
                 <div>
-                  <h3 className="font-semibold text-white text-sm tracking-tight">Backup & Recovery</h3>
+                  <h3 className="text-sm font-semibold text-white">Backup & Recovery</h3>
                   <p className="text-xs text-zinc-400 mt-1">
                     Export all database collections as a portable JSON snapshot, or perform a full system reset.
                   </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={handleExportDataJSON}
-                    className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-semibold rounded-xl text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                    className={ADMIN_BTN_PRIMARY}
                   >
-                    <Download className="w-3.5 h-3.5" /> Export JSON Backup
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export JSON</span>
                   </button>
-
                   <button
                     type="button"
                     onClick={() => setConfirmMasterResetModal(true)}
                     disabled={isMasterResetting}
-                    className="px-4 py-2.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 font-medium rounded-xl text-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className={ADMIN_BTN_DESTRUCTIVE}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Master System Reset
+                    <span>Master Reset</span>
                   </button>
                 </div>
               </div>
 
-              {/* MODAL: Full Database Table Data Inspector & Explorer */}
+              {/* MODAL: Database Table Inspector */}
               {inspectTableModal && (
-                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
-                  <div className="bg-zinc-900 rounded-3xl p-5 sm:p-6 max-w-4xl w-full max-h-[90vh] flex flex-col border border-zinc-800 shadow-2xl space-y-4">
-                    {/* Header */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800 shrink-0">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold">
-                          {inspectTableModal === "videoReviews" ? "🎥" :
-                           inspectTableModal === "places" ? "📍" :
-                           inspectTableModal === "users" ? "👤" :
-                           inspectTableModal === "comments" ? "💬" :
-                           inspectTableModal === "likes" ? "❤️" :
-                           inspectTableModal === "shares" ? "↗️" :
-                           inspectTableModal === "bookmarks" ? "🔖" :
-                           inspectTableModal === "chats" ? "✉️" :
-                           inspectTableModal === "notifications" ? "🔔" :
-                           inspectTableModal === "businessClaims" ? "🏢" : "📊"}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-black text-white font-mono">{inspectTableModal}</h3>
-                            <span className="text-[11px] px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold">
-                              {tableDataItems.length} rows
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-400">Live Bunny.net libSQL database table inspector</p>
-                        </div>
-                      </div>
-
+                <AdminModal
+                  title={inspectTableModal}
+                  subtitle={`${tableDataItems.length} live rows in BunnyDB`}
+                  maxWidthClass="max-w-4xl"
+                  onClose={() => setInspectTableModal(null)}
+                  footer={
+                    <div className="w-full flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
                           onClick={() => fetchTableData(inspectTableModal)}
                           disabled={isLoadingTableData}
-                          className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold rounded-xl border border-zinc-700 cursor-pointer flex items-center gap-1.5"
+                          className={ADMIN_BTN_SECONDARY}
                         >
-                          <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isLoadingTableData ? "animate-spin" : ""}`} />
-                          <span>Sync</span>
+                          <RefreshCw className={`w-3.5 h-3.5 ${isLoadingTableData ? "animate-spin" : ""}`} />
+                          <span>Refresh</span>
                         </button>
-
-                        {/* Quick Jump to Main Tab if Available */}
                         {["videoReviews", "videos", "places", "users", "comments", "likes", "bookmarks", "chats", "messages", "notifications", "broadcast", "businessClaims", "businesses"].includes(inspectTableModal) && (
                           <button
+                            type="button"
                             onClick={() => {
-                              const targetTab = inspectTableModal === "videoReviews" ? "videos" :
-                                                inspectTableModal === "chats" ? "messages" :
-                                                inspectTableModal === "notifications" ? "broadcast" :
-                                                inspectTableModal === "businessClaims" ? "businesses" : inspectTableModal;
+                              const targetTab =
+                                inspectTableModal === "videoReviews" ? "videos" :
+                                inspectTableModal === "chats" ? "messages" :
+                                inspectTableModal === "notifications" ? "broadcast" :
+                                inspectTableModal === "businessClaims" ? "businesses" : inspectTableModal;
                               setActiveTab(targetTab as any);
                               setInspectTableModal(null);
                             }}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
+                            className={ADMIN_BTN_SECONDARY}
                           >
-                            <span>Open {inspectTableModal} View →</span>
+                            Open Full Tab &rarr;
                           </button>
                         )}
-
-                        <button
-                          onClick={() => setInspectTableModal(null)}
-                          className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-zinc-400 hover:text-white cursor-pointer"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setInspectTableModal(null)}
+                        className={ADMIN_BTN_PRIMARY}
+                      >
+                        Done
+                      </button>
                     </div>
-
-                    {/* Search Bar */}
-                    <div className="shrink-0 flex items-center gap-2">
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
                       <div className="relative flex-1">
-                        <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
                           type="text"
                           value={tableDataQuery}
                           onChange={(e) => setTableDataQuery(e.target.value)}
                           placeholder={`Filter ${inspectTableModal} by ID, user, text, email...`}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                          className={`${ADMIN_INPUT} w-full pl-9`}
                         />
                       </div>
                       {tableDataQuery && (
                         <button
+                          type="button"
                           onClick={() => setTableDataQuery("")}
-                          className="px-2.5 py-2 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl cursor-pointer"
+                          className={ADMIN_BTN_SECONDARY}
                         >
                           Clear
                         </button>
                       )}
                     </div>
 
-                    {/* Data List Container */}
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[280px]">
-                      {isLoadingTableData ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-zinc-400 space-y-3">
-                          <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
-                          <p className="text-xs font-medium">Fetching live rows from Bunny libSQL database...</p>
-                        </div>
-                      ) : (() => {
-                        const filtered = tableDataItems.filter((item) => {
-                          if (!tableDataQuery.trim()) return true;
-                          const q = tableDataQuery.toLowerCase().trim();
-                          const str = JSON.stringify(item).toLowerCase();
-                          return str.includes(q);
-                        });
+                    {isLoadingTableData ? (
+                      <div className="py-16 text-center space-y-2.5">
+                        <RefreshCw className="w-5 h-5 text-zinc-400 animate-spin mx-auto" />
+                        <p className="text-xs text-zinc-400">Loading table rows...</p>
+                      </div>
+                    ) : (() => {
+                      const filtered = tableDataItems.filter((item) => {
+                        if (!tableDataQuery.trim()) return true;
+                        const q = tableDataQuery.toLowerCase().trim();
+                        return JSON.stringify(item).toLowerCase().includes(q);
+                      });
 
-                        if (filtered.length === 0) {
-                          return (
-                            <div className="flex flex-col items-center justify-center py-16 text-zinc-500 space-y-2 bg-zinc-950/60 rounded-2xl border border-zinc-800/80">
-                              <span className="text-3xl">📭</span>
-                              <p className="text-sm font-bold text-zinc-300">
-                                {tableDataQuery ? "No matching records found" : `0 Active Rows in ${inspectTableModal}`}
-                              </p>
-                              <p className="text-xs text-zinc-500 text-center max-w-sm px-4">
-                                {tableDataQuery ? "Try a different search query." : "This table currently has 0 rows in the live database. Any user action will write here dynamically."}
-                              </p>
-                            </div>
-                          );
-                        }
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="py-14 text-center space-y-1.5 border border-white/[0.06] rounded-xl bg-white/[0.02]">
+                            <Database className="w-5 h-5 text-zinc-600 mx-auto mb-2" />
+                            <p className="text-sm font-medium text-white">
+                              {tableDataQuery ? "No matching records" : `No rows in ${inspectTableModal}`}
+                            </p>
+                            <p className="text-xs text-zinc-500">
+                              {tableDataQuery ? "Try adjusting your filter query." : "This table currently has 0 rows."}
+                            </p>
+                          </div>
+                        );
+                      }
 
-                        return filtered.map((item, idx) => {
-                          const itemId = String(item.id || item.uid || item._id || item.commentId || item.claimId || `row-${idx}`);
-                          const createdAt = item.createdAt || item.timestamp || item.sentAt || item.claimedAt || item.date;
+                      return (
+                        <div className="border border-white/[0.08] rounded-xl divide-y divide-white/[0.06] overflow-hidden">
+                          {filtered.map((item, idx) => {
+                            const itemId = String(item.id || item.uid || item._id || item.commentId || item.claimId || `row-${idx}`);
+                            const createdAt = item.createdAt || item.timestamp || item.sentAt || item.claimedAt || item.date;
 
-                          return (
-                            <div
-                              key={itemId + idx}
-                              className="p-3.5 bg-zinc-950 hover:bg-zinc-900/90 rounded-2xl border border-zinc-800/90 space-y-2 transition-all"
-                            >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-mono px-2 py-0.5 bg-zinc-800 text-emerald-400 rounded-md font-bold">
-                                    #{idx + 1}
-                                  </span>
-                                  <span className="text-xs font-mono font-bold text-white truncate max-w-[200px]">
-                                    {itemId}
-                                  </span>
-                                  {createdAt && (
-                                    <span className="text-[10px] text-zinc-500">
-                                      • {new Date(createdAt).toLocaleString()}
+                            return (
+                              <div key={itemId + idx} className="p-3.5 hover:bg-white/[0.02] space-y-2.5 transition-colors">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[11px] font-mono text-zinc-500 tabular-nums">#{idx + 1}</span>
+                                    <span className="text-xs font-mono font-medium text-white truncate max-w-[240px]">
+                                      {itemId}
                                     </span>
-                                  )}
-                                </div>
+                                    {createdAt && (
+                                      <span className="text-[11px] text-zinc-500 tabular-nums">
+                                        · {new Date(createdAt).toLocaleString()}
+                                      </span>
+                                    )}
+                                  </div>
 
-                                <div className="flex items-center gap-1.5">
-                                  <button
-                                    onClick={() => setSelectedItemJsonModal({ tableName: inspectTableModal, item })}
-                                    className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-bold rounded-lg cursor-pointer flex items-center gap-1 border border-zinc-700"
-                                  >
-                                    <span>Raw JSON</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const targetTable = inspectTableModal;
-                                      setAdminConfirmDialog({
-                                        title: "Delete database row?",
-                                        message: `Permanently delete row ${itemId} from ${targetTable}?`,
-                                        confirmLabel: "Delete Row",
-                                        onConfirm: async () => {
-                                          try {
-                                            let res: Response;
-                                            if (targetTable === "likes" || targetTable === "bookmarks" || targetTable === "shares") {
-                                              res = await adminFetch(`/api/admin/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
-                                            } else {
-                                              res = await fetch(`/api/nosql/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedItemJsonModal({ tableName: inspectTableModal, item })}
+                                      className="h-7 px-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-[11px] font-medium text-zinc-200 cursor-pointer transition-colors"
+                                    >
+                                      JSON
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const targetTable = inspectTableModal;
+                                        setAdminConfirmDialog({
+                                          title: "Delete database row?",
+                                          message: `Permanently delete row ${itemId} from ${targetTable}?`,
+                                          confirmLabel: "Delete Row",
+                                          onConfirm: async () => {
+                                            try {
+                                              let res: Response;
+                                              if (targetTable === "likes" || targetTable === "bookmarks" || targetTable === "shares") {
+                                                res = await adminFetch(`/api/admin/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                              } else {
+                                                res = await fetch(`/api/nosql/${encodeURIComponent(targetTable)}/${encodeURIComponent(String(itemId))}`, { method: "DELETE" });
+                                              }
+                                              if (res.ok) {
+                                                showToast(`Deleted row ${itemId}`);
+                                                if (targetTable === "likes") fetchAdminLikes(true);
+                                                if (targetTable === "bookmarks") fetchAdminBookmarks(true);
+                                                if (targetTable === "shares") fetchAdminShares();
+                                                if (targetTable === "chats") fetchAdminChats(true);
+                                                fetchTableData(targetTable);
+                                                fetchLiveStats(true);
+                                              } else {
+                                                showToast("Failed to delete row");
+                                              }
+                                            } catch (e) {
+                                              showToast("Error deleting row");
                                             }
-                                            if (res.ok) {
-                                              showToast(`Deleted row ${itemId}`);
-                                              if (targetTable === "likes") fetchAdminLikes();
-                                              if (targetTable === "bookmarks") fetchAdminBookmarks();
-                                              if (targetTable === "shares") fetchAdminShares();
-                                              if (targetTable === "chats") fetchAdminChats();
-                                              fetchTableData(targetTable);
-                                              fetchLiveStats();
-                                            } else {
-                                              showToast("Failed to delete row");
-                                            }
-                                          } catch (e) {
-                                            showToast("Error deleting row");
                                           }
-                                        }
-                                      });
-                                    }}
-                                    className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-lg cursor-pointer transition-colors"
-                                    title="Delete Row"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                        });
+                                      }}
+                                      className={ADMIN_BTN_ICON_DANGER}
+                                      title="Delete row"
+                                      aria-label="Delete row"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Summary info based on item fields */}
-                              <div className="text-xs text-zinc-300 space-y-2 pt-2 border-t border-zinc-900">
-                                {inspectTableModal === "videoReviews" ? (
-                                  <div
-                                    onClick={() => {
-                                      const matchedVid = activeVideos.find((v) => v.id === item.id) || item;
-                                      setPreviewVideo(matchedVid);
-                                    }}
-                                    className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-800 transition-all group"
-                                    title="Click to preview photo review"
-                                  >
-                                    <div className="w-14 h-20 rounded-xl bg-zinc-950 border border-zinc-700/80 overflow-hidden shrink-0 relative group-hover:ring-2 group-hover:ring-emerald-500 transition-all">
+                                <div className="text-xs text-zinc-400">
+                                  {inspectTableModal === "videoReviews" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const matchedVid = activeVideos.find((v) => v.id === item.id) || item;
+                                        setPreviewVideo(matchedVid);
+                                      }}
+                                      className="w-full flex items-center gap-3 text-left group cursor-pointer"
+                                    >
                                       <img
                                         src={item.photoUrl || item.thumbnailUrl || item.posterUrl || "https://rev1.b-cdn.net/sample-review.jpg"}
                                         alt=""
-                                        className="w-full h-full object-cover"
+                                        className="w-10 h-12 rounded-lg object-cover border border-white/[0.08] shrink-0"
                                         onError={(e) => {
                                           (e.currentTarget as HTMLImageElement).src = "https://rev1.b-cdn.net/sample-review.jpg";
                                         }}
                                       />
-                                    </div>
-
-                                    <div className="min-w-0 flex-1 space-y-1.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white text-sm group-hover:text-emerald-400 transition-colors truncate">
-                                          {item.placeName || "Business"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-0.5">
-                                          ★ {Math.max(1, Math.min(5, Math.round(item.rating || 5)))}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
-                                          📸 Photo Review
-                                        </span>
-                                      </div>
-
-                                      <div className="flex items-center gap-2 text-xs text-zinc-300">
-                                        <span className="text-zinc-500">Author:</span>
-                                        <span className="font-semibold text-zinc-200 truncate">{item.author?.name || item.authorName || "Reviewer"}</span>
-                                        {(item.author?.handle || item.authorHandle) && (
-                                          <span className="text-[11px] text-zinc-500 font-mono">
-                                            @{String(item.author?.handle || item.authorHandle).replace(/^@/, '')}
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium text-white group-hover:underline truncate">
+                                            {item.placeName || "Business"}
                                           </span>
-                                        )}
+                                          <span className="inline-flex items-center gap-0.5 text-[11px] text-zinc-300 tabular-nums">
+                                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                            {Math.max(1, Math.min(5, Math.round(item.rating || 5)))}
+                                          </span>
+                                        </div>
+                                        <div className="text-[11px] text-zinc-500 truncate mt-0.5">
+                                          By {item.author?.name || item.authorName || "Reviewer"} · {item.likesCount || item.likes || 0} likes · {item.commentsCount || (Array.isArray(item.comments) ? item.comments.length : 0)} comments · {formatRecordedDate(item.recordedAt, item.createdAtMs || parseTimestampToMs(item.createdAt) || undefined)}
+                                        </div>
                                       </div>
-
-                                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400 pt-0.5">
-                                        <span className="flex items-center gap-1 text-rose-400/90 font-mono">
-                                          ❤️ {item.likesCount || item.likes || 0}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-sky-400/90 font-mono">
-                                          ↗️ {item.sharesCount || item.shares || 0}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-amber-400/90 font-mono">
-                                          🔖 {item.bookmarksCount || item.bookmarks || 0}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-emerald-400/90 font-mono">
-                                          💬 {item.commentsCount || (Array.isArray(item.comments) ? item.comments.length : 0)}
-                                        </span>
-                                        <span className="text-zinc-500">
-                                          • Recorded: <strong className="text-zinc-300">{formatRecordedDate(item.recordedAt, item.createdAtMs || parseTimestampToMs(item.createdAt) || undefined)}</strong>
-                                        </span>
+                                      <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">View &rarr;</span>
+                                    </button>
+                                  ) : inspectTableModal === "likes" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedLikeDetailModal(item)}
+                                      className="w-full flex items-center justify-between gap-3 text-left group cursor-pointer"
+                                    >
+                                      <div className="truncate">
+                                        <span className="font-medium text-white">{item.userName || "Community User"}</span>
+                                        <span className="text-zinc-500"> liked </span>
+                                        <span className="text-zinc-300">{item.placeName || item.videoId}</span>
                                       </div>
-                                    </div>
-
-                                    <span className="text-[10px] px-2.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl font-bold shrink-0 group-hover:bg-emerald-500 group-hover:text-zinc-950 transition-all">
-                                      Play Review →
-                                    </span>
-                                  </div>
-                                ) : inspectTableModal === "likes" ? (
-                                  <div
-                                    onClick={() => setSelectedLikeDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-rose-500/50 hover:bg-zinc-800 transition-all group"
-                                    title="Click to view full Like Audit modal"
-                                  >
-                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-rose-500/20 group-hover:ring-rose-500 transition-all">
-                                      <img
-                                        src={getSafeAvatarUrl(item.userAvatar || item.authorAvatar, item.userName || item.name, item.userHandle)}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = generateGoogleLetterAvatarSvg(item.userName || "User", 128, item.userHandle || item.userName);
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white text-xs group-hover:text-rose-400 transition-colors truncate">
-                                          {item.userName || "Community User"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
-                                          {item.userHandle || "@user"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                                          ❤️ Liked Review
-                                        </span>
+                                      <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
+                                    </button>
+                                  ) : inspectTableModal === "shares" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedShareDetailModal(item)}
+                                      className="w-full flex items-center justify-between gap-3 text-left group cursor-pointer"
+                                    >
+                                      <div className="truncate">
+                                        <span className="font-medium text-white">{item.userName || "Community User"}</span>
+                                        <span className="text-zinc-500"> shared </span>
+                                        <span className="text-zinc-300">{item.placeName || item.videoId}</span>
                                       </div>
-                                      <div className="text-[11px] text-zinc-400 truncate flex items-center gap-2">
-                                        <span>Video: <strong className="text-zinc-200">{item.placeName || item.videoId}</strong></span>
-                                        {item.videoAuthor && <span className="text-zinc-500">• by {item.videoAuthor}</span>}
+                                      <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
+                                    </button>
+                                  ) : inspectTableModal === "bookmarks" ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedBookmarkDetailModal(item)}
+                                      className="w-full flex items-center justify-between gap-3 text-left group cursor-pointer"
+                                    >
+                                      <div className="truncate">
+                                        <span className="font-medium text-white">{item.userName || "Community User"}</span>
+                                        <span className="text-zinc-500"> saved </span>
+                                        <span className="text-zinc-300">{item.placeName || item.placeId || item.videoId}</span>
                                       </div>
-                                    </div>
-                                    <span className="text-[10px] px-2 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg font-bold shrink-0 group-hover:bg-rose-500 group-hover:text-white transition-all">
-                                      Inspect Like →
-                                    </span>
-                                  </div>
-                                ) : inspectTableModal === "shares" ? (
-                                  <div
-                                    onClick={() => setSelectedShareDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-sky-500/50 hover:bg-zinc-800 transition-all group"
-                                    title="Click to view full Share Audit modal"
-                                  >
-                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-sky-500/20 group-hover:ring-sky-500 transition-all">
-                                      <img
-                                        src={getSafeAvatarUrl(item.userAvatar || item.authorAvatar, item.userName || item.name, item.userHandle)}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = generateGoogleLetterAvatarSvg(item.userName || "User", 128, item.userHandle || item.userName);
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white text-xs group-hover:text-sky-400 transition-colors truncate">
-                                          {item.userName || "Community User"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
-                                          {item.userHandle || "@user"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                                          ↗️ Shared
-                                        </span>
-                                      </div>
-                                      <div className="text-[11px] text-zinc-400 truncate flex items-center gap-2">
-                                        <span>Video: <strong className="text-zinc-200">{item.placeName || item.videoId}</strong></span>
-                                        {item.videoAuthor && <span className="text-zinc-500">• by {item.videoAuthor}</span>}
-                                      </div>
-                                    </div>
-                                    <span className="text-[10px] px-2 py-1 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg font-bold shrink-0 group-hover:bg-sky-500 group-hover:text-white transition-all">
-                                      Inspect Share →
-                                    </span>
-                                  </div>
-                                ) : inspectTableModal === "bookmarks" ? (
-                                  <div
-                                    onClick={() => setSelectedBookmarkDetailModal(item)}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-800 transition-all group"
-                                    title="Click to view full Bookmark Audit modal"
-                                  >
-                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-amber-500/20 group-hover:ring-amber-500 transition-all">
-                                      <img
-                                        src={getSafeAvatarUrl(item.userAvatar || item.authorAvatar, item.userName || item.name, item.userHandle)}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = generateGoogleLetterAvatarSvg(item.userName || "User", 128, item.userHandle || item.userName);
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white text-xs group-hover:text-amber-400 transition-colors truncate">
-                                          {item.userName || "Community User"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-zinc-800 text-zinc-400">
-                                          {item.userHandle || "@user"}
-                                        </span>
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                          🔖 Saved Review / Place
-                                        </span>
-                                      </div>
-                                      <div className="text-[11px] text-zinc-400 truncate flex items-center gap-2">
-                                        <span>Target: <strong className="text-zinc-200">{item.placeName || item.placeId || item.videoId}</strong></span>
-                                        {item.videoAuthor && <span className="text-zinc-500">• Review by {item.videoAuthor}</span>}
-                                        {item.userEmail && <span className="text-zinc-600 font-mono text-[10px]">({item.userEmail})</span>}
-                                      </div>
-                                    </div>
-                                    <span className="text-[10px] px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold shrink-0 group-hover:bg-amber-500 group-hover:text-zinc-950 transition-all">
-                                      Inspect Bookmark →
-                                    </span>
-                                  </div>
-                                ) : inspectTableModal === "comments" || item.userName || item.authorName ? (
-                                  <div
-                                    onClick={() => {
-                                      const matchedVid = activeVideos.find((v) => v.id === item.videoId);
-                                      setSelectedCommentDetailModal({
-                                        comment: {
-                                          id: item.id || item.commentId || "comm",
-                                          videoId: item.videoId || "",
-                                          text: item.text || item.comment || "",
-                                          authorName: item.userName || item.authorName || item.name || "User",
-                                          authorHandle: item.userHandle || item.authorHandle || "@user",
-                                          authorAvatar: item.userAvatar || item.authorAvatar || "",
-                                          authorEmail: item.userEmail || item.authorEmail || item.email,
-                                          createdAt: item.createdAt || new Date().toISOString(),
-                                          likesCount: item.likesCount || 0
-                                        },
-                                        video: matchedVid
-                                      });
-                                    }}
-                                    className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800/80 cursor-pointer hover:border-amber-500/50 hover:bg-zinc-800/80 transition-all group"
-                                    title="Click to view full Author & Comment modal"
-                                  >
-                                    <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-zinc-800 group-hover:ring-amber-400 transition-all">
-                                      <img
-                                        src={getSafeAvatarUrl(
-                                          item.userAvatar || item.authorAvatar,
-                                          item.userName || item.authorName || item.name,
-                                          item.userHandle || item.authorHandle
-                                        )}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.currentTarget as HTMLImageElement;
-                                          target.src = generateGoogleLetterAvatarSvg(
-                                            item.userName || item.authorName || item.name || "User",
-                                            128,
-                                            item.userHandle || item.userName
-                                          );
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white text-xs group-hover:text-amber-400 transition-colors truncate">
+                                      <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
+                                    </button>
+                                  ) : inspectTableModal === "comments" || item.userName || item.authorName ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const matchedVid = activeVideos.find((v) => v.id === item.videoId);
+                                        setSelectedCommentDetailModal({
+                                          comment: {
+                                            id: item.id || item.commentId || "comm",
+                                            videoId: item.videoId || "",
+                                            text: item.text || item.comment || "",
+                                            authorName: item.userName || item.authorName || item.name || "User",
+                                            authorHandle: item.userHandle || item.authorHandle || "@user",
+                                            authorAvatar: item.userAvatar || item.authorAvatar || "",
+                                            authorEmail: item.userEmail || item.authorEmail || item.email,
+                                            createdAt: item.createdAt || new Date().toISOString(),
+                                            likesCount: item.likesCount || 0
+                                          },
+                                          video: matchedVid
+                                        });
+                                      }}
+                                      className="w-full flex items-center justify-between gap-3 text-left group cursor-pointer"
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <span className="font-medium text-white">
                                           {item.userName || item.authorName || item.name || "User"}
                                         </span>
-                                        {(item.userHandle || item.authorHandle) && (
-                                          <span className="text-[11px] text-zinc-400 font-mono">
-                                            @{String(item.userHandle || item.authorHandle).replace(/^@/, '')}
+                                        {(item.text || item.comment || item.message || item.body || item.title) && (
+                                          <span className="text-zinc-400 ml-2">
+                                            &ldquo;{item.text || item.comment || item.message || item.body || item.title}&rdquo;
                                           </span>
                                         )}
                                       </div>
-                                      {(item.userEmail || item.authorEmail || item.email) && (
-                                        <p className="text-[10px] text-zinc-500 font-mono truncate">
-                                          {item.userEmail || item.authorEmail || item.email}
-                                        </p>
-                                      )}
-                                      {(item.text || item.comment || item.message || item.body || item.title) && (
-                                        <p className="text-xs text-zinc-200 line-clamp-2 pt-0.5 font-medium italic">
-                                          "{item.text || item.comment || item.message || item.body || item.title}"
-                                        </p>
-                                      )}
+                                      <span className="text-[11px] text-zinc-400 group-hover:text-white shrink-0">Inspect &rarr;</span>
+                                    </button>
+                                  ) : (
+                                    <div className="truncate text-zinc-400">
+                                      {item.name || item.title || item.message || item.placeId || item.videoId || "Stored record"}
                                     </div>
-                                    <span className="text-[10px] px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold shrink-0 group-hover:bg-amber-400 group-hover:text-zinc-950 transition-all">
-                                      Inspect →
-                                    </span>
-                                  </div>
-                                ) : item.userName || item.name || item.userEmail || item.email ? (
-                                  <div className="flex items-center gap-2 text-zinc-300">
-                                    <span className="text-zinc-500 font-medium">Author/User:</span>
-                                    <span className="font-bold text-white">{item.userName || item.name || "Anonymous"}</span>
-                                    {(item.userEmail || item.email) && (
-                                      <span className="text-zinc-500 font-mono text-[11px]">({item.userEmail || item.email})</span>
-                                    )}
-                                  </div>
-                                ) : null}
-
-                                {inspectTableModal !== "comments" && !item.userName && !item.authorName && (item.text || item.comment || item.message || item.body || item.title) ? (
-                                  <div className="text-zinc-200 bg-zinc-900/80 p-2 rounded-xl border border-zinc-800/50 italic">
-                                    "{item.text || item.comment || item.message || item.body || item.title}"
-                                  </div>
-                                ) : null}
-
-                                {item.videoId || item.placeId || item.businessId ? (
-                                  <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-                                    {item.videoId && <span>Target Video: <strong className="text-zinc-200 font-mono">{item.videoId}</strong></span>}
-                                    {item.placeId && <span>Place ID: <strong className="text-zinc-200 font-mono">{item.placeId}</strong></span>}
-                                  </div>
-                                ) : null}
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800 shrink-0 text-xs">
-                      <span className="text-zinc-500">
-                        Showing {tableDataItems.length} live records in <strong className="text-zinc-300 font-mono">{inspectTableModal}</strong>
-                      </span>
-                      <button
-                        onClick={() => setInspectTableModal(null)}
-                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl cursor-pointer"
-                      >
-                        Close Inspector
-                      </button>
-                    </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
-                </div>
+                </AdminModal>
               )}
 
               {/* SUB-MODAL: Raw JSON Viewer */}
               {selectedItemJsonModal && (
-                <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-2xl w-full max-h-[85vh] flex flex-col border border-zinc-800 shadow-2xl space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <Code className="w-5 h-5 text-emerald-400" />
-                        <h3 className="text-base font-bold text-white font-mono">
-                          Raw JSON Data: {selectedItemJsonModal.tableName}
-                        </h3>
-                      </div>
+                <AdminModal
+                  title={`Raw JSON · ${selectedItemJsonModal.tableName}`}
+                  maxWidthClass="max-w-2xl"
+                  onClose={() => setSelectedItemJsonModal(null)}
+                  footer={
+                    <>
                       <button
-                        onClick={() => setSelectedItemJsonModal(null)}
-                        className="p-1 rounded-lg text-zinc-400 hover:text-white cursor-pointer"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto bg-zinc-950 p-4 rounded-2xl border border-zinc-800">
-                      <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed select-all">
-                        {JSON.stringify(selectedItemJsonModal.item, null, 2)}
-                      </pre>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs">
-                      <button
+                        type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(JSON.stringify(selectedItemJsonModal.item, null, 2));
-                          showToast("JSON copied to clipboard!");
+                          showToast("JSON copied to clipboard.");
                         }}
-                        className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl cursor-pointer flex items-center gap-1.5"
+                        className={ADMIN_BTN_SECONDARY}
                       >
-                        <span>Copy JSON</span>
+                        Copy JSON
                       </button>
                       <button
+                        type="button"
                         onClick={() => setSelectedItemJsonModal(null)}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl cursor-pointer"
+                        className={ADMIN_BTN_PRIMARY}
                       >
                         Done
                       </button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  }
+                >
+                  <pre className="p-4 rounded-xl bg-[#050506] border border-white/[0.08] text-xs font-mono text-zinc-300 whitespace-pre-wrap leading-relaxed select-all overflow-x-auto">
+                    {JSON.stringify(selectedItemJsonModal.item, null, 2)}
+                  </pre>
+                </AdminModal>
               )}
 
               {/* MODAL: Confirm Master Reset */}
               {confirmMasterResetModal && (
-                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
-                  <div className="bg-zinc-900 rounded-3xl p-6 max-w-md w-full border border-zinc-800 space-y-4 shadow-2xl">
-                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
-                      <AlertTriangle className="w-6 h-6" />
-                    </div>
-                    <div className="text-center space-y-1">
-                      <h3 className="text-lg font-black text-white">Execute Master System Reset?</h3>
-                      <p className="text-xs text-zinc-400 leading-relaxed">
-                        ⚠️ <strong className="text-red-400">EXTREME WARNING:</strong> This will permanently wipe all database tables (users, photo reviews, places, comments, chats) and all CDN media files from scratch.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 pt-2">
+                <AdminModal
+                  title="Execute Master System Reset"
+                  maxWidthClass="max-w-md"
+                  onClose={() => setConfirmMasterResetModal(false)}
+                  footer={
+                    <>
                       <button
+                        type="button"
                         onClick={() => setConfirmMasterResetModal(false)}
-                        className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-bold text-xs rounded-xl cursor-pointer"
+                        className={ADMIN_BTN_SECONDARY}
                       >
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={handleMasterReset}
                         disabled={isMasterResetting}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-black text-xs rounded-xl cursor-pointer shadow-md flex items-center justify-center gap-1.5"
+                        className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                       >
-                        {isMasterResetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                        {isMasterResetting ? "Resetting..." : "Yes, Wipe Everything"}
+                        {isMasterResetting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>{isMasterResetting ? "Resetting..." : "Wipe Everything"}</span>
                       </button>
-                    </div>
-                  </div>
-                </div>
+                    </>
+                  }
+                >
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    <strong className="text-rose-400">Permanent action:</strong> This will wipe every BunnyDB table (users, photo reviews, places, comments, likes, bookmarks, and messages) and CDN media files. This cannot be undone.
+                  </p>
+                </AdminModal>
               )}
             </div>
           )}
 
           {/* TAB: SEARCH INTELLIGENCE & SCRAPER MONITORING */}
           {activeTab === "search" && (
-            <div className="max-w-7xl mx-auto space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                    <Search className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight">Search Intelligence & Scraper Intel</h2>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      Live monitoring of Google CSE discovery and authentic multi-language scraping operations.
-                    </p>
-                  </div>
-                </div>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Search Intelligence"
+                subtitle="Live log of brand discovery, domain resolution, and metadata extraction."
+              />
 
-                <button
-                  onClick={fetchSearchIntel}
-                  disabled={isFetchingSearchIntel}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-zinc-700 cursor-pointer shadow-sm"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingSearchIntel ? "animate-spin" : ""}`} />
-                  <span>Refresh Intel</span>
-                </button>
-              </div>
-
-              <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden shadow-md">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[800px]">
-                    <thead className="bg-zinc-950 border-b border-zinc-800">
-                      <tr>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Timestamp</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Search Query</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Status</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Resolved Domain</th>
-                        <th className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">Scraped Details</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/60">
-                      {searchIntelLogs.length === 0 ? (
+              {searchIntelLogs.length === 0 ? (
+                <AdminEmptyState
+                  icon={<Search className="w-5 h-5" />}
+                  title="No search operations recorded"
+                  description="Discovery queries and domain scraping activity from the current server session will appear here."
+                />
+              ) : (
+                <div className={`${ADMIN_SURFACE} overflow-hidden`}>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[760px]">
+                      <thead className="border-b border-white/[0.08]">
                         <tr>
-                          <td colSpan={5} className="px-5 py-20 text-center text-zinc-500 font-bold">
-                            No search operations recorded in current session.
-                          </td>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Time</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Query</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Status</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Resolved Domain</th>
+                          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-zinc-500">Extracted Details</th>
                         </tr>
-                      ) : (
-                        searchIntelLogs.map((log, idx) => (
-                          <tr key={idx} className="hover:bg-zinc-800/40 transition-colors group">
-                            <td className="px-5 py-4 font-mono text-[10px] text-zinc-400">
-                              {new Date(log.timestamp).toLocaleTimeString()}
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
+                      </thead>
+                      <tbody className="divide-y divide-white/[0.06] text-xs">
+                        {searchIntelLogs.map((log, idx) => {
+                          const isSuccess = log.statusColor === "emerald" || log.status === "scraped";
+                          const isError = log.status === "critical_error" || log.status === "failed" || log.status === "discovery_failed";
+                          const isCache = log.status === "db_cache_hit";
+
+                          return (
+                            <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="px-4 py-3 font-mono text-[11px] text-zinc-500 tabular-nums whitespace-nowrap">
+                                {new Date(log.timestamp).toLocaleTimeString()}
+                              </td>
+                              <td className="px-4 py-3 font-medium text-white">
                                 {log.query}
-                              </span>
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                log.statusColor === 'emerald' || log.status === 'scraped' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                log.status === 'db_cache_hit' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                log.status === 'resolved_by_search' || log.status === 'resolved_by_discovery' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                log.status === 'initiated' ? 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' :
-                                log.status === 'critical_error' || log.status === 'failed' || log.status === 'discovery_failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 ring-1 ring-rose-500/30' :
-                                'bg-zinc-800 text-zinc-300 border-zinc-700'
-                              }`}>
-                                {log.status.toUpperCase().replace(/_/g, ' ')}
-                              </span>
-                              {(log.error || log.status === 'discovery_failed') && (
-                                <div className="text-[9px] text-rose-400 mt-1 font-mono max-w-[150px] whitespace-normal leading-tight">
-                                  {log.error || "CRITICAL: No official website discovered for this brand query."}
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-5 py-4">
-                              {log.domain ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="w-5 h-5 rounded-md bg-white p-0.5 overflow-hidden">
-                                    <img 
-                                      src={`https://www.google.com/s2/favicons?domain=${log.domain}&sz=32`} 
-                                      className="w-full h-full object-contain"
-                                      alt="" 
-                                    />
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`text-[11px] font-medium capitalize ${
+                                  isSuccess ? "text-emerald-400" :
+                                  isError ? "text-rose-400" :
+                                  isCache ? "text-amber-400" :
+                                  "text-zinc-300"
+                                }`}>
+                                  {String(log.status || "").replace(/_/g, " ")}
+                                </span>
+                                {(log.error || log.status === "discovery_failed") && (
+                                  <div className="text-[11px] text-rose-400/80 mt-0.5 max-w-[200px] leading-snug">
+                                    {log.error || "No official website discovered."}
                                   </div>
-                                  <span className="text-xs font-mono font-bold text-zinc-300">{log.domain}</span>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-zinc-500 italic">Unresolved</span>
-                              )}
-                            </td>
-                            <td className="px-5 py-4">
-                              <div className="space-y-1">
-                                {log.title && (
-                                  <div className="text-[11px] text-white font-bold truncate max-w-xs">{log.title}</div>
                                 )}
-                                <div className="flex flex-wrap gap-2">
-                                  {log.phone && (
-                                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                                      <Phone className="w-2.5 h-2.5" /> {log.phone}
-                                    </span>
-                                  )}
-                                  {log.email && (
-                                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                                      <Mail className="w-2.5 h-2.5" /> {log.email}
-                                    </span>
-                                  )}
-                                  {log.source && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono">
-                                      src:{log.source}
-                                    </span>
-                                  )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {log.domain ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded bg-white p-0.5 overflow-hidden shrink-0">
+                                      <img
+                                        src={`https://www.google.com/s2/favicons?domain=${log.domain}&sz=32`}
+                                        className="w-full h-full object-contain"
+                                        alt=""
+                                      />
+                                    </div>
+                                    <span className="font-mono text-zinc-300">{log.domain}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-zinc-600">Unresolved</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="space-y-0.5">
+                                  {log.title && <div className="text-white font-medium truncate max-w-xs">{log.title}</div>}
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-500">
+                                    {log.phone && <span>{log.phone}</span>}
+                                    {log.email && <span>{log.email}</span>}
+                                    {log.source && <span className="font-mono">src:{log.source}</span>}
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
           {/* TAB: DIGITAL MARKETING PARTNER AGENCIES */}
           {activeTab === "agencies" && (
-            <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900 p-6 rounded-3xl border border-zinc-800 shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                    <Briefcase className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-white tracking-tight font-sans">Accredited Partner Agencies</h2>
-                    <p className="text-xs text-zinc-400 mt-0.5 font-medium">
-                      Manage local B2B Digital Marketing Agencies. Claimed businesses must select an agency to request Premium.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={fetchAdminAgencies}
-                    disabled={isLoadingAdminAgencies}
-                    className="px-4 py-2 bg-zinc-800/80 hover:bg-zinc-800 disabled:opacity-50 text-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-zinc-800 cursor-pointer shadow-sm"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAdminAgencies ? "animate-spin" : ""}`} />
-                    <span>Refresh</span>
-                  </button>
+            <div className="max-w-7xl mx-auto space-y-5">
+              <AdminPageHeader
+                title="Partner Agencies"
+                subtitle="Manage accredited marketing agencies available to claimed businesses."
+                actions={
                   <button
                     type="button"
                     onClick={() => setIsAddAgencyOpen(true)}
-                    className="px-4 py-2 bg-white text-zinc-950 hover:bg-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md cursor-pointer"
+                    className={ADMIN_BTN_PRIMARY}
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <Plus className="w-3.5 h-3.5" />
                     <span>Register Agency</span>
                   </button>
-                </div>
-              </div>
+                }
+              />
 
               {/* Filters Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <div className={`${ADMIN_SURFACE} p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5`}>
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
                   <input
                     type="text"
                     value={agencySearchQuery}
                     onChange={(e) => setAgencySearchQuery(e.target.value)}
-                    placeholder="Search agency by name, city, email, or website..."
-                    className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+                    placeholder="Filter agencies by name, city, email, or website..."
+                    className={`${ADMIN_INPUT} w-full pl-9`}
                   />
                 </div>
 
                 <select
                   value={agencyCountryFilter}
                   onChange={(e) => setAgencyCountryFilter(e.target.value)}
-                  className="px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-semibold text-zinc-200 focus:outline-none cursor-pointer"
+                  className={ADMIN_SELECT}
                 >
                   <option value="all">All Countries</option>
                   <option value="Belgium">Belgium</option>
@@ -9542,54 +8389,86 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
 
               {/* Agencies Grid */}
-              {isLoadingAdminAgencies ? (
-                <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-                  <span className="text-sm font-medium">Loading partner agencies directory...</span>
+              {isLoadingAdminAgencies && adminAgencies.length === 0 ? (
+                <div className={`${ADMIN_SURFACE} py-16 text-center space-y-2.5`}>
+                  <RefreshCw className="w-5 h-5 animate-spin text-zinc-400 mx-auto" />
+                  <p className="text-xs text-zinc-400">Loading partner agencies...</p>
                 </div>
-              ) : adminAgencies.length === 0 ? (
-                <div className="text-center py-20 bg-zinc-900 rounded-3xl border border-zinc-800 text-zinc-500 font-bold">
-                  No agencies registered. Click "Register Agency" to add one manually.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(adminAgencies || [])
-                    .filter(a => {
-                      if (agencyCountryFilter !== "all" && a.country !== agencyCountryFilter) return false;
-                      if (agencySearchQuery.trim()) {
-                        const q = agencySearchQuery.toLowerCase().trim();
-                        return (
-                          a.name?.toLowerCase().includes(q) ||
-                          a.city?.toLowerCase().includes(q) ||
-                          a.email?.toLowerCase().includes(q) ||
-                          a.phone?.includes(q) ||
-                          a.website?.toLowerCase().includes(q)
-                        );
+              ) : (() => {
+                const visibleAgencies = (adminAgencies || []).filter((a) => {
+                  if (agencyCountryFilter !== "all" && a.country !== agencyCountryFilter) return false;
+                  if (agencySearchQuery.trim()) {
+                    const q = agencySearchQuery.toLowerCase().trim();
+                    return (
+                      a.name?.toLowerCase().includes(q) ||
+                      a.city?.toLowerCase().includes(q) ||
+                      a.email?.toLowerCase().includes(q) ||
+                      a.phone?.includes(q) ||
+                      a.website?.toLowerCase().includes(q)
+                    );
+                  }
+                  return true;
+                });
+
+                if (visibleAgencies.length === 0) {
+                  return (
+                    <AdminEmptyState
+                      icon={<Briefcase className="w-5 h-5" />}
+                      title={adminAgencies.length === 0 ? "No agencies registered" : "No matching agencies"}
+                      description={
+                        adminAgencies.length === 0
+                          ? "Register your first accredited agency to list it for claimed business upgrades."
+                          : "Try adjusting your search query or country filter."
                       }
-                      return true;
-                    })
-                    .map((agency) => (
-                      <div key={agency.id} className="p-5 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between space-y-4">
-                        <div className="space-y-3.5">
+                      action={
+                        adminAgencies.length === 0 ? (
+                          <button type="button" onClick={() => setIsAddAgencyOpen(true)} className={ADMIN_BTN_PRIMARY}>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Register Agency</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAgencySearchQuery("");
+                              setAgencyCountryFilter("all");
+                            }}
+                            className={ADMIN_BTN_SECONDARY}
+                          >
+                            Clear Filters
+                          </button>
+                        )
+                      }
+                    />
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {visibleAgencies.map((agency) => (
+                      <div key={agency.id} className={`${ADMIN_SURFACE} p-4 hover:border-white/[0.14] transition-colors flex flex-col justify-between gap-4`}>
+                        <div className="space-y-3">
                           <div className="flex items-center gap-3">
                             {agency.logoUrl ? (
-                              <img src={agency.logoUrl} alt={agency.name} className="w-10 h-10 rounded-xl object-cover bg-white p-1 ring-1 ring-zinc-800" />
+                              <img src={agency.logoUrl} alt={agency.name} className="w-10 h-10 rounded-xl object-cover bg-white p-1 border border-white/[0.08] shrink-0" />
                             ) : (
-                              <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/[0.08] flex items-center justify-center font-bold text-xs text-zinc-300">
+                              <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center font-semibold text-xs text-zinc-300 shrink-0">
                                 {agency.name.substring(0, 2).toUpperCase()}
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <h3 className="font-extrabold text-white text-base leading-snug truncate">{agency.name}</h3>
-                              <p className="text-xs text-zinc-400 truncate">{agency.city}, {agency.country}</p>
+                              <h3 className="text-sm font-semibold text-white truncate">{agency.name}</h3>
+                              <p className="text-xs text-zinc-500 truncate">{agency.city}{agency.city && agency.country ? ", " : ""}{agency.country}</p>
                             </div>
                           </div>
 
-                          <div className="space-y-1.5 text-xs text-zinc-300 font-medium">
+                          <div className="space-y-1.5 text-xs text-zinc-400 py-2.5 border-y border-white/[0.06]">
                             {agency.website && (
                               <div className="flex items-center gap-2 truncate">
                                 <Globe className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline truncate">{agency.website}</a>
+                                <a href={agency.website} target="_blank" rel="noopener noreferrer" className="text-zinc-200 hover:text-white hover:underline truncate">
+                                  {agency.website}
+                                </a>
                               </div>
                             )}
                             {agency.phone && (
@@ -9601,73 +8480,77 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                             {agency.email && (
                               <div className="flex items-center gap-2 truncate">
                                 <Mail className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                                <span className="text-zinc-300">{agency.email}</span>
+                                <span className="text-zinc-300 truncate">{agency.email}</span>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                        <div className="flex items-center justify-between gap-2">
                           <button
                             type="button"
                             onClick={() => setEditAgencyModal(agency)}
-                            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-zinc-700/60 cursor-pointer"
+                            className={ADMIN_BTN_SECONDARY}
                           >
-                            <Edit className="w-3.5 h-3.5" /> Edit
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteAgency(agency.id)}
-                            className="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white border border-red-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                            className={ADMIN_BTN_ICON_DANGER}
+                            title="Delete agency"
+                            aria-label="Delete agency"
                           >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
                     ))}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </main>
       </div>
 
       {/* ========================================================================= */}
-      {/* VIDEO PREVIEW MODAL */}
+      {/* REVIEW PREVIEW MODAL */}
       {/* ========================================================================= */}
       {previewVideo && (
         <div
           role="dialog"
           aria-modal="true"
           onClick={() => setPreviewVideo(null)}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]"
+            className="relative w-full max-w-4xl bg-[#0c0c0f] border border-white/[0.1] rounded-2xl overflow-hidden shadow-2xl shadow-black/80 flex flex-col md:flex-row max-h-[90vh]"
           >
             {/* Close Button */}
             <button
               type="button"
               aria-label="Close review preview"
               onClick={() => setPreviewVideo(null)}
-              className="absolute top-4 right-4 z-30 p-2 rounded-full bg-zinc-950/80 hover:bg-zinc-800 text-zinc-200 hover:text-white transition-colors border border-zinc-700 cursor-pointer"
+              className="absolute top-4 right-4 z-30 w-8 h-8 rounded-lg bg-[#050506]/80 hover:bg-white/[0.1] text-zinc-300 hover:text-white transition-colors border border-white/[0.1] flex items-center justify-center cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Photo / Video Media Viewport */}
-            <div className="md:w-1/2 bg-black flex items-center justify-center relative aspect-[9/16] md:aspect-auto max-h-[50vh] md:max-h-full overflow-hidden">
+            <div className="md:w-1/2 bg-[#050506] flex items-center justify-center relative aspect-[9/16] md:aspect-auto max-h-[50vh] md:max-h-full overflow-hidden border-b md:border-b-0 md:border-r border-white/[0.08]">
               {previewVideo.mediaType === "photo" || Boolean(previewVideo.photoUrl) || !previewVideo.videoUrl ? (
-                <div className="w-full h-full flex items-center justify-center relative bg-zinc-950">
+                <div className="w-full h-full flex items-center justify-center relative bg-[#050506]">
                   <img
                     src={previewVideo.photoUrl || previewVideo.thumbnailUrl}
                     alt={`${previewVideo.placeName || "Business"} review`}
                     className="w-full h-full object-contain"
                   />
-                  <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 text-xs font-bold text-white shadow-md">
-                    <Camera className="w-3.5 h-3.5 text-zinc-300" />
-                    <span>Live Photo Review</span>
+                  <div className="absolute top-4 left-4 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/[0.1] flex items-center gap-1.5 text-[11px] font-medium text-zinc-200">
+                    <Camera className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Photo Review</span>
                   </div>
                 </div>
               ) : (
@@ -9707,17 +8590,18 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   {/* Central Play Overlay if not started */}
                   {!hasVideoStarted && (
                     <button
+                      type="button"
                       onClick={() => {
                         setHasVideoStarted(true);
                         setIsVideoPlaying(true);
-                        videoPlayerRef.current?.play().catch(e => {
-                          if (e.name !== 'AbortError') console.error("Playback error:", e);
+                        videoPlayerRef.current?.play().catch((e) => {
+                          if (e.name !== "AbortError") console.error("Playback error:", e);
                         });
                       }}
-                      className="absolute inset-0 w-full h-full z-20 flex items-center justify-center bg-black/20 group hover:bg-black/30 transition-all cursor-pointer"
+                      className="absolute inset-0 w-full h-full z-20 flex items-center justify-center bg-black/25 group hover:bg-black/35 transition-colors cursor-pointer"
                     >
-                      <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 group-hover:scale-110 transition-transform">
-                        <Play className="w-10 h-10 fill-white ml-1" />
+                      <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/25 group-hover:scale-105 transition-transform">
+                        <Play className="w-7 h-7 fill-white ml-0.5" />
                       </div>
                     </button>
                   )}
@@ -9725,24 +8609,27 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   {/* Player Overlay Controls */}
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                     <button
+                      type="button"
                       onClick={() => {
                         if (videoPlayerRef.current) {
                           if (!hasVideoStarted) setHasVideoStarted(true);
                           if (isVideoPlaying) videoPlayerRef.current.pause();
-                          else videoPlayerRef.current.play().catch(e => {
-                            if (e.name !== 'AbortError') console.error("Playback error:", e);
-                          });
+                          else
+                            videoPlayerRef.current.play().catch((e) => {
+                              if (e.name !== "AbortError") console.error("Playback error:", e);
+                            });
                           setIsVideoPlaying(!isVideoPlaying);
                         }
                       }}
-                      className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
+                      className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur border border-white/[0.12] text-white hover:bg-white/[0.12] flex items-center justify-center cursor-pointer"
                     >
                       {isVideoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => setIsVideoMuted(!isVideoMuted)}
-                      className="p-2.5 rounded-full bg-black/60 backdrop-blur text-white hover:bg-zinc-900/40 cursor-pointer"
+                      className="w-9 h-9 rounded-lg bg-black/70 backdrop-blur border border-white/[0.12] text-white hover:bg-white/[0.12] flex items-center justify-center cursor-pointer"
                     >
                       {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
@@ -9751,96 +8638,96 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               )}
             </div>
 
-            {/* Video Metadata & Controls */}
-            <div className="md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto space-y-4">
+            {/* Review Metadata & Controls */}
+            <div className="md:w-1/2 p-6 flex flex-col justify-between overflow-y-auto gap-5">
               <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700 font-bold text-xs flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {previewVideo.rating} Stars
+                <div className="pr-8">
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-200 tabular-nums">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {previewVideo.rating} / 5
                     </span>
-                    <span className="text-xs text-zinc-200 font-mono">ID: {previewVideo.id}</span>
+                    <span className="text-zinc-600">·</span>
+                    <span className="text-[11px] text-zinc-500 font-mono truncate">ID: {previewVideo.id}</span>
                   </div>
-                  <h3 className="text-xl font-black text-white">{previewVideo.placeName}</h3>
-                  <p className="text-xs text-zinc-200">{previewVideo.placeAddress || previewVideo.placeCategory}</p>
+                  <h3 className="text-lg font-semibold text-white tracking-tight">{previewVideo.placeName}</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">{previewVideo.placeAddress || previewVideo.placeCategory}</p>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#050506] border border-white/[0.08]">
                   <img
                     src={getSafeAvatarUrl(previewVideo.author?.avatar, previewVideo.author?.name, previewVideo.author?.handle)}
                     alt=""
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-9 h-9 rounded-full object-cover border border-white/[0.08]"
                     onError={(e) => {
                       const target = e.currentTarget as HTMLImageElement;
                       target.src = generateGoogleLetterAvatarSvg(previewVideo.author?.name || "Reviewer", 128, previewVideo.author?.handle || previewVideo.author?.name);
                     }}
                   />
-                  <div>
-                    <h4 className="font-bold text-sm text-white">{previewVideo.author?.name || "Reviewer"}</h4>
-                    <p className="text-xs text-zinc-400">
+                  <div className="min-w-0">
+                    <h4 className="font-medium text-sm text-white truncate">{previewVideo.author?.name || "Reviewer"}</h4>
+                    <p className="text-xs text-zinc-500 truncate">
                       {previewVideo.author?.handle || previewVideo.author?.name || "Anonymous"}
                     </p>
                   </div>
                 </div>
 
                 {previewVideo.caption && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-200 uppercase">Review Caption</label>
-                    <p className="text-sm text-zinc-200 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Review Caption</label>
+                    <p className="text-xs text-zinc-200 bg-[#050506] p-3 rounded-xl border border-white/[0.08] leading-relaxed">
                       {previewVideo.caption}
                     </p>
                   </div>
                 )}
 
                 {previewVideo.transcript && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-200 uppercase">AI Spoken Transcript</label>
-                    <p className="text-xs text-zinc-200 bg-zinc-950 p-3 rounded-xl border border-zinc-800 max-h-24 overflow-y-auto">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Captions Transcript</label>
+                    <p className="text-xs text-zinc-300 bg-[#050506] p-3 rounded-xl border border-white/[0.08] max-h-24 overflow-y-auto leading-relaxed">
                       {previewVideo.transcript}
                     </p>
                   </div>
                 )}
 
                 {/* Comments Section */}
-                <div className="space-y-2 pt-2 border-t border-zinc-800/50">
+                <div className="space-y-2 pt-3 border-t border-white/[0.08]">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-zinc-200 uppercase flex items-center gap-1.5">
-                      <MessageSquare className="w-3 h-3 text-zinc-400" /> 
+                    <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
                       Comments ({previewVideo.commentsCount || (previewVideo.comments || []).length})
                     </label>
                   </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {(!previewVideo.comments || previewVideo.comments.length === 0) ? (
-                      <p className="text-[11px] text-zinc-500 italic py-2">No comments yet on this review.</p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {!previewVideo.comments || previewVideo.comments.length === 0 ? (
+                      <p className="text-xs text-zinc-500 py-2">No comments on this review.</p>
                     ) : (
                       previewVideo.comments.map((c: any) => (
-                        <div key={c.id || Math.random()} className="p-2 rounded-xl bg-zinc-950/80 border border-zinc-800/50 text-[11px] group/comment">
+                        <div key={c.id || Math.random()} className="p-2.5 rounded-xl bg-[#050506] border border-white/[0.06] text-xs">
                           <div className="flex items-center gap-2 mb-1">
-                            <img 
-                              src={getSafeAvatarUrl(c.authorAvatar || c.userAvatar, c.authorName || c.userName)} 
-                              className="w-4 h-4 rounded-full border border-white/10" 
-                              alt="" 
+                            <img
+                              src={getSafeAvatarUrl(c.authorAvatar || c.userAvatar, c.authorName || c.userName)}
+                              className="w-4 h-4 rounded-full border border-white/10"
+                              alt=""
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
                                 target.src = generateGoogleLetterAvatarSvg(c.authorName || c.userName || "User", 32);
                               }}
                             />
-                            <span className="font-bold text-zinc-300">{c.authorName || c.userName}</span>
-                            <span className="text-zinc-600 hidden sm:inline">@{c.authorHandle || c.userHandle || "user"}</span>
-                            <span className="ml-auto text-[9px] text-zinc-600">
-                              {c.createdAtMs ? new Date(c.createdAtMs).toLocaleDateString() : (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "")}
+                            <span className="font-medium text-zinc-200">{c.authorName || c.userName}</span>
+                            <span className="text-zinc-500 hidden sm:inline">@{c.authorHandle || c.userHandle || "user"}</span>
+                            <span className="ml-auto text-[10px] text-zinc-600 tabular-nums">
+                              {c.createdAtMs ? new Date(c.createdAtMs).toLocaleDateString() : c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
                             </span>
                           </div>
                           <p className="text-zinc-400 leading-relaxed pl-6">{c.text}</p>
-                          {/* Display replies if any */}
                           {Array.isArray(c.replies) && c.replies.length > 0 && (
-                            <div className="mt-2 ml-6 space-y-1.5 border-l-2 border-zinc-800 pl-3">
+                            <div className="mt-2 ml-6 space-y-1.5 border-l border-white/[0.08] pl-3">
                               {c.replies.map((r: any) => (
-                                <div key={r.id || Math.random()} className="text-[10px]">
+                                <div key={r.id || Math.random()} className="text-[11px]">
                                   <div className="flex items-center gap-1.5 mb-0.5">
-                                    <img src={getSafeAvatarUrl(r.authorAvatar || r.userAvatar, r.authorName || r.userName)} className="w-3 h-3 rounded-full" alt="" />
-                                    <span className="font-bold text-zinc-400">{r.authorName || r.userName}</span>
-                                    {r.isOwner && <span className="px-1 py-0 rounded bg-zinc-800 text-zinc-300 text-[8px] font-bold">OWNER</span>}
+                                    <img src={getSafeAvatarUrl(r.authorAvatar || r.userAvatar, r.authorName || r.userName)} className="w-3.5 h-3.5 rounded-full" alt="" />
+                                    <span className="font-medium text-zinc-300">{r.authorName || r.userName}</span>
+                                    {r.isOwner && <span className="text-[10px] text-zinc-500 font-medium">Owner</span>}
                                   </div>
                                   <p className="text-zinc-500">{r.text}</p>
                                 </div>
@@ -9854,37 +8741,42 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-zinc-800">
+              <div className="flex items-center gap-2 pt-4 border-t border-white/[0.08]">
                 <button
+                  type="button"
                   onClick={() => {
                     setEditVideoModal(previewVideo);
                     setPreviewVideo(null);
                   }}
-                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className={`${ADMIN_BTN_SECONDARY} flex-1`}
                 >
-                  <Edit className="w-4 h-4" /> Edit Metadata
+                  <Edit className="w-3.5 h-3.5" /> Edit Metadata
                 </button>
                 {confirmDeleteVideoId === previewVideo.id ? (
-                  <div className="flex items-center gap-2 animate-in fade-in">
+                  <div className="flex items-center gap-1.5">
                     <button
+                      type="button"
                       onClick={() => executeDeleteVideo(previewVideo.id)}
-                      className="px-4 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-sm transition-colors cursor-pointer"
+                      className={ADMIN_BTN_DESTRUCTIVE_SOLID}
                     >
                       Confirm Delete
                     </button>
                     <button
+                      type="button"
                       onClick={() => setConfirmDeleteVideoId(null)}
-                      className="p-3 bg-zinc-800 text-zinc-400 hover:text-white rounded-xl cursor-pointer"
+                      className={ADMIN_BTN_ICON}
+                      aria-label="Cancel delete"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => setConfirmDeleteVideoId(previewVideo.id)}
-                    className="px-4 py-3 bg-red-950/40 hover:bg-red-900/60 text-red-300 hover:text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-red-800/60 cursor-pointer"
+                    className={ADMIN_BTN_DESTRUCTIVE}
                   >
-                    <Trash2 className="w-4 h-4" /> Delete Video
+                    <Trash2 className="w-3.5 h-3.5" /> Delete Review
                   </button>
                 )}
               </div>
@@ -9897,335 +8789,316 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       {/* EDIT PLACE MODAL */}
       {/* ========================================================================= */}
       {editPlaceModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <h3 className="text-xl font-black text-white">Edit Business Details</h3>
-              <button onClick={() => setEditPlaceModal(null)} className="p-2 text-zinc-200 hover:text-white cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
+        <AdminModal
+          title="Edit Business Details"
+          subtitle={editPlaceModal.id}
+          onClose={() => setEditPlaceModal(null)}
+          maxWidthClass="max-w-2xl"
+        >
+          <form onSubmit={handleSavePlaceEdits} className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Business Name</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.name}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, name: e.target.value })}
+                  required
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.category}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, category: e.target.value })}
+                  className={ADMIN_INPUT}
+                />
+              </div>
             </div>
 
-            <form onSubmit={handleSavePlaceEdits} className="space-y-4 text-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Business Name</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.name}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, name: e.target.value })}
-                    required
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">City / Region</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.city || ""}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, city: e.target.value })}
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Full Street Address</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.address || ""}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, address: e.target.value })}
+                  className={ADMIN_INPUT}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Phone Number</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.phone || ""}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, phone: e.target.value })}
+                  placeholder="+1 415-555-0100"
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Business Public Email</label>
+                <input
+                  type="email"
+                  value={editPlaceModal.email || ""}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, email: e.target.value })}
+                  placeholder="contact@business.com"
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Website URL</label>
+                <input
+                  type="text"
+                  value={editPlaceModal.website || ""}
+                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, website: e.target.value })}
+                  placeholder="https://example.com"
+                  className={`${ADMIN_INPUT} text-xs`}
+                />
+              </div>
+            </div>
+
+            {/* Live Profile Header Preview */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                Live Profile Header Preview
+              </label>
+              <div className="relative h-36 w-full rounded-xl bg-[#050506] border border-white/[0.08] overflow-hidden flex items-center justify-center">
+                {editPlaceModal.bannerUrl || editPlaceModal.ogImage ? (
+                  <img
+                    src={getProxiedImageUrl(editPlaceModal.bannerUrl || editPlaceModal.ogImage)}
+                    alt={editPlaceModal.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#050506] via-[#0f1014] to-[#050506] flex flex-col items-center justify-center">
+                    <span className="text-zinc-500 text-[11px] font-medium tracking-wider uppercase">No Banner Set</span>
+                  </div>
+                )}
+
+                <div className="absolute -bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-[3px] border-[#0c0c0f] bg-white shadow-xl flex items-center justify-center z-20 p-1 overflow-hidden">
+                  <CopoBrandLogo
+                    domain={editPlaceModal.website || editPlaceModal.id}
+                    name={editPlaceModal.name}
+                    website={editPlaceModal.website}
+                    logoUrl={editPlaceModal.logoUrl || editPlaceModal.avatarUrl}
+                    bannerUrl={editPlaceModal.bannerUrl || editPlaceModal.ogImage}
+                    className="w-full h-full rounded-xl bg-white flex items-center justify-center overflow-hidden"
+                    imageClassName="w-full h-full object-contain rounded-xl"
+                    fallbackTextClassName="font-bold text-xl text-zinc-950"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Category</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.category}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                  />
+
+                <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/[0.1] text-[11px] font-medium text-zinc-200">
+                  {editPlaceModal.category || "Business"}
                 </div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">City / Region</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.city || ""}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, city: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Full Street Address</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.address || ""}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, address: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.phone || ""}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, phone: e.target.value })}
-                    placeholder="+1 415-555-0100"
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 font-mono text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Business Public Email</label>
-                  <input
-                    type="email"
-                    value={editPlaceModal.email || ""}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, email: e.target.value })}
-                    placeholder="contact@business.com"
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 font-mono text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-200 mb-1">Website URL</label>
-                  <input
-                    type="text"
-                    value={editPlaceModal.website || ""}
-                    onChange={(e) => setEditPlaceModal({ ...editPlaceModal, website: e.target.value })}
-                    placeholder="https://example.com"
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Live Profile Header Preview (Matching Place & Creator Profile left-aligned squircle frame) */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                  Live Profile Header Preview
-                </label>
-                <div className="relative h-36 w-full rounded-2xl bg-zinc-950 border border-zinc-800 overflow-hidden shadow-inner flex items-center justify-center">
-                  {/* Banner Image / Gradient */}
-                  {editPlaceModal.bannerUrl || editPlaceModal.ogImage ? (
-                    <img
-                      src={getProxiedImageUrl(editPlaceModal.bannerUrl || editPlaceModal.ogImage)}
-                      alt={editPlaceModal.name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-zinc-950 via-slate-900 to-zinc-950 flex flex-col items-center justify-center">
-                      <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
-                      <span className="text-white/40 text-[10px] font-bold tracking-widest uppercase">Verified Listing</span>
-                    </div>
-                  )}
-
-                  {/* Left-Aligned Squircle Logo Frame */}
-                  <div className="absolute -bottom-4 left-4 w-16 h-16 sm:w-20 sm:h-20 rounded-[18px] border-[3px] border-zinc-900 bg-white shadow-xl flex items-center justify-center z-20 p-1 ring-1 ring-white/20 overflow-hidden">
-                    <CopoBrandLogo
-                      domain={editPlaceModal.website || editPlaceModal.id}
-                      name={editPlaceModal.name}
-                      website={editPlaceModal.website}
-                      logoUrl={editPlaceModal.logoUrl || editPlaceModal.avatarUrl}
-                      bannerUrl={editPlaceModal.bannerUrl || editPlaceModal.ogImage}
-                      className="w-full h-full rounded-xl bg-white flex items-center justify-center overflow-hidden"
-                      imageClassName="w-full h-full object-contain rounded-xl"
-                      fallbackTextClassName="font-black text-xl text-zinc-950"
-                    />
-                  </div>
-
-                  {/* Top-Right Badge */}
-                  <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-bold text-white flex items-center gap-1">
-                    <span>{editPlaceModal.category || "Business"}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-zinc-200">Logo / Avatar Image URL</label>
-                    <div className="flex items-center gap-1.5">
-                      {Boolean(editPlaceModal.website) && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const dom = editPlaceModal.website?.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
-                            if (!dom) return;
-                            if (dom.includes('yoouz')) {
-                              setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
-                              showToast("Set Yoouz official logo");
-                              return;
-                            }
-                            try {
-                              showToast("Fetching website logo...");
-                              const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
-                              const data = await res.json();
-                              if (data && data.logo && !data.logo.includes('favicon')) {
-                                setEditPlaceModal({ ...editPlaceModal, logoUrl: data.logo, avatarUrl: data.logo });
-                                showToast("Logo fetched successfully!");
-                              } else {
-                                showToast("No official logo found on domain.");
-                              }
-                            } catch {
-                              showToast("Failed to fetch domain metadata");
-                            }
-                          }}
-                          className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 cursor-pointer"
-                        >
-                          Auto-Detect
-                        </button>
-                      )}
-                      {(editPlaceModal.name?.toLowerCase().includes('yoouz') || editPlaceModal.id?.toLowerCase().includes('yoouz')) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
-                            showToast("Set Yoouz official vector logo");
-                          }}
-                          className="text-[10px] text-zinc-200 hover:text-white font-bold bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700 cursor-pointer"
-                        >
-                          Reset Yoouz Logo
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-inner">
-                      <AdminPlaceLogo place={editPlaceModal} size="sm" className="w-full h-full object-contain" />
-                    </div>
-                    <input
-                      type="text"
-                      value={editPlaceModal.logoUrl || editPlaceModal.avatarUrl || ""}
-                      onChange={(e) =>
-                        setEditPlaceModal({
-                          ...editPlaceModal,
-                          logoUrl: e.target.value,
-                          avatarUrl: e.target.value
-                        })
-                      }
-                      placeholder="https://... or data:image/..."
-                      className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-xs focus:outline-none focus:border-zinc-600"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-zinc-200">Banner / Cover Image URL</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-400">Logo / Avatar URL</label>
+                  <div className="flex items-center gap-1.5">
                     {Boolean(editPlaceModal.website) && (
                       <button
                         type="button"
                         onClick={async () => {
-                          const dom = editPlaceModal.website?.replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0].trim();
+                          const dom = editPlaceModal.website?.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].trim();
                           if (!dom) return;
+                          if (dom.includes("yoouz")) {
+                            setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
+                            showToast("Set Yoouz official logo");
+                            return;
+                          }
                           try {
-                            showToast("Fetching website banner...");
+                            showToast("Fetching website logo...");
                             const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
                             const data = await res.json();
-                            if (data && (data.banner || data.image || data.ogImage)) {
-                              const banner = data.banner || data.image || data.ogImage;
-                              setEditPlaceModal({ ...editPlaceModal, bannerUrl: banner, ogImage: banner });
-                              showToast("Banner fetched successfully!");
+                            if (data && data.logo && !data.logo.includes("favicon")) {
+                              setEditPlaceModal({ ...editPlaceModal, logoUrl: data.logo, avatarUrl: data.logo });
+                              showToast("Logo fetched successfully!");
                             } else {
-                              showToast("No banner found on website");
+                              showToast("No official logo found on domain.");
                             }
                           } catch {
-                            showToast("Could not fetch banner");
+                            showToast("Failed to fetch domain metadata");
                           }
                         }}
-                        className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 cursor-pointer"
+                        className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
                       >
                         Auto-Detect
                       </button>
                     )}
+                    {(editPlaceModal.name?.toLowerCase().includes("yoouz") || editPlaceModal.id?.toLowerCase().includes("yoouz")) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditPlaceModal({ ...editPlaceModal, logoUrl: YOOUZ_LOGO_DATA_URI, avatarUrl: YOOUZ_LOGO_DATA_URI });
+                          showToast("Set Yoouz official vector logo");
+                        }}
+                        className="text-[11px] text-zinc-400 hover:text-white font-medium cursor-pointer"
+                      >
+                        Reset Yoouz
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-lg bg-[#050506] border border-white/[0.08] flex items-center justify-center shrink-0 overflow-hidden p-1">
+                    <AdminPlaceLogo place={editPlaceModal} size="sm" className="w-full h-full object-contain" />
                   </div>
                   <input
                     type="text"
-                    value={editPlaceModal.bannerUrl || editPlaceModal.ogImage || ""}
+                    value={editPlaceModal.logoUrl || editPlaceModal.avatarUrl || ""}
                     onChange={(e) =>
                       setEditPlaceModal({
                         ...editPlaceModal,
-                        bannerUrl: e.target.value,
-                        ogImage: e.target.value
+                        logoUrl: e.target.value,
+                        avatarUrl: e.target.value
                       })
                     }
-                    placeholder="https://... cover photo or banner"
-                    className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white text-xs focus:outline-none focus:border-zinc-600"
+                    placeholder="https://... or data:image/..."
+                    className={`${ADMIN_INPUT} text-xs`}
                   />
                 </div>
               </div>
-
               <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  value={editPlaceModal.description || ""}
-                  onChange={(e) => setEditPlaceModal({ ...editPlaceModal, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-zinc-400">Banner / Cover URL</label>
+                  {Boolean(editPlaceModal.website) && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const dom = editPlaceModal.website?.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].trim();
+                        if (!dom) return;
+                        try {
+                          showToast("Fetching website banner...");
+                          const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(dom)}`);
+                          const data = await res.json();
+                          if (data && (data.banner || data.image || data.ogImage)) {
+                            const banner = data.banner || data.image || data.ogImage;
+                            setEditPlaceModal({ ...editPlaceModal, bannerUrl: banner, ogImage: banner });
+                            showToast("Banner fetched successfully!");
+                          } else {
+                            showToast("No banner found on website");
+                          }
+                        } catch {
+                          showToast("Could not fetch banner");
+                        }
+                      }}
+                      className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
+                    >
+                      Auto-Detect
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={editPlaceModal.bannerUrl || editPlaceModal.ogImage || ""}
+                  onChange={(e) =>
+                    setEditPlaceModal({
+                      ...editPlaceModal,
+                      bannerUrl: e.target.value,
+                      ogImage: e.target.value
+                    })
+                  }
+                  placeholder="https://... cover photo or banner"
+                  className={`${ADMIN_INPUT} text-xs`}
                 />
               </div>
+            </div>
 
-              {/* Merchant Claim & Verification Controls */}
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-zinc-300">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Merchant Claim & Verification
-                  </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                    editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail)
-                      ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800"
-                      : "bg-zinc-800/80 text-zinc-400 border border-zinc-700"
-                  }`}>
-                    {editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "Profile Claimed" : "Unclaimed"}
-                  </span>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
+              <textarea
+                rows={3}
+                value={editPlaceModal.description || ""}
+                onChange={(e) => setEditPlaceModal({ ...editPlaceModal, description: e.target.value })}
+                className="w-full px-3 py-2 bg-[#050506] border border-white/[0.08] rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/[0.22] transition-colors"
+              />
+            </div>
+
+            {/* Merchant Claim & Verification Controls */}
+            <div className="p-4 rounded-xl bg-[#050506] border border-white/[0.08] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-medium text-zinc-200">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> Merchant Claim & Verification
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 mb-1">Claim Status</label>
-                    <select
-                      value={editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "claimed" : "unclaimed"}
-                      onChange={(e) => {
-                        const isNowClaimed = e.target.value === "claimed";
-                        setEditPlaceModal({
-                          ...editPlaceModal,
-                          isClaimed: isNowClaimed,
-                          isVerified: isNowClaimed ? true : editPlaceModal.isVerified,
-                          claimedByEmail: isNowClaimed ? (editPlaceModal.claimedByEmail || "merchant@business.com") : ""
-                        });
-                      }}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white font-bold text-xs focus:outline-none"
-                    >
-                      <option value="unclaimed">Unclaimed Venue</option>
-                      <option value="claimed">Business Claimed</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 mb-1">Owner Email</label>
-                    <input
-                      type="email"
-                      value={editPlaceModal.claimedByEmail || ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setEditPlaceModal({
-                          ...editPlaceModal,
-                          claimedByEmail: val,
-                          isClaimed: Boolean(val.trim())
-                        });
-                      }}
-                      placeholder="owner@company.com"
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-white text-xs font-mono focus:outline-none"
-                    />
-                  </div>
-                </div>
+                <span className={`text-xs font-medium ${editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "text-emerald-400" : "text-zinc-500"}`}>
+                  {editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "Claimed" : "Unclaimed"}
+                </span>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setEditPlaceModal(null)}
-                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl shadow-lg cursor-pointer"
-                >
-                  Save Business Changes
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Claim Status</label>
+                  <select
+                    value={editPlaceModal.isClaimed || Boolean(editPlaceModal.claimedByEmail) ? "claimed" : "unclaimed"}
+                    onChange={(e) => {
+                      const isNowClaimed = e.target.value === "claimed";
+                      setEditPlaceModal({
+                        ...editPlaceModal,
+                        isClaimed: isNowClaimed,
+                        isVerified: isNowClaimed ? true : editPlaceModal.isVerified,
+                        claimedByEmail: isNowClaimed ? editPlaceModal.claimedByEmail || "merchant@business.com" : ""
+                      });
+                    }}
+                    className={`${ADMIN_SELECT} w-full`}
+                  >
+                    <option value="unclaimed">Unclaimed Venue</option>
+                    <option value="claimed">Business Claimed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Owner Email (Private)</label>
+                  <input
+                    type="email"
+                    value={editPlaceModal.claimedByEmail || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditPlaceModal({
+                        ...editPlaceModal,
+                        claimedByEmail: val,
+                        isClaimed: Boolean(val.trim())
+                      });
+                    }}
+                    placeholder="owner@company.com"
+                    className={`${ADMIN_INPUT} font-mono text-xs`}
+                  />
+                </div>
               </div>
-            </form>
-          </div>
-        </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <button type="button" onClick={() => setEditPlaceModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Cancel
+              </button>
+              <button type="submit" className={ADMIN_BTN_PRIMARY}>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
@@ -10236,428 +9109,436 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* EDIT VIDEO REVIEW MODAL */}
+      {/* EDIT REVIEW MODAL */}
       {/* ========================================================================= */}
       {editVideoModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-xl font-black text-white">Edit Photo Review</h3>
-              <button onClick={() => setEditVideoModal(null)} className="p-2 text-zinc-200 hover:text-white cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
+        <AdminModal
+          title="Edit Photo Review"
+          subtitle={editVideoModal.id}
+          onClose={() => setEditVideoModal(null)}
+          maxWidthClass="max-w-lg"
+        >
+          <form onSubmit={handleSaveVideoEdits} className="space-y-4 text-sm">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Business Place Name</label>
+              <input
+                type="text"
+                value={editVideoModal.placeName}
+                onChange={(e) => setEditVideoModal({ ...editVideoModal, placeName: e.target.value })}
+                required
+                className={ADMIN_INPUT}
+              />
             </div>
 
-            <form onSubmit={handleSaveVideoEdits} className="space-y-4 text-sm">
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Business Place Name</label>
-                <input
-                  type="text"
-                  value={editVideoModal.placeName}
-                  onChange={(e) => setEditVideoModal({ ...editVideoModal, placeName: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Whole-Star Rating (1–5)</label>
+              <input
+                type="number"
+                min="1"
+                max="5"
+                step="1"
+                value={Math.max(1, Math.min(5, Math.round(editVideoModal.rating || 5)))}
+                onChange={(e) =>
+                  setEditVideoModal({
+                    ...editVideoModal,
+                    rating: Math.max(1, Math.min(5, Math.round(Number(e.target.value) || 5)))
+                  })
+                }
+                className={`${ADMIN_INPUT} tabular-nums`}
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Whole-Star Rating (1–5)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  step="1"
-                  value={Math.max(1, Math.min(5, Math.round(editVideoModal.rating || 5)))}
-                  onChange={(e) => setEditVideoModal({ ...editVideoModal, rating: Math.max(1, Math.min(5, Math.round(Number(e.target.value) || 5))) })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Review Notes (Optional)</label>
+              <textarea
+                rows={3}
+                value={editVideoModal.caption || ""}
+                onChange={(e) => setEditVideoModal({ ...editVideoModal, caption: e.target.value })}
+                className="w-full px-3 py-2 bg-[#050506] border border-white/[0.08] rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/[0.22] transition-colors"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Review Notes (Optional)</label>
-                <textarea
-                  rows={3}
-                  value={editVideoModal.caption || ""}
-                  onChange={(e) => setEditVideoModal({ ...editVideoModal, caption: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setEditVideoModal(null)}
-                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl shadow-lg cursor-pointer"
-                >
-                  Save Review
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <button type="button" onClick={() => setEditVideoModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Cancel
+              </button>
+              <button type="submit" className={ADMIN_BTN_PRIMARY}>
+                Save Review
+              </button>
+            </div>
+          </form>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* EDIT USER MODAL */}
       {/* ========================================================================= */}
       {editUserModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="text-xl font-black text-white">Edit User Profile</h3>
-              <button onClick={() => setEditUserModal(null)} className="p-2 text-zinc-200 hover:text-white cursor-pointer">
-                <X className="w-5 h-5" />
+        <AdminModal
+          title="Edit User Profile"
+          subtitle={editUserModal.email || editUserModal.id}
+          onClose={() => setEditUserModal(null)}
+          maxWidthClass="max-w-md"
+          footer={
+            <>
+              <button type="button" onClick={() => setEditUserModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Cancel
               </button>
-            </div>
-
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0 relative group">
-                  <img
-                    src={getSafeAvatarUrl(editUserModal.avatar, editUserModal.name, editUserModal.handle || editUserModal.email)}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = generateGoogleLetterAvatarSvg(editUserModal.name || "User", 128, editUserModal.handle || editUserModal.name);
+              <button
+                type="button"
+                onClick={() => {
+                  const savedUser = {
+                    ...editUserModal,
+                    handle: editUserModal.handle
+                      ? editUserModal.handle.startsWith("@")
+                        ? editUserModal.handle
+                        : `@${editUserModal.handle}`
+                      : `@${String(editUserModal.name || "user")
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]/g, "")}`
+                  };
+                  const tId = String(savedUser.id || savedUser.uid || "")
+                    .toLowerCase()
+                    .trim();
+                  const tEm = String(savedUser.email || "")
+                    .toLowerCase()
+                    .trim();
+                  setDbUsers((prev) =>
+                    prev.map((u) => {
+                      const m =
+                        (tId && (String(u.id || "").toLowerCase() === tId || String(u.uid || "").toLowerCase() === tId)) ||
+                        (tEm && String(u.email || "").toLowerCase() === tEm);
+                      return m ? { ...u, ...savedUser } : u;
+                    })
+                  );
+                  setDbVideos((prev) =>
+                    prev.map((v) => {
+                      const vId = String(v.userId || v.author?.id || "")
+                        .toLowerCase()
+                        .trim();
+                      const vEm = String(v.userEmail || v.author?.email || "")
+                        .toLowerCase()
+                        .trim();
+                      if ((tId && vId === tId) || (tEm && vEm === tEm)) {
+                        return {
+                          ...v,
+                          authorName: savedUser.name,
+                          author: {
+                            ...(v.author || {}),
+                            name: savedUser.name,
+                            handle: savedUser.handle,
+                            avatar: savedUser.avatar || v.author?.avatar,
+                            bio: savedUser.bio !== undefined ? savedUser.bio : v.author?.bio
+                          }
+                        };
+                      }
+                      return v;
+                    })
+                  );
+                  if (onUpdateUser) {
+                    onUpdateUser(savedUser);
+                  }
+                  setTimeout(() => fetchLiveStats(true), 400);
+                  showToast(`Saved user ${savedUser.name || "User"}.`);
+                  setEditUserModal(null);
+                }}
+                className={ADMIN_BTN_PRIMARY}
+              >
+                Save Profile
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center gap-3.5 p-3 rounded-xl bg-[#050506] border border-white/[0.08]">
+              <div className="w-12 h-12 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
+                <img
+                  src={getSafeAvatarUrl(editUserModal.avatar, editUserModal.name, editUserModal.handle || editUserModal.email)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.src = generateGoogleLetterAvatarSvg(editUserModal.name || "User", 128, editUserModal.handle || editUserModal.name);
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-white truncate">{editUserModal.name || "User"}</p>
+                <p className="text-[11px] text-zinc-500 truncate">{editUserModal.email || "No email"}</p>
+                <label className="text-[11px] text-zinc-300 hover:text-white font-medium underline underline-offset-2 mt-1 cursor-pointer inline-block">
+                  Upload Avatar Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          if (typeof reader.result === "string") {
+                            setEditUserModal({ ...editUserModal, avatar: reader.result });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     }}
                   />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white truncate">{editUserModal.name || "User"}</p>
-                  <p className="text-[11px] text-zinc-400 truncate">{editUserModal.email || "No email"}</p>
-                  <label className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline mt-1 cursor-pointer block">
-                    Upload Avatar Image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            if (typeof reader.result === "string") {
-                              setEditUserModal({ ...editUserModal, avatar: reader.result });
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Display Name</label>
-                <input
-                  type="text"
-                  value={editUserModal.name || ""}
-                  onChange={(e) => setEditUserModal({ ...editUserModal, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Handle (@username)</label>
-                <input
-                  type="text"
-                  value={editUserModal.handle ? editUserModal.handle.replace(/^@/, "") : ""}
-                  onChange={(e) => setEditUserModal({ ...editUserModal, handle: e.target.value.replace(/^@/, "") })}
-                  placeholder="e.g. alex_travels"
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-200 mb-1">Avatar Image URL</label>
-                <input
-                  type="text"
-                  value={editUserModal.avatar || ""}
-                  onChange={(e) => setEditUserModal({ ...editUserModal, avatar: e.target.value })}
-                  placeholder="https://... or data:image/..."
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-zinc-600 text-xs font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setEditUserModal(null)}
-                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const savedUser = {
-                      ...editUserModal,
-                      handle: editUserModal.handle
-                        ? (editUserModal.handle.startsWith("@") ? editUserModal.handle : `@${editUserModal.handle}`)
-                        : `@${String(editUserModal.name || "user").toLowerCase().replace(/[^a-z0-9]/g, "")}`
-                    };
-                    const tId = String(savedUser.id || savedUser.uid || "").toLowerCase().trim();
-                    const tEm = String(savedUser.email || "").toLowerCase().trim();
-                    setDbUsers((prev) =>
-                      prev.map((u) => {
-                        const m =
-                          (tId && (String(u.id || "").toLowerCase() === tId || String(u.uid || "").toLowerCase() === tId)) ||
-                          (tEm && String(u.email || "").toLowerCase() === tEm);
-                        return m ? { ...u, ...savedUser } : u;
-                      })
-                    );
-                    setDbVideos((prev) =>
-                      prev.map((v) => {
-                        const vId = String(v.userId || v.author?.id || "").toLowerCase().trim();
-                        const vEm = String(v.userEmail || v.author?.email || "").toLowerCase().trim();
-                        if ((tId && vId === tId) || (tEm && vEm === tEm)) {
-                          return {
-                            ...v,
-                            authorName: savedUser.name,
-                            author: {
-                              ...(v.author || {}),
-                              name: savedUser.name,
-                              handle: savedUser.handle,
-                              avatar: savedUser.avatar || v.author?.avatar,
-                              bio: savedUser.bio !== undefined ? savedUser.bio : v.author?.bio
-                            }
-                          };
-                        }
-                        return v;
-                      })
-                    );
-                    if (onUpdateUser) {
-                      onUpdateUser(savedUser);
-                    }
-                    setTimeout(fetchLiveStats, 400);
-                    showToast(`Saved user ${savedUser.name || "User"}.`);
-                    setEditUserModal(null);
-                  }}
-                  className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl cursor-pointer shadow-lg"
-                >
-                  Save Profile
-                </button>
+                </label>
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Display Name</label>
+              <input
+                type="text"
+                value={editUserModal.name || ""}
+                onChange={(e) => setEditUserModal({ ...editUserModal, name: e.target.value })}
+                className={ADMIN_INPUT}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Handle (@username)</label>
+              <input
+                type="text"
+                value={editUserModal.handle ? editUserModal.handle.replace(/^@/, "") : ""}
+                onChange={(e) => setEditUserModal({ ...editUserModal, handle: e.target.value.replace(/^@/, "") })}
+                placeholder="e.g. alex_travels"
+                className={ADMIN_INPUT}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Avatar Image URL</label>
+              <input
+                type="text"
+                value={editUserModal.avatar || ""}
+                onChange={(e) => setEditUserModal({ ...editUserModal, avatar: e.target.value })}
+                placeholder="https://... or data:image/..."
+                className={`${ADMIN_INPUT} text-xs font-mono`}
+              />
+            </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* EDIT COMMENT MODAL */}
       {/* ========================================================================= */}
       {editCommentModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-amber-400" />
-                <h3 className="text-xl font-black text-white">Edit Discussion Comment</h3>
-              </div>
+        <AdminModal
+          title="Edit Discussion Comment"
+          subtitle={`On ${editCommentModal.video.placeName || "Review"}${editCommentModal.isReply ? " (Reply)" : ""}`}
+          onClose={() => {
+            setEditCommentModal(null);
+            setEditCommentText("");
+          }}
+          maxWidthClass="max-w-lg"
+          footer={
+            <>
               <button
+                type="button"
                 onClick={() => {
                   setEditCommentModal(null);
                   setEditCommentText("");
                 }}
-                className="p-2 text-zinc-400 hover:text-white cursor-pointer"
+                className={ADMIN_BTN_SECONDARY}
               >
-                <X className="w-5 h-5" />
+                Cancel
               </button>
-            </div>
+              <button
+                type="button"
+                disabled={!editCommentText.trim()}
+                onClick={async () => {
+                  if (!editCommentModal || !editCommentText.trim()) return;
+                  const { video, comment, isReply, parentCommentId } = editCommentModal;
+                  const clean = editCommentText.trim();
 
-            <div className="space-y-4 text-sm">
-              {/* Author and context banner */}
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
-                <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0">
-                  <img
-                    src={getSafeAvatarUrl(
-                      editCommentModal.comment.authorAvatar,
-                      editCommentModal.comment.authorName,
-                      editCommentModal.comment.authorHandle
-                    )}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget as HTMLImageElement;
-                      target.src = generateGoogleLetterAvatarSvg(
-                        editCommentModal.comment.authorName || "User",
-                        128,
-                        editCommentModal.comment.authorHandle || editCommentModal.comment.authorName
-                      );
-                    }}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-white truncate">{editCommentModal.comment.authorName || "User"}</p>
-                    {editCommentModal.comment.authorHandle && (
-                      <p className="text-[11px] text-zinc-400 font-mono">@{editCommentModal.comment.authorHandle.replace(/^@/, "")}</p>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-zinc-400 truncate mt-0.5">
-                    On <span className="text-zinc-200 font-semibold">{editCommentModal.video.placeName || "Review"}</span>
-                    {editCommentModal.isReply && " (Reply thread)"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Textarea */}
-              <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1.5">
-                  Comment Content
-                </label>
-                <textarea
-                  rows={4}
-                  value={editCommentText}
-                  onChange={(e) => setEditCommentText(e.target.value)}
-                  placeholder="Enter moderated comment text..."
-                  required
-                  className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 text-sm leading-relaxed"
-                />
-                <div className="flex justify-between items-center text-[11px] text-zinc-500 mt-1">
-                  <span>Modifying this text will update it across the video feed and database.</span>
-                  <span className="font-mono">{editCommentText.length} chars</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditCommentModal(null);
-                    setEditCommentText("");
-                  }}
-                  className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={!editCommentText.trim()}
-                  onClick={async () => {
-                    if (!editCommentModal || !editCommentText.trim()) return;
-                    const { video, comment, isReply, parentCommentId } = editCommentModal;
-                    const clean = editCommentText.trim();
-
-                    let nextComments = (video.comments || []).map((c) => {
-                      if (isReply && parentCommentId) {
-                        if (c.id === parentCommentId && Array.isArray(c.replies)) {
-                          return {
-                            ...c,
-                            replies: c.replies.map((r) => (r.id === comment.id ? { ...r, text: clean } : r))
-                          };
-                        }
-                        return c;
-                      }
-                      if (c.id === comment.id) {
-                        return { ...c, text: clean };
+                  const nextComments = (video.comments || []).map((c) => {
+                    if (isReply && parentCommentId) {
+                      if (c.id === parentCommentId && Array.isArray(c.replies)) {
+                        return {
+                          ...c,
+                          replies: c.replies.map((r) => (r.id === comment.id ? { ...r, text: clean } : r))
+                        };
                       }
                       return c;
+                    }
+                    if (c.id === comment.id) {
+                      return { ...c, text: clean };
+                    }
+                    return c;
+                  });
+
+                  if (onUpdateVideo) {
+                    onUpdateVideo({
+                      ...video,
+                      comments: nextComments
                     });
+                  }
 
-                    if (onUpdateVideo) {
-                      onUpdateVideo({
-                        ...video,
-                        comments: nextComments
-                      });
-                    }
-
-                    try {
-                      await Promise.allSettled([
-                        fetch(`/api/nosql/videoReviews/${encodeURIComponent(video.id)}`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            data: { comments: nextComments },
-                            merge: true
+                  try {
+                    await Promise.allSettled([
+                      fetch(`/api/nosql/videoReviews/${encodeURIComponent(video.id)}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          data: { comments: nextComments },
+                          merge: true
+                        })
+                      }),
+                      isReply && parentCommentId
+                        ? fetch(`/api/nosql/comments/${encodeURIComponent(parentCommentId)}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              data: {
+                                replies: nextComments.find((c) => c.id === parentCommentId)?.replies || []
+                              },
+                              merge: true
+                            })
                           })
-                        }),
-                        isReply && parentCommentId
-                          ? fetch(`/api/nosql/comments/${encodeURIComponent(parentCommentId)}`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                data: {
-                                  replies: (nextComments.find((c) => c.id === parentCommentId)?.replies || [])
-                                },
-                                merge: true
-                              })
+                        : fetch(`/api/nosql/comments/${encodeURIComponent(comment.id)}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              data: { text: clean },
+                              merge: true
                             })
-                          : fetch(`/api/nosql/comments/${encodeURIComponent(comment.id)}`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                data: { text: clean },
-                                merge: true
-                              })
-                            })
-                      ]);
-                    } catch (e) {
-                      console.warn("Failed to persist edited comment:", e);
-                    }
+                          })
+                    ]);
+                  } catch (e) {
+                    console.warn("Failed to persist edited comment:", e);
+                  }
 
-                    setEditCommentModal(null);
-                    setEditCommentText("");
-                    showToast("Comment updated successfully.");
-                    setTimeout(fetchLiveStats, 400);
+                  setEditCommentModal(null);
+                  setEditCommentText("");
+                  showToast("Comment updated successfully.");
+                  setTimeout(() => fetchLiveStats(true), 400);
+                }}
+                className={ADMIN_BTN_PRIMARY}
+              >
+                Save Changes
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#050506] border border-white/[0.08]">
+              <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
+                <img
+                  src={getSafeAvatarUrl(
+                    editCommentModal.comment.authorAvatar,
+                    editCommentModal.comment.authorName,
+                    editCommentModal.comment.authorHandle
+                  )}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.src = generateGoogleLetterAvatarSvg(
+                      editCommentModal.comment.authorName || "User",
+                      128,
+                      editCommentModal.comment.authorHandle || editCommentModal.comment.authorName
+                    );
                   }}
-                  className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-xl cursor-pointer shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  Save Changes
-                </button>
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-white truncate">{editCommentModal.comment.authorName || "User"}</p>
+                  {editCommentModal.comment.authorHandle && (
+                    <p className="text-[11px] text-zinc-500 font-mono">@{editCommentModal.comment.authorHandle.replace(/^@/, "")}</p>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                  On <span className="text-zinc-300 font-medium">{editCommentModal.video.placeName || "Review"}</span>
+                  {editCommentModal.isReply && " (Reply thread)"}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Comment Content</label>
+              <textarea
+                rows={4}
+                value={editCommentText}
+                onChange={(e) => setEditCommentText(e.target.value)}
+                placeholder="Enter moderated comment text..."
+                required
+                className="w-full px-3 py-2.5 bg-[#050506] border border-white/[0.08] rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white/[0.22] leading-relaxed transition-colors"
+              />
+              <div className="flex justify-between items-center text-[11px] text-zinc-500 mt-1.5">
+                <span>Updates immediately across the review feed and database.</span>
+                <span className="font-mono tabular-nums">{editCommentText.length} chars</span>
               </div>
             </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* COMMENT & USER PROFILE DETAIL MODAL */}
       {/* ========================================================================= */}
       {selectedCommentDetailModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                  💬
-                </div>
-                <h3 className="text-lg font-black text-white">Comment Author Profile</h3>
-              </div>
+        <AdminModal
+          title="Comment Author Profile"
+          subtitle={selectedCommentDetailModal.video?.placeName || "Review Discussion"}
+          onClose={() => setSelectedCommentDetailModal(null)}
+          maxWidthClass="max-w-lg"
+          footer={
+            <>
               <button
-                onClick={() => setSelectedCommentDetailModal(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => {
+                  const targetVid =
+                    selectedCommentDetailModal.video ||
+                    activeVideos.find((v) => v.id === selectedCommentDetailModal.comment.videoId) ||
+                    activeVideos[0];
+                  const item = {
+                    video: targetVid,
+                    comment: selectedCommentDetailModal.comment,
+                    isReply: selectedCommentDetailModal.isReply,
+                    parentCommentId: selectedCommentDetailModal.parentCommentId
+                  };
+                  setSelectedCommentDetailModal(null);
+                  if (targetVid) {
+                    setEditCommentModal(item as any);
+                    setEditCommentText(selectedCommentDetailModal.comment.text || "");
+                  }
+                }}
+                className={ADMIN_BTN_SECONDARY}
               >
-                <X className="w-5 h-5" />
+                <Edit className="w-3.5 h-3.5" /> Edit Text
               </button>
-            </div>
-
-            {/* User Profile Card */}
+              <button
+                type="button"
+                onClick={() => setSelectedCommentDetailModal(null)}
+                className={ADMIN_BTN_PRIMARY}
+              >
+                Close
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-4">
             {(() => {
               const email = (selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail || "").toLowerCase().trim();
-              const handle = (selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle || "").toLowerCase().replace(/^@/, '').trim();
+              const handle = (selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle || "").toLowerCase().replace(/^@/, "").trim();
               const name = (selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "").toLowerCase().trim();
-              
+
               const resolvedUser = activeAllUsers.find((u) => {
                 const uEmail = (u.email || "").toLowerCase().trim();
-                const uHandle = (u.handle || "").toLowerCase().replace(/^@/, '').trim();
+                const uHandle = (u.handle || "").toLowerCase().replace(/^@/, "").trim();
                 const uName = (u.name || "").toLowerCase().trim();
                 return (email && uEmail === email) || (handle && uHandle === handle) || (name && uName === name);
               });
 
               return (
-                <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4 shadow-inner">
+                <div className="p-4 rounded-xl bg-[#050506] border border-white/[0.08] space-y-4">
                   <div className="flex items-center gap-3.5">
-                    <div className="w-14 h-14 rounded-full bg-zinc-900 border-2 border-amber-400/40 overflow-hidden shrink-0 shadow-lg">
+                    <div className="w-12 h-12 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                       <img
                         src={getSafeAvatarUrl(
                           selectedCommentDetailModal.comment.authorAvatar || (selectedCommentDetailModal.comment as any).userAvatar,
@@ -10677,68 +9558,66 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       />
                     </div>
 
-                    <div className="min-w-0 flex-1 space-y-1">
+                    <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-base font-black text-white truncate">
+                        <h4 className="text-sm font-semibold text-white truncate">
                           {selectedCommentDetailModal.comment.authorName || (selectedCommentDetailModal.comment as any).userName || "User"}
                         </h4>
                         {selectedCommentDetailModal.comment.isOwner && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-800/80 font-bold">
-                            Business Owner
-                          </span>
+                          <span className="text-[11px] text-zinc-400 font-medium">Business Owner</span>
                         )}
                         {selectedCommentDetailModal.comment.isCreator && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-800/80 font-bold">
-                            Creator
-                          </span>
+                          <span className="text-[11px] text-zinc-400 font-medium">Creator</span>
                         )}
                       </div>
 
                       {(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle) && (
-                        <p className="text-xs text-amber-400 font-mono font-semibold">
-                          @{String(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle).replace(/^@/, '')}
+                        <p className="text-xs text-zinc-400 font-mono">
+                          @{String(selectedCommentDetailModal.comment.authorHandle || (selectedCommentDetailModal.comment as any).userHandle).replace(/^@/, "")}
                         </p>
                       )}
 
                       {(selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail) && (
-                        <p className="text-xs text-zinc-400 font-mono truncate">
+                        <p className="text-xs text-zinc-500 font-mono truncate">
                           {selectedCommentDetailModal.comment.authorEmail || (selectedCommentDetailModal.comment as any).userEmail}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* High-Fidelity Profile Details Grid */}
-                  <div className="pt-3 border-t border-zinc-800/80 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-zinc-400">
+                  <div className="pt-3 border-t border-white/[0.06] grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
                     <div>
-                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Account Role</span>
-                      <span className="text-white font-bold">{resolvedUser?.role || (selectedCommentDetailModal.comment.isOwner ? "Business" : selectedCommentDetailModal.comment.isCreator ? "Creator" : "Standard User")}</span>
+                      <span className="block text-[11px] text-zinc-500 font-medium">Account Role</span>
+                      <span className="text-zinc-200 font-medium">
+                        {resolvedUser?.role ||
+                          (selectedCommentDetailModal.comment.isOwner ? "Business" : selectedCommentDetailModal.comment.isCreator ? "Creator" : "Member")}
+                      </span>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Location</span>
-                      <span className="text-white font-bold">{resolvedUser?.location || resolvedUser?.city || "Online"}</span>
+                      <span className="block text-[11px] text-zinc-500 font-medium">Location</span>
+                      <span className="text-zinc-200 font-medium">{resolvedUser?.location || resolvedUser?.city || "Online"}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Photo Reviews</span>
-                      <span className="text-white font-bold font-mono">{resolvedUser?.videoReviewCount || 0} reviews</span>
+                      <span className="block text-[11px] text-zinc-500 font-medium">Photo Reviews</span>
+                      <span className="text-zinc-200 font-medium tabular-nums">{resolvedUser?.videoReviewCount || 0}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Social Engagement</span>
-                      <span className="text-white font-bold font-mono">
+                      <span className="block text-[11px] text-zinc-500 font-medium">Social Graph</span>
+                      <span className="text-zinc-200 font-medium tabular-nums">
                         {resolvedUser?.followersCount || 0} followers · {resolvedUser?.followingCount || 0} following
                       </span>
                     </div>
                     {resolvedUser?.memberSince && (
                       <div className="col-span-2">
-                        <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">Member Since</span>
-                        <span className="text-white font-bold">{resolvedUser.memberSince}</span>
+                        <span className="block text-[11px] text-zinc-500 font-medium">Member Since</span>
+                        <span className="text-zinc-200 font-medium">{resolvedUser.memberSince}</span>
                       </div>
                     )}
                     {resolvedUser?.bio && (
                       <div className="col-span-2 pt-1">
-                        <span className="block text-[10px] text-zinc-500 uppercase font-extrabold tracking-wider">About Author</span>
-                        <p className="text-zinc-300 font-medium italic mt-0.5 leading-relaxed bg-zinc-900/30 p-2 rounded-lg border border-zinc-900/50">
-                          "{resolvedUser.bio}"
+                        <span className="block text-[11px] text-zinc-500 font-medium mb-1">Bio</span>
+                        <p className="text-zinc-300 leading-relaxed bg-[#0c0c0f] p-2.5 rounded-lg border border-white/[0.06]">
+                          {resolvedUser.bio}
                         </p>
                       </div>
                     )}
@@ -10747,169 +9626,133 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               );
             })()}
 
-            {/* Comment Content Bubble */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Comment Text</label>
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800/90 text-white text-sm leading-relaxed whitespace-pre-wrap break-words">
-                "{selectedCommentDetailModal.comment.text}"
+              <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Comment Text</label>
+              <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                {selectedCommentDetailModal.comment.text}
               </div>
             </div>
 
-            {/* Attached Photos / Proof */}
             {Array.isArray(selectedCommentDetailModal.comment.attachments) && selectedCommentDetailModal.comment.attachments.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Attached Proof / Photos ({selectedCommentDetailModal.comment.attachments.length})</label>
-                <div className="flex flex-wrap gap-2.5">
+                <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                  Attached Photos ({selectedCommentDetailModal.comment.attachments.length})
+                </label>
+                <div className="flex flex-wrap gap-2">
                   {selectedCommentDetailModal.comment.attachments.map((attUrl: string, attIdx: number) => (
                     <a
                       key={attIdx}
                       href={attUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block w-24 h-24 rounded-xl overflow-hidden border border-zinc-800 hover:border-zinc-500 transition-colors shadow-sm relative group"
-                      title="Open full-size proof photo"
+                      className="block w-20 h-20 rounded-xl overflow-hidden border border-white/[0.08] hover:border-white/[0.25] transition-colors"
+                      title="Open full-size photo"
                     >
-                      <img src={attUrl} alt="Attachment proof" className="w-full h-full object-cover" />
+                      <img src={attUrl} alt="Attachment" className="w-full h-full object-cover" />
                     </a>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Target Video & Metadata */}
-            <div className="p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs">
               {selectedCommentDetailModal.video && (
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-zinc-400" />
-                  <span className="text-zinc-300 font-semibold">{selectedCommentDetailModal.video.placeName || "Review Video"}</span>
+                <div className="flex items-center gap-2 text-zinc-300 font-medium">
+                  <Building2 className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>{selectedCommentDetailModal.video.placeName || "Photo Review"}</span>
                 </div>
               )}
-              <div className="flex items-center gap-3 text-zinc-500 font-mono ml-auto">
+              <div className="flex items-center gap-1.5 text-zinc-500 font-mono text-[11px] ml-auto tabular-nums">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{new Date(selectedCommentDetailModal.comment.createdAt || Date.now()).toLocaleString()}</span>
               </div>
             </div>
-
-            {/* Action Footer */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
-              <button
-                onClick={() => {
-                  const targetVid = selectedCommentDetailModal.video || activeVideos.find(v => v.id === selectedCommentDetailModal.comment.videoId) || activeVideos[0];
-                  const item = {
-                    video: targetVid,
-                    comment: selectedCommentDetailModal.comment,
-                    isReply: selectedCommentDetailModal.isReply,
-                    parentCommentId: selectedCommentDetailModal.parentCommentId
-                  };
-                  setSelectedCommentDetailModal(null);
-                  if (targetVid) {
-                    setEditCommentModal(item as any);
-                    setEditCommentText(selectedCommentDetailModal.comment.text || "");
-                  }
-                }}
-                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit className="w-3.5 h-3.5" /> Edit Text
-              </button>
-              <button
-                onClick={() => setSelectedCommentDetailModal(null)}
-                className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-xl text-xs cursor-pointer shadow-lg transition-all"
-              >
-                Close
-              </button>
-            </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
-      {/* PREVIEW LIKE TARGET VIDEO MODAL */}
+      {/* PREVIEW TARGET REVIEW MODAL (Supports both Photo & Video reviews) */}
       {/* ========================================================================= */}
       {previewLikeVideoModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
-                  ❤️
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">{previewLikeVideoModal.placeName}</h3>
-                  <p className="text-[11px] text-zinc-400">Reviewed by {previewLikeVideoModal.authorName}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setPreviewLikeVideoModal(null)}
-                className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 bg-black flex items-center justify-center">
-              {previewLikeVideoModal.videoUrl ? (
-                <video
-                  src={previewLikeVideoModal.videoUrl}
-                  poster={previewLikeVideoModal.thumbnailUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="max-h-[60vh] w-full rounded-2xl object-contain bg-black"
-                />
-              ) : (
-                <div className="py-16 text-center text-zinc-500">
-                  <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-xs">Video stream unavailable</p>
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center justify-between">
-              {previewLikeVideoModal.rating && (
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold font-mono flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-amber-400" /> {previewLikeVideoModal.rating} Stars
+        <AdminModal
+          title={previewLikeVideoModal.placeName || "Review Preview"}
+          subtitle={`Reviewed by ${previewLikeVideoModal.authorName || "Reviewer"}`}
+          onClose={() => setPreviewLikeVideoModal(null)}
+          maxWidthClass="max-w-xl"
+          footer={
+            <div className="w-full flex items-center justify-between">
+              {previewLikeVideoModal.rating ? (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-200 tabular-nums">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {previewLikeVideoModal.rating} / 5
                 </span>
+              ) : (
+                <span />
               )}
-              <button
-                onClick={() => setPreviewLikeVideoModal(null)}
-                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer ml-auto"
-              >
-                Close Preview
+              <button type="button" onClick={() => setPreviewLikeVideoModal(null)} className={ADMIN_BTN_PRIMARY}>
+                Close
               </button>
             </div>
+          }
+        >
+          <div className="rounded-xl bg-[#050506] border border-white/[0.08] overflow-hidden flex items-center justify-center min-h-[260px]">
+            {previewLikeVideoModal.videoUrl ? (
+              <video
+                src={previewLikeVideoModal.videoUrl}
+                poster={previewLikeVideoModal.thumbnailUrl}
+                controls
+                autoPlay
+                playsInline
+                className="max-h-[60vh] w-full object-contain bg-black"
+              />
+            ) : previewLikeVideoModal.thumbnailUrl ? (
+              <img
+                src={previewLikeVideoModal.thumbnailUrl}
+                alt={previewLikeVideoModal.placeName || "Photo Review"}
+                className="max-h-[60vh] w-full object-contain bg-[#050506]"
+              />
+            ) : (
+              <div className="py-16 text-center text-zinc-500">
+                <Camera className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                <p className="text-xs">Media preview unavailable</p>
+              </div>
+            )}
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* SHARE RECORD AUDIT & DETAIL MODAL */}
       {/* ========================================================================= */}
       {selectedShareDetailModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
-                  ↗️
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Share Record Audit</h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedShareDetailModal.id}</p>
-                </div>
-              </div>
+        <AdminModal
+          title="Share Record Audit"
+          subtitle={`ID: ${selectedShareDetailModal.id}`}
+          onClose={() => setSelectedShareDetailModal(null)}
+          maxWidthClass="max-w-lg"
+          footer={
+            <div className="w-full flex items-center justify-between">
               <button
-                onClick={() => setSelectedShareDetailModal(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => {
+                  setConfirmDeleteShareId(selectedShareDetailModal.id);
+                  setSelectedShareDetailModal(null);
+                }}
+                className={ADMIN_BTN_DESTRUCTIVE}
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-3.5 h-3.5" /> Remove Record
+              </button>
+              <button type="button" onClick={() => setSelectedShareDetailModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Close
               </button>
             </div>
-
-            {/* User Profile Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">User Identity</span>
+          }
+        >
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">User Identity</span>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0">
+                <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                   <img
                     src={getSafeAvatarUrl(selectedShareDetailModal.userAvatar, selectedShareDetailModal.userName, selectedShareDetailModal.userHandle)}
                     alt=""
@@ -10920,86 +9763,76 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }}
                   />
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">{selectedShareDetailModal.userName || "Community User"}</h4>
-                  <p className="text-xs text-zinc-400 font-mono">{selectedShareDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedShareDetailModal.userId || selectedShareDetailModal.userEmail}</p>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-white text-sm truncate">{selectedShareDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono truncate">{selectedShareDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedShareDetailModal.userId || selectedShareDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
-            {/* Target Video Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Photo Review</span>
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedShareDetailModal.videoThumbnail && (
                   <img
                     src={selectedShareDetailModal.videoThumbnail}
                     alt=""
-                    className="w-14 h-14 rounded-xl object-cover border border-zinc-800 shrink-0"
+                    className="w-12 h-12 rounded-lg object-cover border border-white/[0.08] shrink-0"
                   />
                 )}
                 <div className="min-w-0">
-                  <h4 className="font-bold text-white text-sm truncate">{selectedShareDetailModal.placeName || "Target Place"}</h4>
+                  <h4 className="font-medium text-white text-sm truncate">{selectedShareDetailModal.placeName || "Target Place"}</h4>
                   <p className="text-xs text-zinc-400">Reviewed by {selectedShareDetailModal.videoAuthor || "Reviewer"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Video ID: {selectedShareDetailModal.videoId}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Platform: {selectedShareDetailModal.platform}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
+                    Review ID: {selectedShareDetailModal.videoId} · {selectedShareDetailModal.platform || "Direct"}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Raw JSON */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
-              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedShareDetailModal, null, 2)}
               </pre>
             </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-              <button
-                onClick={() => {
-                  setConfirmDeleteShareId(selectedShareDetailModal.id);
-                  setSelectedShareDetailModal(null);
-                }}
-                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Remove Record
-              </button>
-            </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* LIKE RECORD AUDIT & DETAIL MODAL */}
       {/* ========================================================================= */}
       {selectedLikeDetailModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
-                  ❤️
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Like Event Audit</h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedLikeDetailModal.id}</p>
-                </div>
-              </div>
+        <AdminModal
+          title="Like Event Audit"
+          subtitle={`ID: ${selectedLikeDetailModal.id}`}
+          onClose={() => setSelectedLikeDetailModal(null)}
+          maxWidthClass="max-w-lg"
+          footer={
+            <div className="w-full flex items-center justify-between">
               <button
-                onClick={() => setSelectedLikeDetailModal(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => {
+                  setConfirmDeleteLikeId(selectedLikeDetailModal.id);
+                  setSelectedLikeDetailModal(null);
+                }}
+                className={ADMIN_BTN_DESTRUCTIVE}
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-3.5 h-3.5" /> Remove Like
+              </button>
+              <button type="button" onClick={() => setSelectedLikeDetailModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Close
               </button>
             </div>
-
-            {/* User Profile Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">User Identity</span>
+          }
+        >
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">User Identity</span>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0">
+                <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                   <img
                     src={getSafeAvatarUrl(selectedLikeDetailModal.userAvatar, selectedLikeDetailModal.userName, selectedLikeDetailModal.userHandle)}
                     alt=""
@@ -11010,159 +9843,140 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }}
                   />
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">{selectedLikeDetailModal.userName || "Community User"}</h4>
-                  <p className="text-xs text-zinc-400 font-mono">{selectedLikeDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedLikeDetailModal.userId || selectedLikeDetailModal.userEmail}</p>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-white text-sm truncate">{selectedLikeDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono truncate">{selectedLikeDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedLikeDetailModal.userId || selectedLikeDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
-            {/* Target Video Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Photo Review</span>
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Photo Review</span>
               <div className="flex items-center gap-3">
                 {selectedLikeDetailModal.videoThumbnail && (
                   <img
                     src={selectedLikeDetailModal.videoThumbnail}
                     alt=""
-                    className="w-14 h-14 rounded-xl object-cover border border-zinc-800 shrink-0"
+                    className="w-12 h-12 rounded-lg object-cover border border-white/[0.08] shrink-0"
                   />
                 )}
                 <div className="min-w-0">
-                  <h4 className="font-bold text-white text-sm truncate">{selectedLikeDetailModal.placeName || "Target Place"}</h4>
+                  <h4 className="font-medium text-white text-sm truncate">{selectedLikeDetailModal.placeName || "Target Place"}</h4>
                   <p className="text-xs text-zinc-400">Reviewed by {selectedLikeDetailModal.videoAuthor || "Reviewer"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Video ID: {selectedLikeDetailModal.videoId}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">Review ID: {selectedLikeDetailModal.videoId}</p>
                 </div>
               </div>
             </div>
 
-            {/* Raw JSON */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
-              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedLikeDetailModal, null, 2)}
               </pre>
             </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-              <button
-                onClick={() => {
-                  setConfirmDeleteLikeId(selectedLikeDetailModal.id);
-                  setSelectedLikeDetailModal(null);
-                }}
-                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Remove Like
-              </button>
-
-              <button
-                onClick={() => setSelectedLikeDetailModal(null)}
-                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer"
-              >
-                Close Audit
-              </button>
-            </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM DELETE INDIVIDUAL LIKE MODAL */}
       {/* ========================================================================= */}
       {confirmDeleteLikeId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
-              🗑️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Delete Like Record?</h3>
-              <p className="text-xs text-zinc-400">
-                Are you sure you want to remove this like from the database? The video's like counter will automatically update.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmDeleteLikeId(null)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Delete Like Record"
+          onClose={() => setConfirmDeleteLikeId(null)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmDeleteLikeId(null)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteLike(confirmDeleteLikeId)}
                 disabled={isDeletingLikeId === confirmDeleteLikeId}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+                className={ADMIN_BTN_DESTRUCTIVE_SOLID}
               >
-                {isDeletingLikeId === confirmDeleteLikeId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+                {isDeletingLikeId === confirmDeleteLikeId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete Like"}
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <Trash2 className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Remove this like record from the database? The review&apos;s like counter will automatically update.
+            </p>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM PURGE ALL LIKES MODAL */}
       {/* ========================================================================= */}
       {confirmPurgeAllLikes && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
-              ⚠️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Purge All Likes?</h3>
-              <p className="text-xs text-zinc-400">
-                This will delete ALL like records from the database and reset like counts on all videos to 0. This cannot be undone.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmPurgeAllLikes(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Purge All Likes"
+          onClose={() => setConfirmPurgeAllLikes(false)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmPurgeAllLikes(false)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
-              <button
-                onClick={handlePurgeAllLikes}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
-              >
+              <button type="button" onClick={handlePurgeAllLikes} className={ADMIN_BTN_DESTRUCTIVE_SOLID}>
                 Purge All
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This permanently deletes all like records and resets review like counters to 0. This action cannot be undone.
+            </p>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* BOOKMARK RECORD AUDIT & DETAIL MODAL */}
       {/* ========================================================================= */}
       {selectedBookmarkDetailModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                  🔖
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Bookmark & Saved Record Audit</h3>
-                  <p className="text-[11px] text-zinc-400 font-mono">ID: {selectedBookmarkDetailModal.id}</p>
-                </div>
-              </div>
+        <AdminModal
+          title="Bookmark Record Audit"
+          subtitle={`ID: ${selectedBookmarkDetailModal.id}`}
+          onClose={() => setSelectedBookmarkDetailModal(null)}
+          maxWidthClass="max-w-lg"
+          footer={
+            <div className="w-full flex items-center justify-between">
               <button
-                onClick={() => setSelectedBookmarkDetailModal(null)}
-                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 cursor-pointer transition-colors"
+                type="button"
+                onClick={() => {
+                  setConfirmDeleteBookmarkId(selectedBookmarkDetailModal.id);
+                  setSelectedBookmarkDetailModal(null);
+                }}
+                className={ADMIN_BTN_DESTRUCTIVE}
               >
-                <X className="w-5 h-5" />
+                <Trash2 className="w-3.5 h-3.5" /> Remove Bookmark
+              </button>
+              <button type="button" onClick={() => setSelectedBookmarkDetailModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Close
               </button>
             </div>
-
-            {/* User Profile Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+          }
+        >
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Member Identity</span>
+                <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Member Identity</span>
                 <button
+                  type="button"
                   onClick={() => {
                     const uTarget = selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail || selectedBookmarkDetailModal.userName;
                     if (uTarget) {
@@ -11171,13 +9985,13 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                       setSelectedBookmarkDetailModal(null);
                     }
                   }}
-                  className="text-[11px] text-amber-400 hover:text-amber-300 font-bold hover:underline cursor-pointer"
+                  className="text-xs text-zinc-300 hover:text-white font-medium underline underline-offset-2 cursor-pointer"
                 >
-                  Inspect in Users Tab &rarr;
+                  View in Users
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-700 overflow-hidden shrink-0 ring-2 ring-amber-500/20">
+                <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.1] overflow-hidden shrink-0">
                   <img
                     src={getSafeAvatarUrl(selectedBookmarkDetailModal.userAvatar, selectedBookmarkDetailModal.userName, selectedBookmarkDetailModal.userHandle)}
                     alt=""
@@ -11188,24 +10002,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     }}
                   />
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">{selectedBookmarkDetailModal.userName || "Community User"}</h4>
-                  <p className="text-xs text-zinc-400 font-mono">{selectedBookmarkDetailModal.userHandle || "@user"}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail}</p>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-white text-sm truncate">{selectedBookmarkDetailModal.userName || "Community User"}</h4>
+                  <p className="text-xs text-zinc-400 font-mono truncate">{selectedBookmarkDetailModal.userHandle || "@user"}</p>
+                  <p className="text-[11px] text-zinc-500 font-mono truncate">{selectedBookmarkDetailModal.userId || selectedBookmarkDetailModal.userEmail}</p>
                 </div>
               </div>
             </div>
 
-            {/* Target Saved Entity / Video Review Card */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Target Saved Entity</span>
+            <div className="p-3.5 rounded-xl bg-[#050506] border border-white/[0.08] space-y-2.5">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Target Saved Entity</span>
               <div className="flex items-center gap-3">
                 {selectedBookmarkDetailModal.videoThumbnail ? (
-                  <div
+                  <button
+                    type="button"
                     onClick={() => {
-                      if (selectedBookmarkDetailModal.videoUrl) {
+                      const matchedVid = activeVideos.find((v) => v.id === selectedBookmarkDetailModal.videoId);
+                      if (matchedVid) {
+                        setSelectedBookmarkDetailModal(null);
+                        setPreviewVideo(matchedVid);
+                      } else {
                         setPreviewLikeVideoModal({
-                          videoUrl: selectedBookmarkDetailModal.videoUrl,
+                          videoUrl: selectedBookmarkDetailModal.videoUrl || "",
                           thumbnailUrl: selectedBookmarkDetailModal.videoThumbnail,
                           placeName: selectedBookmarkDetailModal.placeName || "Saved Review",
                           authorName: selectedBookmarkDetailModal.videoAuthor || "Reviewer",
@@ -11213,40 +10031,37 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                         });
                       }
                     }}
-                    className="relative w-14 h-14 rounded-xl overflow-hidden border border-zinc-800 shrink-0 cursor-pointer group"
-                    title="Click to play video"
+                    className="relative w-12 h-12 rounded-lg overflow-hidden border border-white/[0.1] shrink-0 cursor-pointer group"
+                    title="Preview saved review"
                   >
                     <img
                       src={selectedBookmarkDetailModal.videoThumbnail}
                       alt=""
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <Play className="w-4 h-4 fill-white text-white ml-0.5" />
-                    </div>
-                  </div>
+                  </button>
                 ) : selectedBookmarkDetailModal.placeLogo ? (
                   <img
                     src={selectedBookmarkDetailModal.placeLogo}
                     alt=""
-                    className="w-14 h-14 rounded-xl object-contain p-1 border border-zinc-800 shrink-0 bg-zinc-900"
+                    className="w-12 h-12 rounded-lg object-contain p-1 border border-white/[0.08] shrink-0 bg-white/[0.04]"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
-                    <Building2 className="w-6 h-6" />
+                  <div className="w-12 h-12 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-500 shrink-0">
+                    <Building2 className="w-5 h-5" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-white text-sm truncate">{selectedBookmarkDetailModal.placeName || "Target Place"}</h4>
+                    <h4 className="font-medium text-white text-sm truncate">{selectedBookmarkDetailModal.placeName || "Target Place"}</h4>
                     {selectedBookmarkDetailModal.videoRating && (
-                      <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5 fill-amber-400" /> {selectedBookmarkDetailModal.videoRating}
+                      <span className="inline-flex items-center gap-0.5 text-xs text-zinc-300 tabular-nums">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {selectedBookmarkDetailModal.videoRating}
                       </span>
                     )}
                   </div>
                   {selectedBookmarkDetailModal.videoAuthor && (
-                    <p className="text-xs text-zinc-400">Review authored by {selectedBookmarkDetailModal.videoAuthor}</p>
+                    <p className="text-xs text-zinc-400">Reviewed by {selectedBookmarkDetailModal.videoAuthor}</p>
                   )}
                   <p className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
                     Target: {selectedBookmarkDetailModal.placeId || selectedBookmarkDetailModal.videoId || "Venue"}
@@ -11255,184 +10070,388 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
               </div>
             </div>
 
-            {/* Audit Metadata */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Saved Timestamp</span>
-                <p className="text-zinc-300 font-mono text-[11px]">
-                  {selectedBookmarkDetailModal.createdAt ? new Date(selectedBookmarkDetailModal.createdAt).toLocaleString() : selectedBookmarkDetailModal.timestamp || "Recently"}
+              <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] space-y-1">
+                <span className="text-[11px] text-zinc-500 font-medium">Saved Timestamp</span>
+                <p className="text-zinc-300 font-mono text-[11px] tabular-nums">
+                  {selectedBookmarkDetailModal.createdAt
+                    ? new Date(selectedBookmarkDetailModal.createdAt).toLocaleString()
+                    : selectedBookmarkDetailModal.timestamp || "Recently"}
                 </p>
               </div>
-              <div className="p-3 rounded-xl bg-zinc-950 border border-zinc-800 space-y-1">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Storage Engine</span>
-                <p className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
-                  <span>⚡ Bunny libSQL Edge</span>
+              <div className="p-3 rounded-xl bg-[#050506] border border-white/[0.08] space-y-1">
+                <span className="text-[11px] text-zinc-500 font-medium">Storage Engine</span>
+                <p className="text-emerald-400 font-mono text-[11px] flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5" />
+                  <span>Bunny libSQL Edge</span>
                 </p>
               </div>
             </div>
 
-            {/* Raw JSON */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
-              <pre className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl text-[11px] font-mono text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-40">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Raw Stored JSON</span>
+              <pre className="p-3 bg-[#050506] border border-white/[0.08] rounded-xl text-[11px] font-mono text-zinc-300 whitespace-pre-wrap overflow-x-auto max-h-40">
                 {JSON.stringify(selectedBookmarkDetailModal, null, 2)}
               </pre>
             </div>
-
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-              <button
-                onClick={() => {
-                  setConfirmDeleteBookmarkId(selectedBookmarkDetailModal.id);
-                  setSelectedBookmarkDetailModal(null);
-                }}
-                className="px-3.5 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Remove Bookmark
-              </button>
-
-              <button
-                onClick={() => setSelectedBookmarkDetailModal(null)}
-                className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer"
-              >
-                Close Audit
-              </button>
-            </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM DELETE INDIVIDUAL SHARE MODAL */}
       {/* ========================================================================= */}
       {confirmDeleteShareId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center text-xl mx-auto">
-              ↗️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Delete Share Record?</h3>
-              <p className="text-xs text-zinc-400">
-                This will permanently delete this share record.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmDeleteShareId(null)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Delete Share Record"
+          onClose={() => setConfirmDeleteShareId(null)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmDeleteShareId(null)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteShare(confirmDeleteShareId)}
                 disabled={isDeletingShareId === confirmDeleteShareId}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+                className={ADMIN_BTN_DESTRUCTIVE_SOLID}
               >
-                {isDeletingShareId === confirmDeleteShareId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+                {isDeletingShareId === confirmDeleteShareId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete Record"}
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <Share2 className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This will permanently remove this share record from the database.
+            </p>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM PURGE ALL SHARES MODAL */}
       {/* ========================================================================= */}
       {confirmPurgeAllShares && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
-              ⚠️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Purge All Shares?</h3>
-              <p className="text-xs text-zinc-400">
-                This will delete ALL share records from the database. This cannot be undone.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmPurgeAllShares(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Purge All Shares"
+          onClose={() => setConfirmPurgeAllShares(false)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmPurgeAllShares(false)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
-              <button
-                onClick={handlePurgeAllShares}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
-              >
+              <button type="button" onClick={handlePurgeAllShares} className={ADMIN_BTN_DESTRUCTIVE_SOLID}>
                 Purge All
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This will permanently delete all share records from the database. This action cannot be undone.
+            </p>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM DELETE INDIVIDUAL BOOKMARK MODAL */}
       {/* ========================================================================= */}
       {confirmDeleteBookmarkId && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl mx-auto">
-              🔖
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Delete Bookmark Record?</h3>
-              <p className="text-xs text-zinc-400">
-                Are you sure you want to remove this bookmark from the database? The review's bookmark counter will automatically update.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmDeleteBookmarkId(null)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Delete Bookmark Record"
+          onClose={() => setConfirmDeleteBookmarkId(null)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmDeleteBookmarkId(null)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteBookmark(confirmDeleteBookmarkId)}
                 disabled={isDeletingBookmarkId === confirmDeleteBookmarkId}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/20"
+                className={ADMIN_BTN_DESTRUCTIVE_SOLID}
               >
-                {isDeletingBookmarkId === confirmDeleteBookmarkId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete"}
+                {isDeletingBookmarkId === confirmDeleteBookmarkId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : "Delete Bookmark"}
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <Bookmark className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Remove this bookmark from the database? The review&apos;s saved counter will automatically update.
+            </p>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* ========================================================================= */}
       {/* CONFIRM PURGE ALL BOOKMARKS MODAL */}
       {/* ========================================================================= */}
       {confirmPurgeAllBookmarks && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-xl mx-auto">
-              ⚠️
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-base font-bold text-white">Purge All Bookmarks?</h3>
-              <p className="text-xs text-zinc-400">
-                This will delete ALL bookmark records from the database and reset saved counts on all videos to 0. This cannot be undone.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => setConfirmPurgeAllBookmarks(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold cursor-pointer"
-              >
+        <AdminModal
+          title="Purge All Bookmarks"
+          onClose={() => setConfirmPurgeAllBookmarks(false)}
+          maxWidthClass="max-w-sm"
+          footer={
+            <>
+              <button type="button" onClick={() => setConfirmPurgeAllBookmarks(false)} className={ADMIN_BTN_SECONDARY}>
                 Cancel
               </button>
-              <button
-                onClick={handlePurgeAllBookmarks}
-                className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-rose-600/20"
-              >
+              <button type="button" onClick={handlePurgeAllBookmarks} className={ADMIN_BTN_DESTRUCTIVE_SOLID}>
                 Purge All
               </button>
+            </>
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4" />
             </div>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              This will delete all bookmark records and reset saved counters on all reviews to 0. This cannot be undone.
+            </p>
           </div>
-        </div>
+        </AdminModal>
+      )}
+
+      {/* ========================================================================= */}
+      {/* REGISTER PARTNER AGENCY MODAL */}
+      {/* ========================================================================= */}
+      {isAddAgencyOpen && (
+        <AdminModal
+          title="Register Partner Agency"
+          subtitle="Add a marketing or merchant onboarding partner to Yoouz"
+          onClose={() => setIsAddAgencyOpen(false)}
+          maxWidthClass="max-w-lg"
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddAgency();
+            }}
+            className="space-y-4 text-sm"
+          >
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Agency Name (Required)</label>
+              <input
+                type="text"
+                value={newAgency.name}
+                onChange={(e) => setNewAgency({ ...newAgency, name: e.target.value })}
+                placeholder="e.g. Studio North Digital"
+                required
+                className={ADMIN_INPUT}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">City</label>
+                <input
+                  type="text"
+                  value={newAgency.city}
+                  onChange={(e) => setNewAgency({ ...newAgency, city: e.target.value })}
+                  placeholder="e.g. Brussels"
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Country</label>
+                <select
+                  value={newAgency.country}
+                  onChange={(e) => setNewAgency({ ...newAgency, country: e.target.value })}
+                  className={`${ADMIN_SELECT} w-full`}
+                >
+                  <option value="Belgium">Belgium</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="United States">United States</option>
+                  <option value="Netherlands">Netherlands</option>
+                  <option value="France">France</option>
+                  <option value="Germany">Germany</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Website URL</label>
+                <input
+                  type="text"
+                  value={newAgency.website}
+                  onChange={(e) => setNewAgency({ ...newAgency, website: e.target.value })}
+                  placeholder="https://agency.com"
+                  className={`${ADMIN_INPUT} text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Contact Email</label>
+                <input
+                  type="email"
+                  value={newAgency.email}
+                  onChange={(e) => setNewAgency({ ...newAgency, email: e.target.value })}
+                  placeholder="partners@agency.com"
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Phone Number</label>
+                <input
+                  type="text"
+                  value={newAgency.phone}
+                  onChange={(e) => setNewAgency({ ...newAgency, phone: e.target.value })}
+                  placeholder="+32 2 555 0100"
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Logo URL (Optional)</label>
+                <input
+                  type="text"
+                  value={newAgency.logoUrl}
+                  onChange={(e) => setNewAgency({ ...newAgency, logoUrl: e.target.value })}
+                  placeholder="https://..."
+                  className={`${ADMIN_INPUT} text-xs`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <button type="button" onClick={() => setIsAddAgencyOpen(false)} className={ADMIN_BTN_SECONDARY}>
+                Cancel
+              </button>
+              <button type="submit" disabled={!newAgency.name.trim()} className={ADMIN_BTN_PRIMARY}>
+                Register Agency
+              </button>
+            </div>
+          </form>
+        </AdminModal>
+      )}
+
+      {/* ========================================================================= */}
+      {/* EDIT PARTNER AGENCY MODAL */}
+      {/* ========================================================================= */}
+      {editAgencyModal && (
+        <AdminModal
+          title="Edit Partner Agency"
+          subtitle={editAgencyModal.id}
+          onClose={() => setEditAgencyModal(null)}
+          maxWidthClass="max-w-lg"
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateAgency();
+            }}
+            className="space-y-4 text-sm"
+          >
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Agency Name (Required)</label>
+              <input
+                type="text"
+                value={editAgencyModal.name || ""}
+                onChange={(e) => setEditAgencyModal({ ...editAgencyModal, name: e.target.value })}
+                required
+                className={ADMIN_INPUT}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">City</label>
+                <input
+                  type="text"
+                  value={editAgencyModal.city || ""}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, city: e.target.value })}
+                  className={ADMIN_INPUT}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Country</label>
+                <select
+                  value={editAgencyModal.country || "Belgium"}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, country: e.target.value })}
+                  className={`${ADMIN_SELECT} w-full`}
+                >
+                  <option value="Belgium">Belgium</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="United States">United States</option>
+                  <option value="Netherlands">Netherlands</option>
+                  <option value="France">France</option>
+                  <option value="Germany">Germany</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Website URL</label>
+                <input
+                  type="text"
+                  value={editAgencyModal.website || ""}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, website: e.target.value })}
+                  className={`${ADMIN_INPUT} text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Contact Email</label>
+                <input
+                  type="email"
+                  value={editAgencyModal.email || ""}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, email: e.target.value })}
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Phone Number</label>
+                <input
+                  type="text"
+                  value={editAgencyModal.phone || ""}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, phone: e.target.value })}
+                  className={`${ADMIN_INPUT} font-mono text-xs`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1.5">Logo URL</label>
+                <input
+                  type="text"
+                  value={editAgencyModal.logoUrl || ""}
+                  onChange={(e) => setEditAgencyModal({ ...editAgencyModal, logoUrl: e.target.value })}
+                  className={`${ADMIN_INPUT} text-xs`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+              <button type="button" onClick={() => setEditAgencyModal(null)} className={ADMIN_BTN_SECONDARY}>
+                Cancel
+              </button>
+              <button type="submit" disabled={!editAgencyModal.name?.trim()} className={ADMIN_BTN_PRIMARY}>
+                Save Agency
+              </button>
+            </div>
+          </form>
+        </AdminModal>
       )}
     </div>
   );
@@ -11451,7 +10470,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
   const [website, setWebsite] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [claimedByEmail, setClaimedByEmail] = useState("");
-  const [rating, setRating] = useState(5.0);
+  const [rating] = useState(5.0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -11483,7 +10502,7 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
       website: website.trim(),
       priceRange: "$$",
       plusCode: "",
-      description: "Claimed business on Yoouz video platform.",
+      description: "Listed business on Yoouz.",
       popularKeywords: [{ tag: "Authentic", count: 1 }],
       amenities: ["Free Wi-Fi", "Credit Cards Accepted"],
       topDishes: [],
@@ -11496,136 +10515,126 @@ const CreatePlaceModal: React.FC<{ onClose: () => void; onSave: (p: Place) => vo
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-          <h3 className="text-xl font-black text-white">Create New Business Page</h3>
-          <button onClick={onClose} className="p-2 text-zinc-200 hover:text-white cursor-pointer">
-            <X className="w-5 h-5" />
-          </button>
+    <AdminModal
+      title="Create Business Page"
+      subtitle="Add a new venue or brand listing to Yoouz"
+      onClose={onClose}
+      maxWidthClass="max-w-2xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Business Name (Required)</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Blue Bottle Coffee"
+              required
+              className={ADMIN_INPUT}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Cafe, Restaurant, Hotel"
+              className={ADMIN_INPUT}
+            />
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Business Name (Required)</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Blue Bottle Coffee"
-                required
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Category</label>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. Cafe, Restaurant, Hotel"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">City / Region</label>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. New York"
+              className={ADMIN_INPUT}
+            />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Full Street Address</label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="e.g. 100 Main St, Suite 200"
+              className={ADMIN_INPUT}
+            />
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">City / Region</label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. New York"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Full Street Address</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. 100 Main St, Suite 200"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Phone Number</label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1 415-555-0199"
+              className={`${ADMIN_INPUT} font-mono text-xs`}
+            />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Public Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="contact@business.com"
+              className={`${ADMIN_INPUT} font-mono text-xs`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Website URL</label>
+            <input
+              type="text"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://example.com"
+              className={`${ADMIN_INPUT} text-xs`}
+            />
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Phone Number</label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. +1 415-555-0199"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-mono text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Business Public Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. contact@business.com"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 font-mono text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Website URL</label>
-              <input
-                type="text"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="e.g. https://example.com"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 text-xs"
-              />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Logo URL (Optional)</label>
+            <input
+              type="text"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              placeholder="https://..."
+              className={ADMIN_INPUT}
+            />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Assign Owner Email (Private)</label>
+            <input
+              type="email"
+              value={claimedByEmail}
+              onChange={(e) => setClaimedByEmail(e.target.value)}
+              placeholder="owner@business.com"
+              className={ADMIN_INPUT}
+            />
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Logo URL (Optional)</label>
-              <input
-                type="text"
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-200 mb-1">Assign Claim to Email (Optional)</label>
-              <input
-                type="email"
-                value={claimedByEmail}
-                onChange={(e) => setClaimedByEmail(e.target.value)}
-                placeholder="owner@business.com"
-                className="w-full px-3.5 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl font-bold cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold rounded-xl shadow-lg cursor-pointer"
-            >
-              Create Business
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.08]">
+          <button type="button" onClick={onClose} className={ADMIN_BTN_SECONDARY}>
+            Cancel
+          </button>
+          <button type="submit" disabled={!name.trim()} className={ADMIN_BTN_PRIMARY}>
+            Create Business
+          </button>
+        </div>
+      </form>
+    </AdminModal>
   );
 };
+
