@@ -879,7 +879,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       ? {
           ...existing,
           name: officialName || existing.name,
-          category: !isGenericCategory(existing.category) ? existing.category : seededCat.specificCategory,
+          category: !seededCat.isFallback ? seededCat.specificCategory : (!isGenericCategory(existing.category) ? existing.category : ""),
           categoryType: seededCat.canonicalId,
           brandDomain: cleanDom,
           website: websiteUrl || existing.website || `https://${cleanDom}`
@@ -888,7 +888,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           id: cleanDom,
           name: officialName,
           brandDomain: cleanDom,
-          category: seededCat.specificCategory,
+          category: seededCat.isFallback ? "" : seededCat.specificCategory,
           categoryType: seededCat.canonicalId,
           address: "",
           city: "",
@@ -1049,7 +1049,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
             id: resolvedDomain,
             name: officialName,
             brandDomain: resolvedDomain,
-            category: resolvedCat.specificCategory,
+            category: resolvedCat.isFallback ? "" : resolvedCat.specificCategory,
             categoryType: resolvedCat.canonicalId,
             address: meta.address || "",
             city: meta.city || "",
@@ -1522,11 +1522,12 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                           <div className="flex items-center gap-1.5 text-[12px] text-zinc-400 truncate font-normal mt-0.5 tabular-nums">
                             {item.domain && <span className="truncate">{item.domain}</span>}
                             {!item.isCreator && (() => {
-                              const suggCat = classifyBusinessCategory({
+                              const suggCatInfo = classifyBusinessCategory({
                                 rawCategory: item.category,
                                 name: item.title,
                                 domain: item.domain || item.id
-                              }).badgeLabel;
+                              });
+                              const suggCat = suggCatInfo.isFallback ? "" : suggCatInfo.badgeLabel;
                               return suggCat ? (
                                 <>
                                   {item.domain && <span aria-hidden="true">·</span>}

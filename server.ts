@@ -32068,7 +32068,7 @@ Timestamp: ${new Date(timestamp).toUTCString()}
           schemaTypes: schemaTypesCollected,
           keywords: metaKeywords
         });
-        category = classified.specificCategory;
+        category = classified.isFallback ? "" : classified.specificCategory;
       }
 
       // 13. Opening Hours extraction
@@ -32262,7 +32262,8 @@ Timestamp: ${new Date(timestamp).toUTCString()}
       openingHours, 
       locations, 
       lat, 
-      lng 
+      lng,
+      schemaTypes: schemaTypesCollected 
     };
   }
 
@@ -36316,6 +36317,17 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 domain: matchedDom,
                 description: pData.description
               });
+              const resolvedCachedCat = cachedCatInfo.isFallback ? "" : cachedCatInfo.specificCategory;
+              // Auto-heal stale/misclassified DB category asynchronously when upgraded classifier detects a correction
+              if (resolvedCachedCat && resolvedCachedCat !== (row.category || pData.category || "")) {
+                try {
+                  const healedData = { ...pData, category: resolvedCachedCat, categoryType: cachedCatInfo.canonicalId };
+                  bunnyDb.execute({
+                    sql: `UPDATE places SET category = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                    args: [resolvedCachedCat, JSON.stringify(healedData), row.id]
+                  }).catch(() => {});
+                } catch {}
+              }
               return {
                 status: 200,
                 body: {
@@ -36331,7 +36343,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   country: row.country || pData.country || "",
                   phone: pData.phone || "",
                   email: pData.email || "",
-                  category: cachedCatInfo.specificCategory,
+                  category: resolvedCachedCat,
                   categoryType: cachedCatInfo.canonicalId,
                   openingHours: pData.openingHours || "",
                   locations: pData.locations || [],
@@ -38165,10 +38177,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         name: title || siteName || cleanDomain,
         domain: cleanDomain,
         description,
+        schemaTypes: Array.isArray((locInfo as any)?.schemaTypes) ? (locInfo as any).schemaTypes : undefined,
         keywords: $ ? ($('meta[name="keywords"]').attr('content') || '') : ''
       });
-      if (!effectiveCategory || isGenericCategory(effectiveCategory)) {
-        effectiveCategory = isYoouz ? "Live Photo Reviews Platform" : finalCatClassification.specificCategory;
+      if (isYoouz) {
+        effectiveCategory = "Live Photo Reviews Platform";
+      } else if (!finalCatClassification.isFallback) {
+        effectiveCategory = finalCatClassification.specificCategory;
+      } else if (isGenericCategory(effectiveCategory)) {
+        effectiveCategory = "";
       }
       const effectiveCategoryType = finalCatClassification.canonicalId;
 
@@ -38380,17 +38397,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const mergedPhone = effectivePhone || existingDoc.phone || "";
             const mergedEmail = effectiveEmail || existingDoc.email || "";
 
-            const resolvedMergedCategory = (!isGenericCategory(effectiveCategory) && effectiveCategory)
-              ? effectiveCategory
-              : (!isGenericCategory(existingDoc.category) && existingDoc.category)
-                ? existingDoc.category
-                : autoPlaceDoc.category;
-            const resolvedMergedCategoryType = classifyBusinessCategory({
-              rawCategory: resolvedMergedCategory,
+            const mergedCatClassification = classifyBusinessCategory({
+              rawCategory: (!isGenericCategory(effectiveCategory) && effectiveCategory)
+                ? effectiveCategory
+                : (!isGenericCategory(existingDoc.category) && existingDoc.category ? existingDoc.category : ""),
               name: formattedExistingName,
               domain: cleanDomain,
-              description: existingDoc.description || description
-            }).canonicalId;
+              description: description || existingDoc.description || "",
+              schemaTypes: Array.isArray((locInfo as any)?.schemaTypes) ? (locInfo as any).schemaTypes : undefined
+            });
+            const resolvedMergedCategory = isYoouz
+              ? "Live Photo Reviews Platform"
+              : (mergedCatClassification.isFallback ? "" : mergedCatClassification.specificCategory);
+            const resolvedMergedCategoryType = mergedCatClassification.canonicalId;
 
             const mergedDoc = {
               ...autoPlaceDoc,
@@ -38539,6 +38558,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         email: effectiveEmail,
         category: effectiveCategory,
         categoryType: effectiveCategoryType,
+        schemaTypes: Array.isArray((locInfo as any)?.schemaTypes) ? (locInfo as any).schemaTypes : [],
         openingHours: locInfo.openingHours || "",
         locations: locInfo.locations || [],
         name: title,
@@ -38711,13 +38731,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 const title = (hasDot && (isFalseSplitOfDomain(rawTitle, bDom) || isFalseSplitAgainstText(rawTitle, pData.description, bDom) || isDomainStemName(rawTitle, bDom)) && descOfficial)
                   ? descOfficial
                   : (formatBusinessName(rawTitle, bDom, undefined, { fromWebsite: true, fallbackText: pData.description }) || rawTitle);
+                const dbCatInfo = classifyBusinessCategory({
+                  rawCategory: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && !isGenericCategory(row.category)) ? row.category : "",
+                  name: title,
+                  domain: hasDot ? bDom : "",
+                  description: pData.description || ""
+                });
                 addSuggestion({
                   id: row.id,
                   title,
                   domain: hasDot ? bDom : "",
                   websiteUrl: row.website || pData.website || (hasDot ? `https://${bDom}` : undefined),
                   logoUrl: row.logoUrl || (hasDot && KNOWN_BRAND_LOGOS[bDom] ? KNOWN_BRAND_LOGOS[bDom] : ""),
-                  category: (row.category && !row.category.toLowerCase().includes("verified") && !row.category.toLowerCase().includes("google") && row.category !== "Website") ? row.category : "",
+                  category: dbCatInfo.isFallback ? "" : dbCatInfo.specificCategory,
                   address: row.address ? `${row.address}${row.city ? ', ' + row.city : ''}` : (row.city || ""),
                   source: "database"
                 });
@@ -38748,11 +38774,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             const validDomain = hasDot
               ? domLower
               : (KNOWN_BRAND_LOGOS[domLower + ".com"] ? domLower + ".com" : (KNOWN_OFFICIAL_NAMES[domLower + ".com"] ? domLower + ".com" : (KNOWN_BRAND_LOGOS[domLower] ? domLower : "")));
+            const cleanValidDom = validDomain.replace(/^www\d*\./i, "");
+            const knownBrandCat = classifyBusinessCategory({ name: officialName, domain: cleanValidDom });
             addSuggestion({
               title: officialName,
-              domain: validDomain.replace(/^www\d*\./i, ""),
+              domain: cleanValidDom,
               logoUrl: validDomain && KNOWN_BRAND_LOGOS[validDomain] ? KNOWN_BRAND_LOGOS[validDomain] : "",
-              category: "",
+              category: knownBrandCat.isFallback ? "" : knownBrandCat.specificCategory,
               source: "brand_index"
             });
             if (suggestions.length >= 8) break;
@@ -38799,7 +38827,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   const merged = mergeOfficialBrandSpellingServer(bestSeg || discovered.title, spelled, host);
                   const cand = merged || spelled || formatBusinessName(bestSeg || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
                   if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
-                    resolvedTop = { timestamp: Date.now(), title: cand, domain: host, websiteUrl: discovered.url };
+                    const discCat = classifyBusinessCategory({
+                      name: cand,
+                      domain: host,
+                      description: discovered.snippet || ""
+                    });
+                    resolvedTop = {
+                      timestamp: Date.now(),
+                      title: cand,
+                      domain: host,
+                      websiteUrl: discovered.url,
+                      category: discCat.isFallback ? "" : discCat.specificCategory
+                    };
                   }
                 }
                 if (suggestBrandResolutionCache.size > 500) suggestBrandResolutionCache.clear();
@@ -47766,6 +47805,65 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       await reconcileDatabaseIntegrityV1(false).catch((recErr: any) => {
         console.warn("DB integrity reconciliation notice:", recErr?.message || recErr);
       });
+
+      // One-time idempotent BunnyDB category heal migration:
+      // Re-classifies all existing places using the upgraded weighted classifier (fixing plural "Hotels" -> "Boutique Hotels",
+      // Hotel-vs-Spa conflicts, VC firms, streaming/media, universities, Burger King, The Hoxton, etc.)
+      const healMisclassifiedPlaceCategoriesOnce = async () => {
+        const markerPath = path.join(globalUploadsDir, ".place_category_heal_v2_done");
+        if (await hasPersistentMigrationMarker("place_category_heal_v2_done", markerPath)) return;
+        try {
+          if (bunnyDb) {
+            const rs = await bunnyDb.execute("SELECT id, name, category, brandDomain, website, data FROM places");
+            let healedCount = 0;
+            const healedMap = new Map<string, { category: string; categoryType: string }>();
+            for (const row of (rs.rows || []) as any[]) {
+              const pid = String(row?.id || "").trim();
+              if (!pid) continue;
+              let d: any = {};
+              try { d = typeof row.data === "string" ? JSON.parse(row.data) : (row.data || {}); } catch {}
+              const dom = String(row.brandDomain || d.brandDomain || row.website || d.website || pid).trim();
+              const rawCat = String(row.category || d.category || "").trim();
+              const classified = classifyBusinessCategory({
+                rawCategory: rawCat,
+                name: String(row.name || d.name || ""),
+                domain: dom,
+                description: String(d.description || "")
+              });
+              const targetCat = classified.isFallback ? "" : classified.specificCategory;
+              const targetType = classified.canonicalId;
+              const needsUpdate = (targetCat !== rawCat) || (d.categoryType !== targetType);
+              if (needsUpdate) {
+                d.category = targetCat;
+                d.categoryType = targetType;
+                await executeDurableBunnyDb({
+                  sql: "UPDATE places SET category = ?, data = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+                  args: [targetCat, JSON.stringify(d), pid]
+                }).catch(() => {});
+                healedMap.set(pid.toLowerCase(), { category: targetCat, categoryType: targetType });
+                healedCount++;
+              }
+            }
+            if (healedCount > 0) {
+              try {
+                const localPlaces = readPlacesIndex();
+                const patchedPlaces = localPlaces.map((p: any) => {
+                  const hit = p?.id ? healedMap.get(String(p.id).toLowerCase()) : null;
+                  return hit ? { ...p, category: hit.category, categoryType: hit.categoryType } : p;
+                });
+                writePlacesIndex(patchedPlaces);
+              } catch {}
+              feedCache.lastFetched = 0;
+              console.log(`✅ [Server] Healed ${healedCount} place categories in BunnyDB with upgraded weighted classifier.`);
+            }
+          }
+          await markPersistentMigrationDone("place_category_heal_v2_done", markerPath);
+        } catch (healErr: any) {
+          console.warn("Place category heal migration notice:", healErr?.message || healErr);
+        }
+      };
+
+      await healMisclassifiedPlaceCategoriesOnce().catch(() => {});
 
       // Purge legacy /videos/ folder from Bunny Storage (rev1) and strip any stale .mp4 references in places table
       (async () => {

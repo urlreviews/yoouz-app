@@ -122,6 +122,8 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   const [showUnclaimedChatModal, setShowUnclaimedChatModal] = useState(false);
   const [claimAsOwner, setClaimAsOwner] = useState(false);
   const [bannerError, setBannerError] = useState(false);
+  const [fallbackBannerLoaded, setFallbackBannerLoaded] = useState(false);
+  const [fallbackBannerError, setFallbackBannerError] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [activeBannerState, setActiveBannerState] = useState<{ placeId: string; url: string } | null>(null);
   const [bannerLoaded, setBannerLoaded] = useState(false);
@@ -152,6 +154,8 @@ const CopoPlaceDrawerComponent: React.FC<CopoPlaceDrawerProps> = ({
   useEffect(() => {
     setActiveTab("reviews");
     setBannerError(false);
+    setFallbackBannerLoaded(false);
+    setFallbackBannerError(false);
     setPhotoIndex(0);
     setActiveBanner(null);
     setBannerLoaded(false);
@@ -950,16 +954,18 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                   phone: (data.phone && !place.phone) ? data.phone : (place.phone || data.phone || ""),
                   email: (data.email && !place.email) ? data.email : (place.email || data.email || ""),
                   ...(() => {
+                    const mergedDescForCat = (data.description && isGenericDesc) ? data.description : (place.description || data.description || "");
                     const cat = classifyBusinessCategory({
-                      rawCategory: (data.category && !isGenericCategory(data.category) && isGenericCategory(place.category))
+                      rawCategory: (data.category && !isGenericCategory(data.category))
                         ? data.category
-                        : (place.category || data.category || ""),
+                        : (!isGenericCategory(place.category) ? place.category : ""),
                       name: bestPlaceName,
                       domain: resolvedDomainClean || place.brandDomain || place.website || place.id,
-                      description: (data.description && isGenericDesc) ? data.description : (place.description || data.description || "")
+                      description: mergedDescForCat,
+                      schemaTypes: Array.isArray(data.schemaTypes) ? data.schemaTypes : undefined
                     });
                     return {
-                      category: cat.specificCategory,
+                      category: cat.isFallback ? "" : cat.specificCategory,
                       categoryType: cat.canonicalId
                     };
                   })(),
@@ -1594,78 +1600,106 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           </div>
         )}
 
-        {/* Full-Frame Banner Canvas — always edge-to-edge full frame, never a small logo */}
-        <div className={`absolute inset-0 w-full h-full overflow-hidden bg-gradient-to-br ${brandGrad} z-10`}>
-          {!isEnriching && (!hasAuthenticPhoto || bannerError) && fallbackBrandBannerUrl ? (
-            <img
-              src={fallbackBrandBannerUrl}
-              alt={displayedPlaceName}
-              loading="eager"
-              decoding="sync"
-              fetchPriority="high"
-              referrerPolicy={/^https?:\/\//i.test(fallbackBrandBannerUrl) ? "no-referrer" : undefined}
-              className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
-            />
-          ) : (
-            <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${brandGrad} flex items-center justify-center`}>
-              <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white/40 font-black text-3xl">
-                {(displayedPlaceName || "B").charAt(0).toUpperCase()}
-              </div>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] pointer-events-none" />
-        </div>
+        {/* Full-Frame Banner Canvas — Apple/Google obsidian smooth fade, zero giant letter flash */}
+        {(() => {
+          const resolvedBannerSrc = currentBannerCandidate || (hasAuthenticPhoto && !bannerError ? getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]) : "");
+          const isAuthenticPreloaded = Boolean(resolvedBannerSrc && KNOWN_LOADED_BANNERS.has(resolvedBannerSrc));
+          const isAuthenticVisible = Boolean(resolvedBannerSrc && (bannerLoaded || isAuthenticPreloaded));
+          const showFallbackBrandBanner = Boolean(!isEnriching && (!hasAuthenticPhoto || bannerError) && fallbackBrandBannerUrl && !fallbackBannerError);
+          const isBannerStillLoading = Boolean(
+            isEnriching ||
+            (resolvedBannerSrc && !isAuthenticVisible) ||
+            (showFallbackBrandBanner && !fallbackBannerLoaded)
+          );
 
-        {hasAuthenticPhoto && !bannerError && Boolean(allPhotos[photoIndex] || allPhotos[0]) ? (
-          <div className={`absolute inset-0 w-full h-full overflow-hidden flex items-center justify-center bg-gradient-to-br ${brandGrad} z-10`}>
-            {/* Full Widescreen Edge-to-Edge Banner Image */}
-            {(() => {
-              const resolvedBannerSrc = currentBannerCandidate || getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0]);
-              return (
-            <img
-              ref={bannerImgRef}
-              src={resolvedBannerSrc}
-              alt={displayedPlaceName}
-              loading="eager"
-              decoding="sync"
-              fetchPriority="high"
-              className="absolute inset-0 w-full h-full object-cover p-0"
-              referrerPolicy={/^https?:\/\//i.test(resolvedBannerSrc) ? "no-referrer" : undefined}
-              onLoad={(e) => {
-                const img = e.currentTarget;
-                if (img.naturalWidth < 160 || img.naturalHeight < 70 || img.naturalWidth * img.naturalHeight < 15000) {
-                  setBannerLoaded(false);
-                  if (photoIndex + 1 < allPhotos.length) {
-                    setPhotoIndex(prev => prev + 1);
-                  } else {
-                    setBannerError(true);
-                  }
-                  return;
-                }
-                setBannerLoaded(true);
-                setBannerError(false);
-                const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner);
-                if (currentSrc) {
-                  KNOWN_LOADED_BANNERS.add(currentSrc);
-                  const rawSrc = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
-                  if (rawSrc) setActiveBanner(rawSrc);
-                }
-              }}
-              onError={() => {
-                setBannerLoaded(false);
-                if (photoIndex + 1 < allPhotos.length) {
-                  setPhotoIndex(prev => prev + 1);
-                } else {
-                  setBannerError(true);
-                }
-              }}
-            />
-              );
-            })()}
-            {/* Seamless Obsidian edge melt + top contrast vignette for back/QR/report controls */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] z-20 pointer-events-none" />
-          </div>
-        ) : null}
+          return (
+            <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#0a0a0d] z-10">
+              {/* Subtle ambient brand-tinted atmospheric backdrop (never a clunky giant letter) */}
+              <div className={`absolute inset-0 w-full h-full bg-gradient-to-br ${brandGrad} opacity-50 pointer-events-none`} />
+
+              {/* Silent dark shimmer while banner metadata or photo is decoding */}
+              {isBannerStillLoading && (
+                <div
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/[0.015] via-white/[0.06] to-white/[0.015] animate-pulse pointer-events-none"
+                  aria-hidden="true"
+                />
+              )}
+
+              {/* Fallback thematic brand banner ONLY after enrichment confirms no authentic website photo */}
+              {showFallbackBrandBanner && (
+                <img
+                  src={fallbackBrandBannerUrl}
+                  alt={displayedPlaceName}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  referrerPolicy={/^https?:\/\//i.test(fallbackBrandBannerUrl) ? "no-referrer" : undefined}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    if (img.naturalWidth >= 100 && img.naturalHeight >= 50) {
+                      setFallbackBannerLoaded(true);
+                    } else {
+                      setFallbackBannerError(true);
+                    }
+                  }}
+                  onError={() => {
+                    setFallbackBannerError(true);
+                  }}
+                  className={`absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-opacity duration-300 ease-out ${
+                    fallbackBannerLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              )}
+
+              {/* Primary Full Widescreen Edge-to-Edge Authentic Banner Image */}
+              {resolvedBannerSrc ? (
+                <img
+                  ref={bannerImgRef}
+                  src={resolvedBannerSrc}
+                  alt={displayedPlaceName}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className={`absolute inset-0 w-full h-full object-cover p-0 select-none transition-opacity duration-300 ease-out ${
+                    isAuthenticVisible ? "opacity-100" : "opacity-0"
+                  }`}
+                  referrerPolicy={/^https?:\/\//i.test(resolvedBannerSrc) ? "no-referrer" : undefined}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    if (img.naturalWidth < 160 || img.naturalHeight < 70 || img.naturalWidth * img.naturalHeight < 15000) {
+                      setBannerLoaded(false);
+                      if (photoIndex + 1 < allPhotos.length) {
+                        setPhotoIndex(prev => prev + 1);
+                      } else {
+                        setBannerError(true);
+                      }
+                      return;
+                    }
+                    setBannerLoaded(true);
+                    setBannerError(false);
+                    const currentSrc = getProxiedImageUrl(allPhotos[photoIndex] || allPhotos[0] || effectiveBanner);
+                    if (currentSrc) {
+                      KNOWN_LOADED_BANNERS.add(currentSrc);
+                      const rawSrc = allPhotos[photoIndex] || allPhotos[0] || effectiveBanner;
+                      if (rawSrc) setActiveBanner(rawSrc);
+                    }
+                  }}
+                  onError={() => {
+                    setBannerLoaded(false);
+                    if (photoIndex + 1 < allPhotos.length) {
+                      setPhotoIndex(prev => prev + 1);
+                    } else {
+                      setBannerError(true);
+                    }
+                  }}
+                />
+              ) : null}
+
+              {/* Seamless Obsidian edge melt + top contrast vignette for back/QR/report controls */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_top,#050506_0%,rgba(5,5,6,0.68)_18%,rgba(5,5,6,0.16)_38%,rgba(5,5,6,0)_58%,rgba(0,0,0,0.42)_100%)] z-20 pointer-events-none" />
+            </div>
+          );
+        })()}
 
         {/* Overlapping Business Logo - Refined Apple-proportioned Brand Tile */}
         <div className="absolute -bottom-9 left-5 w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] rounded-[20px] sm:rounded-[22px] border-[3px] border-[#050506] bg-white flex items-center justify-center z-20 p-0 ring-1 ring-white/20 overflow-hidden group transition-all duration-300 shadow-[0_12px_32px_rgba(0,0,0,0.65)]">
@@ -1710,7 +1744,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
               );
             })()}
 
-            {/* Official Website & Normalized Category Sub-Header */}
+            {/* Official Website & Normalized Category Sub-Header (only show verified category, never flash a generic fallback while scraping) */}
             {(() => {
               const catInfo = classifyBusinessCategory({
                 rawCategory: place.category,
@@ -1718,7 +1752,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
                 domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
                 description: place.description
               });
-              const displayCat = catInfo.specificCategory;
+              const displayCat = catInfo.isFallback ? "" : catInfo.specificCategory;
               return (
                 <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-xs sm:text-[13px]">
                   {displayWebsiteClean && (
@@ -2228,14 +2262,15 @@ return () => window.removeEventListener("keydown", handleKeyDown);
 
               {/* 2. Single Unified Hairline-Divided Details Card (Zero Stacked Box Clutter) */}
               <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] divide-y divide-white/[0.06] overflow-hidden">
-                {/* Category */}
+                {/* Category (only display when verified, never fake fallback) */}
                 {(() => {
-                  const aboutCat = classifyBusinessCategory({
+                  const aboutCatInfo = classifyBusinessCategory({
                     rawCategory: place.category,
                     name: displayedPlaceName,
                     domain: displayWebsiteClean || place.brandDomain || place.website || place.id,
                     description: place.description
-                  }).specificCategory;
+                  });
+                  const aboutCat = aboutCatInfo.isFallback ? "" : aboutCatInfo.specificCategory;
                   return aboutCat ? (
                     <div className="px-4 py-3 flex items-center gap-3">
                       <Tag className="w-4 h-4 text-zinc-400 shrink-0" />

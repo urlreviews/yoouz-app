@@ -737,12 +737,13 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                         <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums overflow-hidden whitespace-nowrap">
                           {biz.domain && <span className="truncate min-w-0 max-w-[110px]">{biz.domain}</span>}
                           {(() => {
-                            const catBadge = classifyBusinessCategory({
+                            const catInfo = classifyBusinessCategory({
                               rawCategory: biz.place?.category,
                               name: biz.title,
                               domain: biz.domain,
                               description: biz.place?.description
-                            }).badgeLabel;
+                            });
+                            const catBadge = catInfo.isFallback ? "" : catInfo.badgeLabel;
                             return catBadge ? (
                               <>
                                 {biz.domain && <span aria-hidden="true">·</span>}
@@ -879,11 +880,12 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                           <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400 mt-0.5 tabular-nums truncate">
                             {item.domain && <span className="truncate">{item.domain}</span>}
                             {!item.isCreator && (() => {
-                              const catBadge = classifyBusinessCategory({
+                              const catInfo = classifyBusinessCategory({
                                 rawCategory: item.category,
                                 name: item.title,
                                 domain: item.domain || item.id
-                              }).badgeLabel;
+                              });
+                              const catBadge = catInfo.isFallback ? "" : catInfo.badgeLabel;
                               return catBadge ? (
                                 <>
                                   {item.domain && <span aria-hidden="true">·</span>}

@@ -315,7 +315,7 @@ export const CopoBrandLogo: React.FC<CopoBrandLogoProps> = ({
           loading={loading === "lazy" ? "eager" : loading}
           fetchPriority={fetchPriority}
           decoding="sync"
-          className={`${activeImageClass} ${contrastFilterClass} relative z-20 w-full h-full [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
+          className={`${activeImageClass} ${contrastFilterClass} relative z-20 w-full h-full transition-opacity duration-200 ease-out [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${
             instantVisible || currentSrc === loadedSrc || (imgLoaded && !loadedSrc) ? "opacity-100" : "opacity-0"
           }`}
           referrerPolicy={/^https?:\/\//i.test(currentSrc) ? "no-referrer" : undefined}
