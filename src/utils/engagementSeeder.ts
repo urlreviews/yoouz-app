@@ -579,16 +579,15 @@ export async function seedCommunityEngagementV1(): Promise<{
     if (actorCount === 0) continue;
 
     if (plan) {
-      // 2a. Seed Likes (all strictly between review creation time and now)
+      const safeCapMs = now - 3600_000;
+
+      // 2a. Seed Likes (anchored deterministically +25m..+32h after parent review creation)
       const targetLikes = Math.min(plan.likes, actorCount);
       for (let i = 0; i < targetLikes; i++) {
         const actor = eligibleActors[(seedHash + i * 7) % actorCount];
         const likeId = `like_${actor.id}_${videoId}`;
-        const spanMs = Math.max(1800_000, now - baseMs - 600_000);
-        const safeTsMs = Math.min(
-          now - 300_000 - i * 60_000,
-          baseMs + Math.round(((i + 1) / (targetLikes + 1)) * spanMs)
-        );
+        const offsetMs = (25 + ((seedHash + i * 197) % 1895)) * 60_000;
+        const safeTsMs = Math.min(safeCapMs, baseMs + offsetMs);
         const isoAt = new Date(safeTsMs).toISOString();
         const sqlAt = toSqliteTimestamp(safeTsMs);
 
@@ -622,17 +621,14 @@ export async function seedCommunityEngagementV1(): Promise<{
         likesAdded++;
       }
 
-      // 2b. Seed Bookmarks / Saves
+      // 2b. Seed Bookmarks / Saves (anchored deterministically +40m..+36h after parent review creation)
       const targetBookmarks = Math.min(plan.bookmarks, actorCount);
       for (let i = 0; i < targetBookmarks; i++) {
         const actor = eligibleActors[(seedHash + 13 + i * 11) % actorCount];
         const safeSlug = videoId.replace(/[^a-z0-9]/gi, "_");
         const bmId = `bm_${actor.id}_${safeSlug}`;
-        const spanMs = Math.max(1800_000, now - baseMs - 900_000);
-        const safeTsMs = Math.min(
-          now - 450_000 - i * 90_000,
-          baseMs + Math.round(((i + 1) / (targetBookmarks + 1)) * spanMs)
-        );
+        const offsetMs = (40 + ((seedHash + i * 241) % 2120)) * 60_000;
+        const safeTsMs = Math.min(safeCapMs, baseMs + offsetMs);
         const isoAt = new Date(safeTsMs).toISOString();
         const sqlAt = toSqliteTimestamp(safeTsMs);
 
@@ -668,17 +664,14 @@ export async function seedCommunityEngagementV1(): Promise<{
         bookmarksAdded++;
       }
 
-      // 2c. Seed Shares
+      // 2c. Seed Shares (anchored deterministically +55m..+40h after parent review creation)
       const targetShares = Math.min(plan.shares, actorCount);
       for (let i = 0; i < targetShares; i++) {
         const actor = eligibleActors[(seedHash + 19 + i * 5) % actorCount];
         const platform = SHARE_PLATFORMS[(seedHash + i) % SHARE_PLATFORMS.length];
         const shareId = `share_seed_${actor.id}_${videoId}_${i}`;
-        const spanMs = Math.max(1800_000, now - baseMs - 1200_000);
-        const safeTsMs = Math.min(
-          now - 600_000 - i * 120_000,
-          baseMs + Math.round(((i + 1) / (targetShares + 1)) * spanMs)
-        );
+        const offsetMs = (55 + ((seedHash + i * 283) % 2345)) * 60_000;
+        const safeTsMs = Math.min(safeCapMs, baseMs + offsetMs);
         const isoAt = new Date(safeTsMs).toISOString();
         const sqlAt = toSqliteTimestamp(safeTsMs);
 
@@ -710,9 +703,9 @@ export async function seedCommunityEngagementV1(): Promise<{
         sharesAdded++;
       }
 
-      // 2d. Seed Natural Comments & Replies with realistic, distinct relative timestamps newer than the review
-      const distinctCommentAges = getDistinctCommentAgesHours(reviewAgeHours, plan.comments.length, seedHash);
+      // 2d. Seed Natural Comments & Replies anchored deterministically after parent review creation
       let lastTopLevelCommentId: string | undefined = undefined;
+      let lastTopLevelMs: number = baseMs;
       for (let i = 0; i < plan.comments.length; i++) {
         const cb = plan.comments[i];
         const isAuthorReply = cb.authorUserId === "__REVIEW_AUTHOR__";
@@ -723,18 +716,23 @@ export async function seedCommunityEngagementV1(): Promise<{
         const actorHandle = isAuthorReply ? reviewAuthorHandle : matchedActor!.handle;
         const actorAvatar = isAuthorReply ? reviewAuthorAvatar : matchedActor!.avatar;
 
-        const commentAgeHours = distinctCommentAges[i] ?? Math.max(1, Math.floor(reviewAgeHours / (i + 2)));
-        const commentMinuteOffset = ((seedHash + i * 13) % 19) * 60_000;
-        const rawCommentMs = now - commentAgeHours * 3600_000 - commentMinuteOffset;
-        // Guarantee strictly newer than review and strictly before now
-        const finalTsMs = Math.max(baseMs + (i + 1) * 900_000, Math.min(rawCommentMs, now - 120_000));
-        const isoAt = new Date(finalTsMs).toISOString();
-        const sqlAt = toSqliteTimestamp(finalTsMs);
-
         const commentId = `comm_seed_${videoId.replace(/[^a-z0-9]/gi, "_")}_${i}`;
         const isReply = Boolean(cb.replyToPrev && lastTopLevelCommentId);
         const parentId = isReply ? lastTopLevelCommentId : undefined;
-        if (!isReply) lastTopLevelCommentId = commentId;
+
+        let finalTsMs: number;
+        if (isReply) {
+          const replyOffsetMs = (22 + ((seedHash + i * 19) % 138)) * 60_000;
+          finalTsMs = Math.min(safeCapMs, lastTopLevelMs + replyOffsetMs);
+        } else {
+          const hoursAfter = 1 + ((seedHash + i * 5) % 14);
+          const minsAfter = (seedHash + i * 17) % 53;
+          finalTsMs = Math.min(safeCapMs, baseMs + hoursAfter * 3600_000 + minsAfter * 60_000);
+          lastTopLevelCommentId = commentId;
+          lastTopLevelMs = finalTsMs;
+        }
+        const isoAt = new Date(finalTsMs).toISOString();
+        const sqlAt = toSqliteTimestamp(finalTsMs);
 
         const commentObj: any = {
           id: commentId,

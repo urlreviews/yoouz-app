@@ -1568,31 +1568,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     }
   };
 
-  // Live Database Items State (Direct fetch from /api/nosql/* to guarantee 100% parity with Database tab)
-  const [dbPlaces, setDbPlaces] = useState<Place[]>(() => {
-    try {
-      const cached = localStorage.getItem("yoouz_cached_places");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {}
-    return [];
-  });
+  // Live Database Items State (Atomically hydrated from /api/admin/bootstrap — single source of truth)
+  const [hasBootstrapped, setHasBootstrapped] = useState(false);
+  const [dbPlaces, setDbPlaces] = useState<Place[]>([]);
   const [dbVideos, setDbVideos] = useState<VideoReview[]>([]);
-  const [dbUsers, setDbUsers] = useState<any[]>(() => {
-    try {
-      localStorage.removeItem("yoouz_admin_cached_users");
-      const cached = localStorage.getItem("yoouz_admin_cached_users_v2");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {}
-    return [];
-  });
+  const [dbUsers, setDbUsers] = useState<any[]>([]);
   const [dbComments, setDbComments] = useState<any[]>([]);
 
   // Partner Agencies State
@@ -1612,179 +1592,95 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     country: "Belgium"
   });
 
-  // Merged authoritative collections
+  // Authoritative collections: once /api/admin/bootstrap completes, ONLY the full BunnyDB snapshot is used
+  // (never merges partial 24-item paginated feed props from App.tsx so counts NEVER jump or conflict!)
   const activePlaces = useMemo(() => {
+    const source = hasBootstrapped ? dbPlaces : [];
     const map = new Map<string, Place>();
-    const processItem = (p: Place) => {
+    source.forEach((p) => {
       if (!p || !p.id) return;
       const key = String(p.id).toLowerCase().trim();
       const existing = map.get(key);
-      if (!existing) {
-        map.set(key, { ...p, id: key });
-      } else {
-        map.set(key, { ...existing, ...p, id: key });
-      }
-    };
-
-    (places || []).forEach(processItem);
-    (dbPlaces || []).forEach(processItem);
+      map.set(key, existing ? { ...existing, ...p, id: key } : { ...p, id: key });
+    });
     return Array.from(map.values());
-  }, [places, dbPlaces]);
+  }, [hasBootstrapped, dbPlaces]);
 
   const activeVideos = useMemo(() => {
+    const source = hasBootstrapped ? dbVideos : [];
     const map = new Map<string, VideoReview>();
-    (videos || []).forEach((v) => {
-      if (v && v.id && !isClientDeletedVideo(v)) {
-        map.set(String(v.id), v);
-      }
-    });
-    (dbVideos || []).forEach((v) => {
+    source.forEach((v) => {
       if (v && v.id && !isClientDeletedVideo(v)) {
         map.set(String(v.id), v);
       }
     });
     return Array.from(map.values());
-  }, [videos, dbVideos]);
+  }, [hasBootstrapped, dbVideos]);
 
   const activeAllUsers = useMemo(() => {
+    const source = hasBootstrapped ? dbUsers : [];
     const map = new Map<string, any>();
-    (allUsers || []).forEach((u) => {
-      if (u) {
-        const key = u.id || u.uid || u.email || u.handle;
-        if (key) map.set(String(key).toLowerCase(), u);
-      }
-    });
-    (dbUsers || []).forEach((u) => {
+    source.forEach((u) => {
       if (u) {
         const key = u.id || u.uid || u.email || u.handle;
         if (key) map.set(String(key).toLowerCase(), u);
       }
     });
     return Array.from(map.values());
-  }, [allUsers, dbUsers]);
+  }, [hasBootstrapped, dbUsers]);
 
   const fetchLiveStats = async (silent = true) => {
     if (!silent) setIsLoadingLiveStats(true);
-    const withSignal = (ms = 10000) => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), ms);
-      return { signal: controller.signal, done: () => clearTimeout(timer) };
-    };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const statsCtrl = withSignal(15000);
-      const statsTask = adminFetch("/api/admin/live-stats", { cache: "no-store", signal: statsCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const data = await res.json();
-            setLiveStats(data);
-            setLastSyncedTime(new Date());
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          statsCtrl.done();
-          if (!silent) setIsLoadingLiveStats(false);
-        });
+      const res = await adminFetch(`/api/admin/bootstrap?_t=${Date.now()}`, {
+        cache: "no-store",
+        signal: controller.signal
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success) {
+          const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
+          let localDel: string[] = [];
+          try { localDel = JSON.parse(deletedStr); } catch {}
+          const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
 
-      const usersCtrl = withSignal(10000);
-      const usersTask = adminFetch("/api/admin/users", { cache: "no-store", signal: usersCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const usersData = await res.json();
-            const list = Array.isArray(usersData) ? usersData : (usersData?.users || []);
-            if (Array.isArray(list)) {
-              setDbUsers(list);
-              try {
-                localStorage.removeItem("yoouz_admin_cached_users");
-                localStorage.setItem("yoouz_admin_cached_users_v2", JSON.stringify(list));
-              } catch (e) {}
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => usersCtrl.done());
+          const cleanVideos = Array.isArray(data.videos)
+            ? data.videos.filter((v: any) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()))
+            : [];
+          const cleanPlaces = Array.isArray(data.places) ? data.places : [];
+          const cleanUsers = Array.isArray(data.users) ? data.users : [];
+          const cleanComments = Array.isArray(data.comments) ? data.comments : [];
+          const cleanLikes = Array.isArray(data.likes) ? data.likes : [];
+          const cleanBookmarks = Array.isArray(data.bookmarks) ? data.bookmarks : [];
+          const cleanChats = Array.isArray(data.chats) ? data.chats : [];
 
-      const placesCtrl = withSignal(12000);
-      const placesTask = fetch(`/api/nosql/places?_t=${Date.now()}`, { cache: "no-store", signal: placesCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const placesData = await res.json();
-            if (Array.isArray(placesData)) {
-              setDbPlaces(placesData);
-              try {
-                localStorage.setItem("yoouz_cached_places", JSON.stringify(placesData));
-              } catch (e) {}
-            }
+          // Commit the entire coherent server snapshot in ONE atomic React render batch
+          setLiveStats(data.liveStats || null);
+          setDbVideos(cleanVideos);
+          setDbPlaces(cleanPlaces);
+          setDbUsers(cleanUsers);
+          setDbComments(cleanComments);
+          setAdminLikes(cleanLikes);
+          setAdminBookmarks(cleanBookmarks);
+          setAdminChats(cleanChats);
+          setHasLoadedChats(true);
+          if (Array.isArray(data.broadcasts) && data.broadcasts.length > 0) {
+            setBroadcastHistory(data.broadcasts);
+            try {
+              localStorage.setItem("yoouz_broadcast_history", JSON.stringify(data.broadcasts));
+            } catch {}
           }
-        })
-        .catch(() => {})
-        .finally(() => placesCtrl.done());
-
-      const videosCtrl = withSignal(12000);
-      const videosTask = fetch(`/api/nosql/videoReviews?_t=${Date.now()}`, { cache: "no-store", signal: videosCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const videosData = await res.json();
-            if (Array.isArray(videosData)) {
-              const deletedStr = localStorage.getItem("copo_deleted_videos") || "[]";
-              let localDel: string[] = [];
-              try { localDel = JSON.parse(deletedStr); } catch (e) {}
-              const delSet = new Set(localDel.map((s) => String(s).toLowerCase().trim()));
-              const cleanVideos = videosData.filter((v) => v && v.id && !delSet.has(String(v.id).toLowerCase().trim()));
-              setDbVideos(cleanVideos);
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => videosCtrl.done());
-
-      const chatsCtrl = withSignal(10000);
-      const chatsTask = adminFetch("/api/admin/chats", { cache: "no-store", signal: chatsCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const chatsData = await res.json();
-            if (chatsData && chatsData.success && Array.isArray(chatsData.chats)) {
-              setAdminChats(chatsData.chats);
-              setHasLoadedChats(true);
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => chatsCtrl.done());
-
-      const commentsCtrl = withSignal(10000);
-      const commentsTask = fetch(`/api/nosql/comments?_t=${Date.now()}`, { cache: "no-store", signal: commentsCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const commentsData = await res.json();
-            if (Array.isArray(commentsData)) {
-              setDbComments(commentsData);
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => commentsCtrl.done());
-
-      const broadcastsCtrl = withSignal(10000);
-      const broadcastsTask = adminFetch(`/api/admin/broadcasts?_t=${Date.now()}`, { cache: "no-store", signal: broadcastsCtrl.signal })
-        .then(async (res) => {
-          if (res.ok) {
-            const bcData = await res.json();
-            if (bcData && bcData.success && Array.isArray(bcData.broadcasts) && bcData.broadcasts.length > 0) {
-              setBroadcastHistory(bcData.broadcasts);
-              try {
-                localStorage.setItem("yoouz_broadcast_history", JSON.stringify(bcData.broadcasts));
-              } catch {}
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => broadcastsCtrl.done());
-
-      await Promise.allSettled([statsTask, usersTask, placesTask, videosTask, chatsTask, commentsTask, broadcastsTask]);
+          setHasBootstrapped(true);
+          setLastSyncedTime(new Date());
+          return;
+        }
+      }
     } catch (err) {
-      console.warn("Failed to fetch live admin stats:", err);
+      console.warn("Failed to fetch atomic admin bootstrap:", err);
     } finally {
+      clearTimeout(timer);
       if (!silent) setIsLoadingLiveStats(false);
     }
   };
@@ -1799,10 +1695,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
         setDbVideos((prev) => prev.filter((v) => String(v.id).toLowerCase().trim() !== vidIdLower));
         setSelectedVideoIds((prev) => prev.filter((id) => String(id).toLowerCase().trim() !== vidIdLower));
       }
+      fetchLiveStats(true);
     };
     const handlePurged = () => {
       setDbVideos([]);
       setSelectedVideoIds([]);
+      fetchLiveStats(true);
     };
     const handleLiked = (e: any) => {
       const vidId = e?.detail?.videoId;
@@ -1810,7 +1708,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (vidId && nLikes !== undefined) {
         setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, likes: nLikes, likesCount: nLikes } : v));
       }
-      fetchAdminLikes(true);
       fetchLiveStats(true);
     };
     const handleBookmarked = (e: any) => {
@@ -1819,7 +1716,6 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       if (vidId && nBm !== undefined) {
         setDbVideos((prev) => prev.map((v) => String(v.id) === String(vidId) ? { ...v, bookmarks: nBm, bookmarksCount: nBm } : v));
       }
-      fetchAdminBookmarks(true);
       fetchLiveStats(true);
     };
     const handleComment = () => {
@@ -1844,22 +1740,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       window.removeEventListener("copo-new-comment", handleComment);
       window.removeEventListener("copo-profile-updated", handleProfileUpdated);
     };
-  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchLiveStats(false);
-    fetchAdminLikes(true);
-    fetchAdminBookmarks(true);
-    fetchAdminChats(true);
     const interval = setInterval(() => {
       fetchLiveStats(true);
-      fetchAdminLikes(true);
-      fetchAdminBookmarks(true);
-      fetchAdminChats(true);
     }, 30000);
     return () => clearInterval(interval);
-  }, [isAuthenticated, fetchAdminLikes, fetchAdminBookmarks, fetchAdminChats]);
+  }, [isAuthenticated]);
 
   // Helper: Toast notification
   const showToast = (msg: string) => {
@@ -2775,13 +2665,28 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
     return list;
   }, [allComments, searchQuery, commentTypeFilter, commentPlaceFilter, commentSortFilter]);
 
-  // Filtered and Sorted Likes List
-  const filteredLikes = useMemo(() => {
-    let list = adminLikes.filter((l) => {
+  const activeVideoIdsSet = useMemo(() => new Set(activeVideos.map((v) => String(v.id))), [activeVideos]);
+
+  // Authoritative unfiltered likes & bookmarks (immune to tab search inputs so sidebar/KPI/database counts stay exact)
+  const validAdminLikes = useMemo(() => {
+    return adminLikes.filter((l) => {
       if (!l || !l.videoId) return true;
       if (isClientDeletedVideo(l.videoId)) return false;
-      return activeVideos.some((v) => String(v.id) === String(l.videoId));
+      return activeVideoIdsSet.has(String(l.videoId));
     });
+  }, [adminLikes, activeVideoIdsSet]);
+
+  const validAdminBookmarks = useMemo(() => {
+    return adminBookmarks.filter((b) => {
+      if (!b || !b.videoId) return true;
+      if (isClientDeletedVideo(b.videoId)) return false;
+      return activeVideoIdsSet.has(String(b.videoId));
+    });
+  }, [adminBookmarks, activeVideoIdsSet]);
+
+  // Filtered and Sorted Likes List
+  const filteredLikes = useMemo(() => {
+    let list = [...validAdminLikes];
     if (likesSearchQuery.trim()) {
       const q = likesSearchQuery.toLowerCase().trim();
       list = list.filter((l) => {
@@ -2800,15 +2705,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     }
     return list;
-  }, [adminLikes, activeVideos, likesSearchQuery, likesSort]);
+  }, [validAdminLikes, likesSearchQuery, likesSort]);
 
   // Filtered and Sorted Bookmarks List
   const filteredBookmarks = useMemo(() => {
-    let list = adminBookmarks.filter((b) => {
-      if (!b || !b.videoId) return true;
-      if (isClientDeletedVideo(b.videoId)) return false;
-      return activeVideos.some((v) => String(v.id) === String(b.videoId));
-    });
+    let list = [...validAdminBookmarks];
     if (bookmarksSearchQuery.trim()) {
       const q = bookmarksSearchQuery.toLowerCase().trim();
       list = list.filter((b) => {
@@ -2828,7 +2729,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
       list.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
     }
     return list;
-  }, [adminBookmarks, activeVideos, bookmarksSearchQuery, bookmarksSort]);
+  }, [validAdminBookmarks, bookmarksSearchQuery, bookmarksSort]);
 
   // Categories list
   const uniqueBusinessCategories = useMemo(() => {
@@ -3726,20 +3627,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   title: "Core",
                   items: [
                     { id: "overview" as AdminTab, label: "Overview", icon: BarChart3 },
-                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos) },
-                    { id: "businesses" as AdminTab, label: "Businesses", icon: Briefcase, count: metrics.totalBusinesses },
-                    { id: "places" as AdminTab, label: "Places", icon: Building2, count: metrics.totalPhysicalPlaces }
+                    { id: "videos" as AdminTab, label: "Photo Reviews", icon: Camera, count: hasBootstrapped ? activeVideos.length : undefined },
+                    { id: "businesses" as AdminTab, label: "Businesses", icon: Briefcase, count: hasBootstrapped ? metrics.totalBusinesses : undefined },
+                    { id: "places" as AdminTab, label: "Places", icon: Building2, count: hasBootstrapped ? metrics.totalPhysicalPlaces : undefined }
                   ]
                 },
                 {
                   title: "Community",
                   items: [
-                    { id: "users" as AdminTab, label: "Users", icon: Users, count: metrics.totalUsers },
-                    { id: "creators" as AdminTab, label: "Creators", icon: Award, count: metrics.totalCreators },
-                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments) },
-                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes) },
-                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks) },
-                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length) }
+                    { id: "users" as AdminTab, label: "Users", icon: Users, count: hasBootstrapped ? metrics.totalUsers : undefined },
+                    { id: "creators" as AdminTab, label: "Creators", icon: Award, count: hasBootstrapped ? metrics.totalCreators : undefined },
+                    { id: "comments" as AdminTab, label: "Comments", icon: MessageSquare, count: hasBootstrapped ? allComments.length : undefined },
+                    { id: "likes" as AdminTab, label: "Likes", icon: Heart, count: hasBootstrapped ? validAdminLikes.length : undefined },
+                    { id: "bookmarks" as AdminTab, label: "Bookmarks", icon: Bookmark, count: hasBootstrapped ? validAdminBookmarks.length : undefined },
+                    { id: "messages" as AdminTab, label: "Messages", icon: Mail, count: hasBootstrapped ? adminChats.length : undefined }
                   ]
                 },
                 {
@@ -3819,15 +3720,15 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
             {(
               [
                 ["overview", "Overview"],
-                ["videos", `Photo Reviews (${activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)})`],
-                ["businesses", `Businesses (${metrics.totalBusinesses})`],
-                ["places", `Places (${metrics.totalPhysicalPlaces})`],
-                ["users", `Users (${metrics.totalUsers})`],
-                ["creators", `Creators (${metrics.totalCreators})`],
-                ["comments", `Comments (${allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)})`],
-                ["likes", `Likes (${filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)})`],
-                ["bookmarks", `Bookmarks (${filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks)})`],
-                ["messages", `Messages (${hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length)})`],
+                ["videos", hasBootstrapped ? `Photo Reviews (${activeVideos.length})` : "Photo Reviews"],
+                ["businesses", hasBootstrapped ? `Businesses (${metrics.totalBusinesses})` : "Businesses"],
+                ["places", hasBootstrapped ? `Places (${metrics.totalPhysicalPlaces})` : "Places"],
+                ["users", hasBootstrapped ? `Users (${metrics.totalUsers})` : "Users"],
+                ["creators", hasBootstrapped ? `Creators (${metrics.totalCreators})` : "Creators"],
+                ["comments", hasBootstrapped ? `Comments (${allComments.length})` : "Comments"],
+                ["likes", hasBootstrapped ? `Likes (${validAdminLikes.length})` : "Likes"],
+                ["bookmarks", hasBootstrapped ? `Bookmarks (${validAdminBookmarks.length})` : "Bookmarks"],
+                ["messages", hasBootstrapped ? `Messages (${adminChats.length})` : "Messages"],
                 ["broadcast", "Broadcast"],
                 ["search", "Search Intel"],
                 ["indexing", "Google Indexing"],
@@ -4294,7 +4195,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {metrics.totalBusinesses}
+                      {hasBootstrapped ? metrics.totalBusinesses : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Claimed & verified</div>
                   </div>
@@ -4315,11 +4216,11 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)}
+                      {hasBootstrapped ? activeVideos.length : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 flex items-center gap-1 truncate tabular-nums">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-                      <span className="text-zinc-300 font-medium">{metrics.avgRating}</span>
+                      <span className="text-zinc-300 font-medium">{hasBootstrapped ? metrics.avgRating : "—"}</span>
                       <span>avg</span>
                     </div>
                   </div>
@@ -4340,7 +4241,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {metrics.totalPhysicalPlaces}
+                      {hasBootstrapped ? metrics.totalPhysicalPlaces : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Indexed venues</div>
                   </div>
@@ -4361,10 +4262,10 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {metrics.totalCreators}
+                      {hasBootstrapped ? metrics.totalCreators : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
-                      {activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos)} authored reviews
+                      {hasBootstrapped ? `${activeVideos.length} authored reviews` : "Syncing reviews..."}
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
@@ -4384,7 +4285,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {metrics.totalUsers}
+                      {hasBootstrapped ? metrics.totalUsers : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate">Total accounts</div>
                   </div>
@@ -4405,10 +4306,12 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                   </div>
                   <div className="my-3">
                     <div className="text-2xl font-semibold text-white tracking-tight tabular-nums">
-                      {(filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)) + (filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks)) + (allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)) + (liveStats?.totals?.shares ?? metrics.totalShares)}
+                      {hasBootstrapped
+                        ? validAdminLikes.length + validAdminBookmarks.length + allComments.length + (liveStats?.totals?.shares ?? metrics.totalShares)
+                        : "—"}
                     </div>
                     <div className="text-[11px] text-zinc-300 mt-0.5 truncate tabular-nums">
-                      {filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes)} likes · {allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments)} comments
+                      {hasBootstrapped ? `${validAdminLikes.length} likes · ${allComments.length} comments` : "Syncing activity..."}
                     </div>
                   </div>
                   <div className="flex items-center justify-between w-full text-[11px] text-zinc-300 group-hover:text-zinc-200 pt-2.5 border-t border-white/[0.06] transition-colors">
@@ -6275,16 +6178,20 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                     const isConfirmingDelete = confirmDeleteCommentInfo?.commentId === item.comment.id;
 
                     let timeDisplay = item.comment.createdAt || "Recent";
-                    if (item.comment.createdAtMs) {
-                      const diffMs = Date.now() - item.comment.createdAtMs;
+                    if (item.comment.createdAtMs && Number.isFinite(item.comment.createdAtMs)) {
+                      const dObj = new Date(item.comment.createdAtMs);
+                      const exactDate = dObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                      const diffMs = Math.max(0, Date.now() - item.comment.createdAtMs);
                       const diffMins = Math.floor(diffMs / 60000);
                       const diffHours = Math.floor(diffMs / 3600000);
                       const diffDays = Math.floor(diffMs / 86400000);
-                      if (diffMins < 1) timeDisplay = "Just now";
-                      else if (diffMins < 60) timeDisplay = `${diffMins}m ago`;
-                      else if (diffHours < 24) timeDisplay = `${diffHours}h ago`;
-                      else if (diffDays < 7) timeDisplay = `${diffDays}d ago`;
-                      else timeDisplay = new Date(item.comment.createdAtMs).toLocaleDateString();
+                      let rel = "";
+                      if (diffMins < 1) rel = "Just now";
+                      else if (diffMins < 60) rel = `${diffMins}m ago`;
+                      else if (diffHours < 24) rel = `${diffHours}h ago`;
+                      else if (diffDays < 30) rel = `${diffDays}d ago`;
+                      else rel = `${Math.floor(diffDays / 30)}mo ago`;
+                      timeDisplay = diffDays >= 1 ? `${exactDate} · ${rel}` : rel;
                     }
 
                     const metaTags: string[] = [];
@@ -7943,16 +7850,16 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {(
                     [
-                      { name: "videoReviews", label: "Photo Reviews", count: activeVideos.length > 0 ? activeVideos.length : (liveStats?.totals?.videoReviews ?? metrics.totalVideos), Icon: Camera },
-                      { name: "places", label: "Places", count: metrics.totalPhysicalPlaces > 0 ? metrics.totalPhysicalPlaces : (liveStats?.totals?.places ?? 0), Icon: MapPin },
-                      { name: "users", label: "Users", count: metrics.totalUsers > 0 ? metrics.totalUsers : (liveStats?.totals?.users ?? 0), Icon: Users },
-                      { name: "comments", label: "Comments", count: allComments.length > 0 ? allComments.length : (liveStats?.totals?.comments ?? metrics.totalComments), Icon: MessageSquare },
-                      { name: "likes", label: "Likes", count: filteredLikes.length > 0 ? filteredLikes.length : (liveStats?.totals?.likes ?? metrics.totalLikes), Icon: Heart },
+                      { name: "videoReviews", label: "Photo Reviews", count: activeVideos.length, Icon: Camera },
+                      { name: "places", label: "Places", count: metrics.totalPhysicalPlaces, Icon: MapPin },
+                      { name: "users", label: "Users", count: metrics.totalUsers, Icon: Users },
+                      { name: "comments", label: "Comments", count: allComments.length, Icon: MessageSquare },
+                      { name: "likes", label: "Likes", count: validAdminLikes.length, Icon: Heart },
                       { name: "shares", label: "Shares", count: liveStats?.totals?.shares ?? metrics.totalShares, Icon: Share2 },
-                      { name: "bookmarks", label: "Bookmarks", count: filteredBookmarks.length > 0 ? filteredBookmarks.length : (liveStats?.totals?.bookmarks ?? metrics.totalBookmarks), Icon: Bookmark },
-                      { name: "chats", label: "Messages", count: hasLoadedChats ? adminChats.length : (liveStats?.totals?.chats ?? adminChats.length), Icon: Mail },
+                      { name: "bookmarks", label: "Bookmarks", count: validAdminBookmarks.length, Icon: Bookmark },
+                      { name: "chats", label: "Messages", count: adminChats.length, Icon: Mail },
                       { name: "notifications", label: "Notifications", count: liveStats?.totals?.notifications ?? 0, Icon: Bell },
-                      { name: "businessClaims", label: "Business Claims", count: metrics.totalBusinesses > 0 ? metrics.totalBusinesses : (liveStats?.totals?.businessClaims ?? 0), Icon: Building2 }
+                      { name: "businessClaims", label: "Business Claims", count: metrics.totalBusinesses, Icon: Building2 }
                     ] as const
                   ).map((t) => {
                     const TableIcon = t.Icon;
@@ -7970,7 +7877,7 @@ export const CopoAdminPanel: React.FC<CopoAdminPanelProps> = ({
                           <TableIcon className="w-4 h-4 text-zinc-300 group-hover:text-white shrink-0" />
                         </div>
                         <div className="flex items-baseline justify-between gap-2 w-full">
-                          {isLoadingLiveStats && !liveStats ? (
+                          {!hasBootstrapped ? (
                             <div className="h-6 w-10 bg-white/[0.1] animate-pulse rounded" />
                           ) : (
                             <span className="text-2xl font-bold text-white tabular-nums">{t.count.toLocaleString()}</span>
