@@ -1,5 +1,131 @@
 [
   {
+    "id": "koadamsterdam.com",
+    "name": "KOAD Amsterdam",
+    "website": "https://www.koadamsterdam.com/",
+    "brandDomain": "https://www.koadamsterdam.com/",
+    "rating": 4,
+    "totalReviews": 1,
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "address": "Haarlemmerdijk 126-B, 1013 JJ Amsterdam, Netherlands",
+    "phone": "+31 20 786 4263",
+    "email": "info@koadamsterdam.com",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67d5b4e18d59a50f40ec0c2a%2F0cf885e1-53d2-4680-858b-2c3fc04f2f05%2FWhatsApp%2BImage%2B2025-07-02%2Bat%2B14.38.10.jpeg%3Fformat%3D1500w",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67d5b4e18d59a50f40ec0c2a%2F0cf885e1-53d2-4680-858b-2c3fc04f2f05%2FWhatsApp%2BImage%2B2025-07-02%2Bat%2B14.38.10.jpeg%3Fformat%3D1500w",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67d5b4e18d59a50f40ec0c2a%2F0cf885e1-53d2-4680-858b-2c3fc04f2f05%2FWhatsApp%2BImage%2B2025-07-02%2Bat%2B14.38.10.jpeg%3Fformat%3D1500w"
+    ],
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67d5b4e18d59a50f40ec0c2a%2Fca843152-1b75-4aab-9712-ecf36b308b35%2FLOGO%2BFINAL%2B-%2BPHOTOSHOP.png%3Fformat%3D1500w",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fimages.squarespace-cdn.com%2Fcontent%2Fv1%2F67d5b4e18d59a50f40ec0c2a%2Fca843152-1b75-4aab-9712-ecf36b308b35%2FLOGO%2BFINAL%2B-%2BPHOTOSHOP.png%3Fformat%3D1500w",
+    "category": "Barber & Grooming",
+    "categoryType": "services",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 1,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 1,
+      "5": 0
+    }
+  },
+  {
+    "id": "tandartsjordaan.nl",
+    "name": "Tandarts Jordaan",
+    "website": "https://tandartsjordaan.nl/en/",
+    "brandDomain": "https://tandartsjordaan.nl/en/",
+    "rating": 5,
+    "totalReviews": 1,
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "address": "Westerstraat 176, 1015 MR Amsterdam",
+    "phone": "+31 20 612 1243",
+    "email": "info@tandartsjordaan.nl",
+    "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Ftandartsjordaan.nl%2Fwp-content%2Fuploads%2F2022%2F01%2FHeader-Image-Tandarts-Jordaan-102-Marit-van-den-Berg-Photography-1.png%3Fid%3D2932",
+    "ogImage": "/api/proxy-image?url=https%3A%2F%2Ftandartsjordaan.nl%2Fwp-content%2Fuploads%2F2022%2F01%2FHeader-Image-Tandarts-Jordaan-102-Marit-van-den-Berg-Photography-1.png%3Fid%3D2932",
+    "photos": [
+      "/api/proxy-image?url=https%3A%2F%2Ftandartsjordaan.nl%2Fwp-content%2Fuploads%2F2022%2F01%2FHeader-Image-Tandarts-Jordaan-102-Marit-van-den-Berg-Photography-1.png%3Fid%3D2932"
+    ],
+    "logoUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Ftandartsjordaan.nl%2Fwp-content%2Fuploads%2F2022%2F01%2FLogo-Jordaan-liggend.svg",
+    "avatarUrl": "/api/proxy-image?v=3&url=https%3A%2F%2Ftandartsjordaan.nl%2Fwp-content%2Fuploads%2F2022%2F01%2FLogo-Jordaan-liggend.svg",
+    "category": "Healthcare & Medical",
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "categoryType": "services"
+  },
+  {
+    "id": "hoteljeannedarc.com",
+    "name": "Hotel Jeanne d’Arc",
+    "website": "https://hoteljeannedarc.com/",
+    "brandDomain": "https://hoteljeannedarc.com/",
+    "rating": 5,
+    "totalReviews": 1,
+    "city": "Paris",
+    "country": "France",
+    "address": "3 Rue de Jarente, 75004 Paris, France",
+    "phone": "+33 1 48 87 62 11",
+    "email": "information@hoteljeannedarc.com",
+    "bannerUrl": "https://www.hoteljeannedarc.com/_novaimg/4972861-1491473_0_0_4800_3184_2200_1459.jpg",
+    "ogImage": "https://www.hoteljeannedarc.com/_novaimg/4972861-1491473_0_0_4800_3184_2200_1459.jpg",
+    "photos": [
+      "https://www.hoteljeannedarc.com/_novaimg/4972861-1491473_0_0_4800_3184_2200_1459.jpg",
+      "/api/proxy-image?url=https%3A%2F%2Fwww.hoteljeannedarc.com%2F_novaimg%2F4972861-1491473_0_0_4800_3184_2200_1459.jpg"
+    ],
+    "logoUrl": "/api/favicon?domain=hoteljeannedarc.com",
+    "avatarUrl": "/api/favicon?domain=hoteljeannedarc.com",
+    "category": "Hotel & Hospitality",
+    "categoryType": "hotels",
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "ratingDistribution": {
+      "stars5": 1,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "Welcome to Hotel Jeanne d’Arc, a modern and charming economical hotel in Le Marais, the historic centre of Paris. Official site, best available rates!",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    }
+  },
+  {
     "id": "guesswatches.com",
     "category": "Watches & Accessories",
     "logoUrl": "/uploads/brand-assets/logos/guesswatches.com.webp",
@@ -3646,8 +3772,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=webflow.com",
-    "logoUrl": "/api/favicon?domain=webflow.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dwebflow.com%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fcdn.prod.website-files.com%2F6009ec8cda7f305645c9d91b%2F651f2091caa28de325c11530_BlogHeader_Introducing-webflow-2-2400x1260.webp",
     "photos": [
@@ -8656,8 +8782,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=nfx.com",
-    "logoUrl": "/api/favicon?domain=nfx.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fapple-touch-icon.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.nfx.com%2Fimages%2Fogimages%2F_nfx-graphic-generic._001.jpg",
     "photos": [
@@ -8714,8 +8840,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=2b.vc",
-    "logoUrl": "/api/favicon?domain=2b.vc",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F06%2Flogo-copy.jpg",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.2b.vc%2Fwp-content%2Fuploads%2F2022%2F05%2FTBS_2951-1-1-1.png",
     "photos": [
@@ -9048,8 +9174,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=phoenixcourt.co",
-    "logoUrl": "/api/favicon?domain=phoenixcourt.co",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fapple-icon.png%3Fapple-icon.249ftcom0dxfh.png",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fwww.phoenixcourt.vc%2Fshare.png",
     "photos": [
@@ -9716,8 +9842,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=marketplace-capital.com",
-    "logoUrl": "/api/favicon?domain=marketplace-capital.com",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fmarketplace-capital.com%2Fassets%2Fmc-logo.png",
     "bannerUrl": "https://marketplace-capital.com/assets/firm-street.jpg",
     "ogImage": "https://marketplace-capital.com/assets/firm-street.jpg",
     "photos": [
@@ -10187,8 +10313,8 @@
       "stars2": 0,
       "stars1": 0
     },
-    "avatarUrl": "/api/favicon?domain=researchgate.net",
-    "logoUrl": "/api/favicon?domain=researchgate.net",
+    "avatarUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
+    "logoUrl": "/api/proxy-image?url=https%3A%2F%2Fwww.google.com%2Fs2%2Ffavicons%3Fdomain%3Dresearchgate.net%26sz%3D256",
     "bannerUrl": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "ogImage": "/api/proxy-image?url=https%3A%2F%2Fhelp.researchgate.net%2F~gitbook%2Fogimage%2F3q12zViWfUdoji7mB0vm",
     "photos": [
