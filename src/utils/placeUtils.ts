@@ -43,32 +43,72 @@ export function getReviewTime(v: any): number {
 }
 
 const TWO_PART_TLDS = new Set([
-  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk",
-  "com.au", "net.au", "org.au", "edu.au", "gov.au",
-  "co.nz", "org.nz", "net.nz", "govt.nz",
-  "co.il", "org.il", "net.il", "gov.il", "muni.il",
-  "com.br", "org.br", "net.br", "gov.br",
-  "com.tr", "org.tr", "net.tr", "gov.tr", "edu.tr",
-  "co.za", "org.za", "net.za", "gov.za",
-  "com.sg", "org.sg", "edu.sg", "gov.sg",
+  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk", "nhs.uk", "sch.uk", "police.uk",
+  "com.au", "net.au", "org.au", "edu.au", "gov.au", "asn.au", "id.au",
+  "co.nz", "org.nz", "net.nz", "govt.nz", "ac.nz", "school.nz", "geek.nz", "iwi.nz",
+  "co.il", "org.il", "net.il", "gov.il", "ac.il", "muni.il", "k12.il", "idf.il",
+  "com.br", "org.br", "net.br", "gov.br", "edu.br", "mil.br", "art.br", "ind.br", "jus.br", "leg.br",
+  "com.tr", "org.tr", "net.tr", "gov.tr", "edu.tr", "bel.tr", "k12.tr", "pol.tr", "av.tr", "gen.tr",
+  "co.za", "org.za", "net.za", "gov.za", "ac.za", "edu.za", "web.za", "law.za",
+  "com.sg", "org.sg", "edu.sg", "gov.sg", "net.sg",
   "com.my", "org.my", "net.my", "gov.my", "edu.my",
   "com.mx", "org.mx", "net.mx", "edu.mx", "gob.mx",
-  "com.ar", "org.ar", "net.ar", "gov.ar",
-  "com.co", "org.co", "net.co", "gov.co",
-  "co.in", "org.in", "net.in", "gov.in", "edu.in",
-  "com.ph", "org.ph", "net.ph", "gov.ph",
+  "com.ar", "org.ar", "net.ar", "gov.ar", "gob.ar", "edu.ar", "tur.ar",
+  "com.co", "org.co", "net.co", "gov.co", "edu.co",
+  "com.pe", "org.pe", "edu.pe", "gob.pe", "com.ec", "edu.ec", "gob.ec", "com.uy", "edu.uy", "gub.uy", "com.ve", "edu.ve", "gob.ve", "gob.cl",
+  "co.in", "org.in", "net.in", "gov.in", "edu.in", "ac.in", "res.in", "nic.in", "ernet.in",
+  "com.ph", "org.ph", "net.ph", "gov.ph", "edu.ph",
   "com.ng", "org.ng", "gov.ng", "edu.ng",
-  "com.es", "org.es", "nom.es",
+  "com.es", "org.es", "nom.es", "gob.es", "edu.es",
   "com.de", "org.de",
-  "com.pl", "org.pl", "net.pl",
-  "com.tw", "org.tw", "net.tw", "gov.tw",
-  "com.hk", "org.hk", "net.hk", "gov.hk",
-  "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp",
-  "co.kr", "or.kr", "ne.kr", "re.kr", "go.kr",
-  "com.cn", "org.cn", "net.cn", "gov.cn",
-  "com.ua", "org.ua", "net.ua", "gov.ua",
-  "co.th", "or.th", "ac.th", "go.th"
+  "com.pl", "org.pl", "net.pl", "edu.pl", "gov.pl",
+  "com.tw", "org.tw", "net.tw", "gov.tw", "edu.tw",
+  "com.hk", "org.hk", "net.hk", "gov.hk", "edu.hk",
+  "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp", "ed.jp", "gr.jp", "lg.jp",
+  "co.kr", "or.kr", "ne.kr", "re.kr", "go.kr", "ac.kr", "hs.kr", "ms.kr", "es.kr",
+  "com.cn", "org.cn", "net.cn", "gov.cn", "edu.cn", "ac.cn",
+  "com.ua", "org.ua", "net.ua", "gov.ua", "edu.ua", "kiev.ua",
+  "co.th", "or.th", "ac.th", "go.th", "in.th",
+  "co.id", "or.id", "ac.id", "go.id", "web.id", "sch.id",
+  "com.vn", "org.vn", "net.vn", "gov.vn", "edu.vn",
+  "com.pk", "org.pk", "gov.pk", "edu.pk",
+  "com.bd", "org.bd", "gov.bd", "edu.bd",
+  "ac.lk", "com.lk", "gov.lk",
+  "com.sa", "edu.sa", "gov.sa", "org.sa", "net.sa",
+  "com.ae", "ac.ae", "gov.ae", "org.ae", "net.ae", "sch.ae",
+  "com.eg", "edu.eg", "gov.eg", "org.eg", "sci.eg",
+  "com.jo", "edu.jo", "gov.jo", "com.lb", "edu.lb", "gov.lb",
+  "com.kw", "edu.kw", "gov.kw", "com.qa", "edu.qa", "gov.qa",
+  "com.bh", "edu.bh", "gov.bh", "com.om", "edu.om", "gov.om",
+  "co.ma", "ac.ma", "gov.ma", "org.ma",
+  "gouv.fr", "asso.fr", "com.pt", "org.pt", "edu.pt", "gov.pt",
+  "edu.gr", "com.gr", "gov.gr", "org.gr",
+  "ac.at", "co.at", "or.at", "gv.at", "ac.be", "co.hu",
+  "gov.ie", "gov.it", "edu.it", "gov.ro", "com.ro", "org.ro",
+  "com.cy", "ac.cy", "gov.cy", "com.mt", "edu.mt", "gov.mt",
+  "ac.rs", "co.rs", "org.rs", "gov.rs",
+  "co.ke", "ac.ke", "or.ke", "go.ke", "com.gh", "edu.gh", "gov.gh",
+  "co.tz", "ac.tz", "go.tz", "co.ug", "ac.ug", "go.ug", "com.et", "edu.et", "gov.et",
+  "com.ru", "org.ru", "net.ru", "spb.ru", "msk.ru", "com.kz", "edu.kz", "gov.kz"
 ]);
+
+// Real root national government/health portals that legitimately exist at the 2-part ccTLD itself
+const ALLOWED_NATIONAL_PORTAL_TWO_PART_HOSTS = new Set([
+  "gov.il", "idf.il", "gov.uk", "nhs.uk", "gov.au", "govt.nz", "gov.za", "gov.sg",
+  "gov.my", "gob.mx", "gov.ar", "gob.ar", "gov.co", "gob.pe", "gob.ec", "gub.uy",
+  "gob.ve", "gob.cl", "gov.in", "gov.ph", "gov.ng", "gob.es", "gov.pl", "gov.tw",
+  "gov.hk", "go.jp", "go.kr", "gov.cn", "gov.ua", "go.th", "go.id", "gov.vn",
+  "gov.pk", "gov.bd", "gov.lk", "gov.sa", "gov.ae", "gov.eg", "gov.jo", "gov.lb",
+  "gov.kw", "gov.qa", "gov.bh", "gov.om", "gov.ma", "gouv.fr", "gov.pt", "gov.gr",
+  "gv.at", "gov.ie", "gov.it", "gov.ro", "gov.cy", "gov.mt", "gov.rs", "go.ke",
+  "gov.gh", "go.tz", "go.ug", "gov.et", "gov.kz", "gov.br", "gov.tr"
+]);
+
+export function isBarePublicSuffixDomain(domain?: string | null): boolean {
+  const clean = (domain || "").toLowerCase().replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0].split("?")[0].split("#")[0].split(":")[0].trim();
+  if (!clean) return false;
+  return TWO_PART_TLDS.has(clean) && !ALLOWED_NATIONAL_PORTAL_TWO_PART_HOSTS.has(clean);
+}
 
 /**
  * Cleanly extracts domain name from URL or text string.
@@ -151,12 +191,21 @@ export function extractCleanDomain(input?: string | null): string {
   clean = clean.replace(/\.(com|org|net)(?:takes|it|is|in|on|to|for|with|and|from|the|has|was|can|will|at|by|or|as|of)$/i, '.$1');
 
   // 6. Beginning Clean: Strip www and known utility/subdomain prefixes repeatedly (e.g. web.whatsapp.com -> whatsapp.com, m.facebook.com -> facebook.com)
+  // Guard: never strip a prefix if doing so would leave a bare 2-part public suffix (e.g. "app.co.uk" or "mail.ac.il")
   const junkPrefixRegex = /^(?:www\d*|web\d*|m|mobile|app\d*|apps|my|login|signin|auth|accounts?|portal|admin|connect|secure|help|support|docs|faq|api|cdn|static|assets|media|mail|email|shop|store|news|blog|beta|dev|en|fr|de|es|nl|it|pt|ru|zh|ja|ar|tr|pl|sv|da|fi|no|el|he|ko)[\.\-]/i;
   while (junkPrefixRegex.test(clean)) {
-    clean = clean.replace(junkPrefixRegex, "");
+    const candidate = clean.replace(junkPrefixRegex, "");
+    if (!candidate || !candidate.includes(".") || isBarePublicSuffixDomain(candidate)) {
+      // Only strip www\d*. even if the remainder is a bare suffix (so www.ac.il becomes ac.il and gets rejected below)
+      if (/^www\d*\./i.test(clean)) {
+        clean = clean.replace(/^www\d*\./i, "");
+      }
+      break;
+    }
+    clean = candidate;
   }
 
-  // 7. Extract authentic root domain if domain still has 3+ parts (e.g. web.whatsapp.com -> whatsapp.com, sub.company.co.uk -> company.co.uk)
+  // 7. Extract authentic root domain if domain still has 3+ parts (e.g. web.whatsapp.com -> whatsapp.com, sub.company.co.uk -> company.co.uk, www1.biu.ac.il -> biu.ac.il)
   const parts = clean.split(".");
   if (parts.length >= 3) {
     const lastTwo = parts.slice(-2).join(".");
@@ -172,18 +221,24 @@ export function extractCleanDomain(input?: string | null): string {
   // 8. Final strip of any trailing or leading symbols, slashes, or dots
   clean = clean.replace(/^[\/\.\s_-]+/, "").replace(/[\/\.\s_-]+$/, "").trim();
 
+  // Never allow bare registry public suffixes (e.g. "ac.il", "co.il", "co.uk", "ac.uk", "edu.au") to be treated as business domains
+  if (isBarePublicSuffixDomain(clean)) {
+    return "";
+  }
+
   return clean;
 }
 
 /**
  * Strict validator for whether an input is a valid domain/URL search.
- * Rejects single letters (e.g. "k", "n"), words without dots, or invalid URLs.
+ * Rejects single letters (e.g. "k", "n"), words without dots, bare public suffixes (e.g. "ac.il", "co.uk"), or invalid URLs.
  */
 export function isValidDomainUrl(input?: string | null): boolean {
   if (!input || typeof input !== "string") return false;
   const clean = extractCleanDomain(input);
   if (!clean || clean.length < 3) return false;
-  // Must contain at least one dot separating domain label and TLD (e.g. uber.com, bhol.co.il)
+  if (isBarePublicSuffixDomain(clean)) return false;
+  // Must contain at least one dot separating domain label and TLD (e.g. uber.com, bhol.co.il, biu.ac.il)
   if (!clean.includes(".")) return false;
   const parts = clean.split(".");
   if (parts.length < 2) return false;
@@ -5269,25 +5324,7 @@ export function generateSmartReviewTitle(
   return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Photo Review");
 }
 
-const TWO_PART_PUBLIC_SUFFIXES = new Set([
-  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk",
-  "co.il", "org.il", "gov.il", "ac.il", "muni.il", "net.il",
-  "com.au", "net.au", "org.au", "gov.au", "edu.au",
-  "com.br", "org.br", "gov.br", "net.br",
-  "com.mx", "gob.mx", "org.mx",
-  "co.jp", "ne.jp", "or.jp", "go.jp", "ac.jp",
-  "co.kr", "or.kr", "go.kr", "ne.kr",
-  "com.cn", "net.cn", "org.cn", "gov.cn",
-  "com.tw", "org.tw", "gov.tw",
-  "com.hk", "org.hk", "gov.hk",
-  "com.sg", "org.sg", "gov.sg",
-  "co.nz", "org.nz", "govt.nz",
-  "co.za", "org.za", "gov.za",
-  "com.tr", "org.tr", "gov.tr",
-  "com.ar", "com.co", "com.pe", "com.cl", "com.ua", "com.pl",
-  "com.sa", "com.ae", "com.eg", "com.my", "com.ph", "com.vn", "com.ng", "com.pk",
-  "co.in", "org.in", "gov.in", "ac.in", "co.id", "co.th", "co.ke", "co.ma"
-]);
+const TWO_PART_PUBLIC_SUFFIXES = TWO_PART_TLDS;
 
 const NON_DISTINCTIVE_DOMAIN_STEMS = new Set([
   "gov", "gob", "govt", "org", "com", "net", "edu", "ac", "co", "mil",

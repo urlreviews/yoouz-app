@@ -1857,6 +1857,11 @@ export function extractDomain(str: string | null | undefined): string | null {
     return null;
   }
 
+  // Reject bare registry public suffixes (e.g. "ac.il", "co.il", "co.uk", "ac.uk", "edu.au")
+  if (/^(?:ac|co|com|org|net|edu|muni|k12|or|ne|re|sch|res|nic|asn|id|me|ltd|plc|nom|bel|gen|av|pol|web|law|art|ind|jus|leg|tur|sci|asso|in)\.[a-z]{2}$/i.test(clean)) {
+    return null;
+  }
+
   return clean;
 }
 

@@ -27,5 +27,10 @@
   "example-org",
   "www.example.org",
   "www.example-org",
-  "www-example-org"
+  "www-example-org",
+  "ac.il",
+  "ac-il",
+  "www.ac.il",
+  "www.ac-il",
+  "www-ac-il"
 ]
