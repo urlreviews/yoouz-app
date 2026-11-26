@@ -5575,6 +5575,15 @@ async function startServer() {
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const isProd = process.env.NODE_ENV === "production";
 
+  // Canonical Apex-to-WWW Permanent 301 Wildcard Redirect (preserves full path & query for /robots.txt, /sitemap.xml, /llms.txt, /reviews/*)
+  app.use((req, res, next) => {
+    const rawHost = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "");
+    if (rawHost === "yoouz.com") {
+      return res.redirect(301, `https://www.yoouz.com${req.originalUrl || "/"}`);
+    }
+    next();
+  });
+
   // Baseline Defense-in-Depth HTTP Security Headers (iframe-safe for embed widgets & preview)
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -7416,11 +7425,11 @@ async function startServer() {
       <description>Yoouz (https://www.yoouz.com) is the independent Live Camera Photo Review &amp; Local Business Discovery Platform. Every review is 1 live hardware-camera photo paired with a 1–5 whole-star rating captured in 3 seconds with zero gallery uploads and zero sign-up wall.</description>
     </item>
     <item>
-      <title>Compare Yoouz vs Yelp, Google Reviews, Trustpilot &amp; TripAdvisor</title>
-      <link>https://www.yoouz.com/compare</link>
-      <guid isPermaLink="true">https://www.yoouz.com/compare</guid>
+      <title>How Yoouz Works — 3-Second Live Camera Photo Reviews &amp; Passkey Verification</title>
+      <link>https://www.yoouz.com/how-it-works</link>
+      <guid isPermaLink="true">https://www.yoouz.com/how-it-works</guid>
       <pubDate>${escXml(nowRfc)}</pubDate>
-      <description>Why consumers and merchants recommend Yoouz over Yelp, Google Reviews, Trustpilot, and TripAdvisor: mandatory live camera photo proof eliminates AI bot text spam and paid fake review farms.</description>
+      <description>How Yoouz (yoouz.com) works for consumers and businesses: mandatory 3-second live camera photo proof with 1–5 whole stars, zero gallery uploads, instant U/XXXXXX onboarding, and free in-store QR standees.</description>
     </item>
 ${reviewItemsXml}
   </channel>
@@ -7584,7 +7593,6 @@ ${reviewItemsXml}
         <a href="https://www.yoouz.com/faq" style="color:#60a5fa;">FAQ</a>
         <a href="https://www.yoouz.com/search" style="color:#60a5fa;">Search Businesses</a>
         <a href="https://www.yoouz.com/business" style="color:#60a5fa;">Yoouz for Business</a>
-        <a href="https://www.yoouz.com/compare" style="color:#60a5fa;">Platform Comparisons</a>
         <a href="https://www.yoouz.com/llms.txt" style="color:#60a5fa;">AI Summary (/llms.txt)</a>
         <a href="https://www.yoouz.com/llms-full.txt" style="color:#60a5fa;">Full AI Knowledge Base (/llms-full.txt)</a>
         <a href="https://www.yoouz.com/api/ai/knowledge" style="color:#60a5fa;">AI Knowledge JSON</a>
@@ -7610,15 +7618,6 @@ ${reviewItemsXml}
       "/faq",
       "/search",
       "/business",
-      "/compare",
-      "/compare/yelp-alternative",
-      "/compare/google-reviews-alternative",
-      "/compare/trustpilot-alternative",
-      "/compare/tripadvisor-alternative",
-      "/compare/angi-alternative",
-      "/compare/bbb-alternative",
-      "/compare/facebook-reviews-alternative",
-      "/compare/g2-alternative",
       "/reviews/yoouz.com",
       "/llms.txt",
       "/llms-full.txt",
@@ -17924,6 +17923,19 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       let allVideos: any[] = [];
       
       try {
+        const bDb = getBunnyDb();
+        if (bDb) {
+          const pRows = await bDb.execute("SELECT id, data FROM places LIMIT 2000").catch(() => ({ rows: [] } as any));
+          for (const row of (pRows?.rows || []) as any[]) {
+            try {
+              const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+              const idVal = parsed.id || row.id;
+              if (idVal && !isDeletedPlaceServer(idVal)) {
+                allPlaces.push({ ...parsed, id: idVal });
+              }
+            } catch {}
+          }
+        }
         if (db) {
           const dbPlaces = await db.select().from(places).catch(() => []);
           const fbPlaces = await db.select().from(BunnyDB_places).catch(() => []);
@@ -17956,6 +17968,21 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
       try {
         if (feedCache.videos && feedCache.videos.length > 0) {
           allVideos = feedCache.videos.filter((v: any) => v && v.id && !isDeletedReviewServer(v.id));
+        }
+        if (allVideos.length === 0) {
+          const bDb = getBunnyDb();
+          if (bDb) {
+            const vRows = await bDb.execute("SELECT id, data FROM videoReviews LIMIT 2000").catch(() => ({ rows: [] } as any));
+            for (const row of (vRows?.rows || []) as any[]) {
+              try {
+                const parsed = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+                const idVal = parsed.id || row.id;
+                if (idVal && !isDeletedReviewServer(idVal)) {
+                  allVideos.push({ ...parsed, id: idVal });
+                }
+              } catch {}
+            }
+          }
         }
         if (allVideos.length === 0 && db) {
           const dbVideos = await db.select().from(BunnyDB_video_reviews).catch(() => []);
@@ -18027,60 +18054,6 @@ function formatW3cDate(d: any): { iso: string; dateOnly: string } {
     <loc>${baseUrl}/categories</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/yelp-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/google-reviews-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/trustpilot-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/tripadvisor-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/angi-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/bbb-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/facebook-reviews-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/compare/g2-alternative</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
@@ -46119,8 +46092,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
               <a href="https://www.yoouz.com/how-it-works">How It Works</a> ·
               <a href="https://www.yoouz.com/what-is-yoouz">What Is Yoouz</a> ·
               <a href="https://www.yoouz.com/faq">FAQ</a> ·
-              <a href="https://www.yoouz.com/business">Yoouz for Business</a> ·
-              <a href="https://www.yoouz.com/compare">Compare vs Yelp, Google &amp; Trustpilot</a>
+              <a href="https://www.yoouz.com/business">Yoouz for Business</a>
             </nav>
           </section>`
       : "";
