@@ -7459,11 +7459,11 @@ ${reviewItemsXml}
     const isHowItWorks = req.path === "/how-it-works";
     const canonicalUrl = `https://www.yoouz.com${req.path}`;
     const pageTitle = isHowItWorks
-      ? "How Yoouz Works | 3-Second Live Camera Photo Reviews & Passkey Verification"
-      : "What Is Yoouz.com? | Official Live Camera Photo Review Platform";
+      ? "How Yoouz Works | 3-Second Live Camera Photo Reviews"
+      : "What Is Yoouz.com? | Live Camera Photo Review Platform";
     const pageDesc = isHowItWorks
-      ? "Learn how Yoouz (yoouz.com) works: snap 1 live camera photo and tap 1–5 solid whole stars in 3 seconds with zero gallery uploads, instant U/XXXXXX onboarding, optional Face ID Passkey, and in-store QR standees."
-      : "Official overview of yoouz.com (https://www.yoouz.com): Yoouz is the 3-Second Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof.').";
+      ? "See how Yoouz (yoouz.com) works: snap 1 live camera photo and tap 1–5 whole stars in 3 seconds with zero gallery uploads, Passkey ID, and QR standees."
+      : "Official guide to Yoouz (yoouz.com), the 3-second live camera photo review and local business discovery platform. Real photos, 1–5 stars, no fake text.";
 
     const sampleListHtml = liveProof.samplePlaces
       .slice(0, 24)
@@ -46501,8 +46501,8 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     const canonicalRequestUrl = canonicalUrlObj.toString();
     
     const publicBase = baseUrl;
-    let title = "Yoouz - Real Photos. Real Proof. | 3-Second Live Camera Photo Reviews & Local Discovery";
-    let description = "A picture is worth a thousand words. Yoouz (yoouz.com) is the live camera photo review platform for local businesses, restaurants, cafes, hotels, and websites. Snap 1 live camera photo and tap 1–5 whole stars in 3 seconds with zero gallery uploads, zero fake AI text, zero video reviews, and zero signup.";
+    let title = "Yoouz – Live Camera Photo Reviews | Real Photos & Proof";
+    let description = "Yoouz (yoouz.com) is the live camera photo review platform for local businesses & websites. Snap 1 live photo + 1–5 stars in 3 seconds. No fake reviews.";
     let imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Yoouz")}&subtitle=${encodeURIComponent("Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/")}&v=26`;
     let touchIcon = `${publicBase}/apple-touch-icon.png`;
     let videoUrl = "";
@@ -46510,7 +46510,7 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
     let type = "website";
     let twitterCard = "summary_large_image";
     let structuredData: any = null;
-    let keywords = "Yoouz, yoouz.com, live photo reviews, 3-second camera photo reviews, real customer photo reviews, anti-fake review platform, restaurant photo reviews, local business ratings, Google Maps photo discovery, no fake reviews, Yelp alternative, Trustpilot alternative";
+    let keywords = "Yoouz, yoouz.com, live photo reviews, 3-second camera photo reviews, real customer photo reviews, anti-fake review platform, restaurant photo reviews, local business ratings, verified photo discovery";
     let robots = "";
     let canonicalVideoUrl = "";
     let canonicalPlaceUrl = "";
@@ -47414,10 +47414,10 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
         robots = "noindex, follow";
         imageUrl = `${publicBase}/api/og-banner/brand.png?title=${encodeURIComponent("Saved Bookmarks")}&subtitle=${encodeURIComponent("Your Favorite Live Photo Reviews")}&path=${encodeURIComponent("yoouz.com/bookmarks")}&v=26`;
     } else if (cleanPathname === '/about') {
-        title = "About Yoouz (yoouz.com) – Live Camera Photo Reviews & Local Discovery";
-        description = "Yoouz (yoouz.com) is the independent 3-second Live Camera Photo Review & Local Business Discovery Platform ('Real Photos. Real Proof.'). Zero gallery uploads, zero sign-up wall, zero fake text reviews.";
+        title = "About Yoouz (yoouz.com) | Live Camera Photo Reviews";
+        description = "Yoouz (yoouz.com) is the independent 3-second live camera photo review and local business discovery platform. Real photos, 1–5 stars, no fake reviews.";
         imageUrl = `${publicBase}/og-banner.png`;
-        keywords = "About Yoouz, what is yoouz.com, live camera photo reviews, Real Photos Real Proof, Yelp alternative, Google Reviews alternative, Trustpilot alternative";
+        keywords = "About Yoouz, what is yoouz.com, live camera photo reviews, Real Photos Real Proof, verified customer photos";
         structuredData = {
           "@context": "https://schema.org",
           "@graph": [
@@ -47439,8 +47439,8 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
           ]
         };
     } else if (cleanPathname === '/faq') {
-        title = "Yoouz FAQ – How 3-Second Live Camera Photo Reviews Work | yoouz.com";
-        description = "Answers to every question about Yoouz (yoouz.com): 3-second live camera photo capture, zero gallery uploads, instant U/XXXXXX handles, Face ID Passkeys, QR standees, business widgets, and anti-extortion guarantees.";
+        title = "Yoouz FAQ | How 3-Second Live Photo Reviews Work";
+        description = "Answers about Yoouz (yoouz.com): 3-second live camera photo capture, zero gallery uploads, instant handles, Face ID Passkeys, and free QR standees.";
         imageUrl = `${publicBase}/og-banner.png`;
         keywords = "Yoouz FAQ, how Yoouz works, yoouz.com questions, live photo reviews, Passkey reviews, QR standee reviews";
         structuredData = {
@@ -47520,9 +47520,39 @@ function injectOpenGraphTags(html: string, meta: any, isCrawler = false) {
       };
     }
 
+    const clampSeoTitle = (raw: string): string => {
+      const cleaned = String(raw || "Yoouz – Live Camera Photo Reviews").replace(/\s+/g, " ").trim();
+      if (cleaned.length <= 60) return cleaned;
+      const suffix = " | Yoouz";
+      const hasSuffix = cleaned.endsWith(suffix);
+      const maxBase = hasSuffix ? 60 - suffix.length : 59;
+      const base = hasSuffix ? cleaned.slice(0, -suffix.length) : cleaned;
+      let cut = base.slice(0, maxBase);
+      const lastSpace = cut.lastIndexOf(" ");
+      if (lastSpace > 24) cut = cut.slice(0, lastSpace);
+      cut = cut.replace(/[\s\-–—|,.:;]+$/, "");
+      return hasSuffix ? `${cut}${suffix}` : `${cut}…`;
+    };
+    const clampSeoDescription = (raw: string): string => {
+      let cleaned = String(raw || "").replace(/\s+/g, " ").trim();
+      if (!cleaned) {
+        return "Yoouz (yoouz.com) is the live camera photo review platform for local businesses & websites. Snap 1 live photo + 1–5 stars in 3 seconds. No fake reviews.";
+      }
+      if (cleaned.length < 110) {
+        const addon = " Real live-camera customer photos & 1–5 star ratings on Yoouz (yoouz.com) with zero fake text reviews.";
+        cleaned = `${cleaned}${addon}`.trim();
+      }
+      if (cleaned.length <= 155) return cleaned;
+      let cut = cleaned.slice(0, 152);
+      const lastSpace = cut.lastIndexOf(" ");
+      if (lastSpace > 100) cut = cut.slice(0, lastSpace);
+      cut = cut.replace(/[\s\-–—|,;:]+$/, "");
+      return /[.!?]$/.test(cut) ? cut : `${cut}.`;
+    };
+
     return {
-      title,
-      description,
+      title: clampSeoTitle(title),
+      description: clampSeoDescription(description),
       imageUrl,
       touchIcon,
       logoUrl: touchIcon,
