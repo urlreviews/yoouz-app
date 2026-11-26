@@ -864,44 +864,43 @@ export const CopoCreatorDrawer: React.FC<CopoCreatorDrawerProps> = ({
     if (!name) return true;
     const s = String(name).toLowerCase().trim().replace(/^@+/, "");
     return (
-      s.includes("yoouz") ||
-      s.includes("member") ||
-      s.includes("reviewer") ||
-      s.includes("registered user") ||
-      s.includes("david") ||
+      s === "yoouz member" ||
+      s === "yoouz reviewer" ||
+      s === "registered user" ||
       s === "user" ||
       s === "community member" ||
       s === "community reviewer"
     );
   };
 
-  const rawFollowers = socialData?.followers || liveFollowersList;
+  const rawFollowers = socialData ? (socialData.followers || []) : liveFollowersList;
   const filteredFollowers = rawFollowers.filter((u: any) => {
     if (!u) return false;
     const nameStr = typeof u === 'string' ? u : (u.name || u.id || u.handle || "");
     return Boolean(nameStr) && !isInvalidName(nameStr);
   });
 
-  const rawFollowing = socialData?.following || liveFollowingList;
+  const rawFollowing = socialData ? (socialData.following || []) : liveFollowingList;
   const filteredFollowing = rawFollowing.filter((u: any) => {
     if (!u) return false;
+    if (typeof u === 'object' && u.type === 'place') return Boolean(u.name || u.id);
     const nameStr = typeof u === 'string' ? u : (u.name || u.id || u.handle || "");
     return Boolean(nameStr) && !isInvalidName(nameStr);
   });
 
-  const effectiveFollowersCount = Math.max(
-    filteredFollowers.length,
-    typeof socialData?.followersCount === 'number' ? socialData.followersCount : 0,
-    typeof liveUserFromRegistry?.followersCount === 'number' ? liveUserFromRegistry.followersCount : (Array.isArray(liveUserFromRegistry?.followers) ? liveUserFromRegistry.followers.length : 0),
-    Array.isArray((author as any)?.followers) ? (author as any).followers.length : 0
-  );
+  // Strict 1-to-1 live database parity: once socialData is loaded, ALWAYS match the real list length (never show phantom numbers above an empty list!)
+  const effectiveFollowersCount = socialData
+    ? filteredFollowers.length
+    : (Array.isArray(liveUserFromRegistry?.followers)
+        ? liveUserFromRegistry.followers.length
+        : (typeof liveUserFromRegistry?.followersCount === 'number' ? liveUserFromRegistry.followersCount : 0));
 
-  const effectiveFollowingCount = Math.max(
-    filteredFollowing.length,
-    typeof socialData?.followingCount === 'number' ? socialData.followingCount : 0,
-    typeof liveUserFromRegistry?.followingCount === 'number' ? liveUserFromRegistry.followingCount : (Array.isArray(liveUserFromRegistry?.followedAuthors) ? liveUserFromRegistry.followedAuthors.length : 0),
-    Array.isArray((author as any)?.followedAuthors) ? (author as any).followedAuthors.length : 0
-  );
+  const effectiveFollowingCount = socialData
+    ? filteredFollowing.length
+    : ((Array.isArray(liveUserFromRegistry?.followedAuthors) || Array.isArray(liveUserFromRegistry?.followedPlaces))
+        ? ((Array.isArray(liveUserFromRegistry?.followedAuthors) ? liveUserFromRegistry.followedAuthors.length : 0) +
+           (Array.isArray(liveUserFromRegistry?.followedPlaces) ? liveUserFromRegistry.followedPlaces.length : 0))
+        : (typeof liveUserFromRegistry?.followingCount === 'number' ? liveUserFromRegistry.followingCount : 0));
 
   const targetHandle = safeCreator?.handle?.replace(/^@+/, '') || safeCreator?.name || author?.handle?.replace(/^@+/, '') || author?.name || author?.id || "";
 

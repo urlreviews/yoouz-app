@@ -158,8 +158,8 @@
     "placeEmail": "info@koadamsterdam.com",
     "bookmarksCount": 0,
     "sharesCount": 0,
-    "viewsCount": 5,
-    "views": 5,
+    "viewsCount": 6,
+    "views": 6,
     "isBookmarked": false,
     "isLiked": false,
     "reviewsCount": 1,
@@ -454,7 +454,7 @@
       "location": "",
       "city": "",
       "country": "",
-      "bio": ""
+      "bio": "Reviewer on Yoouz."
     },
     "rating": 4,
     "durationSeconds": 0,
@@ -989,7 +989,7 @@
       "country": "",
       "firstName": "U/AEWJQE",
       "lastName": "",
-      "bio": "Verified photo reviewer on Yoouz."
+      "bio": "Reviewer on Yoouz."
     },
     "rating": 4,
     "durationSeconds": 0,

@@ -1434,14 +1434,14 @@ export async function seedAuthenticCommunity(options: { force?: boolean } = {}):
       city: reviewer.city,
       country: reviewer.country,
       avatar: avatarSvg,
-      isVerified: reviewer.isVerified,
-      passkeyProtected: reviewer.passkeyProtected,
+      isVerified: false,
+      passkeyProtected: false,
       videoReviewCount: reviewer.videoReviewCount,
       role: "creator",
       memberSince: "Nov 2024",
       yoouzPhotoUser: true,
-      followersCount: Math.floor(reviewer.likesCount ? reviewer.likesCount * 1.5 : 45),
-      followingCount: Math.floor(Math.random() * 20) + 10,
+      followersCount: 0,
+      followingCount: 0,
     };
     usersToSave.push(userProfile);
 
@@ -1755,14 +1755,14 @@ export async function seedWave2CommunityOnly(): Promise<{
       city: reviewer.city,
       country: reviewer.country,
       avatar: avatarSvg,
-      isVerified: reviewer.isVerified,
-      passkeyProtected: reviewer.passkeyProtected,
+      isVerified: false,
+      passkeyProtected: false,
       videoReviewCount: reviewer.videoReviewCount,
       role: "creator",
       memberSince: "Nov 2024",
       yoouzPhotoUser: true,
-      followersCount: Math.floor(Math.random() * 40) + 12,
-      followingCount: Math.floor(Math.random() * 18) + 6,
+      followersCount: 0,
+      followingCount: 0,
     };
     usersToAdd.push(userProfile);
 
