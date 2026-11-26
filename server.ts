@@ -828,19 +828,32 @@ function parseImageDimensionsFromBuffer(buf: Buffer): { width: number; height: n
   return null;
 }
 
-async function probeBannerImageSuitability(testUrl: string): Promise<boolean> {
+async function probeBannerImageSuitability(testUrl: string, refererUrl?: string): Promise<boolean> {
   if (!testUrl || !testUrl.startsWith("http") || isBadBanner(testUrl)) return false;
-  try {
-    const r = await fetch(testUrl, {
+  const attemptFetch = async (useRange: boolean) => {
+    const headers: Record<string, string> = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+    };
+    if (useRange) headers["Range"] = "bytes=0-65535";
+    if (refererUrl && refererUrl.startsWith("http")) {
+      try {
+        headers["Referer"] = new URL(refererUrl).origin + "/";
+      } catch {}
+    }
+    return fetch(testUrl, {
       method: "GET",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-        "Range": "bytes=0-65535"
-      },
+      headers,
       redirect: "follow",
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2400) : undefined
     });
+  };
+
+  try {
+    let r = await attemptFetch(true);
+    if (!r.ok && r.status !== 206 && (r.status === 403 || r.status === 405 || r.status === 416)) {
+      r = await attemptFetch(false);
+    }
     if (!r.ok && r.status !== 206) {
       return false;
     }
@@ -868,10 +881,10 @@ async function probeBannerImageSuitability(testUrl: string): Promise<boolean> {
     if (buf.length < 32) return false;
     const dims = parseImageDimensionsFromBuffer(buf);
     if (dims && dims.width > 0 && dims.height > 0) {
-      if (dims.width < 200 || dims.height < 75 || dims.width * dims.height < 20000) {
+      if (dims.width < 220 || dims.height < 90 || dims.width * dims.height < 24000) {
         return false;
       }
-      if (dims.width / dims.height > 4.5 && dims.height < 250) {
+      if (dims.width / dims.height > 4.2 && dims.height < 260) {
         return false;
       }
     }
@@ -879,6 +892,162 @@ async function probeBannerImageSuitability(testUrl: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Universal multi-tier banner photo extractor for ANY website architecture:
+ *  1) og:image / twitter:image / meta[itemprop="image"] / link[rel="image_src"]
+ *  2) Hero <video poster>, <link rel="preload" as="image">, <picture><source srcset>
+ *  3) Inline <style> & element background-image hero backgrounds
+ *  4) DOM <img> (src, data-src, srcset, data-srcset) with smart landscape/hero weighting (never drops valid photos on missing English CSS classes)
+ *  5) JSON-LD & SPA/hydration script image URLs (Next.js __NEXT_DATA__, Nuxt, Angular, React, Vue)
+ * Probes top candidates in bounded parallel batches via probeBannerImageSuitability so the winner is guaranteed to load cleanly.
+ */
+async function extractBestVerifiedBannerFromHtml(
+  $: cheerio.CheerioAPI,
+  html: string,
+  baseUrl: string,
+  domain: string,
+  excludedLogoUrl?: string | null
+): Promise<string> {
+  const scored: Array<{ url: string; weight: number }> = [];
+  const seen = new Set<string>();
+  const excludedNorm = (excludedLogoUrl || "").trim();
+
+  const pushCandidate = (rawSrc: string | undefined | null, weight: number) => {
+    if (!rawSrc || typeof rawSrc !== "string") return;
+    const trimmed = rawSrc.trim();
+    if (!trimmed || trimmed.startsWith("data:") || trimmed.includes("#") || trimmed.includes("paint0_linear")) return;
+    try {
+      const abs = new URL(trimmed, baseUrl).toString();
+      if (!abs.startsWith("http")) return;
+      if (seen.has(abs)) return;
+      if (excludedNorm && (abs === excludedNorm || excludedNorm.includes(encodeURIComponent(abs)))) return;
+      if (isLogoOrIconUrl(abs) || isBadBanner(abs)) return;
+      const lower = abs.toLowerCase();
+      if (/\.(?:svg|ico|gif)(?:\?|$)/i.test(lower)) return;
+      // Penalize ultra-wide thin ad strips encoded in filename like 1144x190 or 1200x150
+      const dimMatch = lower.match(/(\d{3,4})x(\d{2,4})/);
+      if (dimMatch) {
+        const w = parseInt(dimMatch[1], 10);
+        const h = parseInt(dimMatch[2], 10);
+        if (w > 0 && h > 0 && (w < 220 || h < 90 || (w / h > 4.2 && h < 260))) {
+          return;
+        }
+      }
+      seen.add(abs);
+      scored.push({ url: abs, weight });
+    } catch {}
+  };
+
+  // Tier 1: Explicit OpenGraph / Twitter / Schema meta images
+  $('meta[property="og:image"], meta[property="og:image:secure_url"], meta[name="og:image"], meta[name="twitter:image"], meta[property="twitter:image"], meta[itemprop="image"]').each((_, el) => {
+    pushCandidate($(el).attr("content"), 1000);
+  });
+  pushCandidate($('link[rel="image_src"]').attr("href"), 950);
+
+  // Tier 2: Hero <video poster>, <link rel="preload" as="image">, <picture><source srcset>
+  $('video[poster]').each((_, el) => {
+    pushCandidate($(el).attr("poster"), 860);
+  });
+  $('link[rel="preload"][as="image"]').each((_, el) => {
+    pushCandidate($(el).attr("href"), 720);
+  });
+  $('picture source[srcset], picture source[data-srcset]').each((_, el) => {
+    const srcset = ($(el).attr("srcset") || $(el).attr("data-srcset") || "").trim();
+    if (!srcset) return;
+    const entries = srcset.split(/,\s+(?=https?:\/\/|\/)/).map((s) => s.trim().split(/\s+/)[0]).filter(Boolean);
+    if (entries.length > 0) {
+      pushCandidate(entries[entries.length - 1], 680);
+    }
+  });
+
+  // Tier 3: Element inline background-image & <style> hero background URLs
+  $('[data-bgset], [data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((_, el) => {
+    let raw = $(el).attr("data-bgset") || $(el).attr("data-bg") || $(el).attr("data-bg-image") || "";
+    if (!raw) {
+      const style = $(el).attr("style") || "";
+      const m = style.match(/background(?:-image)?\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
+      if (m) raw = m[1];
+    }
+    if (raw) {
+      const lower = raw.toLowerCase();
+      const boost = /(?:hero|banner|cover|header|slide|bg)/i.test(lower) ? 250 : 0;
+      pushCandidate(raw.split(",")[0].trim().split(" ")[0], 540 + boost);
+    }
+  });
+  $('style').each((_, el) => {
+    const css = $(el).html() || "";
+    if (!css || !css.includes("url(")) return;
+    const matches = Array.from(css.matchAll(/background(?:-image)?\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/gi));
+    for (const m of matches.slice(0, 8)) {
+      const raw = (m[1] || "").trim();
+      if (raw && /\.(?:jpe?g|webp|png)(?:\?|$)/i.test(raw)) {
+        const boost = /(?:hero|banner|cover|header|slide)/i.test(raw) ? 240 : 0;
+        pushCandidate(raw, 480 + boost);
+      }
+    }
+  });
+
+  // Tier 4: DOM <img> elements (always keep clean JPEG/WebP photos even without English CSS classes)
+  $('img').each((_, el) => {
+    const rawSrc = (
+      $(el).attr("src") ||
+      $(el).attr("data-src") ||
+      $(el).attr("data-lazy-src") ||
+      ($(el).attr("srcset") || $(el).attr("data-srcset") || "").split(",").pop()?.trim().split(/\s+/)[0] ||
+      ""
+    ).trim();
+    if (!rawSrc || rawSrc.startsWith("data:")) return;
+    const lowerSrc = rawSrc.toLowerCase();
+    const alt = ($(el).attr("alt") || "").toLowerCase();
+    const parentCls = (($(el).parent().attr("class") || "") + " " + ($(el).closest("section, div, main, article, figure").attr("class") || "")).toLowerCase();
+    if (alt.includes("logo") || parentCls.includes("logo") || parentCls.includes("flag") || parentCls.includes("avatar")) return;
+
+    let w = 280;
+    if (/\.(?:jpe?g|webp)(?:\?|$)/i.test(lowerSrc)) w += 120;
+    if (/(?:hero|banner|cover|slider|slideshow|featured|parallax|masthead|jumbotron|stage)/i.test(parentCls)) w += 360;
+    if (/(?:hero|banner|cover|main|featured|desktop|campaign|header|large|full|maximal)/i.test(lowerSrc)) w += 220;
+    const attrW = parseInt($(el).attr("width") || "0", 10);
+    const attrH = parseInt($(el).attr("height") || "0", 10);
+    if (attrW > 0 && attrH > 0) {
+      if (attrW < 220 || attrH < 90 || (attrW / attrH > 4.2 && attrH < 260)) return;
+      if (attrW >= 700 && attrH >= 280) w += 180;
+    }
+    pushCandidate(rawSrc, w);
+  });
+
+  // Tier 5: JSON-LD & SPA hydration script photo URLs (crucial for Next.js, Nuxt, Angular, React sites without SSR og:image)
+  const scriptUrlMatches = html.match(/https?:\/\/[^"'\s<>\\)]+\.(?:jpe?g|webp)(?:\?[^"'\s<>\\)]*)?/gi) || [];
+  let scriptAdded = 0;
+  for (const rawUrl of scriptUrlMatches) {
+    if (scriptAdded >= 20) break;
+    const cleanUrl = rawUrl.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
+    const lower = cleanUrl.toLowerCase();
+    if (/(?:logo|icon|favicon|flag|avatar|sprite|pixel|thumb|badge|button)/i.test(lower)) continue;
+    let w = 320;
+    if (/(?:hero|banner|cover|main|maximal|large|full|featured|uploads|cdn\.|images|media|photo)/i.test(lower)) w += 220;
+    if (domain && lower.includes(domain.split(".")[0].toLowerCase())) w += 120;
+    const beforeSize = seen.size;
+    pushCandidate(cleanUrl, w);
+    if (seen.size > beforeSize) scriptAdded++;
+  }
+
+  if (scored.length === 0) return "";
+  scored.sort((a, b) => b.weight - a.weight);
+
+  // Probe top candidates in fast parallel batches of 4 (max 8 total) to verify reachable high-res landscape image
+  const topCandidates = scored.slice(0, 8).map((c) => c.url);
+  for (let i = 0; i < topCandidates.length; i += 4) {
+    const batch = topCandidates.slice(i, i + 4);
+    const results = await Promise.all(
+      batch.map(async (url) => ((await probeBannerImageSuitability(url, baseUrl)) ? url : ""))
+    );
+    const winner = results.find(Boolean);
+    if (winner) return winner;
+  }
+
+  return "";
 }
 
 interface ResolvedBusinessData {
@@ -36648,25 +36817,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     }
                   }
                   if (!rawEntityBanner && !lockedFastRec?.bannerUrl) {
-                    const ogImg = ($site('meta[property="og:image"]').attr("content") || $site('meta[name="og:image"]').attr("content") || "").trim();
-                    if (ogImg && !isLogoOrIconUrl(ogImg) && !isBadBanner(ogImg)) {
-                      try {
-                        rawEntityBanner = sanitizeProxy(new URL(ogImg, siteResp.url || trySiteUrl).toString());
-                      } catch {}
-                    }
-                    // Also check large homepage hero JPG/WebP photos when og:image is absent (e.g. bankjerusalem.co.il)
-                    if (!rawEntityBanner) {
-                      $site('img').each((_: any, el: any) => {
-                        if (rawEntityBanner) return;
-                        const src = ($site(el).attr('src') || $site(el).attr('data-src') || '').trim();
-                        if (!src || src.startsWith('data:') || !/\.(?:jpe?g|webp)(?:\?|$)/i.test(src)) return;
-                        try {
-                          const abs = new URL(src, siteResp.url || trySiteUrl).toString();
-                          if (!isLogoOrIconUrl(abs) && !isBadBanner(abs)) {
-                            rawEntityBanner = sanitizeProxy(abs);
-                          }
-                        } catch {}
-                      });
+                    const verifiedBanner = await extractBestVerifiedBannerFromHtml($site, siteHtml, siteResp.url || trySiteUrl, realDomain, rawEntityLogo);
+                    if (verifiedBanner) {
+                      rawEntityBanner = sanitizeProxy(verifiedBanner);
                     }
                   }
                   if ((!resolvedEntity.name || isWafOrBlockTitle(resolvedEntity.name, realDomain) || isDomainStemName(resolvedEntity.name, realDomain) || isFalseSplitOfDomain(resolvedEntity.name, realDomain))) {
@@ -36690,6 +36843,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               } catch (eSite) {}
             }
+          }
+
+          // Universal fallback for WAF-protected or pure JS-shell websites that yielded no direct HTML banner photo
+          if (!rawEntityBanner && !lockedFastRec?.bannerUrl && !resolveOnly && realDomain) {
+            try {
+              const ddgMedia = await fetchDuckDuckGoMediaAndInfo(realDomain, resolvedEntity.name || rawQuery, { skipLogo: true }).catch(() => null);
+              if (ddgMedia?.bannerUrl && !isBadBanner(ddgMedia.bannerUrl) && !isLogoOrIconUrl(ddgMedia.bannerUrl)) {
+                if (await probeBannerImageSuitability(ddgMedia.bannerUrl, `https://${realDomain}`)) {
+                  rawEntityBanner = sanitizeProxy(ddgMedia.bannerUrl);
+                }
+              }
+            } catch {}
           }
 
           if (rawEntityBanner) rawEntityBanner = sanitizeProxy(rawEntityBanner) || rawEntityBanner;
@@ -37857,11 +38022,38 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   }
                 }
 
-                const validCandidates = candidates.filter(c => c.src && c.src !== rejectedDividerUrl && c.weight >= 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
-                validCandidates.sort((a, b) => b.weight - a.weight);
+                // Also collect <picture><source srcset> and inline <style> background hero images
+                $('picture source[srcset], picture source[data-srcset]').each((_, el) => {
+                  const srcset = ($(el).attr('srcset') || $(el).attr('data-srcset') || '').trim();
+                  if (!srcset) return;
+                  const bestSrc = srcset.split(/,\s+(?=https?:\/\/|\/)/).map((s) => s.trim().split(/\s+/)[0]).filter(Boolean).pop();
+                  if (bestSrc && !isLogoOrIconUrl(bestSrc) && !isBadBanner(bestSrc)) {
+                    candidates.push({ src: bestSrc, weight: 620 });
+                  }
+                });
+                $('style').each((_, el) => {
+                  const css = $(el).html() || '';
+                  if (!css || !css.includes('url(')) return;
+                  const bgMatches = Array.from(css.matchAll(/background(?:-image)?\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/gi));
+                  for (const m of bgMatches.slice(0, 6)) {
+                    const rawBg = (m[1] || '').trim();
+                    if (rawBg && !rawBg.startsWith('data:') && /\.(?:jpe?g|webp|png)(?:\?|$)/i.test(rawBg) && !isLogoOrIconUrl(rawBg) && !isBadBanner(rawBg)) {
+                      candidates.push({ src: rawBg, weight: /(?:hero|banner|cover|header|slide)/i.test(rawBg) ? 680 : 460 });
+                    }
+                  }
+                });
+
+                const highConfCandidates = candidates.filter(c => c.src && c.src !== rejectedDividerUrl && c.weight >= 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
+                highConfCandidates.sort((a, b) => b.weight - a.weight);
+
+                // Fallback tier: never drop valid website JPEG/WebP photos just because a site lacks English "hero"/"banner" CSS classes
+                const fallbackCandidates = candidates.filter(c => c.src && c.src !== rejectedDividerUrl && c.weight >= 180 && c.weight < 450 && !c.src.includes('#') && !c.src.includes('paint0_linear') && !isBadBanner(c.src));
+                fallbackCandidates.sort((a, b) => b.weight - a.weight);
+
+                const validCandidates = [...highConfCandidates.slice(0, 6), ...fallbackCandidates.slice(0, 6)];
 
                 const resolvedDomCandidates: string[] = [];
-                validCandidates.slice(0, 6).forEach(c => {
+                validCandidates.forEach(c => {
                   try {
                     const abs = new URL(c.src, finalUrl).toString();
                     if (abs === logo) return;
@@ -37874,20 +38066,29 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   image = resolvedDomCandidates[0];
                 }
 
-                // Verify primary banner image is reachable AND is large enough to be an authentic banner (never a 30x60 UI sprite or 404 link)
+                // Verify primary banner image is reachable AND is large enough to be an authentic banner (never a 30x60 UI sprite, thin ad strip, or 404 link)
                 if (image && image.startsWith('http')) {
-                  const isPrimaryOk = await probeBannerImageSuitability(image);
+                  const isPrimaryOk = await probeBannerImageSuitability(image, finalUrl);
                   if (!isPrimaryOk) {
                     scrapedPhotosList = scrapedPhotosList.filter(u => u !== image);
                     image = '';
                     for (const fallbackCand of resolvedDomCandidates) {
-                      if (await probeBannerImageSuitability(fallbackCand)) {
+                      if (await probeBannerImageSuitability(fallbackCand, finalUrl)) {
                         image = fallbackCand;
                         break;
                       } else {
                         scrapedPhotosList = scrapedPhotosList.filter(u => u !== fallbackCand);
                       }
                     }
+                  }
+                }
+
+                // Universal Tier-5 recovery when standard DOM selectors found zero verified photos (e.g. Next.js/Nuxt/Angular hydration or no og:image)
+                if (!image && html) {
+                  const recoveredBanner = await extractBestVerifiedBannerFromHtml($, html, finalUrl, cleanDomain || domain, logo);
+                  if (recoveredBanner) {
+                    image = recoveredBanner;
+                    if (!scrapedPhotosList.includes(recoveredBanner)) scrapedPhotosList.unshift(recoveredBanner);
                   }
                 }
               }
@@ -37900,6 +38101,18 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 } else {
                   image = "";
                 }
+              }
+
+              // Last-resort real photo discovery for WAF-blocked or pure JS-shell websites before giving up on a real banner
+              if (!image && cleanDomain && !resolveOnly) {
+                try {
+                  const ddgMedia = await fetchDuckDuckGoMediaAndInfo(cleanDomain, title || siteName || cleanDomain, { skipLogo: true }).catch(() => null);
+                  if (ddgMedia?.bannerUrl && !isBadBanner(ddgMedia.bannerUrl) && !isLogoOrIconUrl(ddgMedia.bannerUrl)) {
+                    if (await probeBannerImageSuitability(ddgMedia.bannerUrl, finalUrl || `https://${cleanDomain}`)) {
+                      image = ddgMedia.bannerUrl;
+                    }
+                  }
+                } catch {}
               }
 
               const getHighQualityImageUrl = (urlStr: string): string => {
@@ -37917,9 +38130,10 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   cleaned = cleaned.split('?')[0];
                 }
 
-                const wpThumbRegex = /(-\d+x\d+)(\.[a-zA-Z0-9]+)$/;
-                if (wpThumbRegex.test(cleaned)) {
-                  cleaned = cleaned.replace(wpThumbRegex, '$2');
+                // Only strip WordPress thumbnail suffixes for genuinely small thumbnails (< 800px wide), NEVER already-large images like -2048x1365.jpg
+                const wpThumbMatch = cleaned.match(/-(\d+)x(\d+)(\.[a-zA-Z0-9]+)$/);
+                if (wpThumbMatch && parseInt(wpThumbMatch[1], 10) < 800) {
+                  cleaned = cleaned.replace(/-(\d+)x(\d+)(\.[a-zA-Z0-9]+)$/, '$3');
                 }
 
                 if (cleaned.includes('/cdn.shopify.com/') || cleaned.includes('/cdn/shop/')) {

@@ -852,7 +852,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
           setIsEnriching(true);
         }
 
-        const refreshParam = (bannerError || isWafOrBlockTitle(place.name, drawerDomain) || isLoginOrPortalUrl(place.website)) ? "&refresh=true" : "";
+        const refreshParam = (bannerError || needsBanner || isWafOrBlockTitle(place.name, drawerDomain) || isLoginOrPortalUrl(place.website))
+          ? `&refresh=true${(bannerError || needsBanner) ? "&forceBanner=true" : ""}`
+          : "";
         const hintCandidate = ((place as any).selectedName && !isWafOrBlockTitle((place as any).selectedName, drawerDomain))
           ? String((place as any).selectedName).trim()
           : (place.name && !isGenericName && !isWafOrBlockTitle(place.name, drawerDomain) && !isValidDomainUrl(place.name) ? place.name.trim() : "");

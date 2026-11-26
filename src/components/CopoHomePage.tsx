@@ -1393,11 +1393,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   />
                 </div>
 
-                {/* Right Side: Quiet Spinner (only on submit resolve or empty-list fetch) / Clear + Pure-White Submit Arrow */}
+                {/* Right Side: Always-Steady Clear Button + Pure-White Submit Arrow (spinner ONLY on actual submit, never per keystroke) */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {(isResolvingPlace || (isLoadingSuggest && suggestions.length === 0)) && (
-                    <Loader2 className="w-4 h-4 text-zinc-400 animate-spin mr-1" />
-                  )}
                   {query.trim() && (
                     <button
                       type="button"
@@ -1417,6 +1414,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                   )}
                   <button
                     type="submit"
+                    disabled={isResolvingPlace}
                     onClick={(e) => {
                       if (!query.trim()) {
                         e.preventDefault();
@@ -1432,7 +1430,11 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                     aria-label="Search"
                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white hover:bg-zinc-200 text-zinc-950 flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(255,255,255,0.16)]"
                   >
-                    <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                    {isResolvingPlace ? (
+                      <Loader2 className="w-4 h-4 sm:w-[18px] sm:h-[18px] animate-spin" />
+                    ) : (
+                      <ArrowRight className="w-4 h-4 sm:w-[18px] sm:h-[18px] stroke-[2.2]" />
+                    )}
                   </button>
                 </div>
               </div>

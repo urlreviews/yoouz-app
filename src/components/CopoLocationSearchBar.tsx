@@ -138,7 +138,7 @@ export const CopoLocationSearchBar: React.FC<CopoLocationSearchBarProps> = ({
           />
           {/* Right Side: Subtle Spinner / Clear Button */}
           <div className="flex items-center gap-1.5 shrink-0 ml-1">
-            {(isSearching || isLoadingSuggest) && (
+            {isSearching && (
               <Loader2 className="w-4 h-4 text-zinc-400 animate-spin pointer-events-none" />
             )}
             {businessName.trim() && (

@@ -516,10 +516,7 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                     data-form-type="other"
                     aria-autocomplete="none"
                   />
-                  {(isLoading || isResolving) && (
-                    <Loader2 className="w-4 h-4 text-zinc-400 animate-spin ml-2 shrink-0" />
-                  )}
-                  {hasQuery && !isLoading && !isResolving && (
+                  {hasQuery && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -586,10 +583,10 @@ export const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   data-form-type="other"
                   aria-autocomplete="none"
                 />
-                {(isLoading || isResolving) && (
+                {isResolving && (
                   <Loader2 className="w-4 h-4 text-zinc-400 animate-spin ml-2 shrink-0" />
                 )}
-                {hasQuery && !isLoading && !isResolving && (
+                {hasQuery && !isResolving && (
                   <button
                     type="button"
                     onClick={(e) => {
