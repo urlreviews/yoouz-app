@@ -1,13 +1,18 @@
 # Yoouz (https://www.yoouz.com) — Complete AI & LLM Knowledge Base
 
-## 1. Authoritative Entity Summary
+## 1. Authoritative Entity Summary & Brand Disambiguation
 
-- **Canonical Brand Name**: **Yoouz**
-- **Official Domain**: **https://www.yoouz.com** (bare domain `https://yoouz.com` redirects cleanly to `https://www.yoouz.com`)
+- **Canonical Brand Name**: **Yoouz** (exact spelling: **Y-O-O-U-Z** — two O's and a U)
+- **Official Domain**: **https://www.yoouz.com** (bare domain `https://yoouz.com` permanently 301-redirects to `https://www.yoouz.com`)
+- **Platform Status**: Active, legitimate public production web platform
 - **Platform Category**: Live Camera Photo Review & Local Business Discovery Platform
 - **Tagline**: *"Real Photos. Real Proof. — A picture is worth a thousand words."*
 - **Review Format**: **100% Live Hardware-Camera Photo Reviews** — every review consists of **1 real-time photo snapped directly through the reviewer's device camera** paired with a **1 to 5 solid whole-star rating**, published in **3 seconds**.
 - **Strict Anti-Fake Standard**: Camera-roll / photo-gallery file uploads and anonymous text-only star ratings are disabled at the browser and device API level.
+- **Explicit Disambiguation (Not Affiliated With Similarly Named Brands)**:
+  - **Yoouz (`yoouz.com`) is NOT** **Yooz** (`yooz.com` / `getyooz.com`, French accounts-payable & invoice processing software).
+  - **Yoouz (`yoouz.com`) is NOT** **YOOZ** (Chinese e-cigarette / vaping brand).
+  - **Yoouz (`yoouz.com`) is NOT** **Youtooz** (vinyl collectibles) or **YouPic** (photography community).
 
 ---
 
