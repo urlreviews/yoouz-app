@@ -34,7 +34,7 @@ import { db, getDb } from "./src/db/index.ts";
 import { VideoReview } from "./src/types.ts";
 import { users, reviews, bookings, places, BunnyDB_video_reviews, BunnyDB_users, BunnyDB_places, BunnyDB_chats } from "./src/db/schema.ts";
 import { eq, desc, or, like } from "drizzle-orm";
-import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl, areDomainAliases } from "./src/utils/placeUtils.ts";
+import { KNOWN_OFFICIAL_NAMES, formatBusinessName, splitCompoundWords, isDomainStemName, isDomainDerivedGuess, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractCamelCaseBrandFromText, extractOfficialBrandSpellingFromText, alignTitleWithDomain, extractDomainAlignedNameFromText, stripLegalEntityAndNoiseSuffixes, extractCleanDomain, isCorruptedBusinessName, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl, areDomainAliases, getRegistrableRootDomain, getBrandDomainStem, normalizeSearchEntityPhrase, dedupeSearchSuggestions } from "./src/utils/placeUtils.ts";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS } from "./src/utils/logoUtils.ts";
 import { getHreflangAlternates, parseLocaleFromPath, getStandardHreflangCode } from "./src/i18n/urlLocalization.ts";
 import { SUPPORTED_LANGUAGES } from "./src/i18n/translations.ts";
@@ -253,6 +253,10 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("1024x170") ||
     clean.includes("navigation-tile") ||
     clean.includes("/catalog/product/") ||
+    clean.includes("ichef.bbci.co.uk/news/") ||
+    clean.includes("/cpsprodpb/") ||
+    /\/(?:articles?|stories|editorial|news-images?)\/[^?]*\.(?:jpe?g|webp)(?:\?|$)/i.test(clean) ||
+    /\.jpe?g\.webp(?:\?|$)/i.test(clean) ||
     clean.includes("/lookbook/") ||
     clean.includes("/pdp/") ||
     /\/flags?\//i.test(clean) ||
@@ -38980,7 +38984,9 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
 
           const hasValidDomain = dom.includes(".") && dom.length > 3 && !dom.endsWith(".");
-          if (hasValidDomain && seenDomains.has(dom)) return;
+          const rootDom = hasValidDomain ? getRegistrableRootDomain(dom) : "";
+          const domStem = hasValidDomain ? getBrandDomainStem(dom) : "";
+          if (hasValidDomain && (seenDomains.has(dom) || (rootDom && seenDomains.has(`root:${rootDom}`)) || (domStem && seenDomains.has(`stem:${domStem}`)))) return;
 
           const key = dom ? `${dom}:${normTitle}` : normTitle;
           if (seenKeys.has(normTitle)) return;
@@ -38988,7 +38994,11 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (seenKeys.has(key)) return;
           seenKeys.add(normTitle);
           if (compactTitle) seenKeys.add(`compact:${compactTitle}`);
-          if (hasValidDomain) seenDomains.add(dom);
+          if (hasValidDomain) {
+            seenDomains.add(dom);
+            if (rootDom) seenDomains.add(`root:${rootDom}`);
+            if (domStem) seenDomains.add(`stem:${domStem}`);
+          }
           if (key !== normTitle) seenKeys.add(key);
 
           let logo = item.logoUrl || "";
@@ -39115,28 +39125,51 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
 
-        // Step C. Bounded Parallel External Autocomplete (ONLY when needed, NEVER scrapes target HTML during typing, hard 900ms budget!)
+        // Step C. Bounded Parallel External Autocomplete (ONLY when needed, NEVER scrapes target HTML during typing, ultra-snappy budget!)
         const isDirectDomainInput = q.includes('.') && !q.includes(' ') && cleanDomainName(q).includes('.');
-        const alreadyHasStrongDomainMatch = suggestions.some((s) => {
+        const qCompactUnicode = qLower.replace(/[^\p{L}\p{N}]/gu, '');
+        const GENERIC_CATEGORY_QUERIES = new Set([
+          "hotel", "hotels", "resort", "resorts", "bank", "banks", "cafe", "cafes", "coffee",
+          "pizza", "sushi", "burger", "restaurant", "restaurants", "shop", "store", "auto", "car", "cars",
+          "tech", "beauty", "dental", "dentist", "salon", "clinic", "hospital", "gym", "spa", "bar", "pub",
+          "travel", "flight", "flights", "airline", "airlines", "insurance", "lawyer", "legal", "doctor",
+          "pharmacy", "bakery", "market", "supermarket", "food", "news", "media", "music", "fashion",
+          "shoes", "watch", "watches", "cloud", "software", "app", "delivery", "cleaning", "real estate"
+        ]);
+        const isGenericCategoryQuery = GENERIC_CATEGORY_QUERIES.has(qLower);
+
+        const hasExactVerifiedEntity = !isGenericCategoryQuery && suggestions.some((s) => {
           if (!s.domain) return false;
-          const tNoSpace = s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-          const dRoot = s.domain.split('.')[0].replace(/[^a-z0-9]/g, '');
+          const tCompact = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+          const tFirstWord = s.title.toLowerCase().split(/\s+/).filter(Boolean)[0] || "";
+          const dRoot = s.domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
           return (
-            tNoSpace === qNoSpaces ||
-            (tNoSpace.length >= 4 && (qNoSpaces.startsWith(tNoSpace) || tNoSpace.startsWith(qNoSpaces))) ||
-            (dRoot.length >= 4 && (qNoSpaces.startsWith(dRoot) || dRoot.startsWith(qNoSpaces)))
+            (qCompactUnicode.length >= 2 && (tCompact === qCompactUnicode || dRoot === qCompactUnicode)) ||
+            (qCompactUnicode.length >= 4 && tFirstWord.length >= 4 && tFirstWord === qLower)
           );
         });
 
-        if (!isDirectDomainInput && q.length >= 3) {
-          const needStructuredDiscovery = !alreadyHasStrongDomainMatch && suggestions.length < 3;
-          const needGoogleSuggest = suggestions.length < 6;
+        const alreadyHasStrongDomainMatch = hasExactVerifiedEntity || suggestions.some((s) => {
+          if (!s.domain) return false;
+          const tCompact = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+          const dRoot = s.domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+          return (
+            (tCompact.length >= 3 && (qCompactUnicode === tCompact || (tCompact.length >= 4 && (qCompactUnicode.startsWith(tCompact) || tCompact.startsWith(qCompactUnicode))))) ||
+            (dRoot.length >= 3 && (qCompactUnicode === dRoot || (dRoot.length >= 4 && (qCompactUnicode.startsWith(dRoot) || dRoot.startsWith(qCompactUnicode)))))
+          );
+        });
+
+        // If we ALREADY have an exact verified business match (e.g. "bbc" -> BBC, "apple" -> Apple, "hilton" -> Hilton Hotels, "בנק ירושלים" -> bankjerusalem.co.il),
+        // return IMMEDIATELY in ~15ms instead of waiting 500–900ms for noisy Google sub-page queries ("BBC News", "BBC Sport", "Hilton Honors")!
+        if (!isDirectDomainInput && q.length >= 2 && !hasExactVerifiedEntity) {
+          const needStructuredDiscovery = !alreadyHasStrongDomainMatch && suggestions.length < 3 && q.length >= 3;
+          const needGoogleSuggest = !alreadyHasStrongDomainMatch && suggestions.length < 5 && q.length >= 3;
 
           const [discoveredBrand, googlePhrases] = await Promise.all([
-            // C1. Fast Structured Official Website Resolution (hard 900ms timeout, 5-min TTL cache including negative hits)
+            // C1. Fast Structured Official Website Resolution (snappy 650ms timeout, 5-min TTL cache including negative hits)
             (async () => {
               if (!needStructuredDiscovery) return null;
-              const suggestCacheKey = qNoSpaces;
+              const suggestCacheKey = qCompactUnicode || qNoSpaces;
               const cachedBrand = suggestBrandResolutionCache.get(suggestCacheKey);
               if (cachedBrand !== undefined) {
                 if (cachedBrand === null) return null;
@@ -39145,7 +39178,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               try {
                 const discovered = await Promise.race([
                   discoverFastStructuredOfficial(q).catch(() => null),
-                  new Promise<null>((resolve) => setTimeout(() => resolve(null), 900))
+                  new Promise<null>((resolve) => setTimeout(() => resolve(null), 650))
                 ]);
                 let resolvedTop: { timestamp: number; title: string; domain: string; websiteUrl?: string; category?: string } | null = null;
                 if (discovered && discovered.domain && !isDisallowedNonOfficialHost(discovered.domain, q)) {
@@ -39154,7 +39187,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                   const bestSeg = selectBestTitleSegmentServer(discovered.title || "", host);
                   const merged = mergeOfficialBrandSpellingServer(bestSeg || discovered.title, spelled, host);
                   const cand = merged || spelled || formatBusinessName(bestSeg || discovered.title || q, host, undefined, { fromWebsite: Boolean(discovered.title), fallbackText: discovered.snippet });
-                  if (cand && cand.length >= 2 && cand.length <= 65 && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
+                  if (cand && cand.length >= 2 && cand.length <= 65 && !isWafOrBlockTitle(cand, host) && !isGenericPlaceNameServer(cand) && !isGenericSeoSlogan(cand, host)) {
                     const discCat = classifyBusinessCategory({
                       name: cand,
                       domain: host,
@@ -39176,13 +39209,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 return null;
               }
             })(),
-            // C2. Multi-Language Fast Auto-Complete (hard 500ms timeout)
+            // C2. Multi-Language Fast Auto-Complete (snappy 320ms timeout)
             (async () => {
               if (!needGoogleSuggest) return [] as string[];
               const combinedPhrases: string[] = [];
               try {
                 const ctrl = new AbortController();
-                const tid = setTimeout(() => ctrl.abort(), 500);
+                const tid = setTimeout(() => ctrl.abort(), 320);
                 const gRes = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(q)}`, {
                   signal: ctrl.signal
                 });
@@ -39213,7 +39246,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
             });
           }
 
-          if (googlePhrases.length > 0 && suggestions.length < 8) {
+          if (googlePhrases.length > 0 && suggestions.length < 6) {
             const JUNK_KEYWORDS = [
               'menu', 'photo', 'photos', 'reviews', 'hour', 'hours', 'reddit', 'yelp', 'tripadvisor', 'facebook',
               'instagram', 'twitter', 'near me', 'wiki', 'wikipedia', 'meaning', 'girl', 'driver', 'check in',
@@ -39221,16 +39254,67 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               'share price', 'flight', 'flights', 'booking', 'booking.com', 'boeken', 'expedia', 'trivago',
               'agoda', 'hotels.com', 'trip.com', 'airbnb', 'price', 'prices', 'per night', 'cost', 'room',
               'rooms', 'suite', 'suites', 'closed', 'facts', 'fun facts', 'tickets', 'ticket', 'dress code',
-              'height', 'inside', 'owner', 'owners', 'maps', 'directions', 'images', 'pictures'
+              'height', 'inside', 'owner', 'owners', 'maps', 'directions', 'images', 'pictures',
+              // Website sub-sections, channels, support/account pages & language/region feeds of the same brand
+              'news', 'sport', 'sports', 'football', 'soccer', 'weather', 'radio', 'iplayer', 'sounds', 'bitesize',
+              'plus', 'live', 'tv', 'podcast', 'podcasts', 'video', 'videos', 'clips', 'schedule', 'guide',
+              'program', 'programme', 'programmes', 'channel', 'channels', 'stream', 'streaming', 'crossword',
+              'wordle', 'recipes', 'good food', 'newsletter', 'headlines', 'today', 'latest', 'updates',
+              'login', 'sign in', 'signin', 'account', 'portal', 'support', 'help', 'customer service',
+              'contact', 'careers', 'career', 'jobs', 'job', 'status', 'down', 'outage', 'tracking',
+              'returns', 'refund', 'warranty', 'faq', 'coupon', 'coupons', 'promo', 'discount', 'sale',
+              'outlet', 'deals', 'gift card', 'honors', 'rewards', 'loyalty', 'prime', 'pay', 'download',
+              'investors', 'press', 'about', 'privacy', 'terms', 'proximus', 'world', 'international',
+              // Language / country editions appended after a brand name
+              'nl', 'uk', 'us', 'usa', 'de', 'fr', 'es', 'it', 'jp', 'au', 'ca', 'br', 'mx', 'be', 'ch',
+              'at', 'se', 'no', 'dk', 'fi', 'pl', 'tr', 'ru', 'cn', 'kr', 'ar', 'farsi', 'persian',
+              'arabic', 'hindi', 'urdu', 'spanish', 'french', 'german', 'dutch', 'italian', 'russian',
+              'chinese', 'japanese', 'korean', 'hebrew', 'english', 'belgium', 'nederland', 'nederlands',
+              'deutsch', 'français', 'español', 'scotland', 'wales', 'cymru', 'northern ireland',
+              'europe', 'asia', 'africa', 'americas', 'middle east', 'latam'
             ];
 
-            for (const phrase of googlePhrases) {
-              if (suggestions.length >= 8) break;
+            // Build word-boundary brand stems from ALL verified businesses already in suggestions (including 2–3 letter brands like BBC, CNN, BMW, KFC!)
+            const GENERIC_PREFIX_WORDS = new Set(["the", "hotel", "hotels", "bank", "cafe", "coffee", "new", "royal", "grand", "park", "club", "city", "studio", "house", "group", "global", "first", "my"]);
+            const getVerifiedBrandPrefixes = (): string[] => {
+              const prefixes = new Set<string>();
+              for (const s of suggestions) {
+                if (!s.domain) continue;
+                const tLow = s.title.toLowerCase().trim();
+                if (tLow.length >= 2) prefixes.add(tLow);
+                const firstWord = tLow.split(/\s+/).filter(Boolean)[0] || "";
+                if (firstWord.length >= 2 && !GENERIC_PREFIX_WORDS.has(firstWord)) prefixes.add(firstWord);
+                const dRoot = s.domain.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (dRoot.length >= 2 && !GENERIC_PREFIX_WORDS.has(dRoot)) prefixes.add(dRoot);
+              }
+              return Array.from(prefixes);
+            };
+            const seenUnverifiedRoots = new Set<string>();
+
+            // Sort shortest clean canonical phrase first so root business names (e.g. "Aljazeera", "בנק הפועלים", "الجزيرة")
+            // are always evaluated before longer sub-section/language/domain variants (e.g. "Aljazeera.Net البث الحي", "בנק הפועלים כניסה")
+            const orderedGooglePhrases = [...googlePhrases].sort((a, b) => {
+              const aNorm = normalizeSearchEntityPhrase(a);
+              const bNorm = normalizeSearchEntityPhrase(b);
+              const aWords = aNorm.split(" ").filter(Boolean).length;
+              const bWords = bNorm.split(" ").filter(Boolean).length;
+              if (aWords !== bWords) return aWords - bWords;
+              return aNorm.length - bNorm.length;
+            });
+
+            for (const phrase of orderedGooglePhrases) {
+              if (suggestions.length >= 6) break;
               const phraseClean = phrase.trim();
               const phraseLower = phraseClean.toLowerCase();
-              const phraseNoSpaces = phraseLower.replace(/\s+/g, '');
+              const phraseNorm = normalizeSearchEntityPhrase(phraseClean);
+              const phraseNoSpaces = phraseNorm.replace(/\s+/g, '');
+              const phraseWords = phraseNorm.split(" ").filter(Boolean);
 
-              if (JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower === k || phraseLower.includes(` ${k} `))) {
+              // Skip obvious sub-section / language / support queries when appended to a brand name
+              if (phraseWords.length >= 2 && JUNK_KEYWORDS.some(k => phraseLower.endsWith(` ${k}`) || phraseLower.includes(` ${k} `))) {
+                continue;
+              }
+              if (JUNK_KEYWORDS.some(k => phraseLower === k)) {
                 continue;
               }
 
@@ -39258,16 +39342,49 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 }
               }
 
+              // If this phrase has NO distinct domain of its own, NEVER show sub-pages/variants of an already-present verified business!
+              const verifiedPrefixes = getVerifiedBrandPrefixes();
+              if (!targetDom && verifiedPrefixes.some((pref) => phraseLower === pref || phraseLower.startsWith(`${pref} `))) {
+                continue;
+              }
+              // Cross-script guard: if Step C1 already resolved a verified official website for query `q` (e.g. "任天堂" -> nintendo.com),
+              // never also add a domain-less echo/extension of `q` (e.g. "任天堂" or "任天堂スイッチ") for the exact same company!
+              const qNormForCrossScript = normalizeSearchEntityPhrase(q);
+              if (
+                !targetDom &&
+                discoveredBrand &&
+                discoveredBrand.domain &&
+                qNormForCrossScript.length >= 2 &&
+                !isGenericCategoryQuery &&
+                (phraseNorm === qNormForCrossScript ||
+                  phraseNorm.startsWith(`${qNormForCrossScript} `) ||
+                  (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u.test(qNormForCrossScript) &&
+                    phraseNorm.startsWith(qNormForCrossScript)))
+              ) {
+                continue;
+              }
+
               const phraseDistinctiveTokens = phraseLower.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(w => w.length >= 3 && !GENERIC_QUERY_STOPWORDS.has(w));
               if (!targetDom && suggestions.some(s => {
                 if (!s.domain) return false;
                 const sNoSpace = s.title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
                 const sTitleLow = s.title.toLowerCase();
-                if (sNoSpace.length >= 4 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace))) return true;
+                if (sNoSpace.length >= 3 && (phraseNoSpaces === sNoSpace || phraseNoSpaces.startsWith(sNoSpace))) return true;
                 if (phraseDistinctiveTokens.length >= 2 && phraseDistinctiveTokens.every(tok => sTitleLow.includes(tok))) return true;
                 return false;
               })) {
                 continue;
+              }
+
+              // Even for brand-new unseen entities without a domain, collapse duplicate prefix variants (keep only the cleanest root name, max 1 per root)
+              if (!targetDom && phraseWords.length >= 1) {
+                const rootW = phraseWords[0];
+                if (rootW.length >= 2 && !GENERIC_PREFIX_WORDS.has(rootW)) {
+                  if (seenUnverifiedRoots.has(rootW) && phraseWords.length >= 2) {
+                    continue;
+                  }
+                  seenUnverifiedRoots.add(rootW);
+                }
               }
 
               const knownLoc = targetDom ? (KNOWN_ENTITY_LOCATIONS[targetDom] || KNOWN_ENTITY_LOCATIONS[targetDom.split('.')[0]]) : null;
@@ -39312,7 +39429,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           }
         }
 
-        const finalResults = suggestions.slice(0, 8);
+        const finalResults = dedupeSearchSuggestions(suggestions).slice(0, 8);
         if (searchSuggestCache.size > 600) {
           const oldestKey = searchSuggestCache.keys().next().value;
           if (oldestKey) searchSuggestCache.delete(oldestKey);

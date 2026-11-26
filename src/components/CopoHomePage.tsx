@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { Search, Star, ChevronLeft, ChevronRight, ArrowRight, Loader2, X, Building2, CheckCircle, Bell, Camera, User, Globe, ShieldCheck, BedDouble, UtensilsCrossed, Package, Briefcase, Sparkles, ShoppingBag, Car, Cpu } from "lucide-react";
 import { MobileSearchOverlay } from "./MobileSearchOverlay";
 import { Place, VideoReview, VideoAuthor, UserProfile } from "../types";
-import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime, isWafOrBlockTitle, isLoginOrPortalUrl } from "../utils/placeUtils";
+import { formatBusinessName, extractCleanDomain, resolveSafeAuthor, isPlaceReviewMatch, isValidDomainUrl, isDomainDerivedGuess, isDomainStemName, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, KNOWN_OFFICIAL_NAMES, getSafeAvatarUrl, getReviewTime, isWafOrBlockTitle, isLoginOrPortalUrl, dedupeSearchSuggestions } from "../utils/placeUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { KNOWN_BRAND_LOGOS, KNOWN_BRAND_BANNERS, isGenericOrPlaceholderLogo } from "../utils/logoUtils";
 import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
@@ -563,53 +563,8 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       };
     };
 
-    const dedupeSuggestions = (items: SuggestionItem[]): SuggestionItem[] => {
-      const byDomain = new Map<string, SuggestionItem>();
-      const byTitle = new Map<string, SuggestionItem>();
-      const out: SuggestionItem[] = [];
-
-      const mergeInto = (target: SuggestionItem, incoming: SuggestionItem) => {
-        if (!target.domain && incoming.domain) {
-          target.domain = incoming.domain;
-          target.id = incoming.domain;
-        }
-        if (!target.logoUrl && incoming.logoUrl) {
-          target.logoUrl = incoming.logoUrl;
-        } else if (
-          target.logoUrl &&
-          target.logoUrl.includes("/api/favicon") &&
-          incoming.logoUrl &&
-          !incoming.logoUrl.includes("/api/favicon")
-        ) {
-          target.logoUrl = incoming.logoUrl;
-        }
-        if (!target.websiteUrl && incoming.websiteUrl) target.websiteUrl = incoming.websiteUrl;
-        if (!target.address && incoming.address) target.address = incoming.address;
-      };
-
-      for (const rawItem of items) {
-        const item = sanitizeSuggestion(rawItem);
-        const domKey = item.domain ? `${item.isCreator ? "creator:" : "dom:"}${item.domain}` : "";
-        const titleKey = compactTitleKey(item.title) ? `${item.isCreator ? "creator:" : "title:"}${compactTitleKey(item.title)}` : "";
-
-        const existingByDom = domKey ? byDomain.get(domKey) : undefined;
-        if (existingByDom) {
-          mergeInto(existingByDom, item);
-          continue;
-        }
-        const existingByTitle = titleKey ? byTitle.get(titleKey) : undefined;
-        if (existingByTitle) {
-          mergeInto(existingByTitle, item);
-          if (domKey && !byDomain.has(domKey)) byDomain.set(domKey, existingByTitle);
-          continue;
-        }
-
-        out.push(item);
-        if (domKey) byDomain.set(domKey, item);
-        if (titleKey) byTitle.set(titleKey, item);
-      }
-      return out;
-    };
+    const dedupeSuggestions = (items: SuggestionItem[]): SuggestionItem[] =>
+      dedupeSearchSuggestions(items.map(sanitizeSuggestion));
 
     const currentPlaces = placesRef.current;
     const currentVideos = trendingVideosRef.current;
@@ -777,7 +732,32 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
       return;
     }
 
-    // 7. Debounced Network Suggest (280ms quiet window + AbortController — fires ONLY once user pauses typing!)
+    // 6b. Instant 0ms Short-Circuit when local DB / Knowledge Graph ALREADY has an exact verified business match
+    // (e.g. "bbc" -> BBC (bbc.com), "apple" -> Apple, "hilton" -> Hilton Hotels, "בנק ירושלים" -> bankjerusalem.co.il)
+    const GENERIC_CAT_WORDS = new Set([
+      "hotel", "hotels", "resort", "resorts", "bank", "banks", "cafe", "cafes", "coffee",
+      "pizza", "sushi", "burger", "restaurant", "restaurants", "shop", "store", "auto", "car", "cars",
+      "tech", "beauty", "dental", "dentist", "salon", "clinic", "hospital", "gym", "spa", "bar", "pub",
+      "travel", "flight", "flights", "airline", "airlines", "insurance", "lawyer", "legal", "doctor",
+      "pharmacy", "bakery", "market", "supermarket", "food", "news", "media", "music", "fashion"
+    ]);
+    const qCompactUni = (qSearchClean || trimmed).toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+    const hasExactLocalBrand = !GENERIC_CAT_WORDS.has((qSearchClean || trimmed).toLowerCase()) && rankedLocal.some((item) => {
+      if (!item.domain || item.isCreator) return false;
+      const tComp = (item.title || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+      const tFirst = (item.title || "").toLowerCase().split(/\s+/).filter(Boolean)[0] || "";
+      const dRoot = item.domain.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      return (
+        (qCompactUni.length >= 2 && (tComp === qCompactUni || dRoot === qCompactUni)) ||
+        (qCompactUni.length >= 4 && tFirst.length >= 4 && tFirst === (qSearchClean || trimmed).toLowerCase())
+      );
+    });
+    if (hasExactLocalBrand) {
+      setIsLoadingSuggest(false);
+      return;
+    }
+
+    // 7. Snappy Debounced Network Suggest (100ms Apple Spotlight-grade cadence + AbortController)
     let cancelled = false;
     setIsLoadingSuggest(false);
 
@@ -820,7 +800,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
           setIsLoadingSuggest(false);
         }
       }
-    }, 280);
+    }, 100);
 
     return () => {
       cancelled = true;
@@ -1525,7 +1505,7 @@ export const CopoHomePage: React.FC<CopoHomePageProps> = ({
                                 <span className="font-semibold text-white">{item.title}</span>
                               )}
                             </span>
-                            {!item.isCreator && (
+                            {!item.isCreator && Boolean(item.domain) && (
                               <CheckCircle className="w-3.5 h-3.5 fill-white text-[#0D0D10] shrink-0 inline-block" />
                             )}
                           </div>

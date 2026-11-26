@@ -910,6 +910,61 @@ export const KNOWN_OFFICIAL_NAMES: Record<string, string> = {
   "ups.com": "UPS",
   "cnn": "CNN",
   "cnn.com": "CNN",
+  "bbc": "BBC",
+  "bbc.com": "BBC",
+  "reuters": "Reuters",
+  "reuters.com": "Reuters",
+  "theguardian": "The Guardian",
+  "theguardian.com": "The Guardian",
+  "nytimes": "The New York Times",
+  "nytimes.com": "The New York Times",
+  "bloomberg": "Bloomberg",
+  "bloomberg.com": "Bloomberg",
+  "espn": "ESPN",
+  "espn.com": "ESPN",
+  "foxnews": "Fox News",
+  "foxnews.com": "Fox News",
+  "wsj": "The Wall Street Journal",
+  "wsj.com": "The Wall Street Journal",
+  "forbes": "Forbes",
+  "forbes.com": "Forbes",
+  "cnbc": "CNBC",
+  "cnbc.com": "CNBC",
+  "washingtonpost": "The Washington Post",
+  "washingtonpost.com": "The Washington Post",
+  "ft.com": "Financial Times",
+  "economist": "The Economist",
+  "economist.com": "The Economist",
+  "bmw": "BMW",
+  "bmw.com": "BMW",
+  "mercedes": "Mercedes-Benz",
+  "mercedes-benz.com": "Mercedes-Benz",
+  "audi": "Audi",
+  "audi.com": "Audi",
+  "porsche": "Porsche",
+  "porsche.com": "Porsche",
+  "toyota": "Toyota",
+  "toyota.com": "Toyota",
+  "volkswagen": "Volkswagen",
+  "volkswagen.com": "Volkswagen",
+  "ford": "Ford",
+  "ford.com": "Ford",
+  "honda": "Honda",
+  "honda.com": "Honda",
+  "hp": "HP",
+  "hp.com": "HP",
+  "dell": "Dell",
+  "dell.com": "Dell",
+  "dhl": "DHL",
+  "dhl.com": "DHL",
+  "fedex": "FedEx",
+  "fedex.com": "FedEx",
+  "adidas": "Adidas",
+  "adidas.com": "Adidas",
+  "puma": "Puma",
+  "puma.com": "Puma",
+  "lyft": "Lyft",
+  "lyft.com": "Lyft",
   "zoom": "Zoom",
   "zoom.us": "Zoom",
   "zoom.com": "Zoom",
@@ -5212,6 +5267,342 @@ export function generateSmartReviewTitle(
   }
 
   return cleanPlace ? `${cleanPlace} (${numRating}★ Review)` : (firstSentence || "Verified Photo Review");
+}
+
+const TWO_PART_PUBLIC_SUFFIXES = new Set([
+  "co.uk", "org.uk", "gov.uk", "ac.uk", "me.uk", "net.uk",
+  "co.il", "org.il", "gov.il", "ac.il", "muni.il", "net.il",
+  "com.au", "net.au", "org.au", "gov.au", "edu.au",
+  "com.br", "org.br", "gov.br", "net.br",
+  "com.mx", "gob.mx", "org.mx",
+  "co.jp", "ne.jp", "or.jp", "go.jp", "ac.jp",
+  "co.kr", "or.kr", "go.kr", "ne.kr",
+  "com.cn", "net.cn", "org.cn", "gov.cn",
+  "com.tw", "org.tw", "gov.tw",
+  "com.hk", "org.hk", "gov.hk",
+  "com.sg", "org.sg", "gov.sg",
+  "co.nz", "org.nz", "govt.nz",
+  "co.za", "org.za", "gov.za",
+  "com.tr", "org.tr", "gov.tr",
+  "com.ar", "com.co", "com.pe", "com.cl", "com.ua", "com.pl",
+  "com.sa", "com.ae", "com.eg", "com.my", "com.ph", "com.vn", "com.ng", "com.pk",
+  "co.in", "org.in", "gov.in", "ac.in", "co.id", "co.th", "co.ke", "co.ma"
+]);
+
+const NON_DISTINCTIVE_DOMAIN_STEMS = new Set([
+  "gov", "gob", "govt", "org", "com", "net", "edu", "ac", "co", "mil",
+  "shop", "store", "hotel", "hotels", "bank", "cafe", "coffee", "news", "media",
+  "info", "web", "site", "app", "mail", "blog", "cloud", "online", "digital",
+  "group", "auto", "car", "cars", "dental", "clinic", "travel", "home", "house",
+  "my", "the", "new", "city", "club", "park", "royal", "grand", "first", "best",
+  "top", "pro", "vip", "max", "plus", "live", "free", "open", "global", "world",
+  "service", "services", "studio", "center", "centre", "market", "food", "tech"
+]);
+
+// Generic single-word business categories across major world languages so searching a generic category
+// (e.g. "bank", "בנק", "بنك", "hotel", "מלון") never collapses distinct businesses into one result.
+const MULTILINGUAL_GENERIC_CATEGORY_WORDS = new Set([
+  // English
+  "the", "a", "an", "my", "new", "hotel", "hotels", "resort", "resorts", "bank", "banks",
+  "cafe", "cafes", "coffee", "restaurant", "restaurants", "shop", "store", "market", "supermarket",
+  "clinic", "dental", "dentist", "hospital", "pharmacy", "salon", "barber", "spa", "gym",
+  "auto", "garage", "car", "cars", "studio", "club", "bar", "pub", "bakery", "pizza", "sushi",
+  "royal", "grand", "park", "city", "house", "group", "global", "first", "national", "central",
+  "ministry", "office", "department", "center", "centre", "agency", "company", "airlines", "air",
+  // Hebrew
+  "בנק", "מלון", "מלונות", "מסעדה", "מסעדות", "קפה", "חנות", "משרד", "מרכז", "חברת", "חברה",
+  "קליניקה", "מרפאה", "מרפאת", "מוסך", "סופר", "בית", "רשת", "קבוצת", "מכון", "אוניברסיטת",
+  // Arabic
+  "بنك", "مصرف", "فندق", "فنادق", "مطعم", "مطاعم", "مقهى", "متجر", "وزارة", "مركز", "شركة",
+  "عيادة", "مستشفى", "صيدلية", "سوق", "مكتب", "مجموعة", "دار", "بيت",
+  // French / Spanish / Italian / Portuguese
+  "le", "la", "les", "el", "los", "las", "il", "lo", "gli", "o", "os", "as", "de", "du", "del",
+  "hôtel", "banque", "banco", "banca", "restaurante", "ristorante", "café", "boutique", "tienda",
+  "negozio", "clinique", "clínica", "clinica", "pharmacie", "farmacia", "ministère", "ministerio",
+  "groupe", "grupo", "gruppo", "maison", "casa", "agence", "agencia",
+  // German / Dutch
+  "der", "die", "das", "het", "een", "sparkasse", "volksbank", "apotheek", "apotheke", "tandarts",
+  "zahnarzt", "autohaus", "bäckerei", "bakkerij", "kaffee", "winkel", "laden", "geschäft",
+  // Russian / Ukrainian / Turkish / Greek
+  "банк", "отель", "гостиница", "ресторан", "кафе", "магазин", "аптека", "клиника", "центр", "министерство",
+  "banka", "bankası", "otel", "restoran", "kafe", "klinik", "eczane", "bakanlığı",
+  // CJK
+  "ホテル", "銀行", "レストラン", "カフェ", "クリニック", "病院", "大学", "会社",
+  "酒店", "银行", "餐厅", "咖啡", "医院", "大学", "公司",
+  "호텔", "은행", "식당", "카페", "병원", "클리닉", "대학교"
+]);
+
+const TLD_TOKEN_SUFFIX_REGEX = /\.(?:com|net|org|io|ai|co|app|dev|tv|me|info|biz|gg|vc|so|uk|nl|de|fr|es|it|be|ch|at|se|no|dk|fi|pl|pt|gr|cz|hu|ro|ie|il|ae|sa|eg|tr|ru|ua|jp|kr|cn|tw|hk|sg|in|au|nz|ca|br|mx|ar|cl|za|id|th|vn|my|ph|gov|edu|ac)(?:\.(?:uk|il|au|br|mx|jp|kr|cn|tw|hk|sg|nz|za|tr|ar|co|pe|cl|ua|pl|sa|ae|eg|in|my|ph|id|th|vn|ng|ke|pk|ma))?$/i;
+
+const CJK_CHAR_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u;
+
+export function getRegistrableRootDomain(rawDomain?: string | null): string {
+  if (!rawDomain) return "";
+  const cleaned = rawDomain
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\d*\./i, "")
+    .split("/")[0]
+    .split("?")[0]
+    .split("#")[0]
+    .replace(/:\d+$/, "")
+    .trim();
+  if (!cleaned || !cleaned.includes(".")) return "";
+  const parts = cleaned.split(".").filter(Boolean);
+  if (parts.length <= 2) return parts.join(".");
+  const lastTwo = parts.slice(-2).join(".");
+  if (TWO_PART_PUBLIC_SUFFIXES.has(lastTwo)) {
+    return parts.slice(-3).join(".");
+  }
+  return lastTwo;
+}
+
+export function getBrandDomainStem(rawDomain?: string | null): string {
+  const root = getRegistrableRootDomain(rawDomain);
+  if (!root) return "";
+  const parts = root.split(".");
+  if (parts.length === 2 && TWO_PART_PUBLIC_SUFFIXES.has(root)) {
+    return "";
+  }
+  const stem = (parts[0] || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (stem.length < 3 || NON_DISTINCTIVE_DOMAIN_STEMS.has(stem)) return "";
+  return stem;
+}
+
+export function normalizeSearchEntityPhrase(rawText?: string | null): string {
+  if (!rawText) return "";
+  const normalized = rawText
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\u0591-\u05C7\u064B-\u065F\u0670]/g, "")
+    .trim();
+  if (!normalized) return "";
+  return normalized
+    .split(/\s+/)
+    .map((tok) => tok.replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").replace(TLD_TOKEN_SUFFIX_REGEX, ""))
+    .join(" ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export interface SearchSuggestionLike {
+  id?: string;
+  title: string;
+  domain?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  category?: string;
+  address?: string;
+  source?: string;
+  isCreator?: boolean;
+}
+
+/**
+ * Universal, language-agnostic canonical deduplicator for search dropdown suggestions.
+ * Guarantees that NO business or website ever appears twice in the dropdown — across:
+ *  - exact domains & subdomains (e.g. news.bbc.co.uk + bbc.co.uk, store.apple.com + apple.com)
+ *  - country-TLD mirrors of the same brand (e.g. bbc.com + bbc.co.uk, amazon.com + amazon.nl, lidl.com + lidl.be)
+ *  - duplicate titles in any script/language (ignoring diacritics, spacing, punctuation, and attached TLDs)
+ *  - website sub-section / language / support / regional extensions in ANY language
+ *    (e.g. "BBC" + "BBC News" / "BBC Farsi", "Aljazeera" + "Aljazeera.Net البث الحي",
+ *     "בנק הפועלים" + "בנק הפועלים כניסה לחשבון", "الجزيرة" + "الجزيرة مباشر", "任天堂" + "任天堂スイッチ")
+ */
+export function dedupeSearchSuggestions<T extends SearchSuggestionLike>(items: T[]): T[] {
+  if (!Array.isArray(items) || items.length <= 1) {
+    return Array.isArray(items) ? items.slice() : [];
+  }
+
+  const normalizeDom = (item: T): string => {
+    const raw = item.domain || (item.id && item.id.includes(".") ? item.id : "");
+    if (!raw) return "";
+    const cleaned = raw
+      .toLowerCase()
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\d*\./i, "")
+      .split("/")[0]
+      .split("?")[0]
+      .trim();
+    return cleaned.includes(".") && cleaned.length > 3 && !cleaned.endsWith(".") ? cleaned : "";
+  };
+
+  const domainPreferenceScore = (dom: string, item: T): number => {
+    if (!dom) return 0;
+    const root = getRegistrableRootDomain(dom);
+    let score = 10;
+    if (dom === root) score += 20;
+    if (dom.endsWith(".com")) score += 8;
+    if (item.source === "database") score += 6;
+    if (item.logoUrl && !item.logoUrl.includes("/api/favicon")) score += 4;
+    if (item.category) score += 2;
+    return score;
+  };
+
+  const mergeMetadata = (winner: T, incoming: T): T => {
+    const out = { ...winner };
+    const winDom = normalizeDom(winner);
+    const incDom = normalizeDom(incoming);
+    if (!winDom && incDom) {
+      out.domain = incDom;
+      out.id = incDom;
+    } else if (winDom && incDom && domainPreferenceScore(incDom, incoming) > domainPreferenceScore(winDom, winner)) {
+      out.domain = incDom;
+      out.id = incDom;
+      if (incoming.websiteUrl) out.websiteUrl = incoming.websiteUrl;
+      if (incoming.title && incoming.title.length <= (winner.title || "").length + 4) {
+        out.title = incoming.title;
+      }
+    }
+    if (!out.logoUrl && incoming.logoUrl) {
+      out.logoUrl = incoming.logoUrl;
+    } else if (
+      out.logoUrl &&
+      out.logoUrl.includes("/api/favicon") &&
+      incoming.logoUrl &&
+      !incoming.logoUrl.includes("/api/favicon")
+    ) {
+      out.logoUrl = incoming.logoUrl;
+    }
+    if (!out.websiteUrl && incoming.websiteUrl) out.websiteUrl = incoming.websiteUrl;
+    if (!out.category && incoming.category) out.category = incoming.category;
+    if (!out.address && incoming.address) out.address = incoming.address;
+    return out;
+  };
+
+  const creators: T[] = [];
+  const seenCreators = new Set<string>();
+  const businessItems: Array<{ item: T; origIdx: number; dom: string; rootDom: string; stem: string; normPhrase: string; compactPhrase: string }> = [];
+
+  items.forEach((raw, origIdx) => {
+    if (!raw || !raw.title || !raw.title.trim()) return;
+    if (raw.isCreator) {
+      const cKey = (raw.id || raw.title).toLowerCase().trim();
+      if (!seenCreators.has(cKey)) {
+        seenCreators.add(cKey);
+        creators.push(raw);
+      }
+      return;
+    }
+    const dom = normalizeDom(raw);
+    const rootDom = dom ? getRegistrableRootDomain(dom) : "";
+    const stem = dom ? getBrandDomainStem(dom) : "";
+    const normPhrase = normalizeSearchEntityPhrase(raw.title);
+    const compactPhrase = normPhrase.replace(/\s+/g, "");
+    if (!normPhrase && !dom) return;
+    businessItems.push({ item: raw, origIdx, dom, rootDom, stem, normPhrase, compactPhrase });
+  });
+
+  const sorted = [...businessItems].sort((a, b) => {
+    const aHasDom = a.dom ? 1 : 0;
+    const bHasDom = b.dom ? 1 : 0;
+    if (aHasDom !== bHasDom) return bHasDom - aHasDom;
+    if (!aHasDom && !bHasDom) {
+      const aWords = a.normPhrase.split(" ").filter(Boolean).length;
+      const bWords = b.normPhrase.split(" ").filter(Boolean).length;
+      if (aWords !== bWords) return aWords - bWords;
+      if (a.normPhrase.length !== b.normPhrase.length) return a.normPhrase.length - b.normPhrase.length;
+    }
+    return a.origIdx - b.origIdx;
+  });
+
+  const byRootDom = new Map<string, number>();
+  const byStem = new Map<string, number>();
+  const byCompactTitle = new Map<string, number>();
+  const accepted: Array<{ item: T; origIdx: number; dom: string; rootDom: string; stem: string; normPhrase: string; compactPhrase: string }> = [];
+
+  for (const entry of sorted) {
+    if (entry.rootDom && byRootDom.has(entry.rootDom)) {
+      const idx = byRootDom.get(entry.rootDom)!;
+      accepted[idx].item = mergeMetadata(accepted[idx].item, entry.item);
+      accepted[idx].dom = normalizeDom(accepted[idx].item);
+      continue;
+    }
+    if (entry.stem && byStem.has(entry.stem)) {
+      const idx = byStem.get(entry.stem)!;
+      accepted[idx].item = mergeMetadata(accepted[idx].item, entry.item);
+      accepted[idx].dom = normalizeDom(accepted[idx].item);
+      continue;
+    }
+    if (entry.compactPhrase && byCompactTitle.has(entry.compactPhrase)) {
+      const idx = byCompactTitle.get(entry.compactPhrase)!;
+      accepted[idx].item = mergeMetadata(accepted[idx].item, entry.item);
+      accepted[idx].dom = normalizeDom(accepted[idx].item);
+      if (entry.rootDom && !byRootDom.has(entry.rootDom)) byRootDom.set(entry.rootDom, idx);
+      if (entry.stem && !byStem.has(entry.stem)) byStem.set(entry.stem, idx);
+      continue;
+    }
+
+    if (!entry.dom && entry.normPhrase) {
+      const entryTokens = entry.normPhrase.split(" ").filter(Boolean);
+      const entryFirstToken = entryTokens[0] || "";
+
+      const isSubVariantOfAccepted = accepted.some((acc) => {
+        if (acc.stem && entryFirstToken === acc.stem) {
+          return true;
+        }
+        if (acc.stem && entry.compactPhrase.startsWith(acc.stem) && entry.compactPhrase.length <= acc.stem.length + 3 && entryTokens.length === 1) {
+          return true;
+        }
+
+        const accPhrase = acc.normPhrase;
+        if (!accPhrase || accPhrase.length < 2) return false;
+        const accTokens = accPhrase.split(" ").filter(Boolean);
+        const isSingleGenericWord = accTokens.length === 1 && MULTILINGUAL_GENERIC_CATEGORY_WORDS.has(accTokens[0]);
+
+        if (!isSingleGenericWord) {
+          if (entry.normPhrase === accPhrase || entry.normPhrase.startsWith(`${accPhrase} `)) {
+            return true;
+          }
+          if (CJK_CHAR_REGEX.test(accPhrase) && accPhrase.length >= 2 && entry.normPhrase.startsWith(accPhrase)) {
+            return true;
+          }
+        }
+
+        if (acc.dom && accTokens.length >= 1) {
+          const accFirst = accTokens[0];
+          if (accFirst.length >= 2 && !MULTILINGUAL_GENERIC_CATEGORY_WORDS.has(accFirst)) {
+            if (entry.normPhrase === accFirst || entry.normPhrase.startsWith(`${accFirst} `)) {
+              return true;
+            }
+          }
+        }
+
+        if (!acc.dom && accTokens.length === 1) {
+          const accRoot = accTokens[0];
+          if (accRoot.length >= 2 && !MULTILINGUAL_GENERIC_CATEGORY_WORDS.has(accRoot)) {
+            if (entryFirstToken === accRoot && entryTokens.length >= 2) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      });
+
+      if (isSubVariantOfAccepted) {
+        continue;
+      }
+    }
+
+    const newIdx = accepted.length;
+    accepted.push({ ...entry });
+    if (entry.rootDom) byRootDom.set(entry.rootDom, newIdx);
+    if (entry.stem) byStem.set(entry.stem, newIdx);
+    if (entry.compactPhrase) byCompactTitle.set(entry.compactPhrase, newIdx);
+  }
+
+  const finalBusinesses = accepted
+    .sort((a, b) => {
+      const aHasDom = a.dom ? 1 : 0;
+      const bHasDom = b.dom ? 1 : 0;
+      if (aHasDom !== bHasDom) return bHasDom - aHasDom;
+      return a.origIdx - b.origIdx;
+    })
+    .map((e) => e.item);
+
+  return [...finalBusinesses, ...creators];
 }
 
 

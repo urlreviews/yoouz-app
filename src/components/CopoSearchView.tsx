@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { Search, Globe, Loader2, Camera, Star, CheckCircle, MapPin, Building2, Phone, Mail, Clock, ExternalLink, Sparkles, TrendingUp, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Place, VideoReview } from "../types";
 import { getPlaceLogoUrl, getCleanLogoUrl, KNOWN_BRAND_BANNERS, getProxiedImageUrl, isFaviconUrl, KNOWN_BRAND_LOGOS, isGenericOrPlaceholderLogo, getCategoryThematicBanner, getLiveWebsiteBannerUrl, isBadBanner, isWhiteOrInvertedLogo } from "../utils/logoUtils";
-import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl } from "../utils/placeUtils";
+import { isPlaceReviewMatch, formatBusinessName, extractCleanDomain, isValidDomainUrl, getCleanDomainUrl, getDisplayUrlAsDomain, KNOWN_OFFICIAL_NAMES, KNOWN_LOCATIONS, isGenericPlaceName, getEffectivePlaceDescription, resolveSafeAuthor, isDomainStemName, isDomainDerivedGuess, extractBrandFromDescription, extractOfficialBrandSpellingFromText, mergeOfficialBrandSpelling, isFalseSplitOfDomain, isFalseSplitAgainstText, isGenericSeoSlogan, isWafOrBlockTitle, isWafOrBlockDescription, isLoginOrPortalUrl, dedupeSearchSuggestions } from "../utils/placeUtils";
 import { resolveVideoPosterUrl, toCardPhotoUrl } from "../utils/videoUtils";
 import { CopoBrandLogo } from "./CopoBrandLogo";
 import { CopoVideoThumbnail } from "./CopoVideoThumbnail";
@@ -360,19 +360,13 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
 
     const cached = suggestCacheRef.current.get(qLow);
     if (cached && Date.now() - cached.ts < 3 * 60 * 1000) {
-      const seen = new Set<string>();
-      const merged: any[] = [];
-      for (const item of [...localMatches, ...cached.items]) {
-        const key = (item.id || item.domain || item.title).toLowerCase();
-        if (!seen.has(key)) { seen.add(key); merged.push(item); }
-      }
-      setSuggestions(merged.slice(0, 8));
+      setSuggestions(dedupeSearchSuggestions([...localMatches, ...cached.items]).slice(0, 8));
       setIsLoadingSuggest(false);
       return;
     }
 
     if (localMatches.length > 0) {
-      setSuggestions(localMatches);
+      setSuggestions(dedupeSearchSuggestions(localMatches));
     }
 
     if (trimmed.length < 2) {
@@ -404,15 +398,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
           }
           suggestCacheRef.current.set(qLow, { ts: Date.now(), items: serverList });
 
-          const seen = new Set<string>();
-          const merged = [];
-          for (const item of [...localMatches, ...serverList]) {
-            const key = (item.id || item.domain || item.title).toLowerCase();
-            if (!seen.has(key)) {
-              seen.add(key);
-              merged.push(item);
-            }
-          }
+          const merged = dedupeSearchSuggestions([...localMatches, ...serverList]);
           setSuggestions(merged.slice(0, 8));
         }
       } catch (err) {
@@ -420,7 +406,7 @@ export const CopoSearchView: React.FC<CopoSearchViewProps> = ({
         if (activeAbortRef.current === controller) activeAbortRef.current = null;
         if (!cancelled && reqSeq === suggestSeqRef.current) setIsLoadingSuggest(false);
       }
-    }, 280);
+    }, 100);
 
     return () => {
       cancelled = true;
