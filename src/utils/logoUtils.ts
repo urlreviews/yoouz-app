@@ -2203,7 +2203,7 @@ export function getPlaceLogoUrl(place: Partial<Place> | null | undefined): strin
 export function getLiveWebsiteBannerUrl(domain?: string | null): string {
   const cleanDomain = extractDomain(domain || "");
   if (cleanDomain && cleanDomain.includes(".")) {
-    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
+    return `/api/brand-banner/${encodeURIComponent(cleanDomain)}?v=2`;
   }
   return "";
 }

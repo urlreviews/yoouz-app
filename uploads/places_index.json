@@ -1,5 +1,55 @@
 [
   {
+    "id": "anumuseum.org.il",
+    "category": "Business & Services",
+    "logoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Beit%20Hatfutsot.png",
+    "bannerUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/ANU%20-%20Museum%20of%20the%20Jewish%20People%2C%20February%2015%2C%202026.jpg",
+    "name": "Anu Museum",
+    "categoryType": "services",
+    "address": "Klausner St 15, Tel Aviv-Yafo, Israel",
+    "city": "Tel Aviv",
+    "country": "Israel",
+    "lat": 32.1133,
+    "lng": 34.8053,
+    "rating": 5,
+    "totalReviews": 0,
+    "ratingCount": 1,
+    "videoReviewCount": 1,
+    "starCounts": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 1
+    },
+    "ratingDistribution": {
+      "stars5": 0,
+      "stars4": 0,
+      "stars3": 0,
+      "stars2": 0,
+      "stars1": 0
+    },
+    "avatarUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Beit%20Hatfutsot.png",
+    "ogImage": "https://commons.wikimedia.org/wiki/Special:FilePath/ANU%20-%20Museum%20of%20the%20Jewish%20People%2C%20February%2015%2C%202026.jpg",
+    "photos": [
+      "https://commons.wikimedia.org/wiki/Special:FilePath/ANU%20-%20Museum%20of%20the%20Jewish%20People%2C%20February%2015%2C%202026.jpg"
+    ],
+    "openingHours": "Available 24/7",
+    "isOpen": true,
+    "phone": "",
+    "email": "",
+    "website": "https://anumuseum.org.il/he/plan-your-visit/",
+    "priceRange": "N/A",
+    "plusCode": "",
+    "locations": [],
+    "description": "אנו – מוזיאון העם היהודי הוא מוזיאון העוסק בעמיות וזהות יהודית, ומקדם רב-תרבותיות ורב-גוניות בעם היהודי. נוסד בשנת 1978, ושוכן בקמפוס אוניברסיטת תל אביב.",
+    "popularKeywords": [],
+    "amenities": [],
+    "topDishes": [],
+    "brandDomain": "anumuseum.org.il",
+    "selectedName": "בית התפוצות"
+  },
+  {
     "id": "bankjerusalem.co.il",
     "name": "בנק ירושלים",
     "category": "Banking & Finance",
@@ -155,8 +205,8 @@
   {
     "id": "biu.ac.il",
     "name": "אוניברסיטת בר-אילן",
-    "category": "Verified Business",
-    "categoryType": "all",
+    "category": "Business & Services",
+    "categoryType": "services",
     "address": "",
     "city": "Ramat Gan",
     "country": "Israel",

@@ -1105,7 +1105,7 @@ return () => window.removeEventListener("keydown", handleKeyDown);
   const fallbackBrandBannerUrl = React.useMemo(() => {
     const key = (drawerDomain || place.brandDomain || place.id || displayedPlaceName || "").trim();
     if (!key) return "";
-    return `/api/brand-banner/${encodeURIComponent(key)}`;
+    return `/api/brand-banner/${encodeURIComponent(key)}?v=2`;
   }, [drawerDomain, place.brandDomain, place.id, displayedPlaceName]);
 
   const hasAuthenticPhoto = allPhotos.length > 0;

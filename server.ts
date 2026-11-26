@@ -748,12 +748,41 @@ function isValidWikidataLogoFile(fileOrUrl: string, cleanDom: string): boolean {
   return true;
 }
 
-function toHttpsWikimediaFilePath(uriOrFile: string): string {
+function isWikimediaHostUrl(urlStr: string): boolean {
+  if (!urlStr) return false;
+  try {
+    const h = new URL(urlStr).hostname.toLowerCase();
+    return h.endsWith("wikimedia.org") || h.endsWith("wikipedia.org");
+  } catch {
+    return false;
+  }
+}
+
+function normalizeWikimediaImageUrl(urlStr: string, targetWidth: number = 1200): string {
+  if (!urlStr || !/^https?:\/\//i.test(urlStr)) return urlStr;
+  let normalized = urlStr.replace(/^http:\/\//i, "https://");
+  try {
+    const parsed = new URL(normalized);
+    if (
+      parsed.hostname.toLowerCase().endsWith("wikimedia.org") &&
+      parsed.pathname.includes("/wiki/Special:FilePath/") &&
+      !/\.svg$/i.test(parsed.pathname) &&
+      !parsed.searchParams.has("width")
+    ) {
+      parsed.searchParams.set("width", String(targetWidth));
+      normalized = parsed.toString();
+    }
+  } catch {}
+  return normalized;
+}
+
+function toHttpsWikimediaFilePath(uriOrFile: string, targetWidth: number = 1200): string {
   if (!uriOrFile) return "";
   if (/^https?:\/\//i.test(uriOrFile)) {
-    return uriOrFile.replace(/^http:\/\//i, "https://");
+    return normalizeWikimediaImageUrl(uriOrFile, targetWidth);
   }
-  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(uriOrFile)}`;
+  const base = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(uriOrFile)}`;
+  return normalizeWikimediaImageUrl(base, targetWidth);
 }
 
 async function fetchVerifiedWikipediaSummary(wikiLang: string, wikiTitle: string): Promise<{ extract: string; imageUrl: string }> {
@@ -762,8 +791,8 @@ async function fetchVerifiedWikipediaSummary(wikiLang: string, wikiTitle: string
     const cleanTitle = decodeURIComponent(wikiTitle).replace(/\s+/g, "_");
     const url = `https://${encodeURIComponent(wikiLang)}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cleanTitle)}`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2400) : undefined
+      headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com; media-proxy@yoouz.com)" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2600) : undefined
     });
     if (!res.ok) return { extract: "", imageUrl: "" };
     const json: any = await res.json().catch(() => null);
@@ -771,12 +800,51 @@ async function fetchVerifiedWikipediaSummary(wikiLang: string, wikiTitle: string
     const extract = String(json.extract || "").trim();
     const orig = json?.originalimage;
     const thumb = json?.thumbnail;
-    const candImg = (orig?.source && (!orig.width || orig.width >= 350) && isValidWikidataBannerPhoto(orig.source))
-      ? orig.source
-      : ((thumb?.source && (!thumb.width || thumb.width >= 350) && isValidWikidataBannerPhoto(thumb.source)) ? thumb.source : "");
+    // Prefer a high-res thumbnail (e.g. 600-1600px) over 30MB raw originals when available, or normalize to width=1200
+    const candImg = (thumb?.source && (!thumb.width || thumb.width >= 480) && isValidWikidataBannerPhoto(thumb.source))
+      ? normalizeWikimediaImageUrl(thumb.source, 1200)
+      : ((orig?.source && (!orig.width || orig.width >= 350) && isValidWikidataBannerPhoto(orig.source))
+          ? normalizeWikimediaImageUrl(orig.source, 1200)
+          : ((thumb?.source && (!thumb.width || thumb.width >= 320) && isValidWikidataBannerPhoto(thumb.source))
+              ? normalizeWikimediaImageUrl(thumb.source, 1200)
+              : ""));
     return { extract, imageUrl: candImg };
   } catch {
     return { extract: "", imageUrl: "" };
+  }
+}
+
+async function fetchVerifiedWikipediaMediaListPhoto(wikiLang: string, wikiTitle: string): Promise<string> {
+  if (!wikiLang || !wikiTitle) return "";
+  try {
+    const cleanTitle = decodeURIComponent(wikiTitle).replace(/\s+/g, "_");
+    const url = `https://${encodeURIComponent(wikiLang)}.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(cleanTitle)}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com; media-proxy@yoouz.com)" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2400) : undefined
+    });
+    if (!res.ok) return "";
+    const json: any = await res.json().catch(() => null);
+    const items: any[] = Array.isArray(json?.items) ? json.items : [];
+    for (const item of items) {
+      if (!item || item.type !== "image" || !item.showInGallery) continue;
+      const titleStr = String(item.title || "");
+      if (!titleStr || !isValidWikidataBannerPhoto(titleStr)) continue;
+      const srcset: any[] = Array.isArray(item.srcset) ? item.srcset : [];
+      const bestSrcObj = srcset[srcset.length - 1] || srcset[0];
+      let rawSrc = String(bestSrcObj?.src || "").trim();
+      if (rawSrc.startsWith("//")) rawSrc = "https:" + rawSrc;
+      if (rawSrc && isValidWikidataBannerPhoto(rawSrc)) {
+        return normalizeWikimediaImageUrl(rawSrc, 1200);
+      }
+      const filePart = titleStr.replace(/^File:/i, "").trim();
+      if (filePart && isValidWikidataBannerPhoto(filePart)) {
+        return toHttpsWikimediaFilePath(filePart, 1200);
+      }
+    }
+    return "";
+  } catch {
+    return "";
   }
 }
 
@@ -857,7 +925,7 @@ async function lookupWikidataVerifiedEntity(domain: string, businessName?: strin
           for (const r of rows) {
             const candidateLogo = String(r.logo?.value || "").trim();
             if (candidateLogo && isValidWikidataLogoFile(candidateLogo, cleanDom)) {
-              logoUrl = toHttpsWikimediaFilePath(candidateLogo);
+              logoUrl = toHttpsWikimediaFilePath(candidateLogo, 512);
               if (/\.svg$/i.test(candidateLogo)) break;
             }
           }
@@ -866,7 +934,7 @@ async function lookupWikidataVerifiedEntity(domain: string, businessName?: strin
           for (const r of rows) {
             const candidateImg = String(r.image?.value || "").trim();
             if (candidateImg && isValidWikidataBannerPhoto(candidateImg)) {
-              bannerUrl = toHttpsWikimediaFilePath(candidateImg);
+              bannerUrl = toHttpsWikimediaFilePath(candidateImg, 1200);
               break;
             }
           }
@@ -1012,8 +1080,8 @@ async function lookupWikidataVerifiedEntity(domain: string, businessName?: strin
             qid: id,
             title,
             description,
-            logoUrl: preferredLogo ? toHttpsWikimediaFilePath(preferredLogo) : "",
-            bannerUrl: preferredBanner ? toHttpsWikimediaFilePath(preferredBanner) : "",
+            logoUrl: preferredLogo ? toHttpsWikimediaFilePath(preferredLogo, 512) : "",
+            bannerUrl: preferredBanner ? toHttpsWikimediaFilePath(preferredBanner, 1200) : "",
             city: "",
             country: "",
             lat,
@@ -1036,6 +1104,13 @@ async function lookupWikidataVerifiedEntity(domain: string, businessName?: strin
     }
     if (!result.bannerUrl && wikiSummary.imageUrl) {
       result.bannerUrl = wikiSummary.imageUrl;
+    }
+    // Tier 3b: If P18 & page/summary image were absent or filtered out (e.g. SVG map/logo), pull verified gallery photo from the EXACT Wikipedia article's media-list
+    if (!result.bannerUrl) {
+      const mediaListImg = await fetchVerifiedWikipediaMediaListPhoto(wikiArticleLang, wikiArticleTitle);
+      if (mediaListImg) {
+        result.bannerUrl = mediaListImg;
+      }
     }
   }
 
@@ -1107,27 +1182,31 @@ function parseImageDimensionsFromBuffer(buf: Buffer): { width: number; height: n
 
 async function probeBannerImageSuitability(testUrl: string, refererUrl?: string): Promise<boolean> {
   if (!testUrl || !testUrl.startsWith("http") || isBadBanner(testUrl)) return false;
+  const isWiki = isWikimediaHostUrl(testUrl);
+  const fetchUrl = isWiki ? normalizeWikimediaImageUrl(testUrl, 1200) : testUrl;
   const attemptFetch = async (useRange: boolean) => {
     const headers: Record<string, string> = {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "User-Agent": isWiki
+        ? "Yoouz/1.0 (https://yoouz.com; media-proxy@yoouz.com)"
+        : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
       "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
     };
-    if (useRange) headers["Range"] = "bytes=0-65535";
-    if (refererUrl && refererUrl.startsWith("http")) {
+    if (useRange && !isWiki) headers["Range"] = "bytes=0-65535";
+    if (!isWiki && refererUrl && refererUrl.startsWith("http")) {
       try {
         headers["Referer"] = new URL(refererUrl).origin + "/";
       } catch {}
     }
-    return fetch(testUrl, {
+    return fetch(fetchUrl, {
       method: "GET",
       headers,
       redirect: "follow",
-      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2400) : undefined
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isWiki ? 4500 : 2600) : undefined
     });
   };
 
   try {
-    let r = await attemptFetch(true);
+    let r = await attemptFetch(!isWiki);
     if (!r.ok && r.status !== 206 && (r.status === 403 || r.status === 405 || r.status === 416)) {
       r = await attemptFetch(false);
     }
@@ -1191,13 +1270,28 @@ async function extractBestVerifiedBannerFromHtml(
   const seen = new Set<string>();
   const excludedNorm = (excludedLogoUrl || "").trim();
 
+  const unwrapFrameworkImageProxy = (absUrl: string): string => {
+    try {
+      const parsed = new URL(absUrl);
+      if (parsed.pathname.includes("/_next/image") || parsed.pathname.includes("/cdn-cgi/image")) {
+        const inner = parsed.searchParams.get("url");
+        if (inner) {
+          return new URL(inner, baseUrl).toString();
+        }
+      }
+    } catch {}
+    return absUrl;
+  };
+
   const pushCandidate = (rawSrc: string | undefined | null, weight: number) => {
     if (!rawSrc || typeof rawSrc !== "string") return;
     const trimmed = rawSrc.trim();
     if (!trimmed || trimmed.startsWith("data:") || trimmed.includes("#") || trimmed.includes("paint0_linear")) return;
     try {
-      const abs = new URL(trimmed, baseUrl).toString();
+      let abs = new URL(trimmed, baseUrl).toString();
+      abs = unwrapFrameworkImageProxy(abs);
       if (!abs.startsWith("http")) return;
+      if (isWikimediaHostUrl(abs)) abs = normalizeWikimediaImageUrl(abs, 1200);
       if (seen.has(abs)) return;
       if (excludedNorm && (abs === excludedNorm || excludedNorm.includes(encodeURIComponent(abs)))) return;
       if (isLogoOrIconUrl(abs) || isBadBanner(abs)) return;
@@ -1208,6 +1302,14 @@ async function extractBestVerifiedBannerFromHtml(
       if (dimMatch) {
         const w = parseInt(dimMatch[1], 10);
         const h = parseInt(dimMatch[2], 10);
+        // For WordPress cropped thumbnails like photo-300x200.jpg, also try the uncropped full-size photo.jpg!
+        if (lower.includes("/wp-content/uploads/") && /-\d{2,4}x\d{2,4}\.(?:jpe?g|png|webp)(?:\?|$)/i.test(abs)) {
+          const fullWp = abs.replace(/-\d{2,4}x\d{2,4}(\.(?:jpe?g|png|webp)(?:\?|$))/i, "$1");
+          if (fullWp !== abs && !seen.has(fullWp)) {
+            seen.add(fullWp);
+            scored.push({ url: fullWp, weight: weight + 90 });
+          }
+        }
         if (w > 0 && h > 0 && (w < 220 || h < 90 || (w / h > 4.2 && h < 260))) {
           return;
         }
@@ -1218,30 +1320,70 @@ async function extractBestVerifiedBannerFromHtml(
   };
 
   // Tier 1: Explicit OpenGraph / Twitter / Schema meta images
-  $('meta[property="og:image"], meta[property="og:image:secure_url"], meta[name="og:image"], meta[name="twitter:image"], meta[property="twitter:image"], meta[itemprop="image"]').each((_, el) => {
+  $('meta[property="og:image"], meta[property="og:image:secure_url"], meta[property="og:image:url"], meta[name="og:image"], meta[name="twitter:image"], meta[name="twitter:image:src"], meta[property="twitter:image"], meta[property="twitter:image:src"], meta[itemprop="image"]').each((_, el) => {
     pushCandidate($(el).attr("content"), 1000);
   });
   pushCandidate($('link[rel="image_src"]').attr("href"), 950);
+
+  // Tier 1.5: Structured JSON-LD (<script type="application/ld+json">) hero/organization/place images
+  $('script[type="application/ld+json"]').each((_, el) => {
+    const rawJson = ($(el).html() || "").trim();
+    if (!rawJson) return;
+    try {
+      const parsed = JSON.parse(rawJson);
+      const visit = (node: any, depth: number) => {
+        if (!node || depth > 5) return;
+        if (Array.isArray(node)) {
+          for (const item of node.slice(0, 12)) visit(item, depth + 1);
+          return;
+        }
+        if (typeof node !== "object") return;
+        for (const field of ["primaryImageOfPage", "image", "photo", "photos", "thumbnailUrl"]) {
+          const val = node[field];
+          if (!val) continue;
+          const weight = field === "primaryImageOfPage" ? 940 : 910;
+          if (typeof val === "string") pushCandidate(val, weight);
+          else if (Array.isArray(val)) {
+            for (const entry of val.slice(0, 4)) {
+              if (typeof entry === "string") pushCandidate(entry, weight);
+              else if (entry && typeof entry === "object" && typeof entry.url === "string") pushCandidate(entry.url, weight);
+            }
+          } else if (typeof val === "object" && typeof val.url === "string") {
+            pushCandidate(val.url, weight);
+          }
+        }
+        if (Array.isArray(node["@graph"])) visit(node["@graph"], depth + 1);
+      };
+      visit(parsed, 0);
+    } catch {}
+  });
 
   // Tier 2: Hero <video poster>, <link rel="preload" as="image">, <picture><source srcset>
   $('video[poster]').each((_, el) => {
     pushCandidate($(el).attr("poster"), 860);
   });
   $('link[rel="preload"][as="image"]').each((_, el) => {
-    pushCandidate($(el).attr("href"), 720);
+    pushCandidate($(el).attr("href") || $(el).attr("imagesrcset")?.split(",").pop()?.trim().split(/\s+/)[0], 740);
   });
   $('picture source[srcset], picture source[data-srcset]').each((_, el) => {
     const srcset = ($(el).attr("srcset") || $(el).attr("data-srcset") || "").trim();
     if (!srcset) return;
     const entries = srcset.split(/,\s+(?=https?:\/\/|\/)/).map((s) => s.trim().split(/\s+/)[0]).filter(Boolean);
     if (entries.length > 0) {
-      pushCandidate(entries[entries.length - 1], 680);
+      pushCandidate(entries[entries.length - 1], 690);
     }
   });
 
-  // Tier 3: Element inline background-image & <style> hero background URLs
-  $('[data-bgset], [data-bg], [data-bg-image], [style*="background-image"], [style*="background:"]').each((_, el) => {
-    let raw = $(el).attr("data-bgset") || $(el).attr("data-bg") || $(el).attr("data-bg-image") || "";
+  // Tier 3: Element inline background-image, CMS lazy background attrs & <style> hero background URLs
+  $('[data-bgset], [data-bg], [data-bg-url], [data-bg-image], [data-background], [data-background-image], [style*="background-image"], [style*="background:"]').each((_, el) => {
+    let raw =
+      $(el).attr("data-bgset") ||
+      $(el).attr("data-bg") ||
+      $(el).attr("data-bg-url") ||
+      $(el).attr("data-bg-image") ||
+      $(el).attr("data-background") ||
+      $(el).attr("data-background-image") ||
+      "";
     if (!raw) {
       const style = $(el).attr("style") || "";
       const m = style.match(/background(?:-image)?\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
@@ -1249,7 +1391,7 @@ async function extractBestVerifiedBannerFromHtml(
     }
     if (raw) {
       const lower = raw.toLowerCase();
-      const boost = /(?:hero|banner|cover|header|slide|bg)/i.test(lower) ? 250 : 0;
+      const boost = /(?:hero|banner|cover|header|slide|bg|stage)/i.test(lower) ? 250 : 0;
       pushCandidate(raw.split(",")[0].trim().split(" ")[0], 540 + boost);
     }
   });
@@ -1257,7 +1399,7 @@ async function extractBestVerifiedBannerFromHtml(
     const css = $(el).html() || "";
     if (!css || !css.includes("url(")) return;
     const matches = Array.from(css.matchAll(/background(?:-image)?\s*:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/gi));
-    for (const m of matches.slice(0, 8)) {
+    for (const m of matches.slice(0, 10)) {
       const raw = (m[1] || "").trim();
       if (raw && /\.(?:jpe?g|webp|png)(?:\?|$)/i.test(raw)) {
         const boost = /(?:hero|banner|cover|header|slide)/i.test(raw) ? 240 : 0;
@@ -1266,13 +1408,18 @@ async function extractBestVerifiedBannerFromHtml(
     }
   });
 
-  // Tier 4: DOM <img> elements (always keep clean JPEG/WebP photos even without English CSS classes)
+  // Tier 4: DOM <img> elements (supports standard, lazy-load, Elementor, Divi, Shopify, Webflow & srcset)
   $('img').each((_, el) => {
     const rawSrc = (
-      $(el).attr("src") ||
-      $(el).attr("data-src") ||
+      $(el).attr("data-desktop-src") ||
+      $(el).attr("data-large-src") ||
+      $(el).attr("data-full-src") ||
+      $(el).attr("data-original") ||
       $(el).attr("data-lazy-src") ||
+      $(el).attr("data-src") ||
+      $(el).attr("data-image") ||
       ($(el).attr("srcset") || $(el).attr("data-srcset") || "").split(",").pop()?.trim().split(/\s+/)[0] ||
+      $(el).attr("src") ||
       ""
     ).trim();
     if (!rawSrc || rawSrc.startsWith("data:")) return;
@@ -1294,11 +1441,14 @@ async function extractBestVerifiedBannerFromHtml(
     pushCandidate(rawSrc, w);
   });
 
-  // Tier 5: JSON-LD & SPA hydration script photo URLs (crucial for Next.js, Nuxt, Angular, React sites without SSR og:image)
-  const scriptUrlMatches = html.match(/https?:\/\/[^"'\s<>\\)]+\.(?:jpe?g|webp)(?:\?[^"'\s<>\\)]*)?/gi) || [];
+  // Tier 5: SPA hydration & modern extensionless CDN photo URLs (Next.js, Nuxt, Cloudinary, Contentful, Sanity, Shopify, Wix, Squarespace)
+  const scriptUrlMatches = [
+    ...(html.match(/https?:\/\/[^"'\s<>\\)]+\.(?:jpe?g|webp)(?:\?[^"'\s<>\\)]*)?/gi) || []),
+    ...(html.match(/https?:\/\/(?:res\.cloudinary\.com|images\.ctfassets\.net|cdn\.sanity\.io|images\.prismic\.io|images\.squarespace-cdn\.com|static\.wixstatic\.com|cdn\.shopify\.com|[^"'\s<>\\)]*imgix\.net)\/[^"'\s<>\\)]+/gi) || [])
+  ];
   let scriptAdded = 0;
   for (const rawUrl of scriptUrlMatches) {
-    if (scriptAdded >= 20) break;
+    if (scriptAdded >= 24) break;
     const cleanUrl = rawUrl.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
     const lower = cleanUrl.toLowerCase();
     if (/(?:logo|icon|favicon|flag|avatar|sprite|pixel|thumb|badge|button)/i.test(lower)) continue;
@@ -1513,32 +1663,71 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
   };
 
   const verifyBannerCandidateReachable = async (imgUrl: string): Promise<boolean> => {
+    const isWiki = isWikimediaHostUrl(imgUrl);
+    const fetchUrl = isWiki ? normalizeWikimediaImageUrl(imgUrl, 1200) : imgUrl;
     try {
-      const checkRes = await fetch(imgUrl, {
+      const checkRes = await fetch(fetchUrl, {
         method: "HEAD",
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "User-Agent": isWiki
+            ? "Yoouz/1.0 (https://yoouz.com; media-proxy@yoouz.com)"
+            : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
         },
         redirect: "follow",
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isWiki ? 4000 : 2500) : undefined
       });
       const ct = (checkRes.headers.get("content-type") || "").toLowerCase();
       if (checkRes.ok && ct.startsWith("image/")) return true;
     } catch {}
-    try {
-      const cleanT = imgUrl.replace(/^https?:\/\//, "");
-      const wpRes = await fetch(`https://i0.wp.com/${cleanT}`, {
-        method: "HEAD",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-        redirect: "follow",
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
-      });
-      const wpCt = (wpRes.headers.get("content-type") || "").toLowerCase();
-      if (wpRes.ok && wpCt.startsWith("image/")) return true;
-    } catch {}
+    if (!isWiki) {
+      try {
+        const cleanT = imgUrl.replace(/^https?:\/\//, "");
+        const wpRes = await fetch(`https://i0.wp.com/${cleanT}`, {
+          method: "HEAD",
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+          redirect: "follow",
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
+        });
+        const wpCt = (wpRes.headers.get("content-type") || "").toLowerCase();
+        if (wpRes.ok && wpCt.startsWith("image/")) return true;
+      } catch {}
+    }
     return false;
   };
+
+  // 1.5 Official Archived Homepage Recovery (Wayback Machine) for WAF/Cloudflare-blocked businesses without a Wikidata banner
+  // Strictly reads the target domain's OWN official archived HTML og:image / JSON-LD image and verifies the image is live!
+  if (!bannerUrl) {
+    try {
+      const wbApiRes = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(`https://${cleanDom}`)}`, {
+        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
+      });
+      if (wbApiRes.ok) {
+        const wbJson: any = await wbApiRes.json().catch(() => null);
+        const snapUrl = String(wbJson?.archived_snapshots?.closest?.url || "").replace(/^http:\/\//i, "https://");
+        if (snapUrl && wbJson?.archived_snapshots?.closest?.available) {
+          // Use id_ flag so Wayback returns raw original HTML without rewriting og:image URLs
+          const rawSnapUrl = snapUrl.replace(/(\/web\/\d+)(\/)/, "$1id_$2");
+          const snapRes = await fetch(rawSnapUrl, {
+            headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
+            redirect: "follow",
+            signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2800) : undefined
+          });
+          if (snapRes.ok) {
+            const snapHtml = (await snapRes.text()).slice(0, 140000);
+            const wb$ = cheerio.load(snapHtml);
+            const extractedWbBanner = await extractBestVerifiedBannerFromHtml(wb$, snapHtml, `https://${cleanDom}/`, cleanDom, logoUrl);
+            if (extractedWbBanner && !isBadBanner(extractedWbBanner)) {
+              bannerUrl = extractedWbBanner;
+              photos.push(extractedWbBanner);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
 
   // 2. Dedicated Logo Query Pass via DuckDuckGo (STRICTLY exact-domain verified — skipped if Wikidata already gave verified logo)
   if (!logoUrl && !options.skipLogo) {
@@ -33176,40 +33365,11 @@ function generateBrandBannerSvg(nameOrDomain?: string | null): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
     <defs>
       ${bgGradient}
-      <style>
-        .banner-title {
-          font-family: ${textFont};
-          font-weight: 900;
-          fill: ${textColor};
-          font-size: 72px;
-          letter-spacing: -2px;
-          text-anchor: middle;
-          dominant-baseline: middle;
-        }
-        .banner-sub {
-          font-family: system-ui, -apple-system, sans-serif;
-          font-weight: 600;
-          fill: ${subtitleColor};
-          font-size: 20px;
-          letter-spacing: 4px;
-          text-anchor: middle;
-          dominant-baseline: middle;
-          text-transform: uppercase;
-          opacity: 0.8;
-        }
-      </style>
     </defs>
-    <!-- Background -->
+    <!-- Clean Minimal Ambient Dark Background (No Cluttering Text or Unverified Claims) -->
     <rect width="1200" height="400" fill="url(#bannerBg)"/>
-    
-    <!-- Abstract Artwork background patterns -->
+    <!-- Subtle Abstract Architectural Wave Artwork -->
     ${artwork}
-    
-    <!-- Title Text -->
-    <text x="600" y="190" class="banner-title">${cleanName}</text>
-    
-    <!-- Subtle category tag context -->
-    <text x="600" y="260" class="banner-sub">VERIFIED BUSINESS PROFILE</text>
   </svg>`;
 }
 
@@ -40565,7 +40725,7 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     const id = req.params.id || "Business";
     const svg = generateBrandBannerSvg(id);
     res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Cache-Control", "public, max-age=3600");
     res.send(svg);
   });
 
@@ -41138,6 +41298,12 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         return res.status(200).send(hit.buf);
       }
 
+      // Normalize Wikimedia Commons Special:FilePath raster URLs to fast HD thumbnails (avoids 38MB raw DSLR downloads & 429 browser-UA blocks)
+      const isWikimediaTarget = isWikimediaHostUrl(targetUrl);
+      if (isWikimediaTarget) {
+        targetUrl = normalizeWikimediaImageUrl(targetUrl, isLikelyLogoReq ? 512 : 1200);
+      }
+
       let response: any = null;
       let contentType = '';
       try {
@@ -41145,13 +41311,20 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
         try {
           sameOriginReferer = new URL(targetUrl).origin + '/';
         } catch {}
+        const fetchHeaders: Record<string, string> = isWikimediaTarget
+          ? {
+              'User-Agent': 'Yoouz/1.0 (https://yoouz.com; media-proxy@yoouz.com)',
+              'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+            }
+          : {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+              'Referer': sameOriginReferer
+            };
         response = await fetch(targetUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-            'Referer': sameOriginReferer
-          },
-          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isLikelyLogoReq ? 3200 : 5200) : undefined
+          headers: fetchHeaders,
+          redirect: 'follow',
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(isWikimediaTarget ? 7500 : (isLikelyLogoReq ? 3200 : 5200)) : undefined
         });
         if (response?.url && !isSafePublicHttpUrl(response.url)) {
           return sendFallbackImage();
