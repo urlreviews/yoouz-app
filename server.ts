@@ -545,25 +545,174 @@ function isImmutablePersistedLogo(url?: string | null, domain?: string, bannerUr
   return true;
 }
 
+const GENERIC_DOMAIN_STEMS_FOR_LOGO = new Set([
+  "gov", "gouv", "gob", "go", "co", "com", "org", "net", "edu", "ac", "mil", "muni",
+  "my", "web", "app", "shop", "store", "bank", "hotel", "news", "info", "online",
+  "portal", "mail", "cloud", "tv", "io", "ai", "www", "services", "login", "secure",
+  "home", "site", "page", "index", "help", "support", "docs", "blog", "media"
+]);
+
+const PUBLIC_MULTI_PART_SUFFIXES = new Set([
+  "co.il", "org.il", "net.il", "ac.il", "muni.il",
+  "co.uk", "org.uk", "ac.uk", "me.uk", "ltd.uk", "plc.uk",
+  "com.au", "net.au", "org.au", "edu.au",
+  "com.br", "org.br", "net.br", "edu.br",
+  "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp",
+  "co.kr", "or.kr", "ac.kr", "go.kr",
+  "co.nz", "org.nz", "net.nz", "ac.nz",
+  "co.za", "org.za", "net.za", "ac.za",
+  "co.in", "org.in", "net.in", "ac.in", "res.in",
+  "com.mx", "org.mx", "edu.mx",
+  "com.ar", "org.ar", "edu.ar",
+  "com.tr", "org.tr", "edu.tr",
+  "com.sg", "org.sg", "edu.sg",
+  "com.hk", "org.hk", "edu.hk",
+  "com.tw", "org.tw", "edu.tw",
+  "com.cn", "org.cn", "edu.cn",
+  "com.eg", "org.eg", "edu.eg",
+  "com.sa", "org.sa", "edu.sa",
+  "co.th", "or.th", "ac.th", "go.th",
+  "com.my", "org.my", "edu.my",
+  "com.ph", "org.ph", "edu.ph",
+  "com.vn", "org.vn", "edu.vn",
+  "com.ua", "org.ua", "edu.ua",
+  "com.pl", "org.pl", "edu.pl",
+  "com.es", "org.es", "edu.es"
+]);
+
+function extractCcTld(cleanDom: string): string {
+  const parts = (cleanDom || "").toLowerCase().split(".").filter(Boolean);
+  if (parts.length < 2) return "";
+  const last = parts[parts.length - 1];
+  // Standard 2-letter country-code TLDs (exclude generic tech ccTLDs like .io, .ai, .co, .tv, .me, .gg, .so, .vc, .sh, .to)
+  if (/^[a-z]{2}$/.test(last) && !["io", "ai", "co", "tv", "me", "gg", "so", "vc", "sh", "to", "cc", "fm", "ly", "im", "is"].includes(last)) {
+    return last;
+  }
+  return "";
+}
+
+/**
+ * Detects when a logo URL/filename explicitly names a FOREIGN country's government or national institution
+ * that contradicts the target website's country-code TLD (e.g. "UK Government Overseas Logo.svg" on "gov.il").
+ */
+function isCrossCountryLogoMismatch(logoUrlOrFile?: string | null, domain?: string | null): boolean {
+  if (!logoUrlOrFile || !domain) return false;
+  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\d*\./, "").split("/")[0].trim();
+  const ccTld = extractCcTld(cleanDom);
+  if (!ccTld) return false;
+
+  let decoded = String(logoUrlOrFile);
+  try { decoded = decodeURIComponent(decoded); } catch {}
+  const low = decoded.toLowerCase();
+
+  // Map explicit national/government logo markers to their allowed country ccTLDs
+  const nationalGovPatterns: Array<{ pattern: RegExp; allowedTlds: string[] }> = [
+    { pattern: /\b(?:uk[\s_-]+government|hm[\s_-]+government|gov\.uk|united[\s_-]+kingdom[\s_-]+government|british[\s_-]+government|his[\s_-]+majesty'?s[\s_-]+government)\b/i, allowedTlds: ["uk", "gb"] },
+    { pattern: /\b(?:usa\.gov|u\.?s\.?[\s_-]+government|united[\s_-]+states[\s_-]+government|white[\s_-]+house)\b/i, allowedTlds: ["us"] },
+    { pattern: /\b(?:government[\s_-]+of[\s_-]+canada|canada\.ca|gouvernement[\s_-]+du[\s_-]+canada)\b/i, allowedTlds: ["ca"] },
+    { pattern: /\b(?:australian[\s_-]+government|gov\.au|mygov[\s_-]+australia)\b/i, allowedTlds: ["au"] },
+    { pattern: /\b(?:government[\s_-]+of[\s_-]+india|gov\.in|mygov[\s_-]+india)\b/i, allowedTlds: ["in"] },
+    { pattern: /\b(?:r[eé]publique[\s_-]+fran[cç]aise|gouvernement[\s_-]+fran[cç]ais|gouv\.fr)\b/i, allowedTlds: ["fr"] },
+    { pattern: /\b(?:bundesregierung|bundesministerium|degov|bund\.de)\b/i, allowedTlds: ["de"] },
+    { pattern: /\b(?:rijksoverheid|overheid\.nl)\b/i, allowedTlds: ["nl"] },
+    { pattern: /\b(?:gobierno[\s_-]+de[\s_-]+espa[nñ]a|gob\.es)\b/i, allowedTlds: ["es"] },
+    { pattern: /\b(?:governo[\s_-]+italiano|gov\.it)\b/i, allowedTlds: ["it"] },
+    { pattern: /\b(?:ministry[\s_-]+of[\s_-]+finance[\s_-]+\(japan\)|mof\.go\.jp|government[\s_-]+of[\s_-]+japan)\b/i, allowedTlds: ["jp"] },
+    { pattern: /\b(?:gov\.il|government[\s_-]+of[\s_-]+israel|state[\s_-]+of[\s_-]+israel)\b/i, allowedTlds: ["il"] },
+    { pattern: /\b(?:gov\.sg|singapore[\s_-]+government)\b/i, allowedTlds: ["sg"] },
+    { pattern: /\b(?:gov\.nz|new[\s_-]+zealand[\s_-]+government)\b/i, allowedTlds: ["nz"] },
+    { pattern: /\b(?:gov\.za|south[\s_-]+african[\s_-]+government)\b/i, allowedTlds: ["za"] },
+    { pattern: /\b(?:gov\.br|governo[\s_-]+federal[\s_-]+do[\s_-]+brasil)\b/i, allowedTlds: ["br"] },
+    { pattern: /\b(?:bank[\s_-]+of[\s_-]+thailand|bot\.or\.th)\b/i, allowedTlds: ["th"] }
+  ];
+
+  for (const rule of nationalGovPatterns) {
+    if (rule.pattern.test(low) && !rule.allowedTlds.includes(ccTld)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function detectWikidataSearchLang(text?: string | null, cleanDom?: string): string {
+  const t = (text || "").trim();
+  if (/[\u0590-\u05FF]/.test(t)) return "he";
+  if (/[\u0600-\u06FF]/.test(t)) return "ar";
+  if (/[\u3040-\u30FF]/.test(t)) return "ja";
+  if (/[\uAC00-\uD7AF]/.test(t)) return "ko";
+  if (/[\u4E00-\u9FFF]/.test(t)) return "zh";
+  if (/[\u0400-\u04FF]/.test(t)) return "ru";
+  if (/[\u0370-\u03FF]/.test(t)) return "el";
+  if (/[\u0E00-\u0E7F]/.test(t)) return "th";
+  const cc = extractCcTld(cleanDom || "");
+  if (cc === "il") return "he";
+  if (cc === "fr") return "fr";
+  if (cc === "de" || cc === "at") return "de";
+  if (cc === "nl") return "nl";
+  if (cc === "es" || cc === "mx" || cc === "ar") return "es";
+  if (cc === "it") return "it";
+  if (cc === "pt" || cc === "br") return "pt";
+  if (cc === "tr") return "tr";
+  if (cc === "pl") return "pl";
+  return "en";
+}
+
+function isExactVerifiedDomainMatch(candidateHost: string, targetDom: string): boolean {
+  const h = (candidateHost || "").replace(/^www\d*\./i, "").toLowerCase().trim();
+  const t = (targetDom || "").replace(/^www\d*\./i, "").toLowerCase().trim();
+  if (!h || !t || !h.includes(".") || !t.includes(".")) return false;
+  if (h === t) return true;
+  // Allow subdomain match (e.g. www.gov.il or finance.gov.il <-> gov.il), NEVER public suffix match (e.g. co.il)
+  if (!PUBLIC_MULTI_PART_SUFFIXES.has(t) && h.endsWith(`.${t}`)) return true;
+  if (!PUBLIC_MULTI_PART_SUFFIXES.has(h) && t.endsWith(`.${h}`)) return true;
+  return false;
+}
+
 async function lookupWikidataOfficialLogo(domain: string, businessName?: string): Promise<string> {
   if (!domain || !domain.includes(".")) return "";
-  const cleanDom = domain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase().trim();
+  const cleanDom = domain.replace(/^https?:\/\//i, "").replace(/^www\d*\./i, "").split("/")[0].toLowerCase().trim();
+  if (!cleanDom || !cleanDom.includes(".") || PUBLIC_MULTI_PART_SUFFIXES.has(cleanDom)) return "";
   const domRoot = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   if (!domRoot || domRoot.length < 2) return "";
 
-  const searchTerms = Array.from(
-    new Set(
-      [
-        businessName ? businessName.trim() : "",
-        KNOWN_OFFICIAL_NAMES[cleanDom] || "",
-        cleanDom.split(".")[0]
-      ].filter(t => t && t.length >= 2)
-    )
+  const isGenericStem = GENERIC_DOMAIN_STEMS_FOR_LOGO.has(domRoot);
+  const safeBizName = (businessName || "").trim();
+  const isUsefulBizName = Boolean(
+    safeBizName &&
+    safeBizName.length >= 2 &&
+    !GENERIC_DOMAIN_STEMS_FOR_LOGO.has(safeBizName.toLowerCase()) &&
+    !isWafOrBlockTitle(safeBizName, cleanDom)
   );
 
-  for (const term of searchTerms.slice(0, 2)) {
+  // Build prioritized search queries: ALWAYS search exact full domain first (e.g. "gov.il" -> Q12409244),
+  // NEVER search bare generic stems like "gov", "co", "org" which collide with foreign governments/unrelated brands!
+  const searchQueries: Array<{ term: string; lang: string }> = [];
+  const seenQ = new Set<string>();
+  const pushQuery = (term: string, lang: string) => {
+    const cleanT = (term || "").trim();
+    if (!cleanT || cleanT.length < 2) return;
+    const key = `${lang}:${cleanT.toLowerCase()}`;
+    if (seenQ.has(key)) return;
+    seenQ.add(key);
+    searchQueries.push({ term: cleanT, lang });
+  };
+
+  pushQuery(cleanDom, "en");
+  if (KNOWN_OFFICIAL_NAMES[cleanDom]) {
+    pushQuery(KNOWN_OFFICIAL_NAMES[cleanDom], detectWikidataSearchLang(KNOWN_OFFICIAL_NAMES[cleanDom], cleanDom));
+  }
+  if (isUsefulBizName) {
+    const bizLang = detectWikidataSearchLang(safeBizName, cleanDom);
+    pushQuery(safeBizName, bizLang);
+    if (bizLang !== "en") pushQuery(safeBizName, "en");
+  }
+  if (!isGenericStem && domRoot.length >= 4) {
+    pushQuery(cleanDom.split(".")[0], "en");
+  }
+
+  for (const { term, lang } of searchQueries.slice(0, 3)) {
     try {
-      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=en&limit=5&format=json`;
+      const searchUrl = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(term)}&language=${encodeURIComponent(lang)}&limit=6&format=json`;
       const sResp = await fetch(searchUrl, {
         headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
         signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2200) : undefined
@@ -573,7 +722,7 @@ async function lookupWikidataOfficialLogo(domain: string, businessName?: string)
       const ids: string[] = (sData?.search || []).map((x: any) => x?.id).filter(Boolean);
       if (ids.length === 0) continue;
 
-      const entUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|labels|descriptions&languages=en&format=json`;
+      const entUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|labels|descriptions&languages=${encodeURIComponent(lang)}|en&format=json`;
       const eResp = await fetch(entUrl, {
         headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
         signal: (AbortSignal as any).timeout ? AbortSignal.timeout(2500) : undefined
@@ -586,33 +735,36 @@ async function lookupWikidataOfficialLogo(domain: string, businessName?: string)
         if (!ent) continue;
         const p154Claims: string[] = (ent.claims?.P154 || [])
           .map((c: any) => String(c?.mainsnak?.datavalue?.value || "").trim())
-          .filter((v: string) => v.length > 0 && !/\.(?:jpg|jpeg|gif|tif|tiff|pdf|webm|ogv)$/i.test(v) && !/\b(?:flag|coat_of_arms|store|building|front|photo|headquarters|location)\b/i.test(v));
+          .filter((v: string) =>
+            v.length > 0 &&
+            !/\.(?:jpg|jpeg|gif|tif|tiff|pdf|webm|ogv)$/i.test(v) &&
+            !/\b(?:flag|coat_of_arms|store|building|front|photo|headquarters|location)\b/i.test(v) &&
+            !isCrossCountryLogoMismatch(v, cleanDom)
+          );
         if (p154Claims.length === 0) continue;
 
         const p856Claims = (ent.claims?.P856 || [])
           .map((c: any) => c?.mainsnak?.datavalue?.value)
           .filter((v: any) => typeof v === "string" && v.trim().length > 0);
 
+        // STRICT EXACT-DOMAIN VERIFICATION ONLY:
+        // Never match by bare stem across TLDs/ccTLDs (prevents gov.il -> gov.uk, greylock.org -> greylock.com, delta.nl -> delta.com)
         const websiteMatches = p856Claims.some((w: string) => {
           try {
-            const h = new URL(w).hostname.replace(/^www\./i, "").toLowerCase();
-            return h === cleanDom || h.split(".")[0].replace(/[^a-z0-9]/g, "") === domRoot;
+            const h = new URL(w).hostname.replace(/^www\d*\./i, "").toLowerCase();
+            return isExactVerifiedDomainMatch(h, cleanDom);
           } catch {
             return false;
           }
         });
 
-        const labelNorm = String(ent.labels?.en?.value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const descLow = String(ent.descriptions?.en?.value || "").toLowerCase();
-        const isBusinessEntity = /\b(hotel|airline|company|chain|brand|corporation|business|restaurant|bank|retailer|group|service|enterprise|resort|casino|firm|platform|store|carrier)\b/i.test(descLow);
-
-        if (websiteMatches || (labelNorm === domRoot && isBusinessEntity && p856Claims.length === 0)) {
+        if (websiteMatches) {
           const preferredClaim =
             p154Claims.find(f => /\.svg$/i.test(f) && /logo/i.test(f)) ||
             p154Claims.find(f => /\.svg$/i.test(f)) ||
             p154Claims.find(f => /\.png$/i.test(f) && /logo/i.test(f)) ||
             p154Claims[0];
-          if (preferredClaim) {
+          if (preferredClaim && !isCrossCountryLogoMismatch(preferredClaim, cleanDom)) {
             return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(preferredClaim)}`;
           }
         }
@@ -831,13 +983,9 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     if (!urlStr) return false;
     try {
       const u = new URL(urlStr.startsWith("http") ? urlStr : `https://${urlStr}`);
-      const h = u.hostname.toLowerCase().replace(/^www\./, "");
-      if (h === cleanDom || h.endsWith(`.${cleanDom}`)) return true;
-      if (domStem.length >= 4) {
-        const parts = h.split(".");
-        if (parts[0] === domStem || parts.slice(0, -1).includes(domStem)) return true;
-      }
-      return false;
+      const h = u.hostname.toLowerCase().replace(/^www\d*\./, "");
+      // Strict exact domain/subdomain match ONLY — never cross-match different TLDs or countries by bare stem!
+      return isExactVerifiedDomainMatch(h, cleanDom);
     } catch {
       return false;
     }
@@ -965,44 +1113,13 @@ async function fetchDuckDuckGoMediaAndInfo(domain: string, businessName?: string
     }
   }
 
-  // 4. Resilient Fallback to Wikidata Official Logo (P154) & Wikimedia Commons API if logo or banner still needed
+  // 4. Resilient Fallback to STRICTLY exact-domain-verified Wikidata Official Logo (P154 with verified P856 website match)
+  // NOTE: Unverified free-text Wikimedia Commons filename searches are strictly prohibited to prevent cross-country/cross-brand logos!
   if (!logoUrl && !options.skipLogo) {
     try {
       const wdLogo = await lookupWikidataOfficialLogo(cleanDom, brandName);
-      if (wdLogo && !isGenericOrPlaceholderLogo(wdLogo)) {
+      if (wdLogo && !isGenericOrPlaceholderLogo(wdLogo) && !isCrossCountryLogoMismatch(wdLogo, cleanDom)) {
         logoUrl = wdLogo;
-      }
-    } catch (e) {}
-  }
-  if (!logoUrl && !options.skipLogo) {
-    try {
-      const domStemCompact = cleanDom.split(".")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
-      const brandCompact = (brandName || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const searchLabel = (brandName && brandName.length >= 3) ? brandName : cleanDom.split(".")[0];
-      const wikiCommonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent("File:" + searchLabel + " logo")}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|mime|size&format=json`;
-      const wcRes = await fetch(wikiCommonsUrl, {
-        headers: { "User-Agent": "Yoouz/1.0 (https://yoouz.com)" },
-        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(3000) : undefined
-      });
-      if (wcRes.ok) {
-        const wcJson = await wcRes.json();
-        const pages = Object.values(wcJson?.query?.pages || {});
-        for (const p of pages as any[]) {
-          const fileTitleLow = String(p?.title || "").toLowerCase();
-          const fileTitleCompact = fileTitleLow.replace(/^file:/, "").replace(/[^a-z0-9]/g, "");
-          if (/\b(?:flag|flags|coat_of_arms|map)\b/i.test(fileTitleLow)) continue;
-          const matchesBrand =
-            (domStemCompact.length >= 3 && fileTitleCompact.includes(domStemCompact)) ||
-            (brandCompact.length >= 3 && fileTitleCompact.includes(brandCompact));
-          if (!matchesBrand || !fileTitleLow.includes("logo")) continue;
-          const info = p.imageinfo?.[0];
-          if (info && info.url && (info.url.endsWith(".svg") || info.url.endsWith(".png"))) {
-            if (!isGenericOrPlaceholderLogo(info.url) && !isFaviconUrl(info.url)) {
-              logoUrl = info.url;
-              break;
-            }
-          }
-        }
       }
     } catch (e) {}
   }
@@ -32638,7 +32755,11 @@ function isCrossBrandPortfolioLogoServer(url?: string | null, domain?: string | 
   ) {
     return true;
   }
-  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\d*\./, "").split("/")[0];
+  // Immediately reject foreign government / cross-country mismatched logos (e.g. UK Government logo on gov.il)
+  if (isCrossCountryLogoMismatch(raw, cleanDom)) {
+    return true;
+  }
   const domStem = cleanDom.split(".")[0].replace(/[^a-z0-9]/g, "");
   if (!domStem) return false;
   const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
@@ -32732,9 +32853,10 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     }
     try {
       const parsed = new URL(h, effectiveBaseUrl);
-      const hostClean = parsed.hostname.replace(/^www\./i, "").toLowerCase();
-      const hostStem = hostClean.split(".")[0].replace(/[^a-z0-9]/g, "");
-      const isSameSite = hostClean === cleanDom || (domStem.length >= 3 && hostStem === domStem) || (effStem.length >= 3 && hostStem === effStem);
+      const hostClean = parsed.hostname.replace(/^www\d*\./i, "").toLowerCase();
+      let effHostClean = cleanDom;
+      try { effHostClean = new URL(effectiveBaseUrl).hostname.replace(/^www\d*\./i, "").toLowerCase() || cleanDom; } catch {}
+      const isSameSite = isExactVerifiedDomainMatch(hostClean, cleanDom) || isExactVerifiedDomainMatch(hostClean, effHostClean);
       if (!isSameSite) return false;
       if (parsed.search || parsed.hash) return false;
       const cleanP = parsed.pathname.replace(/\/+$/, "").toLowerCase();
@@ -39679,24 +39801,36 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       let html = "";
       let finalSiteUrl = `https://${cleanDomain}`;
       let redirDom = cleanDomain;
-      try {
-        const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 2800);
-        const siteResp = await fetch(`https://${cleanDomain}`, {
-          signal: ctrl.signal,
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml"
+      const directCandidates = Array.from(new Set([`https://www.${cleanDomain}`, `https://${cleanDomain}`]));
+      for (const candUrl of directCandidates) {
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), 2600);
+          const siteResp = await fetch(candUrl, {
+            signal: ctrl.signal,
+            redirect: "follow",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml"
+            }
+          });
+          clearTimeout(tid);
+          if (siteResp.ok) {
+            const candidateHtml = await siteResp.text();
+            const candidateDom = cleanDomainName(siteResp.url || candUrl) || cleanDomain;
+            if (candidateHtml && !isSecurityShieldHtml(candidateHtml, siteResp.status, candidateDom)) {
+              finalSiteUrl = siteResp.url || candUrl;
+              redirDom = candidateDom;
+              html = candidateHtml;
+              break;
+            }
           }
-        });
-        clearTimeout(tid);
-        if (siteResp.ok) {
-          finalSiteUrl = siteResp.url || `https://${cleanDomain}`;
-          redirDom = cleanDomainName(finalSiteUrl) || cleanDomain;
-          html = await siteResp.text();
-        } else if (siteResp.status === 403 || siteResp.status === 503) {
-          const jinaResp = await fetch(`https://r.jina.ai/https://${cleanDomain}`, {
+        } catch {}
+      }
+
+      if (!html) {
+        try {
+          const jinaResp = await fetch(`https://r.jina.ai/https://www.${cleanDomain}`, {
             headers: {
               "X-Return-Format": "html",
               "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
@@ -39705,22 +39839,27 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           });
           if (jinaResp.ok) {
             const jinaHtml = await jinaResp.text();
-            if (jinaHtml && jinaHtml.includes("<")) html = jinaHtml;
+            if (jinaHtml && jinaHtml.includes("<") && !isSecurityShieldHtml(jinaHtml, jinaResp.status, cleanDomain)) {
+              html = jinaHtml;
+            }
           }
-        }
-      } catch {}
+        } catch {}
+      }
 
       if (html) {
         const $f = cheerio.load(html);
         let extractedLogo = extractAuthenticWebsiteLogo($f, html, finalSiteUrl, redirDom);
+        if (extractedLogo && isCrossBrandPortfolioLogoServer(extractedLogo, redirDom)) {
+          extractedLogo = "";
+        }
         if (extractedLogo && extractedLogo.startsWith("http") && !(await verifyLogoUrlReachable(extractedLogo))) {
           extractedLogo = "";
         }
         if (!extractedLogo || isFaviconUrl(extractedLogo) || /\/favicon[-_.\d]*\.(?:png|ico|gif)(?:\?|$)/i.test(extractedLogo)) {
           const wdLogo = await lookupWikidataOfficialLogo(redirDom);
-          if (wdLogo) extractedLogo = wdLogo;
+          if (wdLogo && !isCrossBrandPortfolioLogoServer(wdLogo, redirDom)) extractedLogo = wdLogo;
         }
-        if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo)) {
+        if (extractedLogo && !isGenericOrPlaceholderLogo(extractedLogo) && !isCrossBrandPortfolioLogoServer(extractedLogo, redirDom)) {
           return extractedLogo;
         }
 
@@ -39745,10 +39884,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
               if (absIcon.includes("squarespace-cdn.com") && absIcon.includes("format=")) {
                 absIcon = absIcon.replace(/format=\d+w/, "format=500w");
               }
-              return absIcon;
+              if (!isCrossBrandPortfolioLogoServer(absIcon, redirDom)) {
+                return absIcon;
+              }
             } catch {}
           }
         }
+      }
+
+      // Even if the website is behind Cloudflare/WAF (no HTML), strictly exact-domain-verified Wikidata P154
+      // (e.g. gov.il -> Q12409244 with P856=https://www.gov.il/ -> Logo gov.il.png) safely returns the authentic official logo!
+      const verifiedWdLogo = await lookupWikidataOfficialLogo(cleanDomain);
+      if (verifiedWdLogo && !isGenericOrPlaceholderLogo(verifiedWdLogo) && !isCrossBrandPortfolioLogoServer(verifiedWdLogo, cleanDomain)) {
+        return verifiedWdLogo;
       }
     } catch {}
     return "";
@@ -39995,9 +40143,13 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     // Always prefers crisp >= 64px icons (up to 256px) and only falls back to smaller icons if no hi-res asset exists
     if (cleanDomain && cleanDomain.includes(".")) {
       const faviconEndpoints = [
+        `https://www.${cleanDomain}/apple-touch-icon.png`,
         `https://${cleanDomain}/apple-touch-icon.png`,
+        `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.${encodeURIComponent(cleanDomain)}&size=256`,
+        `https://www.google.com/s2/favicons?domain=www.${encodeURIComponent(cleanDomain)}&sz=256`,
         `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${encodeURIComponent(cleanDomain)}&size=256`,
         `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=256`,
+        `https://www.${cleanDomain}/favicon.ico`,
         `https://${cleanDomain}/favicon.ico`,
         `https://icons.duckduckgo.com/ip3/${encodeURIComponent(cleanDomain)}.ico`
       ];

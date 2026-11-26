@@ -1736,7 +1736,37 @@ export function isCrossBrandPortfolioLogo(url?: string | null, domain?: string |
   ) {
     return true;
   }
-  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
+  const cleanDom = domain.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\d*\./, "").split("/")[0];
+  const ccParts = cleanDom.split(".").filter(Boolean);
+  const ccTld = ccParts.length >= 2 && /^[a-z]{2}$/.test(ccParts[ccParts.length - 1]) && !["io", "ai", "co", "tv", "me", "gg", "so", "vc", "sh", "to", "cc", "fm", "ly", "im", "is"].includes(ccParts[ccParts.length - 1])
+    ? ccParts[ccParts.length - 1]
+    : "";
+  if (ccTld) {
+    let decUrl = raw;
+    try { decUrl = decodeURIComponent(decUrl); } catch {}
+    const decLow = decUrl.toLowerCase();
+    const nationalGovRules: Array<{ pattern: RegExp; allowed: string[] }> = [
+      { pattern: /\b(?:uk[\s_-]+government|hm[\s_-]+government|gov\.uk|united[\s_-]+kingdom[\s_-]+government|british[\s_-]+government)\b/i, allowed: ["uk", "gb"] },
+      { pattern: /\b(?:usa\.gov|u\.?s\.?[\s_-]+government|united[\s_-]+states[\s_-]+government)\b/i, allowed: ["us"] },
+      { pattern: /\b(?:government[\s_-]+of[\s_-]+canada|canada\.ca|gouvernement[\s_-]+du[\s_-]+canada)\b/i, allowed: ["ca"] },
+      { pattern: /\b(?:australian[\s_-]+government|gov\.au|mygov[\s_-]+australia)\b/i, allowed: ["au"] },
+      { pattern: /\b(?:government[\s_-]+of[\s_-]+india|gov\.in|mygov[\s_-]+india)\b/i, allowed: ["in"] },
+      { pattern: /\b(?:r[eé]publique[\s_-]+fran[cç]aise|gouvernement[\s_-]+fran[cç]ais|gouv\.fr)\b/i, allowed: ["fr"] },
+      { pattern: /\b(?:bundesregierung|bundesministerium|degov|bund\.de)\b/i, allowed: ["de"] },
+      { pattern: /\b(?:rijksoverheid|overheid\.nl)\b/i, allowed: ["nl"] },
+      { pattern: /\b(?:gobierno[\s_-]+de[\s_-]+espa[nñ]a|gob\.es)\b/i, allowed: ["es"] },
+      { pattern: /\b(?:governo[\s_-]+italiano|gov\.it)\b/i, allowed: ["it"] },
+      { pattern: /\b(?:ministry[\s_-]+of[\s_-]+finance[\s_-]+\(japan\)|mof\.go\.jp|government[\s_-]+of[\s_-]+japan)\b/i, allowed: ["jp"] },
+      { pattern: /\b(?:gov\.il|government[\s_-]+of[\s_-]+israel|state[\s_-]+of[\s_-]+israel)\b/i, allowed: ["il"] },
+      { pattern: /\b(?:gov\.sg|singapore[\s_-]+government)\b/i, allowed: ["sg"] },
+      { pattern: /\b(?:gov\.nz|new[\s_-]+zealand[\s_-]+government)\b/i, allowed: ["nz"] },
+      { pattern: /\b(?:gov\.za|south[\s_-]+african[\s_-]+government)\b/i, allowed: ["za"] },
+      { pattern: /\b(?:gov\.br|governo[\s_-]+federal[\s_-]+do[\s_-]+brasil)\b/i, allowed: ["br"] }
+    ];
+    if (nationalGovRules.some((r) => r.pattern.test(decLow) && !r.allowed.includes(ccTld))) {
+      return true;
+    }
+  }
   const domStem = cleanDom.split(".")[0].replace(/[^a-z0-9]/g, "");
   if (!domStem) return false;
   const domPrefix = domStem.length >= 4 ? domStem.slice(0, 4) : domStem;
