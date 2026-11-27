@@ -206,6 +206,26 @@ function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("wordpress-logo") ||
     clean.includes("wp-logo") ||
     clean.includes("wp-icon") ||
+    clean.includes("parastorage.com/client/pfavico") ||
+    clean.includes("pfavico.ico") ||
+    clean.includes("wix.com/favicon") ||
+    clean.includes("assets.website-files.com/img/favicon") ||
+    clean.includes("squarespace.com/favicon") ||
+    clean.includes("weebly.com/favicon") ||
+    clean.includes("jimdo.com/favicon") ||
+    clean.includes("site123.com/favicon") ||
+    clean.includes("godaddy.com/favicon") ||
+    clean.includes("secureserver.net/favicon") ||
+    clean.includes("0fdef751204647a3bbd7eaa2827ed4f9") ||
+    clean.includes("01c3aff52f2a4dffa526d7a9843d46ea") ||
+    clean.includes("c7d035ba85f6486680c2facedecdcf4d") ||
+    clean.includes("78aa2057f0cb42fbbaffcbc36280a64a") ||
+    clean.includes("6ea5b4a88f0b4f91945b40499aa0af00") ||
+    clean.includes("23fd2a2be53141ed810f4d3dcdcd01fa") ||
+    clean.includes("e0678ef25486466ba65ef6ad47b559e1") ||
+    clean.includes("da7ef6dd1302486c9a67baebe4b364bc") ||
+    clean.includes("c4392d634a0148fda8b7b2b0ad98293b") ||
+    clean.includes("203dcdc2ac8b48de89313f90d2a4cda1") ||
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
@@ -401,6 +421,17 @@ function isBadBanner(url?: string | null): boolean {
       decoded.includes("scholarsedge.in") ||
       decoded.includes("blur_2") ||
       decoded.includes("w_147,") ||
+      /\/w_(?:[1-9]|[1-9]\d|1[0-4]\d),h_(?:[1-9]|[1-9]\d|1[0-4]\d)\b/i.test(decoded) ||
+      decoded.includes("0fdef751204647a3bbd7eaa2827ed4f9") ||
+      decoded.includes("01c3aff52f2a4dffa526d7a9843d46ea") ||
+      decoded.includes("c7d035ba85f6486680c2facedecdcf4d") ||
+      decoded.includes("78aa2057f0cb42fbbaffcbc36280a64a") ||
+      decoded.includes("6ea5b4a88f0b4f91945b40499aa0af00") ||
+      decoded.includes("23fd2a2be53141ed810f4d3dcdcd01fa") ||
+      decoded.includes("e0678ef25486466ba65ef6ad47b559e1") ||
+      decoded.includes("da7ef6dd1302486c9a67baebe4b364bc") ||
+      decoded.includes("c4392d634a0148fda8b7b2b0ad98293b") ||
+      decoded.includes("203dcdc2ac8b48de89313f90d2a4cda1") ||
       decoded.includes("placeholder") || 
       decoded.includes("lovable.app") ||
       decoded.includes("lovable.dev") ||
@@ -1250,6 +1281,179 @@ async function probeBannerImageSuitability(testUrl: string, refererUrl?: string)
   }
 }
 
+const SOCIAL_LINK_HOST_RE = /(?:^|\.)(?:facebook\.com|fb\.com|fb\.me|instagram\.com|instagr\.am|twitter\.com|x\.com|linkedin\.com|youtube\.com|youtu\.be|tiktok\.com|whatsapp\.com|wa\.me|t\.me|telegram\.me|pinterest\.com|snapchat\.com|threads\.net|vimeo\.com)(?:\/|$)/i;
+
+function extractBestSrcsetUrl(rawSrcset?: string | null, preferLargest = true): string {
+  if (!rawSrcset || typeof rawSrcset !== "string") return "";
+  const trimmed = rawSrcset.trim();
+  if (!trimmed) return "";
+  const entries = trimmed
+    .split(/,\s+(?=(?:https?:\/\/|\/|\/\/|[a-zA-Z0-9_-]+\/))/)
+    .map((part) => part.trim().split(/\s+/)[0])
+    .filter((u) => Boolean(u) && !u.startsWith("data:") && !u.includes("blank.gif") && !u.includes("pixel.gif"));
+  if (entries.length === 0) return "";
+  return preferLargest ? entries[entries.length - 1] : entries[0];
+}
+
+function unwrapWixMediaUrl(rawUrl: string): string {
+  if (!rawUrl || !rawUrl.includes("wixstatic.com/media/")) return rawUrl;
+  const m = rawUrl.match(/^(https?:\/\/static\.wixstatic\.com\/media\/[^/?#]+)/i);
+  return m ? m[1] : rawUrl;
+}
+
+function isInsideSocialLink($: any, el: any): boolean {
+  try {
+    const anchor = el.closest("a[href]");
+    if (anchor && anchor.length > 0) {
+      const href = String(anchor.attr("href") || "").trim().toLowerCase();
+      if (href && SOCIAL_LINK_HOST_RE.test(href)) return true;
+      const aria = `${anchor.attr("aria-label") || ""} ${anchor.attr("title") || ""} ${anchor.attr("class") || ""}`.toLowerCase();
+      if (/\b(?:facebook|instagram|twitter|linkedin|youtube|tiktok|whatsapp|telegram|pinterest|social[-_]?icon|social[-_]?link)\b/i.test(aria)) {
+        return true;
+      }
+    }
+    const imgAlt = `${el.attr("alt") || ""} ${el.attr("title") || ""} ${el.attr("aria-label") || ""}`.toLowerCase();
+    if (/^(?:facebook|instagram|twitter|x|linkedin|youtube|tiktok|whatsapp|telegram|pinterest)(?:\s+(?:icon|logo|page|link))?$/i.test(imgAlt.trim())) {
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+function hasTinyRenderedBannerDimensions(el: any, rawUrl: string): boolean {
+  try {
+    const wAttr = parseInt(el?.attr("width") || "0", 10);
+    const hAttr = parseInt(el?.attr("height") || "0", 10);
+    if (wAttr > 0 && hAttr > 0 && (wAttr < 160 || hAttr < 80 || (wAttr / hAttr > 4.2 && hAttr < 260))) {
+      return true;
+    }
+    const sizesAttr = String(el?.attr("sizes") || "").trim();
+    const pxSizes = sizesAttr.match(/^(\d+)px$/i);
+    if (pxSizes && parseInt(pxSizes[1], 10) < 160) {
+      return true;
+    }
+    const wixFill = String(rawUrl || "").match(/\/fill\/[^/]*w_(\d+),h_(\d+)/i);
+    if (wixFill) {
+      const fw = parseInt(wixFill[1], 10);
+      const fh = parseInt(wixFill[2], 10);
+      if (fw > 0 && fh > 0 && (fw < 160 || fh < 80)) return true;
+    }
+  } catch {}
+  return false;
+}
+
+const sitePreviewRamCache = new Map<string, { buf: Buffer; contentType: string; etag: string; cachedAt: number }>();
+
+async function captureVerifiedWebsiteScreenshot(targetUrl: string, cleanDomain: string, uploadsRootDir: string): Promise<string> {
+  if (!cleanDomain || !cleanDomain.includes(".") || !targetUrl || !targetUrl.startsWith("http")) return "";
+  const slug = cleanDomain.toLowerCase().replace(/[^a-z0-9.-]/g, "_");
+  const previewDir = path.join(uploadsRootDir, "brand-cache", "screenshots");
+  try { fs.mkdirSync(previewDir, { recursive: true }); } catch {}
+  const diskWebp = path.join(previewDir, `${slug}.webp`);
+
+  // Instant reuse if already captured within the last 14 days
+  try {
+    if (fs.existsSync(diskWebp)) {
+      const st = fs.statSync(diskWebp);
+      if (st.size > 4096 && Date.now() - st.mtimeMs < 14 * 24 * 60 * 60 * 1000) {
+        return `/api/site-preview/${encodeURIComponent(slug)}`;
+      }
+    }
+  } catch {}
+
+  const saveAndValidateScreenshotBuffer = async (rawBuf: Buffer): Promise<string> => {
+    if (!rawBuf || rawBuf.length < 5000) return "";
+    try {
+      const meta = await sharp(rawBuf).metadata();
+      if (!meta.width || !meta.height || meta.width < 500 || meta.height < 250) return "";
+      const webpBuf = await sharp(rawBuf)
+        .resize(1200, 630, { fit: "cover", position: "top" })
+        .webp({ quality: 82 })
+        .toBuffer();
+      const stats = await sharp(webpBuf).stats();
+      const maxStdev = Math.max(...(stats.channels || []).slice(0, 3).map((c) => c.stdev || 0));
+      // Reject blank/solid-color error or white-screen captures
+      if (maxStdev < 6) return "";
+      fs.writeFileSync(diskWebp, webpBuf);
+      const etag = `"yz-sp-${webpBuf.length}-${slug}"`;
+      if (sitePreviewRamCache.size >= 150) {
+        const oldest = sitePreviewRamCache.keys().next().value;
+        if (oldest) sitePreviewRamCache.delete(oldest);
+      }
+      sitePreviewRamCache.set(slug, { buf: webpBuf, contentType: "image/webp", etag, cachedAt: Date.now() });
+      return `/api/site-preview/${encodeURIComponent(slug)}`;
+    } catch {
+      return "";
+    }
+  };
+
+  // Tier 4A: Local Firecrawl Chromium screenshot (fast when running inside Bunny Magic Containers)
+  const fcUrls = [process.env.FIRECRAWL_API_URL, "http://localhost:3002"].filter(Boolean) as string[];
+  for (const fcBase of fcUrls) {
+    try {
+      const fcResp = await fetch(`${fcBase}/v1/scrape`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.FIRECRAWL_API_KEY ? { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}` } : {})
+        },
+        body: JSON.stringify({ url: targetUrl, formats: ["screenshot"], waitFor: 1200 }),
+        signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
+      });
+      if (fcResp.ok) {
+        const fcJson: any = await fcResp.json().catch(() => null);
+        const fcTitle = String(fcJson?.data?.metadata?.title || "");
+        const shot = String(fcJson?.data?.screenshot || "");
+        if (shot && !isWafOrBlockTitle(fcTitle, cleanDomain)) {
+          let buf: Buffer | null = null;
+          if (shot.startsWith("data:image/")) {
+            buf = Buffer.from(shot.split(",")[1] || "", "base64");
+          } else if (shot.startsWith("http")) {
+            const imgRes = await fetch(shot, { signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4000) : undefined });
+            if (imgRes.ok) buf = Buffer.from(await imgRes.arrayBuffer());
+          }
+          if (buf) {
+            const saved = await saveAndValidateScreenshotBuffer(buf);
+            if (saved) return saved;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Tier 4B: Verified headless browser screenshot via Microlink (strictly rejects WAF/Cloudflare/403 titles before saving locally)
+  try {
+    const mlUrl = `https://api.microlink.io/?url=${encodeURIComponent(targetUrl)}&screenshot=true&viewport.width=1280&viewport.height=720&waitForTimeout=1200`;
+    const mlResp = await fetch(mlUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; YoouzBot/1.0; +https://www.yoouz.com)" },
+      signal: (AbortSignal as any).timeout ? AbortSignal.timeout(7000) : undefined
+    });
+    if (mlResp.ok) {
+      const mlJson: any = await mlResp.json().catch(() => null);
+      const renderedTitle = String(mlJson?.data?.title || "");
+      const shotUrl = String(mlJson?.data?.screenshot?.url || "");
+      if (
+        shotUrl &&
+        shotUrl.startsWith("http") &&
+        !isWafOrBlockTitle(renderedTitle, cleanDomain) &&
+        !/just a moment|attention required|access denied|403 forbidden|404 not found|502 bad gateway|503 service/i.test(renderedTitle)
+      ) {
+        const imgResp = await fetch(shotUrl, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+          signal: (AbortSignal as any).timeout ? AbortSignal.timeout(4500) : undefined
+        });
+        if (imgResp.ok) {
+          const rawBuf = Buffer.from(await imgResp.arrayBuffer());
+          const saved = await saveAndValidateScreenshotBuffer(rawBuf);
+          if (saved) return saved;
+        }
+      }
+    }
+  } catch {}
+
+  return "";
+}
+
 /**
  * Universal multi-tier banner photo extractor for ANY website architecture:
  *  1) og:image / twitter:image / meta[itemprop="image"] / link[rel="image_src"]
@@ -1408,37 +1612,51 @@ async function extractBestVerifiedBannerFromHtml(
     }
   });
 
-  // Tier 4: DOM <img> elements (supports standard, lazy-load, Elementor, Divi, Shopify, Webflow & srcset)
+  // Tier 4: DOM <img> elements (supports standard, lazy-load, Elementor, Divi, Shopify, Webflow, Wix & srcset)
   $('img').each((_, el) => {
+    const $el = $(el);
+    if (isInsideSocialLink($, $el)) return;
     const rawSrc = (
-      $(el).attr("data-desktop-src") ||
-      $(el).attr("data-large-src") ||
-      $(el).attr("data-full-src") ||
-      $(el).attr("data-original") ||
-      $(el).attr("data-lazy-src") ||
-      $(el).attr("data-src") ||
-      $(el).attr("data-image") ||
-      ($(el).attr("srcset") || $(el).attr("data-srcset") || "").split(",").pop()?.trim().split(/\s+/)[0] ||
-      $(el).attr("src") ||
+      $el.attr("data-desktop-src") ||
+      $el.attr("data-large-src") ||
+      $el.attr("data-full-src") ||
+      $el.attr("data-original") ||
+      $el.attr("data-lazy-src") ||
+      $el.attr("data-src") ||
+      $el.attr("data-image") ||
+      extractBestSrcsetUrl($el.attr("srcset") || $el.attr("srcSet") || $el.attr("data-srcset"), true) ||
+      $el.attr("src") ||
       ""
     ).trim();
     if (!rawSrc || rawSrc.startsWith("data:")) return;
+    if (hasTinyRenderedBannerDimensions($el, rawSrc)) return;
     const lowerSrc = rawSrc.toLowerCase();
-    const alt = ($(el).attr("alt") || "").toLowerCase();
-    const parentCls = (($(el).parent().attr("class") || "") + " " + ($(el).closest("section, div, main, article, figure").attr("class") || "")).toLowerCase();
+    const alt = ($el.attr("alt") || "").toLowerCase();
+    const parentCls = (
+      ($el.parent().attr("class") || "") + " " +
+      ($el.parent().attr("id") || "") + " " +
+      ($el.closest("section, div, main, article, figure").attr("class") || "") + " " +
+      ($el.closest("section, div, main, article, figure").attr("id") || "")
+    ).toLowerCase();
     if (alt.includes("logo") || parentCls.includes("logo") || parentCls.includes("flag") || parentCls.includes("avatar")) return;
 
+    const attrW = parseInt($el.attr("width") || "0", 10);
+    const attrH = parseInt($el.attr("height") || "0", 10);
+    if (attrW > 0 && attrH > 0) {
+      if (attrW < 200 || attrH < 90 || (attrW / attrH > 4.2 && attrH < 260)) return;
+    }
+
     let w = 280;
-    if (/\.(?:jpe?g|webp)(?:\?|$)/i.test(lowerSrc)) w += 120;
+    if (/\.(?:jpe?g|webp)(?:\?|$)/i.test(lowerSrc) || /~mv2\.(?:jpe?g|webp)/i.test(lowerSrc)) w += 140;
+    if ($el.attr("fetchpriority") === "high") w += 220;
+    if (attrW >= 300 && attrH >= 160 && attrW > attrH * 1.15) w += 240;
+    if (attrW >= 700 && attrH >= 280) w += 180;
     if (/(?:hero|banner|cover|slider|slideshow|featured|parallax|masthead|jumbotron|stage)/i.test(parentCls)) w += 360;
     if (/(?:hero|banner|cover|main|featured|desktop|campaign|header|large|full|maximal)/i.test(lowerSrc)) w += 220;
-    const attrW = parseInt($(el).attr("width") || "0", 10);
-    const attrH = parseInt($(el).attr("height") || "0", 10);
-    if (attrW > 0 && attrH > 0) {
-      if (attrW < 220 || attrH < 90 || (attrW / attrH > 4.2 && attrH < 260)) return;
-      if (attrW >= 700 && attrH >= 280) w += 180;
-    }
-    pushCandidate(rawSrc, w);
+    // Demote generic full-page Wix/CMS background textures below real foreground photos
+    if (/pagebackground|bgmedia_pagebackground|bglayers_pagebackground/i.test(parentCls)) w -= 420;
+    const resolvedSrc = rawSrc.includes("wixstatic.com/media/") ? unwrapWixMediaUrl(rawSrc) : rawSrc;
+    pushCandidate(resolvedSrc, w);
   });
 
   // Tier 5: SPA hydration & modern extensionless CDN photo URLs (Next.js, Nuxt, Cloudinary, Contentful, Sanity, Shopify, Wix, Squarespace)
@@ -1449,11 +1667,16 @@ async function extractBestVerifiedBannerFromHtml(
   let scriptAdded = 0;
   for (const rawUrl of scriptUrlMatches) {
     if (scriptAdded >= 24) break;
-    const cleanUrl = rawUrl.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
+    let cleanUrl = rawUrl.replace(/\\u002F/gi, "/").replace(/\\\//g, "/");
     const lower = cleanUrl.toLowerCase();
-    if (/(?:logo|icon|favicon|flag|avatar|sprite|pixel|thumb|badge|button)/i.test(lower)) continue;
-    let w = 320;
-    if (/(?:hero|banner|cover|main|maximal|large|full|featured|uploads|cdn\.|images|media|photo)/i.test(lower)) w += 220;
+    if (/(?:logo|icon|favicon|flag|avatar|sprite|pixel|thumb|badge|button|blur_2)/i.test(lower)) continue;
+    // Skip tiny Wix/Cloudinary rendered icons BEFORE unwrapping
+    const tinyWix = lower.match(/\/w_(\d+),h_(\d+)/);
+    if (tinyWix && (parseInt(tinyWix[1], 10) < 160 || parseInt(tinyWix[2], 10) < 80)) continue;
+    if (cleanUrl.includes("wixstatic.com/media/")) cleanUrl = unwrapWixMediaUrl(cleanUrl);
+    let w = 260;
+    if (/(?:hero|banner|cover|main|maximal|large|full|featured|uploads|cdn\.|images|media|photo)/i.test(lower)) w += 180;
+    if (/\.(?:jpe?g|webp)(?:\?|$)/i.test(cleanUrl)) w += 80;
     if (domain && lower.includes(domain.split(".")[0].toLowerCase())) w += 120;
     const beforeSize = seen.size;
     pushCandidate(cleanUrl, w);
@@ -26535,7 +26758,10 @@ app.post("/api/videos/save-review", async (req, res) => {
         avatarUrl: effectiveLogo,
         bannerUrl: effectiveBanner,
         ogImage: effectiveBanner,
-        photos: effectiveBanner ? Array.from(new Set([effectiveBanner, ...(pData.photos || [])])) : (pData.photos || []),
+        photos: Array.from(new Set([
+          ...(effectiveBanner ? [effectiveBanner] : []),
+          ...((Array.isArray(pData.photos) ? pData.photos : []).filter((u: any) => typeof u === "string" && !isBadBanner(u)))
+        ])),
         ...(computedRating ? {
           rating: computedRating.rating,
           totalReviews: computedRating.totalReviews,
@@ -33609,15 +33835,21 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
 
   function doesFileOrAltMatchBrand(el: any, absUrl: string): boolean {
     const altText = ((el?.attr("alt") || el?.attr("title") || el?.attr("aria-label") || "") as string).trim().toLowerCase();
+    const rawHrefForName = String(el?.attr("srcset") || el?.attr("srcSet") || el?.attr("src") || absUrl || "").toLowerCase();
     const cleanPath = (absUrl || "").toLowerCase().split("?")[0].split("#")[0];
-    const fileName = cleanPath.split("/").pop() || "";
+    const rawFilePath = rawHrefForName.split(/\s+/)[0].split("?")[0].split("#")[0];
+    const fileName = rawFilePath.split("/").pop() || cleanPath.split("/").pop() || "";
     const fileBase = fileName
       .replace(/\.[a-z0-9]+$/i, "")
       .replace(/[-_]\d+x\d+$/i, "")
-      .replace(/[-_]\d+$/i, "")
+      .replace(/[-_](?:edited|final|copy|new|small|large|medium|dark|light|white|black|color|v\d+|\d+)$/i, "")
       .trim();
     const fileAlpha = fileBase.replace(/[^a-z0-9]/g, "");
-    const fileTokens = fileBase.split(/[\-_.\s]+/).filter((t: string) => t.length >= 3);
+    const genericFileStopWords = new Set(["image", "photo", "picture", "whatsapp", "chatgpt", "screen", "screenshot", "banner", "hero", "slide", "background", "edited", "final", "untitled", "thumb", "media", "asset", "file", "img"]);
+    const fileTokens = fileBase
+      .split(/[\-_.\s]+/)
+      .map((t: string) => t.replace(/[^a-z0-9]/g, ""))
+      .filter((t: string) => t.length >= 3 && !genericFileStopWords.has(t));
 
     const altMatches =
       (domStem.length >= 2 && altText.includes(domStem)) ||
@@ -33626,12 +33858,17 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       (effPrefix.length >= 3 && altText.includes(effPrefix)) ||
       pageBrandTokens.some((t: string) => altText.includes(t));
 
+    const strongSingleTokenMatch = fileTokens.some(
+      (t: string) => t.length >= 4 && (domStem.includes(t) || effStem.includes(t) || pageBrandTokens.includes(t))
+    );
+
     const fileMatches =
       (domStem.length >= 3 && fileAlpha.includes(domStem)) ||
       (effStem.length >= 3 && fileAlpha.includes(effStem)) ||
-      (fileAlpha.length >= 4 && (domStem.includes(fileAlpha) || effStem.includes(fileAlpha))) ||
+      (fileAlpha.length >= 4 && !genericFileStopWords.has(fileAlpha) && (domStem.includes(fileAlpha) || effStem.includes(fileAlpha))) ||
       (domPrefix.length >= 4 && fileAlpha.startsWith(domPrefix)) ||
       (effPrefix.length >= 4 && fileAlpha.startsWith(effPrefix)) ||
+      strongSingleTokenMatch ||
       (fileTokens.length >= 2 && fileTokens.filter((t: string) => domStem.includes(t) || effStem.includes(t) || pageBrandTokens.includes(t)).length >= 2);
 
     return Boolean(altMatches || fileMatches);
@@ -33671,7 +33908,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       el.attr("data-orig-file") ||
       el.attr("data-large-file") ||
       el.attr("data-lazy") ||
-      el.attr("data-srcset")?.split(",")[0]?.trim()?.split(" ")[0] ||
+      extractBestSrcsetUrl(el.attr("data-srcset"), true) ||
       "";
     const rawSrc = (el.attr("src") || "").trim();
     const isLazyPlaceholderSrc =
@@ -33683,10 +33920,13 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
       rawSrc.includes("pixel.gif") ||
       rawSrc.includes("spacer") ||
       rawSrc.includes("1x1");
-    if (isLazyPlaceholderSrc && lazyCand) {
-      return lazyCand.trim();
+    let chosen = (isLazyPlaceholderSrc && lazyCand)
+      ? lazyCand.trim()
+      : (rawSrc || lazyCand || extractBestSrcsetUrl(el.attr("srcset") || el.attr("srcSet"), true) || "");
+    if (chosen && chosen.includes("wixstatic.com/media/")) {
+      chosen = unwrapWixMediaUrl(chosen);
     }
-    return rawSrc || lazyCand || el.attr("srcset")?.split(",")[0]?.trim()?.split(" ")[0] || "";
+    return chosen;
   }
 
   function isLanguageOrFlagOrUiControl(el: any, absUrl: string): boolean {
@@ -33735,6 +33975,7 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
   function isThirdPartyOrContentLogo(el: any, absUrl: string): boolean {
     if (isCrossBrandPortfolioLogoServer(absUrl, cleanDom)) return true;
     if (isLanguageOrFlagOrUiControl(el, absUrl)) return true;
+    if (el && isInsideSocialLink($, el)) return true;
     if (/\/(?:cms\/)?menu\/images\/|\/promotions\/|\/shows\/|\/events\/|opentable[\-_]?logo|true[\-_]?rewards/i.test(absUrl)) return true;
     if (!el) return false;
     if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return true;
@@ -33934,22 +34175,23 @@ function extractAuthenticWebsiteLogo(sc$: any, rawHtml: string, pageUrl: string,
     });
     if (homepageLinkedLogo) return homepageLinkedLogo;
 
-    // 1A-3. Top-of-Page Brand-Named Images (first 12 images in DOM whose filename or alt matches the domain/brand stem, e.g. Maid-Service-1.png on maidservicenyc.com)
+    // 1A-3. Top-of-Page Brand-Named Images (first 12 images in DOM whose filename or alt matches the domain/brand stem, e.g. Maid-Service-1.png or Wix alonim_edited.png)
     let topBrandNamedLogo = "";
     $("img").slice(0, 12).each((_: any, rawEl: any) => {
       if (topBrandNamedLogo) return;
       const el = $(rawEl);
       if (el.closest('footer, #footer, .footer, .site-footer, [data-elementor-type="footer"]').length > 0) return;
+      if (isInsideSocialLink($, el)) return;
       const src = getBestLogoImgSrc(el);
       if (!src) return;
       const abs = makeAbsolute(src);
       if (!abs || !isValidCandidate(abs) || !isLikelyLogoImageDimensions(el, abs)) return;
       if (doesFileOrAltMatchBrand(el, abs) && !isThirdPartyOrContentLogo(el, abs)) {
-        // Ensure it has logo-like dimensions/aspect ratio or sits in the top navigation bar
+        // Ensure it has logo-like dimensions/aspect ratio or sits in the top navigation/hero header
         const wAttr = parseInt(el.attr("width") || "0", 10);
         const hAttr = parseInt(el.attr("height") || "0", 10);
         const isHorizontalWordmarkOrCompact =
-          (wAttr > 0 && hAttr > 0 && ((wAttr / hAttr >= 1.5 && hAttr <= 350) || (wAttr <= 500 && hAttr <= 300))) ||
+          (wAttr > 0 && hAttr > 0 && ((wAttr / hAttr >= 1.5 && hAttr <= 350) || (wAttr <= 500 && hAttr <= 360))) ||
           /logo|brand|header|icon|mark/i.test(abs) ||
           el.attr("fetchpriority") === "high";
         if (isHorizontalWordmarkOrCompact) {
@@ -38510,12 +38752,15 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                 });
 
                 $('img').each((i, el) => {
-                  const src = getCleanImgSrc($(el));
-                  if (!src || isLogoOrIconUrl(src)) return;
-                  
+                  const $el = $(el);
+                  if (isInsideSocialLink($, $el)) return;
+                  const src = getCleanImgSrc($el);
+                  if (!src || isLogoOrIconUrl(src) || isBadBanner(src)) return;
+                  if (hasTinyRenderedBannerDimensions($el, src)) return;
+
                   const lowerSrc = src.toLowerCase();
-                  const altText = ($(el).attr('alt') || '').toLowerCase();
-                  const parentClasses = ($(el).parent().attr('class') || '') + ' ' + ($(el).closest('div, header, section, main, article, figure').attr('class') || '') + ' ' + ($(el).closest('section, div').attr('id') || '');
+                  const altText = ($el.attr('alt') || '').toLowerCase();
+                  const parentClasses = ($el.parent().attr('class') || '') + ' ' + ($el.parent().attr('id') || '') + ' ' + ($el.closest('div, header, section, main, article, figure').attr('class') || '') + ' ' + ($el.closest('section, div').attr('id') || '');
                   const parentLower = parentClasses.toLowerCase();
 
                   const isHeroBgContainer = parentLower.includes('hh-bg') || parentLower.includes('hero-bg') || parentLower.includes('bg-img') || parentLower.includes('bg-image');
@@ -38536,20 +38781,26 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     return;
                   }
 
-                  const width = parseInt($(el).attr('width') || '0', 10);
-                  const height = parseInt($(el).attr('height') || '0', 10);
+                  const width = parseInt($el.attr('width') || '0', 10);
+                  const height = parseInt($el.attr('height') || '0', 10);
+                  if (width > 0 && height > 0 && (width < 160 || height < 80)) return;
                   const area = (width || 300) * (height || 300);
-                  
+
                   let weight = area > 500000 ? 400 : 200;
+
+                  // Strongly reward foreground landscape photos & fetchpriority="high" hero images (Wix, Squarespace, modern CMS)
+                  if ($el.attr('fetchpriority') === 'high') weight += 260;
+                  if (width >= 300 && height >= 160 && width > height * 1.15) weight += 280;
+                  if (/\.(?:jpe?g|webp)(?:\?|$)/i.test(lowerSrc) || /~mv2\.(?:jpe?g|webp)/i.test(lowerSrc)) weight += 120;
 
                   // High-fidelity CMS container scoring (Shopify, WordPress, Wix, Squarespace, Webflow, Custom)
                   if (
-                    parentLower.includes('hero') || 
+                    parentLower.includes('hero') ||
                     isHeroBgContainer ||
-                    parentLower.includes('banner') || 
-                    parentLower.includes('slider') || 
-                    parentLower.includes('slideshow') || 
-                    parentLower.includes('cover') || 
+                    parentLower.includes('banner') ||
+                    parentLower.includes('slider') ||
+                    parentLower.includes('slideshow') ||
+                    parentLower.includes('cover') ||
                     parentLower.includes('featured') ||
                     parentLower.includes('elementor-widget-container') ||
                     parentLower.includes('wp-block-cover') ||
@@ -38559,23 +38810,23 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     parentLower.includes('parallax') ||
                     parentLower.includes('intro') ||
                     parentLower.includes('main--overlay') ||
-                    $(el).attr('data-parallax-image-wrapper') !== undefined ||
-                    $(el).attr('data-image-dimensions') !== undefined
+                    $el.attr('data-parallax-image-wrapper') !== undefined ||
+                    $el.attr('data-image-dimensions') !== undefined
                   ) {
                     weight += 500;
                   }
 
                   if (
                     lowerSrc.includes('squarespace-cdn.com') ||
-                    lowerSrc.includes('summer') || 
-                    lowerSrc.includes('banner') || 
-                    lowerSrc.includes('hero') || 
-                    lowerSrc.includes('cover') || 
-                    lowerSrc.includes('featured') || 
-                    lowerSrc.includes('outlet') || 
-                    lowerSrc.includes('sale') || 
-                    lowerSrc.includes('campaign') || 
-                    lowerSrc.includes('lookbook') || 
+                    lowerSrc.includes('summer') ||
+                    lowerSrc.includes('banner') ||
+                    lowerSrc.includes('hero') ||
+                    lowerSrc.includes('cover') ||
+                    lowerSrc.includes('featured') ||
+                    lowerSrc.includes('outlet') ||
+                    lowerSrc.includes('sale') ||
+                    lowerSrc.includes('campaign') ||
+                    lowerSrc.includes('lookbook') ||
                     lowerSrc.includes('collection') ||
                     lowerSrc.includes('main') ||
                     lowerSrc.includes('desktop') ||
@@ -38589,13 +38840,16 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
                     lowerSrc.includes('candyshop') ||
                     lowerSrc.includes('graphic') ||
                     lowerSrc.includes('art') ||
-                    lowerSrc.includes('transparent')
+                    lowerSrc.includes('transparent') ||
+                    parentLower.includes('pagebackground') ||
+                    parentLower.includes('bgmedia_pagebackground')
                   ) {
                     weight -= 600;
                   }
 
-                  if (weight >= 450) {
-                    candidates.push({ src, weight });
+                  if (weight >= 220) {
+                    const cleanCandSrc = src.includes('wixstatic.com/media/') ? unwrapWixMediaUrl(src) : src;
+                    candidates.push({ src: cleanCandSrc, weight });
                   }
                 });
 
@@ -39291,6 +39545,19 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           logo = "";
         }
       }
+      // Tier-4 Verified Headless Website Visual Capture:
+      // If a live, non-WAF website genuinely has ZERO hero photos (e.g., old HTML site, minimal text homepage, or client-rendered SPA),
+      // capture a crisp 1200x630 WebP preview of its real rendered homepage and cache it locally at /api/site-preview/:slug.
+      if ((!image || isBadBanner(image)) && cleanDomain && cleanDomain.includes(".") && !resolveOnly && html && html.length > 300 && !isSecurityShieldHtml(html, 200, cleanDomain)) {
+        try {
+          const capturedPreview = await captureVerifiedWebsiteScreenshot(finalUrl || `https://${cleanDomain}`, cleanDomain, serverUploadsDir);
+          if (capturedPreview) {
+            image = capturedPreview;
+            if (!scrapedPhotosList.includes(capturedPreview)) scrapedPhotosList.unshift(capturedPreview);
+          }
+        } catch {}
+      }
+
       if ((!image || isBadBanner(image)) && cleanDomain && cleanDomain.includes(".")) {
         image = `/api/brand-banner/${encodeURIComponent(cleanDomain)}`;
       }
@@ -40930,7 +41197,8 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
       if (fs.existsSync(diskPath) && fs.existsSync(metaPath)) {
         const buf = fs.readFileSync(diskPath);
         const contentType = fs.readFileSync(metaPath, "utf8").trim() || "image/png";
-        if (buf.length > 64) {
+        const isStaleBlankWixIco = buf.length === 1150 && contentType.includes("icon");
+        if (buf.length > 64 && !isStaleBlankWixIco) {
           const etag = `"yz-fv-${buf.length}-${slug}"`;
           faviconRamCache.set(cleanDomain, { buf, contentType, etag, cachedAt: Date.now() });
           res.setHeader("Content-Type", contentType);
@@ -41133,12 +41401,25 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
           if (favResp.ok && (cType.includes('image') || cType.includes('octet-stream'))) {
             const favBuf = Buffer.from(await favResp.arrayBuffer());
             if (favBuf.length > 180) {
+              // Reject Wix's exact generic 1,150-byte blank default pfavico.ico
+              if (favBuf.length === 1150 && (cType.includes('icon') || favUrl.endsWith('.ico'))) {
+                continue;
+              }
               const outType = cType.includes('image') ? cType : "image/png";
               if (!favUrl.endsWith('.ico') && !cType.includes('icon') && !cType.includes('svg')) {
                 const meta = await sharp(favBuf).metadata().catch(() => null);
                 const maxDim = Math.max(meta?.width || 0, meta?.height || 0);
                 if (meta && ((meta.width || 0) <= 16 || (meta.height || 0) <= 16)) {
                   continue;
+                }
+                // Reject visually blank / solid-white / invisible transparent favicons
+                const favStats = await sharp(favBuf).stats().catch(() => null);
+                if (favStats && Array.isArray(favStats.channels) && favStats.channels.length >= 3) {
+                  const rgbStdev = Math.max(...favStats.channels.slice(0, 3).map((c: any) => c.stdev || 0));
+                  const alphaMean = favStats.channels[3]?.mean ?? 255;
+                  if (rgbStdev < 4.5 || alphaMean < 8) {
+                    continue;
+                  }
                 }
                 if (meta && maxDim > 16 && maxDim < 64) {
                   if (!bestSmallFallback || maxDim > bestSmallFallback.maxDim) {
@@ -41180,6 +41461,39 @@ const BUSINESS_QUERY_CACHE = new Map<string, { data: ResolvedBusinessData; times
     }
 
     return sendDefaultFavicon(cleanDomain);
+  });
+
+  // Cached local endpoint for verified headless website visual previews (Tier-4 fallback when a site has zero real hero photos)
+  app.get("/api/site-preview/:slug", (req, res) => {
+    const slug = String(req.params.slug || "").toLowerCase().replace(/[^a-z0-9._-]/g, "");
+    if (!slug) return res.status(404).end();
+    const ramHit = sitePreviewRamCache.get(slug);
+    if (ramHit) {
+      res.setHeader("Content-Type", ramHit.contentType);
+      res.setHeader("Cache-Control", "public, max-age=1209600, stale-while-revalidate=86400");
+      res.setHeader("ETag", ramHit.etag);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      if (req.headers["if-none-match"] === ramHit.etag) return res.status(304).end();
+      return res.status(200).send(ramHit.buf);
+    }
+    try {
+      const diskPath = path.join(serverUploadsDir, "brand-cache", "screenshots", `${slug}.webp`);
+      if (fs.existsSync(diskPath)) {
+        const buf = fs.readFileSync(diskPath);
+        if (buf.length > 2048) {
+          const etag = `"yz-sp-${buf.length}-${slug}"`;
+          sitePreviewRamCache.set(slug, { buf, contentType: "image/webp", etag, cachedAt: Date.now() });
+          res.setHeader("Content-Type", "image/webp");
+          res.setHeader("Cache-Control", "public, max-age=1209600, stale-while-revalidate=86400");
+          res.setHeader("ETag", etag);
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+          return res.status(200).send(buf);
+        }
+      }
+    } catch {}
+    return res.status(404).end();
   });
 
   // Bounded in-memory RAM + persistent disk cache for proxied business banners & logos (<1ms repeat hits)

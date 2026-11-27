@@ -38,6 +38,26 @@ export function isGenericOrPlaceholderLogo(url?: string | null): boolean {
     clean.includes("wordpress-logo") ||
     clean.includes("wp-logo") ||
     clean.includes("wp-icon") ||
+    clean.includes("parastorage.com/client/pfavico") ||
+    clean.includes("pfavico.ico") ||
+    clean.includes("wix.com/favicon") ||
+    clean.includes("assets.website-files.com/img/favicon") ||
+    clean.includes("squarespace.com/favicon") ||
+    clean.includes("weebly.com/favicon") ||
+    clean.includes("jimdo.com/favicon") ||
+    clean.includes("site123.com/favicon") ||
+    clean.includes("godaddy.com/favicon") ||
+    clean.includes("secureserver.net/favicon") ||
+    clean.includes("0fdef751204647a3bbd7eaa2827ed4f9") ||
+    clean.includes("01c3aff52f2a4dffa526d7a9843d46ea") ||
+    clean.includes("c7d035ba85f6486680c2facedecdcf4d") ||
+    clean.includes("78aa2057f0cb42fbbaffcbc36280a64a") ||
+    clean.includes("6ea5b4a88f0b4f91945b40499aa0af00") ||
+    clean.includes("23fd2a2be53141ed810f4d3dcdcd01fa") ||
+    clean.includes("e0678ef25486466ba65ef6ad47b559e1") ||
+    clean.includes("da7ef6dd1302486c9a67baebe4b364bc") ||
+    clean.includes("c4392d634a0148fda8b7b2b0ad98293b") ||
+    clean.includes("203dcdc2ac8b48de89313f90d2a4cda1") ||
     clean.includes("default-favicon") ||
     clean.includes("placeholder-logo") ||
     clean.includes("logo-placeholder") ||
@@ -139,6 +159,17 @@ export function isBadBanner(url?: string | null): boolean {
     u.includes('scholarsedge.in') ||
     u.includes('blur_2') ||
     u.includes('w_147,') ||
+    /\/w_(?:[1-9]|[1-9]\d|1[0-4]\d),h_(?:[1-9]|[1-9]\d|1[0-4]\d)\b/i.test(u) ||
+    u.includes('0fdef751204647a3bbd7eaa2827ed4f9') ||
+    u.includes('01c3aff52f2a4dffa526d7a9843d46ea') ||
+    u.includes('c7d035ba85f6486680c2facedecdcf4d') ||
+    u.includes('78aa2057f0cb42fbbaffcbc36280a64a') ||
+    u.includes('6ea5b4a88f0b4f91945b40499aa0af00') ||
+    u.includes('23fd2a2be53141ed810f4d3dcdcd01fa') ||
+    u.includes('e0678ef25486466ba65ef6ad47b559e1') ||
+    u.includes('da7ef6dd1302486c9a67baebe4b364bc') ||
+    u.includes('c4392d634a0148fda8b7b2b0ad98293b') ||
+    u.includes('203dcdc2ac8b48de89313f90d2a4cda1') ||
     u.includes('placeholder') ||
     u.includes('lovable.app') ||
     u.includes('lovable.dev') ||

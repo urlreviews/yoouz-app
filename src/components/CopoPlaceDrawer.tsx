@@ -835,8 +835,9 @@ return () => window.removeEventListener("keydown", handleKeyDown);
     const needsPhone = !hasGenuinePhone;
     const needsHours = !place.openingHours || place.openingHours.trim() === "";
 
-    // If core media (distinct standalone logo & banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
-    const hasCoreMedia = Boolean((hasValidLogo || place.logoUrl) && (verifiedBrandBanner || place.bannerUrl || reviewBannerUrl) && !bannerError && !isSlugDomain);
+    // If core media (distinct standalone logo & valid banner) already exists and name is non-generic and domain is valid, do NOT re-enrich on refresh
+    const hasValidBanner = Boolean(verifiedBrandBanner || (place.bannerUrl && !isBadBanner(place.bannerUrl)) || (reviewBannerUrl && !isBadBanner(reviewBannerUrl)));
+    const hasCoreMedia = Boolean(hasValidLogo && hasValidBanner && !bannerError && !isSlugDomain);
     if (hasCoreMedia && !isGenericName && !isGenericDesc) {
       return;
     }
